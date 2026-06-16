@@ -113,3 +113,46 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
 def historico_exercicio(aluno_id: str, exercicio_id: str, limit: int = 1) -> list[dict]:
     """Último(s) registro(s) do exercício via GSI1 — sem varrer histórico (ESPEC §4.1)."""
     return repo.clean_all(repo.query_gsi1_last(keys.gsi1_registro(aluno_id, exercicio_id), limit))
+
+
+def _num(v) -> float | None:
+    if v is None:
+        return None
+    try:
+        return float(str(v).replace(",", ".").strip())
+    except ValueError:
+        return None
+
+
+def evolucao_exercicio(aluno_id: str, exercicio_id: str, limit: int = 100) -> dict:
+    """Série temporal (carga máx + tonelagem por sessão) + PR de um exercício, via GSI1
+    (query targeted, não scan — ESPEC §4.1). Carga não-numérica é ignorada nos cálculos."""
+    items = repo.query_gsi1_last(keys.gsi1_registro(aluno_id, exercicio_id), limit)
+    items.sort(key=lambda i: i.get("GSI1SK", ""))  # ascendente por tempo
+    serie: list[dict] = []
+    pr: dict | None = None
+    for it in items:
+        c = repo.clean(it)
+        cargas, volume = [], 0.0
+        for s in c.get("series_exec") or []:
+            cg = _num(s.get("carga"))
+            if cg is not None:
+                cargas.append(cg)
+                volume += cg * (s.get("reps") or 0)
+        carga_max = max(cargas) if cargas else None
+        serie.append({
+            "data": c.get("data_hora"),
+            "carga_max": carga_max,
+            "volume": round(volume, 1) if volume else None,
+            "reps": "/".join(str(s["reps"]) for s in (c.get("series_exec") or []) if s.get("reps")),
+        })
+        if carga_max is not None and (pr is None or carga_max > pr["carga"]):
+            pr = {"carga": carga_max, "data": c.get("data_hora")}
+    return {"serie": serie, "pr": pr, "total_sessoes": len(serie)}
+
+
+def list_exercicios_aluno(aluno_id: str) -> list[dict]:
+    """Lista plana de todos os exercícios do aluno (todos os treinos) — p/ seletor de evolução."""
+    items = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")
+    items.sort(key=lambda e: e.get("ordem", 0))
+    return repo.clean_all(items)

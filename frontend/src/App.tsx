@@ -10,6 +10,7 @@ import { AppLayout } from './components/layout/AppLayout'
 import { DashboardPage } from './pages/DashboardPage'
 import { AlunosPage } from './pages/AlunosPage'
 import { AlunoDetailPage } from './pages/AlunoDetailPage'
+import { AlunoEvolucaoPage } from './pages/AlunoEvolucaoPage'
 import { AlertasPage } from './pages/AlertasPage'
 import { SettingsPage } from './pages/SettingsPage'
 
@@ -43,6 +44,7 @@ const router = createBrowserRouter([
       { path: 'dashboard', element: <DashboardPage /> },
       { path: 'alunos', element: <AlunosPage /> },
       { path: 'alunos/:alunoId', element: <AlunoDetailPage /> },
+      { path: 'alunos/:alunoId/evolucao', element: <AlunoEvolucaoPage /> },
       { path: 'alertas', element: <AlertasPage /> },
       { path: 'config', element: <SettingsPage /> },
     ],

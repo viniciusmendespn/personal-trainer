@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp } from 'lucide-react'
 import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import {
   useTreinos, useCreateTreino, useDeleteTreino,
@@ -71,9 +71,14 @@ export function AlunoDetailPage() {
               {aluno?.telefone} {aluno?.objetivo ? `· ${aluno.objetivo}` : ''} · {aluno?.status}
             </p>
           </div>
-          <button onClick={startEdit} className="text-slate-500 hover:text-slate-300" title="Editar">
-            <Pencil size={16} />
-          </button>
+          <div className="flex items-center gap-3">
+            <Link to={`/alunos/${alunoId}/evolucao`} className="inline-flex items-center gap-1 text-sm text-emerald-400 hover:underline">
+              <TrendingUp size={16} /> Evolução
+            </Link>
+            <button onClick={startEdit} className="text-slate-500 hover:text-slate-300" title="Editar">
+              <Pencil size={16} />
+            </button>
+          </div>
         </div>
       )}
 

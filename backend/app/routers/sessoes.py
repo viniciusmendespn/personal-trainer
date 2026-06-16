@@ -57,3 +57,17 @@ def historico(aluno_id: str, exercicio_id: str, limit: int = 5,
               personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)
     return sessao_service.historico_exercicio(aluno_id, exercicio_id, limit)
+
+
+@router.get("/exercicios")
+def list_exercicios(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
+    """Lista plana de exercícios do aluno (todos os treinos)."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    return sessao_service.list_exercicios_aluno(aluno_id)
+
+
+@router.get("/exercicios/{exercicio_id}/evolucao")
+def evolucao(aluno_id: str, exercicio_id: str, limit: int = 100,
+             personal_id: str = Depends(get_current_personal_id)):
+    authz.authorize_aluno(personal_id, aluno_id)
+    return sessao_service.evolucao_exercicio(aluno_id, exercicio_id, limit)
