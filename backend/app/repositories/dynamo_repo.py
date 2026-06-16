@@ -153,6 +153,21 @@ def update_item_if_exists(pk: str, sk: str, fields: dict) -> dict | None:
         raise
 
 
+def put_series(pk: str, sk: str, series: list, on_insert: dict) -> dict:
+    """Substitui `series_exec` (edição). Metadados de criação via if_not_exists."""
+    names = {"#se": "series_exec"}
+    values = {":new": _san(series)}
+    parts = ["#se = :new"]
+    for i, (k, v) in enumerate(on_insert.items()):
+        names[f"#k{i}"] = k
+        values[f":v{i}"] = _san(v)
+        parts.append(f"#k{i} = if_not_exists(#k{i}, :v{i})")
+    resp = _get_table().update_item(
+        Key={"PK": pk, "SK": sk}, UpdateExpression="SET " + ", ".join(parts),
+        ExpressionAttributeNames=names, ExpressionAttributeValues=values, ReturnValues="ALL_NEW")
+    return resp.get("Attributes", {})
+
+
 def append_series(pk: str, sk: str, new_series: list, on_insert: dict) -> dict:
     """Cria o registro (campos de `on_insert`) ou faz append em `series_exec` (ESPEC §3.2).
     1 write, sem read prévio. `on_insert` só é aplicado na criação (if_not_exists)."""

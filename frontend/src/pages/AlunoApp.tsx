@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, Trophy } from 'lucide-react'
+import { Dumbbell, TrendingUp, Trophy, Check, ChevronRight } from 'lucide-react'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
-import { alunoApi, type SerieInput, type SessaoAtiva } from '../api/alunoApp'
+import { alunoApi, type ExSessao } from '../api/alunoApp'
 import { ALUNO_TOKEN_KEY } from '../api/alunoClient'
 import { Button, Card, Spinner } from '../components/ui'
 
@@ -67,7 +67,7 @@ function Hoje() {
   })
 
   if (sessao.isLoading) return <Spinner />
-  if (sessao.data?.sessao_id) return <SessaoView s={sessao.data} />
+  if (sessao.data?.sessao_id) return <SessaoTreino />
 
   const agendados = hoje.data?.hoje ?? []
   const lista = agendados.length ? agendados : (hoje.data?.treinos ?? []).map((t) => ({ id: t.treino_id, nome: t.nome }))
@@ -88,70 +88,101 @@ function Hoje() {
   )
 }
 
-function SessaoView({ s }: { s: SessaoAtiva }) {
+function SessaoTreino() {
   const qc = useQueryClient()
-  const ex = s.ex_atual
-  const [rows, setRows] = useState<{ carga: string; reps: string }[]>([])
+  const ses = useQuery({ queryKey: ['aluno-sessao-exs'], queryFn: alunoApi.sessaoExercicios, retry: false })
+  const finish = useMutation({
+    mutationFn: () => alunoApi.finish(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['aluno-sessao'] })
+      qc.invalidateQueries({ queryKey: ['aluno-sessao-exs'] })
+    },
+  })
+
+  if (ses.isLoading || !ses.data) return <Spinner />
+  const exs = ses.data.exercicios
+  const feitos = exs.filter((e) => e.registrado?.length).length
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="font-semibold">{ses.data.treino_nome}</p>
+        <span className="text-xs text-slate-500">{feitos}/{exs.length} feitos</span>
+      </div>
+      <p className="text-xs text-slate-500">Toque em um exercício para registrar — você pode começar por onde quiser e editar depois.</p>
+      {exs.map((ex) => <ExercicioCard key={ex.exercicio_id} ex={ex} />)}
+      <Button className="w-full" onClick={() => finish.mutate()} disabled={finish.isPending}>
+        {finish.isPending ? 'Finalizando…' : 'Finalizar treino'}
+      </Button>
+    </div>
+  )
+}
+
+function ExercicioCard({ ex }: { ex: ExSessao }) {
+  const qc = useQueryClient()
+  const [open, setOpen] = useState(false)
   const [pr, setPr] = useState<number | null>(null)
+  const feito = !!ex.registrado?.length
 
-  useEffect(() => {
-    const n = ex?.series ?? 1
-    setRows(Array.from({ length: n }, () => ({ carga: ex?.carga_prescrita ?? '', reps: '' })))
-    setPr(null)
-  }, [ex?.exercicio_id])
-
+  const initRows = () => {
+    const src = ex.registrado?.length
+      ? ex.registrado
+      : Array.from({ length: ex.series ?? 1 }, () => ({ carga: ex.carga_prescrita, reps: undefined }))
+    return src.map((s) => ({ carga: s.carga ?? '', reps: s.reps != null ? String(s.reps) : '' }))
+  }
+  const [rows, setRows] = useState(initRows)
   const upd = (i: number, f: 'carga' | 'reps', v: string) =>
     setRows((rs) => rs.map((r, j) => (j === i ? { ...r, [f]: v } : r)))
 
-  const registrarAvancar = useMutation({
-    mutationFn: async () => {
-      const series: SerieInput[] = rows
+  const save = useMutation({
+    mutationFn: () => {
+      const series = rows
         .filter((r) => r.carga || r.reps)
         .map((r) => ({ carga: r.carga || undefined, reps: r.reps ? Number(r.reps) : undefined }))
-      const r = await alunoApi.registrar(series)
-      if (r.pr_novo) { setPr(r.pr_novo); await new Promise((res) => setTimeout(res, 700)) }
-      await alunoApi.advance()
-      return r
+      return alunoApi.registrar(series, ex.exercicio_id)
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['aluno-sessao'] })
+    onSuccess: (r) => {
+      if (r.pr_novo) setPr(r.pr_novo)
+      qc.invalidateQueries({ queryKey: ['aluno-sessao-exs'] })
       qc.invalidateQueries({ queryKey: ['aluno-resumo'] })
+      setOpen(false)
     },
-  })
-  const finish = useMutation({
-    mutationFn: () => alunoApi.finish(),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['aluno-sessao'] }),
   })
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-slate-400">{s.treino_nome} · exercício {s.ordem_atual + 1}/{s.total_ex}</p>
-      <Card>
-        <h3 className="font-semibold text-lg">{ex?.nome}</h3>
-        <p className="text-xs text-slate-500 mb-3">
-          Prescrito: {ex?.series ? `${ex.series}x` : ''}{ex?.reps_prescritas ?? ''} {ex?.carga_prescrita ? `· ${ex.carga_prescrita} kg` : ''}
-        </p>
-        {pr != null && (
-          <p className="text-amber-300 text-sm mb-2 flex items-center gap-1"><Trophy size={14} /> Novo recorde: {pr} kg!</p>
-        )}
-        {rows.map((r, i) => (
-          <div key={i} className="flex gap-2 mb-2 items-center">
-            <span className="text-xs text-slate-500 w-14">Série {i + 1}</span>
-            <input className={`${inputCls} w-24`} placeholder="Carga" value={r.carga} onChange={(e) => upd(i, 'carga', e.target.value)} />
-            <input className={`${inputCls} w-20`} placeholder="Reps" inputMode="numeric" value={r.reps} onChange={(e) => upd(i, 'reps', e.target.value)} />
-          </div>
-        ))}
-        <button onClick={() => setRows([...rows, { carga: ex?.carga_prescrita ?? '', reps: '' }])} className="text-xs text-emerald-400">
-          + série
-        </button>
-      </Card>
-      <div className="flex gap-2">
-        <Button className="flex-1" onClick={() => registrarAvancar.mutate()} disabled={registrarAvancar.isPending}>
-          {registrarAvancar.isPending ? 'Salvando…' : 'Registrar e avançar'}
-        </Button>
-        <Button variant="ghost" onClick={() => finish.mutate()}>Finalizar</Button>
-      </div>
-    </div>
+    <Card>
+      <button className="w-full flex items-center justify-between text-left"
+        onClick={() => { if (!open) { setRows(initRows()); setPr(null) } setOpen((o) => !o) }}>
+        <span>
+          <span className="font-medium">{ex.nome}</span>
+          <span className="text-xs text-slate-500 ml-2">
+            {ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''} {ex.carga_prescrita ? `· ${ex.carga_prescrita}` : ''}
+          </span>
+        </span>
+        {feito ? <Check size={16} className="text-emerald-400" /> : <ChevronRight size={16} className="text-slate-600" />}
+      </button>
+
+      {feito && !open && (
+        <p className="text-xs text-slate-400 mt-1">{ex.registrado!.map((s) => `${s.carga ?? '-'}×${s.reps ?? '-'}`).join('   ')}</p>
+      )}
+
+      {open && (
+        <div className="mt-3 space-y-2">
+          {rows.map((r, i) => (
+            <div key={i} className="flex gap-2 items-center">
+              <span className="text-xs text-slate-500 w-12">Sér {i + 1}</span>
+              <input className={`${inputCls} w-24`} placeholder="Carga" value={r.carga} onChange={(e) => upd(i, 'carga', e.target.value)} />
+              <input className={`${inputCls} w-20`} placeholder="Reps" inputMode="numeric" value={r.reps} onChange={(e) => upd(i, 'reps', e.target.value)} />
+            </div>
+          ))}
+          <button onClick={() => setRows([...rows, { carga: ex.carga_prescrita ?? '', reps: '' }])} className="text-xs text-emerald-400">+ série</button>
+          {pr != null && <p className="text-amber-300 text-xs flex items-center gap-1"><Trophy size={12} /> Novo recorde: {pr} kg!</p>}
+          <Button className="w-full" onClick={() => save.mutate()} disabled={save.isPending}>
+            {save.isPending ? 'Salvando…' : feito ? 'Atualizar' : 'Registrar'}
+          </Button>
+        </div>
+      )}
+    </Card>
   )
 }
 

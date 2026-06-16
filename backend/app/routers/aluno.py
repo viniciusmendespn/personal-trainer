@@ -48,6 +48,12 @@ def get_sessao(ctx: dict = Depends(get_current_aluno)):
     return repo.clean(sessao_service.get_active(ctx["aluno_id"]))
 
 
+@router.get("/sessao/exercicios")
+def sessao_exercicios(ctx: dict = Depends(get_current_aluno)):
+    """Sessão ativa com todos os exercícios + o que já foi registrado (ver treino todo)."""
+    return sessao_service.sessao_exercicios(ctx["aluno_id"])
+
+
 @router.post("/sessao/start", status_code=201)
 def start(body: StartBody, ctx: dict = Depends(get_current_aluno)):
     return repo.clean(sessao_service.start_session(ctx["personal_id"], ctx["aluno_id"], body.treino_id))
@@ -65,9 +71,10 @@ def finish(ctx: dict = Depends(get_current_aluno)):
 
 @router.post("/registros", status_code=201)
 def registrar(body: RegistroBody, ctx: dict = Depends(get_current_aluno)):
+    """Substitui as séries do exercício (permite registrar e editar depois)."""
     series = [s.model_dump() for s in body.series]
-    registro, pr = sessao_service.record(
-        ctx["aluno_id"], series, exercicio_id=body.exercicio_id,
+    registro, pr = sessao_service.set_series(
+        ctx["aluno_id"], body.exercicio_id, series,
         canal=CanalOrigem.PORTAL, classificacao=Classificacao.AUTO, ator=Ator.ALUNO)
     out = repo.clean(registro)
     if pr:

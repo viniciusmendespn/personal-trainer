@@ -143,6 +143,66 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
     return updated, pr_novo
 
 
+def _volume(series: list | None) -> float:
+    v = 0.0
+    for s in series or []:
+        cg = _num(s.get("carga"))
+        if cg is not None:
+            v += cg * (s.get("reps") or 0)
+    return v
+
+
+def set_series(aluno_id: str, exercicio_id: str | None, series: list,
+               canal: CanalOrigem = CanalOrigem.PORTAL, classificacao: Classificacao = Classificacao.AUTO,
+               ator: Ator = Ator.ALUNO) -> tuple[dict, float | None]:
+    """Substitui as séries de um exercício na sessão (permite editar após registrar).
+    Ajusta os agregados pela diferença de volume. Retorna (registro, novo_PR | None)."""
+    s = get_active(aluno_id, consistent=True)
+    if not s:
+        raise HTTPException(409, "Sem sessão ativa")
+    snaps = s.get("exercicios", [])
+    ex_atual = s.get("ex_atual") or {}
+    ex_id = exercicio_id or ex_atual.get("exercicio_id")
+    if not ex_id:
+        raise HTTPException(400, "Exercício não identificado")
+    ex_nome = next((e.get("nome") for e in snaps if e.get("exercicio_id") == ex_id), ex_atual.get("nome"))
+    pk = keys.pk_aluno(aluno_id)
+    sk = keys.sk_registro(s["sessao_id"], ex_id)
+    old = repo.get_item(pk, sk)
+    old_vol = _volume(old.get("series_exec") if old else None)
+    on_insert = {
+        "sessao_id": s["sessao_id"], "exercicio_id": ex_id, "exercicio_nome": ex_nome,
+        "aluno_id": aluno_id, "data_hora": now_iso(),
+        "canal_origem": canal.value, "classificacao": classificacao.value, "ator": ator.value,
+        "GSI1PK": keys.gsi1_registro(aluno_id, ex_id), "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
+    }
+    updated = repo.put_series(pk, sk, series, on_insert)
+    delta = _volume(series) - old_vol
+    if delta:
+        wk = _isoweek()
+        repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_volume": delta}, set_={"ultimo_treino": now_iso()})
+        repo.add_and_set(pk, keys.sk_stats_week(wk), add={"volume": delta}, set_={"semana": wk})
+    pr_novo = None
+    cargas = [c for c in (_num(it.get("carga")) for it in series) if c is not None]
+    if cargas and repo.update_if_greater(pk, keys.sk_stats_pr(ex_id), "carga", max(cargas),
+                                         extra={"exercicio_nome": ex_nome, "data": now_iso()}):
+        pr_novo = max(cargas)
+    return updated, pr_novo
+
+
+def sessao_exercicios(aluno_id: str) -> dict | None:
+    """Sessão ativa com TODOS os exercícios + o que já foi registrado em cada um."""
+    s = get_active(aluno_id, consistent=True)
+    if not s:
+        return None
+    regs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=f"REG#{s['sessao_id']}#")
+    feito = {r.get("exercicio_id"): repo.clean(r).get("series_exec") for r in regs}
+    return {
+        "sessao_id": s["sessao_id"], "treino_nome": s.get("treino_nome"),
+        "exercicios": [{**e, "registrado": feito.get(e.get("exercicio_id"))} for e in s.get("exercicios", [])],
+    }
+
+
 def historico_exercicio(aluno_id: str, exercicio_id: str, limit: int = 1) -> list[dict]:
     """Último(s) registro(s) do exercício via GSI1 — sem varrer histórico (ESPEC §4.1)."""
     return repo.clean_all(repo.query_gsi1_last(keys.gsi1_registro(aluno_id, exercicio_id), limit))
