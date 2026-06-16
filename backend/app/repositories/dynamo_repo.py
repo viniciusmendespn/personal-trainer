@@ -76,6 +76,12 @@ def query_pk_last_n(pk: str, sk_prefix: str, limit: int) -> list[dict]:
     return resp.get("Items", [])
 
 
+def query_between(pk: str, sk_low: str, sk_high: str) -> list[dict]:
+    cond = Key("PK").eq(pk) & Key("SK").between(sk_low, sk_high)
+    resp = _get_table().query(KeyConditionExpression=cond)
+    return resp.get("Items", [])
+
+
 def query_gsi1_last(gsi1pk: str, limit: int = 1) -> list[dict]:
     """Último(s) registro(s) de um exercício — "quanto peguei?" (ESPEC §4.1)."""
     resp = _get_table().query(

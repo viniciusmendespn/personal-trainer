@@ -190,6 +190,24 @@ Resources:
             Path: /{proxy+}
             Method: ANY
 
+  # ── Scheduler (EventBridge diário — vencimentos de treino) ───────────────────
+  SchedulerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.scheduler.handler
+      CodeUri: ./
+      Description: "Notifica o personal sobre treinos vencendo (diário)"
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MainTable
+      Events:
+        Daily:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 9 * * ? *)   # 09:00 UTC, diariamente
+            Name: !Sub "${ProjectName}-scheduler-${Stage}"
+            Enabled: true
+
   # ── DynamoDB (single-table — ESPEC §2) ───────────────────────────────────────
   # GSI1 = "registros por exercício no tempo" (ESPEC §2.3/§4.1).
   # Projection ALL por ora; refinar p/ INCLUDE quando os atributos congelarem.

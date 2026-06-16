@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Users, AlertTriangle, Clock, MessageCircle } from 'lucide-react'
+import { Users, Bell, Clock, MessageCircle } from 'lucide-react'
 import { useDashboard } from '../hooks/useDashboard'
 import { wapiApi } from '../api/wapi'
 import { Card, Spinner } from '../components/ui'
@@ -43,14 +43,14 @@ export function DashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Stat icon={<Users size={22} />} label="Alunos" value={data?.alunos ?? 0} color="text-emerald-400" />
           <Stat icon={<Users size={22} />} label="Ativos" value={data?.alunos_ativos ?? 0} color="text-emerald-400" />
-          <Stat icon={<AlertTriangle size={22} />} label="Alertas abertos" value={data?.alertas_abertos ?? 0} color="text-red-400" />
+          <Stat icon={<Bell size={22} />} label="Notificações" value={data?.notificacoes_nao_lidas ?? 0} color="text-red-400" />
           <Stat icon={<Clock size={22} />} label="Pendências" value={data?.pendencias ?? 0} color="text-amber-400" />
         </div>
       )}
 
       <div className="mt-6 flex gap-3">
         <Link to="/alunos" className="text-emerald-400 text-sm hover:underline">→ Gerenciar alunos</Link>
-        <Link to="/alertas" className="text-emerald-400 text-sm hover:underline">→ Ver alertas</Link>
+        <Link to="/notificacoes" className="text-emerald-400 text-sm hover:underline">→ Ver notificações</Link>
       </div>
     </div>
   )

@@ -9,6 +9,7 @@ class ExLibCreate(BaseModel):
     grupo: Optional[str] = None                # ex.: "Peito", "Pernas"
     video_url: Optional[str] = None
     descricao: Optional[str] = None
+    recomendacoes: Optional[str] = None        # texto livre do personal (técnica, cuidados…)
 
 
 class ExLib(ExLibCreate):

@@ -9,7 +9,8 @@ class TreinoCreate(BaseModel):
     foco: Optional[str] = None                 # ex.: "Inferiores", "Peito/Tríceps"
     observacoes: Optional[str] = None
     ativo: bool = True
-    dias_semana: list[int] = Field(default_factory=list)   # 0=seg .. 6=dom (agenda)
+    data_inicio: Optional[str] = None          # período do programa (YYYY-MM-DD)
+    data_fim: Optional[str] = None             # ao vencer, notifica o personal (scheduler)
     custom: dict[str, Any] = Field(default_factory=dict)
 
 

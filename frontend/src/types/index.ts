@@ -36,7 +36,8 @@ export interface Treino {
   foco?: string
   observacoes?: string
   ativo: boolean
-  dias_semana?: number[]
+  data_inicio?: string
+  data_fim?: string
   custom?: Custom
   created_at: string
   updated_at: string
@@ -48,7 +49,8 @@ export interface TreinoCreate {
   foco?: string
   observacoes?: string
   ativo?: boolean
-  dias_semana?: number[]
+  data_inicio?: string
+  data_fim?: string
   custom?: Custom
 }
 
@@ -70,6 +72,7 @@ export interface ExLib {
   grupo?: string
   video_url?: string
   descricao?: string
+  recomendacoes?: string
 }
 
 export interface Exercicio {

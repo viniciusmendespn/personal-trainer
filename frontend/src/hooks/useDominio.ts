@@ -30,6 +30,14 @@ export function useCreateExLib() {
   })
 }
 
+export function useUpdateExLib() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: ExLibCreate }) => bibliotecaApi.update(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['biblioteca'] }),
+  })
+}
+
 export function useDeleteExLib() {
   const qc = useQueryClient()
   return useMutation({

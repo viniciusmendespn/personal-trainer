@@ -50,6 +50,22 @@ def sk_pendencia(ts: str, pendencia_id: str) -> str:
     return f"PEND#{ts}#{pendencia_id}"
 
 
+NOTIF_PREFIX = "NOTIF#"
+
+
+def sk_notif(ts: str, notif_id: str) -> str:
+    return f"NOTIF#{ts}#{notif_id}"
+
+
+# ── Agenda global de vencimentos (scheduler diário) ──────────────────────────
+PK_SCHED = "SYSTEM#SCHED"
+DUE_PREFIX = "DUE#"
+
+
+def sk_due(data_fim: str, treino_id: str) -> str:
+    return f"DUE#{data_fim}#{treino_id}"   # data_fim = YYYY-MM-DD (ordenável)
+
+
 # ── SKs do aluno (partição AL#) ──────────────────────────────────────────────
 SK_SESSION_ACTIVE = "SESSION#ACTIVE"
 SK_CHAT = "CHAT"   # memória conversacional do agente (com TTL)

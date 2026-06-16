@@ -3,7 +3,7 @@ import { api } from './client'
 export interface DashboardData {
   alunos: number
   alunos_ativos: number
-  alertas_abertos: number
+  notificacoes_nao_lidas: number
   pendencias: number
 }
 

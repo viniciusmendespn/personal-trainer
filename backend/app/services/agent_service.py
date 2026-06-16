@@ -93,11 +93,13 @@ def enviar_link_portal(aluno_id: str, personal_id: str) -> dict:
 
 
 def treino_de_hoje(aluno_id: str) -> dict:
-    """Treino(s) agendado(s) para o dia da semana atual (agenda)."""
+    """Treino(s) com exercícios agendados para hoje (dia da semana por exercício)."""
     from datetime import datetime, timezone
     hoje = datetime.now(timezone.utc).weekday()   # 0=seg .. 6=dom
+    exs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")
+    ids_hoje = {e["treino_id"] for e in exs if e.get("dia_semana") == hoje}
     treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
-    matches = [t for t in treinos if hoje in (t.get("dias_semana") or [])]
+    matches = [t for t in treinos if t["treino_id"] in ids_hoje]
     return {"treinos": [{"id": t["treino_id"], "nome": t.get("nome")} for t in matches]}
 
 

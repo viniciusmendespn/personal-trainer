@@ -20,6 +20,24 @@ class CopiarBody(BaseModel):
     treino_id: str
 
 
+def _aluno_nome(personal_id: str, aluno_id: str) -> str | None:
+    ptr = repo.get_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id))
+    return (ptr or {}).get("nome")
+
+
+def _sync_due(personal_id: str, aluno_id: str, treino_id: str, treino_nome: str,
+              data_fim: str | None, old_data_fim: str | None = None) -> None:
+    """Mantém a agenda global de vencimento do treino (o scheduler diário lê e notifica)."""
+    if old_data_fim and old_data_fim != data_fim:
+        repo.delete_item(keys.PK_SCHED, keys.sk_due(old_data_fim, treino_id))
+    if data_fim:
+        repo.put_item(keys.PK_SCHED, keys.sk_due(data_fim, treino_id), {
+            "personal_id": personal_id, "aluno_id": aluno_id, "treino_id": treino_id,
+            "treino_nome": treino_nome, "aluno_nome": _aluno_nome(personal_id, aluno_id),
+            "data_fim": data_fim, "tipo": "TREINO_FIM",
+        })
+
+
 def _guard(personal_id: str, aluno_id: str) -> None:
     authz.authorize_aluno(personal_id, aluno_id)
 
@@ -40,6 +58,8 @@ def create_treino(aluno_id: str, body: TreinoCreate, personal_id: str = Depends(
     now = now_iso()
     treino = Treino(treino_id=treino_id, aluno_id=aluno_id, created_at=now, updated_at=now, **body.model_dump())
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id), treino.model_dump())
+    if body.data_fim:
+        _sync_due(personal_id, aluno_id, treino_id, body.nome, body.data_fim)
     return treino
 
 
@@ -70,20 +90,25 @@ def copiar_treino(aluno_id: str, body: CopiarBody, personal_id: str = Depends(ge
 @router.put("/{treino_id}")
 def update_treino(aluno_id: str, treino_id: str, body: TreinoCreate, personal_id: str = Depends(get_current_personal_id)):
     _guard(personal_id, aluno_id)
-    fields = {**body.model_dump(), "updated_at": now_iso()}
-    updated = repo.update_item_if_exists(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id), fields)
-    if updated is None:
+    old = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id))
+    if not old:
         raise HTTPException(404, "Treino não encontrado")
+    fields = {**body.model_dump(), "updated_at": now_iso()}
+    updated = repo.update_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id), fields, return_values=True)
+    _sync_due(personal_id, aluno_id, treino_id, body.nome, body.data_fim, old.get("data_fim"))
     return repo.clean(updated)
 
 
 @router.delete("/{treino_id}", status_code=204)
 def delete_treino(aluno_id: str, treino_id: str, personal_id: str = Depends(get_current_personal_id)):
     _guard(personal_id, aluno_id)
-    # remove o treino + seus exercícios em lote
+    # remove o treino + seus exercícios (+ agenda de vencimento) em lote
+    treino = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id))
     exs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.sk_exercicio_prefix(treino_id))
     deletes = [(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id))]
     deletes += [(keys.pk_aluno(aluno_id), e["SK"]) for e in exs]
+    if treino and treino.get("data_fim"):
+        deletes.append((keys.PK_SCHED, keys.sk_due(treino["data_fim"], treino_id)))
     repo.batch_write(deletes=deletes)
 
 

@@ -13,7 +13,7 @@ import { AlunoDetailPage } from './pages/AlunoDetailPage'
 import { AlunoEvolucaoPage } from './pages/AlunoEvolucaoPage'
 import { AvaliacoesPage } from './pages/AvaliacoesPage'
 import { BibliotecaPage } from './pages/BibliotecaPage'
-import { AlertasPage } from './pages/AlertasPage'
+import { NotificacoesPage } from './pages/NotificacoesPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { AlunoApp } from './pages/AlunoApp'
 
@@ -51,7 +51,7 @@ const router = createBrowserRouter([
       { path: 'alunos/:alunoId/evolucao', element: <AlunoEvolucaoPage /> },
       { path: 'alunos/:alunoId/avaliacoes', element: <AvaliacoesPage /> },
       { path: 'biblioteca', element: <BibliotecaPage /> },
-      { path: 'alertas', element: <AlertasPage /> },
+      { path: 'notificacoes', element: <NotificacoesPage /> },
       { path: 'config', element: <SettingsPage /> },
     ],
   },

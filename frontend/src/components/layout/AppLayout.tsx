@@ -1,9 +1,11 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, Users, AlertTriangle, BookOpen, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, Bell, BookOpen, Settings, LogOut } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
+import { useUnreadCount } from '../../hooks/useNotificacoes'
 
 export function AppLayout() {
   const { user, signOut } = useAuth()
+  const unread = useUnreadCount().data?.count ?? 0
   const link = (active: boolean) =>
     `flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
       active ? 'bg-emerald-600/20 text-emerald-300' : 'text-slate-400 hover:bg-slate-800'
@@ -22,8 +24,11 @@ export function AppLayout() {
         <NavLink to="/alunos" className={({ isActive }) => link(isActive)}>
           <Users size={16} /> Alunos
         </NavLink>
-        <NavLink to="/alertas" className={({ isActive }) => link(isActive)}>
-          <AlertTriangle size={16} /> Alertas
+        <NavLink to="/notificacoes" className={({ isActive }) => link(isActive)}>
+          <Bell size={16} /> Notificações
+          {unread > 0 && (
+            <span className="ml-auto text-[10px] bg-emerald-600 text-white rounded-full px-1.5 min-w-5 text-center">{unread}</span>
+          )}
         </NavLink>
         <NavLink to="/biblioteca" className={({ isActive }) => link(isActive)}>
           <BookOpen size={16} /> Biblioteca

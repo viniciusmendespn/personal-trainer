@@ -17,6 +17,10 @@ export const treinosApi = {
     api
       .post<Exercicio>(`/v1/alunos/${alunoId}/treinos/${treinoId}/exercicios`, body)
       .then((r) => r.data),
+  updateExercicio: (alunoId: string, treinoId: string, exercicioId: string, body: ExercicioCreate) =>
+    api
+      .put<Exercicio>(`/v1/alunos/${alunoId}/treinos/${treinoId}/exercicios/${exercicioId}`, body)
+      .then((r) => r.data),
   removeExercicio: (alunoId: string, treinoId: string, exercicioId: string) =>
     api.delete(`/v1/alunos/${alunoId}/treinos/${treinoId}/exercicios/${exercicioId}`),
 }

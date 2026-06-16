@@ -1,5 +1,5 @@
 """Biblioteca de exercícios do personal (catálogo reutilizável com vídeo) — partição PT#."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.dependencies import get_current_personal_id
 from app.models.biblioteca import ExLib, ExLibCreate
@@ -22,6 +22,14 @@ def create_exlib(body: ExLibCreate, personal_id: str = Depends(get_current_perso
     ex = ExLib(exlib_id=new_id(), **body.model_dump())
     repo.put_item(keys.pk_personal(personal_id), keys.sk_exlib(ex.exlib_id), ex.model_dump())
     return ex
+
+
+@router.put("/{exlib_id}", response_model=ExLib)
+def update_exlib(exlib_id: str, body: ExLibCreate, personal_id: str = Depends(get_current_personal_id)):
+    updated = repo.update_item_if_exists(keys.pk_personal(personal_id), keys.sk_exlib(exlib_id), body.model_dump())
+    if updated is None:
+        raise HTTPException(404, "Exercício não encontrado")
+    return ExLib(**repo.clean(updated))
 
 
 @router.delete("/{exlib_id}", status_code=204)

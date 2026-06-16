@@ -2,9 +2,10 @@
 PT# para leitura recente-primeiro sem fan-out (ESPEC §2.2). Volume baixo."""
 import time
 
-from app.models.enums import AlertaStatus, PendenciaStatus
+from app.models.enums import PendenciaStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
+from app.services import notif_service
 from app.utils import epoch_ms, new_id, now_iso
 
 PEND_TTL_S = 30 * 24 * 3600  # pendência não resolvida some em ~30 dias (RN013)
@@ -15,31 +16,19 @@ def _with_ref(items: list[dict]) -> list[dict]:
     return [{**repo.clean(i), "ref": i["SK"]} for i in items]
 
 
-# ── Dor → Alerta (RF009) ─────────────────────────────────────────────────────
+# ── Dor → histórico do aluno + notificação ao personal (RF009) ───────────────
 def registrar_dor(personal_id: str, aluno_id: str, descricao: str,
                   exercicio_id: str | None = None, exercicio_nome: str | None = None) -> str:
     ts = epoch_ms()
-    alerta_id = new_id()
-    base = {
+    dor_id = new_id()
+    repo.put_item(keys.pk_aluno(aluno_id), keys.sk_dor(exercicio_id or "NA", ts, dor_id), {
         "aluno_id": aluno_id, "exercicio_id": exercicio_id, "exercicio_nome": exercicio_nome,
         "descricao": descricao, "data_hora": now_iso(),
-    }
-    # Histórico do aluno
-    repo.put_item(keys.pk_aluno(aluno_id), keys.sk_dor(exercicio_id or "NA", ts, alerta_id), base)
-    # Feed de alerta do personal
-    repo.put_item(keys.pk_personal(personal_id), keys.sk_alerta(ts, alerta_id), {
-        **base, "alerta_id": alerta_id, "origem": "RELATO_DOR", "status": AlertaStatus.ABERTO.value,
     })
-    return alerta_id
-
-
-def list_alertas(personal_id: str, limit: int = 50) -> list[dict]:
-    return _with_ref(repo.query_pk_last_n(keys.pk_personal(personal_id), "ALERT#", limit))
-
-
-def resolve_alerta(personal_id: str, ref: str) -> dict | None:
-    return repo.update_item_if_exists(keys.pk_personal(personal_id), ref,
-                                      {"status": AlertaStatus.RESOLVIDO.value})
+    contexto = f" em {exercicio_nome}" if exercicio_nome else ""
+    notif_service.criar(personal_id, "DOR", "Relato de dor",
+                        f"O aluno relatou dor{contexto}: {descricao}", aluno_id=aluno_id)
+    return dor_id
 
 
 # ── Pendências (RF005/RF006) ─────────────────────────────────────────────────
@@ -51,6 +40,7 @@ def criar_pendencia(personal_id: str, aluno_id: str, tipo: str, payload: dict, m
         "motivo": motivo, "status": PendenciaStatus.ABERTA.value, "data_hora": now_iso(),
         "ttl": int(time.time()) + PEND_TTL_S,
     })
+    notif_service.criar(personal_id, "PENDENCIA", "Nova pendência", motivo, aluno_id=aluno_id)
     return pid
 
 
