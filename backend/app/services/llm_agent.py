@@ -58,6 +58,11 @@ _TOOLS = [
         "name": "iniciar_sessao", "description": "Inicia uma sessão de um treino pelo treino_id.",
         "parameters": {"type": "object", "properties": {
             "treino_id": {"type": "string"}}, "required": ["treino_id"]}}},
+    {"type": "function", "function": {
+        "name": "registrar_dor",
+        "description": "Registra dor/desconforto do aluno e avisa o personal. Não orientar progressão.",
+        "parameters": {"type": "object", "properties": {
+            "descricao": {"type": "string"}}, "required": ["descricao"]}}},
 ]
 
 
@@ -89,6 +94,8 @@ def _exec(name: str, args: dict, personal_id: str, aluno_id: str) -> dict:
         return agent_service.finalizar(aluno_id)
     if name == "iniciar_sessao":
         return agent_service.iniciar_sessao(personal_id, aluno_id, args.get("treino_id"))
+    if name == "registrar_dor":
+        return agent_service.registrar_dor(personal_id, aluno_id, args.get("descricao", ""))
     return {"erro": "ferramenta desconhecida"}
 
 

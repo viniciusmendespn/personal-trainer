@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
 from app.config import settings
-from app.routers import alunos, config, sessoes, treinos, wapi, webhook
+from app.routers import alertas, alunos, config, dashboard, sessoes, treinos, wapi, webhook
 
 app = FastAPI(
     title="Personal Trainer",
@@ -25,8 +25,8 @@ app.include_router(config.router)    # /v1/config/...
 app.include_router(alunos.router)    # /v1/alunos
 app.include_router(treinos.router)   # /v1/alunos/{id}/treinos[/exercicios]
 app.include_router(sessoes.router)   # /v1/alunos/{id}/sessao | registros | historico
-
-# Próximos: alertas, pendencias, dashboard (indicadores agregados — ESPEC §3.1)
+app.include_router(alertas.router)   # /v1/alertas | /v1/pendencias
+app.include_router(dashboard.router) # /v1/dashboard
 
 
 @app.get("/v1/health")

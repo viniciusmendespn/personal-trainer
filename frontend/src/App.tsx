@@ -7,8 +7,10 @@ import { ProtectedRoute } from './auth/ProtectedRoute'
 import { LoginPage } from './auth/LoginPage'
 import { SignUpPage } from './auth/SignUpPage'
 import { AppLayout } from './components/layout/AppLayout'
+import { DashboardPage } from './pages/DashboardPage'
 import { AlunosPage } from './pages/AlunosPage'
 import { AlunoDetailPage } from './pages/AlunoDetailPage'
+import { AlertasPage } from './pages/AlertasPage'
 import { SettingsPage } from './pages/SettingsPage'
 
 Amplify.configure({
@@ -37,9 +39,11 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <Navigate to="/config" replace /> },
+      { index: true, element: <Navigate to="/dashboard" replace /> },
+      { path: 'dashboard', element: <DashboardPage /> },
       { path: 'alunos', element: <AlunosPage /> },
       { path: 'alunos/:alunoId', element: <AlunoDetailPage /> },
+      { path: 'alertas', element: <AlertasPage /> },
       { path: 'config', element: <SettingsPage /> },
     ],
   },

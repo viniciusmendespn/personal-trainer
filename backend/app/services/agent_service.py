@@ -5,7 +5,7 @@ O `{personal_id, aluno_id}` já vem resolvido pelo webhook — a LLM nunca infor
 from app.models.enums import Ator, CanalOrigem, Classificacao
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import sessao_service
+from app.services import alerta_service, sessao_service
 
 
 def _ult(aluno_id: str, exercicio_id: str | None) -> dict | None:
@@ -64,3 +64,12 @@ def iniciar_sessao(personal_id: str, aluno_id: str, treino_id: str) -> dict:
 def finalizar(aluno_id: str) -> dict:
     sessao_service.finish(aluno_id)
     return {"ok": 1, "fim": 1}
+
+
+def registrar_dor(personal_id: str, aluno_id: str, descricao: str) -> dict:
+    """Registra dor no exercício atual (se houver) e gera alerta ao personal (RF009)."""
+    s = sessao_service.get_active(aluno_id, consistent=True)
+    ex = (s or {}).get("ex_atual") or {}
+    alerta_service.registrar_dor(personal_id, aluno_id, descricao,
+                                 exercicio_id=ex.get("exercicio_id"), exercicio_nome=ex.get("nome"))
+    return {"ok": 1, "avisado": 1}

@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Users, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, AlertTriangle, Settings, LogOut } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 
 export function AppLayout() {
@@ -16,8 +16,14 @@ export function AppLayout() {
           <h1 className="text-lg font-bold text-emerald-400">Personal</h1>
           <p className="text-xs text-slate-500 truncate">{user?.name || user?.email}</p>
         </div>
+        <NavLink to="/dashboard" className={({ isActive }) => link(isActive)}>
+          <LayoutDashboard size={16} /> Visão geral
+        </NavLink>
         <NavLink to="/alunos" className={({ isActive }) => link(isActive)}>
           <Users size={16} /> Alunos
+        </NavLink>
+        <NavLink to="/alertas" className={({ isActive }) => link(isActive)}>
+          <AlertTriangle size={16} /> Alertas
         </NavLink>
         <NavLink to="/config" className={({ isActive }) => link(isActive)}>
           <Settings size={16} /> WhatsApp

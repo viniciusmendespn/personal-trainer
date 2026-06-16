@@ -72,6 +72,10 @@ def sk_registro(sessao_id: str, exercicio_id: str) -> str:
     return f"REG#{sessao_id}#{exercicio_id}"
 
 
+def sk_dor(exercicio_id: str, ts: str, dor_id: str) -> str:
+    return f"DOR#{exercicio_id}#{ts}#{dor_id}"
+
+
 def sk_msg(message_id: str) -> str:
     return f"MSG#{message_id}"
 
