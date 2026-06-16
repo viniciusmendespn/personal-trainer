@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
+from app.config import settings
 from app.routers import alunos, config, sessoes, treinos, wapi, webhook
 
 app = FastAPI(
@@ -33,4 +34,5 @@ def health():
     return {"status": "ok", "version": "0.1.0"}
 
 
-handler = Mangum(app, lifespan="off")
+# HTTP API v2 com stage nomeado entrega o path com prefixo /{stage} — Mangum o remove.
+handler = Mangum(app, lifespan="off", api_gateway_base_path=f"/{settings.stage}")
