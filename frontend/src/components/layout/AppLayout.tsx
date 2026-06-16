@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, Users, AlertTriangle, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, AlertTriangle, BookOpen, Settings, LogOut } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 
 export function AppLayout() {
@@ -24,6 +24,9 @@ export function AppLayout() {
         </NavLink>
         <NavLink to="/alertas" className={({ isActive }) => link(isActive)}>
           <AlertTriangle size={16} /> Alertas
+        </NavLink>
+        <NavLink to="/biblioteca" className={({ isActive }) => link(isActive)}>
+          <BookOpen size={16} /> Biblioteca
         </NavLink>
         <NavLink to="/config" className={({ isActive }) => link(isActive)}>
           <Settings size={16} /> WhatsApp

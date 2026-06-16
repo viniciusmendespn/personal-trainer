@@ -36,6 +36,7 @@ export interface Treino {
   foco?: string
   observacoes?: string
   ativo: boolean
+  dias_semana?: number[]
   custom?: Custom
   created_at: string
   updated_at: string
@@ -47,7 +48,28 @@ export interface TreinoCreate {
   foco?: string
   observacoes?: string
   ativo?: boolean
+  dias_semana?: number[]
   custom?: Custom
+}
+
+export interface Avaliacao {
+  avaliacao_id: string
+  aluno_id: string
+  data?: string
+  peso?: number
+  altura_cm?: number
+  percentual_gordura?: number
+  medidas?: Custom
+  observacoes?: string
+  created_at: string
+}
+
+export interface ExLib {
+  exlib_id: string
+  nome: string
+  grupo?: string
+  video_url?: string
+  descricao?: string
 }
 
 export interface Exercicio {

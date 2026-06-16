@@ -31,6 +31,11 @@ def pk_phone(personal_id: str, e164: str) -> str:
 SK_PROFILE = "PROFILE"
 SK_WAPI_CONFIG = "WAPI#CONFIG"
 SK_CUSTOM_FIELDS = "CONFIG#CUSTOMFIELDS"   # definições de atributos custom (ESPEC §2.4)
+EXLIB_PREFIX = "EXLIB#"                     # biblioteca de exercícios do personal
+
+
+def sk_exlib(exlib_id: str) -> str:
+    return f"EXLIB#{exlib_id}"
 
 
 def sk_aluno_pointer(aluno_id: str) -> str:
@@ -75,6 +80,13 @@ def sk_registro(sessao_id: str, exercicio_id: str) -> str:
 
 def sk_dor(exercicio_id: str, ts: str, dor_id: str) -> str:
     return f"DOR#{exercicio_id}#{ts}#{dor_id}"
+
+
+AVAL_PREFIX = "AVAL#"
+
+
+def sk_avaliacao(ts: str, avaliacao_id: str) -> str:
+    return f"AVAL#{ts}#{avaliacao_id}"
 
 
 def sk_msg(message_id: str) -> str:

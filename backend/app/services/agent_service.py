@@ -83,6 +83,15 @@ def avancar(aluno_id: str) -> dict:
     return {"ok": 1, "ex": ex.get("nome"), "fim": s.get("status") != "EM_ANDAMENTO"}
 
 
+def treino_de_hoje(aluno_id: str) -> dict:
+    """Treino(s) agendado(s) para o dia da semana atual (agenda)."""
+    from datetime import datetime, timezone
+    hoje = datetime.now(timezone.utc).weekday()   # 0=seg .. 6=dom
+    treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
+    matches = [t for t in treinos if hoje in (t.get("dias_semana") or [])]
+    return {"treinos": [{"id": t["treino_id"], "nome": t.get("nome")} for t in matches]}
+
+
 def iniciar_sessao(personal_id: str, aluno_id: str, treino_id: str) -> dict:
     s = sessao_service.start_session(personal_id, aluno_id, treino_id)
     ex = s.get("ex_atual") or {}

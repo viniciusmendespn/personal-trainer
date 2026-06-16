@@ -71,6 +71,11 @@ _TOOLS = [
                        "(campo video) ou registrar/consultar um exercício que não é o atual.",
         "parameters": {"type": "object", "properties": {
             "nome": {"type": "string"}}, "required": ["nome"]}}},
+    {"type": "function", "function": {
+        "name": "treino_de_hoje",
+        "description": "Retorna o(s) treino(s) agendado(s) para hoje (use quando o aluno perguntar "
+                       "qual o treino do dia).",
+        "parameters": {"type": "object", "properties": {}}}},
 ]
 
 
@@ -106,6 +111,8 @@ def _exec(name: str, args: dict, personal_id: str, aluno_id: str) -> dict:
         return agent_service.registrar_dor(personal_id, aluno_id, args.get("descricao", ""))
     if name == "buscar_exercicio":
         return agent_service.buscar_exercicio(aluno_id, args.get("nome", ""))
+    if name == "treino_de_hoje":
+        return agent_service.treino_de_hoje(aluno_id)
     return {"erro": "ferramenta desconhecida"}
 
 

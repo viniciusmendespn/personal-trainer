@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale } from 'lucide-react'
 import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import {
   useTreinos, useCreateTreino, useDeleteTreino,
@@ -19,6 +19,7 @@ export function AlunoDetailPage() {
   const deleteAluno = useDeleteAluno()
   const [nome, setNome] = useState('')
   const [foco, setFoco] = useState('')
+  const [dias, setDias] = useState<number[]>([])
   const [editing, setEditing] = useState(false)
   const [eNome, setENome] = useState('')
   const [eTel, setETel] = useState('')
@@ -42,9 +43,10 @@ export function AlunoDetailPage() {
   async function addTreino(e: React.FormEvent) {
     e.preventDefault()
     if (!nome) return
-    await createTreino.mutateAsync({ nome, foco: foco || undefined, ordem: (treinos?.length ?? 0) + 1 })
-    setNome(''); setFoco('')
+    await createTreino.mutateAsync({ nome, foco: foco || undefined, dias_semana: dias, ordem: (treinos?.length ?? 0) + 1 })
+    setNome(''); setFoco(''); setDias([])
   }
+  const toggleDia = (d: number) => setDias((ds) => (ds.includes(d) ? ds.filter((x) => x !== d) : [...ds, d]))
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -75,6 +77,9 @@ export function AlunoDetailPage() {
             <Link to={`/alunos/${alunoId}/evolucao`} className="inline-flex items-center gap-1 text-sm text-emerald-400 hover:underline">
               <TrendingUp size={16} /> Evolução
             </Link>
+            <Link to={`/alunos/${alunoId}/avaliacoes`} className="inline-flex items-center gap-1 text-sm text-emerald-400 hover:underline">
+              <Scale size={16} /> Avaliação
+            </Link>
             <button onClick={startEdit} className="text-slate-500 hover:text-slate-300" title="Editar">
               <Pencil size={16} />
             </button>
@@ -82,12 +87,26 @@ export function AlunoDetailPage() {
         </div>
       )}
 
-      <form onSubmit={addTreino} className="flex gap-2 mb-4">
-        <Input placeholder="Nome do treino (ex: Treino A)" value={nome} onChange={(e) => setNome(e.target.value)} />
-        <Input placeholder="Foco (ex: Inferiores)" value={foco} onChange={(e) => setFoco(e.target.value)} />
-        <Button type="submit" disabled={createTreino.isPending}>
-          <Plus size={16} />
-        </Button>
+      <form onSubmit={addTreino} className="mb-4 space-y-2">
+        <div className="flex gap-2">
+          <Input placeholder="Nome do treino (ex: Treino A)" value={nome} onChange={(e) => setNome(e.target.value)} />
+          <Input placeholder="Foco (ex: Inferiores)" value={foco} onChange={(e) => setFoco(e.target.value)} />
+          <Button type="submit" disabled={createTreino.isPending}>
+            <Plus size={16} />
+          </Button>
+        </div>
+        <div className="flex gap-1">
+          {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map((d, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => toggleDia(i)}
+              className={`text-xs px-2 py-1 rounded ${dias.includes(i) ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'}`}
+            >
+              {d}
+            </button>
+          ))}
+        </div>
       </form>
 
       {isLoading ? (
@@ -115,6 +134,7 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
   const [series, setSeries] = useState('')
   const [reps, setReps] = useState('')
   const [carga, setCarga] = useState('')
+  const [vid, setVid] = useState('')
 
   async function addEx(e: React.FormEvent) {
     e.preventDefault()
@@ -124,9 +144,10 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
       series: series ? Number(series) : undefined,
       reps_prescritas: reps || undefined,
       carga_prescrita: carga || undefined,
+      video_url: vid || undefined,
       ordem: (exs?.length ?? 0) + 1,
     })
-    setNome(''); setSeries(''); setReps(''); setCarga('')
+    setNome(''); setSeries(''); setReps(''); setCarga(''); setVid('')
   }
 
   return (
@@ -137,6 +158,11 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
           <span>
             <span className="font-medium">{treino.nome}</span>
             {treino.foco && <span className="text-xs text-slate-500 ml-2">{treino.foco}</span>}
+            {!!treino.dias_semana?.length && (
+              <span className="text-xs text-emerald-400/80 ml-2">
+                {treino.dias_semana.slice().sort().map((d) => ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'][d]).join(' ')}
+              </span>
+            )}
           </span>
         </button>
         <button onClick={() => delTreino.mutate(treino.treino_id)} className="text-slate-600 hover:text-red-400">
@@ -159,11 +185,12 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
               </button>
             </div>
           ))}
-          <form onSubmit={addEx} className="flex gap-2 pt-2">
-            <Input placeholder="Exercício" value={nome} onChange={(e) => setNome(e.target.value)} className="flex-1" />
+          <form onSubmit={addEx} className="flex flex-wrap gap-2 pt-2">
+            <Input placeholder="Exercício" value={nome} onChange={(e) => setNome(e.target.value)} className="flex-1 min-w-32" />
             <Input placeholder="Séries" value={series} onChange={(e) => setSeries(e.target.value)} className="w-16" />
             <Input placeholder="Reps" value={reps} onChange={(e) => setReps(e.target.value)} className="w-20" />
             <Input placeholder="Carga" value={carga} onChange={(e) => setCarga(e.target.value)} className="w-20" />
+            <Input placeholder="Vídeo (URL)" value={vid} onChange={(e) => setVid(e.target.value)} className="flex-1 min-w-40" />
             <Button type="submit" variant="ghost" disabled={createEx.isPending}>
               <Plus size={16} />
             </Button>

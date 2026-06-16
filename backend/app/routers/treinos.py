@@ -2,6 +2,8 @@
 AL#{aluno}. `ordem` é atributo (ordenação em app); SK por id facilita o CRUD."""
 from fastapi import APIRouter, Depends, HTTPException
 
+from pydantic import BaseModel
+
 from app.dependencies import get_current_personal_id
 from app.models.exercicio import Exercicio, ExercicioCreate
 from app.models.treino import Treino, TreinoCreate
@@ -11,6 +13,11 @@ from app.services import authz
 from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/alunos/{aluno_id}/treinos", tags=["treinos"])
+
+
+class CopiarBody(BaseModel):
+    from_aluno_id: str
+    treino_id: str
 
 
 def _guard(personal_id: str, aluno_id: str) -> None:
@@ -34,6 +41,30 @@ def create_treino(aluno_id: str, body: TreinoCreate, personal_id: str = Depends(
     treino = Treino(treino_id=treino_id, aluno_id=aluno_id, created_at=now, updated_at=now, **body.model_dump())
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id), treino.model_dump())
     return treino
+
+
+@router.post("/copiar", status_code=201)
+def copiar_treino(aluno_id: str, body: CopiarBody, personal_id: str = Depends(get_current_personal_id)):
+    """Copia um treino (e seus exercícios) de outro aluno para este — templates."""
+    _guard(personal_id, aluno_id)
+    _guard(personal_id, body.from_aluno_id)
+    src = repo.get_item(keys.pk_aluno(body.from_aluno_id), keys.sk_treino(body.treino_id))
+    if not src:
+        raise HTTPException(404, "Treino de origem não encontrado")
+    exs = repo.query_pk(keys.pk_aluno(body.from_aluno_id), sk_prefix=keys.sk_exercicio_prefix(body.treino_id))
+    now = now_iso()
+    new_tid = new_id()
+    dest_pk = keys.pk_aluno(aluno_id)
+    t = repo.clean(src)
+    t.update({"treino_id": new_tid, "aluno_id": aluno_id, "created_at": now, "updated_at": now})
+    puts = [{"PK": dest_pk, "SK": keys.sk_treino(new_tid), **t}]
+    for e in exs:
+        ne = repo.clean(e)
+        new_eid = new_id()
+        ne.update({"exercicio_id": new_eid, "treino_id": new_tid, "aluno_id": aluno_id})
+        puts.append({"PK": dest_pk, "SK": keys.sk_exercicio(new_tid, new_eid), **ne})
+    repo.batch_write(puts=puts)
+    return {"treino_id": new_tid, "exercicios": len(exs)}
 
 
 @router.put("/{treino_id}")
