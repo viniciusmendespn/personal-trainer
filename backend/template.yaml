@@ -25,6 +25,10 @@ Parameters:
     Type: String
     Default: ""
     Description: "Base pública da API (execute-api) p/ auto-configurar o webhook na W-API. Evita dependência circular com o ApiGateway."
+  FrontendUrl:
+    Type: String
+    Default: ""
+    Description: "URL do frontend (CloudFront) — p/ o magic-link do app do aluno."
   OpenAiApiKey:
     Type: String
     Default: ""
@@ -60,6 +64,7 @@ Globals:
         WAPI_BASE_URL: !Ref WapiBaseUrl
         WEBHOOK_SECRET: !Ref WebhookSecret
         WEBHOOK_BASE_URL: !Ref WebhookBaseUrl
+        FRONTEND_URL: !Ref FrontendUrl
         MEDIA_BUCKET_NAME: !Sub "${ProjectName}-media-${Stage}-${AWS::AccountId}"
         OPENAI_API_KEY: !Ref OpenAiApiKey
         OPENAI_MODEL: !Ref OpenAiModel
@@ -167,6 +172,14 @@ Resources:
           Properties:
             ApiId: !Ref ApiGateway
             Path: /v1/public/{proxy+}
+            Method: ANY
+            Auth:
+              Authorizer: NONE
+        AlunoProxy:            # app do aluno: JWT escopado validado na Lambda (ESPEC §1.5)
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGateway
+            Path: /v1/aluno/{proxy+}
             Method: ANY
             Auth:
               Authorizer: NONE

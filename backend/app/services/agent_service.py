@@ -4,6 +4,7 @@ O `{personal_id, aluno_id}` já vem resolvido pelo webhook — a LLM nunca infor
 """
 import time
 
+from app.config import settings
 from app.models.enums import Ator, CanalOrigem, Classificacao
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
@@ -81,6 +82,14 @@ def avancar(aluno_id: str) -> dict:
     s = sessao_service.advance(aluno_id)
     ex = s.get("ex_atual") or {}
     return {"ok": 1, "ex": ex.get("nome"), "fim": s.get("status") != "EM_ANDAMENTO"}
+
+
+def enviar_link_portal(aluno_id: str, personal_id: str) -> dict:
+    """Gera o magic-link do app do aluno (JWT escopado)."""
+    from app import aluno_auth
+    if not settings.frontend_url:
+        return {"erro": "indisponível"}
+    return {"link": aluno_auth.magic_link(aluno_id, personal_id)}
 
 
 def treino_de_hoje(aluno_id: str) -> dict:

@@ -78,6 +78,7 @@ export interface Exercicio {
   aluno_id: string
   nome: string
   ordem: number
+  dia_semana?: number | null
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
@@ -90,6 +91,7 @@ export interface Exercicio {
 export interface ExercicioCreate {
   nome: string
   ordem?: number
+  dia_semana?: number | null
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string

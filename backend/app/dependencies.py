@@ -44,6 +44,16 @@ def get_current_personal_id(
     return personal_id
 
 
+def get_current_aluno(creds: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    """App do aluno: valida o JWT escopado (HS256) e devolve {aluno_id, personal_id}."""
+    from app import aluno_auth
+    try:
+        payload = aluno_auth.verify_token(creds.credentials)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token de aluno inválido")
+    return {"aluno_id": payload["aluno_id"], "personal_id": payload["personal_id"]}
+
+
 def verify_wapi_webhook(secret: str) -> None:
     """Valida o token opaco da URL do webhook W-API em tempo constante (ESPEC §7).
     Levanta 404 (não 401) para não vazar a existência do endpoint."""

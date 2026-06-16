@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
 from app.config import settings
-from app.routers import (alertas, alunos, avaliacoes, biblioteca, config, dashboard,
+from app.routers import (alertas, aluno, alunos, avaliacoes, biblioteca, config, dashboard,
                          sessoes, treinos, wapi, webhook)
 
 app = FastAPI(
@@ -30,6 +30,7 @@ app.include_router(alertas.router)   # /v1/alertas | /v1/pendencias
 app.include_router(dashboard.router) # /v1/dashboard
 app.include_router(avaliacoes.router) # /v1/alunos/{id}/avaliacoes
 app.include_router(biblioteca.router) # /v1/biblioteca/exercicios
+app.include_router(aluno.router)      # /v1/aluno/* (app do aluno — JWT escopado)
 
 
 @app.get("/v1/health")

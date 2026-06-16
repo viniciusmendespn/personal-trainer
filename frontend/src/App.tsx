@@ -15,6 +15,7 @@ import { AvaliacoesPage } from './pages/AvaliacoesPage'
 import { BibliotecaPage } from './pages/BibliotecaPage'
 import { AlertasPage } from './pages/AlertasPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { AlunoApp } from './pages/AlunoApp'
 
 Amplify.configure({
   Auth: {
@@ -32,6 +33,7 @@ const queryClient = new QueryClient({
 })
 
 const router = createBrowserRouter([
+  { path: '/aluno', element: <AlunoApp /> },     // app do aluno (JWT do magic-link)
   { path: '/login', element: <LoginPage /> },
   { path: '/signup', element: <SignUpPage /> },
   {

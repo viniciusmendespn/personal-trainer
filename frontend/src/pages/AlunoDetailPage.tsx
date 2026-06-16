@@ -7,7 +7,10 @@ import {
   useExercicios, useCreateExercicio, useDeleteExercicio,
 } from '../hooks/useTreinos'
 import { Button, Card, Input, Spinner } from '../components/ui'
-import type { Treino } from '../types'
+import { useBiblioteca } from '../hooks/useDominio'
+import type { Treino, Exercicio } from '../types'
+
+const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
 export function AlunoDetailPage() {
   const { alunoId = '' } = useParams()
@@ -128,6 +131,7 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
   const [open, setOpen] = useState(false)
   const delTreino = useDeleteTreino(alunoId)
   const { data: exs } = useExercicios(alunoId, open ? treino.treino_id : '')
+  const { data: biblioteca } = useBiblioteca()
   const createEx = useCreateExercicio(alunoId, treino.treino_id)
   const delEx = useDeleteExercicio(alunoId, treino.treino_id)
   const [nome, setNome] = useState('')
@@ -135,6 +139,13 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
   const [reps, setReps] = useState('')
   const [carga, setCarga] = useState('')
   const [vid, setVid] = useState('')
+  const [dia, setDia] = useState('')
+
+  function onNome(v: string) {
+    setNome(v)
+    const lib = biblioteca?.find((b) => b.nome.toLowerCase() === v.toLowerCase())
+    if (lib?.video_url) setVid(lib.video_url)   // puxa o vídeo da biblioteca
+  }
 
   async function addEx(e: React.FormEvent) {
     e.preventDefault()
@@ -145,10 +156,17 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
       reps_prescritas: reps || undefined,
       carga_prescrita: carga || undefined,
       video_url: vid || undefined,
+      dia_semana: dia === '' ? undefined : Number(dia),
       ordem: (exs?.length ?? 0) + 1,
     })
     setNome(''); setSeries(''); setReps(''); setCarga(''); setVid('')
   }
+
+  const grupos: Record<string, Exercicio[]> = {}
+  ;(exs ?? []).forEach((ex) => {
+    const k = ex.dia_semana == null ? 'Todo dia' : DIAS[ex.dia_semana]
+    ;(grupos[k] ||= []).push(ex)
+  })
 
   return (
     <Card>
@@ -172,25 +190,41 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
 
       {open && (
         <div className="mt-3 pl-6 space-y-2">
-          {exs?.map((ex) => (
-            <div key={ex.exercicio_id} className="flex items-center justify-between text-sm border-b border-slate-800 pb-1">
-              <span>
-                {ex.nome}
-                <span className="text-slate-500 ml-2">
-                  {ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''} {ex.carga_prescrita ? `· ${ex.carga_prescrita}` : ''}
-                </span>
-              </span>
-              <button onClick={() => delEx.mutate(ex.exercicio_id)} className="text-slate-600 hover:text-red-400">
-                <Trash2 size={14} />
-              </button>
+          {Object.entries(grupos).map(([d, list]) => (
+            <div key={d}>
+              <p className="text-xs text-emerald-400/70 mt-2 mb-1">{d}</p>
+              {list.map((ex) => (
+                <div key={ex.exercicio_id} className="flex items-center justify-between text-sm border-b border-slate-800 pb-1">
+                  <span>
+                    {ex.nome}
+                    <span className="text-slate-500 ml-2">
+                      {ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''} {ex.carga_prescrita ? `· ${ex.carga_prescrita}` : ''}
+                    </span>
+                    {ex.video_url && (
+                      <a href={ex.video_url} target="_blank" rel="noreferrer" className="text-emerald-400 ml-2 text-xs hover:underline">vídeo</a>
+                    )}
+                  </span>
+                  <button onClick={() => delEx.mutate(ex.exercicio_id)} className="text-slate-600 hover:text-red-400">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
             </div>
           ))}
           <form onSubmit={addEx} className="flex flex-wrap gap-2 pt-2">
-            <Input placeholder="Exercício" value={nome} onChange={(e) => setNome(e.target.value)} className="flex-1 min-w-32" />
+            <Input placeholder="Exercício (busca biblioteca)" list={`lib-${treino.treino_id}`} value={nome} onChange={(e) => onNome(e.target.value)} className="flex-1 min-w-32" />
+            <datalist id={`lib-${treino.treino_id}`}>
+              {biblioteca?.map((b) => <option key={b.exlib_id} value={b.nome} />)}
+            </datalist>
             <Input placeholder="Séries" value={series} onChange={(e) => setSeries(e.target.value)} className="w-16" />
             <Input placeholder="Reps" value={reps} onChange={(e) => setReps(e.target.value)} className="w-20" />
             <Input placeholder="Carga" value={carga} onChange={(e) => setCarga(e.target.value)} className="w-20" />
-            <Input placeholder="Vídeo (URL)" value={vid} onChange={(e) => setVid(e.target.value)} className="flex-1 min-w-40" />
+            <select value={dia} onChange={(e) => setDia(e.target.value)}
+              className="px-2 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-sm">
+              <option value="">Todo dia</option>
+              {DIAS.map((d, i) => <option key={i} value={i}>{d}</option>)}
+            </select>
+            <Input placeholder="Vídeo" value={vid} onChange={(e) => setVid(e.target.value)} className="flex-1 min-w-32" />
             <Button type="submit" variant="ghost" disabled={createEx.isPending}>
               <Plus size={16} />
             </Button>

@@ -76,6 +76,11 @@ _TOOLS = [
         "description": "Retorna o(s) treino(s) agendado(s) para hoje (use quando o aluno perguntar "
                        "qual o treino do dia).",
         "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {
+        "name": "enviar_link_portal",
+        "description": "Gera o link do app do aluno (campo link) quando ele pedir para acessar/ver "
+                       "no aplicativo. Responda com o link.",
+        "parameters": {"type": "object", "properties": {}}}},
 ]
 
 
@@ -113,6 +118,8 @@ def _exec(name: str, args: dict, personal_id: str, aluno_id: str) -> dict:
         return agent_service.buscar_exercicio(aluno_id, args.get("nome", ""))
     if name == "treino_de_hoje":
         return agent_service.treino_de_hoje(aluno_id)
+    if name == "enviar_link_portal":
+        return agent_service.enviar_link_portal(aluno_id, personal_id)
     return {"erro": "ferramenta desconhecida"}
 
 
