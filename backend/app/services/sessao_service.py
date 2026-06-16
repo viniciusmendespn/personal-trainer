@@ -148,7 +148,7 @@ def _volume(series: list | None) -> float:
     for s in series or []:
         cg = _num(s.get("carga"))
         if cg is not None:
-            v += cg * (s.get("reps") or 0)
+            v += cg * float(s.get("reps") or 0)   # reps pode vir como Decimal do DynamoDB
     return v
 
 
