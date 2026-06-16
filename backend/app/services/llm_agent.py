@@ -32,6 +32,7 @@ Contexto e registros:
 - Se a ferramenta retornar `pr` (novo recorde de carga), comemore em 1 linha (ex.: "🏆 Novo recorde!").
 - Use os IDs de exercício/treino fornecidos no contexto; nunca invente IDs, cargas ou histórico.
 - Dor/desconforto: acolha, registre e diga que o personal foi avisado; não oriente progressão.
+- Pergunta sobre vídeo de execução: use buscar_exercicio e responda com o `video` (link), se houver.
 - Use as ferramentas para ler/gravar. Se faltar dado, pergunte ao aluno."""
 
 _TOOLS = [
@@ -64,6 +65,12 @@ _TOOLS = [
         "description": "Registra dor/desconforto do aluno e avisa o personal. Não orientar progressão.",
         "parameters": {"type": "object", "properties": {
             "descricao": {"type": "string"}}, "required": ["descricao"]}}},
+    {"type": "function", "function": {
+        "name": "buscar_exercicio",
+        "description": "Acha um exercício do aluno por nome — use p/ obter o id, o vídeo de referência "
+                       "(campo video) ou registrar/consultar um exercício que não é o atual.",
+        "parameters": {"type": "object", "properties": {
+            "nome": {"type": "string"}}, "required": ["nome"]}}},
 ]
 
 
@@ -97,6 +104,8 @@ def _exec(name: str, args: dict, personal_id: str, aluno_id: str) -> dict:
         return agent_service.iniciar_sessao(personal_id, aluno_id, args.get("treino_id"))
     if name == "registrar_dor":
         return agent_service.registrar_dor(personal_id, aluno_id, args.get("descricao", ""))
+    if name == "buscar_exercicio":
+        return agent_service.buscar_exercicio(aluno_id, args.get("nome", ""))
     return {"erro": "ferramenta desconhecida"}
 
 

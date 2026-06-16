@@ -67,6 +67,16 @@ def consultar_historico(aluno_id: str, exercicio_id: str) -> dict:
     return {"ex": le.get("exercicio_nome"), "series": le.get("series_exec")}
 
 
+def buscar_exercicio(aluno_id: str, nome: str) -> dict:
+    """Acha exercícios do aluno por nome (p/ vídeo, histórico ou registrar fora do atual)."""
+    nl = (nome or "").lower()
+    exs = sessao_service.list_exercicios_aluno(aluno_id)
+    matches = [e for e in exs if nl in (e.get("nome", "").lower())] if nl else exs
+    return {"ex": [{"id": e["exercicio_id"], "n": e.get("nome"),
+                    "video": e.get("video_url"), "cg": e.get("carga_prescrita")}
+                   for e in matches[:5]]}
+
+
 def avancar(aluno_id: str) -> dict:
     s = sessao_service.advance(aluno_id)
     ex = s.get("ex_atual") or {}
