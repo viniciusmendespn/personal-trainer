@@ -123,3 +123,50 @@ export interface WapiStatus {
   connected: boolean
   phone?: string
 }
+
+export type AgendamentoStatus = 'AGENDADO' | 'CONFIRMADO' | 'CANCELADO' | 'CONCLUIDO'
+
+export interface Agendamento {
+  agendamento_id: string
+  personal_id: string
+  aluno_id: string
+  data_hora_inicio: string
+  duracao_min: number
+  observacao?: string
+  status: AgendamentoStatus
+  created_at: string
+}
+
+export interface AgendamentoCreate {
+  aluno_id: string
+  data_hora_inicio: string
+  duracao_min?: number
+  observacao?: string
+}
+
+export interface ExercicioTemplate {
+  nome: string
+  ordem?: number
+  dia_semana?: number | null
+  series?: number
+  reps_prescritas?: string
+  carga_prescrita?: string
+  intervalo_s?: number
+  video_url?: string
+  observacoes?: string
+}
+
+export interface TreinoTemplate {
+  template_id: string
+  personal_id: string
+  nome: string
+  foco?: string
+  exercicios: ExercicioTemplate[]
+  created_at: string
+}
+
+export interface TreinoTemplateCreate {
+  nome: string
+  foco?: string
+  exercicios?: ExercicioTemplate[]
+}

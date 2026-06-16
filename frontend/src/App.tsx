@@ -4,16 +4,19 @@ import { Amplify } from 'aws-amplify'
 
 import { AuthProvider } from './auth/AuthProvider'
 import { ProtectedRoute } from './auth/ProtectedRoute'
+import { ToastProvider } from './components/ui'
 import { LoginPage } from './auth/LoginPage'
 import { SignUpPage } from './auth/SignUpPage'
 import { AppLayout } from './components/layout/AppLayout'
 import { DashboardPage } from './pages/DashboardPage'
 import { AlunosPage } from './pages/AlunosPage'
+import { AgendaPage } from './pages/AgendaPage'
+import { TemplatesPage } from './pages/TemplatesPage'
 import { AlunoDetailPage } from './pages/AlunoDetailPage'
 import { AlunoEvolucaoPage } from './pages/AlunoEvolucaoPage'
 import { AvaliacoesPage } from './pages/AvaliacoesPage'
 import { BibliotecaPage } from './pages/BibliotecaPage'
-import { NotificacoesPage } from './pages/NotificacoesPage'
+import { PendenciasPage } from './pages/PendenciasPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { AlunoApp } from './pages/AlunoApp'
 
@@ -47,11 +50,13 @@ const router = createBrowserRouter([
       { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: 'dashboard', element: <DashboardPage /> },
       { path: 'alunos', element: <AlunosPage /> },
+      { path: 'agenda', element: <AgendaPage /> },
+      { path: 'templates', element: <TemplatesPage /> },
       { path: 'alunos/:alunoId', element: <AlunoDetailPage /> },
       { path: 'alunos/:alunoId/evolucao', element: <AlunoEvolucaoPage /> },
       { path: 'alunos/:alunoId/avaliacoes', element: <AvaliacoesPage /> },
       { path: 'biblioteca', element: <BibliotecaPage /> },
-      { path: 'notificacoes', element: <NotificacoesPage /> },
+      { path: 'notificacoes', element: <PendenciasPage /> },
       { path: 'config', element: <SettingsPage /> },
     ],
   },
@@ -60,9 +65,11 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RouterProvider router={router} />
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </ToastProvider>
     </QueryClientProvider>
   )
 }

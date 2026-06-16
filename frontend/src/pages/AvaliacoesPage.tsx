@@ -1,12 +1,23 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { ArrowLeft, Plus, Scale, FileDown } from 'lucide-react'
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import { useAluno } from '../hooks/useAlunos'
 import { useAvaliacoes, useCreateAvaliacao } from '../hooks/useDominio'
-import { Button, Card, Input, Spinner } from '../components/ui'
+import { Button, Card, Input, Spinner, Modal, EmptyState, useToast } from '../components/ui'
+import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
+import { renderNodeToPdf } from '../utils/exportPdf'
+
+const chartTip = {
+  background: 'var(--color-surface-elevated)',
+  border: '1px solid var(--color-border-strong)',
+  borderRadius: 10,
+  color: 'var(--color-text)',
+  fontSize: 12,
+}
+const axisTick = { fill: 'var(--color-text-secondary)', fontSize: 12 }
 
 export function AvaliacoesPage() {
   const { alunoId = '' } = useParams()
@@ -16,6 +27,28 @@ export function AvaliacoesPage() {
   const [peso, setPeso] = useState('')
   const [gordura, setGordura] = useState('')
   const [open, setOpen] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const { show } = useToast()
+
+  async function exportarPdf() {
+    if (!avs?.length) return
+    setExporting(true)
+    try {
+      await renderNodeToPdf(
+        <RelatorioPrintLayout
+          alunoNome={aluno?.nome ?? 'Aluno'}
+          avaliacoes={[...avs]
+            .sort((a, b) => (b.data ?? b.created_at).localeCompare(a.data ?? a.created_at))
+            .map((a) => ({ data: a.data ?? a.created_at, peso: a.peso, percentual_gordura: a.percentual_gordura }))}
+        />,
+        `avaliacoes-${aluno?.nome ?? 'aluno'}.pdf`
+      )
+    } catch {
+      show('Não foi possível gerar o PDF.', 'error')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,35 +69,47 @@ export function AvaliacoesPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <Link to={`/alunos/${alunoId}`} className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-slate-200 mb-4">
+      <Link to={`/alunos/${alunoId}`} className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text mb-4">
         <ArrowLeft size={16} /> {aluno?.nome ?? 'Aluno'}
       </Link>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Avaliação física</h2>
-        <Button onClick={() => setOpen((v) => !v)}><span className="flex items-center gap-1"><Plus size={16} /> Nova</span></Button>
+      <div className="flex items-center justify-between mb-4 gap-2">
+        <h2 className="font-display text-xl font-semibold">Avaliação física</h2>
+        <div className="flex items-center gap-2">
+          {!!avs?.length && (
+            <Button variant="outline" size="sm" onClick={exportarPdf} disabled={exporting}>
+              <span className="flex items-center gap-1"><FileDown size={14} /> {exporting ? 'Gerando…' : 'PDF'}</span>
+            </Button>
+          )}
+          <Button onClick={() => setOpen(true)}><span className="flex items-center gap-1"><Plus size={16} /> Nova</span></Button>
+        </div>
       </div>
 
-      {open && (
-        <Card className="mb-4">
-          <form onSubmit={submit} className="flex gap-2 items-end">
-            <Input label="Peso (kg)" value={peso} onChange={(e) => setPeso(e.target.value)} className="w-28" />
-            <Input label="% Gordura" value={gordura} onChange={(e) => setGordura(e.target.value)} className="w-28" />
-            <Button type="submit" disabled={create.isPending}>Salvar</Button>
-          </form>
-        </Card>
-      )}
+      <Modal open={open} onClose={() => setOpen(false)} title="Nova avaliação">
+        <form onSubmit={submit} className="grid grid-cols-2 gap-3">
+          <Input label="Peso (kg)" value={peso} onChange={(e) => setPeso(e.target.value)} />
+          <Input label="% Gordura" value={gordura} onChange={(e) => setGordura(e.target.value)} />
+          <Button type="submit" disabled={create.isPending} className="col-span-2">Salvar</Button>
+        </form>
+      </Modal>
 
       {chart.length > 1 && (
-        <Card className="mb-4">
-          <p className="text-sm text-slate-400 mb-3">Peso ao longo do tempo</p>
+        <Card variant="elevated" className="mb-4">
+          <p className="text-sm text-text-secondary mb-3">Peso ao longo do tempo</p>
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={chart} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="data" stroke="#64748b" fontSize={12} />
-              <YAxis stroke="#64748b" fontSize={12} domain={['dataMin - 2', 'dataMax + 2']} />
-              <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 8 }} />
-              <Line type="monotone" dataKey="peso" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} name="Peso (kg)" />
-            </LineChart>
+            <AreaChart data={chart} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+              <defs>
+                <linearGradient id="pesoGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--color-energy)" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="var(--color-energy)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
+              <YAxis tick={axisTick} stroke="var(--color-border-strong)" domain={['dataMin - 2', 'dataMax + 2']} />
+              <Tooltip contentStyle={chartTip} />
+              <Area type="monotone" dataKey="peso" stroke="var(--color-energy)" strokeWidth={2.5}
+                fill="url(#pesoGradient)" dot={{ r: 3, fill: 'var(--color-energy)' }} name="Peso (kg)" />
+            </AreaChart>
           </ResponsiveContainer>
         </Card>
       )}
@@ -72,13 +117,13 @@ export function AvaliacoesPage() {
       {isLoading ? (
         <Spinner />
       ) : !avs?.length ? (
-        <p className="text-slate-500 text-sm">Nenhuma avaliação ainda.</p>
+        <EmptyState icon={<Scale />} title="Nenhuma avaliação ainda" description="Registre a primeira avaliação física do aluno." action={<Button onClick={() => setOpen(true)}>Nova avaliação</Button>} />
       ) : (
         <div className="space-y-2">
           {[...avs].sort((a, b) => (b.data ?? b.created_at).localeCompare(a.data ?? a.created_at)).map((a) => (
-            <Card key={a.avaliacao_id} className="flex items-center justify-between text-sm">
+            <Card key={a.avaliacao_id} variant="elevated" className="flex items-center justify-between text-sm">
               <span>{new Date(a.data ?? a.created_at).toLocaleDateString('pt-BR')}</span>
-              <span className="text-slate-300">
+              <span className="text-text-secondary">
                 {a.peso != null ? `${a.peso} kg` : ''} {a.percentual_gordura != null ? `· ${a.percentual_gordura}%` : ''}
               </span>
             </Card>

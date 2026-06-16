@@ -57,6 +57,22 @@ def sk_notif(ts: str, notif_id: str) -> str:
     return f"NOTIF#{ts}#{notif_id}"
 
 
+# ── Agenda do personal (compromissos com alunos, partição PT#) ──────────────
+AGENDA_PREFIX = "AGENDA#"
+
+
+def sk_agenda(data_hora_inicio: str, agendamento_id: str) -> str:
+    return f"AGENDA#{data_hora_inicio}#{agendamento_id}"
+
+
+# ── Templates de treino reutilizáveis (partição PT#) ─────────────────────────
+TEMPLATE_PREFIX = "TEMPLATE#"
+
+
+def sk_template(template_id: str) -> str:
+    return f"TEMPLATE#{template_id}"
+
+
 # ── Agenda global de vencimentos (scheduler diário) ──────────────────────────
 PK_SCHED = "SYSTEM#SCHED"
 DUE_PREFIX = "DUE#"

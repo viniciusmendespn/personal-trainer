@@ -19,6 +19,7 @@ export interface Pendencia {
   motivo: string
   status: string
   data_hora: string
+  payload?: { midia_id?: string; s3_key?: string; tipo?: string; [key: string]: unknown }
 }
 
 export const notifApi = {

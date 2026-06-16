@@ -136,7 +136,10 @@ async def receive(secret: str, request: Request):
         if ex.get("exercicio_id") and saved:
             _send(personal_id, sender, f"Mídia vinculada a {ex.get('nome')}.")
         else:
-            alerta_service.criar_pendencia(personal_id, aluno_id, "MIDIA", media, "mídia sem contexto")
+            alerta_service.criar_pendencia(
+                personal_id, aluno_id, "MIDIA_PENDENTE", saved or media,
+                "Mídia recebida sem exercício vinculado",
+            )
             _send(personal_id, sender, "Recebi sua mídia. De qual exercício ela é?")
         return _OK
 

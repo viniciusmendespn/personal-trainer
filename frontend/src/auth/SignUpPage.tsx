@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signUp, confirmSignUp, autoSignIn } from 'aws-amplify/auth'
 import { useAuth } from './AuthProvider'
-import { Button, Input, ErrorText } from '../components/ui'
+import { Button, Input, ErrorText, Card } from '../components/ui'
 
 // Política do pool: 8+ caracteres, maiúscula, minúscula, número (sem símbolo obrigatório).
 function pwdOk(p: string) {
@@ -65,34 +65,36 @@ export function SignUpPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      {step === 'form' ? (
-        <form onSubmit={handleSignUp} className="w-full max-w-sm space-y-4">
-          <h1 className="text-2xl font-bold text-emerald-400 text-center">Criar conta</h1>
-          <Input label="Nome" value={name} onChange={(e) => setName(e.target.value)} required />
-          <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Input label="Senha" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          <ErrorText>{error}</ErrorText>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Enviando…' : 'Cadastrar'}
-          </Button>
-          <p className="text-center text-sm text-slate-400">
-            Já tem conta?{' '}
-            <Link to="/login" className="text-emerald-400 hover:underline">
-              Entrar
-            </Link>
-          </p>
-        </form>
-      ) : (
-        <form onSubmit={handleConfirm} className="w-full max-w-sm space-y-4">
-          <h1 className="text-2xl font-bold text-emerald-400 text-center">Confirme o e-mail</h1>
-          <p className="text-sm text-slate-400 text-center">Enviamos um código para {email}.</p>
-          <Input label="Código" value={code} onChange={(e) => setCode(e.target.value)} required />
-          <ErrorText>{error}</ErrorText>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Confirmando…' : 'Confirmar'}
-          </Button>
-        </form>
-      )}
+      <Card variant="glass" className="w-full max-w-sm p-6 shadow-[var(--shadow-card)]">
+        {step === 'form' ? (
+          <form onSubmit={handleSignUp} className="space-y-4">
+            <h1 className="font-display text-2xl font-bold text-text text-center">Criar conta</h1>
+            <Input label="Nome" value={name} onChange={(e) => setName(e.target.value)} required />
+            <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input label="Senha" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <ErrorText>{error}</ErrorText>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Enviando…' : 'Cadastrar'}
+            </Button>
+            <p className="text-center text-sm text-text-secondary">
+              Já tem conta?{' '}
+              <Link to="/login" className="text-accent-hover hover:underline">
+                Entrar
+              </Link>
+            </p>
+          </form>
+        ) : (
+          <form onSubmit={handleConfirm} className="space-y-4">
+            <h1 className="font-display text-2xl font-bold text-text text-center">Confirme o e-mail</h1>
+            <p className="text-sm text-text-secondary text-center">Enviamos um código para {email}.</p>
+            <Input label="Código" value={code} onChange={(e) => setCode(e.target.value)} required />
+            <ErrorText>{error}</ErrorText>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Confirmando…' : 'Confirmar'}
+            </Button>
+          </form>
+        )}
+      </Card>
     </div>
   )
 }

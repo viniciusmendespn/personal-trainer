@@ -57,6 +57,13 @@ class AlunoStatus(str, Enum):
     INATIVO = "INATIVO"
 
 
+class AgendamentoStatus(str, Enum):
+    AGENDADO = "AGENDADO"
+    CONFIRMADO = "CONFIRMADO"
+    CANCELADO = "CANCELADO"
+    CONCLUIDO = "CONCLUIDO"
+
+
 class CustomFieldType(str, Enum):
     """Tipos de atributo customizável que o personal pode definir (ESPEC §2.4)."""
     TEXT = "TEXT"

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { RefreshCw } from 'lucide-react'
 import { wapiApi } from '../api/wapi'
-import { Button, Card, Input, ErrorText } from '../components/ui'
+import { Button, Card, Input, ErrorText, Badge } from '../components/ui'
 
 export function SettingsPage() {
   const [instanceId, setInstanceId] = useState('')
@@ -38,21 +38,21 @@ export function SettingsPage() {
 
   return (
     <div className="max-w-xl mx-auto">
-      <h2 className="text-xl font-semibold mb-1">Conexão WhatsApp (W-API)</h2>
-      <p className="text-sm text-slate-500 mb-4">
+      <h2 className="font-display text-xl font-semibold mb-1">Conexão WhatsApp (W-API)</h2>
+      <p className="text-sm text-text-secondary mb-4">
         Conecte seu número para que seus alunos conversem com o assistente.
       </p>
 
-      <Card className="mb-4 border-emerald-700/40 bg-emerald-950/20">
-        <p className="text-sm font-medium text-emerald-300 mb-2">Como começar</p>
-        <ol className="text-sm text-slate-300 space-y-1 list-decimal list-inside">
+      <Card variant="glass" className="mb-4 border-accent/30">
+        <p className="text-sm font-medium text-accent-hover mb-2">Como começar</p>
+        <ol className="text-sm text-text-secondary space-y-1 list-decimal list-inside">
           <li>
             Solicite sua instância enviando uma mensagem para o WhatsApp{' '}
             <a
               href="https://wa.me/5513988088204"
               target="_blank"
               rel="noreferrer"
-              className="text-emerald-400 font-medium hover:underline"
+              className="text-accent-hover font-medium hover:underline"
             >
               +55 13 98808-8204
             </a>
@@ -63,21 +63,21 @@ export function SettingsPage() {
         </ol>
       </Card>
 
-      <Card className="mb-4">
+      <Card variant="elevated" className="mb-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm">
-            Status:{' '}
-            <span className={status.data?.connected ? 'text-emerald-400' : 'text-slate-400'}>
+          <span className="text-sm flex items-center gap-2">
+            Status:
+            <Badge tone={status.data?.connected ? 'success' : 'neutral'}>
               {status.data?.connected ? `Conectado (${status.data.phone ?? '—'})` : 'Desconectado'}
-            </span>
+            </Badge>
           </span>
-          <button onClick={() => status.refetch()} className="text-slate-500 hover:text-slate-300">
+          <Button variant="ghost" size="sm" iconOnly aria-label="Atualizar status" onClick={() => status.refetch()}>
             <RefreshCw size={16} />
-          </button>
+          </Button>
         </div>
       </Card>
 
-      <Card className="mb-4">
+      <Card variant="elevated" className="mb-4">
         <form onSubmit={save} className="space-y-3">
           <Input label="Instance ID" value={instanceId} onChange={(e) => setInstanceId(e.target.value)} required />
           <Input label="Token" type="password" value={token} onChange={(e) => setToken(e.target.value)} required />
@@ -86,13 +86,13 @@ export function SettingsPage() {
       </Card>
 
       <div className="space-y-3">
-        <Button variant="ghost" onClick={loadQr}>Gerar QR Code</Button>
+        <Button variant="outline" onClick={loadQr}>Gerar QR Code</Button>
         {qr && (
-          <Card className="flex justify-center bg-white">
+          <Card variant="elevated" className="flex justify-center bg-white shadow-[var(--shadow-glow-accent)]">
             <img src={qr} alt="QR Code WhatsApp" className="w-56 h-56" />
           </Card>
         )}
-        {msg && <p className="text-sm text-emerald-400">{msg}</p>}
+        {msg && <p className="text-sm text-success">{msg}</p>}
         <ErrorText>{error}</ErrorText>
       </div>
     </div>

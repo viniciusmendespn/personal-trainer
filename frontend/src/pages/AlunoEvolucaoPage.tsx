@@ -1,15 +1,24 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Trophy, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Trophy, TrendingUp, Activity, BarChart3, CalendarCheck, FileDown } from 'lucide-react'
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, ReferenceLine,
 } from 'recharts'
 import { useAluno } from '../hooks/useAlunos'
 import { useExerciciosAluno, useEvolucao, useResumo } from '../hooks/useEvolucao'
-import { Card, Spinner } from '../components/ui'
+import { Card, Spinner, Select, StatCard, Badge, EmptyState, Button, useToast } from '../components/ui'
+import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
+import { renderNodeToPdf } from '../utils/exportPdf'
 
-const chartTip = { background: '#0f172a', border: '1px solid #334155', borderRadius: 8 }
+const chartTip = {
+  background: 'var(--color-surface-elevated)',
+  border: '1px solid var(--color-border-strong)',
+  borderRadius: 10,
+  color: 'var(--color-text)',
+  fontSize: 12,
+}
+const axisTick = { fill: 'var(--color-text-secondary)', fontSize: 12 }
 
 export function AlunoEvolucaoPage() {
   const { alunoId = '' } = useParams()
@@ -17,6 +26,23 @@ export function AlunoEvolucaoPage() {
   const { data: exercicios } = useExerciciosAluno(alunoId)
   const { data: resumo } = useResumo(alunoId)
   const [exId, setExId] = useState('')
+  const [exporting, setExporting] = useState(false)
+  const { show } = useToast()
+
+  async function exportarPdf() {
+    if (!resumo) return
+    setExporting(true)
+    try {
+      await renderNodeToPdf(
+        <RelatorioPrintLayout alunoNome={aluno?.nome ?? 'Aluno'} resumo={resumo} />,
+        `evolucao-${aluno?.nome ?? 'aluno'}.pdf`
+      )
+    } catch {
+      show('Não foi possível gerar o PDF.', 'error')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   useEffect(() => {
     if (!exId && exercicios?.length) setExId(exercicios[0].exercicio_id)
@@ -40,86 +66,92 @@ export function AlunoEvolucaoPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <Link to={`/alunos/${alunoId}`} className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-slate-200 mb-4">
+      <Link to={`/alunos/${alunoId}`} className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text mb-4">
         <ArrowLeft size={16} /> {aluno?.nome ?? 'Aluno'}
       </Link>
-      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-        <TrendingUp size={20} className="text-emerald-400" /> Evolução
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-display text-xl font-semibold flex items-center gap-2">
+          <TrendingUp size={20} className="text-accent-hover" /> Evolução
+        </h2>
+        {resumo && (
+          <Button variant="outline" size="sm" onClick={exportarPdf} disabled={exporting}>
+            <span className="flex items-center gap-1"><FileDown size={14} /> {exporting ? 'Gerando…' : 'Exportar PDF'}</span>
+          </Button>
+        )}
+      </div>
 
-      {/* Resumo do aluno (agregados) */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <Card><p className="text-2xl font-bold">{resumo?.total_sessoes ?? 0}</p><p className="text-xs text-slate-500">Sessões totais</p></Card>
-        <Card><p className="text-2xl font-bold">{Math.round(resumo?.total_volume ?? 0).toLocaleString('pt-BR')}</p><p className="text-xs text-slate-500">Volume total (kg)</p></Card>
-        <Card><p className="text-2xl font-bold">{resumo?.sessoes_semana ?? 0}</p><p className="text-xs text-slate-500">Sessões esta semana</p></Card>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+        <StatCard icon={<CalendarCheck />} label="Sessões totais" value={resumo?.total_sessoes ?? 0} tone="accent" />
+        <StatCard icon={<BarChart3 />} label="Volume total (kg)" value={Math.round(resumo?.total_volume ?? 0).toLocaleString('pt-BR')} tone="energy" />
+        <StatCard icon={<Activity />} label="Sessões esta semana" value={resumo?.sessoes_semana ?? 0} tone="success" />
       </div>
 
       {semanas.length > 0 && (
-        <Card className="mb-4">
-          <p className="text-sm text-slate-400 mb-3">Volume por semana</p>
-          <ResponsiveContainer width="100%" height={160}>
+        <Card variant="elevated" className="mb-4">
+          <p className="text-sm text-text-secondary mb-3">Volume por semana</p>
+          <ResponsiveContainer width="100%" height={170}>
             <BarChart data={semanas} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="semana" stroke="#64748b" fontSize={11} />
-              <YAxis stroke="#64748b" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis dataKey="semana" tick={axisTick} stroke="var(--color-border-strong)" />
+              <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
               <Tooltip contentStyle={chartTip} />
-              <Bar dataKey="volume" fill="#10b981" radius={[4, 4, 0, 0]} name="Volume (kg)" />
+              <Bar dataKey="volume" fill="var(--color-accent)" radius={[6, 6, 0, 0]} name="Volume (kg)" />
             </BarChart>
           </ResponsiveContainer>
         </Card>
       )}
 
       {resumo?.prs?.length ? (
-        <Card className="mb-6">
-          <p className="text-sm text-slate-400 mb-2 flex items-center gap-1"><Trophy size={14} className="text-amber-400" /> Recordes</p>
+        <Card variant="elevated" className="mb-6">
+          <p className="text-sm text-text-secondary mb-2 flex items-center gap-1"><Trophy size={14} className="text-energy" /> Recordes</p>
           <div className="flex flex-wrap gap-2">
             {resumo.prs.map((p) => (
-              <span key={p.exercicio} className="text-xs bg-slate-800 rounded-full px-3 py-1">
-                {p.exercicio}: <b className="text-amber-300">{p.carga} kg</b>
-              </span>
+              <Badge key={p.exercicio} tone="warning">{p.exercicio}: <b className="ml-1">{p.carga} kg</b></Badge>
             ))}
           </div>
         </Card>
       ) : null}
 
-      {/* Evolução por exercício */}
-      <h3 className="text-sm font-medium text-slate-300 mb-2">Carga por exercício</h3>
+      <h3 className="text-sm font-medium text-text-secondary mb-2">Carga por exercício</h3>
       {!exercicios?.length ? (
-        <p className="text-slate-500 text-sm">Cadastre exercícios para acompanhar a evolução.</p>
+        <EmptyState icon={<Activity />} title="Sem exercícios" description="Cadastre exercícios para acompanhar a evolução." />
       ) : (
         <>
-          <select
-            value={exId}
-            onChange={(e) => setExId(e.target.value)}
-            className="mb-4 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100"
-          >
+          <Select value={exId} onChange={(e) => setExId(e.target.value)} className="mb-4 max-w-xs">
             {exercicios.map((ex) => (
               <option key={ex.exercicio_id} value={ex.exercicio_id}>{ex.nome}</option>
             ))}
-          </select>
+          </Select>
 
           {isLoading ? (
             <Spinner />
           ) : !chartData.length ? (
-            <p className="text-slate-500 text-sm">Sem registros com carga numérica ainda.</p>
+            <p className="text-text-muted text-sm">Sem registros com carga numérica ainda.</p>
           ) : (
-            <Card>
+            <Card variant="elevated">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm text-slate-400">Carga máxima por sessão</p>
-                <span className="text-xs text-amber-300 flex items-center gap-1"><Trophy size={12} /> PR {evo?.pr?.carga ?? '—'} kg</span>
+                <p className="text-sm text-text-secondary">Carga máxima por sessão</p>
+                <Badge tone="warning"><Trophy size={12} /> PR {evo?.pr?.carga ?? '—'} kg</Badge>
               </div>
               <ResponsiveContainer width="100%" height={240}>
-                <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="data" stroke="#64748b" fontSize={12} />
-                  <YAxis stroke="#64748b" fontSize={12} />
+                <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                  <defs>
+                    <linearGradient id="cargaGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                  <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
+                  <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
                   <Tooltip contentStyle={chartTip} />
                   {!isNaN(prescrita) && (
-                    <ReferenceLine y={prescrita} stroke="#64748b" strokeDasharray="4 4"
-                      label={{ value: `prescrita ${prescrita}`, fill: '#64748b', fontSize: 11, position: 'insideTopRight' }} />
+                    <ReferenceLine y={prescrita} stroke="var(--color-text-muted)" strokeDasharray="4 4"
+                      label={{ value: `prescrita ${prescrita}`, fill: 'var(--color-text-muted)', fontSize: 11, position: 'insideTopRight' }} />
                   )}
-                  <Line type="monotone" dataKey="carga" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} name="Carga (kg)" />
-                </LineChart>
+                  <Area type="monotone" dataKey="carga" stroke="var(--color-accent)" strokeWidth={2.5}
+                    fill="url(#cargaGradient)" dot={{ r: 3, fill: 'var(--color-accent)' }} name="Carga (kg)" />
+                </AreaChart>
               </ResponsiveContainer>
             </Card>
           )}

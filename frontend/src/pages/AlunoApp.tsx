@@ -2,17 +2,24 @@ import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Dumbbell, TrendingUp, Trophy, Check, ChevronRight } from 'lucide-react'
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import { alunoApi, type ExSessao } from '../api/alunoApp'
 import { ALUNO_TOKEN_KEY } from '../api/alunoClient'
-import { Button, Card, Spinner } from '../components/ui'
+import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState } from '../components/ui'
+
+const chartTip = {
+  background: 'var(--color-surface-elevated)',
+  border: '1px solid var(--color-border-strong)',
+  borderRadius: 10,
+  color: 'var(--color-text)',
+  fontSize: 12,
+}
+const axisTick = { fill: 'var(--color-text-secondary)', fontSize: 12 }
 
 function Centered({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen flex items-center justify-center p-6 text-center text-slate-400">{children}</div>
+  return <div className="min-h-screen flex items-center justify-center p-6 text-center text-text-secondary">{children}</div>
 }
-
-const inputCls = 'px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-100 text-sm'
 
 function useAlunoToken() {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(ALUNO_TOKEN_KEY))
@@ -38,16 +45,22 @@ export function AlunoApp() {
   if (me.isError) return <Centered>Seu link expirou. Peça um novo ao seu personal no WhatsApp.</Centered>
 
   return (
-    <div className="min-h-screen max-w-md mx-auto pb-20">
+    <div
+      className="min-h-screen max-w-md mx-auto"
+      style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
+    >
       <header className="p-4">
-        <h1 className="text-lg font-bold text-emerald-400">Olá, {me.data?.nome ?? 'aluno'} 👋</h1>
+        <h1 className="font-display text-lg font-bold text-text">Olá, {me.data?.nome ?? 'aluno'} 👋</h1>
       </header>
       <main className="px-4">{tab === 'hoje' ? <Hoje /> : <Evolucao />}</main>
-      <nav className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-slate-900 border-t border-slate-800 flex">
+      <nav
+        className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-surface-elevated/80 backdrop-blur-xl border-t border-border flex"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         {([['hoje', 'Treino', <Dumbbell size={18} />], ['evolucao', 'Evolução', <TrendingUp size={18} />]] as const).map(
           ([k, label, icon]) => (
             <button key={k} onClick={() => setTab(k)}
-              className={`flex-1 py-3 flex flex-col items-center gap-1 text-xs ${tab === k ? 'text-emerald-400' : 'text-slate-500'}`}>
+              className={`flex-1 py-3 flex flex-col items-center gap-1 text-xs transition-colors ${tab === k ? 'text-energy' : 'text-text-muted'}`}>
               {icon}{label}
             </button>
           ),
@@ -73,14 +86,14 @@ function Hoje() {
   const lista = agendados.length ? agendados : (hoje.data?.treinos ?? []).map((t) => ({ id: t.treino_id, nome: t.nome }))
   return (
     <div className="space-y-3">
-      <h2 className="font-semibold">{agendados.length ? 'Treino de hoje' : 'Escolha um treino'}</h2>
+      <h2 className="font-display font-semibold">{agendados.length ? 'Treino de hoje' : 'Escolha um treino'}</h2>
       {!lista.length ? (
-        <p className="text-slate-500 text-sm">Nenhum treino cadastrado ainda.</p>
+        <EmptyState icon={<Dumbbell />} title="Nenhum treino cadastrado ainda" />
       ) : (
         lista.map((t) => (
-          <Card key={t.id} className="flex items-center justify-between">
+          <Card key={t.id} variant="elevated" className="flex items-center justify-between">
             <span className="font-medium">{t.nome}</span>
-            <Button onClick={() => start.mutate(t.id)} disabled={start.isPending}>Iniciar</Button>
+            <Button variant="energy" onClick={() => start.mutate(t.id)} disabled={start.isPending}>Iniciar</Button>
           </Card>
         ))
       )}
@@ -106,12 +119,12 @@ function SessaoTreino() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="font-semibold">{ses.data.treino_nome}</p>
-        <span className="text-xs text-slate-500">{feitos}/{exs.length} feitos</span>
+        <p className="font-display font-semibold">{ses.data.treino_nome}</p>
+        <span className="text-xs text-text-muted">{feitos}/{exs.length} feitos</span>
       </div>
-      <p className="text-xs text-slate-500">Toque em um exercício para registrar — você pode começar por onde quiser e editar depois.</p>
+      <p className="text-xs text-text-muted">Toque em um exercício para registrar — você pode começar por onde quiser e editar depois.</p>
       {exs.map((ex) => <ExercicioCard key={ex.exercicio_id} ex={ex} />)}
-      <Button className="w-full" onClick={() => finish.mutate()} disabled={finish.isPending}>
+      <Button variant="energy" className="w-full" onClick={() => finish.mutate()} disabled={finish.isPending}>
         {finish.isPending ? 'Finalizando…' : 'Finalizar treino'}
       </Button>
     </div>
@@ -150,34 +163,38 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
   })
 
   return (
-    <Card>
+    <Card variant="elevated">
       <button className="w-full flex items-center justify-between text-left"
         onClick={() => { if (!open) { setRows(initRows()); setPr(null) } setOpen((o) => !o) }}>
         <span>
           <span className="font-medium">{ex.nome}</span>
-          <span className="text-xs text-slate-500 ml-2">
+          <span className="text-xs text-text-muted ml-2">
             {ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''} {ex.carga_prescrita ? `· ${ex.carga_prescrita}` : ''}
           </span>
         </span>
-        {feito ? <Check size={16} className="text-emerald-400" /> : <ChevronRight size={16} className="text-slate-600" />}
+        {feito ? <Check size={16} className="text-success" /> : <ChevronRight size={16} className="text-text-muted" />}
       </button>
 
       {feito && !open && (
-        <p className="text-xs text-slate-400 mt-1">{ex.registrado!.map((s) => `${s.carga ?? '-'}×${s.reps ?? '-'}`).join('   ')}</p>
+        <p className="text-xs text-text-secondary mt-1">{ex.registrado!.map((s) => `${s.carga ?? '-'}×${s.reps ?? '-'}`).join('   ')}</p>
       )}
 
       {open && (
         <div className="mt-3 space-y-2">
           {rows.map((r, i) => (
             <div key={i} className="flex gap-2 items-center">
-              <span className="text-xs text-slate-500 w-12">Sér {i + 1}</span>
-              <input className={`${inputCls} w-24`} placeholder="Carga" value={r.carga} onChange={(e) => upd(i, 'carga', e.target.value)} />
-              <input className={`${inputCls} w-20`} placeholder="Reps" inputMode="numeric" value={r.reps} onChange={(e) => upd(i, 'reps', e.target.value)} />
+              <span className="text-xs text-text-muted w-12">Sér {i + 1}</span>
+              <Input className="w-24" placeholder="Carga" value={r.carga} onChange={(e) => upd(i, 'carga', e.target.value)} />
+              <Input className="w-20" placeholder="Reps" inputMode="numeric" value={r.reps} onChange={(e) => upd(i, 'reps', e.target.value)} />
             </div>
           ))}
-          <button onClick={() => setRows([...rows, { carga: ex.carga_prescrita ?? '', reps: '' }])} className="text-xs text-emerald-400">+ série</button>
-          {pr != null && <p className="text-amber-300 text-xs flex items-center gap-1"><Trophy size={12} /> Novo recorde: {pr} kg!</p>}
-          <Button className="w-full" onClick={() => save.mutate()} disabled={save.isPending}>
+          <button onClick={() => setRows([...rows, { carga: ex.carga_prescrita ?? '', reps: '' }])} className="text-xs text-accent-hover">+ série</button>
+          {pr != null && (
+            <Badge tone="warning" className="text-xs">
+              <Trophy size={12} /> Novo recorde: {pr} kg!
+            </Badge>
+          )}
+          <Button variant="energy" className="w-full" onClick={() => save.mutate()} disabled={save.isPending}>
             {save.isPending ? 'Salvando…' : feito ? 'Atualizar' : 'Registrar'}
           </Button>
         </div>
@@ -200,32 +217,40 @@ function Evolucao() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <Card><p className="text-2xl font-bold">{resumo.data?.total_sessoes ?? 0}</p><p className="text-xs text-slate-500">Sessões</p></Card>
-        <Card><p className="text-2xl font-bold">{resumo.data?.sessoes_semana ?? 0}</p><p className="text-xs text-slate-500">Esta semana</p></Card>
+        <StatCard label="Sessões" value={resumo.data?.total_sessoes ?? 0} tone="accent" />
+        <StatCard label="Esta semana" value={resumo.data?.sessoes_semana ?? 0} tone="success" />
       </div>
       {!exs.data?.length ? (
-        <p className="text-slate-500 text-sm">Sem exercícios ainda.</p>
+        <p className="text-text-muted text-sm">Sem exercícios ainda.</p>
       ) : (
         <>
-          <select value={exId} onChange={(e) => setExId(e.target.value)} className={`${inputCls} w-full`}>
+          <select value={exId} onChange={(e) => setExId(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg bg-surface border border-border text-text text-sm focus:outline-none focus:border-accent">
             {exs.data.map((ex) => <option key={ex.exercicio_id} value={ex.exercicio_id}>{ex.nome}</option>)}
           </select>
           {!data.length ? (
-            <p className="text-slate-500 text-sm">Sem registros com carga ainda.</p>
+            <p className="text-text-muted text-sm">Sem registros com carga ainda.</p>
           ) : (
-            <Card>
+            <Card variant="elevated">
               <div className="flex justify-between mb-2">
-                <span className="text-sm text-slate-400">Carga por sessão</span>
-                <span className="text-xs text-amber-300 flex items-center gap-1"><Trophy size={12} /> {evo.data?.pr?.carga ?? '—'} kg</span>
+                <span className="text-sm text-text-secondary">Carga por sessão</span>
+                <Badge tone="warning"><Trophy size={12} /> {evo.data?.pr?.carga ?? '—'} kg</Badge>
               </div>
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={data} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="data" stroke="#64748b" fontSize={11} />
-                  <YAxis stroke="#64748b" fontSize={11} />
-                  <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 8 }} />
-                  <Line type="monotone" dataKey="carga" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
-                </LineChart>
+                <AreaChart data={data} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                  <defs>
+                    <linearGradient id="alunoCargaGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-energy)" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="var(--color-energy)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                  <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
+                  <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
+                  <Tooltip contentStyle={chartTip} />
+                  <Area type="monotone" dataKey="carga" stroke="var(--color-energy)" strokeWidth={2.5}
+                    fill="url(#alunoCargaGradient)" dot={{ r: 3, fill: 'var(--color-energy)' }} />
+                </AreaChart>
               </ResponsiveContainer>
             </Card>
           )}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthProvider'
-import { Button, Input, ErrorText } from '../components/ui'
+import { Button, Input, ErrorText, Card } from '../components/ui'
 
 export function LoginPage() {
   const { user, signIn } = useAuth()
@@ -32,24 +32,26 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <form onSubmit={handle} className="w-full max-w-sm space-y-4">
-        <div className="text-center mb-2">
-          <h1 className="text-2xl font-bold text-emerald-400">Personal Trainer</h1>
-          <p className="text-sm text-slate-400">Acesse sua conta</p>
-        </div>
-        <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <Input label="Senha" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <ErrorText>{error}</ErrorText>
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'Entrando…' : 'Entrar'}
-        </Button>
-        <p className="text-center text-sm text-slate-400">
-          Não tem conta?{' '}
-          <Link to="/signup" className="text-emerald-400 hover:underline">
-            Cadastre-se
-          </Link>
-        </p>
-      </form>
+      <Card variant="glass" className="w-full max-w-sm p-6 shadow-[var(--shadow-card)]">
+        <form onSubmit={handle} className="space-y-4">
+          <div className="text-center mb-2">
+            <h1 className="font-display text-2xl font-bold text-text">Personal Trainer</h1>
+            <p className="text-sm text-text-secondary">Acesse sua conta</p>
+          </div>
+          <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <Input label="Senha" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <ErrorText>{error}</ErrorText>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Entrando…' : 'Entrar'}
+          </Button>
+          <p className="text-center text-sm text-text-secondary">
+            Não tem conta?{' '}
+            <Link to="/signup" className="text-accent-hover hover:underline">
+              Cadastre-se
+            </Link>
+          </p>
+        </form>
+      </Card>
     </div>
   )
 }
