@@ -21,6 +21,14 @@ Parameters:
   WapiBaseUrl:
     Type: String
     Default: "https://api.w-api.app"
+  OpenAiApiKey:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: "API Key da OpenAI — key SEPARADA deste app (custo isolado)."
+  OpenAiModel:
+    Type: String
+    Default: "gpt-5.4-nano"
   DeployFrontendInfra:
     Type: String
     Default: "false"
@@ -48,6 +56,8 @@ Globals:
         WAPI_BASE_URL: !Ref WapiBaseUrl
         WEBHOOK_SECRET: !Ref WebhookSecret
         MEDIA_BUCKET_NAME: !Sub "${ProjectName}-media-${Stage}-${AWS::AccountId}"
+        OPENAI_API_KEY: !Ref OpenAiApiKey
+        OPENAI_MODEL: !Ref OpenAiModel
 
 Resources:
 

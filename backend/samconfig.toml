@@ -17,4 +17,6 @@ confirm_changeset = false
 resolve_s3        = true
 # WebhookSecret: gerar um token longo e único e definir aqui (ou via --parameter-overrides no deploy).
 # DeployFrontendInfra=true só depois que a conta estiver pronta para CloudFront.
+# OpenAiApiKey: criar uma key SEPARADA p/ este app e passar via --parameter-overrides no deploy
+# (evita versionar segredo). Ex.: sam deploy --parameter-overrides "OpenAiApiKey=sk-..."
 parameter_overrides = "Stage=prod DeployFrontendInfra=false WebhookSecret=CHANGE_ME_WEBHOOK_SECRET"

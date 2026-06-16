@@ -40,7 +40,8 @@ def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_perso
     # telefone único por personal (ESPEC §2): reserva o ponteiro antes de criar
     if body.telefone:
         ok = repo.put_item_if_absent(
-            keys.pk_phone(personal_id, body.telefone), "PHONE", {"aluno_id": aluno_id}
+            keys.pk_phone(personal_id, body.telefone), "PHONE",
+            {"aluno_id": aluno_id, "nome": body.nome},
         )
         if not ok:
             raise HTTPException(409, "Telefone já cadastrado para outro aluno")
@@ -70,7 +71,9 @@ def update_aluno(aluno_id: str, body: AlunoUpdate, personal_id: str = Depends(ge
     new_phone = fields.get("telefone")
     old_phone = current.get("telefone")
     if new_phone and new_phone != old_phone:
-        if not repo.put_item_if_absent(keys.pk_phone(personal_id, new_phone), "PHONE", {"aluno_id": aluno_id}):
+        nome = fields.get("nome") or current.get("nome")
+        if not repo.put_item_if_absent(keys.pk_phone(personal_id, new_phone), "PHONE",
+                                       {"aluno_id": aluno_id, "nome": nome}):
             raise HTTPException(409, "Telefone já cadastrado para outro aluno")
         if old_phone:
             repo.delete_item(keys.pk_phone(personal_id, old_phone), "PHONE")

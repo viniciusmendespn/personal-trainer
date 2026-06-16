@@ -14,7 +14,8 @@ from fastapi import APIRouter, Request
 from app.dependencies import verify_wapi_webhook
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import agent_service
+from app.services import llm_agent
+from app.services.wapi_service import WAPIClient
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/v1/public/wapi", tags=["webhook"])
@@ -28,6 +29,19 @@ def _digits(phone: str | None) -> str | None:
         return None
     d = re.sub(r"\D", "", phone)   # tira '+', '@c.us', espaços
     return d or None
+
+
+def _extract_text(payload: dict) -> str | None:
+    """Texto da mensagem — formato exato da W-API a confirmar; tenta os campos comuns."""
+    for v in (payload.get("text"), payload.get("message"), payload.get("body"),
+              payload.get("conversation")):
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+        if isinstance(v, dict):
+            inner = v.get("message") or v.get("text") or v.get("conversation")
+            if isinstance(inner, str) and inner.strip():
+                return inner.strip()
+    return None
 
 
 def _resolve_personal(instance_id: str | None) -> str | None:
@@ -68,12 +82,15 @@ async def receive(secret: str, request: Request):
         logger.info("[webhook] telefone não cadastrado: personal=%s phone=%s", personal_id, sender)
         return _OK
     aluno_id = phone_item["aluno_id"]
+    text = _extract_text(payload)
 
-    ctx = agent_service.montar_contexto(aluno_id)
-    logger.info("[webhook] contexto montado aluno=%s sessao=%s", aluno_id, ctx.get("sid"))
-
-    # TODO (orquestração — depende do provedor LLM):
-    #   chamar a LLM com `ctx` + texto do aluno e as ferramentas de agent_service
-    #   (registrar / consultar_historico / avancar), e responder:
-    #   WAPIClient(cfg.instance_id, cfg.token).send_text(sender, resposta_curta)
+    # Orquestra o agente (OpenAI) e responde via W-API.
+    reply = llm_agent.run(personal_id, aluno_id, phone_item.get("nome"), text or "")
+    if reply:
+        cfg = repo.get_item(keys.pk_personal(personal_id), keys.SK_WAPI_CONFIG)
+        if cfg:
+            try:
+                WAPIClient(cfg["instance_id"], cfg["token"]).send_text(sender, reply)
+            except Exception as e:
+                logger.warning("[webhook] send_text falhou: %s", e)
     return _OK

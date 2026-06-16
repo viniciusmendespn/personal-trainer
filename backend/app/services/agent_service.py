@@ -53,3 +53,14 @@ def avancar(aluno_id: str) -> dict:
     s = sessao_service.advance(aluno_id)
     ex = s.get("ex_atual") or {}
     return {"ok": 1, "ex": ex.get("nome"), "fim": s.get("status") != "EM_ANDAMENTO"}
+
+
+def iniciar_sessao(personal_id: str, aluno_id: str, treino_id: str) -> dict:
+    s = sessao_service.start_session(personal_id, aluno_id, treino_id)
+    ex = s.get("ex_atual") or {}
+    return {"ok": 1, "ex": ex.get("nome")}
+
+
+def finalizar(aluno_id: str) -> dict:
+    sessao_service.finish(aluno_id)
+    return {"ok": 1, "fim": 1}

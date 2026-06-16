@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     wapi_base_url: str = "https://api.w-api.app"
     webhook_secret: str = ""
     media_bucket_name: str = ""
+    openai_api_key: str = ""              # key SEPARADA deste app (custo isolado)
+    openai_model: str = "gpt-5.4-nano"
 
     class Config:
         env_file = (".env", ".env.local")
