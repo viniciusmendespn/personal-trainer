@@ -30,11 +30,18 @@ export function AlunoDetailPage() {
   const [eNome, setENome] = useState('')
   const [eTel, setETel] = useState('')
   const [eObj, setEObj] = useState('')
-  const [linkMsg, setLinkMsg] = useState('')
+  const [linkRes, setLinkRes] = useState<{ link: string; enviado: boolean } | null>(null)
+  const [copied, setCopied] = useState(false)
   const enviarLink = useMutation({
     mutationFn: () => alunosApi.enviarLink(alunoId),
-    onSuccess: (d) => setLinkMsg(d.enviado ? 'Link enviado no WhatsApp do aluno ✓' : `Não foi possível enviar (WhatsApp não conectado). Copie: ${d.link}`),
+    onSuccess: (d) => { setLinkRes(d); setCopied(false) },
   })
+  function copyLink() {
+    if (!linkRes) return
+    navigator.clipboard?.writeText(linkRes.link)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   function startEdit() {
     setENome(aluno?.nome ?? ''); setETel(aluno?.telefone ?? ''); setEObj(aluno?.objetivo ?? '')
@@ -104,7 +111,22 @@ export function AlunoDetailPage() {
           </div>
         </div>
       )}
-      {linkMsg && <p className="text-xs text-emerald-300 mb-4 break-all">{linkMsg}</p>}
+      {linkRes && (
+        <Card className="mb-4">
+          <p className="text-xs text-slate-400 mb-2">
+            {linkRes.enviado ? 'Link enviado no WhatsApp do aluno ✓ — você também pode copiar:' : 'WhatsApp não conectado — copie o link e envie ao aluno:'}
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value={linkRes.link}
+              onFocus={(e) => e.target.select()}
+              className="flex-1 text-xs px-2 py-1 rounded bg-slate-900 border border-slate-700 text-slate-300"
+            />
+            <Button variant="ghost" onClick={copyLink}>{copied ? 'Copiado!' : 'Copiar'}</Button>
+          </div>
+        </Card>
+      )}
 
       <form onSubmit={addTreino} className="mb-4 flex flex-wrap gap-2 items-end">
         <Input label="Treino" placeholder="ex: Treino A" value={nome} onChange={(e) => setNome(e.target.value)} className="w-44" />
