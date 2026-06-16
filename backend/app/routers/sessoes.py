@@ -49,7 +49,11 @@ def registrar(aluno_id: str, body: RegistroBody, personal_id: str = Depends(get_
     """Personal atuando como aluno → ator=PERSONAL, classificacao=MANUAL (ESPEC §1.3)."""
     authz.authorize_aluno(personal_id, aluno_id)
     series = [s.model_dump() for s in body.series]
-    return repo.clean(sessao_service.record(aluno_id, series, exercicio_id=body.exercicio_id))
+    registro, pr = sessao_service.record(aluno_id, series, exercicio_id=body.exercicio_id)
+    out = repo.clean(registro)
+    if pr:
+        out["pr_novo"] = pr
+    return out
 
 
 @router.get("/exercicios/{exercicio_id}/historico")
@@ -64,6 +68,13 @@ def list_exercicios(aluno_id: str, personal_id: str = Depends(get_current_person
     """Lista plana de exercícios do aluno (todos os treinos)."""
     authz.authorize_aluno(personal_id, aluno_id)
     return sessao_service.list_exercicios_aluno(aluno_id)
+
+
+@router.get("/resumo")
+def resumo(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
+    """Resumo de evolução do aluno (totais, volume semanal, PRs) — agregados."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    return sessao_service.resumo_aluno(aluno_id)
 
 
 @router.get("/exercicios/{exercicio_id}/evolucao")

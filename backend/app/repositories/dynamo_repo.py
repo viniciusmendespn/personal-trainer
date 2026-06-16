@@ -177,6 +177,49 @@ def increment_counter(pk: str, sk: str, field: str, amount: int = 1) -> None:
     )
 
 
+def add_and_set(pk: str, sk: str, add: dict | None = None, set_: dict | None = None) -> None:
+    """ADD (contadores) + SET (rótulos) num único write — agregação na escrita (ESPEC §3.1)."""
+    names: dict = {}
+    values: dict = {}
+    parts: list[str] = []
+    if set_:
+        for k, v in set_.items():
+            names[f"#s{k}"] = k
+            values[f":s{k}"] = _san(v)
+        parts.append("SET " + ", ".join(f"#s{k} = :s{k}" for k in set_))
+    if add:
+        for k, v in add.items():
+            names[f"#a{k}"] = k
+            values[f":a{k}"] = _san(v)
+        parts.append("ADD " + ", ".join(f"#a{k} :a{k}" for k in add))
+    _get_table().update_item(Key={"PK": pk, "SK": sk}, UpdateExpression=" ".join(parts),
+                             ExpressionAttributeNames=names, ExpressionAttributeValues=values)
+
+
+def update_if_greater(pk: str, sk: str, field: str, value, extra: dict | None = None) -> bool:
+    """Grava o item só se `value` superar o atual (ou não existir) — recordes/PR.
+    Retorna True se foi um novo recorde."""
+    names = {f"#{field}": field}
+    values = {":v": _san(value)}
+    sets = [f"#{field} = :v"]
+    for i, (k, v) in enumerate((extra or {}).items()):
+        names[f"#e{i}"] = k
+        values[f":e{i}"] = _san(v)
+        sets.append(f"#e{i} = :e{i}")
+    try:
+        _get_table().update_item(
+            Key={"PK": pk, "SK": sk},
+            UpdateExpression="SET " + ", ".join(sets),
+            ConditionExpression=f"attribute_not_exists(#{field}) OR #{field} < :v",
+            ExpressionAttributeNames=names, ExpressionAttributeValues=values,
+        )
+        return True
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            return False
+        raise
+
+
 def delete_item(pk: str, sk: str) -> None:
     _get_table().delete_item(Key={"PK": pk, "SK": sk})
 

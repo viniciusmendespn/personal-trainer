@@ -16,3 +16,11 @@ export function useEvolucao(alunoId: string, exercicioId: string) {
     enabled: !!alunoId && !!exercicioId,
   })
 }
+
+export function useResumo(alunoId: string) {
+  return useQuery({
+    queryKey: ['resumo', alunoId],
+    queryFn: () => evolucaoApi.resumo(alunoId),
+    enabled: !!alunoId,
+  })
+}

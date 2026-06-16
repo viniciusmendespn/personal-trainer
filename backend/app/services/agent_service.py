@@ -36,9 +36,12 @@ def montar_contexto(aluno_id: str, nome: str | None = None) -> dict:
 
 
 def registrar(aluno_id: str, series: list, exercicio_id: str | None = None) -> dict:
-    r = sessao_service.record(aluno_id, series, exercicio_id=exercicio_id,
-                              canal=CanalOrigem.WHATSAPP, classificacao=Classificacao.AUTO, ator=Ator.ALUNO)
-    return {"ok": 1, "ex": r.get("exercicio_nome")}
+    r, pr = sessao_service.record(aluno_id, series, exercicio_id=exercicio_id,
+                                  canal=CanalOrigem.WHATSAPP, classificacao=Classificacao.AUTO, ator=Ator.ALUNO)
+    out = {"ok": 1, "ex": r.get("exercicio_nome")}
+    if pr:
+        out["pr"] = pr   # novo recorde de carga — o agente pode comemorar
+    return out
 
 
 def consultar_historico(aluno_id: str, exercicio_id: str) -> dict:

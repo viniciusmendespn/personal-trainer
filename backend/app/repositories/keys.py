@@ -80,6 +80,18 @@ def sk_msg(message_id: str) -> str:
     return f"MSG#{message_id}"
 
 
+# ── Agregados (indicadores mantidos na escrita — ESPEC §3.1) ─────────────────
+SK_STATS_ALUNO = "STATS#ALUNO"
+
+
+def sk_stats_week(week: str) -> str:
+    return f"STATS#W#{week}"
+
+
+def sk_stats_pr(exercicio_id: str) -> str:
+    return f"STATS#PR#{exercicio_id}"
+
+
 # ── GSI1: "registros por exercício no tempo" (ESPEC §4.1) ────────────────────
 def gsi1_registro(aluno_id: str, exercicio_id: str) -> str:
     return f"AL#{aluno_id}#EX#{exercicio_id}"

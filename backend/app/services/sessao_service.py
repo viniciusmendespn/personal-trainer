@@ -5,6 +5,7 @@ Sessão ativa = 1 item denormalizado `SESSION#ACTIVE` que embute a sequência de
 (sessão, exercício) com séries acumuladas via list_append (1 write). Usado pelo portal e
 pelo agente."""
 import time
+from datetime import datetime, timezone
 
 from fastapi import HTTPException
 
@@ -14,6 +15,11 @@ from app.repositories import keys
 from app.utils import epoch_ms, new_id, now_iso
 
 SESSION_TTL_S = 6 * 3600  # sessão abandonada cai sozinha (ESPEC §3)
+
+
+def _isoweek() -> str:
+    y, w, _ = datetime.now(timezone.utc).isocalendar()
+    return f"{y}-W{w:02d}"
 
 
 def _snapshot(ex: dict) -> dict:
@@ -79,13 +85,19 @@ def finish(aluno_id: str) -> dict:
     snap = {k: v for k, v in s.items() if k not in ("PK", "SK", "ttl")}  # snapshot sem ttl
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_sessao_hist(epoch_ms(), s["sessao_id"]), snap)
     repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE)
+    # Agregação na escrita: conta a sessão (aluno + semana) — ESPEC §3.1
+    pk = keys.pk_aluno(aluno_id)
+    repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_sessoes": 1}, set_={"ultimo_treino": s["data_hora_fim"]})
+    wk = _isoweek()
+    repo.add_and_set(pk, keys.sk_stats_week(wk), add={"sessoes": 1}, set_={"semana": wk})
     return snap
 
 
 def record(aluno_id: str, series: list, exercicio_id: str | None = None,
            exercicio_nome: str | None = None, canal: CanalOrigem = CanalOrigem.PORTAL,
-           classificacao: Classificacao = Classificacao.MANUAL, ator: Ator = Ator.PERSONAL) -> dict:
-    """Registra séries no exercício atual (ou no informado) — 1 write (append). ESPEC §3.2."""
+           classificacao: Classificacao = Classificacao.MANUAL, ator: Ator = Ator.PERSONAL) -> tuple[dict, float | None]:
+    """Registra séries no exercício atual (ou no informado) — 1 write (append) + agregados.
+    Retorna (registro, nova_carga_de_PR | None). ESPEC §3.2/§3.1."""
     s = get_active(aluno_id, consistent=True)
     if not s:
         raise HTTPException(409, "Sem sessão ativa para registrar")
@@ -94,20 +106,33 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
     ex_nome = exercicio_nome or ex.get("nome")
     if not ex_id:
         raise HTTPException(400, "Exercício não identificado")
+    pk = keys.pk_aluno(aluno_id)
     on_insert = {
-        "sessao_id": s["sessao_id"],
-        "exercicio_id": ex_id,
-        "exercicio_nome": ex_nome,
-        "aluno_id": aluno_id,
-        "data_hora": now_iso(),
-        "canal_origem": canal.value,
-        "classificacao": classificacao.value,
-        "ator": ator.value,
-        "GSI1PK": keys.gsi1_registro(aluno_id, ex_id),
-        "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
+        "sessao_id": s["sessao_id"], "exercicio_id": ex_id, "exercicio_nome": ex_nome,
+        "aluno_id": aluno_id, "data_hora": now_iso(),
+        "canal_origem": canal.value, "classificacao": classificacao.value, "ator": ator.value,
+        "GSI1PK": keys.gsi1_registro(aluno_id, ex_id), "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
     }
-    return repo.append_series(keys.pk_aluno(aluno_id), keys.sk_registro(s["sessao_id"], ex_id),
-                              series, on_insert)
+    updated = repo.append_series(pk, keys.sk_registro(s["sessao_id"], ex_id), series, on_insert)
+
+    # Agregação na escrita (ESPEC §3.1): volume desta gravação + recorde de carga.
+    cargas, volume = [], 0.0
+    for it in series:
+        cg = _num(it.get("carga"))
+        if cg is not None:
+            cargas.append(cg)
+            volume += cg * (it.get("reps") or 0)
+    if volume > 0:
+        wk = _isoweek()
+        repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_volume": volume}, set_={"ultimo_treino": now_iso()})
+        repo.add_and_set(pk, keys.sk_stats_week(wk), add={"volume": volume}, set_={"semana": wk})
+    pr_novo = None
+    if cargas:
+        carga_max = max(cargas)
+        if repo.update_if_greater(pk, keys.sk_stats_pr(ex_id), "carga", carga_max,
+                                  extra={"exercicio_nome": ex_nome, "data": now_iso()}):
+            pr_novo = carga_max
+    return updated, pr_novo
 
 
 def historico_exercicio(aluno_id: str, exercicio_id: str, limit: int = 1) -> list[dict]:
@@ -156,3 +181,24 @@ def list_exercicios_aluno(aluno_id: str) -> list[dict]:
     items = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")
     items.sort(key=lambda e: e.get("ordem", 0))
     return repo.clean_all(items)
+
+
+def resumo_aluno(aluno_id: str, semanas: int = 8) -> dict:
+    """Resumo de evolução do aluno lido de agregados (1 GetItem + queries curtas, sem scan)."""
+    pk = keys.pk_aluno(aluno_id)
+    st = repo.clean(repo.get_item(pk, keys.SK_STATS_ALUNO)) or {}
+    weeks = [repo.clean(w) for w in repo.query_pk_last_n(pk, "STATS#W#", semanas)]
+    weeks.sort(key=lambda w: w.get("semana", ""))
+    prs = [repo.clean(p) for p in repo.query_pk(pk, sk_prefix="STATS#PR#")]
+    wk_atual = _isoweek()
+    return {
+        "total_sessoes": st.get("total_sessoes", 0),
+        "total_volume": st.get("total_volume", 0),
+        "ultimo_treino": st.get("ultimo_treino"),
+        "sessoes_semana": next((w.get("sessoes", 0) for w in weeks if w.get("semana") == wk_atual), 0),
+        "semanas": [{"semana": w.get("semana"), "volume": w.get("volume", 0), "sessoes": w.get("sessoes", 0)} for w in weeks],
+        "prs": sorted(
+            [{"exercicio": p.get("exercicio_nome"), "carga": p.get("carga"), "data": p.get("data")} for p in prs],
+            key=lambda x: x.get("carga") or 0, reverse=True,
+        ),
+    }
