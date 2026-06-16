@@ -39,9 +39,29 @@ export function SettingsPage() {
   return (
     <div className="max-w-xl mx-auto">
       <h2 className="text-xl font-semibold mb-1">Conexão WhatsApp (W-API)</h2>
-      <p className="text-sm text-slate-500 mb-6">
-        Informe a instância W-API e conecte seu número por QR Code.
+      <p className="text-sm text-slate-500 mb-4">
+        Conecte seu número para que seus alunos conversem com o assistente.
       </p>
+
+      <Card className="mb-4 border-emerald-700/40 bg-emerald-950/20">
+        <p className="text-sm font-medium text-emerald-300 mb-2">Como começar</p>
+        <ol className="text-sm text-slate-300 space-y-1 list-decimal list-inside">
+          <li>
+            Solicite sua instância enviando uma mensagem para o WhatsApp{' '}
+            <a
+              href="https://wa.me/5513988088204"
+              target="_blank"
+              rel="noreferrer"
+              className="text-emerald-400 font-medium hover:underline"
+            >
+              +55 13 98808-8204
+            </a>
+            .
+          </li>
+          <li>Cole o <b>Instance ID</b> e o <b>Token</b> recebidos abaixo e salve.</li>
+          <li>Gere o <b>QR Code</b> e escaneie no WhatsApp do seu número (Aparelhos conectados).</li>
+        </ol>
+      </Card>
 
       <Card className="mb-4">
         <div className="flex items-center justify-between">

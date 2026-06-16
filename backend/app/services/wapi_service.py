@@ -43,6 +43,15 @@ class WAPIClient:
     def get_pairing_code(self, phone: str) -> dict:
         return self._get("/v1/instance/pairing-code", params={"phoneNumber": phone})
 
+    def set_received_webhook(self, url: str) -> dict:
+        """Configura o webhook de mensagens recebidas (PUT update-webhook-received)."""
+        with httpx.Client(timeout=15) as c:
+            r = c.put(f"{self.base_url}/v1/webhook/update-webhook-received",
+                      headers=self.headers, params=self._params(), json={"value": url})
+            logger.info(f"[wapi] PUT update-webhook-received -> {r.status_code}")
+            r.raise_for_status()
+            return r.json()
+
     def disconnect(self) -> dict:
         return self._get("/v1/instance/disconnect", timeout=10)
 

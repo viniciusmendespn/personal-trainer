@@ -1,17 +1,20 @@
 """Configuração e conexão da instância W-API pelo PORTAL do personal (ESPEC §7).
 Credenciais ficam na partição PT#; ao salvar, registra o ponteiro WAPI#{instance}->personal
 para o webhook conseguir rotear de volta."""
+import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from app.config import settings
 from app.dependencies import get_current_personal_id
 from app.models.enums import InstanceStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services.wapi_service import WAPIClient
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/v1/wapi", tags=["wapi"])
 
 
@@ -36,8 +39,17 @@ def save_config(body: WapiConfig, personal_id: str = Depends(get_current_persona
         "status": InstanceStatus.DISCONNECTED.value,
         "updated_at": now,
     })
-    # Ponteiro de roteamento do webhook (unicidade do instance_id)
+    # Ponteiro de roteamento do webhook (instanceId -> personal)
     repo.put_item(keys.pk_wapi(body.instance_id), "WAPI", {"personal_id": personal_id})
+
+    # Auto-configura o webhook da W-API p/ a nossa API única (a Lambda resolve o personal
+    # pelo instanceId). Todos os personais apontam para a mesma URL.
+    if settings.webhook_base_url and settings.webhook_secret:
+        url = f"{settings.webhook_base_url}/v1/public/wapi/webhook/{settings.webhook_secret}"
+        try:
+            WAPIClient(body.instance_id, body.token).set_received_webhook(url)
+        except Exception as e:
+            logger.warning("[wapi] não foi possível configurar o webhook: %s", e)
     return {"ok": True}
 
 

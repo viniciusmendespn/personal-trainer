@@ -37,7 +37,7 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <Navigate to="/alunos" replace /> },
+      { index: true, element: <Navigate to="/config" replace /> },
       { path: 'alunos', element: <AlunosPage /> },
       { path: 'alunos/:alunoId', element: <AlunoDetailPage /> },
       { path: 'config', element: <SettingsPage /> },

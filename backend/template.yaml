@@ -55,6 +55,7 @@ Globals:
         STAGE: !Ref Stage
         WAPI_BASE_URL: !Ref WapiBaseUrl
         WEBHOOK_SECRET: !Ref WebhookSecret
+        WEBHOOK_BASE_URL: !Sub "${ApiGateway.ApiEndpoint}/${Stage}"
         MEDIA_BUCKET_NAME: !Sub "${ProjectName}-media-${Stage}-${AWS::AccountId}"
         OPENAI_API_KEY: !Ref OpenAiApiKey
         OPENAI_MODEL: !Ref OpenAiModel

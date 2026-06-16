@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     stage: str = "dev"
     wapi_base_url: str = "https://api.w-api.app"
     webhook_secret: str = ""
+    webhook_base_url: str = ""            # base pública da API (p/ auto-configurar o webhook na W-API)
     media_bucket_name: str = ""
     openai_api_key: str = ""              # key SEPARADA deste app (custo isolado)
     openai_model: str = "gpt-5.4-nano"
