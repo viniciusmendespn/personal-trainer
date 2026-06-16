@@ -21,6 +21,10 @@ Parameters:
   WapiBaseUrl:
     Type: String
     Default: "https://api.w-api.app"
+  WebhookBaseUrl:
+    Type: String
+    Default: ""
+    Description: "Base pública da API (execute-api) p/ auto-configurar o webhook na W-API. Evita dependência circular com o ApiGateway."
   OpenAiApiKey:
     Type: String
     Default: ""
@@ -55,7 +59,7 @@ Globals:
         STAGE: !Ref Stage
         WAPI_BASE_URL: !Ref WapiBaseUrl
         WEBHOOK_SECRET: !Ref WebhookSecret
-        WEBHOOK_BASE_URL: !Sub "${ApiGateway.ApiEndpoint}/${Stage}"
+        WEBHOOK_BASE_URL: !Ref WebhookBaseUrl
         MEDIA_BUCKET_NAME: !Sub "${ProjectName}-media-${Stage}-${AWS::AccountId}"
         OPENAI_API_KEY: !Ref OpenAiApiKey
         OPENAI_MODEL: !Ref OpenAiModel
