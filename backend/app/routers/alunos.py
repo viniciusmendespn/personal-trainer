@@ -1,15 +1,21 @@
 """CRUD de alunos (ESPEC §2). Cada aluno: perfil completo em AL#{aluno}/PROFILE +
 ponteiro leve em PT#{personal}/ALUNO#{aluno} (listar sem fan-out) + lookup de
 telefone PHONE#{personal}#{e164} (resolução do webhook)."""
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 
+from app import aluno_auth
 from app.dependencies import get_current_personal_id
 from app.models.aluno import Aluno, AlunoCreate, AlunoUpdate
 from app.models.enums import AlunoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import authz
+from app.services.wapi_service import WAPIClient
 from app.utils import new_id, now_iso
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1/alunos", tags=["alunos"])
 
@@ -82,6 +88,27 @@ def update_aluno(aluno_id: str, body: AlunoUpdate, personal_id: str = Depends(ge
     updated = repo.update_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, fields, return_values=True)
     repo.put_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(updated))
     return repo.clean(updated)
+
+
+@router.post("/{aluno_id}/enviar-link")
+def enviar_link(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
+    """Gera o magic-link do app e envia no WhatsApp do aluno (e devolve p/ copiar)."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    aluno = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
+    if not aluno:
+        raise HTTPException(404, "Aluno não encontrado")
+    link = aluno_auth.magic_link(aluno_id, personal_id)
+    enviado = False
+    cfg = repo.get_item(keys.pk_personal(personal_id), keys.SK_WAPI_CONFIG)
+    telefone = aluno.get("telefone")
+    if cfg and telefone:
+        try:
+            WAPIClient(cfg["instance_id"], cfg["token"]).send_text(
+                telefone, f"Olá, {aluno.get('nome', '')}! Acesse seu app de treino: {link}")
+            enviado = True
+        except Exception as e:
+            logger.warning("[enviar-link] envio falhou: %s", e)
+    return {"link": link, "enviado": enviado}
 
 
 @router.delete("/{aluno_id}", status_code=204)

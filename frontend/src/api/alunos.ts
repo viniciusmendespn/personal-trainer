@@ -10,4 +10,6 @@ export const alunosApi = {
   update: (id: string, body: AlunoUpdate) =>
     api.put<Aluno>(`/v1/alunos/${id}`, body).then((r) => r.data),
   remove: (id: string) => api.delete(`/v1/alunos/${id}`),
+  enviarLink: (id: string) =>
+    api.post<{ link: string; enviado: boolean }>(`/v1/alunos/${id}/enviar-link`).then((r) => r.data),
 }

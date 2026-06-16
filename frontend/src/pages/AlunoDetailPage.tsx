@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Check, X } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Check, X, Send } from 'lucide-react'
 import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
+import { alunosApi } from '../api/alunos'
 import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio,
@@ -28,6 +30,11 @@ export function AlunoDetailPage() {
   const [eNome, setENome] = useState('')
   const [eTel, setETel] = useState('')
   const [eObj, setEObj] = useState('')
+  const [linkMsg, setLinkMsg] = useState('')
+  const enviarLink = useMutation({
+    mutationFn: () => alunosApi.enviarLink(alunoId),
+    onSuccess: (d) => setLinkMsg(d.enviado ? 'Link enviado no WhatsApp do aluno ✓' : `Não foi possível enviar (WhatsApp não conectado). Copie: ${d.link}`),
+  })
 
   function startEdit() {
     setENome(aluno?.nome ?? ''); setETel(aluno?.telefone ?? ''); setEObj(aluno?.objetivo ?? '')
@@ -87,12 +94,17 @@ export function AlunoDetailPage() {
             <Link to={`/alunos/${alunoId}/avaliacoes`} className="inline-flex items-center gap-1 text-sm text-emerald-400 hover:underline">
               <Scale size={16} /> Avaliação
             </Link>
+            <button onClick={() => enviarLink.mutate()} disabled={enviarLink.isPending}
+              className="inline-flex items-center gap-1 text-sm text-emerald-400 hover:underline disabled:opacity-50" title="Enviar link do app">
+              <Send size={15} /> {enviarLink.isPending ? 'Enviando…' : 'Enviar app'}
+            </button>
             <button onClick={startEdit} className="text-slate-500 hover:text-slate-300" title="Editar">
               <Pencil size={16} />
             </button>
           </div>
         </div>
       )}
+      {linkMsg && <p className="text-xs text-emerald-300 mb-4 break-all">{linkMsg}</p>}
 
       <form onSubmit={addTreino} className="mb-4 flex flex-wrap gap-2 items-end">
         <Input label="Treino" placeholder="ex: Treino A" value={nome} onChange={(e) => setNome(e.target.value)} className="w-44" />
