@@ -1,0 +1,20 @@
+version = 0.1
+
+[default.global.parameters]
+stack_name = "personal-trainer-prod"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.deploy.parameters]
+stack_name        = "personal-trainer-prod"
+s3_prefix         = "personal-trainer"
+region            = "us-east-1"
+profile           = "pessoal-hotmail"
+capabilities      = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
+confirm_changeset = false
+resolve_s3        = true
+# WebhookSecret: gerar um token longo e único e definir aqui (ou via --parameter-overrides no deploy).
+# DeployFrontendInfra=true só depois que a conta estiver pronta para CloudFront.
+parameter_overrides = "Stage=prod DeployFrontendInfra=false WebhookSecret=CHANGE_ME_WEBHOOK_SECRET"

@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# AWS SAM build artifacts
+backend/.aws-sam/
+.aws-sam/
+
+# Secrets / env (manter apenas .env.example)
+.env
+.env.local
+*.local
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
