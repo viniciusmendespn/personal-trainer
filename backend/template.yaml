@@ -114,6 +114,7 @@ Resources:
       PreventUserExistenceErrors: ENABLED
       ExplicitAuthFlows:
         - ALLOW_USER_SRP_AUTH
+        - ALLOW_ADMIN_USER_PASSWORD_AUTH   # auth via CLI (testes/automação)
         - ALLOW_REFRESH_TOKEN_AUTH
 
   # ── API Gateway HTTP v2 (JWT authorizer nativo) ──────────────────────────────
