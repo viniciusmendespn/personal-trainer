@@ -116,6 +116,16 @@ real que não é servível por query direta recebe GSI** — nunca forçar `Scan
 (§0.1). MVP precisa de pelo menos um índice "registros por exercício ao longo do tempo" (serve
 "quanto peguei?" e a evolução). Demais índices: criar quando o padrão aparecer.
 
+### 2.4 Entidades: atributos base + customização do personal
+
+Começar **básico e extensível**. Cada entidade tem **campos base fixos** (tipados) + um mapa
+**`custom`** livre. O personal declara uma vez os atributos extras que quer — por tipo de entidade
+(aluno/treino/exercício) — numa config `CONFIG#CUSTOMFIELDS` na sua partição; o portal renderiza e
+valida os inputs a partir dela, e cada entidade guarda os valores em `custom`. Como o DynamoDB é
+schemaless, detalhar mais dados depois **não exige migração** — evoluem só os models e o portal.
+
+Atributos concretos vivem no **código** (`backend/app/models/`), não aqui (specs enxutas).
+
 ---
 
 ## 3. Padrões de escrita (onde o custo mora)
@@ -214,6 +224,7 @@ criar o necessário, §2.3).
 3. **Provisionamento das instâncias W-API** (§7) — você cria e entrega ao personal, ou autoatendimento?
    Onde guardar o `token` (DynamoDB cifrado vs Secrets Manager)?
 4. **Aluno desconhecido no webhook** (§7) — telefone não cadastrado: boas-vindas, ignorar ou pendência?
-5. **Atributos das entidades** (`FUNCIONAL.md` §5.2) — para fechar os models.
+5. ~~Atributos das entidades~~ — **direção decidida** (§2.4): base + `custom`. Models básicos em
+   `backend/app/models/`; refinar campos conforme o uso.
 6. **Lista de indicadores** (§3.1) — quais métricas, e quais síncronas vs via Streams.
 7. **Portal do aluno** (§1.2) — confirmar que fica para `[FUTURO]`.

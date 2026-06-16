@@ -30,19 +30,49 @@ def pk_phone(personal_id: str, e164: str) -> str:
 # ── SKs do personal (partição PT#) ───────────────────────────────────────────
 SK_PROFILE = "PROFILE"
 SK_WAPI_CONFIG = "WAPI#CONFIG"
+SK_CUSTOM_FIELDS = "CONFIG#CUSTOMFIELDS"   # definições de atributos custom (ESPEC §2.4)
 
 
 def sk_aluno_pointer(aluno_id: str) -> str:
     return f"ALUNO#{aluno_id}"
 
 
+def sk_alerta(ts: str, alerta_id: str) -> str:
+    return f"ALERT#{ts}#{alerta_id}"
+
+
+def sk_pendencia(ts: str, pendencia_id: str) -> str:
+    return f"PEND#{ts}#{pendencia_id}"
+
+
 # ── SKs do aluno (partição AL#) ──────────────────────────────────────────────
 SK_SESSION_ACTIVE = "SESSION#ACTIVE"
+
+
+def sk_treino(ordem: int, treino_id: str) -> str:
+    return f"TREINO#{ordem:02d}#{treino_id}"
+
+
+def sk_exercicio(treino_id: str, ordem: int, exercicio_id: str) -> str:
+    return f"EX#{treino_id}#{ordem:02d}#{exercicio_id}"
+
+
+def sk_sessao_hist(ts: str, sessao_id: str) -> str:
+    return f"SESSION#{ts}#{sessao_id}"
+
+
+def sk_registro(sessao_id: str, exercicio_id: str) -> str:
+    return f"REG#{sessao_id}#{exercicio_id}"
 
 
 def sk_msg(message_id: str) -> str:
     return f"MSG#{message_id}"
 
 
-# Demais SKs (TREINO#, EX#, REG#, MIDIA#, ...) são definidos quando as entidades
-# forem modeladas (atributos ainda em aberto — ESPEC §8 / FUNCIONAL §5.2).
+# ── GSI1: "registros por exercício no tempo" (ESPEC §4.1) ────────────────────
+def gsi1_registro(aluno_id: str, exercicio_id: str) -> str:
+    return f"AL#{aluno_id}#EX#{exercicio_id}"
+
+
+def gsi1sk_registro(ts: str) -> str:
+    return f"R#{ts}"

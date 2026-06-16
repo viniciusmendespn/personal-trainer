@@ -50,3 +50,17 @@ class AlertaStatus(str, Enum):
 class InstanceStatus(str, Enum):
     CONNECTED = "CONNECTED"
     DISCONNECTED = "DISCONNECTED"
+
+
+class AlunoStatus(str, Enum):
+    ATIVO = "ATIVO"
+    INATIVO = "INATIVO"
+
+
+class CustomFieldType(str, Enum):
+    """Tipos de atributo customizável que o personal pode definir (ESPEC §2.4)."""
+    TEXT = "TEXT"
+    NUMBER = "NUMBER"
+    BOOL = "BOOL"
+    SELECT = "SELECT"
+    DATE = "DATE"
