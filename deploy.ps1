@@ -10,7 +10,7 @@ $Region     = "us-east-1"
 $StackName  = "personal-trainer-prod"
 # Preencher após o 1º deploy com DeployFrontendInfra=true (ler dos Outputs do stack):
 $Bucket     = "personal-trainer-frontend-prod-421219980792"
-$CfId       = ""   # CloudFrontDistributionId
+$CfId       = "E3JZ6U88Q0GYGF"   # CloudFrontDistributionId
 
 function Deploy-Backend {
     Write-Host "`n=== Deploy Backend ===" -ForegroundColor Green
