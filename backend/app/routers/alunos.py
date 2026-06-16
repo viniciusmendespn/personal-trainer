@@ -1,0 +1,94 @@
+"""CRUD de alunos (ESPEC §2). Cada aluno: perfil completo em AL#{aluno}/PROFILE +
+ponteiro leve em PT#{personal}/ALUNO#{aluno} (listar sem fan-out) + lookup de
+telefone PHONE#{personal}#{e164} (resolução do webhook)."""
+from fastapi import APIRouter, Depends, HTTPException
+
+from app.dependencies import get_current_personal_id
+from app.models.aluno import Aluno, AlunoCreate, AlunoUpdate
+from app.models.enums import AlunoStatus
+from app.repositories import dynamo_repo as repo
+from app.repositories import keys
+from app.services import authz
+from app.utils import new_id, now_iso
+
+router = APIRouter(prefix="/v1/alunos", tags=["alunos"])
+
+
+def _pointer(aluno: dict) -> dict:
+    return {
+        "aluno_id": aluno["aluno_id"],
+        "nome": aluno["nome"],
+        "status": aluno["status"],
+        "telefone": aluno.get("telefone"),
+        "updated_at": aluno["updated_at"],
+    }
+
+
+@router.get("")
+def list_alunos(personal_id: str = Depends(get_current_personal_id)):
+    items = repo.query_pk(keys.pk_personal(personal_id), sk_prefix="ALUNO#")
+    return repo.clean_all(items)
+
+
+@router.post("", response_model=Aluno, status_code=201)
+def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_personal_id)):
+    aluno_id = new_id()
+    now = now_iso()
+    aluno = Aluno(aluno_id=aluno_id, personal_id=personal_id, status=AlunoStatus.ATIVO,
+                  created_at=now, updated_at=now, **body.model_dump())
+    data = aluno.model_dump()
+    # telefone único por personal (ESPEC §2): reserva o ponteiro antes de criar
+    if body.telefone:
+        ok = repo.put_item_if_absent(
+            keys.pk_phone(personal_id, body.telefone), "PHONE", {"aluno_id": aluno_id}
+        )
+        if not ok:
+            raise HTTPException(409, "Telefone já cadastrado para outro aluno")
+    repo.put_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, data)
+    repo.put_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(data))
+    return aluno
+
+
+@router.get("/{aluno_id}")
+def get_aluno(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
+    authz.authorize_aluno(personal_id, aluno_id)
+    item = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
+    if not item:
+        raise HTTPException(404, "Aluno não encontrado")
+    return repo.clean(item)
+
+
+@router.put("/{aluno_id}")
+def update_aluno(aluno_id: str, body: AlunoUpdate, personal_id: str = Depends(get_current_personal_id)):
+    authz.authorize_aluno(personal_id, aluno_id)
+    current = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
+    if not current:
+        raise HTTPException(404, "Aluno não encontrado")
+
+    fields = body.model_dump(exclude_none=True)
+    # troca de telefone: re-aponta o lookup (remove o antigo, reserva o novo)
+    new_phone = fields.get("telefone")
+    old_phone = current.get("telefone")
+    if new_phone and new_phone != old_phone:
+        if not repo.put_item_if_absent(keys.pk_phone(personal_id, new_phone), "PHONE", {"aluno_id": aluno_id}):
+            raise HTTPException(409, "Telefone já cadastrado para outro aluno")
+        if old_phone:
+            repo.delete_item(keys.pk_phone(personal_id, old_phone), "PHONE")
+
+    fields["updated_at"] = now_iso()
+    updated = repo.update_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, fields, return_values=True)
+    repo.put_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(updated))
+    return repo.clean(updated)
+
+
+@router.delete("/{aluno_id}", status_code=204)
+def delete_aluno(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
+    authz.authorize_aluno(personal_id, aluno_id)
+    current = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
+    if current and current.get("telefone"):
+        repo.delete_item(keys.pk_phone(personal_id, current["telefone"]), "PHONE")
+    repo.delete_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id))
+    repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
+    authz.invalidate(personal_id, aluno_id)
+    # TODO: cascade — treinos/sessões/registros do aluno permanecem na partição AL#
+    # (limpeza em lote ou marcar INATIVO em vez de hard delete). Decidir depois.

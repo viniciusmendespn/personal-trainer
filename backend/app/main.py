@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
-from app.routers import wapi, webhook
+from app.routers import alunos, config, sessoes, treinos, wapi, webhook
 
 app = FastAPI(
     title="Personal Trainer",
@@ -20,9 +20,12 @@ app.add_middleware(
 
 app.include_router(webhook.router)   # /v1/public/wapi/... (sem auth)
 app.include_router(wapi.router)      # /v1/wapi/... (JWT do personal)
+app.include_router(config.router)    # /v1/config/...
+app.include_router(alunos.router)    # /v1/alunos
+app.include_router(treinos.router)   # /v1/alunos/{id}/treinos[/exercicios]
+app.include_router(sessoes.router)   # /v1/alunos/{id}/sessao | registros | historico
 
-# Próximos routers (quando os atributos das entidades forem definidos — ESPEC §8):
-#   alunos, treinos, sessoes, registros, alertas, pendencias, dashboard
+# Próximos: alertas, pendencias, dashboard (indicadores agregados — ESPEC §3.1)
 
 
 @app.get("/v1/health")

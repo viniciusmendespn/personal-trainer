@@ -49,12 +49,19 @@ def sk_pendencia(ts: str, pendencia_id: str) -> str:
 SK_SESSION_ACTIVE = "SESSION#ACTIVE"
 
 
-def sk_treino(ordem: int, treino_id: str) -> str:
-    return f"TREINO#{ordem:02d}#{treino_id}"
+SK_TREINO_PREFIX = "TREINO#"
 
 
-def sk_exercicio(treino_id: str, ordem: int, exercicio_id: str) -> str:
-    return f"EX#{treino_id}#{ordem:02d}#{exercicio_id}"
+def sk_treino(treino_id: str) -> str:
+    return f"TREINO#{treino_id}"
+
+
+def sk_exercicio(treino_id: str, exercicio_id: str) -> str:
+    return f"EX#{treino_id}#{exercicio_id}"
+
+
+def sk_exercicio_prefix(treino_id: str) -> str:
+    return f"EX#{treino_id}#"
 
 
 def sk_sessao_hist(ts: str, sessao_id: str) -> str:
