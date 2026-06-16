@@ -14,7 +14,7 @@ from fastapi import APIRouter, Request
 from app.dependencies import verify_wapi_webhook
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import llm_agent
+from app.services import alerta_service, llm_agent
 from app.services.wapi_service import WAPIClient
 
 logger = logging.getLogger(__name__)
@@ -51,6 +51,28 @@ def _resolve_personal(instance_id: str | None) -> str | None:
     return item.get("personal_id") if item else None
 
 
+def _extract_media(payload: dict) -> dict | None:
+    """Detecta mídia recebida (formato exato da W-API a confirmar)."""
+    for k in ("image", "video", "audio", "document", "sticker"):
+        v = payload.get(k)
+        if v:
+            return {"tipo": k, "ref": v if isinstance(v, (str, dict)) else str(v)}
+    if payload.get("mediaKey") or payload.get("directPath"):
+        return {"tipo": "media",
+                "mediaKey": payload.get("mediaKey"), "directPath": payload.get("directPath"),
+                "mimetype": payload.get("mimetype"), "type": payload.get("type")}
+    return None
+
+
+def _send(personal_id: str, phone: str, text: str) -> None:
+    cfg = repo.get_item(keys.pk_personal(personal_id), keys.SK_WAPI_CONFIG)
+    if cfg:
+        try:
+            WAPIClient(cfg["instance_id"], cfg["token"]).send_text(phone, text)
+        except Exception as e:
+            logger.warning("[webhook] send_text falhou: %s", e)
+
+
 @router.post("/webhook/{secret}")
 async def receive(secret: str, request: Request):
     verify_wapi_webhook(secret)   # 404 se inválido
@@ -82,15 +104,17 @@ async def receive(secret: str, request: Request):
         logger.info("[webhook] telefone não cadastrado: personal=%s phone=%s", personal_id, sender)
         return _OK
     aluno_id = phone_item["aluno_id"]
-    text = _extract_text(payload)
 
-    # Orquestra o agente (OpenAI) e responde via W-API.
+    # Mídia sem contexto -> pendência + pede o exercício (RN008 / FUNCIONAL §10).
+    media = _extract_media(payload)
+    if media:
+        alerta_service.criar_pendencia(personal_id, aluno_id, "MIDIA", media, "mídia recebida sem contexto")
+        _send(personal_id, sender, "Recebi sua mídia. De qual exercício ela é?")
+        return _OK
+
+    # Texto -> orquestra o agente (OpenAI) e responde via W-API.
+    text = _extract_text(payload)
     reply = llm_agent.run(personal_id, aluno_id, phone_item.get("nome"), text or "")
     if reply:
-        cfg = repo.get_item(keys.pk_personal(personal_id), keys.SK_WAPI_CONFIG)
-        if cfg:
-            try:
-                WAPIClient(cfg["instance_id"], cfg["token"]).send_text(sender, reply)
-            except Exception as e:
-                logger.warning("[webhook] send_text falhou: %s", e)
+        _send(personal_id, sender, reply)
     return _OK

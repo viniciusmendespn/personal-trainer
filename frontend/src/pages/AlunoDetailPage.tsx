@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
-import { useAluno } from '../hooks/useAlunos'
+import { Link, useParams, useNavigate } from 'react-router-dom'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil } from 'lucide-react'
+import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import {
   useTreinos, useCreateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useDeleteExercicio,
@@ -11,11 +11,33 @@ import type { Treino } from '../types'
 
 export function AlunoDetailPage() {
   const { alunoId = '' } = useParams()
+  const navigate = useNavigate()
   const { data: aluno } = useAluno(alunoId)
   const { data: treinos, isLoading } = useTreinos(alunoId)
   const createTreino = useCreateTreino(alunoId)
+  const updateAluno = useUpdateAluno(alunoId)
+  const deleteAluno = useDeleteAluno()
   const [nome, setNome] = useState('')
   const [foco, setFoco] = useState('')
+  const [editing, setEditing] = useState(false)
+  const [eNome, setENome] = useState('')
+  const [eTel, setETel] = useState('')
+  const [eObj, setEObj] = useState('')
+
+  function startEdit() {
+    setENome(aluno?.nome ?? ''); setETel(aluno?.telefone ?? ''); setEObj(aluno?.objetivo ?? '')
+    setEditing(true)
+  }
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault()
+    await updateAluno.mutateAsync({ nome: eNome, telefone: eTel, objetivo: eObj || undefined })
+    setEditing(false)
+  }
+  async function remove() {
+    if (!confirm('Excluir este aluno?')) return
+    await deleteAluno.mutateAsync(alunoId)
+    navigate('/alunos')
+  }
 
   async function addTreino(e: React.FormEvent) {
     e.preventDefault()
@@ -29,10 +51,31 @@ export function AlunoDetailPage() {
       <Link to="/alunos" className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-slate-200 mb-4">
         <ArrowLeft size={16} /> Alunos
       </Link>
-      <h2 className="text-xl font-semibold">{aluno?.nome ?? '…'}</h2>
-      <p className="text-sm text-slate-500 mb-6">
-        {aluno?.telefone} {aluno?.objetivo ? `· ${aluno.objetivo}` : ''}
-      </p>
+
+      {editing ? (
+        <form onSubmit={saveEdit} className="space-y-2 mb-6 max-w-md">
+          <Input label="Nome" value={eNome} onChange={(e) => setENome(e.target.value)} />
+          <Input label="Telefone" value={eTel} onChange={(e) => setETel(e.target.value)} />
+          <Input label="Objetivo" value={eObj} onChange={(e) => setEObj(e.target.value)} />
+          <div className="flex gap-2">
+            <Button type="submit" disabled={updateAluno.isPending}>Salvar</Button>
+            <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Cancelar</Button>
+            <Button type="button" variant="danger" onClick={remove} className="ml-auto">Excluir</Button>
+          </div>
+        </form>
+      ) : (
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-semibold">{aluno?.nome ?? '…'}</h2>
+            <p className="text-sm text-slate-500">
+              {aluno?.telefone} {aluno?.objetivo ? `· ${aluno.objetivo}` : ''} · {aluno?.status}
+            </p>
+          </div>
+          <button onClick={startEdit} className="text-slate-500 hover:text-slate-300" title="Editar">
+            <Pencil size={16} />
+          </button>
+        </div>
+      )}
 
       <form onSubmit={addTreino} className="flex gap-2 mb-4">
         <Input placeholder="Nome do treino (ex: Treino A)" value={nome} onChange={(e) => setNome(e.target.value)} />
