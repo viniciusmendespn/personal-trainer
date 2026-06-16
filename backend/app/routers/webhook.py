@@ -14,7 +14,7 @@ from fastapi import APIRouter, Request
 from app.dependencies import verify_wapi_webhook
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import alerta_service, llm_agent
+from app.services import agent_service, alerta_service, llm_agent
 from app.services.wapi_service import WAPIClient
 
 logger = logging.getLogger(__name__)
@@ -112,9 +112,16 @@ async def receive(secret: str, request: Request):
         _send(personal_id, sender, "Recebi sua mídia. De qual exercício ela é?")
         return _OK
 
-    # Texto -> orquestra o agente (OpenAI) e responde via W-API.
+    # Texto -> orquestra o agente (OpenAI) com memória de conversa e responde via W-API.
     text = _extract_text(payload)
-    reply = llm_agent.run(personal_id, aluno_id, phone_item.get("nome"), text or "")
+    if not text:
+        return _OK
+    history = agent_service.get_chat(aluno_id)
+    reply = llm_agent.run(personal_id, aluno_id, phone_item.get("nome"), text, history)
     if reply:
         _send(personal_id, sender, reply)
+        agent_service.save_chat(aluno_id, history + [
+            {"role": "user", "content": text},
+            {"role": "assistant", "content": reply},
+        ])
     return _OK

@@ -47,6 +47,7 @@ def sk_pendencia(ts: str, pendencia_id: str) -> str:
 
 # ── SKs do aluno (partição AL#) ──────────────────────────────────────────────
 SK_SESSION_ACTIVE = "SESSION#ACTIVE"
+SK_CHAT = "CHAT"   # memória conversacional do agente (com TTL)
 
 
 SK_TREINO_PREFIX = "TREINO#"

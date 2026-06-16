@@ -2,10 +2,25 @@
 (chaves curtas, sem nulos) porque o resultado entra no contexto da LLM (tokens).
 O `{personal_id, aluno_id}` já vem resolvido pelo webhook — a LLM nunca informa identidade.
 """
+import time
+
 from app.models.enums import Ator, CanalOrigem, Classificacao
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import alerta_service, sessao_service
+
+CHAT_TTL_S = 2 * 3600   # janela de conversa: 2h sem mensagem zera o contexto
+CHAT_MAX_TURNS = 8      # últimas N mensagens mantidas
+
+
+def get_chat(aluno_id: str) -> list[dict]:
+    item = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_CHAT, consistent=True)
+    return (item or {}).get("turns", [])
+
+
+def save_chat(aluno_id: str, turns: list[dict]) -> None:
+    repo.put_item(keys.pk_aluno(aluno_id), keys.SK_CHAT,
+                  {"turns": turns[-CHAT_MAX_TURNS:], "ttl": int(time.time()) + CHAT_TTL_S})
 
 
 def _ult(aluno_id: str, exercicio_id: str | None) -> dict | None:

@@ -100,14 +100,17 @@ def _exec(name: str, args: dict, personal_id: str, aluno_id: str) -> dict:
     return {"erro": "ferramenta desconhecida"}
 
 
-def run(personal_id: str, aluno_id: str, nome: str | None, text: str) -> str:
-    """Processa uma mensagem do aluno e devolve a resposta curta (str vazia = não responder)."""
+def run(personal_id: str, aluno_id: str, nome: str | None, text: str,
+        history: list[dict] | None = None) -> str:
+    """Processa uma mensagem do aluno e devolve a resposta curta (str vazia = não responder).
+    `history` = turnos anteriores [{role, content}] para a desambiguação multi-turno (FUNCIONAL §9)."""
     if not settings.openai_api_key:
         logger.warning("[agent] OPENAI_API_KEY ausente — sem resposta")
         return ""
     messages = [
         {"role": "system", "content": _SYSTEM},
         {"role": "system", "content": f"Aluno: {nome or 'aluno'}. Contexto: {_context(aluno_id)}"},
+        *(history or []),
         {"role": "user", "content": text or ""},
     ]
     headers = {"Authorization": f"Bearer {settings.openai_api_key}", "Content-Type": "application/json"}
