@@ -1,0 +1,127 @@
+import { useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
+import { useAluno } from '../hooks/useAlunos'
+import {
+  useTreinos, useCreateTreino, useDeleteTreino,
+  useExercicios, useCreateExercicio, useDeleteExercicio,
+} from '../hooks/useTreinos'
+import { Button, Card, Input, Spinner } from '../components/ui'
+import type { Treino } from '../types'
+
+export function AlunoDetailPage() {
+  const { alunoId = '' } = useParams()
+  const { data: aluno } = useAluno(alunoId)
+  const { data: treinos, isLoading } = useTreinos(alunoId)
+  const createTreino = useCreateTreino(alunoId)
+  const [nome, setNome] = useState('')
+  const [foco, setFoco] = useState('')
+
+  async function addTreino(e: React.FormEvent) {
+    e.preventDefault()
+    if (!nome) return
+    await createTreino.mutateAsync({ nome, foco: foco || undefined, ordem: (treinos?.length ?? 0) + 1 })
+    setNome(''); setFoco('')
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      <Link to="/alunos" className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-slate-200 mb-4">
+        <ArrowLeft size={16} /> Alunos
+      </Link>
+      <h2 className="text-xl font-semibold">{aluno?.nome ?? '…'}</h2>
+      <p className="text-sm text-slate-500 mb-6">
+        {aluno?.telefone} {aluno?.objetivo ? `· ${aluno.objetivo}` : ''}
+      </p>
+
+      <form onSubmit={addTreino} className="flex gap-2 mb-4">
+        <Input placeholder="Nome do treino (ex: Treino A)" value={nome} onChange={(e) => setNome(e.target.value)} />
+        <Input placeholder="Foco (ex: Inferiores)" value={foco} onChange={(e) => setFoco(e.target.value)} />
+        <Button type="submit" disabled={createTreino.isPending}>
+          <Plus size={16} />
+        </Button>
+      </form>
+
+      {isLoading ? (
+        <Spinner />
+      ) : !treinos?.length ? (
+        <p className="text-slate-500 text-sm">Nenhum treino. Adicione acima.</p>
+      ) : (
+        <div className="space-y-3">
+          {treinos.map((t) => (
+            <TreinoCard key={t.treino_id} alunoId={alunoId} treino={t} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
+  const [open, setOpen] = useState(false)
+  const delTreino = useDeleteTreino(alunoId)
+  const { data: exs } = useExercicios(alunoId, open ? treino.treino_id : '')
+  const createEx = useCreateExercicio(alunoId, treino.treino_id)
+  const delEx = useDeleteExercicio(alunoId, treino.treino_id)
+  const [nome, setNome] = useState('')
+  const [series, setSeries] = useState('')
+  const [reps, setReps] = useState('')
+  const [carga, setCarga] = useState('')
+
+  async function addEx(e: React.FormEvent) {
+    e.preventDefault()
+    if (!nome) return
+    await createEx.mutateAsync({
+      nome,
+      series: series ? Number(series) : undefined,
+      reps_prescritas: reps || undefined,
+      carga_prescrita: carga || undefined,
+      ordem: (exs?.length ?? 0) + 1,
+    })
+    setNome(''); setSeries(''); setReps(''); setCarga('')
+  }
+
+  return (
+    <Card>
+      <div className="flex items-center justify-between">
+        <button className="flex items-center gap-2 text-left" onClick={() => setOpen((v) => !v)}>
+          {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <span>
+            <span className="font-medium">{treino.nome}</span>
+            {treino.foco && <span className="text-xs text-slate-500 ml-2">{treino.foco}</span>}
+          </span>
+        </button>
+        <button onClick={() => delTreino.mutate(treino.treino_id)} className="text-slate-600 hover:text-red-400">
+          <Trash2 size={16} />
+        </button>
+      </div>
+
+      {open && (
+        <div className="mt-3 pl-6 space-y-2">
+          {exs?.map((ex) => (
+            <div key={ex.exercicio_id} className="flex items-center justify-between text-sm border-b border-slate-800 pb-1">
+              <span>
+                {ex.nome}
+                <span className="text-slate-500 ml-2">
+                  {ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''} {ex.carga_prescrita ? `· ${ex.carga_prescrita}` : ''}
+                </span>
+              </span>
+              <button onClick={() => delEx.mutate(ex.exercicio_id)} className="text-slate-600 hover:text-red-400">
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+          <form onSubmit={addEx} className="flex gap-2 pt-2">
+            <Input placeholder="Exercício" value={nome} onChange={(e) => setNome(e.target.value)} className="flex-1" />
+            <Input placeholder="Séries" value={series} onChange={(e) => setSeries(e.target.value)} className="w-16" />
+            <Input placeholder="Reps" value={reps} onChange={(e) => setReps(e.target.value)} className="w-20" />
+            <Input placeholder="Carga" value={carga} onChange={(e) => setCarga(e.target.value)} className="w-20" />
+            <Button type="submit" variant="ghost" disabled={createEx.isPending}>
+              <Plus size={16} />
+            </Button>
+          </form>
+        </div>
+      )}
+    </Card>
+  )
+}

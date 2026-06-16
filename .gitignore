@@ -18,6 +18,7 @@ backend/.aws-sam/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+*.tsbuildinfo
 
 # OS / editor
 .DS_Store
