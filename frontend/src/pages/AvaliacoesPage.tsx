@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Plus, Scale, FileDown, X, Image as ImageIcon, Paperclip } from 'lucide-react'
+import { ArrowLeft, Plus, Scale, FileDown, X, Paperclip } from 'lucide-react'
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import { useAluno } from '../hooks/useAlunos'
 import { useAvaliacoes, useCreateAvaliacao } from '../hooks/useDominio'
@@ -52,17 +52,33 @@ export function AvaliacoesPage() {
     }
   }
 
-  const chart = [...(avs ?? [])]
+  const [metricaAtiva, setMetricaAtiva] = useState<string | null>(null)
+
+  const metricasDisponiveis = useMemo(() => {
+    const keys = new Set<string>()
+    avs?.forEach((a) => {
+      if (a.percentual_gordura != null) keys.add('percentual_gordura')
+      if (a.medidas) Object.keys(a.medidas).forEach((k) => keys.add(k))
+    })
+    return Array.from(keys)
+  }, [avs])
+
+  const avsSorted = useMemo(
+    () => [...(avs ?? [])].sort((a, b) => (a.data ?? a.created_at).localeCompare(b.data ?? b.created_at)),
+    [avs]
+  )
+
+  const chart = avsSorted
     .filter((a) => a.peso != null)
-    .sort((a, b) => (a.data ?? a.created_at).localeCompare(b.data ?? b.created_at))
     .map((a) => ({
       data: new Date(a.data ?? a.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
       peso: a.peso,
+      metrica: metricaAtiva === 'percentual_gordura'
+        ? a.percentual_gordura
+        : metricaAtiva
+          ? (a.medidas?.[metricaAtiva] as number | undefined) ?? null
+          : null,
     }))
-
-  const comFotos = [...(avs ?? [])]
-    .filter((a) => a.fotos_urls?.length)
-    .sort((a, b) => (b.data ?? b.created_at).localeCompare(a.data ?? a.created_at))
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -91,9 +107,26 @@ export function AvaliacoesPage() {
 
       {chart.length > 1 && (
         <Card variant="elevated" className="mb-4">
-          <p className="text-sm text-text-secondary mb-3">Peso ao longo do tempo</p>
+          <p className="text-sm text-text-secondary mb-2">Peso ao longo do tempo</p>
+          {metricasDisponiveis.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {metricasDisponiveis.map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMetricaAtiva((prev) => prev === m ? null : m)}
+                  className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+                    metricaAtiva === m
+                      ? 'bg-accent/20 border-accent/50 text-accent-hover'
+                      : 'border-border text-text-secondary hover:border-accent/30'
+                  }`}
+                >
+                  {m === 'percentual_gordura' ? '% Gordura' : m}
+                </button>
+              ))}
+            </div>
+          )}
           <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={chart} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+            <ComposedChart data={chart} margin={{ top: 5, right: metricaAtiva ? 20 : 10, bottom: 5, left: -20 }}>
               <defs>
                 <linearGradient id="pesoGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="var(--color-energy)" stopOpacity={0.4} />
@@ -102,32 +135,19 @@ export function AvaliacoesPage() {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
-              <YAxis tick={axisTick} stroke="var(--color-border-strong)" domain={['dataMin - 2', 'dataMax + 2']} />
+              <YAxis yAxisId="left" tick={axisTick} stroke="var(--color-border-strong)" domain={['dataMin - 2', 'dataMax + 2']} />
+              {metricaAtiva && (
+                <YAxis yAxisId="right" orientation="right" tick={axisTick} stroke="var(--color-accent)" />
+              )}
               <Tooltip contentStyle={chartTip} />
-              <Area type="monotone" dataKey="peso" stroke="var(--color-energy)" strokeWidth={2.5}
+              <Area yAxisId="left" type="monotone" dataKey="peso" stroke="var(--color-energy)" strokeWidth={2.5}
                 fill="url(#pesoGradient)" dot={{ r: 3, fill: 'var(--color-energy)' }} name="Peso (kg)" />
-            </AreaChart>
+              {metricaAtiva && (
+                <Line yAxisId="right" type="monotone" dataKey="metrica" stroke="var(--color-accent)" strokeWidth={2}
+                  dot={{ r: 3, fill: 'var(--color-accent)' }} name={metricaAtiva === 'percentual_gordura' ? '% Gordura' : metricaAtiva} connectNulls />
+              )}
+            </ComposedChart>
           </ResponsiveContainer>
-        </Card>
-      )}
-
-      {comFotos.length > 0 && (
-        <Card variant="elevated" className="mb-4">
-          <p className="text-sm text-text-secondary mb-3 flex items-center gap-1"><ImageIcon size={14} /> Timeline de fotos</p>
-          <div className="space-y-3">
-            {comFotos.map((a) => (
-              <div key={a.avaliacao_id}>
-                <p className="text-xs text-text-muted mb-1">{new Date(a.data ?? a.created_at).toLocaleDateString('pt-BR')}</p>
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {a.fotos_urls!.map((url, i) => (
-                    <button key={i} onClick={() => setLightbox(url)} className="shrink-0">
-                      <img src={url} alt="" className="w-20 h-20 object-cover rounded-lg border border-border" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
         </Card>
       )}
 
@@ -148,16 +168,38 @@ export function AvaliacoesPage() {
 
 function AvaliacaoRow({ a, onVerFoto }: { a: Avaliacao; onVerFoto: (url: string) => void }) {
   const [showDetails, setShowDetails] = useState(false)
-  const temDetalhes = !!(a.observacoes || (a.medidas && Object.keys(a.medidas).length) || a.bio_scan_url)
+  const temDetalhes = !!(a.observacoes || (a.medidas && Object.keys(a.medidas).length))
 
   return (
     <Card variant="elevated">
       <button className="w-full flex items-center justify-between text-sm text-left" onClick={() => setShowDetails((v) => !v)} disabled={!temDetalhes}>
-        <span>{new Date(a.data ?? a.created_at).toLocaleDateString('pt-BR')}</span>
+        <span className="flex items-center gap-1.5">
+          {new Date(a.data ?? a.created_at).toLocaleDateString('pt-BR')}
+          {a.bio_scan_url && <Paperclip size={12} className="text-accent-hover" />}
+        </span>
         <span className="text-text-secondary">
           {a.peso != null ? `${a.peso} kg` : ''} {a.percentual_gordura != null ? `· ${a.percentual_gordura}%` : ''}
         </span>
       </button>
+
+      {!!a.fotos_urls?.length && (
+        <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
+          {a.fotos_urls.map((url, i) => (
+            <button key={i} onClick={() => onVerFoto(url)} className="shrink-0">
+              <img src={url} alt="" className="w-12 h-12 object-cover rounded border border-border" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {a.bio_scan_url && (
+        <div className="mt-2">
+          <a href={a.bio_scan_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-accent-hover hover:underline">
+            <Paperclip size={12} /> Ver anexo da bioimpedância
+          </a>
+        </div>
+      )}
+
       {showDetails && temDetalhes && (
         <div className="mt-3 space-y-2 text-xs text-text-secondary border-t border-border pt-3">
           {a.observacoes && <p className="whitespace-pre-wrap">{a.observacoes}</p>}
@@ -165,20 +207,6 @@ function AvaliacaoRow({ a, onVerFoto }: { a: Avaliacao; onVerFoto: (url: string)
             <div className="flex flex-wrap gap-2">
               {Object.entries(a.medidas).map(([k, v]) => (
                 <span key={k} className="bg-white/5 rounded-full px-2 py-1">{k}: <b className="text-text">{String(v)}</b></span>
-              ))}
-            </div>
-          )}
-          {a.bio_scan_url && (
-            <a href={a.bio_scan_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-accent-hover hover:underline">
-              <Paperclip size={12} /> Ver anexo da bioimpedância
-            </a>
-          )}
-          {!!a.fotos_urls?.length && (
-            <div className="flex gap-2">
-              {a.fotos_urls.map((url, i) => (
-                <button key={i} onClick={() => onVerFoto(url)}>
-                  <img src={url} alt="" className="w-12 h-12 object-cover rounded border border-border" />
-                </button>
               ))}
             </div>
           )}

@@ -1,7 +1,7 @@
 import { useId, useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Send, Dumbbell, LayoutTemplate, StickyNote, Link2 } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote } from 'lucide-react'
 import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { alunosApi } from '../api/alunos'
 import {
@@ -39,21 +39,20 @@ export function AlunoDetailPage() {
   const [eEndereco, setEEndereco] = useState('')
   const [eNascimento, setENascimento] = useState('')
   const [eObj, setEObj] = useState('')
-  const [linkRes, setLinkRes] = useState<{ link: string; enviado: boolean } | null>(null)
-  const [copied, setCopied] = useState(false)
+  const { show } = useToast()
+  const { data: linkData } = useQuery({
+    queryKey: ['aluno-link', alunoId],
+    queryFn: () => alunosApi.gerarLink(alunoId),
+    enabled: !!alunoId,
+  })
   const enviarLink = useMutation({
     mutationFn: () => alunosApi.enviarLink(alunoId),
-    onSuccess: (d) => { setLinkRes(d); setCopied(false) },
-  })
-  const gerarLink = useMutation({
-    mutationFn: () => alunosApi.gerarLink(alunoId),
-    onSuccess: (d) => { setLinkRes({ link: d.link, enviado: false }); setCopied(false) },
+    onSuccess: () => show('Link enviado pelo WhatsApp.', 'success'),
   })
   function copyLink() {
-    if (!linkRes) return
-    navigator.clipboard?.writeText(linkRes.link)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    if (!linkData?.link) return
+    navigator.clipboard?.writeText(linkData.link)
+    show('Link copiado!', 'success')
   }
 
   function startEdit() {
@@ -112,30 +111,21 @@ export function AlunoDetailPage() {
           <Link to={`/alunos/${alunoId}/avaliacoes`} className="inline-flex items-center gap-1 text-sm text-accent-hover hover:underline">
             <Scale size={16} /> Avaliação
           </Link>
-          <button onClick={() => gerarLink.mutate()} disabled={gerarLink.isPending}
-            className="inline-flex items-center gap-1 text-sm text-accent-hover hover:underline disabled:opacity-50" title="Copiar link do app">
-            <Link2 size={15} /> {gerarLink.isPending ? 'Gerando…' : 'Copiar link'}
-          </button>
-          <button onClick={() => enviarLink.mutate()} disabled={enviarLink.isPending}
-            className="inline-flex items-center gap-1 text-sm text-accent-hover hover:underline disabled:opacity-50" title="Enviar link do app pelo WhatsApp">
-            <Send size={15} /> {enviarLink.isPending ? 'Enviando…' : 'Enviar app'}
-          </button>
         </div>
       </div>
 
-      {linkRes && (
+      {linkData && (
         <Card variant="elevated" className="mb-4">
-          <p className="text-xs text-text-secondary mb-2">
-            {linkRes.enviado ? 'Link enviado no WhatsApp do aluno ✓ — você também pode copiar:' : 'WhatsApp não conectado — copie o link e envie ao aluno:'}
-          </p>
+          <p className="text-xs text-text-secondary mb-2">Link do app do aluno</p>
           <div className="flex items-center gap-2">
             <input
               readOnly
-              value={linkRes.link}
+              value={linkData.link}
               onFocus={(e) => e.target.select()}
               className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-surface border border-border text-text-secondary"
             />
-            <Button variant="ghost" size="sm" onClick={copyLink}>{copied ? 'Copiado!' : 'Copiar'}</Button>
+            <Button variant="ghost" size="sm" iconOnly aria-label="Copiar link" onClick={copyLink}><Copy size={15} /></Button>
+            <Button variant="ghost" size="sm" iconOnly aria-label="Enviar pelo WhatsApp" onClick={() => enviarLink.mutate()} disabled={enviarLink.isPending}><Send size={15} /></Button>
           </div>
         </Card>
       )}
@@ -255,12 +245,11 @@ function NotasTimeline({ alunoId }: { alunoId: string }) {
       <p className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-1">
         <StickyNote size={14} /> Anotações sobre o aluno
       </p>
-      <form onSubmit={add} className="flex gap-2 mb-3">
-        <Textarea
-          rows={2} value={texto} onChange={(e) => setTexto(e.target.value)}
-          placeholder="Nova anotação…" className="flex-1"
-        />
-        <Button type="submit" size="sm" disabled={create.isPending || !texto.trim()}>Adicionar</Button>
+      <form onSubmit={add} className="space-y-2 mb-3">
+        <Textarea rows={2} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Nova anotação…" />
+        <div className="flex justify-end">
+          <Button type="submit" size="sm" disabled={create.isPending || !texto.trim()}>Adicionar</Button>
+        </div>
       </form>
       {isLoading ? (
         <Spinner />

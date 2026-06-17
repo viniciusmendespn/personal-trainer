@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Trophy, TrendingUp, Activity, BarChart3, CalendarCheck, FileDown } from 'lucide-react'
+import { ArrowLeft, Trophy, TrendingUp, Activity, BarChart3, CalendarCheck, FileDown, Search } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, ReferenceLine,
@@ -8,7 +8,7 @@ import {
 import { useAluno } from '../hooks/useAlunos'
 import { useExerciciosAluno, useEvolucao, useResumo } from '../hooks/useEvolucao'
 import { useMidiaExercicio } from '../hooks/useTreinos'
-import { Card, Spinner, Select, StatCard, Badge, EmptyState, Button, useToast } from '../components/ui'
+import { Card, Spinner, Select, StatCard, Badge, EmptyState, Button, Input, useToast } from '../components/ui'
 import { MediaTimeline } from '../components/media/MediaTimeline'
 import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
 import { renderNodeToPdf } from '../utils/exportPdf'
@@ -29,7 +29,24 @@ export function AlunoEvolucaoPage() {
   const { data: resumo } = useResumo(alunoId)
   const [exId, setExId] = useState('')
   const [exporting, setExporting] = useState(false)
+  const [exQuery, setExQuery] = useState('')
+  const [prQuery, setPrQuery] = useState('')
+  const [prLimit, setPrLimit] = useState(12)
   const { show } = useToast()
+
+  const exerciciosOrdenados = useMemo(
+    () => [...(exercicios ?? [])].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+    [exercicios]
+  )
+  const exerciciosFiltrados = useMemo(
+    () => exerciciosOrdenados.filter((e) => e.nome.toLowerCase().includes(exQuery.toLowerCase())),
+    [exerciciosOrdenados, exQuery]
+  )
+  const prsFiltrados = useMemo(
+    () => (resumo?.prs ?? []).filter((p) => p.exercicio.toLowerCase().includes(prQuery.toLowerCase())),
+    [resumo, prQuery]
+  )
+  const prsVisiveis = prsFiltrados.slice(0, prLimit)
 
   async function exportarPdf() {
     if (!resumo) return
@@ -47,8 +64,8 @@ export function AlunoEvolucaoPage() {
   }
 
   useEffect(() => {
-    if (!exId && exercicios?.length) setExId(exercicios[0].exercicio_id)
-  }, [exercicios, exId])
+    if (!exId && exerciciosOrdenados.length) setExId(exerciciosOrdenados[0].exercicio_id)
+  }, [exerciciosOrdenados, exId])
 
   const { data: evo, isLoading } = useEvolucao(alunoId, exId)
   const { data: midias, isLoading: midiasLoading } = useMidiaExercicio(alunoId, exId, !!exId)
@@ -107,11 +124,20 @@ export function AlunoEvolucaoPage() {
       {resumo?.prs?.length ? (
         <Card variant="elevated" className="mb-6">
           <p className="text-sm text-text-secondary mb-2 flex items-center gap-1"><Trophy size={14} className="text-energy" /> Recordes</p>
+          <div className="relative mb-2">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+            <Input placeholder="Buscar exercício…" value={prQuery} onChange={(e) => setPrQuery(e.target.value)} className="pl-8" />
+          </div>
           <div className="flex flex-wrap gap-2">
-            {resumo.prs.map((p) => (
+            {prsVisiveis.map((p) => (
               <Badge key={p.exercicio} tone="warning">{p.exercicio}: <b className="ml-1">{p.carga} kg</b></Badge>
             ))}
           </div>
+          {prsFiltrados.length > prLimit && (
+            <Button variant="ghost" size="sm" className="mt-2" onClick={() => setPrLimit((n) => n + 12)}>
+              Carregar mais ({prsFiltrados.length - prLimit} restantes)
+            </Button>
+          )}
         </Card>
       ) : null}
 
@@ -120,8 +146,14 @@ export function AlunoEvolucaoPage() {
         <EmptyState icon={<Activity />} title="Sem exercícios" description="Cadastre exercícios para acompanhar a evolução." />
       ) : (
         <>
+          <div className="flex gap-2 mb-4 max-w-xs">
+            <div className="relative flex-1">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+              <Input placeholder="Filtrar…" value={exQuery} onChange={(e) => setExQuery(e.target.value)} className="pl-8" />
+            </div>
+          </div>
           <Select value={exId} onChange={(e) => setExId(e.target.value)} className="mb-4 max-w-xs">
-            {exercicios.map((ex) => (
+            {exerciciosFiltrados.map((ex) => (
               <option key={ex.exercicio_id} value={ex.exercicio_id}>{ex.nome}</option>
             ))}
           </Select>

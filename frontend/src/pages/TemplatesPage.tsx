@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { Trash2, Users, LayoutTemplate, Dumbbell, Pencil, Plus, X } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Trash2, Users, LayoutTemplate, Dumbbell, Pencil, Plus, X, Search } from 'lucide-react'
 import { useAlunos } from '../hooks/useAlunos'
-import { useTemplates, useDeleteTemplate, useUpdateTemplate, useAplicarTemplate } from '../hooks/useTemplates'
+import { useTemplates, useCreateTemplate, useDeleteTemplate, useUpdateTemplate, useAplicarTemplate } from '../hooks/useTemplates'
 import { Button, Card, Input, Select, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm } from '../components/ui'
 import type { ExercicioTemplate, TreinoTemplate } from '../types'
 
@@ -11,10 +11,16 @@ export function TemplatesPage() {
   const { data: templates, isLoading } = useTemplates()
   const [applyTarget, setApplyTarget] = useState<TreinoTemplate | null>(null)
   const [editTarget, setEditTarget] = useState<TreinoTemplate | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h2 className="font-display text-xl font-semibold mb-1">Templates de treino</h2>
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="font-display text-xl font-semibold">Templates de treino</h2>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <span className="flex items-center gap-1"><Plus size={14} /> Novo template</span>
+        </Button>
+      </div>
       <p className="text-sm text-text-secondary mb-4">
         Salve um treino como modelo (no detalhe do aluno) e aplique-o a outros alunos rapidamente.
       </p>
@@ -41,6 +47,10 @@ export function TemplatesPage() {
 
       <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title="Editar template" size="xl">
         {editTarget && <EditForm template={editTarget} onDone={() => setEditTarget(null)} />}
+      </Modal>
+
+      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Novo template" size="xl">
+        <EditForm onDone={() => setCreateOpen(false)} />
       </Modal>
     </div>
   )
@@ -90,6 +100,12 @@ function AplicarForm({ template, onDone }: { template: TreinoTemplate; onDone: (
   const aplicar = useAplicarTemplate()
   const { show } = useToast()
   const [selected, setSelected] = useState<string[]>([])
+  const [query, setQuery] = useState('')
+
+  const alunosFiltrados = useMemo(
+    () => (alunos ?? []).filter((a) => a.nome.toLowerCase().includes(query.toLowerCase())),
+    [alunos, query]
+  )
 
   function toggle(id: string) {
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
@@ -104,8 +120,17 @@ function AplicarForm({ template, onDone }: { template: TreinoTemplate; onDone: (
 
   return (
     <div className="space-y-3">
+      <div className="relative">
+        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+        <Input
+          placeholder="Buscar aluno…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="pl-8"
+        />
+      </div>
       <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1">
-        {alunos?.map((a) => (
+        {alunosFiltrados.map((a) => (
           <label key={a.aluno_id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/5 cursor-pointer">
             <input type="checkbox" checked={selected.includes(a.aluno_id)} onChange={() => toggle(a.aluno_id)} className="accent-accent" />
             <span className="text-sm">{a.nome}</span>
@@ -119,12 +144,14 @@ function AplicarForm({ template, onDone }: { template: TreinoTemplate; onDone: (
   )
 }
 
-function EditForm({ template, onDone }: { template: TreinoTemplate; onDone: () => void }) {
+function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () => void }) {
+  const create = useCreateTemplate()
   const upd = useUpdateTemplate()
   const { show } = useToast()
-  const [nome, setNome] = useState(template.nome)
-  const [foco, setFoco] = useState(template.foco ?? '')
-  const [exercicios, setExercicios] = useState<ExercicioTemplate[]>(template.exercicios)
+  const [nome, setNome] = useState(template?.nome ?? '')
+  const [foco, setFoco] = useState(template?.foco ?? '')
+  const [exercicios, setExercicios] = useState<ExercicioTemplate[]>(template?.exercicios ?? [])
+  const saving = create.isPending || upd.isPending
 
   function updateEx(i: number, fields: Partial<ExercicioTemplate>) {
     setExercicios((exs) => exs.map((e, j) => (j === i ? { ...e, ...fields } : e)))
@@ -139,18 +166,21 @@ function EditForm({ template, onDone }: { template: TreinoTemplate; onDone: () =
   async function save(e: React.FormEvent) {
     e.preventDefault()
     if (!nome.trim()) return
-    await upd.mutateAsync({
-      id: template.template_id,
-      body: { nome, foco: foco || undefined, exercicios: exercicios.filter((ex) => ex.nome.trim()) },
-    })
-    show('Template atualizado.', 'success')
+    const body = { nome, foco: foco || undefined, exercicios: exercicios.filter((ex) => ex.nome.trim()) }
+    if (template) {
+      await upd.mutateAsync({ id: template.template_id, body })
+      show('Template atualizado.', 'success')
+    } else {
+      await create.mutateAsync(body)
+      show('Template criado.', 'success')
+    }
     onDone()
   }
 
   return (
     <form onSubmit={save} className="space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Input label="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
+        <Input label="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required autoFocus />
         <Input label="Foco" value={foco} onChange={(e) => setFoco(e.target.value)} />
       </div>
 
@@ -163,17 +193,32 @@ function EditForm({ template, onDone }: { template: TreinoTemplate; onDone: () =
             >
               <X size={15} />
             </Button>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pr-8">
-              <Input label="Exercício" className="col-span-2 sm:col-span-3" value={ex.nome} onChange={(e) => updateEx(i, { nome: e.target.value })} />
-              <Input label="Séries" value={ex.series ?? ''} onChange={(e) => updateEx(i, { series: e.target.value ? Number(e.target.value) : undefined })} />
-              <Input label="Reps" value={ex.reps_prescritas ?? ''} onChange={(e) => updateEx(i, { reps_prescritas: e.target.value || undefined })} />
-              <Input label="Carga" value={ex.carga_prescrita ?? ''} onChange={(e) => updateEx(i, { carga_prescrita: e.target.value || undefined })} />
-              <Select label="Dia" value={ex.dia_semana ?? ''} onChange={(e) => updateEx(i, { dia_semana: e.target.value === '' ? null : Number(e.target.value) })}>
-                <option value="">Todo dia</option>
-                {DIAS.map((d, idx) => <option key={idx} value={idx}>{d}</option>)}
-              </Select>
-              <Input label="Vídeo" className="col-span-2" value={ex.video_url ?? ''} onChange={(e) => updateEx(i, { video_url: e.target.value || undefined })} />
-              <Textarea label="Observações" className="col-span-2 sm:col-span-3" rows={2} value={ex.observacoes ?? ''} onChange={(e) => updateEx(i, { observacoes: e.target.value || undefined })} />
+            <div className="space-y-3 pr-8">
+              <div>
+                <p className="text-xs font-medium text-text-secondary mb-2">Identificação</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input label="Exercício" className="col-span-2" value={ex.nome} onChange={(e) => updateEx(i, { nome: e.target.value })} />
+                  <Select label="Dia" value={ex.dia_semana ?? ''} onChange={(e) => updateEx(i, { dia_semana: e.target.value === '' ? null : Number(e.target.value) })}>
+                    <option value="">Todo dia</option>
+                    {DIAS.map((d, idx) => <option key={idx} value={idx}>{d}</option>)}
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-text-secondary mb-2">Prescrição</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <Input label="Séries" value={ex.series ?? ''} onChange={(e) => updateEx(i, { series: e.target.value ? Number(e.target.value) : undefined })} />
+                  <Input label="Reps" value={ex.reps_prescritas ?? ''} onChange={(e) => updateEx(i, { reps_prescritas: e.target.value || undefined })} />
+                  <Input label="Carga" value={ex.carga_prescrita ?? ''} onChange={(e) => updateEx(i, { carga_prescrita: e.target.value || undefined })} />
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-text-secondary mb-2">Vídeo e observações</p>
+                <div className="space-y-3">
+                  <Input label="Vídeo (URL)" value={ex.video_url ?? ''} onChange={(e) => updateEx(i, { video_url: e.target.value || undefined })} />
+                  <Textarea label="Observações" rows={2} value={ex.observacoes ?? ''} onChange={(e) => updateEx(i, { observacoes: e.target.value || undefined })} />
+                </div>
+              </div>
             </div>
           </Card>
         ))}
@@ -183,8 +228,8 @@ function EditForm({ template, onDone }: { template: TreinoTemplate; onDone: () =
         <span className="flex items-center gap-1"><Plus size={14} /> Adicionar exercício</span>
       </Button>
 
-      <Button type="submit" className="w-full" disabled={upd.isPending}>
-        {upd.isPending ? 'Salvando…' : 'Salvar'}
+      <Button type="submit" className="w-full" disabled={saving}>
+        {saving ? 'Salvando…' : template ? 'Salvar' : 'Criar template'}
       </Button>
     </form>
   )

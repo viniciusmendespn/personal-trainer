@@ -171,6 +171,11 @@ function AgendamentoRow({ a, alunoNome }: { a: Agendamento; alunoNome?: string }
             <Check size={14} />
           </Button>
         )}
+        {a.status === 'CANCELADO' && (
+          <Button variant="ghost" size="sm" iconOnly aria-label="Reativar e confirmar" onClick={() => setStatus.mutate({ a, status: 'CONFIRMADO' })}>
+            <Check size={14} />
+          </Button>
+        )}
         {(a.status === 'AGENDADO' || a.status === 'CONFIRMADO') && (
           <Button variant="ghost" size="sm" iconOnly aria-label="Cancelar" onClick={cancelar} className="hover:text-danger">
             <X size={14} />

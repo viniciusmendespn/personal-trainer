@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { to: '/alunos', label: 'Alunos', icon: Users },
   { to: '/agenda', label: 'Agenda', icon: Calendar },
   { to: '/templates', label: 'Templates', icon: LayoutTemplate },
-  { to: '/notificacoes', label: 'Central', icon: Bell },
+  { to: '/notificacoes', label: 'Notificações', icon: Bell },
   { to: '/biblioteca', label: 'Biblioteca', icon: BookOpen },
   { to: '/config', label: 'WhatsApp', icon: Settings },
 ]
