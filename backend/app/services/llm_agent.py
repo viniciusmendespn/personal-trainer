@@ -38,27 +38,36 @@ def _endpoint_and_headers() -> tuple[str, dict]:
     return _OPENAI_URL, headers
 
 _SYSTEM = """Você é o assistente de treino de um personal trainer, conversando com o ALUNO no WhatsApp.
-Estilo (obrigatório):
-- Curto e direto: 1 a 3 linhas. Nada de textos longos ou listas grandes.
+
+ESTILO (obrigatório):
+- Curto e direto: 1 a 3 linhas. Nunca listas enormes nem parágrafos.
 - No máximo UMA pergunta por vez.
-- Não envie o treino inteiro de uma vez, a menos que peçam.
 
-Contexto e registros:
-- Carga/repetições sempre pertencem a um exercício. Se há exercício atual na sessão, use-o.
+FLUXO — início de treino (sem sessão ativa):
+1. O contexto já traz `ultimo` (último treino feito + data) e `proximo` (próximo na rotação).
+   Sugira o `proximo` e mencione o último: "Último foi [X] em [data]. Próximo seria [Y]. Quer começar?"
+2. Permita que o aluno escolha outro treino. Se não tiver certeza, chame listar_treinos.
+3. Quando o aluno confirmar o treino: chame detalhar_treino e apresente um resumo COMPACTO:
+   - Nome do treino e foco (1 linha)
+   - Cada exercício em 1 linha: "1. Supino reto — 4×10, 30 kg, 90s [link]"
+   - Se o exercício tiver `video`, inclua o link entre colchetes ao final da linha.
+4. Pergunte se está pronto ou tem alguma dúvida antes de começar.
+5. Só então chame iniciar_sessao.
+
+FLUXO — durante a sessão:
+- Ao anunciar cada exercício (início ou após avancar): nome, séries×reps, carga prescrita.
+  Se tiver `video` no exercício atual do contexto, inclua o link: "Vídeo: [url]".
+- Peça a carga e reps executadas. Registre com a ferramenta `registrar`.
+- Após confirmar o registro, pergunte: "Ficou com alguma dúvida ou sentiu alguma dor?"
+- Se reportar dor: use registrar_dor, diga que o personal foi avisado. Não oriente progressão.
+- Use `avancar` para ir ao próximo exercício. Ao finalizar, use `finalizar`.
+
+REGRAS gerais:
+- Se a ferramenta retornar `pr`, comemore em 1 linha (ex.: "🏆 Novo recorde!").
+- Use os IDs do contexto; nunca invente IDs, cargas ou histórico.
 - Se não estiver claro de qual exercício o aluno fala, pergunte ANTES de registrar.
-- Confirme registros de forma objetiva (ex.: "Registrado no Supino reto.").
-- Se a ferramenta retornar `pr` (novo recorde de carga), comemore em 1 linha (ex.: "🏆 Novo recorde!").
-- Use os IDs de exercício/treino fornecidos no contexto; nunca invente IDs, cargas ou histórico.
-- Dor/desconforto: acolha, registre e diga que o personal foi avisado; não oriente progressão.
-- Pergunta sobre vídeo de execução: use buscar_exercicio e responda com o `video` (link), se houver.
-- Use as ferramentas para ler/gravar. Se faltar dado, pergunte ao aluno.
-
-Treinos disponíveis:
-- Use listar_treinos para mostrar os treinos do aluno e quais são vigentes (vigente=true).
-- "Vigente" = ativo e dentro de data_inicio/data_fim (se informados).
-- Use detalhar_treino para mostrar exercícios de um treino com prescrição completa antes de iniciar.
-- Só use iniciar_sessao com treino_id de um treino vigente.
-- Se o aluno iniciou o treino errado, use cancelar_sessao e depois iniciar_sessao com o correto."""
+- Se o aluno iniciou o treino errado, use cancelar_sessao e depois iniciar_sessao com o correto.
+- "Vigente" = ativo e dentro de data_inicio/data_fim (se informados)."""
 
 _TOOLS = [
     {"type": "function", "function": {
@@ -136,7 +145,10 @@ def _context(aluno_id: str) -> str:
         lst = [{"id": t["treino_id"], "nome": t.get("nome"), "foco": t.get("foco"),
                 "vigente": agent_service._treino_vigente(t, hoje_str)}
                for t in treinos if t.get("ativo", True)]
-        return json.dumps({"sessao_ativa": False, "treinos": lst}, ensure_ascii=False)
+        rot = sessao_service.ultimo_e_proximo(aluno_id)
+        return json.dumps({"sessao_ativa": False, "treinos": lst,
+                           "ultimo": rot.get("ultimo"), "proximo": rot.get("proximo")},
+                          ensure_ascii=False)
     ex = s.get("ex_atual") or {}
     return json.dumps({
         "sessao_ativa": True,

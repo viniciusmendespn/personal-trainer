@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Users, UserCheck, Bell, Clock, MessageCircle, ArrowRight, Calendar, CalendarCheck, Cake, LayoutTemplate } from 'lucide-react'
+import { Users, UserCheck, Bell, MessageCircle, ArrowRight, Calendar, CalendarCheck, Cake, LayoutTemplate } from 'lucide-react'
 import { useDashboard } from '../hooks/useDashboard'
 import { useAgenda } from '../hooks/useAgenda'
 import { useAlunos } from '../hooks/useAlunos'
@@ -79,11 +79,10 @@ export function DashboardPage() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
             <StatCard icon={<Users />} label="Alunos" value={data?.alunos ?? 0} tone="accent" />
             <StatCard icon={<UserCheck />} label="Ativos" value={data?.alunos_ativos ?? 0} tone="success" />
             <StatCard icon={<Bell />} label="Notificações" value={data?.notificacoes_nao_lidas ?? 0} tone="danger" />
-            <StatCard icon={<Clock />} label="Pendências" value={data?.pendencias ?? 0} tone="warning" />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard icon={<Calendar />} label="Sessões hoje" value={sessoesHoje} tone="accent" />

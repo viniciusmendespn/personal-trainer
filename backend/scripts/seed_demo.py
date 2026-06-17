@@ -396,21 +396,23 @@ repo.put_item(keys.pk_aluno(bruno["aluno_id"]), f"MIDIA#NA#{midia_id}", {
     "s3_key": f"midia/{bruno['aluno_id']}/{midia_id}.mp4",
     "exercicio_id": None, "exercicio_nome": None, "status": "PENDENTE", "data_hora": iso_at(NOW),
 })
-alerta_service.criar_pendencia(
-    PERSONAL_ID, bruno["aluno_id"], "MIDIA_PENDENTE",
-    {"midia_id": midia_id, "s3_key": f"midia/{bruno['aluno_id']}/{midia_id}.mp4", "tipo": "video_execucao"},
+notif_service.criar(
+    PERSONAL_ID, "MIDIA_PENDENTE", "Mídia sem exercício",
     "Mídia recebida sem exercício vinculado",
+    aluno_id=bruno["aluno_id"],
+    ref_extra={"midia_id": midia_id, "s3_key": f"midia/{bruno['aluno_id']}/{midia_id}.mp4"},
 )
 
 fernanda = next(a for a in alunos_criados if a["nome"] == "Fernanda Oliveira")
-alerta_service.criar_pendencia(
-    PERSONAL_ID, fernanda["aluno_id"], "PENDENCIA",
-    {"texto": "Achei o treino meio pesado essa semana"}, "Feedback sem treino/exercício associado",
+notif_service.criar(
+    PERSONAL_ID, "FEEDBACK", "Feedback do aluno",
+    "Achei o treino meio pesado essa semana",
+    aluno_id=fernanda["aluno_id"],
 )
 
 # notificações extras (já lidas) para dar histórico à Central
 thiago = next(a for a in alunos_criados if a["nome"] == "Thiago Ferreira")
-nid = notif_service.criar(PERSONAL_ID, "PENDENCIA", "Pendência resolvida (exemplo)",
+nid = notif_service.criar(PERSONAL_ID, "FEEDBACK", "Feedback antigo (exemplo)",
                           f"Histórico antigo de {thiago['nome']} — apenas para exemplo de notificação lida.",
                           aluno_id=thiago["aluno_id"])
 # marca como lida diretamente (SK previsível, pois notif_service.criar usa epoch 'agora')

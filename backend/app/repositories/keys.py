@@ -46,10 +46,6 @@ def sk_alerta(ts: str, alerta_id: str) -> str:
     return f"ALERT#{ts}#{alerta_id}"
 
 
-def sk_pendencia(ts: str, pendencia_id: str) -> str:
-    return f"PEND#{ts}#{pendencia_id}"
-
-
 NOTIF_PREFIX = "NOTIF#"
 
 

@@ -36,11 +36,6 @@ class MidiaTipo(str, Enum):
     OUTRO = "OUTRO"
 
 
-class PendenciaStatus(str, Enum):
-    ABERTA = "ABERTA"
-    RESOLVIDA = "RESOLVIDA"
-
-
 class AlertaStatus(str, Enum):
     ABERTO = "ABERTO"
     VISTO = "VISTO"

@@ -9,17 +9,8 @@ export interface Notificacao {
   aluno_id?: string
   lida: boolean
   data_hora: string
-}
-
-export interface Pendencia {
-  ref: string
-  pendencia_id: string
-  aluno_id: string
-  tipo: string
-  motivo: string
-  status: string
-  data_hora: string
-  payload?: { midia_id?: string; s3_key?: string; tipo?: string; [key: string]: unknown }
+  midia_id?: string
+  s3_key?: string
 }
 
 export interface NotificacaoPage {
@@ -35,6 +26,6 @@ export const notifApi = {
   unread: () => api.get<{ count: number }>('/v1/notificacoes/unread').then((r) => r.data),
   read: (ref: string) => api.post('/v1/notificacoes/read', { ref }),
   readAll: () => api.post('/v1/notificacoes/read-all'),
-  listPendencias: () => api.get<Pendencia[]>('/v1/pendencias').then((r) => r.data),
-  resolvePendencia: (ref: string) => api.post('/v1/pendencias/resolve', { ref }),
+  vincularMidia: (body: { ref: string; aluno_id: string; midia_id: string; exercicio_id: string; exercicio_nome?: string }) =>
+    api.post('/v1/notificacoes/vincular-midia', body),
 }

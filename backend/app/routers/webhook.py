@@ -15,7 +15,7 @@ from app.dependencies import verify_wapi_webhook
 from app.models.enums import Ator, CanalOrigem
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import agent_service, alerta_service, llm_agent, media_service, sessao_service
+from app.services import agent_service, llm_agent, media_service, notif_service, sessao_service
 from app.services.wapi_service import WAPIClient
 
 logger = logging.getLogger(__name__)
@@ -138,9 +138,12 @@ async def receive(secret: str, request: Request):
         if ex.get("exercicio_id") and saved:
             _send(personal_id, sender, f"Mídia vinculada a {ex.get('nome')}.")
         else:
-            alerta_service.criar_pendencia(
-                personal_id, aluno_id, "MIDIA_PENDENTE", saved or media,
+            payload = saved or media or {}
+            notif_service.criar(
+                personal_id, "MIDIA_PENDENTE", "Mídia sem exercício",
                 "Mídia recebida sem exercício vinculado",
+                aluno_id=aluno_id,
+                ref_extra={"midia_id": payload.get("midia_id"), "s3_key": payload.get("s3_key")},
             )
             _send(personal_id, sender, "Recebi sua mídia. De qual exercício ela é?")
         return _OK

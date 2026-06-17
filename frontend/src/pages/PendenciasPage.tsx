@@ -1,11 +1,10 @@
-import { useMemo, useState } from 'react'
-import { Bell, Check, Clock, AlertTriangle, CalendarClock, Image, Link2, HelpCircle, Pin, Camera, Mail } from 'lucide-react'
-import { useCentral, useVincularMidia } from '../hooks/useCentral'
-import { useMarkRead, useMarkAllRead, useResolvePendencia } from '../hooks/useNotificacoes'
+import { useState } from 'react'
+import { Bell, AlertTriangle, CalendarClock, Clock, Image, Camera, HelpCircle, Pin, Mail, Link2 } from 'lucide-react'
+import { useNotificacoes, useMarkRead, useMarkAllRead, useVincularMidia } from '../hooks/useNotificacoes'
 import { useAlunos } from '../hooks/useAlunos'
 import { useExerciciosAluno } from '../hooks/useEvolucao'
-import { Card, Spinner, Button, Tabs, Badge, EmptyState, Select, Modal } from '../components/ui'
-import type { CentralItem } from '../api/central'
+import { Card, Spinner, Button, Badge, EmptyState, Select, Modal } from '../components/ui'
+import type { Notificacao } from '../api/notificacoes'
 
 const TIPO_ICON: Record<string, React.ReactNode> = {
   DOR: <AlertTriangle size={16} className="text-danger" />,
@@ -27,20 +26,11 @@ const TIPO_TONE: Record<string, 'danger' | 'warning' | 'info' | 'neutral'> = {
 }
 
 export function PendenciasPage() {
-  const { data, isLoading } = useCentral()
+  const { data: items, isLoading } = useNotificacoes()
   const markRead = useMarkRead()
   const markAll = useMarkAllRead()
-  const resolveP = useResolvePendencia()
   const { data: alunos } = useAlunos()
-  const [tab, setTab] = useState<'tudo' | 'notif' | 'pend'>('tudo')
-  const [vincularItem, setVincularItem] = useState<CentralItem | null>(null)
-
-  const items = useMemo(() => {
-    const all = data?.items ?? []
-    if (tab === 'notif') return all.filter((i) => i.kind === 'NOTIF')
-    if (tab === 'pend') return all.filter((i) => i.kind === 'PENDENCIA')
-    return all
-  }, [data, tab])
+  const [vincularItem, setVincularItem] = useState<Notificacao | null>(null)
 
   const nomeAluno = (id?: string) => alunos?.find((a) => a.aluno_id === id)?.nome
 
@@ -53,73 +43,53 @@ export function PendenciasPage() {
         <Button variant="ghost" size="sm" onClick={() => markAll.mutate()}>Marcar todas como lidas</Button>
       </div>
 
-      <Tabs
-        className="mb-4"
-        tabs={[
-          { key: 'tudo', label: 'Tudo', badge: data?.total },
-          { key: 'notif', label: 'Notificações' },
-          { key: 'pend', label: 'Pendências' },
-        ]}
-        active={tab}
-        onChange={(k) => setTab(k as typeof tab)}
-      />
-
       {isLoading ? (
         <Spinner />
-      ) : !items.length ? (
-        <EmptyState icon={<Bell />} title="Tudo em dia" description="Nenhuma notificação ou pendência por aqui." />
+      ) : !items?.length ? (
+        <EmptyState icon={<Bell />} title="Tudo em dia" description="Nenhuma notificação por aqui." />
       ) : (
         <div className="space-y-2">
-          {items.map((item) => {
-            const isNotif = item.kind === 'NOTIF'
-            const tipo = isNotif ? item.tipo : item.tipo
-            return (
-              <Card key={item.ref} variant="elevated" className={`flex items-start justify-between gap-3 ${isNotif && !item.lida ? 'border-l-2 border-l-accent' : isNotif && item.lida ? 'opacity-60' : ''}`}>
-                <div className="flex gap-2 min-w-0">
-                  <div className="mt-0.5 shrink-0">{TIPO_ICON[tipo] ?? <Bell size={16} className="text-text-muted" />}</div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium flex items-center gap-2 flex-wrap">
-                      {isNotif ? item.titulo : tipo}
-                      <Badge tone={TIPO_TONE[tipo] ?? 'neutral'}>{isNotif ? 'Notificação' : 'Pendência'}</Badge>
-                      {isNotif && (
-                        <Badge tone={item.lida ? 'neutral' : 'success'}>{item.lida ? 'Lida' : 'Não lida'}</Badge>
-                      )}
-                    </p>
-                    <p className="text-xs text-text-secondary">{isNotif ? item.mensagem : item.motivo}</p>
-                    {!isNotif && item.aluno_id && <p className="text-xs text-text-muted">{nomeAluno(item.aluno_id)}</p>}
-                    <p className="text-[11px] text-text-muted mt-0.5">{new Date(item.data_hora).toLocaleString('pt-BR')}</p>
-                  </div>
+          {items.map((item) => (
+            <Card
+              key={item.ref}
+              variant="elevated"
+              className={`flex items-start justify-between gap-3 ${!item.lida ? 'border-l-2 border-l-accent' : 'opacity-60'}`}
+            >
+              <div className="flex gap-2 min-w-0">
+                <div className="mt-0.5 shrink-0">{TIPO_ICON[item.tipo] ?? <Bell size={16} className="text-text-muted" />}</div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium flex items-center gap-2 flex-wrap">
+                    {item.titulo}
+                    <Badge tone={TIPO_TONE[item.tipo] ?? 'neutral'}>{item.tipo}</Badge>
+                    <Badge tone={item.lida ? 'neutral' : 'success'}>{item.lida ? 'Lida' : 'Não lida'}</Badge>
+                  </p>
+                  <p className="text-xs text-text-secondary">{item.mensagem}</p>
+                  {item.aluno_id && <p className="text-xs text-text-muted">{nomeAluno(item.aluno_id)}</p>}
+                  <p className="text-[11px] text-text-muted mt-0.5">{new Date(item.data_hora).toLocaleString('pt-BR')}</p>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {!isNotif && tipo === 'MIDIA_PENDENTE' && item.payload?.midia_id && (
-                    <Button variant="ghost" size="sm" iconOnly aria-label="Vincular a exercício" onClick={() => setVincularItem(item)}>
-                      <Link2 size={15} />
-                    </Button>
-                  )}
-                  {isNotif && (
-                    <Button
-                      variant="ghost" size="sm" iconOnly
-                      aria-label={item.lida ? 'Já lida' : 'Marcar como lida'}
-                      disabled={item.lida}
-                      onClick={() => !item.lida && markRead.mutate(item.ref)}
-                    >
-                      <Mail size={16} />
-                    </Button>
-                  )}
-                  {!isNotif && (
-                    <Button variant="ghost" size="sm" iconOnly aria-label="Resolver pendência" onClick={() => resolveP.mutate(item.ref)}>
-                      <Check size={16} />
-                    </Button>
-                  )}
-                </div>
-              </Card>
-            )
-          })}
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {item.tipo === 'MIDIA_PENDENTE' && item.midia_id && (
+                  <Button variant="ghost" size="sm" iconOnly aria-label="Vincular a exercício" onClick={() => setVincularItem(item)}>
+                    <Link2 size={15} />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost" size="sm" iconOnly
+                  aria-label={item.lida ? 'Já lida' : 'Marcar como lida'}
+                  disabled={item.lida}
+                  onClick={() => !item.lida && markRead.mutate(item.ref)}
+                >
+                  <Mail size={16} />
+                </Button>
+              </div>
+            </Card>
+          ))}
         </div>
       )}
 
       <Modal open={!!vincularItem} onClose={() => setVincularItem(null)} title="Vincular mídia a um exercício">
-        {vincularItem && vincularItem.kind === 'PENDENCIA' && (
+        {vincularItem && (
           <VincularMidiaForm item={vincularItem} onDone={() => setVincularItem(null)} />
         )}
       </Modal>
@@ -127,17 +97,17 @@ export function PendenciasPage() {
   )
 }
 
-function VincularMidiaForm({ item, onDone }: { item: Extract<CentralItem, { kind: 'PENDENCIA' }>; onDone: () => void }) {
-  const { data: exercicios } = useExerciciosAluno(item.aluno_id)
+function VincularMidiaForm({ item, onDone }: { item: Notificacao; onDone: () => void }) {
+  const { data: exercicios } = useExerciciosAluno(item.aluno_id ?? '')
   const vincular = useVincularMidia()
   const [exId, setExId] = useState('')
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     const ex = exercicios?.find((x) => x.exercicio_id === exId)
-    if (!ex || !item.payload?.midia_id) return
+    if (!ex || !item.midia_id) return
     await vincular.mutateAsync({
-      ref: item.ref, aluno_id: item.aluno_id, midia_id: item.payload.midia_id,
+      ref: item.ref, aluno_id: item.aluno_id!, midia_id: item.midia_id,
       exercicio_id: ex.exercicio_id, exercicio_nome: ex.nome,
     })
     onDone()

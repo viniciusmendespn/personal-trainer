@@ -39,14 +39,14 @@ export function useMarkAllRead() {
   })
 }
 
-export function usePendencias() {
-  return useQuery({ queryKey: ['pendencias'], queryFn: notifApi.listPendencias })
-}
-
-export function useResolvePendencia() {
+export function useVincularMidia() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (ref: string) => notifApi.resolvePendencia(ref),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['pendencias'] }),
+    mutationFn: notifApi.vincularMidia,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notificacoes'] })
+      qc.invalidateQueries({ queryKey: ['notif-unread'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
   })
 }
