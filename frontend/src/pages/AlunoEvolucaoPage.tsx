@@ -7,7 +7,9 @@ import {
 } from 'recharts'
 import { useAluno } from '../hooks/useAlunos'
 import { useExerciciosAluno, useEvolucao, useResumo } from '../hooks/useEvolucao'
+import { useMidiaExercicio } from '../hooks/useTreinos'
 import { Card, Spinner, Select, StatCard, Badge, EmptyState, Button, useToast } from '../components/ui'
+import { MediaTimeline } from '../components/media/MediaTimeline'
 import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
 import { renderNodeToPdf } from '../utils/exportPdf'
 
@@ -49,6 +51,7 @@ export function AlunoEvolucaoPage() {
   }, [exercicios, exId])
 
   const { data: evo, isLoading } = useEvolucao(alunoId, exId)
+  const { data: midias, isLoading: midiasLoading } = useMidiaExercicio(alunoId, exId, !!exId)
   const exSel = exercicios?.find((e) => e.exercicio_id === exId)
   const prescrita = exSel?.carga_prescrita ? Number(String(exSel.carga_prescrita).replace(',', '.')) : NaN
 
@@ -155,6 +158,10 @@ export function AlunoEvolucaoPage() {
               </ResponsiveContainer>
             </Card>
           )}
+
+          <div className="mt-4">
+            <MediaTimeline items={(midias ?? []).map((m) => ({ ...m, ator: m.ator ?? 'ALUNO' }))} isLoading={midiasLoading} />
+          </div>
         </>
       )}
     </div>

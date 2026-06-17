@@ -1,17 +1,19 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Check, X, Send, Dumbbell, LayoutTemplate, StickyNote, Link2, Camera } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Send, Dumbbell, LayoutTemplate, StickyNote, Link2 } from 'lucide-react'
 import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { alunosApi } from '../api/alunos'
 import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
-import { Button, Card, Input, Select, Textarea, Spinner, Tabs, Badge, EmptyState, useToast } from '../components/ui'
+import { Button, Card, Input, Select, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, useToast } from '../components/ui'
+import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
-import type { Treino, Exercicio } from '../types'
+import { useNotas, useCreateNota } from '../hooks/useNotas'
+import type { Treino, Exercicio, ExercicioCreate } from '../types'
 
 const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
@@ -24,6 +26,7 @@ export function AlunoDetailPage() {
   const updateAluno = useUpdateAluno(alunoId)
   const deleteAluno = useDeleteAluno()
   const [tab, setTab] = useState<'perfil' | 'treinos'>('treinos')
+  const [showAddTreino, setShowAddTreino] = useState(false)
   const [nome, setNome] = useState('')
   const [foco, setFoco] = useState('')
   const [dtIni, setDtIni] = useState('')
@@ -82,6 +85,7 @@ export function AlunoDetailPage() {
       ordem: (treinos?.length ?? 0) + 1,
     })
     setNome(''); setFoco(''); setDtIni(''); setDtFim('')
+    setShowAddTreino(false)
   }
 
   return (
@@ -138,7 +142,8 @@ export function AlunoDetailPage() {
       />
 
       {tab === 'perfil' && (
-        <Card variant="elevated" className="max-w-md">
+        <div className="max-w-md space-y-4">
+        <Card variant="elevated">
           {editing ? (
             <form onSubmit={saveEdit} className="space-y-3">
               <Input label="Nome" value={eNome} onChange={(e) => setENome(e.target.value)} />
@@ -181,21 +186,31 @@ export function AlunoDetailPage() {
             </div>
           )}
         </Card>
+        <NotasTimeline alunoId={alunoId} />
+        </div>
       )}
 
       {tab === 'treinos' && (
         <>
-          <Card variant="elevated" className="mb-4">
-            <form onSubmit={addTreino} className="grid grid-cols-1 sm:grid-cols-[2fr_2fr_1.2fr_1.2fr_auto] gap-3 items-end">
-              <Input label="Treino" placeholder="ex: Treino A" value={nome} onChange={(e) => setNome(e.target.value)} />
-              <Input label="Foco" placeholder="ex: Inferiores" value={foco} onChange={(e) => setFoco(e.target.value)} />
-              <Input label="Início" type="date" value={dtIni} onChange={(e) => setDtIni(e.target.value)} />
-              <Input label="Fim" type="date" value={dtFim} onChange={(e) => setDtFim(e.target.value)} />
-              <Button type="submit" disabled={createTreino.isPending} iconOnly aria-label="Adicionar treino">
-                <Plus size={16} />
+          <div className="flex justify-end mb-4">
+            <Button onClick={() => setShowAddTreino(true)}>
+              <span className="flex items-center gap-1"><Plus size={16} /> Adicionar treino</span>
+            </Button>
+          </div>
+
+          <Modal open={showAddTreino} onClose={() => setShowAddTreino(false)} title="Novo treino" size="lg">
+            <form onSubmit={addTreino} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input label="Treino" placeholder="ex: Treino A" value={nome} onChange={(e) => setNome(e.target.value)} autoFocus />
+                <Input label="Foco" placeholder="ex: Inferiores" value={foco} onChange={(e) => setFoco(e.target.value)} />
+                <Input label="Início" type="date" value={dtIni} onChange={(e) => setDtIni(e.target.value)} />
+                <Input label="Fim" type="date" value={dtFim} onChange={(e) => setDtFim(e.target.value)} />
+              </div>
+              <Button type="submit" className="w-full" disabled={createTreino.isPending}>
+                {createTreino.isPending ? 'Adicionando…' : 'Adicionar treino'}
               </Button>
             </form>
-          </Card>
+          </Modal>
 
           {isLoading ? (
             <Spinner />
@@ -217,9 +232,52 @@ export function AlunoDetailPage() {
 const fmtDate = (d?: string) => (d ? d.split('-').reverse().slice(0, 2).join('/') : '')
 const fmtDateFull = (d?: string) => (d ? d.split('-').reverse().join('/') : '')
 
+function NotasTimeline({ alunoId }: { alunoId: string }) {
+  const { data: notas, isLoading } = useNotas(alunoId)
+  const create = useCreateNota(alunoId)
+  const [texto, setTexto] = useState('')
+
+  async function add(e: React.FormEvent) {
+    e.preventDefault()
+    if (!texto.trim()) return
+    await create.mutateAsync(texto.trim())
+    setTexto('')
+  }
+
+  return (
+    <Card variant="elevated">
+      <p className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-1">
+        <StickyNote size={14} /> Anotações sobre o aluno
+      </p>
+      <form onSubmit={add} className="flex gap-2 mb-3">
+        <Textarea
+          rows={2} value={texto} onChange={(e) => setTexto(e.target.value)}
+          placeholder="Nova anotação…" className="flex-1"
+        />
+        <Button type="submit" size="sm" disabled={create.isPending || !texto.trim()}>Adicionar</Button>
+      </form>
+      {isLoading ? (
+        <Spinner />
+      ) : !notas?.length ? (
+        <p className="text-xs text-text-muted">Nenhuma anotação ainda.</p>
+      ) : (
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {notas.map((n) => (
+            <div key={n.nota_id} className="border-b border-border pb-2">
+              <p className="text-sm whitespace-pre-wrap">{n.texto}</p>
+              <p className="text-[11px] text-text-muted mt-0.5">{new Date(n.data_hora).toLocaleString('pt-BR')}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
 function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
   const [open, setOpen] = useState(false)
   const [editT, setEditT] = useState(false)
+  const [addingEx, setAddingEx] = useState(false)
   const delTreino = useDeleteTreino(alunoId)
   const updTreino = useUpdateTreino(alunoId)
   const saveAsTemplate = useCreateTemplateFromTreino()
@@ -227,38 +285,14 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
   const { data: exs } = useExercicios(alunoId, open ? treino.treino_id : '')
   const { data: biblioteca } = useBiblioteca()
   const createEx = useCreateExercicio(alunoId, treino.treino_id)
-  const [nome, setNome] = useState('')
-  const [series, setSeries] = useState('')
-  const [reps, setReps] = useState('')
-  const [carga, setCarga] = useState('')
-  const [vid, setVid] = useState('')
-  const [dia, setDia] = useState('')
-  const [obs, setObs] = useState('')
   const [tNome, setTNome] = useState(treino.nome)
   const [tFoco, setTFoco] = useState(treino.foco ?? '')
   const [tIni, setTIni] = useState(treino.data_inicio ?? '')
   const [tFim, setTFim] = useState(treino.data_fim ?? '')
 
-  function onNome(v: string) {
-    setNome(v)
-    const lib = biblioteca?.find((b) => b.nome.toLowerCase() === v.toLowerCase())
-    if (lib?.video_url) setVid(lib.video_url)
-  }
-
-  async function addEx(e: React.FormEvent) {
-    e.preventDefault()
-    if (!nome) return
-    await createEx.mutateAsync({
-      nome,
-      series: series ? Number(series) : undefined,
-      reps_prescritas: reps || undefined,
-      carga_prescrita: carga || undefined,
-      video_url: vid || undefined,
-      observacoes: obs || undefined,
-      dia_semana: dia === '' ? undefined : Number(dia),
-      ordem: (exs?.length ?? 0) + 1,
-    })
-    setNome(''); setSeries(''); setReps(''); setCarga(''); setVid(''); setObs('')
+  async function addEx(body: ExercicioCreate) {
+    await createEx.mutateAsync({ ...body, ordem: (exs?.length ?? 0) + 1 })
+    setAddingEx(false)
   }
 
   async function saveTreino(e: React.FormEvent) {
@@ -278,133 +312,163 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
 
   return (
     <Card variant="elevated">
-      {editT ? (
-        <form onSubmit={saveTreino} className="grid grid-cols-1 sm:grid-cols-[2fr_2fr_1.2fr_1.2fr] gap-3 items-end">
-          <Input label="Treino" value={tNome} onChange={(e) => setTNome(e.target.value)} />
-          <Input label="Foco" value={tFoco} onChange={(e) => setTFoco(e.target.value)} />
-          <Input label="Início" type="date" value={tIni} onChange={(e) => setTIni(e.target.value)} />
-          <Input label="Fim" type="date" value={tFim} onChange={(e) => setTFim(e.target.value)} />
-          <div className="flex gap-2 sm:col-span-4">
-            <Button type="submit" size="sm" disabled={updTreino.isPending}>Salvar</Button>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setEditT(false)}>Cancelar</Button>
-          </div>
-        </form>
-      ) : (
-        <div className="flex items-center justify-between gap-2">
-          <button className="flex items-center gap-2 text-left min-w-0" onClick={() => setOpen((v) => !v)}>
-            {open ? <ChevronDown size={16} className="shrink-0" /> : <ChevronRight size={16} className="shrink-0" />}
-            <span className="min-w-0">
-              <span className="font-medium">{treino.nome}</span>
-              {treino.foco && <span className="text-xs text-text-muted ml-2">{treino.foco}</span>}
-              {(treino.data_inicio || treino.data_fim) && (
-                <span className="text-xs text-accent-hover/80 ml-2">
-                  {fmtDate(treino.data_inicio)}{treino.data_fim ? ` – ${fmtDate(treino.data_fim)}` : ''}
-                </span>
-              )}
-            </span>
-          </button>
-          <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="ghost" size="sm" iconOnly aria-label="Salvar como template"
-              onClick={async () => {
-                await saveAsTemplate.mutateAsync({ alunoId, treinoId: treino.treino_id, nome: treino.nome })
-                show('Template salvo. Veja em "Templates".', 'success')
-              }}
-              disabled={saveAsTemplate.isPending}
-            >
-              <LayoutTemplate size={15} />
-            </Button>
-            <Button variant="ghost" size="sm" iconOnly aria-label="Editar treino" onClick={() => setEditT(true)}><Pencil size={15} /></Button>
-            <Button variant="ghost" size="sm" iconOnly aria-label="Excluir treino" onClick={() => delTreino.mutate(treino.treino_id)} className="hover:text-danger"><Trash2 size={16} /></Button>
-          </div>
+      <div className="flex items-center justify-between gap-2">
+        <button className="flex items-center gap-2 text-left min-w-0" onClick={() => setOpen((v) => !v)}>
+          {open ? <ChevronDown size={16} className="shrink-0" /> : <ChevronRight size={16} className="shrink-0" />}
+          <span className="min-w-0">
+            <span className="font-medium">{treino.nome}</span>
+            {treino.foco && <span className="text-xs text-text-muted ml-2">{treino.foco}</span>}
+            {(treino.data_inicio || treino.data_fim) && (
+              <span className="text-xs text-accent-hover/80 ml-2">
+                {fmtDate(treino.data_inicio)}{treino.data_fim ? ` – ${fmtDate(treino.data_fim)}` : ''}
+              </span>
+            )}
+          </span>
+        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          <Button
+            variant="ghost" size="sm" iconOnly aria-label="Salvar como template"
+            onClick={async () => {
+              await saveAsTemplate.mutateAsync({ alunoId, treinoId: treino.treino_id, nome: treino.nome })
+              show('Template salvo. Veja em "Templates".', 'success')
+            }}
+            disabled={saveAsTemplate.isPending}
+          >
+            <LayoutTemplate size={15} />
+          </Button>
+          <Button variant="ghost" size="sm" iconOnly aria-label="Editar treino" onClick={() => setEditT(true)}><Pencil size={15} /></Button>
+          <Button variant="ghost" size="sm" iconOnly aria-label="Excluir treino" onClick={() => delTreino.mutate(treino.treino_id)} className="hover:text-danger"><Trash2 size={16} /></Button>
         </div>
-      )}
+      </div>
 
-      {open && !editT && (
+      <Modal open={editT} onClose={() => setEditT(false)} title="Editar treino" size="lg">
+        <form onSubmit={saveTreino} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input label="Treino" value={tNome} onChange={(e) => setTNome(e.target.value)} autoFocus />
+            <Input label="Foco" value={tFoco} onChange={(e) => setTFoco(e.target.value)} />
+            <Input label="Início" type="date" value={tIni} onChange={(e) => setTIni(e.target.value)} />
+            <Input label="Fim" type="date" value={tFim} onChange={(e) => setTFim(e.target.value)} />
+          </div>
+          <Button type="submit" className="w-full" disabled={updTreino.isPending}>
+            {updTreino.isPending ? 'Salvando…' : 'Salvar'}
+          </Button>
+        </form>
+      </Modal>
+
+      {open && (
         <div className="mt-3 pl-2 sm:pl-6 space-y-2">
           {Object.entries(grupos).map(([d, list]) => (
             <div key={d}>
               <p className="text-xs text-accent-hover/80 mt-2 mb-1">{d}</p>
               {list.map((ex) => (
-                <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} />
+                <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} biblioteca={biblioteca} />
               ))}
             </div>
           ))}
-          <form onSubmit={addEx} className="grid grid-cols-2 sm:grid-cols-6 gap-2 pt-2">
-            <Input placeholder="Exercício (busca biblioteca)" list={`lib-${treino.treino_id}`} value={nome} onChange={(e) => onNome(e.target.value)} className="col-span-2 sm:col-span-2" />
-            <datalist id={`lib-${treino.treino_id}`}>
-              {biblioteca?.map((b) => <option key={b.exlib_id} value={b.nome} />)}
-            </datalist>
-            <Input placeholder="Séries" value={series} onChange={(e) => setSeries(e.target.value)} />
-            <Input placeholder="Reps" value={reps} onChange={(e) => setReps(e.target.value)} />
-            <Input placeholder="Carga" value={carga} onChange={(e) => setCarga(e.target.value)} />
-            <Select value={dia} onChange={(e) => setDia(e.target.value)}>
-              <option value="">Todo dia</option>
-              {DIAS.map((d, i) => <option key={i} value={i}>{d}</option>)}
-            </Select>
-            <Input placeholder="Vídeo" value={vid} onChange={(e) => setVid(e.target.value)} className="col-span-2 sm:col-span-2" />
-            <Textarea placeholder="Observações (visíveis ao aluno na sessão)" value={obs} onChange={(e) => setObs(e.target.value)} rows={1} className="col-span-2 sm:col-span-5 min-h-0" />
-            <Button type="submit" variant="ghost" size="sm" disabled={createEx.isPending} iconOnly aria-label="Adicionar exercício" className="col-span-2 sm:col-span-1">
-              <Plus size={16} />
-            </Button>
-          </form>
+          <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={() => setAddingEx(true)}>
+            <span className="flex items-center gap-1"><Plus size={14} /> Exercício</span>
+          </Button>
         </div>
       )}
+
+      <Modal open={addingEx} onClose={() => setAddingEx(false)} title="Novo exercício" size="lg">
+        <ExercicioForm biblioteca={biblioteca} submitLabel="Adicionar exercício" submitting={createEx.isPending} onSubmit={addEx} />
+      </Modal>
     </Card>
   )
 }
 
-function ExercicioRow({ alunoId, treinoId, ex }: { alunoId: string; treinoId: string; ex: Exercicio }) {
-  const [edit, setEdit] = useState(false)
-  const [showMidia, setShowMidia] = useState(false)
-  const upd = useUpdateExercicio(alunoId, treinoId)
-  const del = useDeleteExercicio(alunoId, treinoId)
-  const { data: midias, isLoading: loadingMidia } = useMidiaExercicio(alunoId, ex.exercicio_id, showMidia)
-  const [nome, setNome] = useState(ex.nome)
-  const [series, setSeries] = useState(ex.series?.toString() ?? '')
-  const [reps, setReps] = useState(ex.reps_prescritas ?? '')
-  const [carga, setCarga] = useState(ex.carga_prescrita ?? '')
-  const [vid, setVid] = useState(ex.video_url ?? '')
-  const [dia, setDia] = useState(ex.dia_semana == null ? '' : String(ex.dia_semana))
-  const [obs, setObs] = useState(ex.observacoes ?? '')
+function ExercicioForm({
+  initial, biblioteca, onSubmit, submitting, submitLabel,
+}: {
+  initial?: Partial<Exercicio>
+  biblioteca?: { exlib_id: string; nome: string; video_url?: string }[]
+  onSubmit: (body: ExercicioCreate) => Promise<void>
+  submitting?: boolean
+  submitLabel: string
+}) {
+  const listId = useId()
+  const [nome, setNome] = useState(initial?.nome ?? '')
+  const [series, setSeries] = useState(initial?.series?.toString() ?? '')
+  const [reps, setReps] = useState(initial?.reps_prescritas ?? '')
+  const [carga, setCarga] = useState(initial?.carga_prescrita ?? '')
+  const [vid, setVid] = useState(initial?.video_url ?? '')
+  const [dia, setDia] = useState(initial?.dia_semana == null ? '' : String(initial.dia_semana))
+  const [obs, setObs] = useState(initial?.observacoes ?? '')
 
-  async function save(e: React.FormEvent) {
-    e.preventDefault()
-    await upd.mutateAsync({
-      exercicioId: ex.exercicio_id,
-      body: {
-        nome,
-        series: series ? Number(series) : undefined,
-        reps_prescritas: reps || undefined,
-        carga_prescrita: carga || undefined,
-        video_url: vid || undefined,
-        observacoes: obs || undefined,
-        dia_semana: dia === '' ? undefined : Number(dia),
-        ordem: ex.ordem,
-      },
-    })
-    setEdit(false)
+  function onNome(v: string) {
+    setNome(v)
+    const lib = biblioteca?.find((b) => b.nome.toLowerCase() === v.toLowerCase())
+    if (lib?.video_url) setVid(lib.video_url)
   }
 
-  if (edit)
-    return (
-      <form onSubmit={save} className="grid grid-cols-2 sm:grid-cols-6 gap-1.5 py-1.5">
-        <Input className="col-span-2" value={nome} onChange={(e) => setNome(e.target.value)} />
-        <Input placeholder="Sér" value={series} onChange={(e) => setSeries(e.target.value)} />
-        <Input placeholder="Reps" value={reps} onChange={(e) => setReps(e.target.value)} />
-        <Select value={dia} onChange={(e) => setDia(e.target.value)}>
-          <option value="">Todo dia</option>
-          {DIAS.map((d, i) => <option key={i} value={i}>{d}</option>)}
-        </Select>
-        <Input placeholder="Carga" value={carga} onChange={(e) => setCarga(e.target.value)} />
-        <Input className="col-span-2" placeholder="Vídeo" value={vid} onChange={(e) => setVid(e.target.value)} />
-        <Textarea placeholder="Observações" value={obs} onChange={(e) => setObs(e.target.value)} rows={1} className="col-span-2 sm:col-span-6" />
-        <div className="flex gap-1 col-span-2 sm:col-span-2">
-          <Button type="submit" size="sm" iconOnly aria-label="Salvar exercício"><Check size={16} /></Button>
-          <Button type="button" variant="ghost" size="sm" iconOnly aria-label="Cancelar edição" onClick={() => setEdit(false)}><X size={16} /></Button>
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!nome) return
+    await onSubmit({
+      nome,
+      series: series ? Number(series) : undefined,
+      reps_prescritas: reps || undefined,
+      carga_prescrita: carga || undefined,
+      video_url: vid || undefined,
+      observacoes: obs || undefined,
+      dia_semana: dia === '' ? undefined : Number(dia),
+    })
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <div>
+        <p className="text-xs font-medium text-text-secondary mb-2">Identificação</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Input
+            label="Exercício" className="sm:col-span-2" list={listId} autoFocus
+            value={nome} onChange={(e) => onNome(e.target.value)}
+          />
+          <datalist id={listId}>{biblioteca?.map((b) => <option key={b.exlib_id} value={b.nome} />)}</datalist>
+          <Select label="Dia da semana" value={dia} onChange={(e) => setDia(e.target.value)}>
+            <option value="">Todo dia</option>
+            {DIAS.map((d, i) => <option key={i} value={i}>{d}</option>)}
+          </Select>
         </div>
-      </form>
-    )
+      </div>
+      <div>
+        <p className="text-xs font-medium text-text-secondary mb-2">Prescrição</p>
+        <div className="grid grid-cols-3 gap-3">
+          <Input label="Séries" value={series} onChange={(e) => setSeries(e.target.value)} />
+          <Input label="Reps" value={reps} onChange={(e) => setReps(e.target.value)} />
+          <Input label="Carga" value={carga} onChange={(e) => setCarga(e.target.value)} />
+        </div>
+      </div>
+      <div>
+        <p className="text-xs font-medium text-text-secondary mb-2">Vídeo e observações</p>
+        <div className="space-y-3">
+          <Input label="Vídeo (URL)" value={vid} onChange={(e) => setVid(e.target.value)} />
+          <Textarea
+            label="Observações (visíveis ao aluno na sessão)" rows={2}
+            value={obs} onChange={(e) => setObs(e.target.value)}
+          />
+        </div>
+      </div>
+      <Button type="submit" className="w-full" disabled={submitting || !nome}>
+        {submitting ? 'Salvando…' : submitLabel}
+      </Button>
+    </form>
+  )
+}
+
+function ExercicioRow({
+  alunoId, treinoId, ex, biblioteca,
+}: { alunoId: string; treinoId: string; ex: Exercicio; biblioteca?: { exlib_id: string; nome: string; video_url?: string }[] }) {
+  const [edit, setEdit] = useState(false)
+  const upd = useUpdateExercicio(alunoId, treinoId)
+  const del = useDeleteExercicio(alunoId, treinoId)
+  const { data: midias, isLoading: loadingMidia } = useMidiaExercicio(alunoId, ex.exercicio_id, edit)
+
+  async function save(body: ExercicioCreate) {
+    await upd.mutateAsync({ exercicioId: ex.exercicio_id, body: { ...body, ordem: ex.ordem } })
+    setEdit(false)
+  }
 
   return (
     <div className="border-b border-border pb-1.5">
@@ -422,37 +486,17 @@ function ExercicioRow({ alunoId, treinoId, ex }: { alunoId: string; treinoId: st
           )}
         </span>
         <span className="flex gap-1 shrink-0">
-          <Button variant="ghost" size="sm" iconOnly aria-label="Ver mídias do aluno" onClick={() => setShowMidia((v) => !v)}><Camera size={13} /></Button>
           <Button variant="ghost" size="sm" iconOnly aria-label="Editar exercício" onClick={() => setEdit(true)}><Pencil size={13} /></Button>
           <Button variant="ghost" size="sm" iconOnly aria-label="Excluir exercício" onClick={() => del.mutate(ex.exercicio_id)} className="hover:text-danger"><Trash2 size={14} /></Button>
         </span>
       </div>
 
-      {showMidia && (
-        <div className="mt-2 bg-white/5 rounded-lg p-2">
-          {loadingMidia ? (
-            <Spinner className="w-4 h-4" />
-          ) : !midias?.length ? (
-            <p className="text-xs text-text-muted">O aluno ainda não enviou vídeo/foto deste exercício.</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {midias.map((m) => (
-                m.url && (
-                  m.tipo === 'video_execucao' ? (
-                    <a key={m.midia_id} href={m.url} target="_blank" rel="noreferrer" className="text-xs text-accent-hover hover:underline flex items-center gap-1">
-                      <Camera size={12} /> vídeo ({new Date(m.data_hora).toLocaleDateString('pt-BR')})
-                    </a>
-                  ) : (
-                    <a key={m.midia_id} href={m.url} target="_blank" rel="noreferrer">
-                      <img src={m.url} alt="" className="w-14 h-14 object-cover rounded border border-border" />
-                    </a>
-                  )
-                )
-              ))}
-            </div>
-          )}
+      <Modal open={edit} onClose={() => setEdit(false)} title="Editar exercício" size="lg">
+        <div className="space-y-4">
+          <ExercicioForm initial={ex} biblioteca={biblioteca} submitLabel="Salvar" submitting={upd.isPending} onSubmit={save} />
+          <MediaTimeline items={(midias ?? []).map((m) => ({ ...m, ator: m.ator ?? 'ALUNO' }))} isLoading={loadingMidia} />
         </div>
-      )}
+      </Modal>
     </div>
   )
 }

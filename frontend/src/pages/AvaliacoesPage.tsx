@@ -81,7 +81,7 @@ export function AvaliacoesPage() {
         </div>
       </div>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Nova avaliação" wide>
+      <Modal open={open} onClose={() => setOpen(false)} title="Nova avaliação" size="lg">
         <NovaAvaliacaoForm alunoId={alunoId} onDone={() => setOpen(false)} />
       </Modal>
 

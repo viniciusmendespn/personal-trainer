@@ -39,7 +39,7 @@ export function TemplatesPage() {
         {applyTarget && <AplicarForm template={applyTarget} onDone={() => setApplyTarget(null)} />}
       </Modal>
 
-      <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title="Editar template" wide>
+      <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title="Editar template" size="xl">
         {editTarget && <EditForm template={editTarget} onDone={() => setEditTarget(null)} />}
       </Modal>
     </div>
@@ -143,7 +143,7 @@ function EditForm({ template, onDone }: { template: TreinoTemplate; onDone: () =
         <Input label="Foco" value={foco} onChange={(e) => setFoco(e.target.value)} />
       </div>
 
-      <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+      <div className="space-y-3">
         {exercicios.map((ex, i) => (
           <Card key={i} variant="flat" className="relative">
             <Button

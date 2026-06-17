@@ -26,6 +26,20 @@ export const treinosApi = {
 
   listMidia: (alunoId: string, exercicioId: string) =>
     api.get<MidiaExercicio[]>(`/v1/alunos/${alunoId}/exercicios/${exercicioId}/midia`).then((r) => r.data),
+
+  uploadUrlMidia: (alunoId: string, filename: string, contentType: string) =>
+    api
+      .post<{ upload_url: string; s3_key: string }>(`/v1/alunos/${alunoId}/midia/upload-url`, {
+        filename, content_type: contentType,
+      })
+      .then((r) => r.data),
+  enviarCorrecao: (
+    alunoId: string,
+    body: { s3_key: string; tipo: string; exercicio_id: string; exercicio_nome?: string; texto?: string },
+  ) =>
+    api
+      .post<{ ok: number; midia_id: string; whatsapp_enviado: boolean }>(`/v1/alunos/${alunoId}/midia/correcao`, body)
+      .then((r) => r.data),
 }
 
 export interface MidiaExercicio {
@@ -37,4 +51,5 @@ export interface MidiaExercicio {
   status: string
   data_hora: string
   url?: string
+  ator?: 'ALUNO' | 'PERSONAL'
 }

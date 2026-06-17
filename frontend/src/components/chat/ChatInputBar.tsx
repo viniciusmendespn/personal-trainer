@@ -1,16 +1,18 @@
-import { useState, type FormEvent } from 'react'
-import { Send, Pin } from 'lucide-react'
+import { useRef, useState, type FormEvent } from 'react'
+import { Send, Pin, Paperclip } from 'lucide-react'
 import { Button } from '../ui'
 
 const DIRETO_PREFIX = /^@personal\s*/i
 
 export function ChatInputBar({
-  onSend, onSendDireto, disabled,
+  onSend, onSendDireto, onAttach, disabled,
 }: {
   onSend: (text: string) => void
   onSendDireto?: (text: string) => void
+  onAttach?: (file: File) => void
   disabled?: boolean
 }) {
+  const fileRef = useRef<HTMLInputElement>(null)
   const [text, setText] = useState('')
 
   function submit(e: FormEvent) {
@@ -34,6 +36,27 @@ export function ChatInputBar({
 
   return (
     <form onSubmit={submit} className="flex items-center gap-2 px-3 py-2 border-t border-border bg-surface shrink-0">
+      {onAttach && (
+        <>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*,video/*"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) onAttach(file)
+              e.target.value = ''
+            }}
+          />
+          <Button
+            type="button" variant="outline" size="sm" iconOnly aria-label="Anexar foto ou vídeo"
+            disabled={disabled} onClick={() => fileRef.current?.click()}
+          >
+            <Paperclip size={15} />
+          </Button>
+        </>
+      )}
       <input
         value={text}
         onChange={(e) => setText(e.target.value)}

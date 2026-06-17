@@ -1,23 +1,24 @@
-import { useMemo, useState } from 'react'
-import { Plus, Trash2, Video, Pencil, Check, X, BookOpen, Search } from 'lucide-react'
+import { useId, useMemo, useState } from 'react'
+import { Plus, Trash2, Video, Pencil, BookOpen, Search } from 'lucide-react'
 import { useBiblioteca, useCreateExLib, useUpdateExLib, useDeleteExLib } from '../hooks/useDominio'
-import { Button, Card, Input, Textarea, Spinner, EmptyState } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, EmptyState, Modal } from '../components/ui'
+import type { ExLibCreate } from '../api/biblioteca'
 import type { ExLib } from '../types'
 
 export function BibliotecaPage() {
   const { data: exs, isLoading } = useBiblioteca()
   const create = useCreateExLib()
-  const [nome, setNome] = useState('')
-  const [grupo, setGrupo] = useState('')
-  const [video, setVideo] = useState('')
-  const [rec, setRec] = useState('')
+  const [showAdd, setShowAdd] = useState(false)
   const [query, setQuery] = useState('')
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!nome) return
-    await create.mutateAsync({ nome, grupo: grupo || undefined, video_url: video || undefined, recomendacoes: rec || undefined })
-    setNome(''); setGrupo(''); setVideo(''); setRec('')
+  const grupos = useMemo(
+    () => Array.from(new Set((exs ?? []).map((e) => e.grupo).filter((g): g is string => !!g))).sort(),
+    [exs]
+  )
+
+  async function addExLib(body: ExLibCreate) {
+    await create.mutateAsync(body)
+    setShowAdd(false)
   }
 
   const filtered = useMemo(() => {
@@ -27,35 +28,22 @@ export function BibliotecaPage() {
     return exs.filter((ex) => ex.nome.toLowerCase().includes(q) || ex.grupo?.toLowerCase().includes(q))
   }, [exs, query])
 
-  const grupos = useMemo(
-    () => Array.from(new Set((exs ?? []).map((e) => e.grupo).filter((g): g is string => !!g))).sort(),
-    [exs]
-  )
-
   return (
     <div className="max-w-3xl mx-auto">
-      <h2 className="font-display text-xl font-semibold mb-1">Biblioteca de exercícios</h2>
+      <div className="flex items-start justify-between gap-3 mb-1">
+        <h2 className="font-display text-xl font-semibold">Biblioteca de exercícios</h2>
+        <Button onClick={() => setShowAdd(true)}><span className="flex items-center gap-1"><Plus size={16} /> Adicionar</span></Button>
+      </div>
       <p className="text-sm text-text-secondary mb-4">Catálogo reutilizável com vídeo e recomendações (o agente usa nas respostas).</p>
 
-      <Card variant="elevated" className="mb-6">
-        <form onSubmit={submit} className="space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Input label="Nome" value={nome} onChange={(e) => setNome(e.target.value)} />
-            <Input label="Grupo" list="grupos-biblioteca" value={grupo} onChange={(e) => setGrupo(e.target.value)} />
-            <Input label="Vídeo (URL)" value={video} onChange={(e) => setVideo(e.target.value)} />
-          </div>
-          <datalist id="grupos-biblioteca">
-            {grupos.map((g) => <option key={g} value={g} />)}
-          </datalist>
-          <Textarea rows={2} placeholder="Recomendações (técnica, cuidados, dicas…)" value={rec} onChange={(e) => setRec(e.target.value)} />
-          <Button type="submit" disabled={create.isPending}><span className="flex items-center gap-1"><Plus size={16} /> Adicionar</span></Button>
-        </form>
-      </Card>
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Novo exercício" size="lg">
+        <ExLibForm grupos={grupos} submitLabel="Adicionar" submitting={create.isPending} onSubmit={addExLib} />
+      </Modal>
 
       {isLoading ? (
         <Spinner />
       ) : !exs?.length ? (
-        <EmptyState icon={<BookOpen />} title="Catálogo vazio" description="Adicione exercícios no formulário acima." />
+        <EmptyState icon={<BookOpen />} title="Catálogo vazio" description='Use o botão "Adicionar" para cadastrar o primeiro exercício.' />
       ) : (
         <>
           <div className="relative mb-3">
@@ -63,7 +51,7 @@ export function BibliotecaPage() {
             <Input placeholder="Buscar por nome ou grupo…" value={query} onChange={(e) => setQuery(e.target.value)} className="pl-9" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {filtered?.map((ex) => <ExLibRow key={ex.exlib_id} ex={ex} />)}
+            {filtered?.map((ex) => <ExLibRow key={ex.exlib_id} ex={ex} grupos={grupos} />)}
           </div>
         </>
       )}
@@ -71,38 +59,57 @@ export function BibliotecaPage() {
   )
 }
 
-function ExLibRow({ ex }: { ex: ExLib }) {
+function ExLibForm({
+  initial, grupos, onSubmit, submitting, submitLabel,
+}: {
+  initial?: Partial<ExLib>
+  grupos: string[]
+  onSubmit: (body: ExLibCreate) => Promise<void>
+  submitting?: boolean
+  submitLabel: string
+}) {
+  const listId = useId()
+  const [nome, setNome] = useState(initial?.nome ?? '')
+  const [grupo, setGrupo] = useState(initial?.grupo ?? '')
+  const [video, setVideo] = useState(initial?.video_url ?? '')
+  const [descricao, setDescricao] = useState(initial?.descricao ?? '')
+  const [rec, setRec] = useState(initial?.recomendacoes ?? '')
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!nome) return
+    await onSubmit({
+      nome, grupo: grupo || undefined, video_url: video || undefined,
+      descricao: descricao || undefined, recomendacoes: rec || undefined,
+    })
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Input label="Nome" value={nome} onChange={(e) => setNome(e.target.value)} autoFocus />
+        <Input label="Grupo muscular" list={listId} value={grupo} onChange={(e) => setGrupo(e.target.value)} />
+        <datalist id={listId}>{grupos.map((g) => <option key={g} value={g} />)}</datalist>
+      </div>
+      <Input label="Vídeo (URL)" value={video} onChange={(e) => setVideo(e.target.value)} />
+      <Textarea label="Descrição" rows={2} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+      <Textarea label="Recomendações (técnica, cuidados, dicas…)" rows={3} value={rec} onChange={(e) => setRec(e.target.value)} />
+      <Button type="submit" className="w-full" disabled={submitting || !nome}>
+        {submitting ? 'Salvando…' : submitLabel}
+      </Button>
+    </form>
+  )
+}
+
+function ExLibRow({ ex, grupos }: { ex: ExLib; grupos: string[] }) {
   const [edit, setEdit] = useState(false)
   const upd = useUpdateExLib()
   const del = useDeleteExLib()
-  const [nome, setNome] = useState(ex.nome)
-  const [grupo, setGrupo] = useState(ex.grupo ?? '')
-  const [video, setVideo] = useState(ex.video_url ?? '')
-  const [rec, setRec] = useState(ex.recomendacoes ?? '')
 
-  async function save(e: React.FormEvent) {
-    e.preventDefault()
-    await upd.mutateAsync({ id: ex.exlib_id, body: { nome, grupo: grupo || undefined, video_url: video || undefined, recomendacoes: rec || undefined } })
+  async function save(body: ExLibCreate) {
+    await upd.mutateAsync({ id: ex.exlib_id, body })
     setEdit(false)
   }
-
-  if (edit)
-    return (
-      <Card variant="elevated" className="sm:col-span-2">
-        <form onSubmit={save} className="space-y-2">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <Input value={nome} onChange={(e) => setNome(e.target.value)} />
-            <Input value={grupo} list="grupos-biblioteca" onChange={(e) => setGrupo(e.target.value)} placeholder="Grupo" />
-            <Input value={video} onChange={(e) => setVideo(e.target.value)} placeholder="Vídeo" />
-          </div>
-          <Textarea rows={2} placeholder="Recomendações" value={rec} onChange={(e) => setRec(e.target.value)} />
-          <div className="flex gap-2">
-            <Button type="submit" size="sm" disabled={upd.isPending}><Check size={16} /></Button>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setEdit(false)}><X size={16} /></Button>
-          </div>
-        </form>
-      </Card>
-    )
 
   return (
     <Card variant="elevated" className="flex items-start justify-between">
@@ -119,6 +126,10 @@ function ExLibRow({ ex }: { ex: ExLib }) {
         <Button variant="ghost" size="sm" iconOnly aria-label="Editar" onClick={() => setEdit(true)}><Pencil size={15} /></Button>
         <Button variant="ghost" size="sm" iconOnly aria-label="Remover" onClick={() => del.mutate(ex.exlib_id)} className="hover:text-danger"><Trash2 size={15} /></Button>
       </span>
+
+      <Modal open={edit} onClose={() => setEdit(false)} title="Editar exercício" size="lg">
+        <ExLibForm initial={ex} grupos={grupos} submitLabel="Salvar" submitting={upd.isPending} onSubmit={save} />
+      </Modal>
     </Card>
   )
 }

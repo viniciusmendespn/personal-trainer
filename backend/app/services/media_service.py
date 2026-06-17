@@ -10,6 +10,7 @@ import boto3
 import httpx
 
 from app.config import settings
+from app.models.enums import Ator
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services.wapi_service import WAPIClient
@@ -46,14 +47,15 @@ def gerar_presigned_upload_url(aluno_id: str, filename: str, content_type: str,
 
 
 def registrar_midia_vinculada(aluno_id: str, exercicio_id: str, exercicio_nome: str | None,
-                              tipo: str, s3_key: str) -> dict:
-    """Registra uma mídia já enviada (via presigned URL) pelo próprio app do aluno —
-    o exercício já é conhecido nesse fluxo, então a mídia nasce vinculada (sem pendência)."""
+                              tipo: str, s3_key: str, ator: Ator = Ator.ALUNO) -> dict:
+    """Registra uma mídia já enviada (via presigned URL) — pelo próprio app do aluno ou
+    pelo personal (vídeo/foto de correção) — o exercício já é conhecido nesse fluxo, então
+    a mídia nasce vinculada (sem pendência)."""
     midia_id = new_id()
     item = {
         "midia_id": midia_id, "tipo": tipo, "s3_key": s3_key,
         "exercicio_id": exercicio_id, "exercicio_nome": exercicio_nome,
-        "status": "VINCULADA", "data_hora": now_iso(),
+        "status": "VINCULADA", "data_hora": now_iso(), "ator": ator.value,
     }
     repo.put_item(keys.pk_aluno(aluno_id), f"MIDIA#{exercicio_id}#{midia_id}", item)
     return item

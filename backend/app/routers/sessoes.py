@@ -1,12 +1,13 @@
 """Sessão de treino e registros pelo PORTAL (personal). Pelo agente, as mesmas
 operações vêm de agent_service. Tudo aninhado sob o aluno (ESPEC §3)."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from app.dependencies import get_current_personal_id
+from app.models.enums import Ator, CanalOrigem
 from app.models.registro import SerieExec
 from app.repositories import dynamo_repo as repo
-from app.services import authz, media_service, sessao_service
+from app.services import agent_service, authz, media_service, nota_service, sessao_service
 
 router = APIRouter(prefix="/v1/alunos/{aluno_id}", tags=["sessoes"])
 
@@ -58,9 +59,49 @@ def registrar(aluno_id: str, body: RegistroBody, personal_id: str = Depends(get_
 
 @router.get("/exercicios/{exercicio_id}/midia")
 def midia_exercicio(aluno_id: str, exercicio_id: str, personal_id: str = Depends(get_current_personal_id)):
-    """Vídeos/fotos de execução que o aluno anexou nesse exercício."""
+    """Vídeos/fotos (execução do aluno + correção do personal) anexados nesse exercício."""
     authz.authorize_aluno(personal_id, aluno_id)
     return media_service.list_midia_exercicio(aluno_id, exercicio_id)
+
+
+class MidiaUploadUrlBody(BaseModel):
+    filename: str
+    content_type: str
+
+
+class MidiaCorrecaoBody(BaseModel):
+    s3_key: str
+    tipo: str                          # "video_correcao" | "foto_correcao"
+    exercicio_id: str
+    exercicio_nome: str | None = None
+    texto: str | None = None           # legenda opcional, vai como texto da msg de chat
+
+
+@router.post("/midia/upload-url")
+def midia_upload_url_personal(aluno_id: str, body: MidiaUploadUrlBody,
+                              personal_id: str = Depends(get_current_personal_id)):
+    authz.authorize_aluno(personal_id, aluno_id)
+    result = media_service.gerar_presigned_upload_url(aluno_id, body.filename, body.content_type)
+    if not result:
+        raise HTTPException(502, "Não foi possível gerar a URL de upload.")
+    return result
+
+
+@router.post("/midia/correcao", status_code=201)
+def midia_correcao(aluno_id: str, body: MidiaCorrecaoBody,
+                   personal_id: str = Depends(get_current_personal_id)):
+    """Personal anexa vídeo/foto de correção: vira mídia vinculada ao exercício (aparece
+    na timeline de evolução) E mensagem no chat (com anexo), sem passar pela IA."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    item = media_service.registrar_midia_vinculada(
+        aluno_id, body.exercicio_id, body.exercicio_nome, body.tipo, body.s3_key, ator=Ator.PERSONAL,
+    )
+    midia_ref = {"midia_id": item["midia_id"], "tipo": item["tipo"], "s3_key": item["s3_key"]}
+    texto = body.texto or f"Enviei uma {'foto' if 'foto' in body.tipo else 'vídeo'} de correção."
+    enviado = agent_service.log_direct(
+        personal_id, aluno_id, texto, Ator.PERSONAL, CanalOrigem.PORTAL, midia=midia_ref,
+    )
+    return {"ok": 1, "midia_id": item["midia_id"], "whatsapp_enviado": enviado}
 
 
 @router.get("/exercicios/{exercicio_id}/historico")
@@ -89,3 +130,21 @@ def evolucao(aluno_id: str, exercicio_id: str, limit: int = 100,
              personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)
     return sessao_service.evolucao_exercicio(aluno_id, exercicio_id, limit)
+
+
+class NotaBody(BaseModel):
+    texto: str
+
+
+@router.get("/notas")
+def list_notas(aluno_id: str, limit: int = 50, cursor: str | None = None,
+              personal_id: str = Depends(get_current_personal_id)):
+    authz.authorize_aluno(personal_id, aluno_id)
+    items, next_cursor = nota_service.listar(aluno_id, limit, cursor)
+    return {"items": items, "next_cursor": next_cursor}
+
+
+@router.post("/notas", status_code=201)
+def create_nota(aluno_id: str, body: NotaBody, personal_id: str = Depends(get_current_personal_id)):
+    authz.authorize_aluno(personal_id, aluno_id)
+    return nota_service.criar(aluno_id, body.texto)

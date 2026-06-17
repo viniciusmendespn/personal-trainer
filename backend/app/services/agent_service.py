@@ -2,6 +2,7 @@
 (chaves curtas, sem nulos) porque o resultado entra no contexto da LLM (tokens).
 O `{personal_id, aluno_id}` já vem resolvido pelo webhook — a LLM nunca informa identidade.
 """
+import logging
 import time
 
 from app.config import settings
@@ -10,6 +11,8 @@ from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import alerta_service, sessao_service
 from app.utils import epoch_ms, new_id, now_iso
+
+logger = logging.getLogger(__name__)
 
 CHAT_TTL_S = 2 * 3600   # janela de conversa: 2h sem mensagem zera o contexto
 CHAT_MAX_TURNS = 8      # últimas N mensagens mantidas
@@ -27,12 +30,15 @@ def save_chat(aluno_id: str, turns: list[dict]) -> None:
 
 # ── Histórico durável do chat (UI) — distinto da memória de trabalho acima ──────
 def _write_chat_msg(aluno_id: str, role: str, texto: str, ator: Ator, canal: CanalOrigem,
-                    direto: bool = False) -> None:
+                    direto: bool = False, midia: dict | None = None) -> None:
     msg_id = new_id()
-    repo.put_item(keys.pk_aluno(aluno_id), keys.sk_chat_msg(epoch_ms(), msg_id), {
+    item = {
         "mensagem_id": msg_id, "aluno_id": aluno_id, "role": role, "texto": texto,
         "ator": ator.value, "canal_origem": canal.value, "data_hora": now_iso(), "direto": direto,
-    })
+    }
+    if midia:
+        item["midia"] = midia
+    repo.put_item(keys.pk_aluno(aluno_id), keys.sk_chat_msg(epoch_ms(), msg_id), item)
 
 
 def log_turn(aluno_id: str, user_text: str, assistant_text: str,
@@ -45,17 +51,48 @@ def log_turn(aluno_id: str, user_text: str, assistant_text: str,
         _write_chat_msg(aluno_id, "assistant", assistant_text, ator, canal)
 
 
-def log_direct(aluno_id: str, text: str, ator: Ator, canal: CanalOrigem) -> None:
-    """Mensagem marcada como 'pergunta direta ao personal' — não passa pelo agente,
-    só fica registrada na thread (compartilhada) à espera de resposta humana."""
-    _write_chat_msg(aluno_id, "user", text, ator, canal, direto=True)
+def enviar_whatsapp(personal_id: str, aluno_id: str, text: str) -> bool:
+    """Envia mensagem de texto pro WhatsApp do aluno, usando a config WAPI do personal.
+    Best-effort: não levanta exceção (a mensagem já fica registrada na thread mesmo se o
+    envio falhar)."""
+    from app.services.wapi_service import WAPIClient
+    cfg = repo.get_item(keys.pk_personal(personal_id), keys.SK_WAPI_CONFIG)
+    if not cfg:
+        return False
+    profile = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
+    telefone = (profile or {}).get("telefone")
+    if not telefone:
+        logger.warning("[agent_service] aluno %s sem telefone cadastrado", aluno_id)
+        return False
+    try:
+        WAPIClient(cfg["instance_id"], cfg["token"]).send_text(telefone, text)
+        return True
+    except Exception as e:
+        logger.warning("[agent_service] envio WhatsApp falhou: %s", e)
+        return False
+
+
+def log_direct(personal_id: str, aluno_id: str, text: str, ator: Ator, canal: CanalOrigem,
+               midia: dict | None = None) -> bool:
+    """Mensagem marcada como 'direta' — não passa pelo agente, só fica registrada na
+    thread (compartilhada). Quando o ator é PERSONAL, também envia por WhatsApp (RF novo).
+    Aceita `midia` opcional (anexo de correção do personal, sem reenvio pelo WhatsApp)."""
+    _write_chat_msg(aluno_id, "user", text, ator, canal, direto=True, midia=midia)
+    if ator == Ator.PERSONAL:
+        return enviar_whatsapp(personal_id, aluno_id, text)
+    return True
 
 
 def list_chat_msgs(aluno_id: str, limit: int = 50, cursor: str | None = None) -> tuple[list[dict], str | None]:
     items, next_cursor = repo.query_pk_page(
         keys.pk_aluno(aluno_id), keys.CHAT_MSG_PREFIX, limit, cursor, forward=False
     )
-    return list(reversed(repo.clean_all(items))), next_cursor  # mais antiga primeiro, p/ renderizar a thread
+    cleaned = repo.clean_all(items)
+    for m in cleaned:
+        if m.get("midia"):
+            from app.services import media_service   # import tardio — evita ciclo
+            m["midia"]["url"] = media_service.gerar_presigned_view_url(m["midia"]["s3_key"])
+    return list(reversed(cleaned)), next_cursor  # mais antiga primeiro, p/ renderizar a thread
 
 
 def handle_chat_turn(personal_id: str, aluno_id: str, text: str, ator: Ator) -> str:

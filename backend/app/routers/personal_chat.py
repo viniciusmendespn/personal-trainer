@@ -1,10 +1,11 @@
-"""Chat do personal com o aluno via agente — mesma thread compartilhada do WhatsApp e
-do app do aluno (ESPEC §1.3 'personal atuando como aluno')."""
+"""Chat do personal com o aluno — mesma thread compartilhada do WhatsApp e do app do
+aluno. Mensagem do personal vai DIRETO pro aluno (sem passar pela IA), igual ao caminho
+já usado pelo aluno em /v1/aluno/chat/personal."""
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from app.dependencies import get_current_personal_id
-from app.models.enums import Ator
+from app.models.enums import Ator, CanalOrigem
 from app.services import agent_service, authz
 
 router = APIRouter(prefix="/v1/alunos/{aluno_id}/chat", tags=["chat"])
@@ -27,5 +28,5 @@ def chat_history(
 @router.post("")
 def chat_send(aluno_id: str, body: ChatBody, personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)
-    reply = agent_service.handle_chat_turn(personal_id, aluno_id, body.text, Ator.PERSONAL)
-    return {"reply": reply}
+    enviado = agent_service.log_direct(personal_id, aluno_id, body.text, Ator.PERSONAL, CanalOrigem.PORTAL)
+    return {"ok": 1, "whatsapp_enviado": enviado}

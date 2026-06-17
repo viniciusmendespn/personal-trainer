@@ -29,10 +29,12 @@ function Bubble({ msg, viewerRole, alunoNome }: { msg: ChatMensagem; viewerRole:
   const align = isMine ? 'items-end' : 'items-start'
 
   // Três estilos bem distintos: agente (neutro), eu (accent sólido), outra pessoa (info) —
-  // ex.: o personal vê as msgs do aluno em "info", e vice-versa. "Direto" (pergunta marcada
-  // pro personal, sem passar pelo agente) ganha um destaque próprio (energy) independente disso.
+  // ex.: o personal vê as msgs do aluno em "info", e vice-versa. "Direto" (mensagem direta,
+  // sem passar pelo agente) ganha destaque próprio (energy), exceto quando é a MINHA própria
+  // mensagem direta — nesse caso usa o estilo "eu" normal, senão eu veria minha msg com o
+  // mesmo destaque usado pra chamar atenção pra mensagem de outra pessoa.
   const bubbleStyle = msg.direto
-    ? 'bg-energy/10 border border-energy/40 text-text'
+    ? isMine ? 'bg-accent text-white' : 'bg-energy/10 border border-energy/40 text-text'
     : isAssistant
       ? 'bg-surface-elevated border border-border text-text'
       : isMine
@@ -41,7 +43,7 @@ function Bubble({ msg, viewerRole, alunoNome }: { msg: ChatMensagem; viewerRole:
 
   const Icon = msg.direto ? Pin : isAssistant ? Bot : msg.ator === 'PERSONAL' ? UserCog : User
   const label = msg.direto
-    ? `${msg.ator === 'ALUNO' ? alunoNome ?? 'Aluno' : 'Personal'} · pergunta direta`
+    ? isMine ? null : `${msg.ator === 'ALUNO' ? alunoNome ?? 'Aluno' : 'Personal'} · pergunta direta`
     : isAssistant
       ? 'Agente'
       : isMine
@@ -58,6 +60,13 @@ function Bubble({ msg, viewerRole, alunoNome }: { msg: ChatMensagem; viewerRole:
       )}
       <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap ${bubbleStyle}`}>
         {isAssistant ? renderMarkdownLite(msg.texto) : msg.texto}
+        {msg.midia?.url && (
+          msg.midia.tipo.includes('video') ? (
+            <video src={msg.midia.url} controls className="rounded-lg max-w-full mt-2" />
+          ) : (
+            <img src={msg.midia.url} alt="Anexo" className="rounded-lg max-w-full mt-2" />
+          )
+        )}
       </div>
       <span className="text-[10px] text-text-muted px-1">{formatHora(msg.data_hora)}</span>
     </div>

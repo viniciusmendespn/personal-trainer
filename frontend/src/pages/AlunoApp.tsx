@@ -9,6 +9,7 @@ import { ALUNO_TOKEN_KEY } from '../api/alunoClient'
 import { useAlunoChat, useSendAlunoChat, useSendDiretoAlunoChat } from '../hooks/useAlunoChat'
 import { ChatThread } from '../components/chat/ChatThread'
 import { ChatInputBar } from '../components/chat/ChatInputBar'
+import { MediaTimeline } from '../components/media/MediaTimeline'
 import { Button, Card, Spinner, Input, Textarea, Select, Badge, StatCard, EmptyState, useToast } from '../components/ui'
 
 const chartTip = {
@@ -384,6 +385,7 @@ function Evolucao() {
   const [exId, setExId] = useState('')
   useEffect(() => { if (!exId && exs.data?.length) setExId(exs.data[0].exercicio_id) }, [exs.data, exId])
   const evo = useQuery({ queryKey: ['aluno-evo', exId], queryFn: () => alunoApi.evolucao(exId), enabled: !!exId })
+  const midias = useQuery({ queryKey: ['aluno-midia', exId], queryFn: () => alunoApi.listMidia(exId), enabled: !!exId })
 
   const data = (evo.data?.serie ?? [])
     .filter((p) => p.carga_max != null)
@@ -429,6 +431,7 @@ function Evolucao() {
               </ResponsiveContainer>
             </Card>
           )}
+          <MediaTimeline items={(midias.data ?? []).map((m) => ({ ...m, ator: m.ator ?? 'ALUNO' }))} isLoading={midias.isLoading} />
         </>
       )}
     </div>

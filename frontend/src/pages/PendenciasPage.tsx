@@ -48,7 +48,7 @@ export function PendenciasPage() {
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-4 gap-2">
         <h2 className="font-display text-xl font-semibold flex items-center gap-2">
-          <Bell size={20} className="text-accent-hover" /> Central
+          <Bell size={20} className="text-accent-hover" /> Notificações
         </h2>
         <Button variant="ghost" size="sm" onClick={() => markAll.mutate()}>Marcar notificações como lidas</Button>
       </div>
@@ -81,6 +81,9 @@ export function PendenciasPage() {
                     <p className="text-sm font-medium flex items-center gap-2 flex-wrap">
                       {isNotif ? item.titulo : tipo}
                       <Badge tone={TIPO_TONE[tipo] ?? 'neutral'}>{isNotif ? 'Notificação' : 'Pendência'}</Badge>
+                      {isNotif && (
+                        <Badge tone={item.lida ? 'neutral' : 'success'}>{item.lida ? 'Lida' : 'Não lida'}</Badge>
+                      )}
                     </p>
                     <p className="text-xs text-text-secondary">{isNotif ? item.mensagem : item.motivo}</p>
                     {!isNotif && item.aluno_id && <p className="text-xs text-text-muted">{nomeAluno(item.aluno_id)}</p>}

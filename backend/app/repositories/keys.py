@@ -120,6 +120,13 @@ def sk_dor(exercicio_id: str, ts: str, dor_id: str) -> str:
     return f"DOR#{exercicio_id}#{ts}#{dor_id}"
 
 
+NOTA_PREFIX = "NOTA#"
+
+
+def sk_nota(ts: str, nota_id: str) -> str:
+    return f"NOTA#{ts}#{nota_id}"
+
+
 AVAL_PREFIX = "AVAL#"
 
 

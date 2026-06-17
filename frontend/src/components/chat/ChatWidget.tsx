@@ -1,18 +1,25 @@
-import { useState } from 'react'
-import { MessageCircle, X, ChevronLeft } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { MessageCircle, X, ChevronLeft, Search } from 'lucide-react'
 import { useAlunos } from '../../hooks/useAlunos'
-import { usePersonalChat, useSendPersonalChat } from '../../hooks/usePersonalChat'
-import { Avatar, Spinner } from '../ui'
+import { useExerciciosAluno } from '../../hooks/useEvolucao'
+import { usePersonalChat, useSendPersonalChat, useEnviarCorrecao } from '../../hooks/usePersonalChat'
+import { Avatar, Spinner, Modal, Select, Button } from '../ui'
 import { ChatThread } from './ChatThread'
 import { ChatInputBar } from './ChatInputBar'
 
 export function ChatWidget() {
   const [open, setOpen] = useState(false)
   const [alunoId, setAlunoId] = useState<string | null>(null)
+  const [anexo, setAnexo] = useState<File | null>(null)
+  const [busca, setBusca] = useState('')
   const alunos = useAlunos()
   const history = usePersonalChat(alunoId)
   const send = useSendPersonalChat(alunoId)
   const aluno = alunos.data?.find((a) => a.aluno_id === alunoId)
+  const alunosFiltrados = useMemo(
+    () => alunos.data?.filter((a) => a.nome.toLowerCase().includes(busca.toLowerCase())) ?? [],
+    [alunos.data, busca],
+  )
 
   if (!open) {
     return (
@@ -43,23 +50,40 @@ export function ChatWidget() {
       </header>
 
       {!alunoId ? (
-        <div className="flex-1 overflow-y-auto">
-          {alunos.isLoading ? (
-            <div className="p-6 flex justify-center"><Spinner /></div>
-          ) : !alunos.data?.length ? (
-            <p className="text-center text-sm text-text-muted p-6">Nenhum aluno cadastrado ainda.</p>
-          ) : (
-            alunos.data.map((a) => (
-              <button
-                key={a.aluno_id}
-                onClick={() => setAlunoId(a.aluno_id)}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left border-b border-border/50"
-              >
-                <Avatar name={a.nome} size="sm" />
-                <span className="text-sm text-text truncate">{a.nome}</span>
-              </button>
-            ))
+        <div className="flex-1 flex flex-col min-h-0">
+          {!!alunos.data?.length && (
+            <div className="px-3 py-2 border-b border-border shrink-0">
+              <div className="relative">
+                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  placeholder="Buscar aluno…"
+                  className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-surface-elevated border border-border text-text text-sm placeholder-text-muted focus:outline-none focus:border-accent"
+                />
+              </div>
+            </div>
           )}
+          <div className="flex-1 overflow-y-auto">
+            {alunos.isLoading ? (
+              <div className="p-6 flex justify-center"><Spinner /></div>
+            ) : !alunos.data?.length ? (
+              <p className="text-center text-sm text-text-muted p-6">Nenhum aluno cadastrado ainda.</p>
+            ) : !alunosFiltrados.length ? (
+              <p className="text-center text-sm text-text-muted p-6">Nenhum aluno encontrado.</p>
+            ) : (
+              alunosFiltrados.map((a) => (
+                <button
+                  key={a.aluno_id}
+                  onClick={() => setAlunoId(a.aluno_id)}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left border-b border-border/50"
+                >
+                  <Avatar name={a.nome} size="sm" />
+                  <span className="text-sm text-text truncate">{a.nome}</span>
+                </button>
+              ))
+            )}
+          </div>
         </div>
       ) : (
         <>
@@ -73,9 +97,61 @@ export function ChatWidget() {
             hasMore={history.hasNextPage}
             isLoadingMore={history.isFetchingNextPage}
           />
-          <ChatInputBar onSend={(text) => send.mutate(text)} disabled={send.isPending} />
+          <ChatInputBar
+            onSend={(text) => send.mutate(text)}
+            onAttach={(file) => setAnexo(file)}
+            disabled={send.isPending}
+          />
         </>
       )}
+
+      <Modal open={!!anexo} onClose={() => setAnexo(null)} title="Anexar correção">
+        {anexo && alunoId && (
+          <CorrecaoForm
+            alunoId={alunoId}
+            file={anexo}
+            onDone={() => setAnexo(null)}
+          />
+        )}
+      </Modal>
     </div>
+  )
+}
+
+function CorrecaoForm({
+  alunoId, file, onDone,
+}: { alunoId: string; file: File; onDone: () => void }) {
+  const { data: exercicios } = useExerciciosAluno(alunoId)
+  const correcao = useEnviarCorrecao(alunoId)
+  const [exId, setExId] = useState('')
+  const [texto, setTexto] = useState('')
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    const ex = exercicios?.find((x) => x.exercicio_id === exId)
+    if (!ex) return
+    await correcao.mutateAsync({ file, exercicioId: ex.exercicio_id, exercicioNome: ex.nome, texto: texto.trim() || undefined })
+    onDone()
+  }
+
+  if (!exercicios?.length) return <p className="text-sm text-text-muted">Este aluno não tem exercícios cadastrados.</p>
+
+  return (
+    <form onSubmit={submit} className="space-y-3">
+      <p className="text-xs text-text-muted truncate">Arquivo: {file.name}</p>
+      <Select label="Exercício" value={exId} onChange={(e) => setExId(e.target.value)} required>
+        <option value="">Selecione…</option>
+        {exercicios.map((ex) => <option key={ex.exercicio_id} value={ex.exercicio_id}>{ex.nome}</option>)}
+      </Select>
+      <input
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        placeholder="Legenda (opcional)"
+        className="w-full px-3 py-2 rounded-lg bg-surface-elevated border border-border text-text text-sm placeholder-text-muted focus:outline-none focus:border-accent"
+      />
+      <Button type="submit" className="w-full" disabled={!exId || correcao.isPending}>
+        {correcao.isPending ? 'Enviando…' : 'Enviar correção'}
+      </Button>
+    </form>
   )
 }

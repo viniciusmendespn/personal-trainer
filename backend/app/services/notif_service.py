@@ -1,8 +1,12 @@
 """Sistema de notificações do portal (ESPEC §2.2) — feed do personal na partição PT#.
 Informa situações: relato de dor, treino vencendo/vencido, etc. Bell + lista no portal."""
+import time
+
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.utils import epoch_ms, new_id, now_iso
+
+NOTIF_TTL_S = 30 * 24 * 3600   # notificação lida vira histórico e expira em 30 dias
 
 
 def criar(personal_id: str, tipo: str, titulo: str, mensagem: str,
@@ -30,14 +34,18 @@ def nao_lidas(personal_id: str) -> int:
 
 
 def marcar_lida(personal_id: str, ref: str) -> None:
-    repo.update_item_if_exists(keys.pk_personal(personal_id), ref, {"lida": True})
+    repo.update_item_if_exists(
+        keys.pk_personal(personal_id), ref,
+        {"lida": True, "ttl": int(time.time()) + NOTIF_TTL_S},
+    )
 
 
 def marcar_todas(personal_id: str) -> int:
     items = repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.NOTIF_PREFIX)
+    ttl = int(time.time()) + NOTIF_TTL_S
     n = 0
     for i in items:
         if not i.get("lida"):
-            repo.update_item(keys.pk_personal(personal_id), i["SK"], {"lida": True})
+            repo.update_item(keys.pk_personal(personal_id), i["SK"], {"lida": True, "ttl": ttl})
             n += 1
     return n

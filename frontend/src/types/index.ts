@@ -184,6 +184,13 @@ export interface TreinoTemplateCreate {
 export type CanalOrigem = 'WHATSAPP' | 'PORTAL'
 export type Ator = 'ALUNO' | 'PERSONAL'
 
+export interface ChatMidia {
+  midia_id: string
+  tipo: string
+  s3_key: string
+  url?: string
+}
+
 export interface ChatMensagem {
   mensagem_id: string
   aluno_id: string
@@ -193,4 +200,5 @@ export interface ChatMensagem {
   canal_origem: CanalOrigem
   data_hora: string
   direto?: boolean
+  midia?: ChatMidia
 }

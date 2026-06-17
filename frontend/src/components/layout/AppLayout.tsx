@@ -60,7 +60,7 @@ export function AppLayout() {
   const pageTitle = NAV_ITEMS.find((i) => location.pathname.startsWith(i.to))?.label ?? 'Personal'
 
   return (
-    <div className="min-h-screen flex">
+    <div className="h-screen overflow-hidden flex">
       {/* Desktop sidebar (lg+) */}
       <aside className="hidden lg:flex w-56 shrink-0 border-r border-border bg-surface/60 backdrop-blur-xl p-4">
         <SidebarContent unread={unread} />
@@ -83,7 +83,7 @@ export function AppLayout() {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
         {/* Mobile topbar (<lg) */}
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-surface/60 backdrop-blur-xl sticky top-0 z-30">
           <button

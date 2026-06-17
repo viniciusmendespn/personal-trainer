@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { personalChatApi, type ChatPage } from '../api/personalChat'
+import { treinosApi } from '../api/treinos'
 import type { ChatMensagem } from '../types'
 
 export function usePersonalChat(alunoId: string | null) {
@@ -29,6 +30,7 @@ export function useSendPersonalChat(alunoId: string | null) {
         ator: 'PERSONAL',
         canal_origem: 'PORTAL',
         data_hora: new Date().toISOString(),
+        direto: true,
       }
       qc.setQueryData<{ pages: ChatPage[]; pageParams: unknown[] }>(key, (old) => {
         if (!old) return old
@@ -37,5 +39,25 @@ export function useSendPersonalChat(alunoId: string | null) {
       })
     },
     onSettled: () => qc.invalidateQueries({ queryKey: key }),
+  })
+}
+
+export function useEnviarCorrecao(alunoId: string | null) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      file, exercicioId, exercicioNome, texto,
+    }: { file: File; exercicioId: string; exercicioNome?: string; texto?: string }) => {
+      const tipo = file.type.startsWith('video') ? 'video_correcao' : 'foto_correcao'
+      const { upload_url, s3_key } = await treinosApi.uploadUrlMidia(alunoId!, file.name, file.type)
+      await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
+      return treinosApi.enviarCorrecao(alunoId!, {
+        s3_key, tipo, exercicio_id: exercicioId, exercicio_nome: exercicioNome, texto,
+      })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['personal-chat', alunoId] })
+      qc.invalidateQueries({ queryKey: ['midia-exercicio', alunoId] })
+    },
   })
 }

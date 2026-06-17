@@ -1,6 +1,7 @@
 import { alunoClient } from './alunoClient'
 import type { Exercicio, Treino } from '../types'
 import type { Evolucao, Resumo } from './evolucao'
+import type { MidiaExercicio } from './treinos'
 
 export interface SessaoAtiva {
   sessao_id: string
@@ -62,6 +63,8 @@ export const alunoApi = {
   resumo: () => alunoClient.get<Resumo>('/v1/aluno/resumo').then((r) => r.data),
   listExercicios: () => alunoClient.get<Exercicio[]>('/v1/aluno/exercicios').then((r) => r.data),
   evolucao: (id: string) => alunoClient.get<Evolucao>(`/v1/aluno/exercicios/${id}/evolucao`).then((r) => r.data),
+  listMidia: (exercicioId: string) =>
+    alunoClient.get<MidiaExercicio[]>(`/v1/aluno/exercicios/${exercicioId}/midia`).then((r) => r.data),
   midiaUploadUrl: (filename: string, contentType: string) =>
     alunoClient.post<{ upload_url: string; s3_key: string }>('/v1/aluno/midia/upload-url', {
       filename, content_type: contentType,

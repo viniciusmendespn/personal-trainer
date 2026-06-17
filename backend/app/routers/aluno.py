@@ -1,5 +1,7 @@
 """App do aluno (ESPEC §1.5) — escopo limitado à própria partição, via JWT do magic-link.
 Sem Cognito (rota /v1/aluno/* com Authorizer NONE; o token é validado na Lambda)."""
+from datetime import date
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
@@ -32,6 +34,12 @@ def me(ctx: dict = Depends(get_current_aluno)):
 def hoje(ctx: dict = Depends(get_current_aluno)):
     aluno_id = ctx["aluno_id"]
     treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
+    hoje_str = date.today().isoformat()
+    treinos = [
+        t for t in treinos
+        if (not t.get("data_inicio") or t["data_inicio"] <= hoje_str)
+        and (not t.get("data_fim") or t["data_fim"] >= hoje_str)
+    ]
     treinos.sort(key=lambda t: t.get("ordem", 0))
     ult_prox = sessao_service.ultimo_e_proximo(aluno_id)
     return {
@@ -101,6 +109,12 @@ def list_exercicios(ctx: dict = Depends(get_current_aluno)):
 @router.get("/exercicios/{exercicio_id}/evolucao")
 def evolucao(exercicio_id: str, ctx: dict = Depends(get_current_aluno)):
     return sessao_service.evolucao_exercicio(ctx["aluno_id"], exercicio_id)
+
+
+@router.get("/exercicios/{exercicio_id}/midia")
+def midia_exercicio_aluno(exercicio_id: str, ctx: dict = Depends(get_current_aluno)):
+    """Vídeos/fotos (execução do aluno + correção do personal) anexados nesse exercício."""
+    return media_service.list_midia_exercicio(ctx["aluno_id"], exercicio_id)
 
 
 @router.get("/resumo")
@@ -192,7 +206,7 @@ def chat_send(body: ChatBody, ctx: dict = Depends(get_current_aluno)):
 @router.post("/chat/personal", status_code=201)
 def chat_send_personal(body: ChatBody, ctx: dict = Depends(get_current_aluno)):
     """Pergunta direta ao personal — não passa pelo agente, gera notificação."""
-    agent_service.log_direct(ctx["aluno_id"], body.text, Ator.ALUNO, CanalOrigem.PORTAL)
+    agent_service.log_direct(ctx["personal_id"], ctx["aluno_id"], body.text, Ator.ALUNO, CanalOrigem.PORTAL)
     notif_service.criar(
         ctx["personal_id"], "PERGUNTA_DIRETA", "Pergunta direta do aluno",
         body.text, aluno_id=ctx["aluno_id"],
