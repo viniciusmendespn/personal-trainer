@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, X, Paperclip, AlertTriangle, Timer, Clock, Bell, Wrench, HelpCircle } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
-import { alunoApi, anexarMidiaExecucao, type ExSessao, type SessaoAtiva, type SessaoHistorico } from '../api/alunoApp'
+import { alunoApi, type ExSessao, type SessaoAtiva, type SessaoHistorico } from '../api/alunoApp'
 import { SeriesPrescritasCompact } from '../components/exercicios/SeriesPrescritasEditor'
 import { AlunoSessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import { ALUNO_TOKEN_KEY } from '../api/alunoClient'
@@ -12,9 +12,9 @@ import { useAlunoChat, useSendAlunoChat, useSendDiretoAlunoChat } from '../hooks
 import { useAlunoTimeline } from '../hooks/useAlunoTimeline'
 import { ChatThread } from '../components/chat/ChatThread'
 import { ChatInputBar } from '../components/chat/ChatInputBar'
-import { MediaTimeline } from '../components/media/MediaTimeline'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
-import { Button, Card, Spinner, Input, Textarea, Select, Badge, StatCard, EmptyState, useToast, useConfirm } from '../components/ui'
+import { PostComposer } from '../components/exercicio/PostComposer'
+import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, useToast, useConfirm } from '../components/ui'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -375,38 +375,9 @@ function SessaoTreino({ sessao }: { sessao: SessaoAtiva }) {
 
 function ExercicioCard({ ex }: { ex: ExSessao }) {
   const qc = useQueryClient()
-  const { show } = useToast()
   const [open, setOpen] = useState(false)
   const [pr, setPr] = useState<number | null>(null)
-  const [attaching, setAttaching] = useState(false)
-  const [relatoOpen, setRelatoOpen] = useState(false)
-  const [relatoTipo, setRelatoTipo] = useState<'dor' | 'duvida'>('dor')
-  const [relatoTexto, setRelatoTexto] = useState('')
   const feito = !!ex.registrado?.length
-
-  async function onAnexarMidia(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    setAttaching(true)
-    try {
-      await anexarMidiaExecucao(file, ex.exercicio_id, ex.nome)
-      show('Enviado! Seu personal vai ver.', 'success')
-    } catch {
-      show('Não foi possível enviar a mídia.', 'error')
-    } finally {
-      setAttaching(false)
-    }
-  }
-
-  const relato = useMutation({
-    mutationFn: () => alunoApi.relato(relatoTipo, relatoTexto, ex.exercicio_id, ex.nome),
-    onSuccess: () => {
-      show('Seu personal foi avisado.', 'success')
-      setRelatoOpen(false)
-      setRelatoTexto('')
-    },
-  })
 
   const initRows = () => {
     if (ex.registrado?.length) {
@@ -496,35 +467,7 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
             {save.isPending ? 'Salvando…' : feito ? 'Atualizar' : 'Registrar'}
           </Button>
 
-          <div className="flex items-center gap-3 pt-1">
-            <label className="inline-flex items-center gap-1 text-xs text-text-secondary cursor-pointer">
-              <Paperclip size={13} /> {attaching ? 'Enviando…' : 'Anexar vídeo/foto'}
-              <input type="file" accept="image/*,video/*" className="hidden" disabled={attaching} onChange={onAnexarMidia} />
-            </label>
-            <button type="button" onClick={() => setRelatoOpen((v) => !v)} className="inline-flex items-center gap-1 text-xs text-warning">
-              <AlertTriangle size={13} /> Dor ou dúvida
-            </button>
-          </div>
-
-          {relatoOpen && (
-            <div className="space-y-2 bg-white/5 rounded-lg p-2.5">
-              <Select value={relatoTipo} onChange={(e) => setRelatoTipo(e.target.value as 'dor' | 'duvida')}>
-                <option value="dor">Dor / desconforto</option>
-                <option value="duvida">Dúvida sobre o exercício</option>
-              </Select>
-              <Textarea
-                rows={2} placeholder={relatoTipo === 'dor' ? 'Onde sentiu? Como foi?' : 'Qual sua dúvida?'}
-                value={relatoTexto} onChange={(e) => setRelatoTexto(e.target.value)}
-              />
-              <Button
-                size="sm" variant={relatoTipo === 'dor' ? 'danger' : 'outline'} className="w-full"
-                disabled={!relatoTexto.trim() || relato.isPending}
-                onClick={() => relato.mutate()}
-              >
-                {relato.isPending ? 'Enviando…' : 'Avisar personal'}
-              </Button>
-            </div>
-          )}
+          <PostComposer exercicioId={ex.exercicio_id} exercicioNome={ex.nome} viewerAtor="ALUNO" />
         </div>
       )}
     </Card>
@@ -627,7 +570,6 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
     if (!exId && exs.data?.length) setExId(exs.data[0].exercicio_id)
   }, [exs.data, exId, initialExId])
   const evo = useQuery({ queryKey: ['aluno-evo', exId], queryFn: () => alunoApi.evolucao(exId), enabled: !!exId })
-  const midias = useQuery({ queryKey: ['aluno-midia', exId], queryFn: () => alunoApi.listMidia(exId), enabled: !!exId })
   const feed = useQuery({ queryKey: ['aluno-feed', exId], queryFn: () => alunoApi.feedExercicio(exId), enabled: !!exId })
 
   const data = (evo.data?.serie ?? [])
@@ -674,24 +616,33 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
               </ResponsiveContainer>
             </Card>
           )}
-          <MediaTimeline items={(midias.data ?? []).map((m) => ({ ...m, ator: m.ator ?? 'ALUNO' }))} isLoading={midias.isLoading} />
-          {!!feed.data?.length && (
-            <div className="space-y-1">
-              <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">Correções e relatos</p>
-              <ExercicioFeedCard
-                items={feed.data}
-                viewerAtor="ALUNO"
-                onAddComentario={async (relatoSk, texto) => {
-                  try {
-                    await alunoApi.comentarRelato({ relato_sk: relatoSk, texto })
-                    qc.invalidateQueries({ queryKey: ['aluno-feed', exId] })
-                  } catch {
-                    show('Não foi possível enviar o comentário.', 'error')
-                  }
-                }}
-              />
-            </div>
+          {!!exId && (
+            <PostComposer
+              exercicioId={exId}
+              exercicioNome={exs.data?.find((e) => e.exercicio_id === exId)?.nome}
+              viewerAtor="ALUNO"
+            />
           )}
+          <div className="space-y-1">
+            {!!exId && <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">Feed do exercício</p>}
+            <ExercicioFeedCard
+              items={feed.data ?? []}
+              emptyText="Nenhuma postagem ainda. Use o botão acima para postar."
+              viewerAtor="ALUNO"
+              onAddComentario={async (relatoSk, texto) => {
+                try {
+                  if (relatoSk.startsWith('POST#')) {
+                    await alunoApi.comentarPost({ post_sk: relatoSk, texto })
+                  } else {
+                    await alunoApi.comentarRelato({ relato_sk: relatoSk, texto })
+                  }
+                  qc.invalidateQueries({ queryKey: ['aluno-feed', exId] })
+                } catch {
+                  show('Não foi possível enviar o comentário.', 'error')
+                }
+              }}
+            />
+          </div>
         </>
       )}
     </div>

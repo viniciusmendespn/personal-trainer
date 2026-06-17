@@ -166,6 +166,14 @@ def sk_correcao_ex(exercicio_id: str, ts: str, correcao_id: str) -> str:
     return f"CORRECAO#{exercicio_id}#{ts}#{correcao_id}"
 
 
+# ── Postagens unificadas (aluno + personal) — texto + mídias + tipo ──────────
+POST_PREFIX = "POST#"
+
+
+def sk_post(exercicio_id: str, ts: str, post_id: str) -> str:
+    return f"POST#{exercicio_id}#{ts}#{post_id}"
+
+
 # ── Notificações para o aluno (partição AL#, espelho do NOTIF# do personal) ──
 ANOTIF_PREFIX = "ANOTIF#"
 

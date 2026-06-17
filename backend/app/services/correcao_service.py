@@ -31,10 +31,13 @@ def _enrich_midias(midias: list[dict]) -> list[dict]:
 
 
 def feed_exercicio(aluno_id: str, exercicio_id: str) -> list[dict]:
-    """Retorna DORs + DÚVIDAs + CORREÇÕEs do exercício, ordenados por data_hora desc."""
-    dores = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=f"DOR#{exercicio_id}#")
-    duvidas = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=f"DUVIDA#{exercicio_id}#")
-    correcoes = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=f"CORRECAO#{exercicio_id}#")
+    """Retorna feed unificado: DOR + DUVIDA + CORRECAO + MIDIA + POST, por data_hora desc."""
+    pk = keys.pk_aluno(aluno_id)
+    dores = repo.query_pk(pk, sk_prefix=f"DOR#{exercicio_id}#")
+    duvidas = repo.query_pk(pk, sk_prefix=f"DUVIDA#{exercicio_id}#")
+    correcoes = repo.query_pk(pk, sk_prefix=f"CORRECAO#{exercicio_id}#")
+    midias = repo.query_pk(pk, sk_prefix=f"MIDIA#{exercicio_id}#")
+    posts = repo.query_pk(pk, sk_prefix=f"POST#{exercicio_id}#")
 
     feed: list[dict] = []
     for i in dores:
@@ -51,6 +54,19 @@ def feed_exercicio(aluno_id: str, exercicio_id: str) -> list[dict]:
         c = repo.clean(i)
         c["tipo"] = "CORRECAO"
         c["midias"] = _enrich_midias(c.get("midias") or [])
+        c["descricao"] = c.get("texto")
+        feed.append(c)
+    for i in midias:
+        # Itens MIDIA legacy viram EXECUCAO no feed (sem thread de comentários)
+        c = repo.clean(i)
+        midia_tipo_original = c.get("tipo", "foto_exercicio")
+        c["midias"] = _enrich_midias([{"s3_key": c["s3_key"], "tipo": midia_tipo_original}])
+        c["tipo"] = "EXECUCAO"
+        feed.append(c)
+    for i in posts:
+        c = repo.clean(i)
+        c["midias"] = _enrich_midias(c.get("midias") or [])
+        c["relato_sk"] = i["SK"]
         feed.append(c)
 
     feed.sort(key=lambda r: r.get("data_hora", ""), reverse=True)

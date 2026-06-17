@@ -8,10 +8,9 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAluno } from '../hooks/useAlunos'
 import { useExerciciosAluno, useEvolucao, useResumo } from '../hooks/useEvolucao'
-import { useMidiaExercicio } from '../hooks/useTreinos'
 import { Card, Spinner, Select, StatCard, Badge, EmptyState, Button, Input, useToast } from '../components/ui'
-import { MediaTimeline } from '../components/media/MediaTimeline'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
+import { PostComposer } from '../components/exercicio/PostComposer'
 import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
 import { renderNodeToPdf } from '../utils/exportPdf'
 import { treinosApi } from '../api/treinos'
@@ -82,7 +81,6 @@ export function AlunoEvolucaoPage() {
   }, [highlightExId, exId])
 
   const { data: evo, isLoading } = useEvolucao(alunoId, exId)
-  const { data: midias, isLoading: midiasLoading } = useMidiaExercicio(alunoId, exId, !!exId)
   const { data: feed } = useQuery({
     queryKey: ['feed-exercicio', alunoId, exId],
     queryFn: () => treinosApi.feedExercicio(alunoId, exId),
@@ -210,34 +208,47 @@ export function AlunoEvolucaoPage() {
             </Card>
           )}
 
-          <div className="mt-4">
-            <MediaTimeline items={(midias ?? []).map((m) => ({ ...m, ator: m.ator ?? 'ALUNO' }))} isLoading={midiasLoading} />
-          </div>
-
-          {!!feed?.length && (
-            <div
-              ref={feedRef}
-              className={`mt-4 rounded-xl transition-all duration-500 ${
-                highlightExId === exId ? 'ring-2 ring-accent/60 ring-offset-2 ring-offset-transparent' : ''
-              }`}
-            >
-              <p className="text-sm font-semibold text-text-secondary flex items-center gap-1.5 mb-2">
-                <MessageSquareDot size={15} className="text-accent-hover" /> Relatos e correções
-              </p>
-              <ExercicioFeedCard
-                items={feed}
+          {!!exId && (
+            <div className="mt-4">
+              <PostComposer
+                exercicioId={exId}
+                exercicioNome={exSel?.nome}
                 viewerAtor="PERSONAL"
-                onAddComentario={async (relatoSk, texto) => {
-                  try {
-                    await treinosApi.comentarRelato(alunoId, { relato_sk: relatoSk, texto })
-                    qc.invalidateQueries({ queryKey: ['feed-exercicio', alunoId, exId] })
-                  } catch {
-                    show('Não foi possível enviar o comentário.', 'error')
-                  }
-                }}
+                alunoId={alunoId}
+                onSuccess={() => qc.invalidateQueries({ queryKey: ['feed-exercicio', alunoId, exId] })}
               />
             </div>
           )}
+
+          <div
+            ref={feedRef}
+            className={`mt-4 rounded-xl transition-all duration-500 ${
+              highlightExId === exId ? 'ring-2 ring-accent/60 ring-offset-2 ring-offset-transparent' : ''
+            }`}
+          >
+            {!!exId && (
+              <p className="text-sm font-semibold text-text-secondary flex items-center gap-1.5 mb-2">
+                <MessageSquareDot size={15} className="text-accent-hover" /> Feed do exercício
+              </p>
+            )}
+            <ExercicioFeedCard
+              items={feed ?? []}
+              emptyText="Nenhuma postagem ainda."
+              viewerAtor="PERSONAL"
+              onAddComentario={async (relatoSk, texto) => {
+                try {
+                  if (relatoSk.startsWith('POST#')) {
+                    await treinosApi.comentarPost(alunoId, { post_sk: relatoSk, texto })
+                  } else {
+                    await treinosApi.comentarRelato(alunoId, { relato_sk: relatoSk, texto })
+                  }
+                  qc.invalidateQueries({ queryKey: ['feed-exercicio', alunoId, exId] })
+                } catch {
+                  show('Não foi possível enviar o comentário.', 'error')
+                }
+              }}
+            />
+          </div>
         </>
       )}
     </div>

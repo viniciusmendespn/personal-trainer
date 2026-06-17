@@ -55,10 +55,21 @@ export const treinosApi = {
     body: { exercicio_id: string; exercicio_nome?: string; texto: string; midias: Array<{ s3_key: string; tipo: string }> },
   ) => api.post<{ ok: number; correcao_id: string }>(`/v1/alunos/${alunoId}/exercicios/${body.exercicio_id}/correcao`, body).then((r) => r.data),
 
+  criarPostagemPersonal: (
+    alunoId: string,
+    exercicioId: string,
+    body: { exercicio_nome?: string; descricao?: string; midias?: Array<{ s3_key: string; tipo: string }> },
+  ) =>
+    api
+      .post<{ ok: number; post_id: string }>(`/v1/alunos/${alunoId}/exercicios/${exercicioId}/postagem`, body)
+      .then((r) => r.data),
+
   responderNotificacao: (body: { ref: string; texto: string; aluno_id: string }) =>
     api.post('/v1/notificacoes/responder', body).then((r) => r.data),
   comentarRelato: (alunoId: string, body: { relato_sk: string; texto: string }) =>
     api.post(`/v1/alunos/${alunoId}/relato/comentar`, body).then((r) => r.data),
+  comentarPost: (alunoId: string, body: { post_sk: string; texto: string }) =>
+    api.post(`/v1/alunos/${alunoId}/post/comentar`, body).then((r) => r.data),
 }
 
 export interface Relato {
@@ -81,16 +92,18 @@ export interface Comentario {
 }
 
 export interface FeedItem {
-  tipo: 'DOR' | 'DUVIDA' | 'CORRECAO'
+  tipo: 'DOR' | 'DUVIDA' | 'CORRECAO' | 'EXECUCAO'
+  ator?: 'ALUNO' | 'PERSONAL'
   data_hora: string
-  // DOR / DUVIDA
+  // Thread (DOR / DUVIDA / EXECUCAO com texto)
   descricao?: string
   respondido?: boolean
   resposta_texto?: string
   respondido_em?: string
   relato_sk?: string
   comentarios?: Comentario[]
-  // CORRECAO
+  // Mídia (CORRECAO / EXECUCAO / POST com mídia)
+  post_id?: string
   correcao_id?: string
   texto?: string
   midias?: Array<{ s3_key: string; tipo: string; url?: string }>

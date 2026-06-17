@@ -138,6 +138,20 @@ export const alunoApi = {
     alunoClient.get<FeedItem[]>(`/v1/aluno/exercicios/${exercicioId}/feed`).then((r) => r.data),
   comentarRelato: (body: { relato_sk: string; texto: string }) =>
     alunoClient.post('/v1/aluno/relato/comentar', body).then((r) => r.data),
+  criarPostagem: (
+    exercicioId: string,
+    body: {
+      tipo: 'DOR' | 'DUVIDA' | 'EXECUCAO'
+      descricao?: string
+      midias?: Array<{ s3_key: string; tipo: string }>
+      exercicio_nome?: string
+    },
+  ) =>
+    alunoClient
+      .post<{ ok: number; post_id: string }>(`/v1/aluno/exercicios/${exercicioId}/postagem`, body)
+      .then((r) => r.data),
+  comentarPost: (body: { post_sk: string; texto: string }) =>
+    alunoClient.post('/v1/aluno/post/comentar', body).then((r) => r.data),
 }
 
 /** Pede a presigned URL e sobe o arquivo direto pro S3, depois registra vinculado ao exercício. */

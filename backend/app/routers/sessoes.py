@@ -7,7 +7,8 @@ from app.dependencies import get_current_personal_id
 from app.models.enums import Ator, CanalOrigem
 from app.models.registro import SerieExec
 from app.repositories import dynamo_repo as repo, keys
-from app.services import agent_service, alerta_service, anotif_service, authz, correcao_service, media_service, nota_service, notif_service, sessao_service
+from app.models.postagem import PostagemPersonalCreate
+from app.services import agent_service, alerta_service, anotif_service, authz, correcao_service, media_service, nota_service, notif_service, postagem_service, sessao_service
 
 router = APIRouter(prefix="/v1/alunos/{aluno_id}", tags=["sessoes"])
 
@@ -181,9 +182,51 @@ def criar_correcao(aluno_id: str, exercicio_id: str, body: CorrecaoBody,
 @router.get("/exercicios/{exercicio_id}/feed")
 def feed_exercicio(aluno_id: str, exercicio_id: str,
                    personal_id: str = Depends(get_current_personal_id)):
-    """Feed unificado do exercício: dores, dúvidas e correções — mais recentes primeiro."""
+    """Feed unificado do exercício: dores, dúvidas, correções, mídias e postagens."""
     authz.authorize_aluno(personal_id, aluno_id)
     return correcao_service.feed_exercicio(aluno_id, exercicio_id)
+
+
+@router.post("/exercicios/{exercicio_id}/postagem", status_code=201)
+def criar_postagem_personal(aluno_id: str, exercicio_id: str, body: PostagemPersonalCreate,
+                            personal_id: str = Depends(get_current_personal_id)):
+    """Personal cria postagem de correção no exercício do aluno."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    item = postagem_service.criar_postagem(
+        aluno_id=aluno_id,
+        exercicio_id=exercicio_id,
+        exercicio_nome=body.exercicio_nome,
+        tipo="CORRECAO",
+        descricao=body.descricao,
+        midias=[m.model_dump() for m in body.midias],
+        sessao_id=None,
+        ator="PERSONAL",
+        personal_id=personal_id,
+    )
+    return {"ok": 1, "post_id": item["post_id"]}
+
+
+class ComentarPostPersonalBody(BaseModel):
+    post_sk: str
+    texto: str
+
+
+@router.post("/post/comentar", status_code=201)
+def comentar_post_personal(aluno_id: str, body: ComentarPostPersonalBody,
+                            personal_id: str = Depends(get_current_personal_id)):
+    """Personal adiciona comentário em thread de postagem (POST#)."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    ok = alerta_service.adicionar_comentario(aluno_id, body.post_sk, "PERSONAL", body.texto)
+    if not ok:
+        raise HTTPException(404, "Postagem não encontrada.")
+    parts = body.post_sk.split("#")
+    exercicio_id = parts[1] if len(parts) > 1 else None
+    anotif_service.criar(
+        aluno_id, "DOR_RESPONDIDA", "Resposta do seu personal",
+        body.texto[:120] + ("…" if len(body.texto) > 120 else ""),
+        ref_extra={"exercicio_id": exercicio_id, "relato_sk": body.post_sk},
+    )
+    return {"ok": True}
 
 
 class ComentarRelatoPersonalBody(BaseModel):

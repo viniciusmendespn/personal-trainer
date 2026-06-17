@@ -53,7 +53,7 @@ from app.models.template import ExercicioTemplate, TreinoTemplate  # noqa: E402
 from app.models.treino import Treino  # noqa: E402
 from app.repositories import dynamo_repo as repo  # noqa: E402
 from app.repositories import keys  # noqa: E402
-from app.services import alerta_service, correcao_service, notif_service  # noqa: E402
+from app.services import alerta_service, notif_service, postagem_service  # noqa: E402
 from app.utils import new_id  # noqa: E402
 
 NOW = datetime.now(timezone.utc)
@@ -400,58 +400,53 @@ for nome, foco, exs in TEMPLATES_DEF:
 print(f"Templates de treino: {len(TEMPLATES_DEF)} criados.")
 
 
-# ── 8) Relatos, respostas e correções demo ───────────────────────────────────────────────
+# ── 8) Postagens demo no feed dos exercícios ────────────────────────────────────────────
 mariana = next(a for a in alunos_criados if a["nome"] == "Mariana Souza")
 carlos = next(a for a in alunos_criados if a["nome"] == "Carlos Eduardo Lima")
 ex_agachamento = next(e for e in mariana["treinos"]["B"]["exercicios"] if e["nome"] == "Agachamento livre")
 ex_puxada = next(e for e in carlos["treinos"]["C"]["exercicios"] if e["nome"] == "Puxada frontal")
+ex_supino = next(e for e in mariana["treinos"]["A"]["exercicios"] if e["nome"] == "Supino reto")
 
-# DOR vinculada à última sessão B de Mariana
 mariana_sessao_b = last_sessao_id.get((mariana["aluno_id"], "B"))
-alerta_service.registrar_dor(
-    PERSONAL_ID, mariana["aluno_id"],
-    "Senti uma dor incômoda no joelho direito durante a última série.",
-    exercicio_id=ex_agachamento["exercicio_id"], exercicio_nome=ex_agachamento["nome"],
-    sessao_id=mariana_sessao_b,
+carlos_sessao_c = last_sessao_id.get((carlos["aluno_id"], "C"))
+
+# Postagem DOR de Mariana (agachamento) — aguarda resposta do personal
+postagem_service.criar_postagem(
+    aluno_id=mariana["aluno_id"], exercicio_id=ex_agachamento["exercicio_id"],
+    exercicio_nome=ex_agachamento["nome"], tipo="DOR",
+    descricao="Senti uma dor incômoda no joelho direito durante a última série.",
+    midias=[], sessao_id=mariana_sessao_b, ator="ALUNO", personal_id=PERSONAL_ID,
 )
-# Personal responde à dor (demonstra o loop completo de resposta)
-dor_items = repo.query_pk(keys.pk_aluno(mariana["aluno_id"]), sk_prefix=f"DOR#{ex_agachamento['exercicio_id']}#")
-if dor_items:
-    alerta_service.responder_relato(
-        mariana["aluno_id"], dor_items[0]["SK"],
+# Personal comenta na thread da dor
+dor_posts = repo.query_pk(keys.pk_aluno(mariana["aluno_id"]), sk_prefix=f"POST#{ex_agachamento['exercicio_id']}#")
+if dor_posts:
+    alerta_service.adicionar_comentario(
+        mariana["aluno_id"], dor_posts[0]["SK"], "PERSONAL",
         "Dor típica de sobrecarga no joelho. Vamos reduzir 10% da carga e reforçar a ativação do glúteo antes de cada série.",
-        PERSONAL_ID,
     )
 
-# DÚVIDA não respondida de Carlos (puxada frontal — fica aberta para demo)
-carlos_sessao_c = last_sessao_id.get((carlos["aluno_id"], "C"))
-alerta_service.registrar_duvida(
-    PERSONAL_ID, carlos["aluno_id"],
-    "Qual a pegada correta para ativar mais o dorsal — pronada ou supinada?",
-    exercicio_id=ex_puxada["exercicio_id"], exercicio_nome=ex_puxada["nome"],
-    sessao_id=carlos_sessao_c,
+# Postagem DUVIDA de Carlos (puxada frontal) — aberta
+postagem_service.criar_postagem(
+    aluno_id=carlos["aluno_id"], exercicio_id=ex_puxada["exercicio_id"],
+    exercicio_nome=ex_puxada["nome"], tipo="DUVIDA",
+    descricao="Qual a pegada correta para ativar mais o dorsal — pronada ou supinada?",
+    midias=[], sessao_id=carlos_sessao_c, ator="ALUNO", personal_id=PERSONAL_ID,
 )
 
-# CORREÇÃO do personal para Mariana (agachamento) — aparece no feed do exercício e notifica a aluna
-correcao_service.criar_correcao(
-    PERSONAL_ID, mariana["aluno_id"],
-    ex_agachamento["exercicio_id"], ex_agachamento["nome"],
-    "Percebi que os joelhos estão entrando para dentro na fase excêntrica. Ative o glúteo e empurre os joelhos para fora, alinhando com o 2º dedo do pé durante toda a amplitude do movimento.",
-    midias=[],
+# Postagem CORRECAO do personal para Mariana (agachamento)
+postagem_service.criar_postagem(
+    aluno_id=mariana["aluno_id"], exercicio_id=ex_agachamento["exercicio_id"],
+    exercicio_nome=ex_agachamento["nome"], tipo="CORRECAO",
+    descricao="Percebi que os joelhos estão entrando para dentro na fase excêntrica. Ative o glúteo e empurre os joelhos para fora, alinhando com o 2º dedo do pé durante toda a amplitude do movimento.",
+    midias=[], sessao_id=None, ator="PERSONAL", personal_id=PERSONAL_ID,
 )
 
-bruno = next(a for a in alunos_criados if a["nome"] == "Bruno Almeida")
-midia_id = new_id()
-repo.put_item(keys.pk_aluno(bruno["aluno_id"]), f"MIDIA#NA#{midia_id}", {
-    "midia_id": midia_id, "tipo": "video_execucao",
-    "s3_key": f"midia/{bruno['aluno_id']}/{midia_id}.mp4",
-    "exercicio_id": None, "exercicio_nome": None, "status": "PENDENTE", "data_hora": iso_at(NOW),
-})
-notif_service.criar(
-    PERSONAL_ID, "MIDIA_PENDENTE", "Mídia sem exercício",
-    "Mídia recebida sem exercício vinculado",
-    aluno_id=bruno["aluno_id"],
-    ref_extra={"midia_id": midia_id, "s3_key": f"midia/{bruno['aluno_id']}/{midia_id}.mp4"},
+# Postagem EXECUCAO de Mariana (supino) — texto de registro de execução
+postagem_service.criar_postagem(
+    aluno_id=mariana["aluno_id"], exercicio_id=ex_supino["exercicio_id"],
+    exercicio_nome=ex_supino["nome"], tipo="EXECUCAO",
+    descricao="Consegui fazer 4 séries de 8 com 50kg hoje sem dor. Evoluindo!",
+    midias=[], sessao_id=None, ator="ALUNO", personal_id=PERSONAL_ID,
 )
 
 fernanda = next(a for a in alunos_criados if a["nome"] == "Fernanda Oliveira")
@@ -461,65 +456,7 @@ notif_service.criar(
     aluno_id=fernanda["aluno_id"],
 )
 
-# ── 8b) Mídias de execução e correção vinculadas a exercícios (demo) ─────────────────────
-TIPOS_EXECUCAO = ["foto_exercicio", "video_execucao"]
-TIPOS_CORRECAO = ["foto_correcao", "video_correcao"]
-
-def seed_midias_aluno(aluno: dict, treino_letra: str) -> int:
-    """Cria mídias de execução (ator ALUNO) + uma correção do personal para os primeiros exercícios."""
-    aluno_id = aluno["aluno_id"]
-    treino = aluno["treinos"][treino_letra]
-    total = 0
-    for i, ex in enumerate(treino["exercicios"][:3]):  # apenas os 3 primeiros exercícios
-        ex_id = ex["exercicio_id"]
-        ex_nome = ex["nome"]
-        # execução enviada pelo aluno
-        tipo_ex = TIPOS_EXECUCAO[i % 2]
-        ext = "mp4" if "video" in tipo_ex else "jpg"
-        midia_id = new_id()
-        dt_midia = NOW - timedelta(days=rng.randint(1, 14))
-        repo.put_item(keys.pk_aluno(aluno_id), f"MIDIA#{ex_id}#{midia_id}", {
-            "midia_id": midia_id, "tipo": tipo_ex,
-            "s3_key": f"demo/{aluno_id}/{ex_id}/{midia_id}.{ext}",
-            "exercicio_id": ex_id, "exercicio_nome": ex_nome,
-            "status": "VINCULADA", "data_hora": iso_at(dt_midia), "ator": "ALUNO",
-        })
-        total += 1
-        # correção enviada pelo personal (apenas para o 1º exercício)
-        if i == 0:
-            tipo_cor = TIPOS_CORRECAO[0]
-            corr_id = new_id()
-            repo.put_item(keys.pk_aluno(aluno_id), f"MIDIA#{ex_id}#{corr_id}", {
-                "midia_id": corr_id, "tipo": tipo_cor,
-                "s3_key": f"demo/{aluno_id}/{ex_id}/{corr_id}.jpg",
-                "exercicio_id": ex_id, "exercicio_nome": ex_nome,
-                "status": "VINCULADA", "data_hora": iso_at(NOW - timedelta(hours=2)), "ator": "PERSONAL",
-            })
-            total += 1
-    return total
-
-total_midias = 0
-# Mariana (aluna ativa) — treino A (superior)
-total_midias += seed_midias_aluno(alunos_criados[0], "A")
-# Carlos — treino C (costas/bíceps)
-total_midias += seed_midias_aluno(alunos_criados[1], "C")
-# Thiago — treino B (inferior)
-total_midias += seed_midias_aluno(alunos_criados[7], "B")
-print(f"Mídias demo: {total_midias} registros criados (S3 keys fictícios — upload real via app).")
-
-# notificações extras (já lidas) para dar histórico à Central
-thiago = next(a for a in alunos_criados if a["nome"] == "Thiago Ferreira")
-nid = notif_service.criar(PERSONAL_ID, "FEEDBACK", "Feedback antigo (exemplo)",
-                          f"Histórico antigo de {thiago['nome']} — apenas para exemplo de notificação lida.",
-                          aluno_id=thiago["aluno_id"])
-# marca como lida diretamente (SK previsível, pois notif_service.criar usa epoch 'agora')
-notifs = repo.query_pk_last_n(keys.pk_personal(PERSONAL_ID), keys.NOTIF_PREFIX, 5)
-for n in notifs:
-    if n.get("notif_id") == nid:
-        repo.update_item_if_exists(keys.pk_personal(PERSONAL_ID), n["SK"], {"lida": True})
-        break
-
-print("Relatos: DOR Mariana (respondida), DUVIDA Carlos (aberta), CORRECAO Mariana (agachamento).")
+print("Postagens demo criadas: DOR Mariana (com resposta), DUVIDA Carlos (aberta), CORRECAO Mariana, EXECUCAO Mariana.")
 
 
 # ── Resumo final ──────────────────────────────────────────────────────────────────────────
@@ -533,8 +470,7 @@ print(f"Sessões:         {total_sessoes} (histórico de ~10 semanas, com exerci
 print(f"Avaliações:      {total_avaliacoes}")
 print(f"Agendamentos:    {total_agendamentos}")
 print(f"Templates:       {len(TEMPLATES_DEF)}")
-print(f"Mídias demo:     {total_midias} (Mariana/Carlos/Thiago — S3 keys fictícios, URLs quebradas mas itens visíveis)")
-print("Pendências:      DOR respondida (Mariana/agachamento), DUVIDA aberta (Carlos/puxada frontal), CORRECAO (Mariana), MIDIA_PENDENTE (Bruno), FEEDBACK (Fernanda)")
+print("Postagens:       DOR respondida (Mariana/agachamento), DUVIDA aberta (Carlos/puxada frontal), CORRECAO (Mariana), EXECUCAO (Mariana), FEEDBACK (Fernanda)")
 print("\nFaça login no portal e explore Dashboard, Alunos, Agenda, Templates, Biblioteca e a Central (sino).")
 print("Aba Histórico: disponível no app do aluno e na página de detalhes do aluno (personal).")
 print("Reordenacao de treinos: use os botoes ^ / v na pagina de detalhe do aluno para ordenar a sequencia de treinos.")

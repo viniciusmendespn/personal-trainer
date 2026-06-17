@@ -10,7 +10,8 @@ from app.models.enums import Ator, CanalOrigem, Classificacao
 from app.models.registro import SerieExec
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import agent_service, alerta_service, anotif_service, correcao_service, media_service, notif_service, sessao_service
+from app.models.postagem import PostagemCreate, PostagemTipo
+from app.services import agent_service, alerta_service, anotif_service, correcao_service, media_service, notif_service, postagem_service, sessao_service
 from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
@@ -268,8 +269,51 @@ def marcar_anotif_lida(body: AnotifRefBody, ctx: dict = Depends(get_current_alun
 
 @router.get("/exercicios/{exercicio_id}/feed")
 def feed_exercicio_aluno(exercicio_id: str, ctx: dict = Depends(get_current_aluno)):
-    """Feed de dores, dúvidas e correções do exercício — visão do aluno."""
+    """Feed unificado do exercício: dores, dúvidas, correções, mídias e postagens."""
     return correcao_service.feed_exercicio(ctx["aluno_id"], exercicio_id)
+
+
+@router.post("/exercicios/{exercicio_id}/postagem", status_code=201)
+def criar_postagem(exercicio_id: str, body: PostagemCreate, ctx: dict = Depends(get_current_aluno)):
+    """Aluno cria postagem no exercício: execução (mídia), dor ou dúvida."""
+    if body.tipo == PostagemTipo.CORRECAO:
+        raise HTTPException(403, "Aluno não pode criar postagem do tipo CORRECAO.")
+    sessao_ativa = sessao_service.get_active(ctx["aluno_id"])
+    sessao_id = sessao_ativa["sessao_id"] if sessao_ativa else body.sessao_id
+    item = postagem_service.criar_postagem(
+        aluno_id=ctx["aluno_id"],
+        exercicio_id=exercicio_id,
+        exercicio_nome=body.exercicio_nome,
+        tipo=body.tipo.value,
+        descricao=body.descricao,
+        midias=[m.model_dump() for m in body.midias],
+        sessao_id=sessao_id,
+        ator="ALUNO",
+        personal_id=ctx["personal_id"],
+    )
+    return {"ok": 1, "post_id": item["post_id"]}
+
+
+class ComentarPostBody(BaseModel):
+    post_sk: str
+    texto: str
+
+
+@router.post("/post/comentar", status_code=201)
+def comentar_post(body: ComentarPostBody, ctx: dict = Depends(get_current_aluno)):
+    """Aluno adiciona comentário em thread de postagem (POST#)."""
+    ok = alerta_service.adicionar_comentario(ctx["aluno_id"], body.post_sk, "ALUNO", body.texto)
+    if not ok:
+        raise HTTPException(404, "Postagem não encontrada.")
+    parts = body.post_sk.split("#")
+    exercicio_id = parts[1] if len(parts) > 1 else None
+    notif_service.criar(
+        ctx["personal_id"], "DOR", "Novo comentário do aluno",
+        body.texto[:120] + ("…" if len(body.texto) > 120 else ""),
+        aluno_id=ctx["aluno_id"],
+        ref_extra={"relato_sk": body.post_sk, "exercicio_id": exercicio_id},
+    )
+    return {"ok": 1}
 
 
 @router.get("/chat")

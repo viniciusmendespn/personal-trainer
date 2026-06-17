@@ -1,4 +1,4 @@
-import { AlertTriangle, HelpCircle, Wrench } from 'lucide-react'
+import { AlertTriangle, Camera, HelpCircle, Wrench } from 'lucide-react'
 import { ThreadRelato } from '../notificacoes/ThreadRelato'
 import type { FeedItem } from '../../api/treinos'
 
@@ -54,6 +54,59 @@ function RelatoItem({
   )
 }
 
+function MediaGrid({ midias }: { midias: NonNullable<FeedItem['midias']> }) {
+  if (!midias.length) return null
+  return (
+    <div className="flex flex-wrap gap-2 pt-1">
+      {midias.map((m, i) =>
+        m.url ? (
+          m.tipo.startsWith('video') || m.tipo.includes('video') ? (
+            <video key={i} src={m.url} controls className="rounded-lg max-h-40 max-w-[180px] border border-border" />
+          ) : (
+            <a key={i} href={m.url} target="_blank" rel="noreferrer">
+              <img src={m.url} alt="mídia" className="rounded-lg max-h-40 max-w-[180px] border border-border object-cover" />
+            </a>
+          )
+        ) : null,
+      )}
+    </div>
+  )
+}
+
+function ExecucaoItem({
+  item,
+  viewerAtor,
+  onAddComentario,
+}: {
+  item: FeedItem
+  viewerAtor?: 'ALUNO' | 'PERSONAL'
+  onAddComentario?: (relatoSk: string, texto: string) => Promise<void>
+}) {
+  const showThread = !!viewerAtor && !!onAddComentario && !!item.relato_sk
+  const autorLabel = item.ator === 'PERSONAL' ? 'Personal' : 'Aluno'
+
+  return (
+    <div className="rounded-lg p-2.5 space-y-1.5 bg-success/10 border border-success/20">
+      <div className="flex items-center gap-1.5">
+        <Camera size={13} className="text-success shrink-0" />
+        <span className="text-xs font-medium text-success">Execução · {autorLabel}</span>
+        <span className="text-[10px] text-text-muted ml-auto">{fmtDt(item.data_hora)}</span>
+      </div>
+      {item.descricao && <p className="text-xs text-text-secondary whitespace-pre-wrap">{item.descricao}</p>}
+      <MediaGrid midias={item.midias ?? []} />
+      {showThread && (
+        <ThreadRelato
+          descricao={item.descricao ?? ''}
+          descricaoDataHora={item.data_hora}
+          comentarios={item.comentarios}
+          viewerAtor={viewerAtor!}
+          onAddComentario={(texto) => onAddComentario!(item.relato_sk!, texto)}
+        />
+      )}
+    </div>
+  )
+}
+
 function CorrecaoItem({ item }: { item: FeedItem }) {
   return (
     <div className="rounded-lg p-2.5 space-y-1.5 bg-accent/10 border border-accent/20">
@@ -63,21 +116,7 @@ function CorrecaoItem({ item }: { item: FeedItem }) {
         <span className="text-[10px] text-text-muted ml-auto">{fmtDt(item.data_hora)}</span>
       </div>
       {item.texto && <p className="text-xs text-text-secondary whitespace-pre-wrap">{item.texto}</p>}
-      {!!item.midias?.length && (
-        <div className="flex flex-wrap gap-2 pt-1">
-          {item.midias.map((m, i) =>
-            m.url ? (
-              m.tipo.startsWith('video') || m.tipo.includes('video') ? (
-                <video key={i} src={m.url} controls className="rounded-lg max-h-40 max-w-[180px] border border-border" />
-              ) : (
-                <a key={i} href={m.url} target="_blank" rel="noreferrer">
-                  <img src={m.url} alt="correção" className="rounded-lg max-h-40 max-w-[180px] border border-border object-cover" />
-                </a>
-              )
-            ) : null,
-          )}
-        </div>
-      )}
+      <MediaGrid midias={item.midias ?? []} />
     </div>
   )
 }
@@ -96,11 +135,12 @@ export function ExercicioFeedCard({ items, emptyText, viewerAtor, onAddComentari
   }
   return (
     <div className="space-y-2 mt-2">
-      {items.map((item, i) =>
-        item.tipo === 'CORRECAO'
-          ? <CorrecaoItem key={item.correcao_id ?? i} item={item} />
-          : <RelatoItem key={item.relato_sk ?? i} item={item} viewerAtor={viewerAtor} onAddComentario={onAddComentario} />,
-      )}
+      {items.map((item, i) => {
+        const key = item.post_id ?? item.correcao_id ?? item.relato_sk ?? i
+        if (item.tipo === 'CORRECAO') return <CorrecaoItem key={key} item={item} />
+        if (item.tipo === 'EXECUCAO') return <ExecucaoItem key={key} item={item} viewerAtor={viewerAtor} onAddComentario={onAddComentario} />
+        return <RelatoItem key={key} item={item} viewerAtor={viewerAtor} onAddComentario={onAddComentario} />
+      })}
     </div>
   )
 }
