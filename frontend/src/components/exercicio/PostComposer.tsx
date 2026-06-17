@@ -71,7 +71,9 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
   }
 
   async function uploadFile(file: File): Promise<{ s3_key: string; tipo: string }> {
-    const { upload_url, s3_key } = await alunoApi.midiaUploadUrl(file.name, file.type)
+    const { upload_url, s3_key } = isPersonal && alunoId
+      ? await treinosApi.uploadUrlMidia(alunoId, file.name, file.type)
+      : await alunoApi.midiaUploadUrl(file.name, file.type)
     await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
     const midiaTipo = file.type.startsWith('video')
       ? isPersonal ? 'video_correcao' : 'video_execucao'
