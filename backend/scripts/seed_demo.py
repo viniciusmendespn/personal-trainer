@@ -254,15 +254,9 @@ def registrar_sessao_historica(aluno_id: str, treino: dict, dt: datetime) -> flo
     pk = keys.pk_aluno(aluno_id)
     snaps = [{"exercicio_id": e["exercicio_id"], "nome": e["nome"], "series": None,
               "reps_prescritas": None, "carga_prescrita": None, "intervalo_s": None} for e in treino["exercicios"]]
-    hist = {
-        "sessao_id": sessao_id, "aluno_id": aluno_id, "personal_id": PERSONAL_ID,
-        "treino_id": treino["treino_id"], "treino_nome": treino["nome"], "status": "FINALIZADA",
-        "exercicios": snaps, "ex_atual": snaps[-1] if snaps else None, "ordem_atual": len(snaps) - 1,
-        "total_ex": len(snaps), "data_hora_inicio": iso_at(dt - timedelta(minutes=50)), "data_hora_fim": iso_at(dt),
-    }
-    repo.put_item(pk, keys.sk_sessao_hist(epoch_ms_at(dt), sessao_id), hist)
 
     total_volume_sessao = 0.0
+    exercicios_exec = []
     canal = rng.choice([CanalOrigem.WHATSAPP, CanalOrigem.PORTAL])
     ator = Ator.ALUNO if canal == CanalOrigem.WHATSAPP else Ator.PERSONAL
     classificacao = Classificacao.AUTO if canal == CanalOrigem.WHATSAPP else Classificacao.MANUAL
@@ -282,6 +276,10 @@ def registrar_sessao_historica(aluno_id: str, treino: dict, dt: datetime) -> flo
         item["GSI1PK"] = keys.gsi1_registro(aluno_id, ex["exercicio_id"])
         item["GSI1SK"] = keys.gsi1sk_registro(epoch_ms_at(dt))
         repo.put_item(pk, keys.sk_registro(sessao_id, ex["exercicio_id"]), item)
+        exercicios_exec.append({
+            "exercicio_id": ex["exercicio_id"], "exercicio_nome": ex["nome"],
+            "series_exec": [{"carga": s.carga, "reps": s.reps} for s in series],
+        })
 
         cargas, volume = [], 0.0
         for s in series:
@@ -296,6 +294,17 @@ def registrar_sessao_historica(aluno_id: str, treino: dict, dt: datetime) -> flo
         if cargas:
             repo.update_if_greater(pk, keys.sk_stats_pr(ex["exercicio_id"]), "carga", max(cargas),
                                    extra={"exercicio_nome": ex["nome"], "data": iso_at(dt)})
+
+    duracao_s = 50 * 60 + rng.randint(-600, 600)  # ~50min com variação
+    hist = {
+        "sessao_id": sessao_id, "aluno_id": aluno_id, "personal_id": PERSONAL_ID,
+        "treino_id": treino["treino_id"], "treino_nome": treino["nome"], "status": "FINALIZADA",
+        "exercicios": snaps, "ex_atual": snaps[-1] if snaps else None, "ordem_atual": len(snaps) - 1,
+        "total_ex": len(snaps), "data_hora_inicio": iso_at(dt - timedelta(seconds=duracao_s)),
+        "data_hora_fim": iso_at(dt), "duracao_segundos": duracao_s,
+        "exercicios_exec": exercicios_exec,
+    }
+    repo.put_item(pk, keys.sk_sessao_hist(epoch_ms_at(dt), sessao_id), hist)
     repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_sessoes": 1}, set_={"ultimo_treino": iso_at(dt)})
     repo.add_and_set(pk, keys.sk_stats_week(isoweek_at(dt)), add={"sessoes": 1}, set_={"semana": isoweek_at(dt)})
     return total_volume_sessao
@@ -410,6 +419,52 @@ notif_service.criar(
     aluno_id=fernanda["aluno_id"],
 )
 
+# ── 8b) Mídias de execução e correção vinculadas a exercícios (demo) ─────────────────────
+TIPOS_EXECUCAO = ["foto_exercicio", "video_execucao"]
+TIPOS_CORRECAO = ["foto_correcao", "video_correcao"]
+
+def seed_midias_aluno(aluno: dict, treino_letra: str) -> int:
+    """Cria mídias de execução (ator ALUNO) + uma correção do personal para os primeiros exercícios."""
+    aluno_id = aluno["aluno_id"]
+    treino = aluno["treinos"][treino_letra]
+    total = 0
+    for i, ex in enumerate(treino["exercicios"][:3]):  # apenas os 3 primeiros exercícios
+        ex_id = ex["exercicio_id"]
+        ex_nome = ex["nome"]
+        # execução enviada pelo aluno
+        tipo_ex = TIPOS_EXECUCAO[i % 2]
+        ext = "mp4" if "video" in tipo_ex else "jpg"
+        midia_id = new_id()
+        dt_midia = NOW - timedelta(days=rng.randint(1, 14))
+        repo.put_item(keys.pk_aluno(aluno_id), f"MIDIA#{ex_id}#{midia_id}", {
+            "midia_id": midia_id, "tipo": tipo_ex,
+            "s3_key": f"demo/{aluno_id}/{ex_id}/{midia_id}.{ext}",
+            "exercicio_id": ex_id, "exercicio_nome": ex_nome,
+            "status": "VINCULADA", "data_hora": iso_at(dt_midia), "ator": "ALUNO",
+        })
+        total += 1
+        # correção enviada pelo personal (apenas para o 1º exercício)
+        if i == 0:
+            tipo_cor = TIPOS_CORRECAO[0]
+            corr_id = new_id()
+            repo.put_item(keys.pk_aluno(aluno_id), f"MIDIA#{ex_id}#{corr_id}", {
+                "midia_id": corr_id, "tipo": tipo_cor,
+                "s3_key": f"demo/{aluno_id}/{ex_id}/{corr_id}.jpg",
+                "exercicio_id": ex_id, "exercicio_nome": ex_nome,
+                "status": "VINCULADA", "data_hora": iso_at(NOW - timedelta(hours=2)), "ator": "PERSONAL",
+            })
+            total += 1
+    return total
+
+total_midias = 0
+# Mariana (aluna ativa) — treino A (superior)
+total_midias += seed_midias_aluno(alunos_criados[0], "A")
+# Carlos — treino C (costas/bíceps)
+total_midias += seed_midias_aluno(alunos_criados[1], "C")
+# Thiago — treino B (inferior)
+total_midias += seed_midias_aluno(alunos_criados[7], "B")
+print(f"Mídias demo: {total_midias} registros criados (S3 keys fictícios — upload real via app).")
+
 # notificações extras (já lidas) para dar histórico à Central
 thiago = next(a for a in alunos_criados if a["nome"] == "Thiago Ferreira")
 nid = notif_service.criar(PERSONAL_ID, "FEEDBACK", "Feedback antigo (exemplo)",
@@ -432,9 +487,12 @@ print("=" * 60)
 print(f"Personal:        {args.email} ({PERSONAL_ID})")
 print(f"Alunos:          {len(alunos_criados)} (1 inativo: Patrícia Mendes)")
 print(f"Biblioteca:      {len(exlib_by_nome)} exercícios")
-print(f"Sessões:         {total_sessoes} (histórico de ~10 semanas, com PRs e volume semanal)")
+print(f"Sessões:         {total_sessoes} (histórico de ~10 semanas, com exercicios_exec, duração, PRs e volume semanal)")
 print(f"Avaliações:      {total_avaliacoes}")
 print(f"Agendamentos:    {total_agendamentos}")
 print(f"Templates:       {len(TEMPLATES_DEF)}")
+print(f"Mídias demo:     {total_midias} (Mariana/Carlos/Thiago — S3 keys fictícios, URLs quebradas mas itens visíveis)")
 print("Pendências:      1 relato de dor (Mariana), 1 mídia pendente vinculável (Bruno), 1 genérica (Fernanda)")
 print("\nFaça login no portal e explore Dashboard, Alunos, Agenda, Templates, Biblioteca e a Central (sino).")
+print("Aba Histórico: disponível no app do aluno e na página de detalhes do aluno (personal).")
+print("Reordenação de treinos: use ↑/↓ na página de detalhe do aluno para ordenar a sequência de treinos.")

@@ -480,20 +480,24 @@ function HistoricoTab() {
                     {expanded ? <ChevronDown size={16} className="shrink-0 text-text-muted mt-0.5" /> : <ChevronRight size={16} className="shrink-0 text-text-muted mt-0.5" />}
                   </button>
 
-                  {expanded && s.exercicios_exec && s.exercicios_exec.length > 0 && (
+                  {expanded && (
                     <div className="mt-3 space-y-2 border-t border-border pt-2">
-                      {s.exercicios_exec.map((ex) => (
-                        <div key={ex.exercicio_id} className="text-sm">
-                          <span className="font-medium">{ex.exercicio_nome}</span>
-                          {ex.series_exec?.length > 0 && (
-                            <span className="text-xs text-text-muted ml-2">
-                              {ex.series_exec.map((sr, i) => (
-                                <span key={i}>{i > 0 ? '  ' : ''}{sr.carga ? `${sr.carga}` : '—'}{sr.reps ? `×${sr.reps}` : ''}</span>
-                              ))}
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                      {s.exercicios_exec?.length ? (
+                        s.exercicios_exec.map((ex) => (
+                          <div key={ex.exercicio_id} className="text-sm">
+                            <span className="font-medium">{ex.exercicio_nome}</span>
+                            {ex.series_exec?.length > 0 && (
+                              <span className="text-xs text-text-muted ml-2">
+                                {ex.series_exec.map((sr, i) => (
+                                  <span key={i}>{i > 0 ? '  ' : ''}{sr.carga ? `${sr.carga}` : '—'}{sr.reps ? `×${sr.reps}` : ''}</span>
+                                ))}
+                              </span>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-text-muted">Nenhum exercício registrado.</p>
+                      )}
                     </div>
                   )}
                 </Card>

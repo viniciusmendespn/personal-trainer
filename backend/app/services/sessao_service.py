@@ -39,19 +39,13 @@ def get_active(aluno_id: str, consistent: bool = False) -> dict | None:
     return repo.get_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE, consistent=consistent)
 
 
-def start_session(personal_id: str, aluno_id: str, treino_id: str, dia: int | None = None) -> dict:
+def start_session(personal_id: str, aluno_id: str, treino_id: str) -> dict:
     treino = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id))
     if not treino:
         raise HTTPException(404, "Treino não encontrado")
     exs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.sk_exercicio_prefix(treino_id))
-    # Split intra-treino por dia da semana: se o treino tem exercícios marcados por dia,
-    # carrega só os de hoje (+ os "todo dia"); senão, carrega todos.
-    if dia is None:
-        dia = datetime.now(timezone.utc).weekday()
-    if any(e.get("dia_semana") is not None for e in exs):
-        exs = [e for e in exs if e.get("dia_semana") in (None, dia)]
-        if not exs:
-            raise HTTPException(400, "Nenhum exercício para hoje neste treino")
+    if not exs:
+        raise HTTPException(400, "Este treino não tem exercícios")
     exs.sort(key=lambda e: e.get("ordem", 0))
     snaps = [_snapshot(e) for e in exs]
     item = {

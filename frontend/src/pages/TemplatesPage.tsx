@@ -2,10 +2,9 @@ import { useState, useMemo } from 'react'
 import { Trash2, Users, LayoutTemplate, Dumbbell, Pencil, Plus, X, Search } from 'lucide-react'
 import { useAlunos } from '../hooks/useAlunos'
 import { useTemplates, useCreateTemplate, useDeleteTemplate, useUpdateTemplate, useAplicarTemplate } from '../hooks/useTemplates'
-import { Button, Card, Input, Select, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm } from '../components/ui'
 import type { ExercicioTemplate, TreinoTemplate } from '../types'
 
-const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
 export function TemplatesPage() {
   const { data: templates, isLoading } = useTemplates()
@@ -198,10 +197,6 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                 <p className="text-xs font-medium text-text-secondary mb-2">Identificação</p>
                 <div className="grid grid-cols-2 gap-3">
                   <Input label="Exercício" className="col-span-2" value={ex.nome} onChange={(e) => updateEx(i, { nome: e.target.value })} />
-                  <Select label="Dia" value={ex.dia_semana ?? ''} onChange={(e) => updateEx(i, { dia_semana: e.target.value === '' ? null : Number(e.target.value) })}>
-                    <option value="">Todo dia</option>
-                    {DIAS.map((d, idx) => <option key={idx} value={idx}>{d}</option>)}
-                  </Select>
                 </div>
               </div>
               <div>

@@ -55,6 +55,11 @@ export interface SessaoHistoricoPersonal {
   data_hora_fim?: string
   duracao_segundos?: number
   total_ex: number
+  exercicios_exec?: Array<{
+    exercicio_id: string
+    exercicio_nome: string
+    series_exec: Array<{ carga?: string; reps?: number }>
+  }>
 }
 
 export interface MidiaExercicio {

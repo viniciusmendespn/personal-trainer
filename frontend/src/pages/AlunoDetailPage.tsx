@@ -1,22 +1,20 @@
 import { useId, useRef, useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote, Camera, Clock, RefreshCw, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote, Camera, Clock, RefreshCw, AlertCircle, History } from 'lucide-react'
 import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { alunosApi } from '../api/alunos'
 import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
-import { Button, Card, Input, Select, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, useToast, useConfirm } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, useToast, useConfirm } from '../components/ui'
 import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
 import { useNotas, useCreateNota } from '../hooks/useNotas'
-import { treinosApi } from '../api/treinos'
+import { treinosApi, type SessaoHistoricoPersonal } from '../api/treinos'
 import type { Treino, Exercicio, ExercicioCreate } from '../types'
-
-const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
 export function AlunoDetailPage() {
   const { alunoId = '' } = useParams()
@@ -27,7 +25,7 @@ export function AlunoDetailPage() {
   const updateAluno = useUpdateAluno(alunoId)
   const deleteAluno = useDeleteAluno()
   const confirm = useConfirm()
-  const [tab, setTab] = useState<'perfil' | 'treinos'>('treinos')
+  const [tab, setTab] = useState<'perfil' | 'treinos' | 'historico'>('treinos')
   const [showAddTreino, setShowAddTreino] = useState(false)
   const [nome, setNome] = useState('')
   const [foco, setFoco] = useState('')
@@ -133,9 +131,9 @@ export function AlunoDetailPage() {
 
       <Tabs
         className="mb-4"
-        tabs={[{ key: 'treinos', label: 'Treinos' }, { key: 'perfil', label: 'Perfil' }]}
+        tabs={[{ key: 'treinos', label: 'Treinos' }, { key: 'historico', label: 'Histórico' }, { key: 'perfil', label: 'Perfil' }]}
         active={tab}
-        onChange={(k) => setTab(k as 'perfil' | 'treinos')}
+        onChange={(k) => setTab(k as 'perfil' | 'treinos' | 'historico')}
       />
 
       {tab === 'perfil' && (
@@ -216,9 +214,10 @@ export function AlunoDetailPage() {
           ) : (
             <TreinosLista alunoId={alunoId} treinos={treinos} />
           )}
-          <SessoesRecentes alunoId={alunoId} />
         </>
       )}
+
+      {tab === 'historico' && <HistoricoPersonal alunoId={alunoId} />}
     </div>
   )
 }
@@ -238,6 +237,7 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
   const vigentes = treinos.filter((t) => t.ativo !== false && (!t.data_fim || t.data_fim >= hoje))
   const expirados = treinos.filter((t) => t.ativo === false || (t.data_fim && t.data_fim < hoje))
   const [showExpirados, setShowExpirados] = useState(false)
+  const [reordering, setReordering] = useState(false)
   const updTreino = useUpdateTreino(alunoId)
   const [renovandoId, setRenovandoId] = useState<string | null>(null)
   const [novaDataFim, setNovaDataFim] = useState('')
@@ -247,6 +247,16 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
     const d = new Date()
     d.setDate(d.getDate() + 30)
     return d.toISOString().slice(0, 10)
+  }
+
+  async function reordenar(a: Treino, b: Treino) {
+    setReordering(true)
+    try {
+      await updTreino.mutateAsync({ treinoId: a.treino_id, body: { nome: a.nome, foco: a.foco, observacoes: a.observacoes, ativo: a.ativo, data_inicio: a.data_inicio, data_fim: a.data_fim, custom: a.custom, ordem: b.ordem } })
+      await updTreino.mutateAsync({ treinoId: b.treino_id, body: { nome: b.nome, foco: b.foco, observacoes: b.observacoes, ativo: b.ativo, data_inicio: b.data_inicio, data_fim: b.data_fim, custom: b.custom, ordem: a.ordem } })
+    } finally {
+      setReordering(false)
+    }
   }
 
   async function renovar(t: Treino) {
@@ -268,7 +278,31 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
 
   return (
     <div className="space-y-3">
-      {vigentes.map((t) => <TreinoCard key={t.treino_id} alunoId={alunoId} treino={t} />)}
+      {vigentes.map((t, idx) => (
+        <div key={t.treino_id} className="flex items-start gap-1">
+          <div className="flex flex-col gap-0.5 pt-2.5 shrink-0">
+            <button
+              disabled={idx === 0 || reordering}
+              onClick={() => reordenar(t, vigentes[idx - 1])}
+              className="p-0.5 text-text-muted hover:text-text disabled:opacity-25 transition-opacity"
+              aria-label="Mover para cima"
+            >
+              <ChevronUp size={13} />
+            </button>
+            <button
+              disabled={idx === vigentes.length - 1 || reordering}
+              onClick={() => reordenar(t, vigentes[idx + 1])}
+              className="p-0.5 text-text-muted hover:text-text disabled:opacity-25 transition-opacity"
+              aria-label="Mover para baixo"
+            >
+              <ChevronDown size={13} />
+            </button>
+          </div>
+          <div className="flex-1 min-w-0">
+            <TreinoCard alunoId={alunoId} treino={t} />
+          </div>
+        </div>
+      ))}
 
       {expirados.length > 0 && (
         <div>
@@ -312,42 +346,6 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
         </div>
       )}
     </div>
-  )
-}
-
-function SessoesRecentes({ alunoId }: { alunoId: string }) {
-  const { data, isLoading } = useQuery({
-    queryKey: ['sessoes-aluno', alunoId],
-    queryFn: () => treinosApi.listSessoes(alunoId, { limit: 5 }),
-    enabled: !!alunoId,
-  })
-  const sessoes = data?.items ?? []
-
-  if (isLoading) return null
-  if (!sessoes.length) return null
-
-  return (
-    <Card variant="elevated" className="mt-4">
-      <p className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-1">
-        <Clock size={14} /> Últimas sessões
-      </p>
-      <div className="space-y-2">
-        {sessoes.map((s) => (
-          <div key={s.sessao_id} className="flex items-center justify-between text-sm border-b border-border pb-1.5 last:border-0 last:pb-0">
-            <div>
-              <span className="font-medium">{s.treino_nome}</span>
-              <span className="text-xs text-text-muted ml-2">
-                {new Date(s.data_hora_inicio).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
-            <div className="text-xs text-text-muted text-right">
-              {s.duracao_segundos ? <span className="text-accent-hover">{fmtDuracao(s.duracao_segundos)}</span> : null}
-              {s.total_ex ? <span className="ml-2">{s.total_ex} ex</span> : null}
-            </div>
-          </div>
-        ))}
-      </div>
-    </Card>
   )
 }
 
@@ -451,12 +449,6 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
     setEditT(false)
   }
 
-  const grupos: Record<string, Exercicio[]> = {}
-  ;(exs ?? []).forEach((ex) => {
-    const k = ex.dia_semana == null ? 'Todo dia' : DIAS[ex.dia_semana]
-    ;(grupos[k] ||= []).push(ex)
-  })
-
   return (
     <Card variant="elevated">
       <div className="flex items-center justify-between gap-2">
@@ -500,14 +492,9 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
       </Modal>
 
       {open && (
-        <div className="mt-3 pl-2 sm:pl-6 space-y-2">
-          {Object.entries(grupos).map(([d, list]) => (
-            <div key={d}>
-              <p className="text-xs text-accent-hover/80 mt-2 mb-1">{d}</p>
-              {list.map((ex) => (
-                <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} biblioteca={biblioteca} />
-              ))}
-            </div>
+        <div className="mt-3 pl-2 sm:pl-6 space-y-1">
+          {(exs ?? []).sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)).map((ex) => (
+            <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} biblioteca={biblioteca} />
           ))}
           <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={() => setAddingEx(true)}>
             <span className="flex items-center gap-1"><Plus size={14} /> Exercício</span>
@@ -537,7 +524,6 @@ function ExercicioForm({
   const [reps, setReps] = useState(initial?.reps_prescritas ?? '')
   const [carga, setCarga] = useState(initial?.carga_prescrita ?? '')
   const [vid, setVid] = useState(initial?.video_url ?? '')
-  const [dia, setDia] = useState(initial?.dia_semana == null ? '' : String(initial.dia_semana))
   const [obs, setObs] = useState(initial?.observacoes ?? '')
 
   function onNome(v: string) {
@@ -556,7 +542,6 @@ function ExercicioForm({
       carga_prescrita: carga || undefined,
       video_url: vid || undefined,
       observacoes: obs || undefined,
-      dia_semana: dia === '' ? undefined : Number(dia),
     })
   }
 
@@ -564,17 +549,11 @@ function ExercicioForm({
     <form onSubmit={submit} className="space-y-4">
       <div>
         <p className="text-xs font-medium text-text-secondary mb-2">Identificação</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Input
-            label="Exercício" className="sm:col-span-2" list={listId} autoFocus
-            value={nome} onChange={(e) => onNome(e.target.value)}
-          />
-          <datalist id={listId}>{biblioteca?.map((b) => <option key={b.exlib_id} value={b.nome} />)}</datalist>
-          <Select label="Dia da semana" value={dia} onChange={(e) => setDia(e.target.value)}>
-            <option value="">Todo dia</option>
-            {DIAS.map((d, i) => <option key={i} value={i}>{d}</option>)}
-          </Select>
-        </div>
+        <Input
+          label="Exercício" list={listId} autoFocus
+          value={nome} onChange={(e) => onNome(e.target.value)}
+        />
+        <datalist id={listId}>{biblioteca?.map((b) => <option key={b.exlib_id} value={b.nome} />)}</datalist>
       </div>
       <div>
         <p className="text-xs font-medium text-text-secondary mb-2">Prescrição</p>
@@ -656,6 +635,106 @@ function ExercicioRow({
         open={mediaOpen}
         onClose={() => setMediaOpen(false)}
       />
+    </div>
+  )
+}
+
+function groupSessoesByPeriodo(sessions: SessaoHistoricoPersonal[]) {
+  const groups: { label: string; items: SessaoHistoricoPersonal[] }[] = []
+  for (const s of sessions) {
+    const d = new Date(s.data_hora_inicio)
+    const now = new Date()
+    const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
+    let label: string
+    if (diffDays <= 6) label = 'Esta semana'
+    else if (diffDays <= 13) label = 'Semana passada'
+    else {
+      const mes = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+      label = mes.charAt(0).toUpperCase() + mes.slice(1)
+    }
+    const last = groups[groups.length - 1]
+    if (last?.label === label) last.items.push(s)
+    else groups.push({ label, items: [s] })
+  }
+  return groups
+}
+
+function HistoricoPersonal({ alunoId }: { alunoId: string }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const query = useInfiniteQuery({
+    queryKey: ['sessoes-personal', alunoId],
+    queryFn: ({ pageParam }) => treinosApi.listSessoes(alunoId, { cursor: pageParam as string | undefined, limit: 10 }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+    enabled: !!alunoId,
+  })
+  const sessions = query.data?.pages.flatMap((p) => p.items) ?? []
+
+  if (query.isLoading) return <div className="flex justify-center py-8"><Spinner /></div>
+  if (!sessions.length)
+    return <EmptyState icon={<History />} title="Nenhum treino finalizado ainda" description="O histórico aparece aqui quando o aluno finalizar uma sessão." />
+
+  const groups = groupSessoesByPeriodo(sessions)
+
+  return (
+    <div className="space-y-4 pb-4">
+      {groups.map((g) => (
+        <div key={g.label}>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">{g.label}</p>
+          <div className="space-y-2">
+            {g.items.map((s) => {
+              const expanded = expandedId === s.sessao_id
+              const totalSeries = (s.exercicios_exec ?? []).reduce((acc, e) => acc + (e.series_exec?.length ?? 0), 0)
+              return (
+                <Card key={s.sessao_id} variant="elevated">
+                  <button
+                    className="w-full flex items-start justify-between text-left gap-2"
+                    onClick={() => setExpandedId(expanded ? null : s.sessao_id)}
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{s.treino_nome}</p>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        {new Date(s.data_hora_inicio).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        {s.duracao_segundos ? <> · <Clock size={10} className="inline mb-0.5" /> {fmtDuracao(s.duracao_segundos)}</> : null}
+                        {s.total_ex ? ` · ${s.total_ex} exercício${s.total_ex !== 1 ? 's' : ''}` : null}
+                        {totalSeries ? ` · ${totalSeries} séries` : null}
+                      </p>
+                    </div>
+                    {expanded
+                      ? <ChevronDown size={16} className="shrink-0 text-text-muted mt-0.5" />
+                      : <ChevronRight size={16} className="shrink-0 text-text-muted mt-0.5" />}
+                  </button>
+                  {expanded && (
+                    <div className="mt-3 space-y-2 border-t border-border pt-2">
+                      {s.exercicios_exec?.length ? (
+                        s.exercicios_exec.map((ex) => (
+                          <div key={ex.exercicio_id} className="text-sm">
+                            <span className="font-medium">{ex.exercicio_nome}</span>
+                            {ex.series_exec?.length > 0 && (
+                              <span className="text-xs text-text-muted ml-2">
+                                {ex.series_exec.map((sr, i) => (
+                                  <span key={i}>{i > 0 ? '  ' : ''}{sr.carga ?? '—'}{sr.reps ? `×${sr.reps}` : ''}</span>
+                                ))}
+                              </span>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-text-muted">Nenhum exercício registrado.</p>
+                      )}
+                    </div>
+                  )}
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+      {query.hasNextPage && (
+        <Button variant="outline" className="w-full" onClick={() => query.fetchNextPage()} disabled={query.isFetchingNextPage}>
+          {query.isFetchingNextPage ? <Spinner /> : 'Carregar mais'}
+        </Button>
+      )}
     </div>
   )
 }

@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field
 class ExercicioCreate(BaseModel):
     nome: str                                  # ex.: "Supino reto"
     ordem: int = 0
-    dia_semana: Optional[int] = None           # 0=seg..6=dom; None = todo dia (split intra-treino)
     series: Optional[int] = None               # ex.: 4
     reps_prescritas: Optional[str] = None      # str p/ faixas: "10" ou "8-12"
     carga_prescrita: Optional[str] = None      # str p/ flexibilidade: "30", "BW", "elástico"
