@@ -101,3 +101,18 @@ def resumo(ctx: dict = Depends(get_current_aluno)):
 def avaliacoes(ctx: dict = Depends(get_current_aluno)):
     items = repo.query_pk(keys.pk_aluno(ctx["aluno_id"]), sk_prefix=keys.AVAL_PREFIX)
     return repo.clean_all(items)
+
+
+class ChatBody(BaseModel):
+    text: str
+
+
+@router.get("/chat")
+def chat_history(limit: int = 50, ctx: dict = Depends(get_current_aluno)):
+    return agent_service.list_chat_msgs(ctx["aluno_id"], limit)
+
+
+@router.post("/chat")
+def chat_send(body: ChatBody, ctx: dict = Depends(get_current_aluno)):
+    reply = agent_service.handle_chat_turn(ctx["personal_id"], ctx["aluno_id"], body.text, Ator.ALUNO)
+    return {"reply": reply}

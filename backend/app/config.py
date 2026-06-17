@@ -14,6 +14,13 @@ class Settings(BaseSettings):
     openai_api_key: str = ""              # key SEPARADA deste app (custo isolado)
     openai_model: str = "gpt-5.4-nano"
 
+    # Provider do agente — "openai" (padrão) ou "fusion" (gateway interno, formato Azure
+    # OpenAI). Trocar é só mudar LLM_PROVIDER; reversível sem alterar código (llm_agent.py).
+    llm_provider: str = "openai"
+    fusion_api_key: str = ""
+    fusion_base_url: str = "https://fusion-llm.brq.com"
+    fusion_api_version: str = "2025-03-01-preview"
+
     class Config:
         env_file = (".env", ".env.local")
         extra = "ignore"

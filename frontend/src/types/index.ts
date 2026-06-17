@@ -170,3 +170,16 @@ export interface TreinoTemplateCreate {
   foco?: string
   exercicios?: ExercicioTemplate[]
 }
+
+export type CanalOrigem = 'WHATSAPP' | 'PORTAL'
+export type Ator = 'ALUNO' | 'PERSONAL'
+
+export interface ChatMensagem {
+  mensagem_id: string
+  aluno_id: string
+  role: 'user' | 'assistant'
+  texto: string
+  ator: Ator
+  canal_origem: CanalOrigem
+  data_hora: string
+}

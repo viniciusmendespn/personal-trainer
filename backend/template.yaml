@@ -37,6 +37,22 @@ Parameters:
   OpenAiModel:
     Type: String
     Default: "gpt-5.4-nano"
+  LlmProvider:
+    Type: String
+    Default: "openai"
+    AllowedValues: ["openai", "fusion"]
+    Description: "Provider do agente — trocar é reversível (sem mudar código), só este parâmetro."
+  FusionApiKey:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: "Token do gateway interno Fusion LLM (formato Azure OpenAI) — só usado quando LlmProvider=fusion."
+  FusionBaseUrl:
+    Type: String
+    Default: "https://fusion-llm.brq.com"
+  FusionApiVersion:
+    Type: String
+    Default: "2025-03-01-preview"
   DeployFrontendInfra:
     Type: String
     Default: "false"
@@ -68,6 +84,10 @@ Globals:
         MEDIA_BUCKET_NAME: !Sub "${ProjectName}-media-${Stage}-${AWS::AccountId}"
         OPENAI_API_KEY: !Ref OpenAiApiKey
         OPENAI_MODEL: !Ref OpenAiModel
+        LLM_PROVIDER: !Ref LlmProvider
+        FUSION_API_KEY: !Ref FusionApiKey
+        FUSION_BASE_URL: !Ref FusionBaseUrl
+        FUSION_API_VERSION: !Ref FusionApiVersion
 
 Resources:
 

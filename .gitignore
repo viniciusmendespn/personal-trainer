@@ -13,6 +13,7 @@ backend/.aws-sam/
 .env
 .env.local
 *.local
+samconfig.local.toml
 
 # Frontend
 frontend/node_modules/

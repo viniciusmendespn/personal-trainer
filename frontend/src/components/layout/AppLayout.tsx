@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Settings, LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
+import { ChatWidget } from '../chat/ChatWidget'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Visão geral', icon: LayoutDashboard },
@@ -107,6 +108,8 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
+
+      <ChatWidget />
     </div>
   )
 }

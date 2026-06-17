@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, Trophy, Check, ChevronRight } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, Trophy, Check, ChevronRight } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import { alunoApi, type ExSessao } from '../api/alunoApp'
 import { ALUNO_TOKEN_KEY } from '../api/alunoClient'
+import { useAlunoChat, useSendAlunoChat } from '../hooks/useAlunoChat'
+import { ChatThread } from '../components/chat/ChatThread'
+import { ChatInputBar } from '../components/chat/ChatInputBar'
 import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState } from '../components/ui'
 
 const chartTip = {
@@ -38,7 +41,7 @@ function useAlunoToken() {
 
 export function AlunoApp() {
   const token = useAlunoToken()
-  const [tab, setTab] = useState<'hoje' | 'evolucao'>('hoje')
+  const [tab, setTab] = useState<'hoje' | 'evolucao' | 'chat'>('hoje')
   const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false })
 
   if (!token) return <Centered>Abra o aplicativo pelo link enviado no seu WhatsApp.</Centered>
@@ -46,18 +49,26 @@ export function AlunoApp() {
 
   return (
     <div
-      className="min-h-screen max-w-md mx-auto"
+      className="min-h-screen max-w-md mx-auto flex flex-col"
       style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
     >
-      <header className="p-4">
+      <header className="p-4 shrink-0">
         <h1 className="font-display text-lg font-bold text-text">Olá, {me.data?.nome ?? 'aluno'} 👋</h1>
       </header>
-      <main className="px-4">{tab === 'hoje' ? <Hoje /> : <Evolucao />}</main>
+      {tab === 'chat' ? (
+        <ChatTab />
+      ) : (
+        <main className="px-4 flex-1">{tab === 'hoje' ? <Hoje /> : <Evolucao />}</main>
+      )}
       <nav
         className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-surface-elevated/80 backdrop-blur-xl border-t border-border flex"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        {([['hoje', 'Treino', <Dumbbell size={18} />], ['evolucao', 'Evolução', <TrendingUp size={18} />]] as const).map(
+        {([
+          ['hoje', 'Treino', <Dumbbell size={18} />],
+          ['evolucao', 'Evolução', <TrendingUp size={18} />],
+          ['chat', 'Chat', <MessageCircle size={18} />],
+        ] as const).map(
           ([k, label, icon]) => (
             <button key={k} onClick={() => setTab(k)}
               className={`flex-1 py-3 flex flex-col items-center gap-1 text-xs transition-colors ${tab === k ? 'text-energy' : 'text-text-muted'}`}>
@@ -66,6 +77,20 @@ export function AlunoApp() {
           ),
         )}
       </nav>
+    </div>
+  )
+}
+
+function ChatTab() {
+  const { data: messages, isLoading } = useAlunoChat()
+  const send = useSendAlunoChat()
+  return (
+    <div
+      className="flex flex-col"
+      style={{ height: 'calc(100vh - 4rem - 4.5rem - env(safe-area-inset-bottom))' }}
+    >
+      <ChatThread messages={messages ?? []} isLoading={isLoading} isSending={send.isPending} viewerRole="ALUNO" />
+      <ChatInputBar onSend={(text) => send.mutate(text)} disabled={send.isPending} />
     </div>
   )
 }

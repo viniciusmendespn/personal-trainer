@@ -84,7 +84,13 @@ def sk_due(data_fim: str, treino_id: str) -> str:
 
 # ── SKs do aluno (partição AL#) ──────────────────────────────────────────────
 SK_SESSION_ACTIVE = "SESSION#ACTIVE"
-SK_CHAT = "CHAT"   # memória conversacional do agente (com TTL)
+SK_CHAT = "CHAT"   # memória conversacional do agente (com TTL) — só p/ prompt da LLM
+
+CHAT_MSG_PREFIX = "CMSG#"   # histórico durável do chat (sem TTL) — só p/ exibição na UI
+
+
+def sk_chat_msg(ts: str, msg_id: str) -> str:
+    return f"CMSG#{ts}#{msg_id}"
 
 
 SK_TREINO_PREFIX = "TREINO#"

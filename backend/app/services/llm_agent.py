@@ -10,14 +10,32 @@ import logging
 import httpx
 
 from app.config import settings
+from app.models.enums import Ator, CanalOrigem
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import agent_service, sessao_service
 
 logger = logging.getLogger(__name__)
 
-_URL = "https://api.openai.com/v1/chat/completions"
+_OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 _MAX_STEPS = 5
+
+
+def _active_key() -> str:
+    return settings.fusion_api_key if settings.llm_provider == "fusion" else settings.openai_api_key
+
+
+def _endpoint_and_headers() -> tuple[str, dict]:
+    """Provider do agente — trocar via LLM_PROVIDER (config.py), sem mudar nada aqui além
+    desta função. 'fusion' = gateway interno, formato Azure OpenAI (deployment na URL)."""
+    if settings.llm_provider == "fusion":
+        url = (f"{settings.fusion_base_url}/openai/deployments/{settings.openai_model}"
+               f"/chat/completions?api-version={settings.fusion_api_version}")
+        headers = {"Authorization": f"Bearer {settings.fusion_api_key}",
+                  "Content-Type": "application/json", "Accept": "application/json"}
+        return url, headers
+    headers = {"Authorization": f"Bearer {settings.openai_api_key}", "Content-Type": "application/json"}
+    return _OPENAI_URL, headers
 
 _SYSTEM = """Você é o assistente de treino de um personal trainer, conversando com o ALUNO no WhatsApp.
 Estilo (obrigatório):
@@ -85,7 +103,7 @@ _TOOLS = [
 
 
 def _context(aluno_id: str) -> str:
-    s = sessao_service.get_active(aluno_id, consistent=True)
+    s = repo.clean(sessao_service.get_active(aluno_id, consistent=True))
     if not s:
         treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
         lst = [{"id": t["treino_id"], "nome": t.get("nome")} for t in treinos]
@@ -101,9 +119,11 @@ def _context(aluno_id: str) -> str:
     }, ensure_ascii=False)
 
 
-def _exec(name: str, args: dict, personal_id: str, aluno_id: str) -> dict:
+def _exec(name: str, args: dict, personal_id: str, aluno_id: str,
+         canal: CanalOrigem, ator: Ator) -> dict:
     if name == "registrar":
-        return agent_service.registrar(aluno_id, args.get("series", []), args.get("exercicio_id"))
+        return agent_service.registrar(aluno_id, args.get("series", []), args.get("exercicio_id"),
+                                       canal=canal, ator=ator)
     if name == "consultar_historico":
         return agent_service.consultar_historico(aluno_id, args.get("exercicio_id"))
     if name == "avancar":
@@ -113,7 +133,8 @@ def _exec(name: str, args: dict, personal_id: str, aluno_id: str) -> dict:
     if name == "iniciar_sessao":
         return agent_service.iniciar_sessao(personal_id, aluno_id, args.get("treino_id"))
     if name == "registrar_dor":
-        return agent_service.registrar_dor(personal_id, aluno_id, args.get("descricao", ""))
+        return agent_service.registrar_dor(personal_id, aluno_id, args.get("descricao", ""),
+                                           canal=canal, ator=ator)
     if name == "buscar_exercicio":
         return agent_service.buscar_exercicio(aluno_id, args.get("nome", ""))
     if name == "treino_de_hoje":
@@ -124,25 +145,29 @@ def _exec(name: str, args: dict, personal_id: str, aluno_id: str) -> dict:
 
 
 def run(personal_id: str, aluno_id: str, nome: str | None, text: str,
-        history: list[dict] | None = None) -> str:
-    """Processa uma mensagem do aluno e devolve a resposta curta (str vazia = não responder).
-    `history` = turnos anteriores [{role, content}] para a desambiguação multi-turno (FUNCIONAL §9)."""
-    if not settings.openai_api_key:
-        logger.warning("[agent] OPENAI_API_KEY ausente — sem resposta")
+        history: list[dict] | None = None,
+        canal: CanalOrigem = CanalOrigem.WHATSAPP, ator: Ator = Ator.ALUNO) -> str:
+    """Processa uma mensagem do aluno (ou do personal "atuando como" o aluno) e devolve a
+    resposta curta (str vazia = não responder). `history` = turnos anteriores
+    [{role, content}] para a desambiguação multi-turno (FUNCIONAL §9). `canal`/`ator`
+    identificam a origem real da mensagem (RN010) — propagados às ferramentas que gravam
+    registros/dor; default = comportamento atual do WhatsApp."""
+    if not _active_key():
+        logger.warning("[agent] chave da LLM ausente (provider=%s) — sem resposta", settings.llm_provider)
         return ""
+    url, headers = _endpoint_and_headers()
     messages = [
         {"role": "system", "content": _SYSTEM},
         {"role": "system", "content": f"Aluno: {nome or 'aluno'}. Contexto: {_context(aluno_id)}"},
         *(history or []),
         {"role": "user", "content": text or ""},
     ]
-    headers = {"Authorization": f"Bearer {settings.openai_api_key}", "Content-Type": "application/json"}
     for _ in range(_MAX_STEPS):
         payload = {"model": settings.openai_model, "messages": messages,
                    "tools": _TOOLS, "tool_choice": "auto"}
         try:
             with httpx.Client(timeout=25.0) as c:
-                r = c.post(_URL, json=payload, headers=headers)
+                r = c.post(url, json=payload, headers=headers)
         except httpx.HTTPError as e:
             logger.error("[agent] openai erro de rede: %s", e)
             return "Tive um problema agora. Pode repetir?"
@@ -160,7 +185,7 @@ def run(personal_id: str, aluno_id: str, nome: str | None, text: str,
             except json.JSONDecodeError:
                 args = {}
             try:
-                result = _exec(tc["function"]["name"], args, personal_id, aluno_id)
+                result = _exec(tc["function"]["name"], args, personal_id, aluno_id, canal, ator)
             except Exception as e:  # ferramenta falhou (ex.: sem sessão) — devolve ao modelo
                 result = {"erro": str(e)}
             messages.append({"role": "tool", "tool_call_id": tc["id"],

@@ -12,6 +12,7 @@ import time
 from fastapi import APIRouter, Request
 
 from app.dependencies import verify_wapi_webhook
+from app.models.enums import Ator, CanalOrigem
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import agent_service, alerta_service, llm_agent, media_service, sessao_service
@@ -77,6 +78,7 @@ def _handle_text(personal_id: str, aluno_id: str, nome: str | None, sender: str,
     """Roda o agente com memória de conversa e responde."""
     history = agent_service.get_chat(aluno_id)
     reply = llm_agent.run(personal_id, aluno_id, nome, text, history)
+    agent_service.log_turn(aluno_id, text, reply, ator=Ator.ALUNO, canal=CanalOrigem.WHATSAPP)
     if reply:
         _send(personal_id, sender, reply)
         agent_service.save_chat(aluno_id, history + [

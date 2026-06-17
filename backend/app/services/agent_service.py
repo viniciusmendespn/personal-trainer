@@ -9,6 +9,7 @@ from app.models.enums import Ator, CanalOrigem, Classificacao
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import alerta_service, sessao_service
+from app.utils import epoch_ms, new_id, now_iso
 
 CHAT_TTL_S = 2 * 3600   # janela de conversa: 2h sem mensagem zera o contexto
 CHAT_MAX_TURNS = 8      # últimas N mensagens mantidas
@@ -22,6 +23,46 @@ def get_chat(aluno_id: str) -> list[dict]:
 def save_chat(aluno_id: str, turns: list[dict]) -> None:
     repo.put_item(keys.pk_aluno(aluno_id), keys.SK_CHAT,
                   {"turns": turns[-CHAT_MAX_TURNS:], "ttl": int(time.time()) + CHAT_TTL_S})
+
+
+# ── Histórico durável do chat (UI) — distinto da memória de trabalho acima ──────
+def _write_chat_msg(aluno_id: str, role: str, texto: str, ator: Ator, canal: CanalOrigem) -> None:
+    msg_id = new_id()
+    repo.put_item(keys.pk_aluno(aluno_id), keys.sk_chat_msg(epoch_ms(), msg_id), {
+        "mensagem_id": msg_id, "aluno_id": aluno_id, "role": role, "texto": texto,
+        "ator": ator.value, "canal_origem": canal.value, "data_hora": now_iso(),
+    })
+
+
+def log_turn(aluno_id: str, user_text: str, assistant_text: str,
+            ator: Ator, canal: CanalOrigem) -> None:
+    """Grava o par (mensagem do humano, resposta do agente) no histórico durável —
+    usado pela UI (chat do aluno/personal), nunca lido pela LLM. Sempre grava a mensagem
+    do humano; só grava a resposta se não vier vazia (evita bolha em branco na UI)."""
+    _write_chat_msg(aluno_id, "user", user_text, ator, canal)
+    if assistant_text:
+        _write_chat_msg(aluno_id, "assistant", assistant_text, ator, canal)
+
+
+def list_chat_msgs(aluno_id: str, limit: int = 50) -> list[dict]:
+    items = repo.query_pk_last_n(keys.pk_aluno(aluno_id), keys.CHAT_MSG_PREFIX, limit)
+    return list(reversed(repo.clean_all(items)))  # mais antiga primeiro, p/ renderizar a thread
+
+
+def handle_chat_turn(personal_id: str, aluno_id: str, text: str, ator: Ator) -> str:
+    """Lógica compartilhada pelos endpoints de chat (aluno e personal). Canal sempre
+    PORTAL aqui — WHATSAPP só existe no caminho do webhook."""
+    from app.services import llm_agent   # import tardio — evita ciclo (llm_agent já importa este módulo)
+    nome = (repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE) or {}).get("nome")
+    history = get_chat(aluno_id)
+    reply = llm_agent.run(personal_id, aluno_id, nome, text, history,
+                          canal=CanalOrigem.PORTAL, ator=ator)
+    log_turn(aluno_id, text, reply, ator=ator, canal=CanalOrigem.PORTAL)
+    if reply:
+        save_chat(aluno_id, history + [
+            {"role": "user", "content": text}, {"role": "assistant", "content": reply},
+        ])
+    return reply
 
 
 def _ult(aluno_id: str, exercicio_id: str | None) -> dict | None:
@@ -51,9 +92,14 @@ def montar_contexto(aluno_id: str, nome: str | None = None) -> dict:
     return out
 
 
-def registrar(aluno_id: str, series: list, exercicio_id: str | None = None) -> dict:
+def _classificacao_for(ator: Ator) -> Classificacao:
+    return Classificacao.AUTO if ator == Ator.ALUNO else Classificacao.MANUAL
+
+
+def registrar(aluno_id: str, series: list, exercicio_id: str | None = None,
+             canal: CanalOrigem = CanalOrigem.WHATSAPP, ator: Ator = Ator.ALUNO) -> dict:
     r, pr = sessao_service.record(aluno_id, series, exercicio_id=exercicio_id,
-                                  canal=CanalOrigem.WHATSAPP, classificacao=Classificacao.AUTO, ator=Ator.ALUNO)
+                                  canal=canal, classificacao=_classificacao_for(ator), ator=ator)
     out = {"ok": 1, "ex": r.get("exercicio_nome")}
     if pr:
         out["pr"] = pr   # novo recorde de carga — o agente pode comemorar
@@ -114,10 +160,12 @@ def finalizar(aluno_id: str) -> dict:
     return {"ok": 1, "fim": 1}
 
 
-def registrar_dor(personal_id: str, aluno_id: str, descricao: str) -> dict:
+def registrar_dor(personal_id: str, aluno_id: str, descricao: str,
+                  canal: CanalOrigem = CanalOrigem.WHATSAPP, ator: Ator = Ator.ALUNO) -> dict:
     """Registra dor no exercício atual (se houver) e gera alerta ao personal (RF009)."""
     s = sessao_service.get_active(aluno_id, consistent=True)
     ex = (s or {}).get("ex_atual") or {}
     alerta_service.registrar_dor(personal_id, aluno_id, descricao,
-                                 exercicio_id=ex.get("exercicio_id"), exercicio_nome=ex.get("nome"))
+                                 exercicio_id=ex.get("exercicio_id"), exercicio_nome=ex.get("nome"),
+                                 canal=canal, ator=ator)
     return {"ok": 1, "avisado": 1}
