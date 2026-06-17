@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from app.dependencies import get_current_personal_id
 from app.models.enums import Ator, CanalOrigem
 from app.models.registro import SerieExec
-from app.repositories import dynamo_repo as repo
+from app.repositories import dynamo_repo as repo, keys
 from app.services import agent_service, authz, correcao_service, media_service, nota_service, sessao_service
 
 router = APIRouter(prefix="/v1/alunos/{aluno_id}", tags=["sessoes"])

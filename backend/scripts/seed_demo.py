@@ -53,7 +53,7 @@ from app.models.template import ExercicioTemplate, TreinoTemplate  # noqa: E402
 from app.models.treino import Treino  # noqa: E402
 from app.repositories import dynamo_repo as repo  # noqa: E402
 from app.repositories import keys  # noqa: E402
-from app.services import alerta_service, notif_service  # noqa: E402
+from app.services import alerta_service, correcao_service, notif_service  # noqa: E402
 from app.utils import new_id  # noqa: E402
 
 NOW = datetime.now(timezone.utc)
@@ -316,9 +316,10 @@ def registrar_sessao_historica(aluno_id: str, treino: dict, dt: datetime) -> flo
     hoje_str = dt.date().isoformat()
     repo.add_and_set(keys.pk_personal(PERSONAL_ID), f"STATS#D#{hoje_str}",
                      add={"sessoes": 1}, set_={"data": hoje_str})
-    return total_volume_sessao
+    return total_volume_sessao, sessao_id
 
 
+last_sessao_id: dict = {}
 total_sessoes = 0
 for aluno in alunos_criados:
     if aluno["status"] != AlunoStatus.ATIVO and aluno["nome"] != "Patrícia Mendes":
@@ -334,8 +335,9 @@ for aluno in alunos_criados:
             dt = dt - timedelta(days=dt.weekday()) + timedelta(days=dia_offset, hours=rng.choice([7, 8, 18, 19]), minutes=rng.randint(0, 59))
             if dt > NOW:
                 continue
-            registrar_sessao_historica(aluno["aluno_id"], aluno["treinos"][letra], dt)
+            vol, sid = registrar_sessao_historica(aluno["aluno_id"], aluno["treinos"][letra], dt)
             total_sessoes += 1
+            last_sessao_id[(aluno["aluno_id"], letra)] = sid
 print(f"Histórico de sessões: {total_sessoes} sessões registradas (com agregados de volume/PR).")
 
 
@@ -398,13 +400,44 @@ for nome, foco, exs in TEMPLATES_DEF:
 print(f"Templates de treino: {len(TEMPLATES_DEF)} criados.")
 
 
-# ── 8) Central de pendências: relato de dor + mídia pendente + pendência genérica ───────
+# ── 8) Relatos, respostas e correções demo ───────────────────────────────────────────────
 mariana = next(a for a in alunos_criados if a["nome"] == "Mariana Souza")
+carlos = next(a for a in alunos_criados if a["nome"] == "Carlos Eduardo Lima")
 ex_agachamento = next(e for e in mariana["treinos"]["B"]["exercicios"] if e["nome"] == "Agachamento livre")
+ex_puxada = next(e for e in carlos["treinos"]["C"]["exercicios"] if e["nome"] == "Puxada frontal")
+
+# DOR vinculada à última sessão B de Mariana
+mariana_sessao_b = last_sessao_id.get((mariana["aluno_id"], "B"))
 alerta_service.registrar_dor(
     PERSONAL_ID, mariana["aluno_id"],
     "Senti uma dor incômoda no joelho direito durante a última série.",
     exercicio_id=ex_agachamento["exercicio_id"], exercicio_nome=ex_agachamento["nome"],
+    sessao_id=mariana_sessao_b,
+)
+# Personal responde à dor (demonstra o loop completo de resposta)
+dor_items = repo.query_pk(keys.pk_aluno(mariana["aluno_id"]), sk_prefix=f"DOR#{ex_agachamento['exercicio_id']}#")
+if dor_items:
+    alerta_service.responder_relato(
+        mariana["aluno_id"], dor_items[0]["SK"],
+        "Dor típica de sobrecarga no joelho. Vamos reduzir 10% da carga e reforçar a ativação do glúteo antes de cada série.",
+        PERSONAL_ID,
+    )
+
+# DÚVIDA não respondida de Carlos (puxada frontal — fica aberta para demo)
+carlos_sessao_c = last_sessao_id.get((carlos["aluno_id"], "C"))
+alerta_service.registrar_duvida(
+    PERSONAL_ID, carlos["aluno_id"],
+    "Qual a pegada correta para ativar mais o dorsal — pronada ou supinada?",
+    exercicio_id=ex_puxada["exercicio_id"], exercicio_nome=ex_puxada["nome"],
+    sessao_id=carlos_sessao_c,
+)
+
+# CORREÇÃO do personal para Mariana (agachamento) — aparece no feed do exercício e notifica a aluna
+correcao_service.criar_correcao(
+    PERSONAL_ID, mariana["aluno_id"],
+    ex_agachamento["exercicio_id"], ex_agachamento["nome"],
+    "Percebi que os joelhos estão entrando para dentro na fase excêntrica. Ative o glúteo e empurre os joelhos para fora, alinhando com o 2º dedo do pé durante toda a amplitude do movimento.",
+    midias=[],
 )
 
 bruno = next(a for a in alunos_criados if a["nome"] == "Bruno Almeida")
@@ -486,7 +519,7 @@ for n in notifs:
         repo.update_item_if_exists(keys.pk_personal(PERSONAL_ID), n["SK"], {"lida": True})
         break
 
-print("Central de pendências: relato de dor, mídia pendente e pendência genérica criados.")
+print("Relatos: DOR Mariana (respondida), DUVIDA Carlos (aberta), CORRECAO Mariana (agachamento).")
 
 
 # ── Resumo final ──────────────────────────────────────────────────────────────────────────
@@ -501,7 +534,7 @@ print(f"Avaliações:      {total_avaliacoes}")
 print(f"Agendamentos:    {total_agendamentos}")
 print(f"Templates:       {len(TEMPLATES_DEF)}")
 print(f"Mídias demo:     {total_midias} (Mariana/Carlos/Thiago — S3 keys fictícios, URLs quebradas mas itens visíveis)")
-print("Pendências:      1 relato de dor (Mariana), 1 mídia pendente vinculável (Bruno), 1 genérica (Fernanda)")
+print("Pendências:      DOR respondida (Mariana/agachamento), DUVIDA aberta (Carlos/puxada frontal), CORRECAO (Mariana), MIDIA_PENDENTE (Bruno), FEEDBACK (Fernanda)")
 print("\nFaça login no portal e explore Dashboard, Alunos, Agenda, Templates, Biblioteca e a Central (sino).")
 print("Aba Histórico: disponível no app do aluno e na página de detalhes do aluno (personal).")
 print("Reordenacao de treinos: use os botoes ^ / v na pagina de detalhe do aluno para ordenar a sequencia de treinos.")
