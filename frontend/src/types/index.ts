@@ -192,4 +192,5 @@ export interface ChatMensagem {
   ator: Ator
   canal_origem: CanalOrigem
   data_hora: string
+  direto?: boolean
 }

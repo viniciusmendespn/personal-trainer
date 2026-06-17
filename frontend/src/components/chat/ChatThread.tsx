@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Bot, User, UserCog } from 'lucide-react'
+import { Bot, User, UserCog, Pin } from 'lucide-react'
 import { Spinner } from '../ui'
 import { renderMarkdownLite } from './markdownLite'
 import type { Ator, ChatMensagem } from '../../types'
@@ -26,20 +26,25 @@ function Bubble({ msg, viewerRole, alunoNome }: { msg: ChatMensagem; viewerRole:
   const align = isMine ? 'items-end' : 'items-start'
 
   // Três estilos bem distintos: agente (neutro), eu (accent sólido), outra pessoa (info) —
-  // ex.: o personal vê as msgs do aluno em "info", e vice-versa.
-  const bubbleStyle = isAssistant
-    ? 'bg-surface-elevated border border-border text-text'
-    : isMine
-      ? 'bg-accent text-white'
-      : 'bg-info/10 border border-info/30 text-text'
+  // ex.: o personal vê as msgs do aluno em "info", e vice-versa. "Direto" (pergunta marcada
+  // pro personal, sem passar pelo agente) ganha um destaque próprio (energy) independente disso.
+  const bubbleStyle = msg.direto
+    ? 'bg-energy/10 border border-energy/40 text-text'
+    : isAssistant
+      ? 'bg-surface-elevated border border-border text-text'
+      : isMine
+        ? 'bg-accent text-white'
+        : 'bg-info/10 border border-info/30 text-text'
 
-  const Icon = isAssistant ? Bot : msg.ator === 'PERSONAL' ? UserCog : User
-  const label = isAssistant
-    ? 'Agente'
-    : isMine
-      ? null
-      : (msg.ator === 'ALUNO' ? alunoNome ?? 'Aluno' : 'Personal') +
-        (msg.canal_origem === 'WHATSAPP' ? ' · WhatsApp' : '')
+  const Icon = msg.direto ? Pin : isAssistant ? Bot : msg.ator === 'PERSONAL' ? UserCog : User
+  const label = msg.direto
+    ? `${msg.ator === 'ALUNO' ? alunoNome ?? 'Aluno' : 'Personal'} · pergunta direta`
+    : isAssistant
+      ? 'Agente'
+      : isMine
+        ? null
+        : (msg.ator === 'ALUNO' ? alunoNome ?? 'Aluno' : 'Personal') +
+          (msg.canal_origem === 'WHATSAPP' ? ' · WhatsApp' : '')
 
   return (
     <div className={`flex flex-col gap-1 ${align}`}>

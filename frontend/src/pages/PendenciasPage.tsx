@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Bell, Check, Clock, AlertTriangle, CalendarClock, Image, Link2 } from 'lucide-react'
+import { Bell, Check, Clock, AlertTriangle, CalendarClock, Image, Link2, HelpCircle, Pin, Camera } from 'lucide-react'
 import { useCentral, useVincularMidia } from '../hooks/useCentral'
 import { useMarkRead, useMarkAllRead, useResolvePendencia } from '../hooks/useNotificacoes'
 import { useAlunos } from '../hooks/useAlunos'
@@ -12,12 +12,18 @@ const TIPO_ICON: Record<string, React.ReactNode> = {
   TREINO_FIM: <CalendarClock size={16} className="text-warning" />,
   PENDENCIA: <Clock size={16} className="text-warning" />,
   MIDIA_PENDENTE: <Image size={16} className="text-info" />,
+  MIDIA: <Camera size={16} className="text-info" />,
+  DUVIDA: <HelpCircle size={16} className="text-info" />,
+  PERGUNTA_DIRETA: <Pin size={16} className="text-energy" />,
 }
 const TIPO_TONE: Record<string, 'danger' | 'warning' | 'info' | 'neutral'> = {
   DOR: 'danger',
   TREINO_FIM: 'warning',
   PENDENCIA: 'warning',
   MIDIA_PENDENTE: 'info',
+  MIDIA: 'info',
+  DUVIDA: 'info',
+  PERGUNTA_DIRETA: 'warning',
 }
 
 export function PendenciasPage() {

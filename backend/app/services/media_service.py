@@ -45,6 +45,31 @@ def gerar_presigned_upload_url(aluno_id: str, filename: str, content_type: str,
         return None
 
 
+def registrar_midia_vinculada(aluno_id: str, exercicio_id: str, exercicio_nome: str | None,
+                              tipo: str, s3_key: str) -> dict:
+    """Registra uma mídia já enviada (via presigned URL) pelo próprio app do aluno —
+    o exercício já é conhecido nesse fluxo, então a mídia nasce vinculada (sem pendência)."""
+    midia_id = new_id()
+    item = {
+        "midia_id": midia_id, "tipo": tipo, "s3_key": s3_key,
+        "exercicio_id": exercicio_id, "exercicio_nome": exercicio_nome,
+        "status": "VINCULADA", "data_hora": now_iso(),
+    }
+    repo.put_item(keys.pk_aluno(aluno_id), f"MIDIA#{exercicio_id}#{midia_id}", item)
+    return item
+
+
+def list_midia_exercicio(aluno_id: str, exercicio_id: str) -> list[dict]:
+    """Mídias vinculadas a um exercício, com URL de visualização privada (presigned)."""
+    items = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=f"MIDIA#{exercicio_id}#")
+    out = []
+    for i in items:
+        c = repo.clean(i)
+        c["url"] = gerar_presigned_view_url(c["s3_key"])
+        out.append(c)
+    return out
+
+
 def gerar_presigned_view_url(s3_key: str, expires_in: int = 3600) -> str | None:
     """Presigned GET URL p/ exibir mídia privada (fotos de avaliação, anexo de bio)."""
     if not settings.media_bucket_name:

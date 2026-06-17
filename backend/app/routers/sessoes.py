@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from app.dependencies import get_current_personal_id
 from app.models.registro import SerieExec
 from app.repositories import dynamo_repo as repo
-from app.services import authz, sessao_service
+from app.services import authz, media_service, sessao_service
 
 router = APIRouter(prefix="/v1/alunos/{aluno_id}", tags=["sessoes"])
 
@@ -54,6 +54,13 @@ def registrar(aluno_id: str, body: RegistroBody, personal_id: str = Depends(get_
     if pr:
         out["pr_novo"] = pr
     return out
+
+
+@router.get("/exercicios/{exercicio_id}/midia")
+def midia_exercicio(aluno_id: str, exercicio_id: str, personal_id: str = Depends(get_current_personal_id)):
+    """Vídeos/fotos de execução que o aluno anexou nesse exercício."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    return media_service.list_midia_exercicio(aluno_id, exercicio_id)
 
 
 @router.get("/exercicios/{exercicio_id}/historico")

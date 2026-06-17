@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Check, X, Send, Dumbbell, LayoutTemplate, StickyNote, Link2 } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Check, X, Send, Dumbbell, LayoutTemplate, StickyNote, Link2, Camera } from 'lucide-react'
 import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { alunosApi } from '../api/alunos'
 import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
-  useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio,
+  useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
 import { Button, Card, Input, Select, Textarea, Spinner, Tabs, Badge, EmptyState, useToast } from '../components/ui'
 import { useBiblioteca } from '../hooks/useDominio'
@@ -356,8 +356,10 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
 
 function ExercicioRow({ alunoId, treinoId, ex }: { alunoId: string; treinoId: string; ex: Exercicio }) {
   const [edit, setEdit] = useState(false)
+  const [showMidia, setShowMidia] = useState(false)
   const upd = useUpdateExercicio(alunoId, treinoId)
   const del = useDeleteExercicio(alunoId, treinoId)
+  const { data: midias, isLoading: loadingMidia } = useMidiaExercicio(alunoId, ex.exercicio_id, showMidia)
   const [nome, setNome] = useState(ex.nome)
   const [series, setSeries] = useState(ex.series?.toString() ?? '')
   const [reps, setReps] = useState(ex.reps_prescritas ?? '')
@@ -405,23 +407,52 @@ function ExercicioRow({ alunoId, treinoId, ex }: { alunoId: string; treinoId: st
     )
 
   return (
-    <div className="flex items-center justify-between gap-2 text-sm border-b border-border pb-1.5">
-      <span className="min-w-0 truncate">
-        {ex.nome}
-        <span className="text-text-muted ml-2">
-          {ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''} {ex.carga_prescrita ? `· ${ex.carga_prescrita}` : ''}
-        </span>
-        {ex.video_url && <a href={ex.video_url} target="_blank" rel="noreferrer" className="text-accent-hover ml-2 text-xs hover:underline">vídeo</a>}
-        {ex.observacoes && (
-          <span title={ex.observacoes} className="inline-block ml-2 align-text-bottom">
-            <StickyNote size={12} className="text-warning" />
+    <div className="border-b border-border pb-1.5">
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <span className="min-w-0 truncate">
+          {ex.nome}
+          <span className="text-text-muted ml-2">
+            {ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''} {ex.carga_prescrita ? `· ${ex.carga_prescrita}` : ''}
           </span>
-        )}
-      </span>
-      <span className="flex gap-1 shrink-0">
-        <Button variant="ghost" size="sm" iconOnly aria-label="Editar exercício" onClick={() => setEdit(true)}><Pencil size={13} /></Button>
-        <Button variant="ghost" size="sm" iconOnly aria-label="Excluir exercício" onClick={() => del.mutate(ex.exercicio_id)} className="hover:text-danger"><Trash2 size={14} /></Button>
-      </span>
+          {ex.video_url && <a href={ex.video_url} target="_blank" rel="noreferrer" className="text-accent-hover ml-2 text-xs hover:underline">vídeo</a>}
+          {ex.observacoes && (
+            <span title={ex.observacoes} className="inline-block ml-2 align-text-bottom">
+              <StickyNote size={12} className="text-warning" />
+            </span>
+          )}
+        </span>
+        <span className="flex gap-1 shrink-0">
+          <Button variant="ghost" size="sm" iconOnly aria-label="Ver mídias do aluno" onClick={() => setShowMidia((v) => !v)}><Camera size={13} /></Button>
+          <Button variant="ghost" size="sm" iconOnly aria-label="Editar exercício" onClick={() => setEdit(true)}><Pencil size={13} /></Button>
+          <Button variant="ghost" size="sm" iconOnly aria-label="Excluir exercício" onClick={() => del.mutate(ex.exercicio_id)} className="hover:text-danger"><Trash2 size={14} /></Button>
+        </span>
+      </div>
+
+      {showMidia && (
+        <div className="mt-2 bg-white/5 rounded-lg p-2">
+          {loadingMidia ? (
+            <Spinner className="w-4 h-4" />
+          ) : !midias?.length ? (
+            <p className="text-xs text-text-muted">O aluno ainda não enviou vídeo/foto deste exercício.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {midias.map((m) => (
+                m.url && (
+                  m.tipo === 'video_execucao' ? (
+                    <a key={m.midia_id} href={m.url} target="_blank" rel="noreferrer" className="text-xs text-accent-hover hover:underline flex items-center gap-1">
+                      <Camera size={12} /> vídeo ({new Date(m.data_hora).toLocaleDateString('pt-BR')})
+                    </a>
+                  ) : (
+                    <a key={m.midia_id} href={m.url} target="_blank" rel="noreferrer">
+                      <img src={m.url} alt="" className="w-14 h-14 object-cover rounded border border-border" />
+                    </a>
+                  )
+                )
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -2,7 +2,9 @@ import { api } from './client'
 import type { Agendamento, AgendamentoCreate, AgendamentoStatus } from '../types'
 
 function tsId(a: Pick<Agendamento, 'data_hora_inicio' | 'agendamento_id'>) {
-  return `${a.data_hora_inicio}#${a.agendamento_id}`
+  // encodeURIComponent é essencial aqui: o '#' literal seria interpretado como fragmento
+  // de URL pelo navegador, truncando o resto do path (ex.: "/status") antes do request sair.
+  return encodeURIComponent(`${a.data_hora_inicio}#${a.agendamento_id}`)
 }
 
 export const agendaApi = {

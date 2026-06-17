@@ -67,3 +67,11 @@ export function useDeleteExercicio(alunoId: string, treinoId: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['exercicios', alunoId, treinoId] }),
   })
 }
+
+export function useMidiaExercicio(alunoId: string, exercicioId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['midia-exercicio', alunoId, exercicioId],
+    queryFn: () => treinosApi.listMidia(alunoId, exercicioId),
+    enabled: enabled && !!alunoId && !!exercicioId,
+  })
+}

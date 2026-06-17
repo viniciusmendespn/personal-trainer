@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, Trophy, Check, ChevronRight, Video } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, Trophy, Check, ChevronRight, Video, X, Paperclip, AlertTriangle } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
-import { alunoApi, type ExSessao } from '../api/alunoApp'
+import { alunoApi, anexarMidiaExecucao, type ExSessao } from '../api/alunoApp'
 import { ALUNO_TOKEN_KEY } from '../api/alunoClient'
-import { useAlunoChat, useSendAlunoChat } from '../hooks/useAlunoChat'
+import { useAlunoChat, useSendAlunoChat, useSendDiretoAlunoChat } from '../hooks/useAlunoChat'
 import { ChatThread } from '../components/chat/ChatThread'
 import { ChatInputBar } from '../components/chat/ChatInputBar'
-import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState } from '../components/ui'
+import { Button, Card, Spinner, Input, Textarea, Select, Badge, StatCard, EmptyState, useToast } from '../components/ui'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -94,13 +94,19 @@ export function AlunoApp() {
 function ChatTab() {
   const { data: messages, isLoading } = useAlunoChat()
   const send = useSendAlunoChat()
+  const sendDireto = useSendDiretoAlunoChat()
+  const { show } = useToast()
   return (
     <div
       className="flex flex-col"
       style={{ height: 'calc(100vh - 4rem - 4.5rem - env(safe-area-inset-bottom))' }}
     >
       <ChatThread messages={messages ?? []} isLoading={isLoading} isSending={send.isPending} viewerRole="ALUNO" />
-      <ChatInputBar onSend={(text) => send.mutate(text)} disabled={send.isPending} />
+      <ChatInputBar
+        onSend={(text) => send.mutate(text)}
+        onSendDireto={(text) => sendDireto.mutate(text, { onSuccess: () => show('Enviado direto pro seu personal.', 'success') })}
+        disabled={send.isPending || sendDireto.isPending}
+      />
     </div>
   )
 }
@@ -216,9 +222,38 @@ function SessaoTreino() {
 
 function ExercicioCard({ ex }: { ex: ExSessao }) {
   const qc = useQueryClient()
+  const { show } = useToast()
   const [open, setOpen] = useState(false)
   const [pr, setPr] = useState<number | null>(null)
+  const [attaching, setAttaching] = useState(false)
+  const [relatoOpen, setRelatoOpen] = useState(false)
+  const [relatoTipo, setRelatoTipo] = useState<'dor' | 'duvida'>('dor')
+  const [relatoTexto, setRelatoTexto] = useState('')
   const feito = !!ex.registrado?.length
+
+  async function onAnexarMidia(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setAttaching(true)
+    try {
+      await anexarMidiaExecucao(file, ex.exercicio_id, ex.nome)
+      show('Enviado! Seu personal vai ver.', 'success')
+    } catch {
+      show('Não foi possível enviar a mídia.', 'error')
+    } finally {
+      setAttaching(false)
+    }
+  }
+
+  const relato = useMutation({
+    mutationFn: () => alunoApi.relato(relatoTipo, relatoTexto, ex.exercicio_id, ex.nome),
+    onSuccess: () => {
+      show('Seu personal foi avisado.', 'success')
+      setRelatoOpen(false)
+      setRelatoTexto('')
+    },
+  })
 
   const initRows = () => {
     const src = ex.registrado?.length
@@ -229,6 +264,7 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
   const [rows, setRows] = useState(initRows)
   const upd = (i: number, f: 'carga' | 'reps', v: string) =>
     setRows((rs) => rs.map((r, j) => (j === i ? { ...r, [f]: v } : r)))
+  const removeRow = (i: number) => setRows((rs) => rs.filter((_, j) => j !== i))
 
   const save = useMutation({
     mutationFn: () => {
@@ -282,6 +318,11 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
               <span className="text-xs text-text-muted w-12">Sér {i + 1}</span>
               <Input className="w-24" placeholder="Carga" value={r.carga} onChange={(e) => upd(i, 'carga', e.target.value)} />
               <Input className="w-20" placeholder="Reps" inputMode="numeric" value={r.reps} onChange={(e) => upd(i, 'reps', e.target.value)} />
+              {rows.length > 1 && (
+                <button type="button" onClick={() => removeRow(i)} aria-label="Remover série" className="text-text-muted hover:text-danger">
+                  <X size={14} />
+                </button>
+              )}
             </div>
           ))}
           <button onClick={() => setRows([...rows, { carga: ex.carga_prescrita ?? '', reps: '' }])} className="text-xs text-accent-hover">+ série</button>
@@ -293,6 +334,36 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
           <Button variant="energy" className="w-full" onClick={() => save.mutate()} disabled={save.isPending}>
             {save.isPending ? 'Salvando…' : feito ? 'Atualizar' : 'Registrar'}
           </Button>
+
+          <div className="flex items-center gap-3 pt-1">
+            <label className="inline-flex items-center gap-1 text-xs text-text-secondary cursor-pointer">
+              <Paperclip size={13} /> {attaching ? 'Enviando…' : 'Anexar vídeo/foto'}
+              <input type="file" accept="image/*,video/*" className="hidden" disabled={attaching} onChange={onAnexarMidia} />
+            </label>
+            <button type="button" onClick={() => setRelatoOpen((v) => !v)} className="inline-flex items-center gap-1 text-xs text-warning">
+              <AlertTriangle size={13} /> Dor ou dúvida
+            </button>
+          </div>
+
+          {relatoOpen && (
+            <div className="space-y-2 bg-white/5 rounded-lg p-2.5">
+              <Select value={relatoTipo} onChange={(e) => setRelatoTipo(e.target.value as 'dor' | 'duvida')}>
+                <option value="dor">Dor / desconforto</option>
+                <option value="duvida">Dúvida sobre o exercício</option>
+              </Select>
+              <Textarea
+                rows={2} placeholder={relatoTipo === 'dor' ? 'Onde sentiu? Como foi?' : 'Qual sua dúvida?'}
+                value={relatoTexto} onChange={(e) => setRelatoTexto(e.target.value)}
+              />
+              <Button
+                size="sm" variant={relatoTipo === 'dor' ? 'danger' : 'outline'} className="w-full"
+                disabled={!relatoTexto.trim() || relato.isPending}
+                onClick={() => relato.mutate()}
+              >
+                {relato.isPending ? 'Enviando…' : 'Avisar personal'}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </Card>

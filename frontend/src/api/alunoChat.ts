@@ -6,4 +6,6 @@ export const alunoChatApi = {
     alunoClient.get<ChatMensagem[]>('/v1/aluno/chat', { params: { limit } }).then((r) => r.data),
   send: (text: string) =>
     alunoClient.post<{ reply: string }>('/v1/aluno/chat', { text }).then((r) => r.data),
+  sendDireto: (text: string) =>
+    alunoClient.post('/v1/aluno/chat/personal', { text }).then((r) => r.data),
 }

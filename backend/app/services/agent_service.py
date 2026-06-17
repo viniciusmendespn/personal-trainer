@@ -26,11 +26,12 @@ def save_chat(aluno_id: str, turns: list[dict]) -> None:
 
 
 # ── Histórico durável do chat (UI) — distinto da memória de trabalho acima ──────
-def _write_chat_msg(aluno_id: str, role: str, texto: str, ator: Ator, canal: CanalOrigem) -> None:
+def _write_chat_msg(aluno_id: str, role: str, texto: str, ator: Ator, canal: CanalOrigem,
+                    direto: bool = False) -> None:
     msg_id = new_id()
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_chat_msg(epoch_ms(), msg_id), {
         "mensagem_id": msg_id, "aluno_id": aluno_id, "role": role, "texto": texto,
-        "ator": ator.value, "canal_origem": canal.value, "data_hora": now_iso(),
+        "ator": ator.value, "canal_origem": canal.value, "data_hora": now_iso(), "direto": direto,
     })
 
 
@@ -42,6 +43,12 @@ def log_turn(aluno_id: str, user_text: str, assistant_text: str,
     _write_chat_msg(aluno_id, "user", user_text, ator, canal)
     if assistant_text:
         _write_chat_msg(aluno_id, "assistant", assistant_text, ator, canal)
+
+
+def log_direct(aluno_id: str, text: str, ator: Ator, canal: CanalOrigem) -> None:
+    """Mensagem marcada como 'pergunta direta ao personal' — não passa pelo agente,
+    só fica registrada na thread (compartilhada) à espera de resposta humana."""
+    _write_chat_msg(aluno_id, "user", text, ator, canal, direto=True)
 
 
 def list_chat_msgs(aluno_id: str, limit: int = 50) -> list[dict]:

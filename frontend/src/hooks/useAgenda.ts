@@ -18,6 +18,14 @@ export function useCreateAgendamento() {
   })
 }
 
+export function useUpdateAgendamento() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ a, body }: { a: Agendamento; body: Partial<AgendamentoCreate> }) => agendaApi.update(a, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['agenda'] }),
+  })
+}
+
 export function useSetAgendamentoStatus() {
   const qc = useQueryClient()
   return useMutation({

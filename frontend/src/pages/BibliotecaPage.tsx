@@ -27,6 +27,11 @@ export function BibliotecaPage() {
     return exs.filter((ex) => ex.nome.toLowerCase().includes(q) || ex.grupo?.toLowerCase().includes(q))
   }, [exs, query])
 
+  const grupos = useMemo(
+    () => Array.from(new Set((exs ?? []).map((e) => e.grupo).filter((g): g is string => !!g))).sort(),
+    [exs]
+  )
+
   return (
     <div className="max-w-3xl mx-auto">
       <h2 className="font-display text-xl font-semibold mb-1">Biblioteca de exercícios</h2>
@@ -36,9 +41,12 @@ export function BibliotecaPage() {
         <form onSubmit={submit} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Input label="Nome" value={nome} onChange={(e) => setNome(e.target.value)} />
-            <Input label="Grupo" value={grupo} onChange={(e) => setGrupo(e.target.value)} />
+            <Input label="Grupo" list="grupos-biblioteca" value={grupo} onChange={(e) => setGrupo(e.target.value)} />
             <Input label="Vídeo (URL)" value={video} onChange={(e) => setVideo(e.target.value)} />
           </div>
+          <datalist id="grupos-biblioteca">
+            {grupos.map((g) => <option key={g} value={g} />)}
+          </datalist>
           <Textarea rows={2} placeholder="Recomendações (técnica, cuidados, dicas…)" value={rec} onChange={(e) => setRec(e.target.value)} />
           <Button type="submit" disabled={create.isPending}><span className="flex items-center gap-1"><Plus size={16} /> Adicionar</span></Button>
         </form>
@@ -84,7 +92,7 @@ function ExLibRow({ ex }: { ex: ExLib }) {
         <form onSubmit={save} className="space-y-2">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <Input value={nome} onChange={(e) => setNome(e.target.value)} />
-            <Input value={grupo} onChange={(e) => setGrupo(e.target.value)} placeholder="Grupo" />
+            <Input value={grupo} list="grupos-biblioteca" onChange={(e) => setGrupo(e.target.value)} placeholder="Grupo" />
             <Input value={video} onChange={(e) => setVideo(e.target.value)} placeholder="Vídeo" />
           </div>
           <Textarea rows={2} placeholder="Recomendações" value={rec} onChange={(e) => setRec(e.target.value)} />

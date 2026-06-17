@@ -23,4 +23,18 @@ export const treinosApi = {
       .then((r) => r.data),
   removeExercicio: (alunoId: string, treinoId: string, exercicioId: string) =>
     api.delete(`/v1/alunos/${alunoId}/treinos/${treinoId}/exercicios/${exercicioId}`),
+
+  listMidia: (alunoId: string, exercicioId: string) =>
+    api.get<MidiaExercicio[]>(`/v1/alunos/${alunoId}/exercicios/${exercicioId}/midia`).then((r) => r.data),
+}
+
+export interface MidiaExercicio {
+  midia_id: string
+  tipo: string
+  s3_key: string
+  exercicio_id: string
+  exercicio_nome?: string
+  status: string
+  data_hora: string
+  url?: string
 }

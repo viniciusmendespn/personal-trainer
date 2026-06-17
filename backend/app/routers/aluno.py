@@ -8,7 +8,7 @@ from app.models.enums import Ator, CanalOrigem, Classificacao
 from app.models.registro import SerieExec
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import agent_service, sessao_service
+from app.services import agent_service, alerta_service, media_service, notif_service, sessao_service
 
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
 
@@ -118,6 +118,65 @@ class ChatBody(BaseModel):
     text: str
 
 
+class MidiaUploadUrlBody(BaseModel):
+    filename: str
+    content_type: str
+
+
+class MidiaRegistrarBody(BaseModel):
+    s3_key: str
+    tipo: str                          # "video_execucao" | "foto_exercicio"
+    exercicio_id: str
+    exercicio_nome: str | None = None
+
+
+@router.post("/midia/upload-url")
+def midia_upload_url(body: MidiaUploadUrlBody, ctx: dict = Depends(get_current_aluno)):
+    result = media_service.gerar_presigned_upload_url(ctx["aluno_id"], body.filename, body.content_type)
+    if not result:
+        raise HTTPException(502, "Não foi possível gerar a URL de upload.")
+    return result
+
+
+@router.post("/midia", status_code=201)
+def midia_registrar(body: MidiaRegistrarBody, ctx: dict = Depends(get_current_aluno)):
+    item = media_service.registrar_midia_vinculada(
+        ctx["aluno_id"], body.exercicio_id, body.exercicio_nome, body.tipo, body.s3_key
+    )
+    notif_service.criar(
+        ctx["personal_id"], "MIDIA", "Nova mídia de execução",
+        f"O aluno enviou uma mídia em {body.exercicio_nome or 'um exercício'} pra você analisar.",
+        aluno_id=ctx["aluno_id"],
+    )
+    return {"ok": 1, "midia_id": item["midia_id"]}
+
+
+class RelatoBody(BaseModel):
+    tipo: str                          # "dor" | "duvida"
+    exercicio_id: str | None = None
+    exercicio_nome: str | None = None
+    descricao: str
+
+
+@router.post("/relato", status_code=201)
+def relato(body: RelatoBody, ctx: dict = Depends(get_current_aluno)):
+    """Relato de dor ou dúvida sobre um exercício, fora do fluxo do agente — gera
+    notificação direta ao personal (RF009 / mesmo padrão do agente, mas via UI)."""
+    if body.tipo == "dor":
+        alerta_service.registrar_dor(
+            ctx["personal_id"], ctx["aluno_id"], body.descricao,
+            exercicio_id=body.exercicio_id, exercicio_nome=body.exercicio_nome,
+            canal=CanalOrigem.PORTAL, ator=Ator.ALUNO,
+        )
+    else:
+        contexto = f" em {body.exercicio_nome}" if body.exercicio_nome else ""
+        notif_service.criar(
+            ctx["personal_id"], "DUVIDA", "Dúvida do aluno",
+            f"O aluno teve uma dúvida{contexto}: {body.descricao}", aluno_id=ctx["aluno_id"],
+        )
+    return {"ok": 1}
+
+
 @router.get("/chat")
 def chat_history(limit: int = 50, ctx: dict = Depends(get_current_aluno)):
     return agent_service.list_chat_msgs(ctx["aluno_id"], limit)
@@ -127,3 +186,14 @@ def chat_history(limit: int = 50, ctx: dict = Depends(get_current_aluno)):
 def chat_send(body: ChatBody, ctx: dict = Depends(get_current_aluno)):
     reply = agent_service.handle_chat_turn(ctx["personal_id"], ctx["aluno_id"], body.text, Ator.ALUNO)
     return {"reply": reply}
+
+
+@router.post("/chat/personal", status_code=201)
+def chat_send_personal(body: ChatBody, ctx: dict = Depends(get_current_aluno)):
+    """Pergunta direta ao personal — não passa pelo agente, gera notificação."""
+    agent_service.log_direct(ctx["aluno_id"], body.text, Ator.ALUNO, CanalOrigem.PORTAL)
+    notif_service.criar(
+        ctx["personal_id"], "PERGUNTA_DIRETA", "Pergunta direta do aluno",
+        body.text, aluno_id=ctx["aluno_id"],
+    )
+    return {"ok": 1}

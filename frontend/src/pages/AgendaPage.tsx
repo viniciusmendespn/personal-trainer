@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Plus, ChevronLeft, ChevronRight, Calendar, Check, X, Trash2, CalendarDays } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Plus, ChevronLeft, ChevronRight, Calendar, Check, X, Trash2, Pencil, Dumbbell, CalendarDays } from 'lucide-react'
 import { useAlunos } from '../hooks/useAlunos'
-import { useAgenda, useCreateAgendamento, useSetAgendamentoStatus, useDeleteAgendamento } from '../hooks/useAgenda'
+import { useAgenda, useCreateAgendamento, useUpdateAgendamento, useSetAgendamentoStatus, useDeleteAgendamento } from '../hooks/useAgenda'
 import { Button, Card, Input, Select, Modal, Badge, EmptyState, Spinner } from '../components/ui'
-import type { Agendamento, AgendamentoStatus } from '../types'
+import type { Agendamento, AgendamentoCreate, AgendamentoStatus } from '../types'
 
 const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
@@ -93,7 +94,7 @@ export function AgendaPage() {
       </div>
 
       <Modal open={open} onClose={() => setOpen(false)} title="Novo agendamento">
-        <NovoAgendamentoForm alunos={alunos ?? []} onDone={() => setOpen(false)} defaultDate={weekStart} />
+        <AgendamentoForm alunos={alunos ?? []} onDone={() => setOpen(false)} defaultDate={weekStart} />
       </Modal>
 
       {isLoading ? (
@@ -130,12 +131,18 @@ export function AgendaPage() {
 function AgendamentoRow({ a, alunoNome }: { a: Agendamento; alunoNome?: string }) {
   const setStatus = useSetAgendamentoStatus()
   const del = useDeleteAgendamento()
+  const [editOpen, setEditOpen] = useState(false)
   const hora = new Date(a.data_hora_inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 
   return (
     <div className="flex items-center justify-between gap-2 text-sm border-b border-border last:border-0 pb-2 last:pb-0">
       <div className="min-w-0">
-        <p className="truncate"><span className="font-medium">{hora}</span> · {alunoNome ?? a.aluno_id}</p>
+        <p className="truncate">
+          <span className="font-medium">{hora}</span> ·{' '}
+          <Link to={`/alunos/${a.aluno_id}`} className="text-accent-hover hover:underline inline-flex items-center gap-1">
+            {alunoNome ?? a.aluno_id} <Dumbbell size={11} />
+          </Link>
+        </p>
         {a.observacao && <p className="text-xs text-text-muted truncate">{a.observacao}</p>}
       </div>
       <div className="flex items-center gap-1.5 shrink-0">
@@ -150,10 +157,17 @@ function AgendamentoRow({ a, alunoNome }: { a: Agendamento; alunoNome?: string }
             <X size={14} />
           </Button>
         )}
-        <Button variant="ghost" size="sm" iconOnly aria-label="Excluir" onClick={() => del.mutate(a)} className="hover:text-danger">
+        <Button variant="ghost" size="sm" iconOnly aria-label="Editar" onClick={() => setEditOpen(true)}>
+          <Pencil size={14} />
+        </Button>
+        <Button variant="ghost" size="sm" iconOnly aria-label="Excluir" onClick={() => { if (window.confirm('Excluir este agendamento?')) del.mutate(a) }} className="hover:text-danger">
           <Trash2 size={14} />
         </Button>
       </div>
+
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Editar agendamento">
+        <AgendamentoForm editing={a} onDone={() => setEditOpen(false)} />
+      </Modal>
     </div>
   )
 }
@@ -192,32 +206,51 @@ function MonthGrid({
   )
 }
 
-function NovoAgendamentoForm({
-  alunos, onDone, defaultDate,
-}: { alunos: { aluno_id: string; nome: string }[]; onDone: () => void; defaultDate: Date }) {
+function splitDateHora(iso: string): [string, string] {
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return [
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+    `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+  ]
+}
+
+function AgendamentoForm({
+  alunos, onDone, defaultDate, editing,
+}: { alunos?: { aluno_id: string; nome: string }[]; onDone: () => void; defaultDate?: Date; editing?: Agendamento }) {
+  const { data: alunosLoaded } = useAlunos()
+  const lista = alunos ?? alunosLoaded ?? []
   const create = useCreateAgendamento()
-  const [alunoId, setAlunoId] = useState(alunos[0]?.aluno_id ?? '')
-  const [data, setData] = useState(ymd(defaultDate))
-  const [hora, setHora] = useState('08:00')
-  const [duracao, setDuracao] = useState('60')
-  const [observacao, setObservacao] = useState('')
+  const update = useUpdateAgendamento()
+  const [eData, eHora] = editing ? splitDateHora(editing.data_hora_inicio) : ['', '']
+  const [alunoId, setAlunoId] = useState(editing?.aluno_id ?? lista[0]?.aluno_id ?? '')
+  const [data, setData] = useState(editing ? eData : ymd(defaultDate ?? new Date()))
+  const [hora, setHora] = useState(editing ? eHora : '08:00')
+  const [duracao, setDuracao] = useState(String(editing?.duracao_min ?? 60))
+  const [observacao, setObservacao] = useState(editing?.observacao ?? '')
+  const saving = create.isPending || update.isPending
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!alunoId || !data || !hora) return
-    await create.mutateAsync({
+    const body: AgendamentoCreate = {
       aluno_id: alunoId,
       data_hora_inicio: new Date(`${data}T${hora}:00`).toISOString(),
       duracao_min: Number(duracao) || 60,
       observacao: observacao || undefined,
-    })
+    }
+    if (editing) {
+      await update.mutateAsync({ a: editing, body })
+    } else {
+      await create.mutateAsync(body)
+    }
     onDone()
   }
 
   return (
     <form onSubmit={submit} className="space-y-3">
       <Select label="Aluno" value={alunoId} onChange={(e) => setAlunoId(e.target.value)} required>
-        {alunos.map((a) => <option key={a.aluno_id} value={a.aluno_id}>{a.nome}</option>)}
+        {lista.map((a) => <option key={a.aluno_id} value={a.aluno_id}>{a.nome}</option>)}
       </Select>
       <div className="grid grid-cols-2 gap-3">
         <Input label="Data" type="date" value={data} onChange={(e) => setData(e.target.value)} required />
@@ -225,10 +258,10 @@ function NovoAgendamentoForm({
       </div>
       <Input label="Duração (min)" type="number" min={15} step={15} value={duracao} onChange={(e) => setDuracao(e.target.value)} />
       <Input label="Observação" value={observacao} onChange={(e) => setObservacao(e.target.value)} />
-      <Button type="submit" className="w-full" disabled={create.isPending || !alunos.length}>
-        {create.isPending ? 'Salvando…' : 'Agendar'}
+      <Button type="submit" className="w-full" disabled={saving || !lista.length}>
+        {saving ? 'Salvando…' : editing ? 'Salvar alterações' : 'Agendar'}
       </Button>
-      {!alunos.length && <p className="text-xs text-text-muted text-center">Cadastre um aluno primeiro.</p>}
+      {!lista.length && <p className="text-xs text-text-muted text-center">Cadastre um aluno primeiro.</p>}
     </form>
   )
 }
