@@ -4,6 +4,7 @@ import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Setti
 import { useAuth } from '../../auth/AuthProvider'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
 import { ChatWidget } from '../chat/ChatWidget'
+import { ChatContextProvider } from '../../context/ChatContext'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Visão geral', icon: LayoutDashboard },
@@ -60,6 +61,7 @@ export function AppLayout() {
   const pageTitle = NAV_ITEMS.find((i) => location.pathname.startsWith(i.to))?.label ?? 'Personal'
 
   return (
+    <ChatContextProvider>
     <div className="h-screen overflow-hidden flex">
       {/* Desktop sidebar (lg+) */}
       <aside className="hidden lg:flex w-56 shrink-0 border-r border-border bg-surface/60 backdrop-blur-xl p-4">
@@ -111,5 +113,6 @@ export function AppLayout() {
 
       <ChatWidget />
     </div>
+    </ChatContextProvider>
   )
 }

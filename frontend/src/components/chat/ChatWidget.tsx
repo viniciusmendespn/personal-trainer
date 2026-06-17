@@ -6,10 +6,10 @@ import { usePersonalChat, useSendPersonalChat, useEnviarCorrecao } from '../../h
 import { Avatar, Spinner, Modal, Select, Button } from '../ui'
 import { ChatThread } from './ChatThread'
 import { ChatInputBar } from './ChatInputBar'
+import { useChatContext } from '../../context/ChatContext'
 
 export function ChatWidget() {
-  const [open, setOpen] = useState(false)
-  const [alunoId, setAlunoId] = useState<string | null>(null)
+  const { open, setOpen, alunoId, setAlunoId } = useChatContext()
   const [anexo, setAnexo] = useState<File | null>(null)
   const [busca, setBusca] = useState('')
   const alunos = useAlunos()

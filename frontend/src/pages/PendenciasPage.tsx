@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { Bell, AlertTriangle, CalendarClock, Clock, Image, Camera, HelpCircle, Pin, Mail, Link2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Bell, AlertTriangle, CalendarClock, Clock, Image, Camera, HelpCircle, Pin, Mail, Link2, MessageCircle, UserRound, Dumbbell, PlaySquare } from 'lucide-react'
 import { useNotificacoes, useMarkRead, useMarkAllRead, useVincularMidia } from '../hooks/useNotificacoes'
 import { useAlunos } from '../hooks/useAlunos'
 import { useExerciciosAluno } from '../hooks/useEvolucao'
 import { Card, Spinner, Button, Badge, EmptyState, Select, Modal } from '../components/ui'
+import { useChatContext } from '../context/ChatContext'
 import type { Notificacao } from '../api/notificacoes'
 
 const TIPO_ICON: Record<string, React.ReactNode> = {
@@ -25,14 +27,119 @@ const TIPO_TONE: Record<string, 'danger' | 'warning' | 'info' | 'neutral'> = {
   PERGUNTA_DIRETA: 'warning',
 }
 
+interface QuickAction {
+  label: string
+  icon: React.ReactNode
+  fn: () => void
+}
+
+function useQuickAction(item: Notificacao, markRead: ReturnType<typeof useMarkRead>): QuickAction | null {
+  const navigate = useNavigate()
+  const { openChat } = useChatContext()
+
+  if (!item.aluno_id) return null
+
+  const doAndRead = (fn: () => void) => () => {
+    fn()
+    if (!item.lida) markRead.mutate(item.ref)
+  }
+
+  if (item.tipo === 'PERGUNTA_DIRETA' || item.tipo === 'DUVIDA') {
+    return {
+      label: 'Responder',
+      icon: <MessageCircle size={15} />,
+      fn: doAndRead(() => openChat(item.aluno_id!)),
+    }
+  }
+  if (item.tipo === 'MIDIA') {
+    return {
+      label: 'Ver mídia',
+      icon: <PlaySquare size={15} />,
+      fn: doAndRead(() => navigate(`/alunos/${item.aluno_id}/evolucao`)),
+    }
+  }
+  if (item.tipo === 'DOR') {
+    return {
+      label: 'Ver aluno',
+      icon: <UserRound size={15} />,
+      fn: doAndRead(() => navigate(`/alunos/${item.aluno_id}`)),
+    }
+  }
+  if (item.tipo === 'TREINO_FIM') {
+    return {
+      label: 'Abrir treino',
+      icon: <Dumbbell size={15} />,
+      fn: doAndRead(() => navigate(`/alunos/${item.aluno_id}`)),
+    }
+  }
+  if (item.tipo === 'MIDIA_PENDENTE') {
+    return {
+      label: 'Ver aluno',
+      icon: <UserRound size={15} />,
+      fn: doAndRead(() => navigate(`/alunos/${item.aluno_id}`)),
+    }
+  }
+
+  return null
+}
+
+function NotifCard({ item, alunos, markRead, onVincular }: {
+  item: Notificacao
+  alunos: ReturnType<typeof useAlunos>['data']
+  markRead: ReturnType<typeof useMarkRead>
+  onVincular: (item: Notificacao) => void
+}) {
+  const quickAction = useQuickAction(item, markRead)
+  const nomeAluno = alunos?.find((a) => a.aluno_id === item.aluno_id)?.nome
+
+  return (
+    <Card
+      variant="elevated"
+      className={`flex items-start justify-between gap-3 ${!item.lida ? 'border-l-2 border-l-accent' : 'opacity-60'}`}
+    >
+      <div className="flex gap-2 min-w-0">
+        <div className="mt-0.5 shrink-0">{TIPO_ICON[item.tipo] ?? <Bell size={16} className="text-text-muted" />}</div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium flex items-center gap-2 flex-wrap">
+            {item.titulo}
+            <Badge tone={TIPO_TONE[item.tipo] ?? 'neutral'}>{item.tipo}</Badge>
+            <Badge tone={item.lida ? 'neutral' : 'success'}>{item.lida ? 'Lida' : 'Não lida'}</Badge>
+          </p>
+          <p className="text-xs text-text-secondary">{item.mensagem}</p>
+          {nomeAluno && <p className="text-xs text-text-muted">{nomeAluno}</p>}
+          <p className="text-[11px] text-text-muted mt-0.5">{new Date(item.data_hora).toLocaleString('pt-BR')}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0">
+        {quickAction && (
+          <Button variant="ghost" size="sm" iconOnly aria-label={quickAction.label} onClick={quickAction.fn}>
+            {quickAction.icon}
+          </Button>
+        )}
+        {item.tipo === 'MIDIA_PENDENTE' && item.midia_id && (
+          <Button variant="ghost" size="sm" iconOnly aria-label="Vincular a exercício" onClick={() => onVincular(item)}>
+            <Link2 size={15} />
+          </Button>
+        )}
+        <Button
+          variant="ghost" size="sm" iconOnly
+          aria-label={item.lida ? 'Já lida' : 'Marcar como lida'}
+          disabled={item.lida}
+          onClick={() => !item.lida && markRead.mutate(item.ref)}
+        >
+          <Mail size={16} />
+        </Button>
+      </div>
+    </Card>
+  )
+}
+
 export function PendenciasPage() {
   const { data: items, isLoading } = useNotificacoes()
   const markRead = useMarkRead()
   const markAll = useMarkAllRead()
-  const { data: alunos } = useAlunos()
+  const alunos = useAlunos()
   const [vincularItem, setVincularItem] = useState<Notificacao | null>(null)
-
-  const nomeAluno = (id?: string) => alunos?.find((a) => a.aluno_id === id)?.nome
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -50,40 +157,13 @@ export function PendenciasPage() {
       ) : (
         <div className="space-y-2">
           {items.map((item) => (
-            <Card
+            <NotifCard
               key={item.ref}
-              variant="elevated"
-              className={`flex items-start justify-between gap-3 ${!item.lida ? 'border-l-2 border-l-accent' : 'opacity-60'}`}
-            >
-              <div className="flex gap-2 min-w-0">
-                <div className="mt-0.5 shrink-0">{TIPO_ICON[item.tipo] ?? <Bell size={16} className="text-text-muted" />}</div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium flex items-center gap-2 flex-wrap">
-                    {item.titulo}
-                    <Badge tone={TIPO_TONE[item.tipo] ?? 'neutral'}>{item.tipo}</Badge>
-                    <Badge tone={item.lida ? 'neutral' : 'success'}>{item.lida ? 'Lida' : 'Não lida'}</Badge>
-                  </p>
-                  <p className="text-xs text-text-secondary">{item.mensagem}</p>
-                  {item.aluno_id && <p className="text-xs text-text-muted">{nomeAluno(item.aluno_id)}</p>}
-                  <p className="text-[11px] text-text-muted mt-0.5">{new Date(item.data_hora).toLocaleString('pt-BR')}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {item.tipo === 'MIDIA_PENDENTE' && item.midia_id && (
-                  <Button variant="ghost" size="sm" iconOnly aria-label="Vincular a exercício" onClick={() => setVincularItem(item)}>
-                    <Link2 size={15} />
-                  </Button>
-                )}
-                <Button
-                  variant="ghost" size="sm" iconOnly
-                  aria-label={item.lida ? 'Já lida' : 'Marcar como lida'}
-                  disabled={item.lida}
-                  onClick={() => !item.lida && markRead.mutate(item.ref)}
-                >
-                  <Mail size={16} />
-                </Button>
-              </div>
-            </Card>
+              item={item}
+              alunos={alunos.data}
+              markRead={markRead}
+              onVincular={setVincularItem}
+            />
           ))}
         </div>
       )}
