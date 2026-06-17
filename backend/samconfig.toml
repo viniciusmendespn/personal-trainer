@@ -15,8 +15,10 @@ profile           = "pessoal-hotmail"
 capabilities      = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
 confirm_changeset = false
 resolve_s3        = true
-# WebhookSecret: gerar um token longo e único e definir aqui (ou via --parameter-overrides no deploy).
-# DeployFrontendInfra=true só depois que a conta estiver pronta para CloudFront.
-# OpenAiApiKey: criar uma key SEPARADA p/ este app e passar via --parameter-overrides no deploy
-# (evita versionar segredo). Ex.: sam deploy --parameter-overrides "OpenAiApiKey=sk-..."
-parameter_overrides = "Stage=prod DeployFrontendInfra=false WebhookSecret=CHANGE_ME_WEBHOOK_SECRET"
+# WebhookSecret/OpenAiApiKey/FusionApiKey: NoEcho, Default="" no template — já setados no
+# stack via --parameter-overrides em deploys anteriores. De propósito NÃO ficam aqui: omitir
+# o parâmetro faz o CloudFormation reusar o valor atual do stack (UsePreviousValue); se algum
+# deles for incluído aqui com um valor (ex.: placeholder), o próximo deploy SOBRESCREVE o
+# segredo real em produção. Só passar via --parameter-overrides pontual quando for, de fato,
+# trocar o segredo.
+parameter_overrides = "Stage=prod DeployFrontendInfra=true"
