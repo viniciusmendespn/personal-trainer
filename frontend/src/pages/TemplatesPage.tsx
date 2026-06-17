@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Trash2, Users, LayoutTemplate, Dumbbell, Pencil, Plus, X } from 'lucide-react'
 import { useAlunos } from '../hooks/useAlunos'
 import { useTemplates, useDeleteTemplate, useUpdateTemplate, useAplicarTemplate } from '../hooks/useTemplates'
-import { Button, Card, Input, Select, Spinner, Modal, EmptyState, Badge, useToast } from '../components/ui'
+import { Button, Card, Input, Select, Textarea, Spinner, Modal, EmptyState, Badge, useToast } from '../components/ui'
 import type { ExercicioTemplate, TreinoTemplate } from '../types'
 
 const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
@@ -39,7 +39,7 @@ export function TemplatesPage() {
         {applyTarget && <AplicarForm template={applyTarget} onDone={() => setApplyTarget(null)} />}
       </Modal>
 
-      <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title="Editar template" className="sm:max-w-2xl">
+      <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title="Editar template" wide>
         {editTarget && <EditForm template={editTarget} onDone={() => setEditTarget(null)} />}
       </Modal>
     </div>
@@ -143,23 +143,28 @@ function EditForm({ template, onDone }: { template: TreinoTemplate; onDone: () =
         <Input label="Foco" value={foco} onChange={(e) => setFoco(e.target.value)} />
       </div>
 
-      <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+      <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
         {exercicios.map((ex, i) => (
-          <div key={i} className="grid grid-cols-2 sm:grid-cols-6 gap-1.5 items-end border-b border-border pb-2">
-            <Input className="col-span-2" placeholder="Exercício" value={ex.nome} onChange={(e) => updateEx(i, { nome: e.target.value })} />
-            <Input placeholder="Séries" value={ex.series ?? ''} onChange={(e) => updateEx(i, { series: e.target.value ? Number(e.target.value) : undefined })} />
-            <Input placeholder="Reps" value={ex.reps_prescritas ?? ''} onChange={(e) => updateEx(i, { reps_prescritas: e.target.value || undefined })} />
-            <Select value={ex.dia_semana ?? ''} onChange={(e) => updateEx(i, { dia_semana: e.target.value === '' ? null : Number(e.target.value) })}>
-              <option value="">Todo dia</option>
-              {DIAS.map((d, idx) => <option key={idx} value={idx}>{d}</option>)}
-            </Select>
-            <div className="flex gap-1">
-              <Input placeholder="Carga" value={ex.carga_prescrita ?? ''} onChange={(e) => updateEx(i, { carga_prescrita: e.target.value || undefined })} />
-              <Button type="button" variant="ghost" size="sm" iconOnly aria-label="Remover exercício" onClick={() => removeEx(i)} className="hover:text-danger shrink-0">
-                <X size={15} />
-              </Button>
+          <Card key={i} variant="flat" className="relative">
+            <Button
+              type="button" variant="ghost" size="sm" iconOnly aria-label="Remover exercício"
+              onClick={() => removeEx(i)} className="absolute top-3 right-3 hover:text-danger"
+            >
+              <X size={15} />
+            </Button>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pr-8">
+              <Input label="Exercício" className="col-span-2 sm:col-span-3" value={ex.nome} onChange={(e) => updateEx(i, { nome: e.target.value })} />
+              <Input label="Séries" value={ex.series ?? ''} onChange={(e) => updateEx(i, { series: e.target.value ? Number(e.target.value) : undefined })} />
+              <Input label="Reps" value={ex.reps_prescritas ?? ''} onChange={(e) => updateEx(i, { reps_prescritas: e.target.value || undefined })} />
+              <Input label="Carga" value={ex.carga_prescrita ?? ''} onChange={(e) => updateEx(i, { carga_prescrita: e.target.value || undefined })} />
+              <Select label="Dia" value={ex.dia_semana ?? ''} onChange={(e) => updateEx(i, { dia_semana: e.target.value === '' ? null : Number(e.target.value) })}>
+                <option value="">Todo dia</option>
+                {DIAS.map((d, idx) => <option key={idx} value={idx}>{d}</option>)}
+              </Select>
+              <Input label="Vídeo" className="col-span-2" value={ex.video_url ?? ''} onChange={(e) => updateEx(i, { video_url: e.target.value || undefined })} />
+              <Textarea label="Observações" className="col-span-2 sm:col-span-3" rows={2} value={ex.observacoes ?? ''} onChange={(e) => updateEx(i, { observacoes: e.target.value || undefined })} />
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 

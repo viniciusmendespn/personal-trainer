@@ -8,6 +8,9 @@ from app.models.enums import AlunoStatus
 class AlunoCreate(BaseModel):
     nome: str
     telefone: str                              # E.164 sem '+' (ex.: 5531999998888)
+    email: Optional[str] = None
+    endereco: Optional[str] = None
+    data_nascimento: Optional[str] = None      # ISO date (YYYY-MM-DD)
     objetivo: Optional[str] = None
     observacoes: Optional[str] = None
     custom: dict[str, Any] = Field(default_factory=dict)
@@ -16,6 +19,9 @@ class AlunoCreate(BaseModel):
 class AlunoUpdate(BaseModel):
     nome: Optional[str] = None
     telefone: Optional[str] = None
+    email: Optional[str] = None
+    endereco: Optional[str] = None
+    data_nascimento: Optional[str] = None
     objetivo: Optional[str] = None
     observacoes: Optional[str] = None
     status: Optional[AlunoStatus] = None

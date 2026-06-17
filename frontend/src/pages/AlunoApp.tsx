@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, Trophy, Check, ChevronRight } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, Trophy, Check, ChevronRight, Video } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -111,7 +111,10 @@ function Hoje() {
   const hoje = useQuery({ queryKey: ['aluno-hoje'], queryFn: alunoApi.hoje, retry: false })
   const start = useMutation({
     mutationFn: (id: string) => alunoApi.start(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['aluno-sessao'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['aluno-sessao'] })
+      qc.invalidateQueries({ queryKey: ['aluno-sessao-exs'] })
+    },
   })
 
   if (sessao.isLoading) return <Spinner />
@@ -167,6 +170,13 @@ function SessaoTreino() {
       qc.invalidateQueries({ queryKey: ['aluno-sessao-exs'] })
     },
   })
+  const cancel = useMutation({
+    mutationFn: () => alunoApi.cancel(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['aluno-sessao'] })
+      qc.invalidateQueries({ queryKey: ['aluno-sessao-exs'] })
+    },
+  })
 
   if (ses.isLoading || !ses.data) return <Spinner />
   const exs = ses.data.exercicios
@@ -193,6 +203,12 @@ function SessaoTreino() {
       {exs.map((ex) => <ExercicioCard key={ex.exercicio_id} ex={ex} />)}
       <Button variant="energy" className="w-full" onClick={() => finish.mutate()} disabled={finish.isPending}>
         {finish.isPending ? 'Finalizando…' : 'Finalizar treino'}
+      </Button>
+      <Button
+        variant="outline" className="w-full" disabled={cancel.isPending}
+        onClick={() => { if (window.confirm('Cancelar este treino? Nada será registrado.')) cancel.mutate() }}
+      >
+        {cancel.isPending ? 'Cancelando…' : 'Cancelar treino'}
       </Button>
     </div>
   )
@@ -241,6 +257,19 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
         </span>
         {feito ? <Check size={16} className="text-success" /> : <ChevronRight size={16} className="text-text-muted" />}
       </button>
+
+      {(ex.video_url || ex.observacoes) && (
+        <div className="mt-2 space-y-1">
+          {ex.video_url && (
+            <a href={ex.video_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-accent-hover hover:underline">
+              <Video size={12} /> Ver vídeo de execução
+            </a>
+          )}
+          {ex.observacoes && (
+            <p className="text-xs text-text-secondary bg-white/5 rounded-lg px-2 py-1.5 whitespace-pre-wrap">{ex.observacoes}</p>
+          )}
+        </div>
+      )}
 
       {feito && !open && (
         <p className="text-xs text-text-secondary mt-1">{ex.registrado!.map((s) => `${s.carga ?? '-'}×${s.reps ?? '-'}`).join('   ')}</p>

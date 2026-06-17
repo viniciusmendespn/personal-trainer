@@ -26,6 +26,40 @@ def _s3c():
     return _s3
 
 
+def gerar_presigned_upload_url(aluno_id: str, filename: str, content_type: str,
+                               expires_in: int = 900) -> dict | None:
+    """Presigned PUT URL p/ upload direto do navegador (portal) — sem passar pela Lambda.
+    CORS (PUT) e IAM (S3CrudPolicy) já liberados no bucket de mídia (template.yaml)."""
+    if not settings.media_bucket_name:
+        return None
+    key = f"midia/{aluno_id}/{uuid.uuid4()}/{filename}"
+    try:
+        url = _s3c().generate_presigned_url(
+            "put_object",
+            Params={"Bucket": settings.media_bucket_name, "Key": key, "ContentType": content_type},
+            ExpiresIn=expires_in,
+        )
+        return {"upload_url": url, "s3_key": key}
+    except Exception as e:
+        logger.warning("[media] presigned upload url falhou: %s", e)
+        return None
+
+
+def gerar_presigned_view_url(s3_key: str, expires_in: int = 3600) -> str | None:
+    """Presigned GET URL p/ exibir mídia privada (fotos de avaliação, anexo de bio)."""
+    if not settings.media_bucket_name:
+        return None
+    try:
+        return _s3c().generate_presigned_url(
+            "get_object",
+            Params={"Bucket": settings.media_bucket_name, "Key": s3_key},
+            ExpiresIn=expires_in,
+        )
+    except Exception as e:
+        logger.warning("[media] presigned view url falhou: %s", e)
+        return None
+
+
 def _download_link(cfg: dict, media: dict) -> str | None:
     """Pede o link temporário do arquivo à W-API (download-media)."""
     try:

@@ -70,6 +70,11 @@ def advance(ctx: dict = Depends(get_current_aluno)):
     return repo.clean(sessao_service.advance(ctx["aluno_id"]))
 
 
+@router.post("/sessao/cancel", status_code=204)
+def cancel(ctx: dict = Depends(get_current_aluno)):
+    sessao_service.cancelar(ctx["aluno_id"])
+
+
 @router.post("/sessao/finish")
 def finish(ctx: dict = Depends(get_current_aluno)):
     return repo.clean(sessao_service.finish(ctx["aluno_id"]))

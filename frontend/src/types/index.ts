@@ -13,6 +13,9 @@ export interface Aluno {
   nome: string
   telefone: string
   status: AlunoStatus
+  email?: string
+  endereco?: string
+  data_nascimento?: string
   objetivo?: string
   observacoes?: string
   custom?: Custom
@@ -23,6 +26,9 @@ export interface Aluno {
 export interface AlunoCreate {
   nome: string
   telefone: string
+  email?: string
+  endereco?: string
+  data_nascimento?: string
   objetivo?: string
   observacoes?: string
   custom?: Custom
@@ -63,6 +69,10 @@ export interface Avaliacao {
   percentual_gordura?: number
   medidas?: Custom
   observacoes?: string
+  fotos_s3_keys?: string[]
+  bio_scan_s3_key?: string
+  fotos_urls?: string[]
+  bio_scan_url?: string
   created_at: string
 }
 

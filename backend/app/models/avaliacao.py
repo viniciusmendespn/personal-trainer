@@ -10,6 +10,8 @@ class AvaliacaoCreate(BaseModel):
     percentual_gordura: Optional[float] = None
     medidas: dict[str, Any] = Field(default_factory=dict)   # ex.: {"cintura": 80, "braco": 38}
     observacoes: Optional[str] = None
+    fotos_s3_keys: list[str] = Field(default_factory=list)  # fotos p/ comparação na timeline
+    bio_scan_s3_key: Optional[str] = None                   # anexo do resultado da bioimpedância
 
 
 class Avaliacao(AvaliacaoCreate):

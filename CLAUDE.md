@@ -45,8 +45,15 @@ Detalhes completos em **`ARCHITECTURE.md` §12 — Separação de Custos**.
 ### ⚠️ REGRA OBRIGATÓRIA — Commit antes do deploy
 O SAM faz build a partir do disco local, não do git. Nunca rodar deploy com arquivos não commitados.
 Sempre: `git status` → `git diff` → `git add <arquivos>` → `git commit` → `deploy`.
-Nunca `git add -A` em backend/infra sem revisar o diff. Sempre perguntar antes de commitar
-`backend/`, `template.yaml`, `samconfig.toml` ou scripts de infra.
+Nunca `git add -A` em backend/infra sem revisar o diff.
+
+### Regra do usuário — comitar e deployar automaticamente ao final de cada tarefa
+Confirmado pelo usuário (2026-06-17): ao concluir uma tarefa (backend e/ou frontend), **comitar
+e fazer deploy automaticamente**, sem precisar perguntar a cada vez — o objetivo é manter tudo
+sempre no ar. Isso substitui a exigência antiga de "perguntar antes de commitar backend/". Ainda
+assim: sempre revisar o changeset do CloudFormation antes de executar (`--no-execute-changeset`
+→ revisar → `execute-change-set`), nunca pular hooks, e pausar para perguntar se a mudança for
+genuinamente arriscada/destrutiva (ex.: troca de parâmetro que apague infraestrutura).
 
 ## Regras obrigatórias (herdadas do padrão)
 - `user_id` sempre via JWT (`Depends(get_current_user_id)`) — nunca do body

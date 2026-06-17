@@ -7,12 +7,14 @@ export function Modal({
   title,
   children,
   className = '',
+  wide = false,
 }: {
   open: boolean
   onClose: () => void
   title?: string
   children: ReactNode
   className?: string
+  wide?: boolean
 }) {
   useEffect(() => {
     if (!open) return
@@ -32,7 +34,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`relative w-full sm:max-w-lg sm:mx-4 max-h-[88vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-surface-elevated border border-border shadow-[var(--shadow-card)] p-5 ${className}`}
+        className={`relative w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'} sm:mx-4 max-h-[88vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-surface-elevated border border-border shadow-[var(--shadow-card)] p-5 ${className}`}
       >
         <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-border-strong sm:hidden" />
         {title && (

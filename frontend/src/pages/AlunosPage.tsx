@@ -11,6 +11,9 @@ export function AlunosPage() {
   const [query, setQuery] = useState('')
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
+  const [email, setEmail] = useState('')
+  const [endereco, setEndereco] = useState('')
+  const [dataNascimento, setDataNascimento] = useState('')
   const [objetivo, setObjetivo] = useState('')
   const [error, setError] = useState('')
 
@@ -18,8 +21,12 @@ export function AlunosPage() {
     e.preventDefault()
     setError('')
     try {
-      await create.mutateAsync({ nome, telefone, objetivo: objetivo || undefined })
-      setNome(''); setTelefone(''); setObjetivo(''); setOpen(false)
+      await create.mutateAsync({
+        nome, telefone,
+        email: email || undefined, endereco: endereco || undefined,
+        data_nascimento: dataNascimento || undefined, objetivo: objetivo || undefined,
+      })
+      setNome(''); setTelefone(''); setEmail(''); setEndereco(''); setDataNascimento(''); setObjetivo(''); setOpen(false)
     } catch (err: any) {
       setError(err?.response?.data?.detail ?? 'Erro ao criar aluno')
     }
@@ -64,6 +71,11 @@ export function AlunosPage() {
               required
             />
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input label="Data de nascimento" type="date" value={dataNascimento} onChange={(e) => setDataNascimento(e.target.value)} />
+          </div>
+          <Input label="Endereço" value={endereco} onChange={(e) => setEndereco(e.target.value)} />
           <Input label="Objetivo" value={objetivo} onChange={(e) => setObjetivo(e.target.value)} />
           <ErrorText>{error}</ErrorText>
           <div className="flex gap-2 pt-1">

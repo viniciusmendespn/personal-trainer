@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Check, X, Send, Dumbbell, LayoutTemplate } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Check, X, Send, Dumbbell, LayoutTemplate, StickyNote, Link2 } from 'lucide-react'
 import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { alunosApi } from '../api/alunos'
 import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio,
 } from '../hooks/useTreinos'
-import { Button, Card, Input, Select, Spinner, Tabs, Badge, EmptyState, useToast } from '../components/ui'
+import { Button, Card, Input, Select, Textarea, Spinner, Tabs, Badge, EmptyState, useToast } from '../components/ui'
 import { useBiblioteca } from '../hooks/useDominio'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
 import type { Treino, Exercicio } from '../types'
@@ -31,12 +31,19 @@ export function AlunoDetailPage() {
   const [editing, setEditing] = useState(false)
   const [eNome, setENome] = useState('')
   const [eTel, setETel] = useState('')
+  const [eEmail, setEEmail] = useState('')
+  const [eEndereco, setEEndereco] = useState('')
+  const [eNascimento, setENascimento] = useState('')
   const [eObj, setEObj] = useState('')
   const [linkRes, setLinkRes] = useState<{ link: string; enviado: boolean } | null>(null)
   const [copied, setCopied] = useState(false)
   const enviarLink = useMutation({
     mutationFn: () => alunosApi.enviarLink(alunoId),
     onSuccess: (d) => { setLinkRes(d); setCopied(false) },
+  })
+  const gerarLink = useMutation({
+    mutationFn: () => alunosApi.gerarLink(alunoId),
+    onSuccess: (d) => { setLinkRes({ link: d.link, enviado: false }); setCopied(false) },
   })
   function copyLink() {
     if (!linkRes) return
@@ -46,12 +53,18 @@ export function AlunoDetailPage() {
   }
 
   function startEdit() {
-    setENome(aluno?.nome ?? ''); setETel(aluno?.telefone ?? ''); setEObj(aluno?.objetivo ?? '')
+    setENome(aluno?.nome ?? ''); setETel(aluno?.telefone ?? '')
+    setEEmail(aluno?.email ?? ''); setEEndereco(aluno?.endereco ?? ''); setENascimento(aluno?.data_nascimento ?? '')
+    setEObj(aluno?.objetivo ?? '')
     setEditing(true)
   }
   async function saveEdit(e: React.FormEvent) {
     e.preventDefault()
-    await updateAluno.mutateAsync({ nome: eNome, telefone: eTel, objetivo: eObj || undefined })
+    await updateAluno.mutateAsync({
+      nome: eNome, telefone: eTel,
+      email: eEmail || undefined, endereco: eEndereco || undefined,
+      data_nascimento: eNascimento || undefined, objetivo: eObj || undefined,
+    })
     setEditing(false)
   }
   async function remove() {
@@ -89,8 +102,12 @@ export function AlunoDetailPage() {
           <Link to={`/alunos/${alunoId}/avaliacoes`} className="inline-flex items-center gap-1 text-sm text-accent-hover hover:underline">
             <Scale size={16} /> Avaliação
           </Link>
+          <button onClick={() => gerarLink.mutate()} disabled={gerarLink.isPending}
+            className="inline-flex items-center gap-1 text-sm text-accent-hover hover:underline disabled:opacity-50" title="Copiar link do app">
+            <Link2 size={15} /> {gerarLink.isPending ? 'Gerando…' : 'Copiar link'}
+          </button>
           <button onClick={() => enviarLink.mutate()} disabled={enviarLink.isPending}
-            className="inline-flex items-center gap-1 text-sm text-accent-hover hover:underline disabled:opacity-50" title="Enviar link do app">
+            className="inline-flex items-center gap-1 text-sm text-accent-hover hover:underline disabled:opacity-50" title="Enviar link do app pelo WhatsApp">
             <Send size={15} /> {enviarLink.isPending ? 'Enviando…' : 'Enviar app'}
           </button>
         </div>
@@ -126,6 +143,9 @@ export function AlunoDetailPage() {
             <form onSubmit={saveEdit} className="space-y-3">
               <Input label="Nome" value={eNome} onChange={(e) => setENome(e.target.value)} />
               <Input label="Telefone" value={eTel} onChange={(e) => setETel(e.target.value)} />
+              <Input label="E-mail" type="email" value={eEmail} onChange={(e) => setEEmail(e.target.value)} />
+              <Input label="Data de nascimento" type="date" value={eNascimento} onChange={(e) => setENascimento(e.target.value)} />
+              <Input label="Endereço" value={eEndereco} onChange={(e) => setEEndereco(e.target.value)} />
               <Input label="Objetivo" value={eObj} onChange={(e) => setEObj(e.target.value)} />
               <div className="flex gap-2 pt-1">
                 <Button type="submit" disabled={updateAluno.isPending}>Salvar</Button>
@@ -138,6 +158,18 @@ export function AlunoDetailPage() {
               <div>
                 <p className="text-xs text-text-muted">Telefone</p>
                 <p className="text-sm">{aluno?.telefone}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-muted">E-mail</p>
+                <p className="text-sm">{aluno?.email || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-muted">Data de nascimento</p>
+                <p className="text-sm">{aluno?.data_nascimento ? fmtDateFull(aluno.data_nascimento) : '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-muted">Endereço</p>
+                <p className="text-sm">{aluno?.endereco || '—'}</p>
               </div>
               <div>
                 <p className="text-xs text-text-muted">Objetivo</p>
@@ -183,6 +215,7 @@ export function AlunoDetailPage() {
 }
 
 const fmtDate = (d?: string) => (d ? d.split('-').reverse().slice(0, 2).join('/') : '')
+const fmtDateFull = (d?: string) => (d ? d.split('-').reverse().join('/') : '')
 
 function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
   const [open, setOpen] = useState(false)
@@ -200,6 +233,7 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
   const [carga, setCarga] = useState('')
   const [vid, setVid] = useState('')
   const [dia, setDia] = useState('')
+  const [obs, setObs] = useState('')
   const [tNome, setTNome] = useState(treino.nome)
   const [tFoco, setTFoco] = useState(treino.foco ?? '')
   const [tIni, setTIni] = useState(treino.data_inicio ?? '')
@@ -220,10 +254,11 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
       reps_prescritas: reps || undefined,
       carga_prescrita: carga || undefined,
       video_url: vid || undefined,
+      observacoes: obs || undefined,
       dia_semana: dia === '' ? undefined : Number(dia),
       ordem: (exs?.length ?? 0) + 1,
     })
-    setNome(''); setSeries(''); setReps(''); setCarga(''); setVid('')
+    setNome(''); setSeries(''); setReps(''); setCarga(''); setVid(''); setObs('')
   }
 
   async function saveTreino(e: React.FormEvent) {
@@ -308,6 +343,7 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
               {DIAS.map((d, i) => <option key={i} value={i}>{d}</option>)}
             </Select>
             <Input placeholder="Vídeo" value={vid} onChange={(e) => setVid(e.target.value)} className="col-span-2 sm:col-span-2" />
+            <Textarea placeholder="Observações (visíveis ao aluno na sessão)" value={obs} onChange={(e) => setObs(e.target.value)} rows={1} className="col-span-2 sm:col-span-5 min-h-0" />
             <Button type="submit" variant="ghost" size="sm" disabled={createEx.isPending} iconOnly aria-label="Adicionar exercício" className="col-span-2 sm:col-span-1">
               <Plus size={16} />
             </Button>
@@ -328,6 +364,7 @@ function ExercicioRow({ alunoId, treinoId, ex }: { alunoId: string; treinoId: st
   const [carga, setCarga] = useState(ex.carga_prescrita ?? '')
   const [vid, setVid] = useState(ex.video_url ?? '')
   const [dia, setDia] = useState(ex.dia_semana == null ? '' : String(ex.dia_semana))
+  const [obs, setObs] = useState(ex.observacoes ?? '')
 
   async function save(e: React.FormEvent) {
     e.preventDefault()
@@ -339,6 +376,7 @@ function ExercicioRow({ alunoId, treinoId, ex }: { alunoId: string; treinoId: st
         reps_prescritas: reps || undefined,
         carga_prescrita: carga || undefined,
         video_url: vid || undefined,
+        observacoes: obs || undefined,
         dia_semana: dia === '' ? undefined : Number(dia),
         ordem: ex.ordem,
       },
@@ -358,6 +396,7 @@ function ExercicioRow({ alunoId, treinoId, ex }: { alunoId: string; treinoId: st
         </Select>
         <Input placeholder="Carga" value={carga} onChange={(e) => setCarga(e.target.value)} />
         <Input className="col-span-2" placeholder="Vídeo" value={vid} onChange={(e) => setVid(e.target.value)} />
+        <Textarea placeholder="Observações" value={obs} onChange={(e) => setObs(e.target.value)} rows={1} className="col-span-2 sm:col-span-6" />
         <div className="flex gap-1 col-span-2 sm:col-span-2">
           <Button type="submit" size="sm" iconOnly aria-label="Salvar exercício"><Check size={16} /></Button>
           <Button type="button" variant="ghost" size="sm" iconOnly aria-label="Cancelar edição" onClick={() => setEdit(false)}><X size={16} /></Button>
@@ -373,6 +412,11 @@ function ExercicioRow({ alunoId, treinoId, ex }: { alunoId: string; treinoId: st
           {ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''} {ex.carga_prescrita ? `· ${ex.carga_prescrita}` : ''}
         </span>
         {ex.video_url && <a href={ex.video_url} target="_blank" rel="noreferrer" className="text-accent-hover ml-2 text-xs hover:underline">vídeo</a>}
+        {ex.observacoes && (
+          <span title={ex.observacoes} className="inline-block ml-2 align-text-bottom">
+            <StickyNote size={12} className="text-warning" />
+          </span>
+        )}
       </span>
       <span className="flex gap-1 shrink-0">
         <Button variant="ghost" size="sm" iconOnly aria-label="Editar exercício" onClick={() => setEdit(true)}><Pencil size={13} /></Button>

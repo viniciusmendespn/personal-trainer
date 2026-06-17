@@ -12,4 +12,6 @@ export const alunosApi = {
   remove: (id: string) => api.delete(`/v1/alunos/${id}`),
   enviarLink: (id: string) =>
     api.post<{ link: string; enviado: boolean }>(`/v1/alunos/${id}/enviar-link`).then((r) => r.data),
+  gerarLink: (id: string) =>
+    api.get<{ link: string }>(`/v1/alunos/${id}/link`).then((r) => r.data),
 }

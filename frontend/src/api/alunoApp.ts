@@ -22,6 +22,8 @@ export interface ExSessao {
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
+  video_url?: string
+  observacoes?: string
   registrado?: SerieInput[] | null
 }
 
@@ -54,6 +56,7 @@ export const alunoApi = {
   start: (treino_id: string) => alunoClient.post<SessaoAtiva>('/v1/aluno/sessao/start', { treino_id }).then((r) => r.data),
   advance: () => alunoClient.post('/v1/aluno/sessao/advance').then((r) => r.data),
   finish: () => alunoClient.post('/v1/aluno/sessao/finish').then((r) => r.data),
+  cancel: () => alunoClient.post('/v1/aluno/sessao/cancel').then((r) => r.data),
   registrar: (series: SerieInput[], exercicio_id?: string) =>
     alunoClient.post<{ pr_novo?: number }>('/v1/aluno/registros', { series, exercicio_id }).then((r) => r.data),
   resumo: () => alunoClient.get<Resumo>('/v1/aluno/resumo').then((r) => r.data),

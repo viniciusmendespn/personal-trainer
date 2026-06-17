@@ -10,7 +10,7 @@ export function Tabs({
   className?: string
 }) {
   return (
-    <div role="tablist" className={`flex gap-1 border-b border-border overflow-x-auto ${className}`}>
+    <div role="tablist" className={`flex flex-wrap gap-1 border-b border-border ${className}`}>
       {tabs.map((tab) => {
         const isActive = tab.key === active
         return (

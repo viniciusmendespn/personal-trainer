@@ -90,6 +90,13 @@ def update_aluno(aluno_id: str, body: AlunoUpdate, personal_id: str = Depends(ge
     return repo.clean(updated)
 
 
+@router.get("/{aluno_id}/link")
+def gerar_link(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
+    """Gera o magic-link do app sem enviar nada — pra copiar e mandar manualmente."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    return {"link": aluno_auth.magic_link(aluno_id, personal_id)}
+
+
 @router.post("/{aluno_id}/enviar-link")
 def enviar_link(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
     """Gera o magic-link do app e envia no WhatsApp do aluno (e devolve p/ copiar)."""

@@ -30,6 +30,8 @@ def _snapshot(ex: dict) -> dict:
         "reps_prescritas": ex.get("reps_prescritas"),
         "carga_prescrita": ex.get("carga_prescrita"),
         "intervalo_s": ex.get("intervalo_s"),
+        "video_url": ex.get("video_url"),
+        "observacoes": ex.get("observacoes"),
     }
 
 
@@ -99,6 +101,15 @@ def finish(aluno_id: str) -> dict:
     wk = _isoweek()
     repo.add_and_set(pk, keys.sk_stats_week(wk), add={"sessoes": 1}, set_={"semana": wk})
     return snap
+
+
+def cancelar(aluno_id: str) -> None:
+    """Desfaz a sessão ativa (ex.: aluno selecionou o treino errado) — sem gravar histórico
+    nem tocar nos agregados, como se nunca tivesse começado."""
+    s = get_active(aluno_id, consistent=True)
+    if not s:
+        raise HTTPException(404, "Sem sessão ativa")
+    repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE)
 
 
 def record(aluno_id: str, series: list, exercicio_id: str | None = None,

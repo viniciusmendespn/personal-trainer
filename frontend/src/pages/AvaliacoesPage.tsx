@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Plus, Scale, FileDown } from 'lucide-react'
+import { ArrowLeft, Plus, Scale, FileDown, X, Image as ImageIcon, Paperclip } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import { useAluno } from '../hooks/useAlunos'
 import { useAvaliacoes, useCreateAvaliacao } from '../hooks/useDominio'
-import { Button, Card, Input, Spinner, Modal, EmptyState, useToast } from '../components/ui'
+import { uploadAvaliacaoFile } from '../api/avaliacoes'
+import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, useToast } from '../components/ui'
 import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
 import { renderNodeToPdf } from '../utils/exportPdf'
+import type { Avaliacao } from '../types'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -19,15 +21,15 @@ const chartTip = {
 }
 const axisTick = { fill: 'var(--color-text-secondary)', fontSize: 12 }
 
+const PRESET_BIO_FIELDS = ['Massa muscular (kg)', '% Água corporal', 'Gordura visceral', 'Massa óssea (kg)', 'Taxa metabólica basal (kcal)']
+
 export function AvaliacoesPage() {
   const { alunoId = '' } = useParams()
   const { data: aluno } = useAluno(alunoId)
   const { data: avs, isLoading } = useAvaliacoes(alunoId)
-  const create = useCreateAvaliacao(alunoId)
-  const [peso, setPeso] = useState('')
-  const [gordura, setGordura] = useState('')
   const [open, setOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [lightbox, setLightbox] = useState<string | null>(null)
   const { show } = useToast()
 
   async function exportarPdf() {
@@ -50,15 +52,6 @@ export function AvaliacoesPage() {
     }
   }
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault()
-    await create.mutateAsync({
-      peso: peso ? Number(peso) : undefined,
-      percentual_gordura: gordura ? Number(gordura) : undefined,
-    })
-    setPeso(''); setGordura(''); setOpen(false)
-  }
-
   const chart = [...(avs ?? [])]
     .filter((a) => a.peso != null)
     .sort((a, b) => (a.data ?? a.created_at).localeCompare(b.data ?? b.created_at))
@@ -66,6 +59,10 @@ export function AvaliacoesPage() {
       data: new Date(a.data ?? a.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
       peso: a.peso,
     }))
+
+  const comFotos = [...(avs ?? [])]
+    .filter((a) => a.fotos_urls?.length)
+    .sort((a, b) => (b.data ?? b.created_at).localeCompare(a.data ?? a.created_at))
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -84,12 +81,12 @@ export function AvaliacoesPage() {
         </div>
       </div>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Nova avaliação">
-        <form onSubmit={submit} className="grid grid-cols-2 gap-3">
-          <Input label="Peso (kg)" value={peso} onChange={(e) => setPeso(e.target.value)} />
-          <Input label="% Gordura" value={gordura} onChange={(e) => setGordura(e.target.value)} />
-          <Button type="submit" disabled={create.isPending} className="col-span-2">Salvar</Button>
-        </form>
+      <Modal open={open} onClose={() => setOpen(false)} title="Nova avaliação" wide>
+        <NovaAvaliacaoForm alunoId={alunoId} onDone={() => setOpen(false)} />
+      </Modal>
+
+      <Modal open={!!lightbox} onClose={() => setLightbox(null)} title="Foto">
+        {lightbox && <img src={lightbox} alt="Foto da avaliação" className="w-full rounded-lg" />}
       </Modal>
 
       {chart.length > 1 && (
@@ -114,6 +111,26 @@ export function AvaliacoesPage() {
         </Card>
       )}
 
+      {comFotos.length > 0 && (
+        <Card variant="elevated" className="mb-4">
+          <p className="text-sm text-text-secondary mb-3 flex items-center gap-1"><ImageIcon size={14} /> Timeline de fotos</p>
+          <div className="space-y-3">
+            {comFotos.map((a) => (
+              <div key={a.avaliacao_id}>
+                <p className="text-xs text-text-muted mb-1">{new Date(a.data ?? a.created_at).toLocaleDateString('pt-BR')}</p>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {a.fotos_urls!.map((url, i) => (
+                    <button key={i} onClick={() => setLightbox(url)} className="shrink-0">
+                      <img src={url} alt="" className="w-20 h-20 object-cover rounded-lg border border-border" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {isLoading ? (
         <Spinner />
       ) : !avs?.length ? (
@@ -121,15 +138,165 @@ export function AvaliacoesPage() {
       ) : (
         <div className="space-y-2">
           {[...avs].sort((a, b) => (b.data ?? b.created_at).localeCompare(a.data ?? a.created_at)).map((a) => (
-            <Card key={a.avaliacao_id} variant="elevated" className="flex items-center justify-between text-sm">
-              <span>{new Date(a.data ?? a.created_at).toLocaleDateString('pt-BR')}</span>
-              <span className="text-text-secondary">
-                {a.peso != null ? `${a.peso} kg` : ''} {a.percentual_gordura != null ? `· ${a.percentual_gordura}%` : ''}
-              </span>
-            </Card>
+            <AvaliacaoRow key={a.avaliacao_id} a={a} onVerFoto={setLightbox} />
           ))}
         </div>
       )}
     </div>
+  )
+}
+
+function AvaliacaoRow({ a, onVerFoto }: { a: Avaliacao; onVerFoto: (url: string) => void }) {
+  const [showDetails, setShowDetails] = useState(false)
+  const temDetalhes = !!(a.observacoes || (a.medidas && Object.keys(a.medidas).length) || a.bio_scan_url)
+
+  return (
+    <Card variant="elevated">
+      <button className="w-full flex items-center justify-between text-sm text-left" onClick={() => setShowDetails((v) => !v)} disabled={!temDetalhes}>
+        <span>{new Date(a.data ?? a.created_at).toLocaleDateString('pt-BR')}</span>
+        <span className="text-text-secondary">
+          {a.peso != null ? `${a.peso} kg` : ''} {a.percentual_gordura != null ? `· ${a.percentual_gordura}%` : ''}
+        </span>
+      </button>
+      {showDetails && temDetalhes && (
+        <div className="mt-3 space-y-2 text-xs text-text-secondary border-t border-border pt-3">
+          {a.observacoes && <p className="whitespace-pre-wrap">{a.observacoes}</p>}
+          {a.medidas && Object.keys(a.medidas).length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(a.medidas).map(([k, v]) => (
+                <span key={k} className="bg-white/5 rounded-full px-2 py-1">{k}: <b className="text-text">{String(v)}</b></span>
+              ))}
+            </div>
+          )}
+          {a.bio_scan_url && (
+            <a href={a.bio_scan_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-accent-hover hover:underline">
+              <Paperclip size={12} /> Ver anexo da bioimpedância
+            </a>
+          )}
+          {!!a.fotos_urls?.length && (
+            <div className="flex gap-2">
+              {a.fotos_urls.map((url, i) => (
+                <button key={i} onClick={() => onVerFoto(url)}>
+                  <img src={url} alt="" className="w-12 h-12 object-cover rounded border border-border" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function NovaAvaliacaoForm({ alunoId, onDone }: { alunoId: string; onDone: () => void }) {
+  const create = useCreateAvaliacao(alunoId)
+  const { show } = useToast()
+  const [peso, setPeso] = useState('')
+  const [gordura, setGordura] = useState('')
+  const [observacoes, setObservacoes] = useState('')
+  const [bioFields, setBioFields] = useState<{ label: string; value: string }[]>(
+    PRESET_BIO_FIELDS.map((label) => ({ label, value: '' }))
+  )
+  const [fotos, setFotos] = useState<File[]>([])
+  const [bioAnexo, setBioAnexo] = useState<File | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  function updateBioField(i: number, value: string) {
+    setBioFields((fs) => fs.map((f, j) => (j === i ? { ...f, value } : f)))
+  }
+  function updateBioLabel(i: number, label: string) {
+    setBioFields((fs) => fs.map((f, j) => (j === i ? { ...f, label } : f)))
+  }
+  function removeBioField(i: number) {
+    setBioFields((fs) => fs.filter((_, j) => j !== i))
+  }
+  function addBioField() {
+    setBioFields((fs) => [...fs, { label: '', value: '' }])
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      const fotos_s3_keys = await Promise.all(fotos.map((f) => uploadAvaliacaoFile(alunoId, f)))
+      const bio_scan_s3_key = bioAnexo ? await uploadAvaliacaoFile(alunoId, bioAnexo) : undefined
+      const medidas: Record<string, unknown> = {}
+      for (const f of bioFields) {
+        if (f.label.trim() && f.value.trim()) {
+          const n = Number(f.value.replace(',', '.'))
+          medidas[f.label.trim()] = Number.isFinite(n) ? n : f.value.trim()
+        }
+      }
+      await create.mutateAsync({
+        peso: peso ? Number(peso) : undefined,
+        percentual_gordura: gordura ? Number(gordura) : undefined,
+        observacoes: observacoes || undefined,
+        medidas: Object.keys(medidas).length ? medidas : undefined,
+        fotos_s3_keys: fotos_s3_keys.length ? fotos_s3_keys : undefined,
+        bio_scan_s3_key,
+      })
+      onDone()
+    } catch {
+      show('Não foi possível salvar a avaliação.', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Peso (kg)" value={peso} onChange={(e) => setPeso(e.target.value)} />
+        <Input label="% Gordura" value={gordura} onChange={(e) => setGordura(e.target.value)} />
+      </div>
+      <Textarea label="Observações" rows={2} value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
+
+      <div>
+        <p className="text-xs font-medium text-text-secondary mb-2">Bioimpedância (opcional)</p>
+        <div className="space-y-2">
+          {bioFields.map((f, i) => (
+            <div key={i} className="flex gap-2 items-end">
+              {PRESET_BIO_FIELDS.includes(f.label) ? (
+                <Input className="flex-1" value={f.label} disabled />
+              ) : (
+                <Input className="flex-1" placeholder="Nome do campo" value={f.label} onChange={(e) => updateBioLabel(i, e.target.value)} />
+              )}
+              <Input className="w-28" placeholder="Valor" value={f.value} onChange={(e) => updateBioField(i, e.target.value)} />
+              <Button type="button" variant="ghost" size="sm" iconOnly aria-label="Remover campo" onClick={() => removeBioField(i)} className="hover:text-danger">
+                <X size={14} />
+              </Button>
+            </div>
+          ))}
+        </div>
+        <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={addBioField}>
+          <span className="flex items-center gap-1"><Plus size={14} /> Adicionar campo</span>
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label className="block">
+          <span className="block text-xs font-medium text-text-secondary mb-1">Fotos (comparação na timeline)</span>
+          <input
+            type="file" accept="image/*" multiple
+            onChange={(e) => setFotos(Array.from(e.target.files ?? []))}
+            className="w-full text-xs text-text-secondary file:mr-2 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-surface file:text-text file:cursor-pointer"
+          />
+          {fotos.length > 0 && <p className="text-[11px] text-text-muted mt-1">{fotos.length} foto(s) selecionada(s)</p>}
+        </label>
+        <label className="block">
+          <span className="block text-xs font-medium text-text-secondary mb-1">Anexo da bio (imagem ou PDF)</span>
+          <input
+            type="file" accept="image/*,application/pdf"
+            onChange={(e) => setBioAnexo(e.target.files?.[0] ?? null)}
+            className="w-full text-xs text-text-secondary file:mr-2 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-surface file:text-text file:cursor-pointer"
+          />
+          {bioAnexo && <p className="text-[11px] text-text-muted mt-1">{bioAnexo.name}</p>}
+        </label>
+      </div>
+
+      <Button type="submit" disabled={saving} className="w-full">
+        {saving ? 'Salvando…' : 'Salvar'}
+      </Button>
+    </form>
   )
 }
