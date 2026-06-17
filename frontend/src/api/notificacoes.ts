@@ -11,6 +11,8 @@ export interface Notificacao {
   data_hora: string
   midia_id?: string
   s3_key?: string
+  relato_sk?: string
+  relato_tipo?: 'dor' | 'duvida'
 }
 
 export interface NotificacaoPage {

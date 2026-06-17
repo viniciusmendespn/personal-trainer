@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.dependencies import get_current_personal_id
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz, media_service, notif_service
+from app.services import alerta_service, authz, media_service, notif_service
 
 router = APIRouter(prefix="/v1", tags=["notificacoes"])
 
@@ -21,6 +21,12 @@ from pydantic import BaseModel
 
 class RefBody(BaseModel):
     ref: str
+
+
+class ResponderBody(BaseModel):
+    ref: str       # SK da notificação (para buscar relato_sk e marcar como lida)
+    texto: str
+    aluno_id: str
 
 
 # ── Notificações ─────────────────────────────────────────────────────────────
@@ -59,6 +65,25 @@ def read(body: RefBody, personal_id: str = Depends(get_current_personal_id)):
 @router.post("/notificacoes/read-all")
 def read_all(personal_id: str = Depends(get_current_personal_id)):
     return {"marcadas": notif_service.marcar_todas(personal_id)}
+
+
+@router.post("/notificacoes/responder")
+def responder_notif(body: ResponderBody, personal_id: str = Depends(get_current_personal_id)):
+    """Personal responde a um relato de dor ou dúvida do aluno.
+    A notificação deve conter relato_sk e relato_tipo nos campos extras."""
+    authz.authorize_aluno(personal_id, body.aluno_id)
+    # Busca a notificação para obter a SK do relato original
+    notif = repo.get_item(keys.pk_personal(personal_id), body.ref)
+    if not notif:
+        raise HTTPException(404, "Notificação não encontrada")
+    relato_sk = notif.get("relato_sk")
+    if not relato_sk:
+        raise HTTPException(400, "Esta notificação não tem relato vinculado para responder")
+    ok = alerta_service.responder_relato(body.aluno_id, relato_sk, body.texto, personal_id)
+    if not ok:
+        raise HTTPException(404, "Relato não encontrado")
+    notif_service.marcar_lida(personal_id, body.ref)
+    return {"ok": True}
 
 
 # ── Ação: vincular mídia pendente a um exercício ─────────────────────────────

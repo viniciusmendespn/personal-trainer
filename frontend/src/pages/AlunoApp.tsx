@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, X, Paperclip, AlertTriangle, Timer, Clock } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, X, Paperclip, AlertTriangle, Timer, Clock, Bell, Wrench, HelpCircle } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -13,6 +13,7 @@ import { useAlunoTimeline } from '../hooks/useAlunoTimeline'
 import { ChatThread } from '../components/chat/ChatThread'
 import { ChatInputBar } from '../components/chat/ChatInputBar'
 import { MediaTimeline } from '../components/media/MediaTimeline'
+import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
 import { Button, Card, Spinner, Input, Textarea, Select, Badge, StatCard, EmptyState, useToast, useConfirm } from '../components/ui'
 
 const chartTip = {
@@ -53,6 +54,93 @@ function useAlunoToken() {
   return token
 }
 
+function NotifBell() {
+  const count = useQuery({
+    queryKey: ['aluno-notif-count'],
+    queryFn: alunoApi.notificacoesCount,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+  const [open, setOpen] = useState(false)
+  const n = count.data?.nao_lidas ?? 0
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="relative p-1 text-text-muted hover:text-text transition-colors"
+        aria-label="Notificações"
+      >
+        <Bell size={20} />
+        {n > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 rounded-full bg-danger text-[10px] font-bold text-white flex items-center justify-center px-0.5">
+            {n > 9 ? '9+' : n}
+          </span>
+        )}
+      </button>
+      {open && <NotifDrawer onClose={() => setOpen(false)} />}
+    </>
+  )
+}
+
+const ANOTIF_ICON: Record<string, React.ReactNode> = {
+  DOR_RESPONDIDA: <AlertTriangle size={14} className="text-danger" />,
+  DUVIDA_RESPONDIDA: <HelpCircle size={14} className="text-info" />,
+  MSG_PERSONAL: <MessageCircle size={14} className="text-energy" />,
+  CORRECAO_EXERCICIO: <Wrench size={14} className="text-accent-hover" />,
+}
+
+function NotifDrawer({ onClose }: { onClose: () => void }) {
+  const qc = useQueryClient()
+  const notifs = useQuery({
+    queryKey: ['aluno-notifs'],
+    queryFn: () => alunoApi.notificacoes({ limit: 30 }),
+  })
+  const items = notifs.data?.items ?? []
+
+  async function marcarLida(ref: string) {
+    await alunoApi.marcarNotificacaoLida(ref)
+    qc.invalidateQueries({ queryKey: ['aluno-notifs'] })
+    qc.invalidateQueries({ queryKey: ['aluno-notif-count'] })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col" onClick={onClose}>
+      <div className="flex-1" />
+      <div
+        className="bg-surface-elevated rounded-t-2xl shadow-lg max-h-[70vh] flex flex-col"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <h2 className="font-semibold text-sm">Notificações</h2>
+          <button onClick={onClose} className="text-text-muted hover:text-text"><X size={18} /></button>
+        </div>
+        <div className="overflow-y-auto flex-1 divide-y divide-border">
+          {notifs.isLoading && <div className="flex justify-center py-6"><Spinner /></div>}
+          {!notifs.isLoading && !items.length && (
+            <p className="text-sm text-text-muted text-center py-8">Nenhuma notificação ainda.</p>
+          )}
+          {items.map((n) => (
+            <button
+              key={n.ref}
+              className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors hover:bg-white/5 ${n.lida ? 'opacity-60' : ''}`}
+              onClick={() => !n.lida && marcarLida(n.ref)}
+            >
+              <div className="mt-0.5 shrink-0">{ANOTIF_ICON[n.tipo] ?? <Bell size={14} className="text-text-muted" />}</div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-text leading-tight">{n.titulo}</p>
+                <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{n.mensagem}</p>
+                <p className="text-[10px] text-text-muted mt-1">{new Date(n.data_hora).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+              </div>
+              {!n.lida && <span className="w-2 h-2 rounded-full bg-energy shrink-0 mt-1.5" />}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function AlunoApp() {
   const token = useAlunoToken()
   const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'chat'>('hoje')
@@ -66,8 +154,9 @@ export function AlunoApp() {
       className="min-h-screen max-w-md mx-auto flex flex-col"
       style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
     >
-      <header className="p-4 shrink-0">
+      <header className="px-4 pt-4 pb-2 shrink-0 flex items-center justify-between">
         <h1 className="font-display text-lg font-bold text-text">Olá, {me.data?.nome ?? 'aluno'} 👋</h1>
+        {token && <NotifBell />}
       </header>
       {tab === 'chat' ? (
         <ChatTab />
@@ -515,6 +604,7 @@ function Evolucao() {
   useEffect(() => { if (!exId && exs.data?.length) setExId(exs.data[0].exercicio_id) }, [exs.data, exId])
   const evo = useQuery({ queryKey: ['aluno-evo', exId], queryFn: () => alunoApi.evolucao(exId), enabled: !!exId })
   const midias = useQuery({ queryKey: ['aluno-midia', exId], queryFn: () => alunoApi.listMidia(exId), enabled: !!exId })
+  const feed = useQuery({ queryKey: ['aluno-feed', exId], queryFn: () => alunoApi.feedExercicio(exId), enabled: !!exId })
 
   const data = (evo.data?.serie ?? [])
     .filter((p) => p.carga_max != null)
@@ -561,6 +651,12 @@ function Evolucao() {
             </Card>
           )}
           <MediaTimeline items={(midias.data ?? []).map((m) => ({ ...m, ator: m.ator ?? 'ALUNO' }))} isLoading={midias.isLoading} />
+          {!!feed.data?.length && (
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">Correções e relatos</p>
+              <ExercicioFeedCard items={feed.data} />
+            </div>
+          )}
         </>
       )}
     </div>

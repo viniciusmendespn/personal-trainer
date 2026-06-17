@@ -1,8 +1,12 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Clock } from 'lucide-react'
+import { Clock, Wrench } from 'lucide-react'
 import { treinosApi } from '../../api/treinos'
 import { alunoApi } from '../../api/alunoApp'
 import { MediaTimeline, type MediaTimelineItem } from '../media/MediaTimeline'
+import { ExercicioFeedCard } from '../exercicio/ExercicioFeedCard'
+import { CorrecaoForm } from '../exercicio/CorrecaoForm'
+import { Modal } from '../ui'
 
 function fmtDur(secs: number) {
   const h = Math.floor(secs / 3600)
@@ -11,6 +15,15 @@ function fmtDur(secs: number) {
   if (h > 0) return `${h}h ${String(m).padStart(2, '0')}min`
   if (m > 0) return `${m}min ${String(s).padStart(2, '0')}s`
   return `${s}s`
+}
+
+interface Relato {
+  tipo: 'DOR' | 'DUVIDA'
+  descricao: string
+  data_hora: string
+  respondido: boolean
+  resposta_texto?: string
+  respondido_em?: string
 }
 
 interface ExecEx {
@@ -22,6 +35,12 @@ interface ExecEx {
   reps_prescritas?: string
   carga_prescrita?: string
   midia?: Array<{ midia_id: string; tipo: string; url?: string; data_hora: string; ator?: 'ALUNO' | 'PERSONAL' }>
+  relatos?: Relato[]
+}
+
+interface ExercicioDetalheProps {
+  ex: ExecEx
+  alunoId?: string  // presente só no lado do personal
 }
 
 function totalVolume(exs: ExecEx[]) {
@@ -46,8 +65,9 @@ function prescritoLabel(ex: ExecEx): string | null {
   return null
 }
 
-function ExercicioDetalhe({ ex }: { ex: ExecEx }) {
+function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
   const prescrito = prescritoLabel(ex)
+  const [correcaoOpen, setCorrecaoOpen] = useState(false)
   const midiaItems: MediaTimelineItem[] = (ex.midia ?? []).map((m) => ({
     midia_id: m.midia_id,
     tipo: m.tipo,
@@ -55,10 +75,22 @@ function ExercicioDetalhe({ ex }: { ex: ExecEx }) {
     data_hora: m.data_hora,
     ator: m.ator,
   }))
+  const relatos = (ex.relatos ?? []).map((r) => ({ ...r, tipo: r.tipo as 'DOR' | 'DUVIDA' | 'CORRECAO' }))
 
   return (
     <div className="space-y-2 pb-3 border-b border-border last:border-0 last:pb-0">
-      <p className="text-sm font-semibold text-text">{ex.exercicio_nome}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-text">{ex.exercicio_nome}</p>
+        {alunoId && (
+          <button
+            type="button"
+            onClick={() => setCorrecaoOpen(true)}
+            className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-accent-hover transition-colors"
+          >
+            <Wrench size={12} /> Postar correção
+          </button>
+        )}
+      </div>
 
       {prescrito && (
         <div className="flex gap-2 text-xs">
@@ -87,11 +119,26 @@ function ExercicioDetalhe({ ex }: { ex: ExecEx }) {
       {midiaItems.length > 0 && (
         <MediaTimeline items={midiaItems} compact />
       )}
+
+      {relatos.length > 0 && (
+        <ExercicioFeedCard items={relatos} />
+      )}
+
+      {alunoId && (
+        <Modal open={correcaoOpen} onClose={() => setCorrecaoOpen(false)} title={`Correção — ${ex.exercicio_nome}`}>
+          <CorrecaoForm
+            alunoId={alunoId}
+            exercicioId={ex.exercicio_id}
+            exercicioNome={ex.exercicio_nome}
+            onDone={() => setCorrecaoOpen(false)}
+          />
+        </Modal>
+      )}
     </div>
   )
 }
 
-function SessaoDetalheConteudo({ data }: { data: { duracao_segundos?: number; exercicios_exec?: ExecEx[] } }) {
+function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: number; exercicios_exec?: ExecEx[] }; alunoId?: string }) {
   const exs = data.exercicios_exec ?? []
   const vol = totalVolume(exs)
 
@@ -109,7 +156,7 @@ function SessaoDetalheConteudo({ data }: { data: { duracao_segundos?: number; ex
 
       <div className="space-y-3">
         {exs.map((ex) => (
-          <ExercicioDetalhe key={ex.exercicio_id} ex={ex} />
+          <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} />
         ))}
         {exs.length === 0 && (
           <p className="text-xs text-text-muted">Nenhum exercício registrado.</p>
@@ -129,7 +176,7 @@ export function SessaoDetalheCard({ alunoId, sessaoId }: { alunoId: string; sess
 
   if (isLoading) return <Skeleton />
   if (isError || !data) return <p className="text-xs text-text-muted py-2 mt-3 border-t border-border pt-3">Não foi possível carregar os detalhes.</p>
-  return <SessaoDetalheConteudo data={data} />
+  return <SessaoDetalheConteudo data={data} alunoId={alunoId} />
 }
 
 /** Versão para o app do aluno (usa endpoint /v1/aluno/sessoes/{sessaoId}) */

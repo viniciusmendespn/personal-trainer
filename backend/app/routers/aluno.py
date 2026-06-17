@@ -10,7 +10,7 @@ from app.models.enums import Ator, CanalOrigem, Classificacao
 from app.models.registro import SerieExec
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import agent_service, alerta_service, media_service, notif_service, sessao_service
+from app.services import agent_service, alerta_service, anotif_service, correcao_service, media_service, notif_service, sessao_service
 
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
 
@@ -138,6 +138,7 @@ def get_sessao_detalhe_aluno(sessao_id: str, ctx: dict = Depends(get_current_alu
     s = repo.clean(session)
     for ex in s.get("exercicios_exec") or []:
         ex["midia"] = media_service.list_midia_exercicio(aluno_id, ex["exercicio_id"])
+        ex["relatos"] = correcao_service.relatos_sessao(aluno_id, ex["exercicio_id"], sessao_id)
     return s
 
 
@@ -198,21 +199,50 @@ class RelatoBody(BaseModel):
 
 @router.post("/relato", status_code=201)
 def relato(body: RelatoBody, ctx: dict = Depends(get_current_aluno)):
-    """Relato de dor ou dúvida sobre um exercício, fora do fluxo do agente — gera
-    notificação direta ao personal (RF009 / mesmo padrão do agente, mas via UI)."""
+    """Relato de dor ou dúvida sobre um exercício — cria item próprio + notificação ao personal."""
+    sessao_ativa = sessao_service.get_active(ctx["aluno_id"])
+    sessao_id = sessao_ativa["sessao_id"] if sessao_ativa else None
     if body.tipo == "dor":
         alerta_service.registrar_dor(
             ctx["personal_id"], ctx["aluno_id"], body.descricao,
             exercicio_id=body.exercicio_id, exercicio_nome=body.exercicio_nome,
-            canal=CanalOrigem.PORTAL, ator=Ator.ALUNO,
+            canal=CanalOrigem.PORTAL, ator=Ator.ALUNO, sessao_id=sessao_id,
         )
     else:
-        contexto = f" em {body.exercicio_nome}" if body.exercicio_nome else ""
-        notif_service.criar(
-            ctx["personal_id"], "DUVIDA", "Dúvida do aluno",
-            f"O aluno teve uma dúvida{contexto}: {body.descricao}", aluno_id=ctx["aluno_id"],
+        alerta_service.registrar_duvida(
+            ctx["personal_id"], ctx["aluno_id"], body.descricao,
+            exercicio_id=body.exercicio_id, exercicio_nome=body.exercicio_nome,
+            canal=CanalOrigem.PORTAL, ator=Ator.ALUNO, sessao_id=sessao_id,
         )
     return {"ok": 1}
+
+
+@router.get("/notificacoes")
+def list_anotif(limit: int = 30, cursor: str | None = None,
+                ctx: dict = Depends(get_current_aluno)):
+    items, next_cursor = anotif_service.listar(ctx["aluno_id"], limit, cursor)
+    return {"items": items, "next_cursor": next_cursor}
+
+
+@router.get("/notificacoes/count")
+def count_anotif(ctx: dict = Depends(get_current_aluno)):
+    return {"nao_lidas": anotif_service.nao_lidas(ctx["aluno_id"])}
+
+
+class AnotifRefBody(BaseModel):
+    ref: str
+
+
+@router.post("/notificacoes/lida")
+def marcar_anotif_lida(body: AnotifRefBody, ctx: dict = Depends(get_current_aluno)):
+    anotif_service.marcar_lida(ctx["aluno_id"], body.ref)
+    return {"ok": True}
+
+
+@router.get("/exercicios/{exercicio_id}/feed")
+def feed_exercicio_aluno(exercicio_id: str, ctx: dict = Depends(get_current_aluno)):
+    """Feed de dores, dúvidas e correções do exercício — visão do aluno."""
+    return correcao_service.feed_exercicio(ctx["aluno_id"], exercicio_id)
 
 
 @router.get("/chat")

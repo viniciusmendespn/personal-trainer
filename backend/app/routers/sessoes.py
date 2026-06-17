@@ -7,7 +7,7 @@ from app.dependencies import get_current_personal_id
 from app.models.enums import Ator, CanalOrigem
 from app.models.registro import SerieExec
 from app.repositories import dynamo_repo as repo
-from app.services import agent_service, authz, media_service, nota_service, sessao_service
+from app.services import agent_service, authz, correcao_service, media_service, nota_service, sessao_service
 
 router = APIRouter(prefix="/v1/alunos/{aluno_id}", tags=["sessoes"])
 
@@ -45,6 +45,7 @@ def get_sessao_detalhe(aluno_id: str, sessao_id: str,
     s = repo.clean(session)
     for ex in s.get("exercicios_exec") or []:
         ex["midia"] = media_service.list_midia_exercicio(aluno_id, ex["exercicio_id"])
+        ex["relatos"] = correcao_service.relatos_sessao(aluno_id, ex["exercicio_id"], sessao_id)
     return s
 
 
@@ -157,6 +158,32 @@ def evolucao(aluno_id: str, exercicio_id: str, limit: int = 100,
              personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)
     return sessao_service.evolucao_exercicio(aluno_id, exercicio_id, limit)
+
+
+class CorrecaoBody(BaseModel):
+    texto: str
+    exercicio_nome: str | None = None
+    midias: list[dict] = []   # [{ s3_key: str, tipo: str }]
+
+
+@router.post("/exercicios/{exercicio_id}/correcao", status_code=201)
+def criar_correcao(aluno_id: str, exercicio_id: str, body: CorrecaoBody,
+                   personal_id: str = Depends(get_current_personal_id)):
+    """Post rico de correção (texto + mídias) vinculado a um exercício — aparece no feed."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    item = correcao_service.criar_correcao(
+        personal_id, aluno_id, exercicio_id, body.exercicio_nome,
+        body.texto, body.midias,
+    )
+    return {"ok": 1, "correcao_id": item["correcao_id"]}
+
+
+@router.get("/exercicios/{exercicio_id}/feed")
+def feed_exercicio(aluno_id: str, exercicio_id: str,
+                   personal_id: str = Depends(get_current_personal_id)):
+    """Feed unificado do exercício: dores, dúvidas e correções — mais recentes primeiro."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    return correcao_service.feed_exercicio(aluno_id, exercicio_id)
 
 
 class NotaBody(BaseModel):

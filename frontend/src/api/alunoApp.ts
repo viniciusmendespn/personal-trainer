@@ -1,7 +1,7 @@
 import { alunoClient } from './alunoClient'
 import type { Exercicio, Treino } from '../types'
 import type { Evolucao, Resumo } from './evolucao'
-import type { MidiaExercicio } from './treinos'
+import type { FeedItem, MidiaExercicio, Relato } from './treinos'
 
 export interface SessaoAtiva {
   sessao_id: string
@@ -15,6 +15,17 @@ export interface SessaoAtiva {
 export interface SerieExec {
   carga?: string
   reps?: number
+}
+
+export interface AlunoNotificacao {
+  ref: string
+  notif_id: string
+  tipo: string
+  titulo: string
+  mensagem: string
+  lida: boolean
+  data_hora: string
+  ref_id?: string
 }
 
 export interface SessaoHistorico {
@@ -35,6 +46,7 @@ export interface SessaoHistorico {
     reps_prescritas?: string
     carga_prescrita?: string
     midia?: Array<{ midia_id: string; tipo: string; url?: string; data_hora: string; ator?: 'ALUNO' | 'PERSONAL' }>
+    relatos?: Relato[]
   }>
 }
 
@@ -111,6 +123,17 @@ export const alunoApi = {
       .then((r) => r.data),
   sessaoDetalhe: (sessaoId: string) =>
     alunoClient.get<SessaoHistorico>(`/v1/aluno/sessoes/${sessaoId}`).then((r) => r.data),
+
+  notificacoes: (params?: { cursor?: string; limit?: number }) =>
+    alunoClient
+      .get<{ items: AlunoNotificacao[]; next_cursor: string | null }>('/v1/aluno/notificacoes', { params })
+      .then((r) => r.data),
+  notificacoesCount: () =>
+    alunoClient.get<{ nao_lidas: number }>('/v1/aluno/notificacoes/count').then((r) => r.data),
+  marcarNotificacaoLida: (ref: string) =>
+    alunoClient.post('/v1/aluno/notificacoes/lida', { ref }).then((r) => r.data),
+  feedExercicio: (exercicioId: string) =>
+    alunoClient.get<FeedItem[]>(`/v1/aluno/exercicios/${exercicioId}/feed`).then((r) => r.data),
 }
 
 /** Pede a presigned URL e sobe o arquivo direto pro S3, depois registra vinculado ao exercício. */

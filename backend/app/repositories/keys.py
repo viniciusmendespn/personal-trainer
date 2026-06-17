@@ -150,6 +150,30 @@ def sk_stats_pr(exercicio_id: str) -> str:
     return f"STATS#PR#{exercicio_id}"
 
 
+# ── Dúvidas do aluno (partição AL#) ─────────────────────────────────────────
+DUVIDA_PREFIX = "DUVIDA#"
+
+
+def sk_duvida(exercicio_id: str, ts: str, duvida_id: str) -> str:
+    return f"DUVIDA#{exercicio_id}#{ts}#{duvida_id}"
+
+
+# ── Correções do personal (post rico: texto + mídias) ────────────────────────
+CORRECAO_PREFIX = "CORRECAO#"
+
+
+def sk_correcao_ex(exercicio_id: str, ts: str, correcao_id: str) -> str:
+    return f"CORRECAO#{exercicio_id}#{ts}#{correcao_id}"
+
+
+# ── Notificações para o aluno (partição AL#, espelho do NOTIF# do personal) ──
+ANOTIF_PREFIX = "ANOTIF#"
+
+
+def sk_anotif(ts: str, notif_id: str) -> str:
+    return f"ANOTIF#{ts}#{notif_id}"
+
+
 # ── GSI1: "registros por exercício no tempo" (ESPEC §4.1) ────────────────────
 def gsi1_registro(aluno_id: str, exercicio_id: str) -> str:
     return f"AL#{aluno_id}#EX#{exercicio_id}"

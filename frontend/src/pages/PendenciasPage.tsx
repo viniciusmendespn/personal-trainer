@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, AlertTriangle, CalendarClock, Clock, Image, Camera, HelpCircle, Pin, Mail, Link2, MessageCircle, UserRound, Dumbbell, PlaySquare } from 'lucide-react'
+import { Bell, AlertTriangle, CalendarClock, Clock, Image, Camera, HelpCircle, Pin, Mail, Link2, MessageCircle, UserRound, Dumbbell, PlaySquare, Send } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNotificacoes, useMarkRead, useMarkAllRead, useVincularMidia } from '../hooks/useNotificacoes'
 import { useAlunos } from '../hooks/useAlunos'
 import { useExerciciosAluno } from '../hooks/useEvolucao'
-import { Card, Spinner, Button, Badge, EmptyState, Select, Modal } from '../components/ui'
+import { Card, Spinner, Button, Badge, EmptyState, Select, Modal, Textarea, useToast } from '../components/ui'
 import { useChatContext } from '../context/ChatContext'
+import { treinosApi } from '../api/treinos'
 import type { Notificacao } from '../api/notificacoes'
 
 const TIPO_ICON: Record<string, React.ReactNode> = {
@@ -83,53 +85,99 @@ function useQuickAction(item: Notificacao, markRead: ReturnType<typeof useMarkRe
   return null
 }
 
+function ResponderRelato({ item, onDone }: { item: Notificacao; onDone: () => void }) {
+  const qc = useQueryClient()
+  const { show } = useToast()
+  const [texto, setTexto] = useState('')
+  const responder = useMutation({
+    mutationFn: () => treinosApi.responderNotificacao({ ref: item.ref, texto: texto.trim(), aluno_id: item.aluno_id! }),
+    onSuccess: () => {
+      show('Resposta enviada!', 'success')
+      qc.invalidateQueries({ queryKey: ['notificacoes'] })
+      onDone()
+    },
+    onError: () => show('Erro ao enviar resposta.', 'error'),
+  })
+  return (
+    <div className="mt-2 space-y-1.5">
+      <Textarea
+        rows={2}
+        placeholder="Escreva sua resposta…"
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        disabled={responder.isPending}
+      />
+      <Button
+        size="sm" className="w-full" variant="outline"
+        disabled={!texto.trim() || responder.isPending}
+        onClick={() => responder.mutate()}
+      >
+        <Send size={13} className="mr-1" />
+        {responder.isPending ? 'Enviando…' : 'Enviar resposta'}
+      </Button>
+    </div>
+  )
+}
+
 function NotifCard({ item, alunos, markRead, onVincular }: {
   item: Notificacao
   alunos: ReturnType<typeof useAlunos>['data']
   markRead: ReturnType<typeof useMarkRead>
   onVincular: (item: Notificacao) => void
 }) {
+  const [respondendo, setRespondendo] = useState(false)
   const quickAction = useQuickAction(item, markRead)
   const nomeAluno = alunos?.find((a) => a.aluno_id === item.aluno_id)?.nome
+  const podeResponder = (item.tipo === 'DOR' || item.tipo === 'DUVIDA') && !!item.relato_sk && !!item.aluno_id
 
   return (
     <Card
       variant="elevated"
-      className={`flex items-start justify-between gap-3 ${!item.lida ? 'border-l-2 border-l-accent' : 'opacity-60'}`}
+      className={`${!item.lida ? 'border-l-2 border-l-accent' : 'opacity-60'}`}
     >
-      <div className="flex gap-2 min-w-0">
-        <div className="mt-0.5 shrink-0">{TIPO_ICON[item.tipo] ?? <Bell size={16} className="text-text-muted" />}</div>
-        <div className="min-w-0">
-          <p className="text-sm font-medium flex items-center gap-2 flex-wrap">
-            {item.titulo}
-            <Badge tone={TIPO_TONE[item.tipo] ?? 'neutral'}>{item.tipo}</Badge>
-            <Badge tone={item.lida ? 'neutral' : 'success'}>{item.lida ? 'Lida' : 'Não lida'}</Badge>
-          </p>
-          <p className="text-xs text-text-secondary">{item.mensagem}</p>
-          {nomeAluno && <p className="text-xs text-text-muted">{nomeAluno}</p>}
-          <p className="text-[11px] text-text-muted mt-0.5">{new Date(item.data_hora).toLocaleString('pt-BR')}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex gap-2 min-w-0">
+          <div className="mt-0.5 shrink-0">{TIPO_ICON[item.tipo] ?? <Bell size={16} className="text-text-muted" />}</div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium flex items-center gap-2 flex-wrap">
+              {item.titulo}
+              <Badge tone={TIPO_TONE[item.tipo] ?? 'neutral'}>{item.tipo}</Badge>
+              <Badge tone={item.lida ? 'neutral' : 'success'}>{item.lida ? 'Lida' : 'Não lida'}</Badge>
+            </p>
+            <p className="text-xs text-text-secondary">{item.mensagem}</p>
+            {nomeAluno && <p className="text-xs text-text-muted">{nomeAluno}</p>}
+            <p className="text-[11px] text-text-muted mt-0.5">{new Date(item.data_hora).toLocaleString('pt-BR')}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {podeResponder && (
+            <Button variant="ghost" size="sm" iconOnly aria-label="Responder" onClick={() => setRespondendo((v) => !v)}>
+              <MessageCircle size={15} className={respondendo ? 'text-accent-hover' : ''} />
+            </Button>
+          )}
+          {quickAction && !(podeResponder) && (
+            <Button variant="ghost" size="sm" iconOnly aria-label={quickAction.label} onClick={quickAction.fn}>
+              {quickAction.icon}
+            </Button>
+          )}
+          {item.tipo === 'MIDIA_PENDENTE' && item.midia_id && (
+            <Button variant="ghost" size="sm" iconOnly aria-label="Vincular a exercício" onClick={() => onVincular(item)}>
+              <Link2 size={15} />
+            </Button>
+          )}
+          <Button
+            variant="ghost" size="sm" iconOnly
+            aria-label={item.lida ? 'Já lida' : 'Marcar como lida'}
+            disabled={item.lida}
+            onClick={() => !item.lida && markRead.mutate(item.ref)}
+          >
+            <Mail size={16} />
+          </Button>
         </div>
       </div>
-      <div className="flex items-center gap-1.5 shrink-0">
-        {quickAction && (
-          <Button variant="ghost" size="sm" iconOnly aria-label={quickAction.label} onClick={quickAction.fn}>
-            {quickAction.icon}
-          </Button>
-        )}
-        {item.tipo === 'MIDIA_PENDENTE' && item.midia_id && (
-          <Button variant="ghost" size="sm" iconOnly aria-label="Vincular a exercício" onClick={() => onVincular(item)}>
-            <Link2 size={15} />
-          </Button>
-        )}
-        <Button
-          variant="ghost" size="sm" iconOnly
-          aria-label={item.lida ? 'Já lida' : 'Marcar como lida'}
-          disabled={item.lida}
-          onClick={() => !item.lida && markRead.mutate(item.ref)}
-        >
-          <Mail size={16} />
-        </Button>
-      </div>
+      {respondendo && podeResponder && (
+        <ResponderRelato item={item} onDone={() => setRespondendo(false)} />
+      )}
     </Card>
   )
 }

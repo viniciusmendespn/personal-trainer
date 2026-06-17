@@ -46,6 +46,44 @@ export const treinosApi = {
       .then((r) => r.data),
   sessaoDetalhe: (alunoId: string, sessaoId: string) =>
     api.get<SessaoDetalhe>(`/v1/alunos/${alunoId}/sessoes/${sessaoId}`).then((r) => r.data),
+
+  feedExercicio: (alunoId: string, exercicioId: string) =>
+    api.get<FeedItem[]>(`/v1/alunos/${alunoId}/exercicios/${exercicioId}/feed`).then((r) => r.data),
+
+  criarCorrecao: (
+    alunoId: string,
+    body: { exercicio_id: string; exercicio_nome?: string; texto: string; midias: Array<{ s3_key: string; tipo: string }> },
+  ) => api.post<{ ok: number; correcao_id: string }>(`/v1/alunos/${alunoId}/exercicios/${body.exercicio_id}/correcao`, body).then((r) => r.data),
+
+  responderNotificacao: (body: { ref: string; texto: string; aluno_id: string }) =>
+    api.post('/v1/notificacoes/responder', body).then((r) => r.data),
+}
+
+export interface Relato {
+  tipo: 'DOR' | 'DUVIDA'
+  descricao: string
+  data_hora: string
+  exercicio_id?: string
+  exercicio_nome?: string
+  respondido: boolean
+  resposta_texto?: string
+  respondido_em?: string
+  sessao_id?: string
+}
+
+export interface FeedItem {
+  tipo: 'DOR' | 'DUVIDA' | 'CORRECAO'
+  data_hora: string
+  // DOR / DUVIDA
+  descricao?: string
+  respondido?: boolean
+  resposta_texto?: string
+  respondido_em?: string
+  // CORRECAO
+  correcao_id?: string
+  texto?: string
+  midias?: Array<{ s3_key: string; tipo: string; url?: string }>
+  exercicio_nome?: string
 }
 
 export interface ExecExercicio {
@@ -57,6 +95,7 @@ export interface ExecExercicio {
   reps_prescritas?: string
   carga_prescrita?: string
   midia?: MidiaExercicio[]
+  relatos?: Relato[]
 }
 
 export interface SessaoHistoricoPersonal {
