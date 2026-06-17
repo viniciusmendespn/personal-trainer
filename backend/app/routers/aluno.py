@@ -33,7 +33,13 @@ def hoje(ctx: dict = Depends(get_current_aluno)):
     aluno_id = ctx["aluno_id"]
     treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
     treinos.sort(key=lambda t: t.get("ordem", 0))
-    return {"hoje": agent_service.treino_de_hoje(aluno_id)["treinos"], "treinos": repo.clean_all(treinos)}
+    ult_prox = sessao_service.ultimo_e_proximo(aluno_id)
+    return {
+        "hoje": agent_service.treino_de_hoje(aluno_id)["treinos"],
+        "treinos": repo.clean_all(treinos),
+        "ultimo": ult_prox["ultimo"],
+        "proximo": ult_prox["proximo"],
+    }
 
 
 @router.get("/treinos/{treino_id}/exercicios")

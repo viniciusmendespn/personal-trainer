@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
-import { Bot } from 'lucide-react'
+import { Bot, User, UserCog } from 'lucide-react'
 import { Spinner } from '../ui'
+import { renderMarkdownLite } from './markdownLite'
 import type { Ator, ChatMensagem } from '../../types'
 
 interface ChatThreadProps {
@@ -11,27 +12,46 @@ interface ChatThreadProps {
   alunoNome?: string
 }
 
+function formatHora(iso: string) {
+  const d = new Date(iso)
+  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  const mesmoDia = d.toDateString() === new Date().toDateString()
+  if (mesmoDia) return hora
+  return `${d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} ${hora}`
+}
+
 function Bubble({ msg, viewerRole, alunoNome }: { msg: ChatMensagem; viewerRole: Ator; alunoNome?: string }) {
   const isAssistant = msg.role === 'assistant'
   const isMine = !isAssistant && msg.ator === viewerRole
   const align = isMine ? 'items-end' : 'items-start'
+
+  // Três estilos bem distintos: agente (neutro), eu (accent sólido), outra pessoa (info) —
+  // ex.: o personal vê as msgs do aluno em "info", e vice-versa.
   const bubbleStyle = isAssistant
     ? 'bg-surface-elevated border border-border text-text'
     : isMine
       ? 'bg-accent text-white'
-      : 'bg-white/5 border border-border-strong text-text'
+      : 'bg-info/10 border border-info/30 text-text'
 
-  const label = !isAssistant && !isMine
-    ? (msg.ator === 'ALUNO' ? alunoNome ?? 'Aluno' : 'Personal') +
-      (msg.canal_origem === 'WHATSAPP' ? ' · WhatsApp' : '')
-    : null
+  const Icon = isAssistant ? Bot : msg.ator === 'PERSONAL' ? UserCog : User
+  const label = isAssistant
+    ? 'Agente'
+    : isMine
+      ? null
+      : (msg.ator === 'ALUNO' ? alunoNome ?? 'Aluno' : 'Personal') +
+        (msg.canal_origem === 'WHATSAPP' ? ' · WhatsApp' : '')
 
   return (
     <div className={`flex flex-col gap-1 ${align}`}>
-      {label && <span className="text-[10px] text-text-muted px-1">{label}</span>}
+      {label && (
+        <span className="flex items-center gap-1 text-[10px] text-text-muted px-1">
+          <Icon size={11} /> {label}
+        </span>
+      )}
       <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap ${bubbleStyle}`}>
-        {msg.texto}
+        {isAssistant ? renderMarkdownLite(msg.texto) : msg.texto}
       </div>
+      <span className="text-[10px] text-text-muted px-1">{formatHora(msg.data_hora)}</span>
     </div>
   )
 }

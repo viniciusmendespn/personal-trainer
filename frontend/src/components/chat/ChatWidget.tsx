@@ -27,7 +27,7 @@ export function ChatWidget() {
   }
 
   return (
-    <div className="fixed inset-0 sm:inset-auto sm:bottom-5 sm:right-5 z-40 sm:w-[400px] sm:h-[600px] sm:rounded-2xl overflow-hidden bg-surface border border-border shadow-2xl flex flex-col">
+    <div className="fixed inset-0 sm:inset-auto sm:bottom-5 sm:right-5 z-40 sm:w-[400px] sm:max-w-[calc(100vw-2.5rem)] sm:h-[600px] sm:max-h-[calc(100vh-2.5rem)] sm:rounded-2xl overflow-hidden bg-surface border border-border shadow-2xl flex flex-col">
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border bg-surface-elevated shrink-0">
         {alunoId && (
           <button onClick={() => setAlunoId(null)} aria-label="Voltar" className="p-1 -ml-1 text-text-secondary hover:text-text">

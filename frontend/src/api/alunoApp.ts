@@ -31,9 +31,22 @@ export interface SessaoExercicios {
   exercicios: ExSessao[]
 }
 
+export interface UltimoTreino {
+  treino_nome?: string
+  data?: string
+}
+
+export interface ProximoTreino {
+  treino_id: string
+  nome?: string
+}
+
 export const alunoApi = {
   me: () => alunoClient.get<{ nome?: string }>('/v1/aluno/me').then((r) => r.data),
-  hoje: () => alunoClient.get<{ hoje: { id: string; nome: string }[]; treinos: Treino[] }>('/v1/aluno/hoje').then((r) => r.data),
+  hoje: () =>
+    alunoClient
+      .get<{ hoje: { id: string; nome: string }[]; treinos: Treino[]; ultimo: UltimoTreino | null; proximo: ProximoTreino | null }>('/v1/aluno/hoje')
+      .then((r) => r.data),
   exercicios: (treinoId: string) =>
     alunoClient.get<Exercicio[]>(`/v1/aluno/treinos/${treinoId}/exercicios`).then((r) => r.data),
   sessao: () => alunoClient.get<SessaoAtiva | null>('/v1/aluno/sessao').then((r) => r.data),

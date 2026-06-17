@@ -244,6 +244,32 @@ def evolucao_exercicio(aluno_id: str, exercicio_id: str, limit: int = 100) -> di
     return {"serie": serie, "pr": pr, "total_sessoes": len(serie)}
 
 
+def ultimo_e_proximo(aluno_id: str) -> dict:
+    """Último treino concluído (nome + data) e o próximo na rotação (ordem dos treinos),
+    p/ o app do aluno mostrar 'feito ontem' / 'próximo: Treino B'."""
+    pk = keys.pk_aluno(aluno_id)
+    # candidatos via prefixo "SESSION#" inclui também "SESSION#ACTIVE" — filtra a ativa.
+    candidatos = repo.query_pk_last_n(pk, "SESSION#", 5)
+    ultima_raw = next((c for c in candidatos if c.get("status") != SessaoStatus.EM_ANDAMENTO.value), None)
+    ultima = repo.clean(ultima_raw) if ultima_raw else None
+
+    treinos = repo.clean_all(repo.query_pk(pk, sk_prefix=keys.SK_TREINO_PREFIX))
+    treinos.sort(key=lambda t: t.get("ordem", 0))
+
+    proximo = None
+    if treinos:
+        if ultima:
+            idx = next((i for i, t in enumerate(treinos) if t["treino_id"] == ultima.get("treino_id")), None)
+            proximo = treinos[(idx + 1) % len(treinos)] if idx is not None else treinos[0]
+        else:
+            proximo = treinos[0]
+
+    return {
+        "ultimo": {"treino_nome": ultima.get("treino_nome"), "data": ultima.get("data_hora_fim")} if ultima else None,
+        "proximo": {"treino_id": proximo["treino_id"], "nome": proximo.get("nome")} if proximo else None,
+    }
+
+
 def list_exercicios_aluno(aluno_id: str) -> list[dict]:
     """Lista plana de todos os exercícios do aluno (todos os treinos) — p/ seletor de evolução."""
     items = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")

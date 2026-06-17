@@ -1,13 +1,16 @@
 import { useState } from 'react'
-import { Trash2, Users, LayoutTemplate, Dumbbell } from 'lucide-react'
+import { Trash2, Users, LayoutTemplate, Dumbbell, Pencil, Plus, X } from 'lucide-react'
 import { useAlunos } from '../hooks/useAlunos'
-import { useTemplates, useDeleteTemplate, useAplicarTemplate } from '../hooks/useTemplates'
-import { Button, Card, Spinner, Modal, EmptyState, Badge, useToast } from '../components/ui'
-import type { TreinoTemplate } from '../types'
+import { useTemplates, useDeleteTemplate, useUpdateTemplate, useAplicarTemplate } from '../hooks/useTemplates'
+import { Button, Card, Input, Select, Spinner, Modal, EmptyState, Badge, useToast } from '../components/ui'
+import type { ExercicioTemplate, TreinoTemplate } from '../types'
+
+const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
 export function TemplatesPage() {
   const { data: templates, isLoading } = useTemplates()
   const [applyTarget, setApplyTarget] = useState<TreinoTemplate | null>(null)
+  const [editTarget, setEditTarget] = useState<TreinoTemplate | null>(null)
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -27,7 +30,7 @@ export function TemplatesPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {templates.map((t) => (
-            <TemplateCard key={t.template_id} template={t} onApply={() => setApplyTarget(t)} />
+            <TemplateCard key={t.template_id} template={t} onApply={() => setApplyTarget(t)} onEdit={() => setEditTarget(t)} />
           ))}
         </div>
       )}
@@ -35,11 +38,15 @@ export function TemplatesPage() {
       <Modal open={!!applyTarget} onClose={() => setApplyTarget(null)} title={`Aplicar "${applyTarget?.nome}"`}>
         {applyTarget && <AplicarForm template={applyTarget} onDone={() => setApplyTarget(null)} />}
       </Modal>
+
+      <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title="Editar template" className="sm:max-w-2xl">
+        {editTarget && <EditForm template={editTarget} onDone={() => setEditTarget(null)} />}
+      </Modal>
     </div>
   )
 }
 
-function TemplateCard({ template, onApply }: { template: TreinoTemplate; onApply: () => void }) {
+function TemplateCard({ template, onApply, onEdit }: { template: TreinoTemplate; onApply: () => void; onEdit: () => void }) {
   const del = useDeleteTemplate()
   return (
     <Card variant="elevated">
@@ -48,9 +55,14 @@ function TemplateCard({ template, onApply }: { template: TreinoTemplate; onApply
           <p className="font-medium truncate">{template.nome}</p>
           {template.foco && <p className="text-xs text-text-muted">{template.foco}</p>}
         </div>
-        <Button variant="ghost" size="sm" iconOnly aria-label="Excluir template" onClick={() => del.mutate(template.template_id)} className="hover:text-danger shrink-0">
-          <Trash2 size={15} />
-        </Button>
+        <div className="flex items-center gap-1 shrink-0">
+          <Button variant="ghost" size="sm" iconOnly aria-label="Editar template" onClick={onEdit}>
+            <Pencil size={15} />
+          </Button>
+          <Button variant="ghost" size="sm" iconOnly aria-label="Excluir template" onClick={() => del.mutate(template.template_id)} className="hover:text-danger">
+            <Trash2 size={15} />
+          </Button>
+        </div>
       </div>
       <Badge tone="neutral" className="mt-2">
         <Dumbbell size={11} /> {template.exercicios.length} exercício{template.exercicios.length === 1 ? '' : 's'}
@@ -93,5 +105,71 @@ function AplicarForm({ template, onDone }: { template: TreinoTemplate; onDone: (
         {aplicar.isPending ? 'Aplicando…' : `Aplicar a ${selected.length || ''} aluno(s)`}
       </Button>
     </div>
+  )
+}
+
+function EditForm({ template, onDone }: { template: TreinoTemplate; onDone: () => void }) {
+  const upd = useUpdateTemplate()
+  const { show } = useToast()
+  const [nome, setNome] = useState(template.nome)
+  const [foco, setFoco] = useState(template.foco ?? '')
+  const [exercicios, setExercicios] = useState<ExercicioTemplate[]>(template.exercicios)
+
+  function updateEx(i: number, fields: Partial<ExercicioTemplate>) {
+    setExercicios((exs) => exs.map((e, j) => (j === i ? { ...e, ...fields } : e)))
+  }
+  function removeEx(i: number) {
+    setExercicios((exs) => exs.filter((_, j) => j !== i))
+  }
+  function addEx() {
+    setExercicios((exs) => [...exs, { nome: '', ordem: exs.length }])
+  }
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault()
+    if (!nome.trim()) return
+    await upd.mutateAsync({
+      id: template.template_id,
+      body: { nome, foco: foco || undefined, exercicios: exercicios.filter((ex) => ex.nome.trim()) },
+    })
+    show('Template atualizado.', 'success')
+    onDone()
+  }
+
+  return (
+    <form onSubmit={save} className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Input label="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
+        <Input label="Foco" value={foco} onChange={(e) => setFoco(e.target.value)} />
+      </div>
+
+      <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+        {exercicios.map((ex, i) => (
+          <div key={i} className="grid grid-cols-2 sm:grid-cols-6 gap-1.5 items-end border-b border-border pb-2">
+            <Input className="col-span-2" placeholder="Exercício" value={ex.nome} onChange={(e) => updateEx(i, { nome: e.target.value })} />
+            <Input placeholder="Séries" value={ex.series ?? ''} onChange={(e) => updateEx(i, { series: e.target.value ? Number(e.target.value) : undefined })} />
+            <Input placeholder="Reps" value={ex.reps_prescritas ?? ''} onChange={(e) => updateEx(i, { reps_prescritas: e.target.value || undefined })} />
+            <Select value={ex.dia_semana ?? ''} onChange={(e) => updateEx(i, { dia_semana: e.target.value === '' ? null : Number(e.target.value) })}>
+              <option value="">Todo dia</option>
+              {DIAS.map((d, idx) => <option key={idx} value={idx}>{d}</option>)}
+            </Select>
+            <div className="flex gap-1">
+              <Input placeholder="Carga" value={ex.carga_prescrita ?? ''} onChange={(e) => updateEx(i, { carga_prescrita: e.target.value || undefined })} />
+              <Button type="button" variant="ghost" size="sm" iconOnly aria-label="Remover exercício" onClick={() => removeEx(i)} className="hover:text-danger shrink-0">
+                <X size={15} />
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Button type="button" variant="ghost" size="sm" onClick={addEx}>
+        <span className="flex items-center gap-1"><Plus size={14} /> Adicionar exercício</span>
+      </Button>
+
+      <Button type="submit" className="w-full" disabled={upd.isPending}>
+        {upd.isPending ? 'Salvando…' : 'Salvar'}
+      </Button>
+    </form>
   )
 }

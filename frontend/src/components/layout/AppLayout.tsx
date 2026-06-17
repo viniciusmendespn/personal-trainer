@@ -23,7 +23,7 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
     }`
 
   return (
-    <div className="flex flex-col gap-1 h-full">
+    <div className="flex flex-col gap-1 h-full w-full">
       <div className="px-2 mb-4">
         <h1 className="font-display text-lg font-bold text-text">Personal</h1>
         <p className="text-xs text-text-muted truncate">{user?.name || user?.email}</p>

@@ -25,6 +25,14 @@ export function useCreateTemplateFromTreino() {
   })
 }
 
+export function useUpdateTemplate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: TreinoTemplateCreate }) => templatesApi.update(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  })
+}
+
 export function useDeleteTemplate() {
   const qc = useQueryClient()
   return useMutation({

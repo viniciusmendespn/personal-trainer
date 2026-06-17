@@ -20,6 +20,16 @@ const chartTip = {
 }
 const axisTick = { fill: 'var(--color-text-secondary)', fontSize: 12 }
 
+function formatDiaCompleto(iso: string) {
+  const d = new Date(iso)
+  const hoje = new Date()
+  const ontem = new Date(hoje)
+  ontem.setDate(hoje.getDate() - 1)
+  if (d.toDateString() === hoje.toDateString()) return 'hoje'
+  if (d.toDateString() === ontem.toDateString()) return 'ontem'
+  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' })
+}
+
 function Centered({ children }: { children: React.ReactNode }) {
   return <div className="min-h-screen flex items-center justify-center p-6 text-center text-text-secondary">{children}</div>
 }
@@ -109,8 +119,29 @@ function Hoje() {
 
   const agendados = hoje.data?.hoje ?? []
   const lista = agendados.length ? agendados : (hoje.data?.treinos ?? []).map((t) => ({ id: t.treino_id, nome: t.nome }))
+  const ultimo = hoje.data?.ultimo
+  const proximo = hoje.data?.proximo
+
   return (
     <div className="space-y-3">
+      {(ultimo || proximo) && (
+        <Card variant="elevated" className="space-y-1.5">
+          {ultimo && (
+            <p className="text-xs text-text-secondary">
+              <span className="text-text-muted">Último treino:</span>{' '}
+              <span className="font-medium text-text">{ultimo.treino_nome ?? '—'}</span>
+              {ultimo.data && <span className="text-text-muted"> · {formatDiaCompleto(ultimo.data)}</span>}
+            </p>
+          )}
+          {proximo && (
+            <p className="text-xs text-text-secondary">
+              <span className="text-text-muted">Próximo:</span>{' '}
+              <span className="font-medium text-energy">{proximo.nome ?? '—'}</span>
+            </p>
+          )}
+        </Card>
+      )}
+
       <h2 className="font-display font-semibold">{agendados.length ? 'Treino de hoje' : 'Escolha um treino'}</h2>
       {!lista.length ? (
         <EmptyState icon={<Dumbbell />} title="Nenhum treino cadastrado ainda" />
@@ -140,12 +171,23 @@ function SessaoTreino() {
   if (ses.isLoading || !ses.data) return <Spinner />
   const exs = ses.data.exercicios
   const feitos = exs.filter((e) => e.registrado?.length).length
+  const progresso = exs.length ? Math.round((feitos / exs.length) * 100) : 0
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="font-display font-semibold">{ses.data.treino_nome}</p>
         <span className="text-xs text-text-muted">{feitos}/{exs.length} feitos</span>
+      </div>
+      <div className="h-2 rounded-full bg-surface-elevated border border-border overflow-hidden">
+        <div
+          className="h-full bg-energy transition-all duration-300"
+          style={{ width: `${progresso}%` }}
+          role="progressbar"
+          aria-valuenow={progresso}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        />
       </div>
       <p className="text-xs text-text-muted">Toque em um exercício para registrar — você pode começar por onde quiser e editar depois.</p>
       {exs.map((ex) => <ExercicioCard key={ex.exercicio_id} ex={ex} />)}
