@@ -90,7 +90,6 @@ export function ChatWidget() {
           <ChatThread
             messages={history.messages ?? []}
             isLoading={history.isLoading}
-            isSending={send.isPending}
             viewerRole="PERSONAL"
             alunoNome={aluno?.nome}
             onLoadMore={() => history.fetchNextPage()}

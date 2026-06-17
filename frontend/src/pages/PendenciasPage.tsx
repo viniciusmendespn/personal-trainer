@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Bell, Check, Clock, AlertTriangle, CalendarClock, Image, Link2, HelpCircle, Pin, Camera } from 'lucide-react'
+import { Bell, Check, Clock, AlertTriangle, CalendarClock, Image, Link2, HelpCircle, Pin, Camera, Mail } from 'lucide-react'
 import { useCentral, useVincularMidia } from '../hooks/useCentral'
 import { useMarkRead, useMarkAllRead, useResolvePendencia } from '../hooks/useNotificacoes'
 import { useAlunos } from '../hooks/useAlunos'
@@ -50,7 +50,7 @@ export function PendenciasPage() {
         <h2 className="font-display text-xl font-semibold flex items-center gap-2">
           <Bell size={20} className="text-accent-hover" /> Notificações
         </h2>
-        <Button variant="ghost" size="sm" onClick={() => markAll.mutate()}>Marcar notificações como lidas</Button>
+        <Button variant="ghost" size="sm" onClick={() => markAll.mutate()}>Marcar todas como lidas</Button>
       </div>
 
       <Tabs
@@ -74,7 +74,7 @@ export function PendenciasPage() {
             const isNotif = item.kind === 'NOTIF'
             const tipo = isNotif ? item.tipo : item.tipo
             return (
-              <Card key={item.ref} variant="elevated" className={`flex items-start justify-between gap-3 ${isNotif && item.lida ? 'opacity-60' : ''}`}>
+              <Card key={item.ref} variant="elevated" className={`flex items-start justify-between gap-3 ${isNotif && !item.lida ? 'border-l-2 border-l-accent' : isNotif && item.lida ? 'opacity-60' : ''}`}>
                 <div className="flex gap-2 min-w-0">
                   <div className="mt-0.5 shrink-0">{TIPO_ICON[tipo] ?? <Bell size={16} className="text-text-muted" />}</div>
                   <div className="min-w-0">
@@ -96,9 +96,14 @@ export function PendenciasPage() {
                       <Link2 size={15} />
                     </Button>
                   )}
-                  {isNotif && !item.lida && (
-                    <Button variant="ghost" size="sm" iconOnly aria-label="Marcar como lida" onClick={() => markRead.mutate(item.ref)}>
-                      <Check size={16} />
+                  {isNotif && (
+                    <Button
+                      variant="ghost" size="sm" iconOnly
+                      aria-label={item.lida ? 'Já lida' : 'Marcar como lida'}
+                      disabled={item.lida}
+                      onClick={() => !item.lida && markRead.mutate(item.ref)}
+                    >
+                      <Mail size={16} />
                     </Button>
                   )}
                   {!isNotif && (

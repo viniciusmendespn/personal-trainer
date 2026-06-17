@@ -105,10 +105,10 @@ def vincular_exercicio_midia(body: VincularMidiaBody, personal_id: str = Depends
 def central(personal_id: str = Depends(get_current_personal_id)):
     notifs, _ = notif_service.listar(personal_id)
     pendencias = alerta_service.list_pendencias(personal_id)
-    unread_notifs = [n for n in notifs if not n.get("lida")]
     items = sorted(
-        [{**n, "kind": "NOTIF"} for n in unread_notifs] + [{**p, "kind": "PENDENCIA"} for p in pendencias],
+        [{**n, "kind": "NOTIF"} for n in notifs] + [{**p, "kind": "PENDENCIA"} for p in pendencias],
         key=lambda x: x.get("data_hora", ""),
         reverse=True,
     )
-    return {"items": items, "total": len(unread_notifs) + len(pendencias)}
+    unread_count = sum(1 for n in notifs if not n.get("lida"))
+    return {"items": items, "total": unread_count + len(pendencias)}

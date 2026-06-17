@@ -34,8 +34,22 @@ export function ChatInputBar({
     setText('')
   }
 
+  const showSuggestion = !!onSendDireto && text.startsWith('@') && !DIRETO_PREFIX.test(text)
+
   return (
-    <form onSubmit={submit} className="flex items-center gap-2 px-3 py-2 border-t border-border bg-surface shrink-0">
+    <div className="border-t border-border bg-surface shrink-0">
+      {showSuggestion && (
+        <div className="px-3 pt-2">
+          <button
+            type="button"
+            onMouseDown={(e) => { e.preventDefault(); setText('@personal ') }}
+            className="text-xs px-2 py-0.5 rounded-full bg-energy/10 border border-energy/30 text-energy hover:bg-energy/20"
+          >
+            @personal
+          </button>
+        </div>
+      )}
+    <form onSubmit={submit} className="flex items-center gap-2 px-3 py-2">
       {onAttach && (
         <>
           <input
@@ -76,5 +90,6 @@ export function ChatInputBar({
         <Send size={16} />
       </Button>
     </form>
+    </div>
   )
 }
