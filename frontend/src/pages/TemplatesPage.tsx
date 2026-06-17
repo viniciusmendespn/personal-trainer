@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Trash2, Users, LayoutTemplate, Dumbbell, Pencil, Plus, X } from 'lucide-react'
 import { useAlunos } from '../hooks/useAlunos'
 import { useTemplates, useDeleteTemplate, useUpdateTemplate, useAplicarTemplate } from '../hooks/useTemplates'
-import { Button, Card, Input, Select, Textarea, Spinner, Modal, EmptyState, Badge, useToast } from '../components/ui'
+import { Button, Card, Input, Select, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm } from '../components/ui'
 import type { ExercicioTemplate, TreinoTemplate } from '../types'
 
 const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
@@ -48,6 +48,17 @@ export function TemplatesPage() {
 
 function TemplateCard({ template, onApply, onEdit }: { template: TreinoTemplate; onApply: () => void; onEdit: () => void }) {
   const del = useDeleteTemplate()
+  const confirm = useConfirm()
+
+  async function remove() {
+    const ok = await confirm({
+      title: 'Excluir template',
+      message: `Excluir o template "${template.nome}"? Alunos que já o receberam não são afetados.`,
+      confirmLabel: 'Excluir', tone: 'danger',
+    })
+    if (ok) del.mutate(template.template_id)
+  }
+
   return (
     <Card variant="elevated">
       <div className="flex items-start justify-between gap-2">
@@ -59,7 +70,7 @@ function TemplateCard({ template, onApply, onEdit }: { template: TreinoTemplate;
           <Button variant="ghost" size="sm" iconOnly aria-label="Editar template" onClick={onEdit}>
             <Pencil size={15} />
           </Button>
-          <Button variant="ghost" size="sm" iconOnly aria-label="Excluir template" onClick={() => del.mutate(template.template_id)} className="hover:text-danger">
+          <Button variant="ghost" size="sm" iconOnly aria-label="Excluir template" onClick={remove} className="hover:text-danger">
             <Trash2 size={15} />
           </Button>
         </div>

@@ -8,7 +8,7 @@ import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
-import { Button, Card, Input, Select, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, useToast } from '../components/ui'
+import { Button, Card, Input, Select, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, useToast, useConfirm } from '../components/ui'
 import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
@@ -25,6 +25,7 @@ export function AlunoDetailPage() {
   const createTreino = useCreateTreino(alunoId)
   const updateAluno = useUpdateAluno(alunoId)
   const deleteAluno = useDeleteAluno()
+  const confirm = useConfirm()
   const [tab, setTab] = useState<'perfil' | 'treinos'>('treinos')
   const [showAddTreino, setShowAddTreino] = useState(false)
   const [nome, setNome] = useState('')
@@ -71,7 +72,12 @@ export function AlunoDetailPage() {
     setEditing(false)
   }
   async function remove() {
-    if (!confirm('Excluir este aluno?')) return
+    const ok = await confirm({
+      title: 'Excluir aluno',
+      message: `Excluir ${aluno?.nome ?? 'este aluno'}? Treinos, histórico e mídias serão perdidos permanentemente.`,
+      confirmLabel: 'Excluir', tone: 'danger',
+    })
+    if (!ok) return
     await deleteAluno.mutateAsync(alunoId)
     navigate('/alunos')
   }
@@ -282,6 +288,7 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
   const updTreino = useUpdateTreino(alunoId)
   const saveAsTemplate = useCreateTemplateFromTreino()
   const { show } = useToast()
+  const confirm = useConfirm()
   const { data: exs } = useExercicios(alunoId, open ? treino.treino_id : '')
   const { data: biblioteca } = useBiblioteca()
   const createEx = useCreateExercicio(alunoId, treino.treino_id)
@@ -293,6 +300,34 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
   async function addEx(body: ExercicioCreate) {
     await createEx.mutateAsync({ ...body, ordem: (exs?.length ?? 0) + 1 })
     setAddingEx(false)
+  }
+
+  async function salvarComoTemplate() {
+    if (open && exs && exs.length === 0) {
+      show('Este treino não tem exercícios — adicione ao menos um antes de salvar como template.', 'error')
+      return
+    }
+    const ok = await confirm({
+      title: 'Salvar como template',
+      message: `Salvar "${treino.nome}" como template reutilizável? Você poderá aplicá-lo a outros alunos em "Templates".`,
+      confirmLabel: 'Salvar',
+    })
+    if (!ok) return
+    try {
+      await saveAsTemplate.mutateAsync({ alunoId, treinoId: treino.treino_id, nome: treino.nome })
+      show('Template salvo. Veja em "Templates".', 'success')
+    } catch (err: any) {
+      show(err?.response?.data?.detail ?? 'Não foi possível salvar o template.', 'error')
+    }
+  }
+
+  async function removerTreino() {
+    const ok = await confirm({
+      title: 'Excluir treino',
+      message: `Excluir "${treino.nome}"? Todos os exercícios e o histórico de execução desse treino serão perdidos.`,
+      confirmLabel: 'Excluir', tone: 'danger',
+    })
+    if (ok) delTreino.mutate(treino.treino_id)
   }
 
   async function saveTreino(e: React.FormEvent) {
@@ -328,16 +363,13 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
         <div className="flex items-center gap-1 shrink-0">
           <Button
             variant="ghost" size="sm" iconOnly aria-label="Salvar como template"
-            onClick={async () => {
-              await saveAsTemplate.mutateAsync({ alunoId, treinoId: treino.treino_id, nome: treino.nome })
-              show('Template salvo. Veja em "Templates".', 'success')
-            }}
+            onClick={salvarComoTemplate}
             disabled={saveAsTemplate.isPending}
           >
             <LayoutTemplate size={15} />
           </Button>
           <Button variant="ghost" size="sm" iconOnly aria-label="Editar treino" onClick={() => setEditT(true)}><Pencil size={15} /></Button>
-          <Button variant="ghost" size="sm" iconOnly aria-label="Excluir treino" onClick={() => delTreino.mutate(treino.treino_id)} className="hover:text-danger"><Trash2 size={16} /></Button>
+          <Button variant="ghost" size="sm" iconOnly aria-label="Excluir treino" onClick={removerTreino} className="hover:text-danger"><Trash2 size={16} /></Button>
         </div>
       </div>
 
@@ -463,11 +495,21 @@ function ExercicioRow({
   const [edit, setEdit] = useState(false)
   const upd = useUpdateExercicio(alunoId, treinoId)
   const del = useDeleteExercicio(alunoId, treinoId)
+  const confirm = useConfirm()
   const { data: midias, isLoading: loadingMidia } = useMidiaExercicio(alunoId, ex.exercicio_id, edit)
 
   async function save(body: ExercicioCreate) {
     await upd.mutateAsync({ exercicioId: ex.exercicio_id, body: { ...body, ordem: ex.ordem } })
     setEdit(false)
+  }
+
+  async function remove() {
+    const ok = await confirm({
+      title: 'Excluir exercício',
+      message: `Excluir "${ex.nome}"? O histórico de execução desse exercício será perdido.`,
+      confirmLabel: 'Excluir', tone: 'danger',
+    })
+    if (ok) del.mutate(ex.exercicio_id)
   }
 
   return (
@@ -487,7 +529,7 @@ function ExercicioRow({
         </span>
         <span className="flex gap-1 shrink-0">
           <Button variant="ghost" size="sm" iconOnly aria-label="Editar exercício" onClick={() => setEdit(true)}><Pencil size={13} /></Button>
-          <Button variant="ghost" size="sm" iconOnly aria-label="Excluir exercício" onClick={() => del.mutate(ex.exercicio_id)} className="hover:text-danger"><Trash2 size={14} /></Button>
+          <Button variant="ghost" size="sm" iconOnly aria-label="Excluir exercício" onClick={remove} className="hover:text-danger"><Trash2 size={14} /></Button>
         </span>
       </div>
 

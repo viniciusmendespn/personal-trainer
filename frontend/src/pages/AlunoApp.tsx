@@ -10,7 +10,7 @@ import { useAlunoChat, useSendAlunoChat, useSendDiretoAlunoChat } from '../hooks
 import { ChatThread } from '../components/chat/ChatThread'
 import { ChatInputBar } from '../components/chat/ChatInputBar'
 import { MediaTimeline } from '../components/media/MediaTimeline'
-import { Button, Card, Spinner, Input, Textarea, Select, Badge, StatCard, EmptyState, useToast } from '../components/ui'
+import { Button, Card, Spinner, Input, Textarea, Select, Badge, StatCard, EmptyState, useToast, useConfirm } from '../components/ui'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -177,6 +177,7 @@ function Hoje() {
 
 function SessaoTreino() {
   const qc = useQueryClient()
+  const confirm = useConfirm()
   const ses = useQuery({ queryKey: ['aluno-sessao-exs'], queryFn: alunoApi.sessaoExercicios, retry: false })
   const finish = useMutation({
     mutationFn: () => alunoApi.finish(),
@@ -221,7 +222,14 @@ function SessaoTreino() {
       </Button>
       <Button
         variant="outline" className="w-full" disabled={cancel.isPending}
-        onClick={() => { if (window.confirm('Cancelar este treino? Nada será registrado.')) cancel.mutate() }}
+        onClick={async () => {
+          const ok = await confirm({
+            title: 'Cancelar treino',
+            message: 'Cancelar este treino? Nada do que você fez nessa sessão será registrado.',
+            confirmLabel: 'Cancelar treino', cancelLabel: 'Voltar', tone: 'danger',
+          })
+          if (ok) cancel.mutate()
+        }}
       >
         {cancel.isPending ? 'Cancelando…' : 'Cancelar treino'}
       </Button>

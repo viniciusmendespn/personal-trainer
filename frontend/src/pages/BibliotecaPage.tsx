@@ -1,7 +1,7 @@
 import { useId, useMemo, useState } from 'react'
 import { Plus, Trash2, Video, Pencil, BookOpen, Search } from 'lucide-react'
 import { useBiblioteca, useCreateExLib, useUpdateExLib, useDeleteExLib } from '../hooks/useDominio'
-import { Button, Card, Input, Textarea, Spinner, EmptyState, Modal } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, EmptyState, Modal, useConfirm } from '../components/ui'
 import type { ExLibCreate } from '../api/biblioteca'
 import type { ExLib } from '../types'
 
@@ -105,10 +105,20 @@ function ExLibRow({ ex, grupos }: { ex: ExLib; grupos: string[] }) {
   const [edit, setEdit] = useState(false)
   const upd = useUpdateExLib()
   const del = useDeleteExLib()
+  const confirm = useConfirm()
 
   async function save(body: ExLibCreate) {
     await upd.mutateAsync({ id: ex.exlib_id, body })
     setEdit(false)
+  }
+
+  async function remove() {
+    const ok = await confirm({
+      title: 'Remover da biblioteca',
+      message: `Remover "${ex.nome}" do catálogo? Treinos que já usam esse exercício não são afetados.`,
+      confirmLabel: 'Remover', tone: 'danger',
+    })
+    if (ok) del.mutate(ex.exlib_id)
   }
 
   return (
@@ -124,7 +134,7 @@ function ExLibRow({ ex, grupos }: { ex: ExLib; grupos: string[] }) {
       </div>
       <span className="flex gap-2 shrink-0">
         <Button variant="ghost" size="sm" iconOnly aria-label="Editar" onClick={() => setEdit(true)}><Pencil size={15} /></Button>
-        <Button variant="ghost" size="sm" iconOnly aria-label="Remover" onClick={() => del.mutate(ex.exlib_id)} className="hover:text-danger"><Trash2 size={15} /></Button>
+        <Button variant="ghost" size="sm" iconOnly aria-label="Remover" onClick={remove} className="hover:text-danger"><Trash2 size={15} /></Button>
       </span>
 
       <Modal open={edit} onClose={() => setEdit(false)} title="Editar exercício" size="lg">

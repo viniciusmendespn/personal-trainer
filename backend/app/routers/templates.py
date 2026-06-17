@@ -42,6 +42,8 @@ def create_template_from_treino(
     if not treino:
         raise HTTPException(404, "Treino não encontrado")
     exs = repo.query_pk(keys.pk_aluno(body.aluno_id), sk_prefix=keys.sk_exercicio_prefix(body.treino_id))
+    if not exs:
+        raise HTTPException(400, "Treino sem exercícios não pode ser salvo como template.")
     exs.sort(key=lambda e: e.get("ordem", 0))
     treino_clean = repo.clean(treino)
     exercicios = [ExercicioTemplate(**repo.clean(e)) for e in exs]

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Plus, ChevronLeft, ChevronRight, Calendar, Check, X, Trash2, Pencil, Dumbbell, CalendarDays } from 'lucide-react'
 import { useAlunos } from '../hooks/useAlunos'
 import { useAgenda, useCreateAgendamento, useUpdateAgendamento, useSetAgendamentoStatus, useDeleteAgendamento } from '../hooks/useAgenda'
-import { Button, Card, Input, Select, Modal, Badge, EmptyState, Spinner } from '../components/ui'
+import { Button, Card, Input, Select, Modal, Badge, EmptyState, Spinner, useConfirm } from '../components/ui'
 import type { Agendamento, AgendamentoCreate, AgendamentoStatus } from '../types'
 
 const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
@@ -131,8 +131,27 @@ export function AgendaPage() {
 function AgendamentoRow({ a, alunoNome }: { a: Agendamento; alunoNome?: string }) {
   const setStatus = useSetAgendamentoStatus()
   const del = useDeleteAgendamento()
+  const confirm = useConfirm()
   const [editOpen, setEditOpen] = useState(false)
   const hora = new Date(a.data_hora_inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+
+  async function cancelar() {
+    const ok = await confirm({
+      title: 'Cancelar agendamento',
+      message: `Cancelar o horário de ${alunoNome ?? 'este aluno'} às ${hora}?`,
+      confirmLabel: 'Cancelar agendamento', cancelLabel: 'Voltar', tone: 'danger',
+    })
+    if (ok) setStatus.mutate({ a, status: 'CANCELADO' })
+  }
+
+  async function remove() {
+    const ok = await confirm({
+      title: 'Excluir agendamento',
+      message: `Excluir o horário de ${alunoNome ?? 'este aluno'} às ${hora}?`,
+      confirmLabel: 'Excluir', tone: 'danger',
+    })
+    if (ok) del.mutate(a)
+  }
 
   return (
     <div className="flex items-center justify-between gap-2 text-sm border-b border-border last:border-0 pb-2 last:pb-0">
@@ -153,14 +172,14 @@ function AgendamentoRow({ a, alunoNome }: { a: Agendamento; alunoNome?: string }
           </Button>
         )}
         {(a.status === 'AGENDADO' || a.status === 'CONFIRMADO') && (
-          <Button variant="ghost" size="sm" iconOnly aria-label="Cancelar" onClick={() => setStatus.mutate({ a, status: 'CANCELADO' })} className="hover:text-danger">
+          <Button variant="ghost" size="sm" iconOnly aria-label="Cancelar" onClick={cancelar} className="hover:text-danger">
             <X size={14} />
           </Button>
         )}
         <Button variant="ghost" size="sm" iconOnly aria-label="Editar" onClick={() => setEditOpen(true)}>
           <Pencil size={14} />
         </Button>
-        <Button variant="ghost" size="sm" iconOnly aria-label="Excluir" onClick={() => { if (window.confirm('Excluir este agendamento?')) del.mutate(a) }} className="hover:text-danger">
+        <Button variant="ghost" size="sm" iconOnly aria-label="Excluir" onClick={remove} className="hover:text-danger">
           <Trash2 size={14} />
         </Button>
       </div>
