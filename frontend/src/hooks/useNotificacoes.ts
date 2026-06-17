@@ -1,8 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { notifApi } from '../api/notificacoes'
 
 export function useNotificacoes() {
-  return useQuery({ queryKey: ['notificacoes'], queryFn: notifApi.list })
+  const query = useInfiniteQuery({
+    queryKey: ['notificacoes'],
+    queryFn: ({ pageParam }: { pageParam?: string }) => notifApi.list({ cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+  })
+  return { ...query, data: query.data?.pages.flatMap((p) => p.items) }
 }
 
 export function useUnreadCount() {

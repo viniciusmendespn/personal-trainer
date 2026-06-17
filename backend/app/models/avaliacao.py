@@ -18,3 +18,14 @@ class Avaliacao(AvaliacaoCreate):
     avaliacao_id: str
     aluno_id: str
     created_at: str
+
+
+class AvaliacaoUpdate(BaseModel):
+    data: Optional[str] = None
+    peso: Optional[float] = None
+    altura_cm: Optional[float] = None
+    percentual_gordura: Optional[float] = None
+    medidas: Optional[dict[str, Any]] = None
+    observacoes: Optional[str] = None
+    fotos_s3_keys: Optional[list[str]] = None
+    bio_scan_s3_key: Optional[str] = None

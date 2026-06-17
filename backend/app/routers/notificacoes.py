@@ -19,8 +19,24 @@ class Ref(BaseModel):
 
 # ── Notificações ─────────────────────────────────────────────────────────────
 @router.get("/notificacoes")
-def listar(personal_id: str = Depends(get_current_personal_id)):
-    return notif_service.listar(personal_id)
+def listar(limit: int = 50, cursor: str | None = None, personal_id: str = Depends(get_current_personal_id)):
+    items, next_cursor = notif_service.listar(personal_id, limit, cursor)
+    return {"items": items, "next_cursor": next_cursor}
+
+
+@router.get("/notificacoes/item")
+def get_notif(ref: str, personal_id: str = Depends(get_current_personal_id)):
+    item = repo.get_item(keys.pk_personal(personal_id), ref)
+    if not item:
+        raise HTTPException(404, "Notificação não encontrada")
+    return {**repo.clean(item), "ref": ref}
+
+
+@router.delete("/notificacoes/item", status_code=204)
+def delete_notif(ref: str, personal_id: str = Depends(get_current_personal_id)):
+    ok = repo.delete_item_if_exists(keys.pk_personal(personal_id), ref)
+    if not ok:
+        raise HTTPException(404, "Notificação não encontrada")
 
 
 @router.get("/notificacoes/unread")
@@ -87,7 +103,7 @@ def vincular_exercicio_midia(body: VincularMidiaBody, personal_id: str = Depends
 # ── Central unificada (notificações + pendências, ordenado por data) ────────
 @router.get("/central")
 def central(personal_id: str = Depends(get_current_personal_id)):
-    notifs = notif_service.listar(personal_id)
+    notifs, _ = notif_service.listar(personal_id)
     pendencias = alerta_service.list_pendencias(personal_id)
     unread_notifs = [n for n in notifs if not n.get("lida")]
     items = sorted(

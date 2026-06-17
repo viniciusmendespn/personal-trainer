@@ -1,11 +1,35 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { alunosApi, type AlunoUpdate } from '../api/alunos'
 import type { AlunoCreate } from '../types'
 
 const KEY = ['alunos']
+const KEY_PAGE = ['alunos', 'page']
 
+function useAlunosInfinite(key: unknown[]) {
+  return useInfiniteQuery({
+    queryKey: key,
+    queryFn: ({ pageParam }: { pageParam?: string }) => alunosApi.list({ cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+  })
+}
+
+/** Roster completo do personal — carrega todas as páginas em segundo plano. Usar em
+ * seletores/pickers que precisam de todos os alunos (Agenda, Templates, Pendências, Chat). */
 export function useAlunos() {
-  return useQuery({ queryKey: KEY, queryFn: alunosApi.list })
+  const query = useAlunosInfinite(KEY)
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = query
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+  return { ...query, data: query.data?.pages.flatMap((p) => p.items) }
+}
+
+/** Lista paginada (1 página por vez) p/ a tela de Alunos, com "carregar mais". */
+export function useAlunosPaginated() {
+  const query = useAlunosInfinite(KEY_PAGE)
+  return { ...query, data: query.data?.pages.flatMap((p) => p.items) }
 }
 
 export function useAluno(id: string) {
@@ -16,7 +40,10 @@ export function useCreateAluno() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: AlunoCreate) => alunosApi.create(body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY })
+      qc.invalidateQueries({ queryKey: KEY_PAGE })
+    },
   })
 }
 
@@ -26,6 +53,7 @@ export function useUpdateAluno(id: string) {
     mutationFn: (body: AlunoUpdate) => alunosApi.update(id, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEY })
+      qc.invalidateQueries({ queryKey: KEY_PAGE })
       qc.invalidateQueries({ queryKey: ['aluno', id] })
     },
   })
@@ -35,6 +63,9 @@ export function useDeleteAluno() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => alunosApi.remove(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY })
+      qc.invalidateQueries({ queryKey: KEY_PAGE })
+    },
   })
 }

@@ -404,6 +404,25 @@ class Item(ItemCreate):
     updated_at: str
 ```
 
+### 4.7 Paginação cursor-based — coleções que escalam
+
+Usar quando a coleção cresce sem limite por usuário (séries temporais como chat/notificações,
+ou listas que escalam com a carteira do personal — ex.: alunos). Coleções pequenas/limitadas
+por aluno ou por personal (treinos, exercícios, avaliações, agenda, templates, biblioteca)
+continuam usando `query_pk` sem paginação — não vale a complexidade.
+
+`dynamo_repo.py`:
+```python
+def query_pk_page(
+    pk: str, sk_prefix: str, limit: int, cursor: str | None = None, forward: bool = True
+) -> tuple[list[dict], str | None]:
+    """Cursor opaco (LastEvaluatedKey codificado em base64). Retorna (items, next_cursor)."""
+```
+
+O router devolve `{"items": [...], "next_cursor": str | None}` (sem `response_model`
+genérico — mantém o padrão do resto do projeto, que não tipa a maioria das respostas de
+lista). Toda entidade nova com esse perfil de crescimento deve seguir esse mesmo formato.
+
 ---
 
 ## 5. DynamoDB — Single-Table Design
@@ -981,6 +1000,28 @@ export function useDeleteItem() {
   })
 }
 ```
+
+### 7.4.1 Paginação no frontend — useInfiniteQuery
+
+Para listas que usam `query_pk_page` no backend (§4.7), o hook usa `useInfiniteQuery` em vez
+de `useQuery`:
+
+```typescript
+const query = useInfiniteQuery({
+  queryKey: QUERY_KEY,
+  queryFn: ({ pageParam }: { pageParam?: string }) => itemsApi.list({ cursor: pageParam }),
+  initialPageParam: undefined as string | undefined,
+  getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+})
+const data = query.data?.pages.flatMap((p) => p.items)
+```
+
+UX de "carregar mais": botão (listas verticais simples, ex. Alunos) ou scroll infinito
+(threads de chat — disparar `fetchNextPage` ao rolar perto do topo, preservando a posição de
+scroll ao prepender). Se o mesmo dado também alimenta um seletor/picker que precisa do roster
+completo (ex.: lista de alunos usada em Agenda/Templates), usar uma `queryKey` separada que
+encadeia `fetchNextPage` automaticamente até `hasNextPage` ser `false` — mantém a tela
+principal paginada e os seletores com a lista completa, sem duplicar lógica de fetch.
 
 ### 7.5 auth/AuthProvider.tsx
 

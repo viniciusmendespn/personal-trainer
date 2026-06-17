@@ -57,6 +57,14 @@ def create_template_from_treino(
     return tpl
 
 
+@router.get("/{template_id}", response_model=TreinoTemplate)
+def get_template(template_id: str, personal_id: str = Depends(get_current_personal_id)):
+    item = repo.get_item(keys.pk_personal(personal_id), keys.sk_template(template_id))
+    if not item:
+        raise HTTPException(404, "Template não encontrado")
+    return TreinoTemplate(**repo.clean(item))
+
+
 @router.put("/{template_id}", response_model=TreinoTemplate)
 def update_template(
     template_id: str, body: TreinoTemplateCreate, personal_id: str = Depends(get_current_personal_id)

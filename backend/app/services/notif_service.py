@@ -17,9 +17,11 @@ def criar(personal_id: str, tipo: str, titulo: str, mensagem: str,
     return nid
 
 
-def listar(personal_id: str, limit: int = 50) -> list[dict]:
-    items = repo.query_pk_last_n(keys.pk_personal(personal_id), keys.NOTIF_PREFIX, limit)
-    return [{**repo.clean(i), "ref": i["SK"]} for i in items]
+def listar(personal_id: str, limit: int = 50, cursor: str | None = None) -> tuple[list[dict], str | None]:
+    items, next_cursor = repo.query_pk_page(
+        keys.pk_personal(personal_id), keys.NOTIF_PREFIX, limit, cursor, forward=False
+    )
+    return [{**repo.clean(i), "ref": i["SK"]} for i in items], next_cursor
 
 
 def nao_lidas(personal_id: str) -> int:

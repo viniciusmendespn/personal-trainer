@@ -1,11 +1,27 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { alunoChatApi } from '../api/alunoChat'
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { alunoChatApi, type ChatPage } from '../api/alunoChat'
 import type { ChatMensagem } from '../types'
 
 const KEY = ['aluno-chat']
 
 export function useAlunoChat() {
-  return useQuery({ queryKey: KEY, queryFn: () => alunoChatApi.history() })
+  const query = useInfiniteQuery({
+    queryKey: KEY,
+    queryFn: ({ pageParam }: { pageParam?: string }) => alunoChatApi.history({ cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+  })
+  // páginas vêm da mais recente p/ a mais antiga; inverter p/ exibir a thread em ordem cronológica
+  const messages = query.data?.pages.slice().reverse().flatMap((p) => p.items)
+  return { ...query, messages }
+}
+
+function appendOptimistic(qc: ReturnType<typeof useQueryClient>, optimistic: ChatMensagem) {
+  qc.setQueryData<{ pages: ChatPage[]; pageParams: unknown[] }>(KEY, (old) => {
+    if (!old) return old
+    const [mostRecent, ...rest] = old.pages
+    return { ...old, pages: [{ ...mostRecent, items: [...mostRecent.items, optimistic] }, ...rest] }
+  })
 }
 
 export function useSendAlunoChat() {
@@ -13,7 +29,7 @@ export function useSendAlunoChat() {
   return useMutation({
     mutationFn: (text: string) => alunoChatApi.send(text),
     onMutate: (text: string) => {
-      const optimistic: ChatMensagem = {
+      appendOptimistic(qc, {
         mensagem_id: `optimistic-${Date.now()}`,
         aluno_id: '',
         role: 'user',
@@ -21,8 +37,7 @@ export function useSendAlunoChat() {
         ator: 'ALUNO',
         canal_origem: 'PORTAL',
         data_hora: new Date().toISOString(),
-      }
-      qc.setQueryData<ChatMensagem[]>(KEY, (old) => [...(old ?? []), optimistic])
+      })
     },
     onSettled: () => qc.invalidateQueries({ queryKey: KEY }),
   })
@@ -33,7 +48,7 @@ export function useSendDiretoAlunoChat() {
   return useMutation({
     mutationFn: (text: string) => alunoChatApi.sendDireto(text),
     onMutate: (text: string) => {
-      const optimistic: ChatMensagem = {
+      appendOptimistic(qc, {
         mensagem_id: `optimistic-${Date.now()}`,
         aluno_id: '',
         role: 'user',
@@ -42,8 +57,7 @@ export function useSendDiretoAlunoChat() {
         canal_origem: 'PORTAL',
         data_hora: new Date().toISOString(),
         direto: true,
-      }
-      qc.setQueryData<ChatMensagem[]>(KEY, (old) => [...(old ?? []), optimistic])
+      })
     },
     onSettled: () => qc.invalidateQueries({ queryKey: KEY }),
   })

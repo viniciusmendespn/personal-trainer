@@ -24,6 +24,14 @@ def create_exlib(body: ExLibCreate, personal_id: str = Depends(get_current_perso
     return ex
 
 
+@router.get("/{exlib_id}", response_model=ExLib)
+def get_exlib(exlib_id: str, personal_id: str = Depends(get_current_personal_id)):
+    item = repo.get_item(keys.pk_personal(personal_id), keys.sk_exlib(exlib_id))
+    if not item:
+        raise HTTPException(404, "Exercício não encontrado")
+    return ExLib(**repo.clean(item))
+
+
 @router.put("/{exlib_id}", response_model=ExLib)
 def update_exlib(exlib_id: str, body: ExLibCreate, personal_id: str = Depends(get_current_personal_id)):
     updated = repo.update_item_if_exists(keys.pk_personal(personal_id), keys.sk_exlib(exlib_id), body.model_dump())

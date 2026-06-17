@@ -22,8 +22,16 @@ export interface Pendencia {
   payload?: { midia_id?: string; s3_key?: string; tipo?: string; [key: string]: unknown }
 }
 
+export interface NotificacaoPage {
+  items: Notificacao[]
+  next_cursor: string | null
+}
+
 export const notifApi = {
-  list: () => api.get<Notificacao[]>('/v1/notificacoes').then((r) => r.data),
+  list: (params: { cursor?: string; limit?: number } = {}) =>
+    api.get<NotificacaoPage>('/v1/notificacoes', { params }).then((r) => r.data),
+  get: (ref: string) => api.get<Notificacao>('/v1/notificacoes/item', { params: { ref } }).then((r) => r.data),
+  remove: (ref: string) => api.delete('/v1/notificacoes/item', { params: { ref } }),
   unread: () => api.get<{ count: number }>('/v1/notificacoes/unread').then((r) => r.data),
   read: (ref: string) => api.post('/v1/notificacoes/read', { ref }),
   readAll: () => api.post('/v1/notificacoes/read-all'),

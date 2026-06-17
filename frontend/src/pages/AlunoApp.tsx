@@ -92,7 +92,7 @@ export function AlunoApp() {
 }
 
 function ChatTab() {
-  const { data: messages, isLoading } = useAlunoChat()
+  const { messages, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useAlunoChat()
   const send = useSendAlunoChat()
   const sendDireto = useSendDiretoAlunoChat()
   const { show } = useToast()
@@ -101,7 +101,15 @@ function ChatTab() {
       className="flex flex-col"
       style={{ height: 'calc(100vh - 4rem - 4.5rem - env(safe-area-inset-bottom))' }}
     >
-      <ChatThread messages={messages ?? []} isLoading={isLoading} isSending={send.isPending} viewerRole="ALUNO" />
+      <ChatThread
+        messages={messages ?? []}
+        isLoading={isLoading}
+        isSending={send.isPending}
+        viewerRole="ALUNO"
+        onLoadMore={() => fetchNextPage()}
+        hasMore={hasNextPage}
+        isLoadingMore={isFetchingNextPage}
+      />
       <ChatInputBar
         onSend={(text) => send.mutate(text)}
         onSendDireto={(text) => sendDireto.mutate(text, { onSuccess: () => show('Enviado direto pro seu personal.', 'success') })}

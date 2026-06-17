@@ -3,6 +3,8 @@ quentes). Primitivos genéricos — sem read-before-write (ESPEC §3 / ARCHITECT
 
 Sanitização: DynamoDB (boto3 resource) não aceita float — convertemos float->Decimal na
 escrita e Decimal->int/float na leitura."""
+import base64
+import json
 from decimal import Decimal
 
 import boto3
@@ -74,6 +76,31 @@ def query_pk_last_n(pk: str, sk_prefix: str, limit: int) -> list[dict]:
     cond = Key("PK").eq(pk) & Key("SK").begins_with(sk_prefix)
     resp = _get_table().query(KeyConditionExpression=cond, ScanIndexForward=False, Limit=limit)
     return resp.get("Items", [])
+
+
+def _encode_cursor(key: dict) -> str:
+    return base64.urlsafe_b64encode(json.dumps(key).encode()).decode()
+
+
+def _decode_cursor(cursor: str) -> dict:
+    return json.loads(base64.urlsafe_b64decode(cursor.encode()).decode())
+
+
+def query_pk_page(
+    pk: str, sk_prefix: str, limit: int, cursor: str | None = None, forward: bool = True
+) -> tuple[list[dict], str | None]:
+    """Paginação cursor-based — usar em coleções que crescem sem limite por usuário
+    (séries temporais como chat/notificações, ou listas que escalam com a carteira do
+    personal). `cursor` é opaco (carrega o LastEvaluatedKey codificado); coleções pequenas/
+    limitadas por aluno ou personal continuam usando `query_pk` sem paginação."""
+    cond = Key("PK").eq(pk) & Key("SK").begins_with(sk_prefix)
+    kwargs: dict = {"KeyConditionExpression": cond, "ScanIndexForward": forward, "Limit": limit}
+    if cursor:
+        kwargs["ExclusiveStartKey"] = _decode_cursor(cursor)
+    resp = _get_table().query(**kwargs)
+    last_key = resp.get("LastEvaluatedKey")
+    next_cursor = _encode_cursor(last_key) if last_key else None
+    return resp.get("Items", []), next_cursor
 
 
 def query_between(pk: str, sk_low: str, sk_high: str) -> list[dict]:

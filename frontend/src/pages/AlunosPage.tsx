@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, ChevronRight, Search, Users } from 'lucide-react'
-import { useAlunos, useCreateAluno } from '../hooks/useAlunos'
+import { useAlunosPaginated, useCreateAluno } from '../hooks/useAlunos'
 import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState } from '../components/ui'
 
 export function AlunosPage() {
-  const { data: alunos, isLoading } = useAlunos()
+  const { data: alunos, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useAlunosPaginated()
   const create = useCreateAluno()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -101,21 +101,30 @@ export function AlunosPage() {
       ) : !filtered?.length ? (
         <p className="text-text-muted text-sm">Nenhum aluno encontrado para "{query}".</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filtered.map((a) => (
-            <Link key={a.aluno_id} to={`/alunos/${a.aluno_id}`}>
-              <Card variant="elevated" className="flex items-center gap-3 hover:border-accent/50 transition-colors h-full">
-                <Avatar name={a.nome} />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium truncate">{a.nome}</p>
-                  <p className="text-xs text-text-muted truncate">{a.telefone}</p>
-                  <Badge tone={a.status === 'ATIVO' ? 'success' : 'neutral'} className="mt-1">{a.status}</Badge>
-                </div>
-                <ChevronRight size={18} className="text-text-muted shrink-0" />
-              </Card>
-            </Link>
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filtered.map((a) => (
+              <Link key={a.aluno_id} to={`/alunos/${a.aluno_id}`}>
+                <Card variant="elevated" className="flex items-center gap-3 hover:border-accent/50 transition-colors h-full">
+                  <Avatar name={a.nome} />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{a.nome}</p>
+                    <p className="text-xs text-text-muted truncate">{a.telefone}</p>
+                    <Badge tone={a.status === 'ATIVO' ? 'success' : 'neutral'} className="mt-1">{a.status}</Badge>
+                  </div>
+                  <ChevronRight size={18} className="text-text-muted shrink-0" />
+                </Card>
+              </Link>
+            ))}
+          </div>
+          {hasNextPage && !query && (
+            <div className="flex justify-center mt-4">
+              <Button variant="ghost" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+                {isFetchingNextPage ? 'Carregando…' : 'Carregar mais'}
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

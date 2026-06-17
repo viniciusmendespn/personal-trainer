@@ -31,9 +31,9 @@ def _pointer(aluno: dict) -> dict:
 
 
 @router.get("")
-def list_alunos(personal_id: str = Depends(get_current_personal_id)):
-    items = repo.query_pk(keys.pk_personal(personal_id), sk_prefix="ALUNO#")
-    return repo.clean_all(items)
+def list_alunos(limit: int = 50, cursor: str | None = None, personal_id: str = Depends(get_current_personal_id)):
+    items, next_cursor = repo.query_pk_page(keys.pk_personal(personal_id), "ALUNO#", limit, cursor)
+    return {"items": repo.clean_all(items), "next_cursor": next_cursor}
 
 
 @router.post("", response_model=Aluno, status_code=201)

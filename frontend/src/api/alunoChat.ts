@@ -1,9 +1,14 @@
 import { alunoClient } from './alunoClient'
 import type { ChatMensagem } from '../types'
 
+export interface ChatPage {
+  items: ChatMensagem[]
+  next_cursor: string | null
+}
+
 export const alunoChatApi = {
-  history: (limit = 50) =>
-    alunoClient.get<ChatMensagem[]>('/v1/aluno/chat', { params: { limit } }).then((r) => r.data),
+  history: (params: { cursor?: string; limit?: number } = {}) =>
+    alunoClient.get<ChatPage>('/v1/aluno/chat', { params }).then((r) => r.data),
   send: (text: string) =>
     alunoClient.post<{ reply: string }>('/v1/aluno/chat', { text }).then((r) => r.data),
   sendDireto: (text: string) =>

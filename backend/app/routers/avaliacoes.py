@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from app.dependencies import get_current_personal_id
-from app.models.avaliacao import Avaliacao, AvaliacaoCreate
+from app.models.avaliacao import Avaliacao, AvaliacaoCreate, AvaliacaoUpdate
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import authz, media_service
@@ -49,6 +49,20 @@ def create_avaliacao(aluno_id: str, body: AvaliacaoCreate, personal_id: str = De
                    **{**body.model_dump(), "data": body.data or now})
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_avaliacao(epoch_ms(), av.avaliacao_id), av.model_dump())
     return av
+
+
+@router.put("/{ts_id}")
+def update_avaliacao(
+    aluno_id: str, ts_id: str, body: AvaliacaoUpdate, personal_id: str = Depends(get_current_personal_id)
+):
+    """ts_id = '{ts}#{avaliacao_id}' (do SK)."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    updated = repo.update_item_if_exists(
+        keys.pk_aluno(aluno_id), f"AVAL#{ts_id}", body.model_dump(exclude_none=True)
+    )
+    if updated is None:
+        raise HTTPException(404, "Avaliação não encontrada")
+    return _with_view_urls(updated)
 
 
 @router.delete("/{ts_id}", status_code=204)

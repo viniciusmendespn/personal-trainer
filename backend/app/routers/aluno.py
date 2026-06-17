@@ -178,8 +178,9 @@ def relato(body: RelatoBody, ctx: dict = Depends(get_current_aluno)):
 
 
 @router.get("/chat")
-def chat_history(limit: int = 50, ctx: dict = Depends(get_current_aluno)):
-    return agent_service.list_chat_msgs(ctx["aluno_id"], limit)
+def chat_history(limit: int = 50, cursor: str | None = None, ctx: dict = Depends(get_current_aluno)):
+    items, next_cursor = agent_service.list_chat_msgs(ctx["aluno_id"], limit, cursor)
+    return {"items": items, "next_cursor": next_cursor}
 
 
 @router.post("/chat")

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { Bot, User, UserCog, Pin } from 'lucide-react'
 import { Spinner } from '../ui'
 import { renderMarkdownLite } from './markdownLite'
@@ -10,6 +10,9 @@ interface ChatThreadProps {
   isSending?: boolean
   viewerRole: Ator
   alunoNome?: string
+  onLoadMore?: () => void
+  hasMore?: boolean
+  isLoadingMore?: boolean
 }
 
 function formatHora(iso: string) {
@@ -61,16 +64,47 @@ function Bubble({ msg, viewerRole, alunoNome }: { msg: ChatMensagem; viewerRole:
   )
 }
 
-export function ChatThread({ messages, isLoading, isSending, viewerRole, alunoNome }: ChatThreadProps) {
+export function ChatThread({
+  messages, isLoading, isSending, viewerRole, alunoNome, onLoadMore, hasMore, isLoadingMore,
+}: ChatThreadProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const prevScrollHeight = useRef(0)
+  const loadingMoreRef = useRef(false)
+
+  // auto-rola pro fim em mensagem nova — não quando a mudança foi carregar histórico antigo
   useEffect(() => {
+    if (loadingMoreRef.current) {
+      loadingMoreRef.current = false
+      return
+    }
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages.length, isSending])
+
+  // ao prepender mensagens antigas, mantém a posição visual (compensa a altura inserida no topo)
+  useLayoutEffect(() => {
+    const el = containerRef.current
+    if (!el || !loadingMoreRef.current) return
+    el.scrollTop += el.scrollHeight - prevScrollHeight.current
+  }, [messages])
+
+  function handleScroll() {
+    const el = containerRef.current
+    if (!el || !onLoadMore || !hasMore || isLoadingMore) return
+    if (el.scrollTop < 80) {
+      loadingMoreRef.current = true
+      prevScrollHeight.current = el.scrollHeight
+      onLoadMore()
+    }
+  }
 
   if (isLoading) return <div className="flex-1 flex items-center justify-center"><Spinner /></div>
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+    <div ref={containerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+      {isLoadingMore && (
+        <div className="flex justify-center py-1"><Spinner className="w-4 h-4" /></div>
+      )}
       {!messages.length && (
         <p className="text-center text-xs text-text-muted mt-8">Nenhuma mensagem ainda. Diga olá!</p>
       )}

@@ -63,7 +63,16 @@ export function ChatWidget() {
         </div>
       ) : (
         <>
-          <ChatThread messages={history.data ?? []} isLoading={history.isLoading} isSending={send.isPending} viewerRole="PERSONAL" alunoNome={aluno?.nome} />
+          <ChatThread
+            messages={history.messages ?? []}
+            isLoading={history.isLoading}
+            isSending={send.isPending}
+            viewerRole="PERSONAL"
+            alunoNome={aluno?.nome}
+            onLoadMore={() => history.fetchNextPage()}
+            hasMore={history.hasNextPage}
+            isLoadingMore={history.isFetchingNextPage}
+          />
           <ChatInputBar onSend={(text) => send.mutate(text)} disabled={send.isPending} />
         </>
       )}

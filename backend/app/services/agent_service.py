@@ -51,9 +51,11 @@ def log_direct(aluno_id: str, text: str, ator: Ator, canal: CanalOrigem) -> None
     _write_chat_msg(aluno_id, "user", text, ator, canal, direto=True)
 
 
-def list_chat_msgs(aluno_id: str, limit: int = 50) -> list[dict]:
-    items = repo.query_pk_last_n(keys.pk_aluno(aluno_id), keys.CHAT_MSG_PREFIX, limit)
-    return list(reversed(repo.clean_all(items)))  # mais antiga primeiro, p/ renderizar a thread
+def list_chat_msgs(aluno_id: str, limit: int = 50, cursor: str | None = None) -> tuple[list[dict], str | None]:
+    items, next_cursor = repo.query_pk_page(
+        keys.pk_aluno(aluno_id), keys.CHAT_MSG_PREFIX, limit, cursor, forward=False
+    )
+    return list(reversed(repo.clean_all(items))), next_cursor  # mais antiga primeiro, p/ renderizar a thread
 
 
 def handle_chat_turn(personal_id: str, aluno_id: str, text: str, ator: Ator) -> str:

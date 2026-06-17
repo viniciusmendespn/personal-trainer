@@ -15,9 +15,13 @@ class ChatBody(BaseModel):
 
 
 @router.get("")
-def chat_history(aluno_id: str, limit: int = 50, personal_id: str = Depends(get_current_personal_id)):
+def chat_history(
+    aluno_id: str, limit: int = 50, cursor: str | None = None,
+    personal_id: str = Depends(get_current_personal_id),
+):
     authz.authorize_aluno(personal_id, aluno_id)
-    return agent_service.list_chat_msgs(aluno_id, limit)
+    items, next_cursor = agent_service.list_chat_msgs(aluno_id, limit, cursor)
+    return {"items": items, "next_cursor": next_cursor}
 
 
 @router.post("")
