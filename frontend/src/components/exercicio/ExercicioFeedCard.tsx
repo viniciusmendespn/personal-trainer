@@ -1,12 +1,23 @@
-import { AlertTriangle, HelpCircle, Wrench, MessageSquare } from 'lucide-react'
+import { AlertTriangle, HelpCircle, Wrench } from 'lucide-react'
+import { ThreadRelato } from '../notificacoes/ThreadRelato'
 import type { FeedItem } from '../../api/treinos'
 
 function fmtDt(iso: string) {
   return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
-function RelatoItem({ item }: { item: FeedItem }) {
+function RelatoItem({
+  item,
+  viewerAtor,
+  onAddComentario,
+}: {
+  item: FeedItem
+  viewerAtor?: 'ALUNO' | 'PERSONAL'
+  onAddComentario?: (relatoSk: string, texto: string) => Promise<void>
+}) {
   const isDor = item.tipo === 'DOR'
+  const showThread = !!viewerAtor && !!onAddComentario && !!item.relato_sk
+
   return (
     <div className={`rounded-lg p-2.5 space-y-1.5 ${isDor ? 'bg-danger/10 border border-danger/20' : 'bg-info/10 border border-info/20'}`}>
       <div className="flex items-center gap-1.5">
@@ -18,15 +29,26 @@ function RelatoItem({ item }: { item: FeedItem }) {
         </span>
         <span className="text-[10px] text-text-muted ml-auto">{fmtDt(item.data_hora)}</span>
       </div>
-      <p className="text-xs text-text-secondary">{item.descricao}</p>
-      {item.respondido && item.resposta_texto && (
-        <div className="mt-1 pl-2 border-l-2 border-accent/40">
-          <p className="text-[10px] text-text-muted mb-0.5 flex items-center gap-1">
-            <MessageSquare size={10} /> Personal respondeu
-            {item.respondido_em && <span className="ml-1">· {fmtDt(item.respondido_em)}</span>}
-          </p>
-          <p className="text-xs text-text">{item.resposta_texto}</p>
-        </div>
+      {showThread ? (
+        <ThreadRelato
+          descricao={item.descricao ?? ''}
+          descricaoDataHora={item.data_hora}
+          comentarios={item.comentarios}
+          viewerAtor={viewerAtor!}
+          onAddComentario={(texto) => onAddComentario!(item.relato_sk!, texto)}
+        />
+      ) : (
+        <>
+          <p className="text-xs text-text-secondary">{item.descricao}</p>
+          {item.respondido && item.resposta_texto && (
+            <div className="mt-1 pl-2 border-l-2 border-accent/40">
+              <p className="text-[10px] text-text-muted mb-0.5">
+                Personal respondeu{item.respondido_em && <span> · {fmtDt(item.respondido_em)}</span>}
+              </p>
+              <p className="text-xs text-text">{item.resposta_texto}</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
@@ -46,12 +68,7 @@ function CorrecaoItem({ item }: { item: FeedItem }) {
           {item.midias.map((m, i) =>
             m.url ? (
               m.tipo.startsWith('video') || m.tipo.includes('video') ? (
-                <video
-                  key={i}
-                  src={m.url}
-                  controls
-                  className="rounded-lg max-h-40 max-w-[180px] border border-border"
-                />
+                <video key={i} src={m.url} controls className="rounded-lg max-h-40 max-w-[180px] border border-border" />
               ) : (
                 <a key={i} href={m.url} target="_blank" rel="noreferrer">
                   <img src={m.url} alt="correção" className="rounded-lg max-h-40 max-w-[180px] border border-border object-cover" />
@@ -68,9 +85,11 @@ function CorrecaoItem({ item }: { item: FeedItem }) {
 interface Props {
   items: FeedItem[]
   emptyText?: string
+  viewerAtor?: 'ALUNO' | 'PERSONAL'
+  onAddComentario?: (relatoSk: string, texto: string) => Promise<void>
 }
 
-export function ExercicioFeedCard({ items, emptyText }: Props) {
+export function ExercicioFeedCard({ items, emptyText, viewerAtor, onAddComentario }: Props) {
   if (!items.length) {
     if (emptyText) return <p className="text-xs text-text-muted py-1">{emptyText}</p>
     return null
@@ -80,7 +99,7 @@ export function ExercicioFeedCard({ items, emptyText }: Props) {
       {items.map((item, i) =>
         item.tipo === 'CORRECAO'
           ? <CorrecaoItem key={item.correcao_id ?? i} item={item} />
-          : <RelatoItem key={i} item={item} />,
+          : <RelatoItem key={item.relato_sk ?? i} item={item} viewerAtor={viewerAtor} onAddComentario={onAddComentario} />,
       )}
     </div>
   )

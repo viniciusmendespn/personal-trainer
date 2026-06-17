@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.dependencies import get_current_personal_id
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import alerta_service, authz, media_service, notif_service
+from app.services import alerta_service, anotif_service, authz, media_service, notif_service
+from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1", tags=["notificacoes"])
 
@@ -65,6 +66,49 @@ def read(body: RefBody, personal_id: str = Depends(get_current_personal_id)):
 @router.post("/notificacoes/read-all")
 def read_all(personal_id: str = Depends(get_current_personal_id)):
     return {"marcadas": notif_service.marcar_todas(personal_id)}
+
+
+@router.get("/notificacoes/relato")
+def get_relato(ref: str, aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
+    """Retorna o item de dor ou dúvida vinculado a uma notificação, incluindo a thread de comentários."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    notif = repo.get_item(keys.pk_personal(personal_id), ref)
+    if not notif:
+        raise HTTPException(404, "Notificação não encontrada")
+    relato_sk = notif.get("relato_sk")
+    if not relato_sk:
+        raise HTTPException(400, "Notificação sem relato vinculado")
+    relato = repo.get_item(keys.pk_aluno(aluno_id), relato_sk)
+    if not relato:
+        raise HTTPException(404, "Relato não encontrado")
+    return {**repo.clean(relato), "relato_sk": relato_sk}
+
+
+class ComentarBody(BaseModel):
+    ref: str
+    texto: str
+    aluno_id: str
+
+
+@router.post("/notificacoes/comentar")
+def comentar_notif(body: ComentarBody, personal_id: str = Depends(get_current_personal_id)):
+    """Personal adiciona comentário em uma thread de dor ou dúvida via notificação."""
+    authz.authorize_aluno(personal_id, body.aluno_id)
+    notif = repo.get_item(keys.pk_personal(personal_id), body.ref)
+    if not notif:
+        raise HTTPException(404, "Notificação não encontrada")
+    relato_sk = notif.get("relato_sk")
+    if not relato_sk:
+        raise HTTPException(400, "Esta notificação não tem relato vinculado")
+    ok = alerta_service.adicionar_comentario(body.aluno_id, relato_sk, "PERSONAL", body.texto)
+    if not ok:
+        raise HTTPException(404, "Relato não encontrado")
+    exercicio_id = notif.get("exercicio_id")
+    tipo_notif = "DOR_RESPONDIDA" if relato_sk.startswith("DOR#") else "DUVIDA_RESPONDIDA"
+    anotif_service.criar(body.aluno_id, tipo_notif, "Resposta do seu personal",
+                         body.texto[:120] + ("…" if len(body.texto) > 120 else ""),
+                         ref_extra={"exercicio_id": exercicio_id, "relato_sk": relato_sk})
+    return {"ok": True}
 
 
 @router.post("/notificacoes/responder")

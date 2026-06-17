@@ -26,6 +26,8 @@ export interface AlunoNotificacao {
   lida: boolean
   data_hora: string
   ref_id?: string
+  exercicio_id?: string
+  relato_sk?: string
 }
 
 export interface SessaoHistorico {
@@ -134,6 +136,8 @@ export const alunoApi = {
     alunoClient.post('/v1/aluno/notificacoes/lida', { ref }).then((r) => r.data),
   feedExercicio: (exercicioId: string) =>
     alunoClient.get<FeedItem[]>(`/v1/aluno/exercicios/${exercicioId}/feed`).then((r) => r.data),
+  comentarRelato: (body: { relato_sk: string; texto: string }) =>
+    alunoClient.post('/v1/aluno/relato/comentar', body).then((r) => r.data),
 }
 
 /** Pede a presigned URL e sobe o arquivo direto pro S3, depois registra vinculado ao exercício. */

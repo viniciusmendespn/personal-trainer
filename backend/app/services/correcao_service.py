@@ -22,7 +22,7 @@ def criar_correcao(personal_id: str, aluno_id: str, exercicio_id: str,
     ex_nome = exercicio_nome or "um exercício"
     anotif_service.criar(aluno_id, "CORRECAO_EXERCICIO", "Correção do personal",
                          f"Seu personal postou uma correção em {ex_nome}.",
-                         ref_id=correcao_id)
+                         ref_extra={"ref_id": correcao_id, "exercicio_id": exercicio_id})
     return item
 
 
@@ -40,10 +40,12 @@ def feed_exercicio(aluno_id: str, exercicio_id: str) -> list[dict]:
     for i in dores:
         c = repo.clean(i)
         c["tipo"] = "DOR"
+        c["relato_sk"] = i["SK"]
         feed.append(c)
     for i in duvidas:
         c = repo.clean(i)
         c["tipo"] = "DUVIDA"
+        c["relato_sk"] = i["SK"]
         feed.append(c)
     for i in correcoes:
         c = repo.clean(i)

@@ -54,7 +54,7 @@ function useAlunoToken() {
   return token
 }
 
-function NotifBell() {
+function NotifBell({ onNavigate }: { onNavigate: (tab: 'evolucao' | 'historico', exId?: string) => void }) {
   const count = useQuery({
     queryKey: ['aluno-notif-count'],
     queryFn: alunoApi.notificacoesCount,
@@ -77,7 +77,7 @@ function NotifBell() {
           </span>
         )}
       </button>
-      {open && <NotifDrawer onClose={() => setOpen(false)} />}
+      {open && <NotifDrawer onClose={() => setOpen(false)} onNavigate={onNavigate} />}
     </>
   )
 }
@@ -89,7 +89,9 @@ const ANOTIF_ICON: Record<string, React.ReactNode> = {
   CORRECAO_EXERCICIO: <Wrench size={14} className="text-accent-hover" />,
 }
 
-function NotifDrawer({ onClose }: { onClose: () => void }) {
+const DEEP_LINK_TIPOS = ['DOR_RESPONDIDA', 'DUVIDA_RESPONDIDA', 'CORRECAO_EXERCICIO']
+
+function NotifDrawer({ onClose, onNavigate }: { onClose: () => void; onNavigate: (tab: 'evolucao' | 'historico', exId?: string) => void }) {
   const qc = useQueryClient()
   const notifs = useQuery({
     queryKey: ['aluno-notifs'],
@@ -97,10 +99,16 @@ function NotifDrawer({ onClose }: { onClose: () => void }) {
   })
   const items = notifs.data?.items ?? []
 
-  async function marcarLida(ref: string) {
-    await alunoApi.marcarNotificacaoLida(ref)
-    qc.invalidateQueries({ queryKey: ['aluno-notifs'] })
-    qc.invalidateQueries({ queryKey: ['aluno-notif-count'] })
+  async function handleClick(n: typeof items[number]) {
+    if (!n.lida) {
+      await alunoApi.marcarNotificacaoLida(n.ref)
+      qc.invalidateQueries({ queryKey: ['aluno-notifs'] })
+      qc.invalidateQueries({ queryKey: ['aluno-notif-count'] })
+    }
+    if (DEEP_LINK_TIPOS.includes(n.tipo) && n.exercicio_id) {
+      onNavigate('evolucao', n.exercicio_id)
+      onClose()
+    }
   }
 
   return (
@@ -124,13 +132,16 @@ function NotifDrawer({ onClose }: { onClose: () => void }) {
             <button
               key={n.ref}
               className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors hover:bg-white/5 ${n.lida ? 'opacity-60' : ''}`}
-              onClick={() => !n.lida && marcarLida(n.ref)}
+              onClick={() => handleClick(n)}
             >
               <div className="mt-0.5 shrink-0">{ANOTIF_ICON[n.tipo] ?? <Bell size={14} className="text-text-muted" />}</div>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-text leading-tight">{n.titulo}</p>
                 <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{n.mensagem}</p>
                 <p className="text-[10px] text-text-muted mt-1">{new Date(n.data_hora).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                {DEEP_LINK_TIPOS.includes(n.tipo) && n.exercicio_id && (
+                  <p className="text-[10px] text-accent-hover mt-0.5">Toque para ver no histórico</p>
+                )}
               </div>
               {!n.lida && <span className="w-2 h-2 rounded-full bg-energy shrink-0 mt-1.5" />}
             </button>
@@ -144,7 +155,13 @@ function NotifDrawer({ onClose }: { onClose: () => void }) {
 export function AlunoApp() {
   const token = useAlunoToken()
   const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'chat'>('hoje')
+  const [highlightExId, setHighlightExId] = useState<string | undefined>(undefined)
   const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false })
+
+  function handleNotifNavigate(dest: 'evolucao' | 'historico', exId?: string) {
+    setTab(dest)
+    if (exId) setHighlightExId(exId)
+  }
 
   if (!token) return <Centered>Abra o aplicativo pelo link enviado no seu WhatsApp.</Centered>
   if (me.isError) return <Centered>Seu link expirou. Peça um novo ao seu personal no WhatsApp.</Centered>
@@ -156,14 +173,16 @@ export function AlunoApp() {
     >
       <header className="px-4 pt-4 pb-2 shrink-0 flex items-center justify-between">
         <h1 className="font-display text-lg font-bold text-text">Olá, {me.data?.nome ?? 'aluno'} 👋</h1>
-        {token && <NotifBell />}
+        {token && <NotifBell onNavigate={handleNotifNavigate} />}
       </header>
       {tab === 'chat' ? (
         <ChatTab />
       ) : tab === 'historico' ? (
         <main className="px-4 flex-1"><HistoricoTab /></main>
       ) : (
-        <main className="px-4 flex-1">{tab === 'hoje' ? <Hoje /> : <Evolucao />}</main>
+        <main className="px-4 flex-1">
+          {tab === 'hoje' ? <Hoje /> : <Evolucao initialExId={highlightExId} />}
+        </main>
       )}
       <nav
         className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-surface-elevated/80 backdrop-blur-xl border-t border-border flex"
@@ -597,11 +616,16 @@ function HistoricoTab() {
   )
 }
 
-function Evolucao() {
+function Evolucao({ initialExId }: { initialExId?: string }) {
+  const qc = useQueryClient()
+  const { show } = useToast()
   const resumo = useQuery({ queryKey: ['aluno-resumo'], queryFn: alunoApi.resumo })
   const exs = useQuery({ queryKey: ['aluno-exs'], queryFn: alunoApi.listExercicios })
-  const [exId, setExId] = useState('')
-  useEffect(() => { if (!exId && exs.data?.length) setExId(exs.data[0].exercicio_id) }, [exs.data, exId])
+  const [exId, setExId] = useState(initialExId ?? '')
+  useEffect(() => {
+    if (initialExId) { setExId(initialExId); return }
+    if (!exId && exs.data?.length) setExId(exs.data[0].exercicio_id)
+  }, [exs.data, exId, initialExId])
   const evo = useQuery({ queryKey: ['aluno-evo', exId], queryFn: () => alunoApi.evolucao(exId), enabled: !!exId })
   const midias = useQuery({ queryKey: ['aluno-midia', exId], queryFn: () => alunoApi.listMidia(exId), enabled: !!exId })
   const feed = useQuery({ queryKey: ['aluno-feed', exId], queryFn: () => alunoApi.feedExercicio(exId), enabled: !!exId })
@@ -654,7 +678,18 @@ function Evolucao() {
           {!!feed.data?.length && (
             <div className="space-y-1">
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">Correções e relatos</p>
-              <ExercicioFeedCard items={feed.data} />
+              <ExercicioFeedCard
+                items={feed.data}
+                viewerAtor="ALUNO"
+                onAddComentario={async (relatoSk, texto) => {
+                  try {
+                    await alunoApi.comentarRelato({ relato_sk: relatoSk, texto })
+                    qc.invalidateQueries({ queryKey: ['aluno-feed', exId] })
+                  } catch {
+                    show('Não foi possível enviar o comentário.', 'error')
+                  }
+                }}
+              />
             </div>
           )}
         </>

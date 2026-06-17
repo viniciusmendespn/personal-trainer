@@ -5,6 +5,9 @@ from app.repositories import keys
 from app.services import anotif_service, notif_service
 from app.utils import epoch_ms, new_id, now_iso
 
+SK_PREFIX_DOR = "DOR#"
+SK_PREFIX_DUVIDA = "DUVIDA#"
+
 
 # ── Dor → histórico do aluno + notificação ao personal (RF009) ───────────────
 def registrar_dor(personal_id: str, aluno_id: str, descricao: str,
@@ -23,7 +26,8 @@ def registrar_dor(personal_id: str, aluno_id: str, descricao: str,
     contexto = f" em {exercicio_nome}" if exercicio_nome else ""
     notif_service.criar(personal_id, "DOR", "Relato de dor",
                         f"O aluno relatou dor{contexto}: {descricao}", aluno_id=aluno_id,
-                        ref_extra={"relato_sk": sk, "relato_tipo": "dor"})
+                        ref_extra={"relato_sk": sk, "relato_tipo": "dor",
+                                   "exercicio_id": exercicio_id})
     return dor_id
 
 
@@ -44,7 +48,8 @@ def registrar_duvida(personal_id: str, aluno_id: str, descricao: str,
     contexto = f" em {exercicio_nome}" if exercicio_nome else ""
     notif_service.criar(personal_id, "DUVIDA", "Dúvida do aluno",
                         f"O aluno teve uma dúvida{contexto}: {descricao}", aluno_id=aluno_id,
-                        ref_extra={"relato_sk": sk, "relato_tipo": "duvida"})
+                        ref_extra={"relato_sk": sk, "relato_tipo": "duvida",
+                                   "exercicio_id": exercicio_id})
     return duvida_id
 
 
@@ -57,8 +62,21 @@ def responder_relato(aluno_id: str, relato_sk: str, texto: str, personal_id: str
     )
     if not updated:
         return False
+    # Append comment to the thread
+    repo.list_append_item(keys.pk_aluno(aluno_id), relato_sk, "comentarios", {
+        "com_id": new_id(), "ator": "PERSONAL", "texto": texto, "data_hora": now_iso(),
+    })
     tipo_notif = "DOR_RESPONDIDA" if relato_sk.startswith("DOR#") else "DUVIDA_RESPONDIDA"
-    titulo = "Resposta do seu personal"
-    mensagem = texto[:120] + ("…" if len(texto) > 120 else "")
-    anotif_service.criar(aluno_id, tipo_notif, titulo, mensagem)
+    exercicio_id = updated.get("exercicio_id")
+    anotif_service.criar(aluno_id, tipo_notif, "Resposta do seu personal",
+                         texto[:120] + ("…" if len(texto) > 120 else ""),
+                         ref_extra={"exercicio_id": exercicio_id, "relato_sk": relato_sk})
     return True
+
+
+# ── Comentário em thread (personal ou aluno) ─────────────────────────────────
+def adicionar_comentario(aluno_id: str, relato_sk: str, ator: str, texto: str) -> bool:
+    """Appends a comment to a DOR/DUVIDA thread. Returns False if item not found."""
+    return repo.list_append_item(keys.pk_aluno(aluno_id), relato_sk, "comentarios", {
+        "com_id": new_id(), "ator": ator, "texto": texto, "data_hora": now_iso(),
+    })

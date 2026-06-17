@@ -12,12 +12,12 @@ ANOTIF_TTL_S = 30 * 24 * 3600
 
 
 def criar(aluno_id: str, tipo: str, titulo: str, mensagem: str,
-          ref_id: str | None = None) -> str:
+          ref_extra: dict | None = None) -> str:
     nid = new_id()
     item = {
         "notif_id": nid, "tipo": tipo, "titulo": titulo, "mensagem": mensagem,
         "lida": False, "data_hora": now_iso(),
-        **({"ref_id": ref_id} if ref_id else {}),
+        **(ref_extra or {}),
     }
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_anotif(epoch_ms(), nid), item)
     return nid

@@ -268,6 +268,23 @@ def update_if_greater(pk: str, sk: str, field: str, value, extra: dict | None = 
         raise
 
 
+def list_append_item(pk: str, sk: str, field: str, item: dict) -> bool:
+    """Appends one dict to a list field. Returns False if the parent item does not exist."""
+    try:
+        _get_table().update_item(
+            Key={"PK": pk, "SK": sk},
+            UpdateExpression="SET #f = list_append(if_not_exists(#f, :empty), :new)",
+            ConditionExpression=Attr("PK").exists(),
+            ExpressionAttributeNames={"#f": field},
+            ExpressionAttributeValues={":empty": [], ":new": [_san(item)]},
+        )
+        return True
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            return False
+        raise
+
+
 def delete_item(pk: str, sk: str) -> None:
     _get_table().delete_item(Key={"PK": pk, "SK": sk})
 

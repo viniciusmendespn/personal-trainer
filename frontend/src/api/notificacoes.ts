@@ -13,6 +13,27 @@ export interface Notificacao {
   s3_key?: string
   relato_sk?: string
   relato_tipo?: 'dor' | 'duvida'
+  exercicio_id?: string
+  exercicio_nome?: string
+}
+
+export interface Comentario {
+  com_id: string
+  ator: 'ALUNO' | 'PERSONAL'
+  texto: string
+  data_hora: string
+}
+
+export interface RelatoThread {
+  tipo: string
+  descricao: string
+  data_hora: string
+  exercicio_id?: string
+  exercicio_nome?: string
+  respondido: boolean
+  resposta_texto?: string
+  relato_sk: string
+  comentarios?: Comentario[]
 }
 
 export interface NotificacaoPage {
@@ -30,4 +51,8 @@ export const notifApi = {
   readAll: () => api.post('/v1/notificacoes/read-all'),
   vincularMidia: (body: { ref: string; aluno_id: string; midia_id: string; exercicio_id: string; exercicio_nome?: string }) =>
     api.post('/v1/notificacoes/vincular-midia', body),
+  getRelato: (ref: string, aluno_id: string) =>
+    api.get<RelatoThread>('/v1/notificacoes/relato', { params: { ref, aluno_id } }).then((r) => r.data),
+  comentarRelato: (body: { ref: string; aluno_id: string; texto: string }) =>
+    api.post('/v1/notificacoes/comentar', body).then((r) => r.data),
 }

@@ -11,6 +11,7 @@ from app.models.registro import SerieExec
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import agent_service, alerta_service, anotif_service, correcao_service, media_service, notif_service, sessao_service
+from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
 
@@ -186,6 +187,7 @@ def midia_registrar(body: MidiaRegistrarBody, ctx: dict = Depends(get_current_al
         ctx["personal_id"], "MIDIA", "Nova mídia de execução",
         f"O aluno enviou uma mídia em {body.exercicio_nome or 'um exercício'} pra você analisar.",
         aluno_id=ctx["aluno_id"],
+        ref_extra={"exercicio_id": body.exercicio_id, "exercicio_nome": body.exercicio_nome},
     )
     return {"ok": 1, "midia_id": item["midia_id"]}
 
@@ -214,6 +216,31 @@ def relato(body: RelatoBody, ctx: dict = Depends(get_current_aluno)):
             exercicio_id=body.exercicio_id, exercicio_nome=body.exercicio_nome,
             canal=CanalOrigem.PORTAL, ator=Ator.ALUNO, sessao_id=sessao_id,
         )
+    return {"ok": 1}
+
+
+class ComentarRelatoBody(BaseModel):
+    relato_sk: str
+    texto: str
+
+
+@router.post("/relato/comentar", status_code=201)
+def comentar_relato(body: ComentarRelatoBody, ctx: dict = Depends(get_current_aluno)):
+    """Aluno adiciona comentário em uma thread de dor ou dúvida."""
+    ok = alerta_service.adicionar_comentario(ctx["aluno_id"], body.relato_sk, Ator.ALUNO.value, body.texto)
+    if not ok:
+        raise HTTPException(404, "Relato não encontrado")
+    # Parse exercicio_id from relato_sk (e.g. DOR#{exercicio_id}#{ts}#{id})
+    parts = body.relato_sk.split("#")
+    exercicio_id = parts[1] if len(parts) > 1 and parts[1] != "NA" else None
+    tipo_notif = "DOR" if body.relato_sk.startswith("DOR#") else "DUVIDA"
+    notif_service.criar(
+        ctx["personal_id"], tipo_notif, "Novo comentário do aluno",
+        body.texto[:120] + ("…" if len(body.texto) > 120 else ""),
+        aluno_id=ctx["aluno_id"],
+        ref_extra={"relato_sk": body.relato_sk, "relato_tipo": tipo_notif.lower(),
+                   "exercicio_id": exercicio_id},
+    )
     return {"ok": 1}
 
 

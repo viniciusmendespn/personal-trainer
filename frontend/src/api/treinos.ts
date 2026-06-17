@@ -57,6 +57,8 @@ export const treinosApi = {
 
   responderNotificacao: (body: { ref: string; texto: string; aluno_id: string }) =>
     api.post('/v1/notificacoes/responder', body).then((r) => r.data),
+  comentarRelato: (alunoId: string, body: { relato_sk: string; texto: string }) =>
+    api.post(`/v1/alunos/${alunoId}/relato/comentar`, body).then((r) => r.data),
 }
 
 export interface Relato {
@@ -71,6 +73,13 @@ export interface Relato {
   sessao_id?: string
 }
 
+export interface Comentario {
+  com_id: string
+  ator: 'ALUNO' | 'PERSONAL'
+  texto: string
+  data_hora: string
+}
+
 export interface FeedItem {
   tipo: 'DOR' | 'DUVIDA' | 'CORRECAO'
   data_hora: string
@@ -79,6 +88,8 @@ export interface FeedItem {
   respondido?: boolean
   resposta_texto?: string
   respondido_em?: string
+  relato_sk?: string
+  comentarios?: Comentario[]
   // CORRECAO
   correcao_id?: string
   texto?: string

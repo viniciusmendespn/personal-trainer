@@ -1,17 +1,20 @@
-import { useEffect, useState, useMemo } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Trophy, TrendingUp, Activity, BarChart3, CalendarCheck, FileDown, Search } from 'lucide-react'
+import { useEffect, useState, useMemo, useRef } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { ArrowLeft, Trophy, TrendingUp, Activity, BarChart3, CalendarCheck, FileDown, Search, MessageSquareDot } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, ReferenceLine,
 } from 'recharts'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAluno } from '../hooks/useAlunos'
 import { useExerciciosAluno, useEvolucao, useResumo } from '../hooks/useEvolucao'
 import { useMidiaExercicio } from '../hooks/useTreinos'
 import { Card, Spinner, Select, StatCard, Badge, EmptyState, Button, Input, useToast } from '../components/ui'
 import { MediaTimeline } from '../components/media/MediaTimeline'
+import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
 import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
 import { renderNodeToPdf } from '../utils/exportPdf'
+import { treinosApi } from '../api/treinos'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -24,15 +27,19 @@ const axisTick = { fill: 'var(--color-text-secondary)', fontSize: 12 }
 
 export function AlunoEvolucaoPage() {
   const { alunoId = '' } = useParams()
+  const [searchParams] = useSearchParams()
+  const highlightExId = searchParams.get('highlight') ?? undefined
   const { data: aluno } = useAluno(alunoId)
   const { data: exercicios } = useExerciciosAluno(alunoId)
   const { data: resumo } = useResumo(alunoId)
-  const [exId, setExId] = useState('')
+  const [exId, setExId] = useState(highlightExId ?? '')
   const [exporting, setExporting] = useState(false)
   const [exQuery, setExQuery] = useState('')
   const [prQuery, setPrQuery] = useState('')
   const [prLimit, setPrLimit] = useState(12)
   const { show } = useToast()
+  const qc = useQueryClient()
+  const feedRef = useRef<HTMLDivElement>(null)
 
   const exerciciosOrdenados = useMemo(
     () => [...(exercicios ?? [])].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
@@ -64,11 +71,23 @@ export function AlunoEvolucaoPage() {
   }
 
   useEffect(() => {
+    if (highlightExId) { setExId(highlightExId); return }
     if (!exId && exerciciosOrdenados.length) setExId(exerciciosOrdenados[0].exercicio_id)
-  }, [exerciciosOrdenados, exId])
+  }, [exerciciosOrdenados, exId, highlightExId])
+
+  useEffect(() => {
+    if (highlightExId && feedRef.current) {
+      setTimeout(() => feedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 400)
+    }
+  }, [highlightExId, exId])
 
   const { data: evo, isLoading } = useEvolucao(alunoId, exId)
   const { data: midias, isLoading: midiasLoading } = useMidiaExercicio(alunoId, exId, !!exId)
+  const { data: feed } = useQuery({
+    queryKey: ['feed-exercicio', alunoId, exId],
+    queryFn: () => treinosApi.feedExercicio(alunoId, exId),
+    enabled: !!exId,
+  })
   const exSel = exercicios?.find((e) => e.exercicio_id === exId)
   const prescrita = exSel?.carga_prescrita ? Number(String(exSel.carga_prescrita).replace(',', '.')) : NaN
 
@@ -194,6 +213,31 @@ export function AlunoEvolucaoPage() {
           <div className="mt-4">
             <MediaTimeline items={(midias ?? []).map((m) => ({ ...m, ator: m.ator ?? 'ALUNO' }))} isLoading={midiasLoading} />
           </div>
+
+          {!!feed?.length && (
+            <div
+              ref={feedRef}
+              className={`mt-4 rounded-xl transition-all duration-500 ${
+                highlightExId === exId ? 'ring-2 ring-accent/60 ring-offset-2 ring-offset-transparent' : ''
+              }`}
+            >
+              <p className="text-sm font-semibold text-text-secondary flex items-center gap-1.5 mb-2">
+                <MessageSquareDot size={15} className="text-accent-hover" /> Relatos e correções
+              </p>
+              <ExercicioFeedCard
+                items={feed}
+                viewerAtor="PERSONAL"
+                onAddComentario={async (relatoSk, texto) => {
+                  try {
+                    await treinosApi.comentarRelato(alunoId, { relato_sk: relatoSk, texto })
+                    qc.invalidateQueries({ queryKey: ['feed-exercicio', alunoId, exId] })
+                  } catch {
+                    show('Não foi possível enviar o comentário.', 'error')
+                  }
+                }}
+              />
+            </div>
+          )}
         </>
       )}
     </div>
