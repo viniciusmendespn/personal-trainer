@@ -5,6 +5,8 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import { alunoApi, anexarMidiaExecucao, type ExSessao, type SessaoAtiva, type SessaoHistorico } from '../api/alunoApp'
+import { SeriesPrescritasCompact } from '../components/exercicios/SeriesPrescritasEditor'
+import { AlunoSessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import { ALUNO_TOKEN_KEY } from '../api/alunoClient'
 import { useAlunoChat, useSendAlunoChat, useSendDiretoAlunoChat } from '../hooks/useAlunoChat'
 import { useAlunoTimeline } from '../hooks/useAlunoTimeline'
@@ -299,10 +301,15 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
   })
 
   const initRows = () => {
-    const src = ex.registrado?.length
-      ? ex.registrado
-      : Array.from({ length: ex.series ?? 1 }, () => ({ carga: ex.carga_prescrita, reps: undefined }))
-    return src.map((s) => ({ carga: s.carga ?? '', reps: s.reps != null ? String(s.reps) : '' }))
+    if (ex.registrado?.length) {
+      return ex.registrado.map((s) => ({ carga: s.carga ?? '', reps: s.reps != null ? String(s.reps) : '' }))
+    }
+    if (ex.series_prescritas?.length) {
+      return ex.series_prescritas.flatMap((p) =>
+        Array.from({ length: p.series }, () => ({ carga: p.carga ?? '', reps: p.reps }))
+      )
+    }
+    return Array.from({ length: ex.series ?? 1 }, () => ({ carga: ex.carga_prescrita ?? '', reps: '' }))
   }
   const [rows, setRows] = useState(initRows)
   const upd = (i: number, f: 'carga' | 'reps', v: string) =>
@@ -330,8 +337,11 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
         onClick={() => { if (!open) { setRows(initRows()); setPr(null) } setOpen((o) => !o) }}>
         <span>
           <span className="font-medium">{ex.nome}</span>
-          <span className="text-xs text-text-muted ml-2">
-            {ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''} {ex.carga_prescrita ? `· ${ex.carga_prescrita}` : ''}
+          <span className="ml-2">
+            {ex.series_prescritas?.length
+              ? <SeriesPrescritasCompact items={ex.series_prescritas} />
+              : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
+            }
           </span>
         </span>
         {feito ? <Check size={16} className="text-success" /> : <ChevronRight size={16} className="text-text-muted" />}
@@ -368,7 +378,7 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
               )}
             </div>
           ))}
-          <button onClick={() => setRows([...rows, { carga: ex.carga_prescrita ?? '', reps: '' }])} className="text-xs text-accent-hover">+ série</button>
+          <button onClick={() => setRows([...rows, { carga: '', reps: '' }])} className="text-xs text-accent-hover">+ série</button>
           {pr != null && (
             <Badge tone="warning" className="text-xs">
               <Trophy size={12} /> Novo recorde: {pr} kg!
@@ -481,24 +491,7 @@ function HistoricoTab() {
                   </button>
 
                   {expanded && (
-                    <div className="mt-3 space-y-2 border-t border-border pt-2">
-                      {s.exercicios_exec?.length ? (
-                        s.exercicios_exec.map((ex) => (
-                          <div key={ex.exercicio_id} className="text-sm">
-                            <span className="font-medium">{ex.exercicio_nome}</span>
-                            {ex.series_exec?.length > 0 && (
-                              <span className="text-xs text-text-muted ml-2">
-                                {ex.series_exec.map((sr, i) => (
-                                  <span key={i}>{i > 0 ? '  ' : ''}{sr.carga ? `${sr.carga}` : '—'}{sr.reps ? `×${sr.reps}` : ''}</span>
-                                ))}
-                              </span>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-text-muted">Nenhum exercício registrado.</p>
-                      )}
-                    </div>
+                    <AlunoSessaoDetalheCard sessaoId={s.sessao_id} />
                   )}
                 </Card>
               )

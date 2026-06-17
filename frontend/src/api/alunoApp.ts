@@ -29,7 +29,12 @@ export interface SessaoHistorico {
   exercicios_exec?: Array<{
     exercicio_id: string
     exercicio_nome: string
-    series_exec: SerieExec[]
+    series_exec: Array<{ carga?: string; reps?: number; rpe?: number }>
+    series_prescritas?: Array<{ series: number; reps: string; carga?: string }>
+    series?: number
+    reps_prescritas?: string
+    carga_prescrita?: string
+    midia?: Array<{ midia_id: string; tipo: string; url?: string; data_hora: string; ator?: 'ALUNO' | 'PERSONAL' }>
   }>
 }
 
@@ -45,6 +50,7 @@ export interface ExSessao {
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
+  series_prescritas?: Array<{ series: number; reps: string; carga?: string }>
   video_url?: string
   observacoes?: string
   registrado?: SerieInput[] | null
@@ -103,6 +109,8 @@ export const alunoApi = {
     alunoClient
       .get<{ items: SessaoHistorico[]; next_cursor: string | null }>('/v1/aluno/sessoes', { params })
       .then((r) => r.data),
+  sessaoDetalhe: (sessaoId: string) =>
+    alunoClient.get<SessaoHistorico>(`/v1/aluno/sessoes/${sessaoId}`).then((r) => r.data),
 }
 
 /** Pede a presigned URL e sobe o arquivo direto pro S3, depois registra vinculado ao exercício. */

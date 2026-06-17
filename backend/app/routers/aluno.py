@@ -124,6 +124,23 @@ def list_sessoes(limit: int = 10, cursor: str | None = None, ctx: dict = Depends
     return {"items": items, "next_cursor": next_cursor}
 
 
+@router.get("/sessoes/{sessao_id}")
+def get_sessao_detalhe_aluno(sessao_id: str, ctx: dict = Depends(get_current_aluno)):
+    """Detalhe completo de uma sessão com prescrição + mídia por exercício."""
+    aluno_id = ctx["aluno_id"]
+    pk = keys.pk_aluno(aluno_id)
+    idx = repo.get_item(pk, keys.sk_sessao_idx(sessao_id))
+    if not idx:
+        raise HTTPException(404, "Sessão não encontrada")
+    session = repo.get_item(pk, idx["sk"])
+    if not session:
+        raise HTTPException(404, "Sessão não encontrada")
+    s = repo.clean(session)
+    for ex in s.get("exercicios_exec") or []:
+        ex["midia"] = media_service.list_midia_exercicio(aluno_id, ex["exercicio_id"])
+    return s
+
+
 @router.get("/resumo")
 def resumo(ctx: dict = Depends(get_current_aluno)):
     return sessao_service.resumo_aluno(ctx["aluno_id"])

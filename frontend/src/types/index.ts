@@ -85,6 +85,12 @@ export interface ExLib {
   recomendacoes?: string
 }
 
+export interface SeriePrescrita {
+  series: number
+  reps: string
+  carga?: string
+}
+
 export interface Exercicio {
   exercicio_id: string
   treino_id: string
@@ -94,6 +100,7 @@ export interface Exercicio {
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
+  series_prescritas?: SeriePrescrita[]
   intervalo_s?: number
   video_url?: string
   observacoes?: string
@@ -106,6 +113,7 @@ export interface ExercicioCreate {
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
+  series_prescritas?: SeriePrescrita[]
   intervalo_s?: number
   video_url?: string
   observacoes?: string
@@ -158,6 +166,7 @@ export interface ExercicioTemplate {
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
+  series_prescritas?: SeriePrescrita[]
   intervalo_s?: number
   video_url?: string
   observacoes?: string

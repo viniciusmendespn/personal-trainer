@@ -29,6 +29,7 @@ def _snapshot(ex: dict) -> dict:
         "series": ex.get("series"),
         "reps_prescritas": ex.get("reps_prescritas"),
         "carga_prescrita": ex.get("carga_prescrita"),
+        "series_prescritas": ex.get("series_prescritas"),
         "intervalo_s": ex.get("intervalo_s"),
         "video_url": ex.get("video_url"),
         "observacoes": ex.get("observacoes"),
@@ -96,19 +97,37 @@ def finish(aluno_id: str) -> dict:
     # Denormaliza registros na sessão histórica (1 query extra, evita N+1 na timeline)
     sessao_id = s["sessao_id"]
     regs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=f"REG#{sessao_id}#")
+    snap_by_ex = {e["exercicio_id"]: e for e in s.get("exercicios", [])}
     s["exercicios_exec"] = [
-        {"exercicio_id": r.get("exercicio_id"), "exercicio_nome": r.get("exercicio_nome"),
-         "series_exec": r.get("series_exec", [])}
+        {
+            "exercicio_id": r.get("exercicio_id"),
+            "exercicio_nome": r.get("exercicio_nome"),
+            "series_exec": r.get("series_exec", []),
+            "series_prescritas": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("series_prescritas"),
+            "series": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("series"),
+            "reps_prescritas": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("reps_prescritas"),
+            "carga_prescrita": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("carga_prescrita"),
+        }
         for r in regs
     ]
     snap = {k: v for k, v in s.items() if k not in ("PK", "SK", "ttl")}
-    repo.put_item(keys.pk_aluno(aluno_id), keys.sk_sessao_hist(epoch_ms(), sessao_id), snap)
+    ts = epoch_ms()
+    sk_hist = keys.sk_sessao_hist(ts, sessao_id)
+    repo.put_item(keys.pk_aluno(aluno_id), sk_hist, snap)
+    # Ponteiro por sessao_id para busca direta no detalhe
+    repo.put_item(keys.pk_aluno(aluno_id), keys.sk_sessao_idx(sessao_id), {"sk": sk_hist})
     repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE)
     # Agregação na escrita: conta a sessão (aluno + semana) — ESPEC §3.1
     pk = keys.pk_aluno(aluno_id)
     repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_sessoes": 1}, set_={"ultimo_treino": fim_iso})
     wk = _isoweek()
     repo.add_and_set(pk, keys.sk_stats_week(wk), add={"sessoes": 1}, set_={"semana": wk})
+    # Agregado diário por personal (para gráfico do dashboard)
+    personal_id = s.get("personal_id")
+    if personal_id:
+        hoje = fim_iso[:10]
+        repo.add_and_set(keys.pk_personal(personal_id), f"STATS#D#{hoje}",
+                         add={"sessoes": 1}, set_={"data": hoje})
     return snap
 
 

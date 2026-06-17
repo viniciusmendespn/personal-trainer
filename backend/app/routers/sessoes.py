@@ -30,6 +30,24 @@ def list_sessoes(aluno_id: str, limit: int = 10, cursor: str | None = None,
     return {"items": items, "next_cursor": next_cursor}
 
 
+@router.get("/sessoes/{sessao_id}")
+def get_sessao_detalhe(aluno_id: str, sessao_id: str,
+                       personal_id: str = Depends(get_current_personal_id)):
+    """Detalhe completo de uma sessão: prescrição + execução + mídia por exercício."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    pk = keys.pk_aluno(aluno_id)
+    idx = repo.get_item(pk, keys.sk_sessao_idx(sessao_id))
+    if not idx:
+        raise HTTPException(404, "Sessão não encontrada")
+    session = repo.get_item(pk, idx["sk"])
+    if not session:
+        raise HTTPException(404, "Sessão não encontrada")
+    s = repo.clean(session)
+    for ex in s.get("exercicios_exec") or []:
+        ex["midia"] = media_service.list_midia_exercicio(aluno_id, ex["exercicio_id"])
+    return s
+
+
 @router.get("/sessao")
 def get_sessao(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)

@@ -14,7 +14,9 @@ import { useBiblioteca } from '../hooks/useDominio'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
 import { useNotas, useCreateNota } from '../hooks/useNotas'
 import { treinosApi, type SessaoHistoricoPersonal } from '../api/treinos'
-import type { Treino, Exercicio, ExercicioCreate } from '../types'
+import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
+import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
+import type { Treino, Exercicio, ExercicioCreate, SeriePrescrita } from '../types'
 
 export function AlunoDetailPage() {
   const { alunoId = '' } = useParams()
@@ -520,9 +522,9 @@ function ExercicioForm({
 }) {
   const listId = useId()
   const [nome, setNome] = useState(initial?.nome ?? '')
-  const [series, setSeries] = useState(initial?.series?.toString() ?? '')
-  const [reps, setReps] = useState(initial?.reps_prescritas ?? '')
-  const [carga, setCarga] = useState(initial?.carga_prescrita ?? '')
+  const [seriesPrescritas, setSeriesPrescritas] = useState<SeriePrescrita[]>(() =>
+    initSeriesPrescritas(initial?.series_prescritas, initial?.series, initial?.reps_prescritas, initial?.carga_prescrita)
+  )
   const [vid, setVid] = useState(initial?.video_url ?? '')
   const [obs, setObs] = useState(initial?.observacoes ?? '')
 
@@ -535,11 +537,10 @@ function ExercicioForm({
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!nome) return
+    const validas = seriesPrescritas.filter((s) => s.reps || s.carga)
     await onSubmit({
       nome,
-      series: series ? Number(series) : undefined,
-      reps_prescritas: reps || undefined,
-      carga_prescrita: carga || undefined,
+      series_prescritas: validas.length ? validas : undefined,
       video_url: vid || undefined,
       observacoes: obs || undefined,
     })
@@ -556,12 +557,8 @@ function ExercicioForm({
         <datalist id={listId}>{biblioteca?.map((b) => <option key={b.exlib_id} value={b.nome} />)}</datalist>
       </div>
       <div>
-        <p className="text-xs font-medium text-text-secondary mb-2">Prescrição</p>
-        <div className="grid grid-cols-3 gap-3">
-          <Input label="Séries" value={series} onChange={(e) => setSeries(e.target.value)} />
-          <Input label="Reps" value={reps} onChange={(e) => setReps(e.target.value)} />
-          <Input label="Carga" value={carga} onChange={(e) => setCarga(e.target.value)} />
-        </div>
+        <p className="text-xs font-medium text-text-secondary mb-2">Prescrição — séries × reps · carga</p>
+        <SeriesPrescritasEditor value={seriesPrescritas} onChange={setSeriesPrescritas} />
       </div>
       <div>
         <p className="text-xs font-medium text-text-secondary mb-2">Vídeo e observações</p>
@@ -608,8 +605,11 @@ function ExercicioRow({
       <div className="flex items-center justify-between gap-2 text-sm">
         <span className="min-w-0 truncate">
           {ex.nome}
-          <span className="text-text-muted ml-2">
-            {ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''} {ex.carga_prescrita ? `· ${ex.carga_prescrita}` : ''}
+          <span className="ml-2">
+            {ex.series_prescritas?.length
+              ? <SeriesPrescritasCompact items={ex.series_prescritas} />
+              : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
+            }
           </span>
           {ex.video_url && <a href={ex.video_url} target="_blank" rel="noreferrer" className="text-accent-hover ml-2 text-xs hover:underline">vídeo</a>}
           {ex.observacoes && (
@@ -705,24 +705,7 @@ function HistoricoPersonal({ alunoId }: { alunoId: string }) {
                       : <ChevronRight size={16} className="shrink-0 text-text-muted mt-0.5" />}
                   </button>
                   {expanded && (
-                    <div className="mt-3 space-y-2 border-t border-border pt-2">
-                      {s.exercicios_exec?.length ? (
-                        s.exercicios_exec.map((ex) => (
-                          <div key={ex.exercicio_id} className="text-sm">
-                            <span className="font-medium">{ex.exercicio_nome}</span>
-                            {ex.series_exec?.length > 0 && (
-                              <span className="text-xs text-text-muted ml-2">
-                                {ex.series_exec.map((sr, i) => (
-                                  <span key={i}>{i > 0 ? '  ' : ''}{sr.carga ?? '—'}{sr.reps ? `×${sr.reps}` : ''}</span>
-                                ))}
-                              </span>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-text-muted">Nenhum exercício registrado.</p>
-                      )}
-                    </div>
+                    <SessaoDetalheCard alunoId={alunoId} sessaoId={s.sessao_id} />
                   )}
                 </Card>
               )

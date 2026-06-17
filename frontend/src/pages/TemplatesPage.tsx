@@ -3,7 +3,8 @@ import { Trash2, Users, LayoutTemplate, Dumbbell, Pencil, Plus, X, Search } from
 import { useAlunos } from '../hooks/useAlunos'
 import { useTemplates, useCreateTemplate, useDeleteTemplate, useUpdateTemplate, useAplicarTemplate } from '../hooks/useTemplates'
 import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm } from '../components/ui'
-import type { ExercicioTemplate, TreinoTemplate } from '../types'
+import { SeriesPrescritasEditor, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
+import type { ExercicioTemplate, TreinoTemplate, SeriePrescrita } from '../types'
 
 
 export function TemplatesPage() {
@@ -200,12 +201,11 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                 </div>
               </div>
               <div>
-                <p className="text-xs font-medium text-text-secondary mb-2">Prescrição</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <Input label="Séries" value={ex.series ?? ''} onChange={(e) => updateEx(i, { series: e.target.value ? Number(e.target.value) : undefined })} />
-                  <Input label="Reps" value={ex.reps_prescritas ?? ''} onChange={(e) => updateEx(i, { reps_prescritas: e.target.value || undefined })} />
-                  <Input label="Carga" value={ex.carga_prescrita ?? ''} onChange={(e) => updateEx(i, { carga_prescrita: e.target.value || undefined })} />
-                </div>
+                <p className="text-xs font-medium text-text-secondary mb-2">Prescrição — séries × reps · carga</p>
+                <SeriesPrescritasEditor
+                  value={initSeriesPrescritas(ex.series_prescritas, ex.series, ex.reps_prescritas, ex.carga_prescrita)}
+                  onChange={(v: SeriePrescrita[]) => updateEx(i, { series_prescritas: v })}
+                />
               </div>
               <div>
                 <p className="text-xs font-medium text-text-secondary mb-2">Vídeo e observações</p>

@@ -44,6 +44,19 @@ export const treinosApi = {
     api
       .get<{ items: SessaoHistoricoPersonal[]; next_cursor: string | null }>(`/v1/alunos/${alunoId}/sessoes`, { params })
       .then((r) => r.data),
+  sessaoDetalhe: (alunoId: string, sessaoId: string) =>
+    api.get<SessaoDetalhe>(`/v1/alunos/${alunoId}/sessoes/${sessaoId}`).then((r) => r.data),
+}
+
+export interface ExecExercicio {
+  exercicio_id: string
+  exercicio_nome: string
+  series_exec: Array<{ carga?: string; reps?: number; rpe?: number }>
+  series_prescritas?: Array<{ series: number; reps: string; carga?: string }>
+  series?: number
+  reps_prescritas?: string
+  carga_prescrita?: string
+  midia?: MidiaExercicio[]
 }
 
 export interface SessaoHistoricoPersonal {
@@ -55,11 +68,11 @@ export interface SessaoHistoricoPersonal {
   data_hora_fim?: string
   duracao_segundos?: number
   total_ex: number
-  exercicios_exec?: Array<{
-    exercicio_id: string
-    exercicio_nome: string
-    series_exec: Array<{ carga?: string; reps?: number }>
-  }>
+  exercicios_exec?: ExecExercicio[]
+}
+
+export interface SessaoDetalhe extends SessaoHistoricoPersonal {
+  exercicios_exec: ExecExercicio[]
 }
 
 export interface MidiaExercicio {

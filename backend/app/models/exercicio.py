@@ -3,12 +3,19 @@ from typing import Any, Optional
 from pydantic import BaseModel, Field
 
 
+class SeriePrescrita(BaseModel):
+    series: int
+    reps: str
+    carga: Optional[str] = None
+
+
 class ExercicioCreate(BaseModel):
     nome: str                                  # ex.: "Supino reto"
     ordem: int = 0
-    series: Optional[int] = None               # ex.: 4
-    reps_prescritas: Optional[str] = None      # str p/ faixas: "10" ou "8-12"
-    carga_prescrita: Optional[str] = None      # str p/ flexibilidade: "30", "BW", "elástico"
+    series: Optional[int] = None               # legado — leitura de itens antigos
+    reps_prescritas: Optional[str] = None      # legado — leitura de itens antigos
+    carga_prescrita: Optional[str] = None      # legado — leitura de itens antigos
+    series_prescritas: Optional[list[SeriePrescrita]] = None  # prescrição estruturada
     intervalo_s: Optional[int] = None
     video_url: Optional[str] = None
     observacoes: Optional[str] = None

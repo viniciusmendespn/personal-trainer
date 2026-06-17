@@ -13,6 +13,7 @@ class ExercicioAtual(BaseModel):
     series: Optional[int] = None
     reps_prescritas: Optional[str] = None
     carga_prescrita: Optional[str] = None
+    series_prescritas: Optional[list] = None
     intervalo_s: Optional[int] = None
 
 

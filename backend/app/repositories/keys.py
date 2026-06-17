@@ -108,6 +108,10 @@ def sk_sessao_hist(ts: str, sessao_id: str) -> str:
     return f"SESSION#{ts}#{sessao_id}"
 
 
+def sk_sessao_idx(sessao_id: str) -> str:
+    return f"SESSAO_IDX#{sessao_id}"
+
+
 def sk_registro(sessao_id: str, exercicio_id: str) -> str:
     return f"REG#{sessao_id}#{exercicio_id}"
 
