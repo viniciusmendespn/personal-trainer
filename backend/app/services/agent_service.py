@@ -166,7 +166,9 @@ def buscar_exercicio(aluno_id: str, nome: str) -> dict:
     exs = sessao_service.list_exercicios_aluno(aluno_id)
     matches = [e for e in exs if nl in (e.get("nome", "").lower())] if nl else exs
     return {"ex": [{"id": e["exercicio_id"], "n": e.get("nome"),
-                    "video": e.get("video_url"), "cg": e.get("carga_prescrita")}
+                    "s": e.get("series"), "rp": e.get("reps_prescritas"),
+                    "cg": e.get("carga_prescrita"), "int": e.get("intervalo_s"),
+                    "video": e.get("video_url"), "obs": e.get("observacoes")}
                    for e in matches[:5]]}
 
 
@@ -184,15 +186,84 @@ def enviar_link_portal(aluno_id: str, personal_id: str) -> dict:
     return {"link": aluno_auth.magic_link(aluno_id, personal_id)}
 
 
+def _treino_vigente(t: dict, hoje_str: str) -> bool:
+    """True se o treino está ativo e dentro do período (campos opcionais)."""
+    if not t.get("ativo", True):
+        return False
+    if t.get("data_inicio") and hoje_str < t["data_inicio"]:
+        return False
+    if t.get("data_fim") and hoje_str > t["data_fim"]:
+        return False
+    return True
+
+
 def treino_de_hoje(aluno_id: str) -> dict:
-    """Treino(s) com exercícios agendados para hoje (dia da semana por exercício)."""
-    from datetime import datetime, timezone
+    """Treino(s) com exercícios agendados para hoje (vigentes + dia da semana ou diários)."""
+    from datetime import date, datetime, timezone
     hoje = datetime.now(timezone.utc).weekday()   # 0=seg .. 6=dom
+    hoje_str = date.today().isoformat()
     exs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")
-    ids_hoje = {e["treino_id"] for e in exs if e.get("dia_semana") == hoje}
+    # Inclui exercícios do dia E exercícios sem dia fixo (diários, dia_semana=None)
+    ids_hoje = {e["treino_id"] for e in exs if e.get("dia_semana") in (None, hoje)}
     treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
-    matches = [t for t in treinos if t["treino_id"] in ids_hoje]
-    return {"treinos": [{"id": t["treino_id"], "nome": t.get("nome")} for t in matches]}
+    matches = [t for t in treinos
+               if t["treino_id"] in ids_hoje and _treino_vigente(t, hoje_str)]
+    # Conta exercícios de cada treino para hoje
+    counts: dict[str, int] = {}
+    for e in exs:
+        tid = e["treino_id"]
+        if tid in ids_hoje and e.get("dia_semana") in (None, hoje):
+            counts[tid] = counts.get(tid, 0) + 1
+    return {"treinos": [{"id": t["treino_id"], "nome": t.get("nome"),
+                         "foco": t.get("foco"), "num_ex": counts.get(t["treino_id"], 0)}
+                        for t in matches]}
+
+
+def listar_treinos(aluno_id: str) -> dict:
+    """Todos os treinos do aluno com sinalização de vigência."""
+    from datetime import date
+    hoje_str = date.today().isoformat()
+    treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
+    exs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")
+    counts: dict[str, int] = {}
+    for e in exs:
+        tid = e["treino_id"]
+        counts[tid] = counts.get(tid, 0) + 1
+    return {"treinos": [
+        {"id": t["treino_id"], "nome": t.get("nome"), "foco": t.get("foco"),
+         "ativo": t.get("ativo", True), "vigente": _treino_vigente(t, hoje_str),
+         "num_ex": counts.get(t["treino_id"], 0),
+         "inicio": t.get("data_inicio"), "fim": t.get("data_fim")}
+        for t in treinos
+    ]}
+
+
+def detalhar_treino(aluno_id: str, treino_id: str) -> dict:
+    """Exercícios de um treino com prescrição completa."""
+    if not treino_id:
+        return {"erro": "treino_id obrigatório"}
+    treino = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id))
+    if not treino:
+        return {"erro": "treino não encontrado"}
+    exs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.sk_exercicio_prefix(treino_id))
+    exs_clean = repo.clean_all(exs)
+    exs_clean.sort(key=lambda e: e.get("ordem", 0))
+    return {
+        "nome": treino.get("nome"), "foco": treino.get("foco"),
+        "obs": treino.get("observacoes"),
+        "ex": [{"id": e["exercicio_id"], "nome": e.get("nome"),
+                "s": e.get("series"), "rp": e.get("reps_prescritas"),
+                "cg": e.get("carga_prescrita"), "int": e.get("intervalo_s"),
+                "video": e.get("video_url"), "obs": e.get("observacoes"),
+                "dia": e.get("dia_semana")}
+               for e in exs_clean],
+    }
+
+
+def cancelar_sessao(aluno_id: str) -> dict:
+    """Cancela a sessão ativa (como se nunca tivesse começado)."""
+    sessao_service.cancelar(aluno_id)
+    return {"ok": 1}
 
 
 def iniciar_sessao(personal_id: str, aluno_id: str, treino_id: str) -> dict:

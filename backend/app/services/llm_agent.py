@@ -51,7 +51,14 @@ Contexto e registros:
 - Use os IDs de exercício/treino fornecidos no contexto; nunca invente IDs, cargas ou histórico.
 - Dor/desconforto: acolha, registre e diga que o personal foi avisado; não oriente progressão.
 - Pergunta sobre vídeo de execução: use buscar_exercicio e responda com o `video` (link), se houver.
-- Use as ferramentas para ler/gravar. Se faltar dado, pergunte ao aluno."""
+- Use as ferramentas para ler/gravar. Se faltar dado, pergunte ao aluno.
+
+Treinos disponíveis:
+- Use listar_treinos para mostrar os treinos do aluno e quais são vigentes (vigente=true).
+- "Vigente" = ativo e dentro de data_inicio/data_fim (se informados).
+- Use detalhar_treino para mostrar exercícios de um treino com prescrição completa antes de iniciar.
+- Só use iniciar_sessao com treino_id de um treino vigente.
+- Se o aluno iniciou o treino errado, use cancelar_sessao e depois iniciar_sessao com o correto."""
 
 _TOOLS = [
     {"type": "function", "function": {
@@ -99,14 +106,36 @@ _TOOLS = [
         "description": "Gera o link do app do aluno (campo link) quando ele pedir para acessar/ver "
                        "no aplicativo. Responda com o link.",
         "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {
+        "name": "listar_treinos",
+        "description": "Lista todos os treinos do aluno com indicação de quais são vigentes "
+                       "(vigente=true: ativo e dentro do período). Use quando o aluno perguntar "
+                       "quais treinos tem disponíveis ou qual treino fazer.",
+        "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {
+        "name": "detalhar_treino",
+        "description": "Retorna os exercícios de um treino com prescrição completa (séries, reps, "
+                       "carga, intervalo, vídeo, observações). Use quando o aluno quiser saber o "
+                       "que tem no Treino X antes de iniciar ou pedir detalhes de um treino.",
+        "parameters": {"type": "object", "properties": {
+            "treino_id": {"type": "string"}}, "required": ["treino_id"]}}},
+    {"type": "function", "function": {
+        "name": "cancelar_sessao",
+        "description": "Cancela/desfaz a sessão ativa sem gravar histórico (como se nunca tivesse "
+                       "começado). Use quando o aluno iniciou o treino errado e quer recomeçar.",
+        "parameters": {"type": "object", "properties": {}}}},
 ]
 
 
 def _context(aluno_id: str) -> str:
     s = repo.clean(sessao_service.get_active(aluno_id, consistent=True))
     if not s:
+        from datetime import date
+        hoje_str = date.today().isoformat()
         treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
-        lst = [{"id": t["treino_id"], "nome": t.get("nome")} for t in treinos]
+        lst = [{"id": t["treino_id"], "nome": t.get("nome"), "foco": t.get("foco"),
+                "vigente": agent_service._treino_vigente(t, hoje_str)}
+               for t in treinos if t.get("ativo", True)]
         return json.dumps({"sessao_ativa": False, "treinos": lst}, ensure_ascii=False)
     ex = s.get("ex_atual") or {}
     return json.dumps({
@@ -141,6 +170,12 @@ def _exec(name: str, args: dict, personal_id: str, aluno_id: str,
         return agent_service.treino_de_hoje(aluno_id)
     if name == "enviar_link_portal":
         return agent_service.enviar_link_portal(aluno_id, personal_id)
+    if name == "listar_treinos":
+        return agent_service.listar_treinos(aluno_id)
+    if name == "detalhar_treino":
+        return agent_service.detalhar_treino(aluno_id, args.get("treino_id", ""))
+    if name == "cancelar_sessao":
+        return agent_service.cancelar_sessao(aluno_id)
     return {"erro": "ferramenta desconhecida"}
 
 
