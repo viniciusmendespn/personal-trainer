@@ -23,7 +23,7 @@ function Deploy-Backend {
 }
 
 function Deploy-Frontend {
-    if (-not $CfId) { Write-Host "CfId vazio — configure a infra de frontend primeiro." -ForegroundColor Yellow; return }
+    if (-not $CfId) { Write-Host "CfId vazio - configure a infra de frontend primeiro." -ForegroundColor Yellow; return }
     Write-Host "`n=== Deploy Frontend ===" -ForegroundColor Green
     Set-Location frontend
     npm run build
