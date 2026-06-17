@@ -150,7 +150,12 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
   const { show } = useToast()
   const [nome, setNome] = useState(template?.nome ?? '')
   const [foco, setFoco] = useState(template?.foco ?? '')
-  const [exercicios, setExercicios] = useState<ExercicioTemplate[]>(template?.exercicios ?? [])
+  const [exercicios, setExercicios] = useState<ExercicioTemplate[]>(() =>
+    (template?.exercicios ?? []).map((ex) => ({
+      ...ex,
+      series_prescritas: initSeriesPrescritas(ex.series_prescritas, ex.series, ex.reps_prescritas, ex.carga_prescrita),
+    }))
+  )
   const saving = create.isPending || upd.isPending
 
   function updateEx(i: number, fields: Partial<ExercicioTemplate>) {
@@ -160,7 +165,7 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
     setExercicios((exs) => exs.filter((_, j) => j !== i))
   }
   function addEx() {
-    setExercicios((exs) => [...exs, { nome: '', ordem: exs.length }])
+    setExercicios((exs) => [...exs, { nome: '', ordem: exs.length, series_prescritas: [{ series: 1, reps: '' }] }])
   }
 
   async function save(e: React.FormEvent) {
@@ -203,7 +208,7 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
               <div>
                 <p className="text-xs font-medium text-text-secondary mb-2">Prescrição — séries × reps · carga</p>
                 <SeriesPrescritasEditor
-                  value={initSeriesPrescritas(ex.series_prescritas, ex.series, ex.reps_prescritas, ex.carga_prescrita)}
+                  value={ex.series_prescritas ?? []}
                   onChange={(v: SeriePrescrita[]) => updateEx(i, { series_prescritas: v })}
                 />
               </div>

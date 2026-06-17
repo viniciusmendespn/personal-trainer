@@ -47,7 +47,7 @@ from app.models.aluno import Aluno  # noqa: E402
 from app.models.avaliacao import Avaliacao  # noqa: E402
 from app.models.biblioteca import ExLib  # noqa: E402
 from app.models.enums import AgendamentoStatus, AlunoStatus, Ator, CanalOrigem, Classificacao  # noqa: E402
-from app.models.exercicio import Exercicio  # noqa: E402
+from app.models.exercicio import Exercicio, SeriePrescrita  # noqa: E402
 from app.models.registro import Registro, SerieExec  # noqa: E402
 from app.models.template import ExercicioTemplate, TreinoTemplate  # noqa: E402
 from app.models.treino import Treino  # noqa: E402
@@ -216,14 +216,17 @@ for aluno in alunos_criados:
             ex_id = new_id()
             kind = "compound" if ex_nome in COMPOUND else "isolation"
             reps_lo, reps_hi = REP_RANGE[kind]
+            n_series = 4 if kind == "compound" else 3
+            sp = [SeriePrescrita(series=n_series, reps=f"{reps_lo}-{reps_hi}",
+                                 carga=str(carga0) if carga0 else None)]
             exercicio = Exercicio(
                 exercicio_id=ex_id, treino_id=treino_id, aluno_id=aluno_id, nome=ex_nome, ordem=i,
-                series=4 if kind == "compound" else 3, reps_prescritas=f"{reps_lo}-{reps_hi}",
-                carga_prescrita=(str(carga0) if carga0 else "peso corporal"),
+                series_prescritas=sp,
                 video_url=f"https://www.youtube.com/results?search_query={ex_nome.replace(' ', '+')}",
             )
             repo.put_item(keys.pk_aluno(aluno_id), keys.sk_exercicio(treino_id, ex_id), exercicio.model_dump())
-            exercicios.append({"exercicio_id": ex_id, "nome": ex_nome, "carga_atual": carga0, "kind": kind})
+            exercicios.append({"exercicio_id": ex_id, "nome": ex_nome, "carga_atual": carga0, "kind": kind,
+                               "series_prescritas": [s.model_dump() for s in sp]})
         treinos[letra] = {"treino_id": treino_id, "nome": nome, "exercicios": exercicios, "data_fim": data_fim}
 
         if data_fim:
@@ -252,8 +255,8 @@ def registrar_sessao_historica(aluno_id: str, treino: dict, dt: datetime) -> flo
     mas com timestamp controlado (dt) em vez de 'agora'."""
     sessao_id = new_id()
     pk = keys.pk_aluno(aluno_id)
-    snaps = [{"exercicio_id": e["exercicio_id"], "nome": e["nome"], "series": None,
-              "reps_prescritas": None, "carga_prescrita": None, "intervalo_s": None} for e in treino["exercicios"]]
+    snaps = [{"exercicio_id": e["exercicio_id"], "nome": e["nome"],
+              "series_prescritas": e.get("series_prescritas"), "intervalo_s": None} for e in treino["exercicios"]]
 
     total_volume_sessao = 0.0
     exercicios_exec = []
@@ -278,7 +281,8 @@ def registrar_sessao_historica(aluno_id: str, treino: dict, dt: datetime) -> flo
         repo.put_item(pk, keys.sk_registro(sessao_id, ex["exercicio_id"]), item)
         exercicios_exec.append({
             "exercicio_id": ex["exercicio_id"], "exercicio_nome": ex["nome"],
-            "series_exec": [{"carga": s.carga, "reps": s.reps} for s in series],
+            "series_exec": [{"carga": s.carga, "reps": s.reps, "rpe": s.rpe} for s in series],
+            "series_prescritas": ex.get("series_prescritas"),
         })
 
         cargas, volume = [], 0.0
@@ -304,9 +308,14 @@ def registrar_sessao_historica(aluno_id: str, treino: dict, dt: datetime) -> flo
         "data_hora_fim": iso_at(dt), "duracao_segundos": duracao_s,
         "exercicios_exec": exercicios_exec,
     }
-    repo.put_item(pk, keys.sk_sessao_hist(epoch_ms_at(dt), sessao_id), hist)
+    sk_hist = keys.sk_sessao_hist(epoch_ms_at(dt), sessao_id)
+    repo.put_item(pk, sk_hist, hist)
+    repo.put_item(pk, keys.sk_sessao_idx(sessao_id), {"sk": sk_hist})
     repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_sessoes": 1}, set_={"ultimo_treino": iso_at(dt)})
     repo.add_and_set(pk, keys.sk_stats_week(isoweek_at(dt)), add={"sessoes": 1}, set_={"semana": isoweek_at(dt)})
+    hoje_str = dt.date().isoformat()
+    repo.add_and_set(keys.pk_personal(PERSONAL_ID), f"STATS#D#{hoje_str}",
+                     add={"sessoes": 1}, set_={"data": hoje_str})
     return total_volume_sessao
 
 
@@ -379,8 +388,8 @@ TEMPLATES_DEF = [
 ]
 for nome, foco, exs in TEMPLATES_DEF:
     exercicios_tpl = [
-        ExercicioTemplate(nome=ex_nome, ordem=i, series=3, reps_prescritas="8-12",
-                          carga_prescrita=None, video_url=None)
+        ExercicioTemplate(nome=ex_nome, ordem=i,
+                          series_prescritas=[SeriePrescrita(series=3, reps="8-12")])
         for i, ex_nome in enumerate(exs)
     ]
     tpl = TreinoTemplate(template_id=new_id(), personal_id=PERSONAL_ID, nome=nome, foco=foco,
@@ -495,4 +504,4 @@ print(f"Mídias demo:     {total_midias} (Mariana/Carlos/Thiago — S3 keys fict
 print("Pendências:      1 relato de dor (Mariana), 1 mídia pendente vinculável (Bruno), 1 genérica (Fernanda)")
 print("\nFaça login no portal e explore Dashboard, Alunos, Agenda, Templates, Biblioteca e a Central (sino).")
 print("Aba Histórico: disponível no app do aluno e na página de detalhes do aluno (personal).")
-print("Reordenação de treinos: use ↑/↓ na página de detalhe do aluno para ordenar a sequência de treinos.")
+print("Reordenacao de treinos: use os botoes ^ / v na pagina de detalhe do aluno para ordenar a sequencia de treinos.")

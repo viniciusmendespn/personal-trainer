@@ -2,6 +2,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+from app.models.exercicio import SeriePrescrita
+
 
 class ExercicioTemplate(BaseModel):
     nome: str
@@ -10,6 +12,7 @@ class ExercicioTemplate(BaseModel):
     series: Optional[int] = None
     reps_prescritas: Optional[str] = None
     carga_prescrita: Optional[str] = None
+    series_prescritas: Optional[list[SeriePrescrita]] = None
     intervalo_s: Optional[int] = None
     video_url: Optional[str] = None
     observacoes: Optional[str] = None

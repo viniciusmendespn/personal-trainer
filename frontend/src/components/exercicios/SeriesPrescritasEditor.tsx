@@ -8,19 +8,20 @@ interface Props {
 }
 
 export function SeriesPrescritasEditor({ value, onChange }: Props) {
+  const safeValue = Array.isArray(value) ? value : []
   function update(i: number, field: keyof SeriePrescrita, v: string) {
-    onChange(value.map((r, j) => j === i ? { ...r, [field]: field === 'series' ? Number(v) || 1 : v } : r))
+    onChange(safeValue.map((r, j) => j === i ? { ...r, [field]: field === 'series' ? Number(v) || 1 : v } : r))
   }
   function remove(i: number) {
-    onChange(value.filter((_, j) => j !== i))
+    onChange(safeValue.filter((_, j) => j !== i))
   }
   function add() {
-    onChange([...value, { series: 1, reps: '', carga: undefined }])
+    onChange([...safeValue, { series: 1, reps: '', carga: undefined }])
   }
 
   return (
     <div className="space-y-2">
-      {value.map((row, i) => (
+      {safeValue.map((row, i) => (
         <div key={i} className="flex items-center gap-2">
           <Input
             className="w-16 text-center"
@@ -43,7 +44,7 @@ export function SeriesPrescritasEditor({ value, onChange }: Props) {
             value={row.carga ?? ''}
             onChange={(e) => update(i, 'carga', e.target.value)}
           />
-          {value.length > 1 && (
+          {safeValue.length > 1 && (
             <button type="button" onClick={() => remove(i)} className="text-text-muted hover:text-danger shrink-0">
               <X size={14} />
             </button>
