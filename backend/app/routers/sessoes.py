@@ -21,6 +21,15 @@ class RegistroBody(BaseModel):
     exercicio_id: str | None = None
 
 
+@router.get("/sessoes")
+def list_sessoes(aluno_id: str, limit: int = 10, cursor: str | None = None,
+                 personal_id: str = Depends(get_current_personal_id)):
+    """Histórico de sessões finalizadas do aluno (mais recentes primeiro)."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    items, next_cursor = sessao_service.list_sessoes(aluno_id, limit, cursor)
+    return {"items": items, "next_cursor": next_cursor}
+
+
 @router.get("/sessao")
 def get_sessao(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)

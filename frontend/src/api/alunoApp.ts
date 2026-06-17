@@ -9,6 +9,28 @@ export interface SessaoAtiva {
   ex_atual?: { exercicio_id: string; nome: string; series?: number; reps_prescritas?: string; carga_prescrita?: string }
   ordem_atual: number
   total_ex: number
+  data_hora_inicio: string
+}
+
+export interface SerieExec {
+  carga?: string
+  reps?: number
+}
+
+export interface SessaoHistorico {
+  sessao_id: string
+  treino_id: string
+  treino_nome: string
+  status: string
+  data_hora_inicio: string
+  data_hora_fim?: string
+  duracao_segundos?: number
+  total_ex: number
+  exercicios_exec?: Array<{
+    exercicio_id: string
+    exercicio_nome: string
+    series_exec: SerieExec[]
+  }>
 }
 
 export interface SerieInput {
@@ -77,6 +99,10 @@ export const alunoApi = {
     alunoClient.post('/v1/aluno/relato', {
       tipo, descricao, exercicio_id: exercicioId, exercicio_nome: exercicioNome,
     }).then((r) => r.data),
+  sessoes: (params?: { cursor?: string; limit?: number }) =>
+    alunoClient
+      .get<{ items: SessaoHistorico[]; next_cursor: string | null }>('/v1/aluno/sessoes', { params })
+      .then((r) => r.data),
 }
 
 /** Pede a presigned URL e sobe o arquivo direto pro S3, depois registra vinculado ao exercício. */

@@ -91,13 +91,28 @@ def finish(aluno_id: str) -> dict:
     if not s:
         raise HTTPException(404, "Sem sessão ativa")
     s["status"] = SessaoStatus.FINALIZADA.value
-    s["data_hora_fim"] = now_iso()
-    snap = {k: v for k, v in s.items() if k not in ("PK", "SK", "ttl")}  # snapshot sem ttl
-    repo.put_item(keys.pk_aluno(aluno_id), keys.sk_sessao_hist(epoch_ms(), s["sessao_id"]), snap)
+    fim_iso = now_iso()
+    s["data_hora_fim"] = fim_iso
+    try:
+        inicio_dt = datetime.fromisoformat(s["data_hora_inicio"].replace("Z", "+00:00"))
+        fim_dt = datetime.fromisoformat(fim_iso.replace("Z", "+00:00"))
+        s["duracao_segundos"] = int((fim_dt - inicio_dt).total_seconds())
+    except Exception:
+        pass
+    # Denormaliza registros na sessão histórica (1 query extra, evita N+1 na timeline)
+    sessao_id = s["sessao_id"]
+    regs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=f"REG#{sessao_id}#")
+    s["exercicios_exec"] = [
+        {"exercicio_id": r.get("exercicio_id"), "exercicio_nome": r.get("exercicio_nome"),
+         "series_exec": r.get("series_exec", [])}
+        for r in regs
+    ]
+    snap = {k: v for k, v in s.items() if k not in ("PK", "SK", "ttl")}
+    repo.put_item(keys.pk_aluno(aluno_id), keys.sk_sessao_hist(epoch_ms(), sessao_id), snap)
     repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE)
     # Agregação na escrita: conta a sessão (aluno + semana) — ESPEC §3.1
     pk = keys.pk_aluno(aluno_id)
-    repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_sessoes": 1}, set_={"ultimo_treino": s["data_hora_fim"]})
+    repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_sessoes": 1}, set_={"ultimo_treino": fim_iso})
     wk = _isoweek()
     repo.add_and_set(pk, keys.sk_stats_week(wk), add={"sessoes": 1}, set_={"semana": wk})
     return snap
@@ -279,6 +294,15 @@ def ultimo_e_proximo(aluno_id: str) -> dict:
         "ultimo": {"treino_nome": ultima.get("treino_nome"), "data": ultima.get("data_hora_fim")} if ultima else None,
         "proximo": {"treino_id": proximo["treino_id"], "nome": proximo.get("nome")} if proximo else None,
     }
+
+
+def list_sessoes(aluno_id: str, limit: int = 10, cursor: str | None = None) -> tuple[list[dict], str | None]:
+    """Sessões históricas paginadas (mais recentes primeiro), sem a sessão ativa."""
+    items, next_cursor = repo.query_pk_page(
+        keys.pk_aluno(aluno_id), "SESSION#", limit=limit + 1, cursor=cursor, forward=False
+    )
+    items = [i for i in items if i.get("SK") != keys.SK_SESSION_ACTIVE][:limit]
+    return repo.clean_all(items), next_cursor
 
 
 def list_exercicios_aluno(aluno_id: str) -> list[dict]:

@@ -40,6 +40,21 @@ export const treinosApi = {
     api
       .post<{ ok: number; midia_id: string; whatsapp_enviado: boolean }>(`/v1/alunos/${alunoId}/midia/correcao`, body)
       .then((r) => r.data),
+  listSessoes: (alunoId: string, params?: { cursor?: string; limit?: number }) =>
+    api
+      .get<{ items: SessaoHistoricoPersonal[]; next_cursor: string | null }>(`/v1/alunos/${alunoId}/sessoes`, { params })
+      .then((r) => r.data),
+}
+
+export interface SessaoHistoricoPersonal {
+  sessao_id: string
+  treino_id: string
+  treino_nome: string
+  status: string
+  data_hora_inicio: string
+  data_hora_fim?: string
+  duracao_segundos?: number
+  total_ex: number
 }
 
 export interface MidiaExercicio {

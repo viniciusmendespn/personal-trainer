@@ -2,7 +2,7 @@
 Sem Cognito (rota /v1/aluno/* com Authorizer NONE; o token é validado na Lambda)."""
 from datetime import date
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from app.dependencies import get_current_aluno
@@ -115,6 +115,13 @@ def evolucao(exercicio_id: str, ctx: dict = Depends(get_current_aluno)):
 def midia_exercicio_aluno(exercicio_id: str, ctx: dict = Depends(get_current_aluno)):
     """Vídeos/fotos (execução do aluno + correção do personal) anexados nesse exercício."""
     return media_service.list_midia_exercicio(ctx["aluno_id"], exercicio_id)
+
+
+@router.get("/sessoes")
+def list_sessoes(limit: int = 10, cursor: str | None = None, ctx: dict = Depends(get_current_aluno)):
+    """Histórico de sessões finalizadas (mais recentes primeiro) — timeline do aluno."""
+    items, next_cursor = sessao_service.list_sessoes(ctx["aluno_id"], limit, cursor)
+    return {"items": items, "next_cursor": next_cursor}
 
 
 @router.get("/resumo")

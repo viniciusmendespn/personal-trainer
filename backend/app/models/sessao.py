@@ -28,3 +28,5 @@ class SessaoTreino(BaseModel):
     total_ex: int = 0
     data_hora_inicio: str
     data_hora_fim: Optional[str] = None
+    duracao_segundos: Optional[int] = None
+    exercicios_exec: Optional[list] = None

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, Trophy, Check, ChevronRight, Video, X, Paperclip, AlertTriangle } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, X, Paperclip, AlertTriangle, Timer, Clock } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
-import { alunoApi, anexarMidiaExecucao, type ExSessao } from '../api/alunoApp'
+import { alunoApi, anexarMidiaExecucao, type ExSessao, type SessaoAtiva, type SessaoHistorico } from '../api/alunoApp'
 import { ALUNO_TOKEN_KEY } from '../api/alunoClient'
 import { useAlunoChat, useSendAlunoChat, useSendDiretoAlunoChat } from '../hooks/useAlunoChat'
+import { useAlunoTimeline } from '../hooks/useAlunoTimeline'
 import { ChatThread } from '../components/chat/ChatThread'
 import { ChatInputBar } from '../components/chat/ChatInputBar'
 import { MediaTimeline } from '../components/media/MediaTimeline'
@@ -52,7 +53,7 @@ function useAlunoToken() {
 
 export function AlunoApp() {
   const token = useAlunoToken()
-  const [tab, setTab] = useState<'hoje' | 'evolucao' | 'chat'>('hoje')
+  const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'chat'>('hoje')
   const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false })
 
   if (!token) return <Centered>Abra o aplicativo pelo link enviado no seu WhatsApp.</Centered>
@@ -68,6 +69,8 @@ export function AlunoApp() {
       </header>
       {tab === 'chat' ? (
         <ChatTab />
+      ) : tab === 'historico' ? (
+        <main className="px-4 flex-1"><HistoricoTab /></main>
       ) : (
         <main className="px-4 flex-1">{tab === 'hoje' ? <Hoje /> : <Evolucao />}</main>
       )}
@@ -78,6 +81,7 @@ export function AlunoApp() {
         {([
           ['hoje', 'Treino', <Dumbbell size={18} />],
           ['evolucao', 'Evolução', <TrendingUp size={18} />],
+          ['historico', 'Histórico', <History size={18} />],
           ['chat', 'Chat', <MessageCircle size={18} />],
         ] as const).map(
           ([k, label, icon]) => (
@@ -133,7 +137,7 @@ function Hoje() {
   })
 
   if (sessao.isLoading) return <Spinner />
-  if (sessao.data?.sessao_id) return <SessaoTreino />
+  if (sessao.data?.sessao_id) return <SessaoTreino sessao={sessao.data} />
 
   const agendados = hoje.data?.hoje ?? []
   const lista = agendados.length ? agendados : (hoje.data?.treinos ?? []).map((t) => ({ id: t.treino_id, nome: t.nome }))
@@ -175,15 +179,24 @@ function Hoje() {
   )
 }
 
-function SessaoTreino() {
+function formatElapsed(secs: number) {
+  const h = Math.floor(secs / 3600)
+  const m = Math.floor((secs % 3600) / 60)
+  const s = secs % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
+function SessaoTreino({ sessao }: { sessao: SessaoAtiva }) {
   const qc = useQueryClient()
   const confirm = useConfirm()
+  const [elapsed, setElapsed] = useState(0)
   const ses = useQuery({ queryKey: ['aluno-sessao-exs'], queryFn: alunoApi.sessaoExercicios, retry: false })
   const finish = useMutation({
     mutationFn: () => alunoApi.finish(),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['aluno-sessao'] })
       qc.invalidateQueries({ queryKey: ['aluno-sessao-exs'] })
+      qc.invalidateQueries({ queryKey: ['aluno-sessoes'] })
     },
   })
   const cancel = useMutation({
@@ -194,6 +207,14 @@ function SessaoTreino() {
     },
   })
 
+  useEffect(() => {
+    const inicio = new Date(sessao.data_hora_inicio).getTime()
+    const update = () => setElapsed(Math.max(0, Math.floor((Date.now() - inicio) / 1000)))
+    update()
+    const id = setInterval(update, 1000)
+    return () => clearInterval(id)
+  }, [sessao.data_hora_inicio])
+
   if (ses.isLoading || !ses.data) return <Spinner />
   const exs = ses.data.exercicios
   const feitos = exs.filter((e) => e.registrado?.length).length
@@ -203,7 +224,12 @@ function SessaoTreino() {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="font-display font-semibold">{ses.data.treino_nome}</p>
-        <span className="text-xs text-text-muted">{feitos}/{exs.length} feitos</span>
+        <span className="flex items-center gap-1 text-sm font-mono text-energy">
+          <Timer size={14} />{formatElapsed(elapsed)}
+        </span>
+      </div>
+      <div className="flex items-center justify-between text-xs text-text-muted">
+        <span>{feitos}/{exs.length} exercícios feitos</span>
       </div>
       <div className="h-2 rounded-full bg-surface-elevated border border-border overflow-hidden">
         <div
@@ -384,6 +410,104 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
         </div>
       )}
     </Card>
+  )
+}
+
+function formatDuracao(secs?: number) {
+  if (!secs) return null
+  const h = Math.floor(secs / 3600)
+  const m = Math.floor((secs % 3600) / 60)
+  const s = secs % 60
+  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}min`
+  if (m > 0) return `${m}min ${String(s).padStart(2, '0')}s`
+  return `${s}s`
+}
+
+function groupSessoesByPeriodo(sessions: SessaoHistorico[]) {
+  const groups: { label: string; items: typeof sessions }[] = []
+  for (const s of sessions) {
+    const d = new Date(s.data_hora_inicio)
+    const now = new Date()
+    const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
+    let label: string
+    if (diffDays <= 6) label = 'Esta semana'
+    else if (diffDays <= 13) label = 'Semana passada'
+    else {
+      const mes = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+      label = mes.charAt(0).toUpperCase() + mes.slice(1)
+    }
+    const last = groups[groups.length - 1]
+    if (last?.label === label) last.items.push(s)
+    else groups.push({ label, items: [s] })
+  }
+  return groups
+}
+
+function HistoricoTab() {
+  const { sessions, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useAlunoTimeline()
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  if (isLoading) return <div className="flex justify-center py-8"><Spinner /></div>
+  if (!sessions.length)
+    return <EmptyState icon={<History />} title="Nenhum treino finalizado ainda" description="Complete seu primeiro treino para ver o histórico." />
+
+  const groups = groupSessoesByPeriodo(sessions)
+
+  return (
+    <div className="space-y-4 pb-4">
+      {groups.map((g) => (
+        <div key={g.label}>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">{g.label}</p>
+          <div className="space-y-2">
+            {g.items.map((s) => {
+              const expanded = expandedId === s.sessao_id
+              const totalSeries = (s.exercicios_exec ?? []).reduce((acc, e) => acc + (e.series_exec?.length ?? 0), 0)
+              return (
+                <Card key={s.sessao_id} variant="elevated">
+                  <button
+                    className="w-full flex items-start justify-between text-left gap-2"
+                    onClick={() => setExpandedId(expanded ? null : s.sessao_id)}
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{s.treino_nome}</p>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        {new Date(s.data_hora_inicio).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        {s.duracao_segundos ? <> · <Clock size={10} className="inline mb-0.5" /> {formatDuracao(s.duracao_segundos)}</> : null}
+                        {s.total_ex ? ` · ${s.total_ex} exercício${s.total_ex !== 1 ? 's' : ''}` : null}
+                        {totalSeries ? ` · ${totalSeries} séries` : null}
+                      </p>
+                    </div>
+                    {expanded ? <ChevronDown size={16} className="shrink-0 text-text-muted mt-0.5" /> : <ChevronRight size={16} className="shrink-0 text-text-muted mt-0.5" />}
+                  </button>
+
+                  {expanded && s.exercicios_exec && s.exercicios_exec.length > 0 && (
+                    <div className="mt-3 space-y-2 border-t border-border pt-2">
+                      {s.exercicios_exec.map((ex) => (
+                        <div key={ex.exercicio_id} className="text-sm">
+                          <span className="font-medium">{ex.exercicio_nome}</span>
+                          {ex.series_exec?.length > 0 && (
+                            <span className="text-xs text-text-muted ml-2">
+                              {ex.series_exec.map((sr, i) => (
+                                <span key={i}>{i > 0 ? '  ' : ''}{sr.carga ? `${sr.carga}` : '—'}{sr.reps ? `×${sr.reps}` : ''}</span>
+                              ))}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+      {hasNextPage && (
+        <Button variant="outline" className="w-full" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+          {isFetchingNextPage ? <Spinner /> : 'Carregar mais'}
+        </Button>
+      )}
+    </div>
   )
 }
 

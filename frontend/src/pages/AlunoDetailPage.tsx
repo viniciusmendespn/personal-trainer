@@ -1,7 +1,7 @@
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote, Camera, Clock, RefreshCw, AlertCircle } from 'lucide-react'
 import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { alunosApi } from '../api/alunos'
 import {
@@ -13,6 +13,7 @@ import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
 import { useNotas, useCreateNota } from '../hooks/useNotas'
+import { treinosApi } from '../api/treinos'
 import type { Treino, Exercicio, ExercicioCreate } from '../types'
 
 const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
@@ -213,12 +214,9 @@ export function AlunoDetailPage() {
           ) : !treinos?.length ? (
             <EmptyState icon={<Dumbbell />} title="Nenhum treino" description="Adicione o primeiro treino no formulário acima." />
           ) : (
-            <div className="space-y-3">
-              {treinos.map((t) => (
-                <TreinoCard key={t.treino_id} alunoId={alunoId} treino={t} />
-              ))}
-            </div>
+            <TreinosLista alunoId={alunoId} treinos={treinos} />
           )}
+          <SessoesRecentes alunoId={alunoId} />
         </>
       )}
     </div>
@@ -227,6 +225,131 @@ export function AlunoDetailPage() {
 
 const fmtDate = (d?: string) => (d ? d.split('-').reverse().slice(0, 2).join('/') : '')
 const fmtDateFull = (d?: string) => (d ? d.split('-').reverse().join('/') : '')
+const fmtDuracao = (secs?: number) => {
+  if (!secs) return null
+  const h = Math.floor(secs / 3600)
+  const m = Math.floor((secs % 3600) / 60)
+  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}min`
+  return `${m}min`
+}
+
+function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[] }) {
+  const hoje = new Date().toISOString().slice(0, 10)
+  const vigentes = treinos.filter((t) => t.ativo !== false && (!t.data_fim || t.data_fim >= hoje))
+  const expirados = treinos.filter((t) => t.ativo === false || (t.data_fim && t.data_fim < hoje))
+  const [showExpirados, setShowExpirados] = useState(false)
+  const updTreino = useUpdateTreino(alunoId)
+  const [renovandoId, setRenovandoId] = useState<string | null>(null)
+  const [novaDataFim, setNovaDataFim] = useState('')
+  const { show } = useToast()
+
+  const defaultDataFim = () => {
+    const d = new Date()
+    d.setDate(d.getDate() + 30)
+    return d.toISOString().slice(0, 10)
+  }
+
+  async function renovar(t: Treino) {
+    setRenovandoId(t.treino_id)
+    setNovaDataFim(defaultDataFim())
+  }
+
+  async function confirmarRenovacao(t: Treino) {
+    await updTreino.mutateAsync({
+      treinoId: t.treino_id,
+      body: {
+        nome: t.nome, ordem: t.ordem, foco: t.foco, observacoes: t.observacoes,
+        ativo: true, data_inicio: t.data_inicio, data_fim: novaDataFim || undefined, custom: t.custom,
+      },
+    })
+    show('Vigência renovada.', 'success')
+    setRenovandoId(null)
+  }
+
+  return (
+    <div className="space-y-3">
+      {vigentes.map((t) => <TreinoCard key={t.treino_id} alunoId={alunoId} treino={t} />)}
+
+      {expirados.length > 0 && (
+        <div>
+          <button
+            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text py-1 transition-colors"
+            onClick={() => setShowExpirados((v) => !v)}
+          >
+            {showExpirados ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            <AlertCircle size={13} className="text-warning" />
+            Treinos expirados ({expirados.length})
+          </button>
+          {showExpirados && (
+            <div className="space-y-3 mt-2">
+              {expirados.map((t) => (
+                <div key={t.treino_id} className="opacity-70">
+                  <TreinoCard alunoId={alunoId} treino={t} />
+                  <div className="flex justify-end -mt-1 pb-1">
+                    <Button size="sm" variant="outline" onClick={() => renovar(t)}>
+                      <span className="flex items-center gap-1"><RefreshCw size={12} /> Renovar vigência</span>
+                    </Button>
+                  </div>
+                  {renovandoId === t.treino_id && (
+                    <Modal open onClose={() => setRenovandoId(null)} title={`Renovar "${t.nome}"`} size="md">
+                      <div className="space-y-3">
+                        <Input
+                          label="Nova data de término"
+                          type="date"
+                          value={novaDataFim}
+                          onChange={(e) => setNovaDataFim(e.target.value)}
+                        />
+                        <Button className="w-full" disabled={updTreino.isPending} onClick={() => confirmarRenovacao(t)}>
+                          {updTreino.isPending ? 'Salvando…' : 'Confirmar renovação'}
+                        </Button>
+                      </div>
+                    </Modal>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SessoesRecentes({ alunoId }: { alunoId: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['sessoes-aluno', alunoId],
+    queryFn: () => treinosApi.listSessoes(alunoId, { limit: 5 }),
+    enabled: !!alunoId,
+  })
+  const sessoes = data?.items ?? []
+
+  if (isLoading) return null
+  if (!sessoes.length) return null
+
+  return (
+    <Card variant="elevated" className="mt-4">
+      <p className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-1">
+        <Clock size={14} /> Últimas sessões
+      </p>
+      <div className="space-y-2">
+        {sessoes.map((s) => (
+          <div key={s.sessao_id} className="flex items-center justify-between text-sm border-b border-border pb-1.5 last:border-0 last:pb-0">
+            <div>
+              <span className="font-medium">{s.treino_nome}</span>
+              <span className="text-xs text-text-muted ml-2">
+                {new Date(s.data_hora_inicio).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+            <div className="text-xs text-text-muted text-right">
+              {s.duracao_segundos ? <span className="text-accent-hover">{fmtDuracao(s.duracao_segundos)}</span> : null}
+              {s.total_ex ? <span className="ml-2">{s.total_ex} ex</span> : null}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  )
+}
 
 function NotasTimeline({ alunoId }: { alunoId: string }) {
   const { data: notas, isLoading } = useNotas(alunoId)
@@ -482,10 +605,10 @@ function ExercicioRow({
   alunoId, treinoId, ex, biblioteca,
 }: { alunoId: string; treinoId: string; ex: Exercicio; biblioteca?: { exlib_id: string; nome: string; video_url?: string }[] }) {
   const [edit, setEdit] = useState(false)
+  const [mediaOpen, setMediaOpen] = useState(false)
   const upd = useUpdateExercicio(alunoId, treinoId)
   const del = useDeleteExercicio(alunoId, treinoId)
   const confirm = useConfirm()
-  const { data: midias, isLoading: loadingMidia } = useMidiaExercicio(alunoId, ex.exercicio_id, edit)
 
   async function save(body: ExercicioCreate) {
     await upd.mutateAsync({ exercicioId: ex.exercicio_id, body: { ...body, ordem: ex.ordem } })
@@ -517,17 +640,74 @@ function ExercicioRow({
           )}
         </span>
         <span className="flex gap-1 shrink-0">
+          <Button variant="ghost" size="sm" iconOnly aria-label="Fotos e vídeos" onClick={() => setMediaOpen(true)}><Camera size={13} /></Button>
           <Button variant="ghost" size="sm" iconOnly aria-label="Editar exercício" onClick={() => setEdit(true)}><Pencil size={13} /></Button>
           <Button variant="ghost" size="sm" iconOnly aria-label="Excluir exercício" onClick={remove} className="hover:text-danger"><Trash2 size={14} /></Button>
         </span>
       </div>
 
       <Modal open={edit} onClose={() => setEdit(false)} title="Editar exercício" size="lg">
-        <div className="space-y-4">
-          <ExercicioForm initial={ex} biblioteca={biblioteca} submitLabel="Salvar" submitting={upd.isPending} onSubmit={save} />
-          <MediaTimeline items={(midias ?? []).map((m) => ({ ...m, ator: m.ator ?? 'ALUNO' }))} isLoading={loadingMidia} />
-        </div>
+        <ExercicioForm initial={ex} biblioteca={biblioteca} submitLabel="Salvar" submitting={upd.isPending} onSubmit={save} />
       </Modal>
+
+      <ExercicioMediaModal
+        alunoId={alunoId}
+        exercicio={ex}
+        open={mediaOpen}
+        onClose={() => setMediaOpen(false)}
+      />
     </div>
+  )
+}
+
+function ExercicioMediaModal({
+  alunoId, exercicio, open, onClose,
+}: { alunoId: string; exercicio: Exercicio; open: boolean; onClose: () => void }) {
+  const { data: midias, isLoading, refetch } = useMidiaExercicio(alunoId, exercicio.exercicio_id, open)
+  const { show } = useToast()
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setUploading(true)
+    try {
+      const { upload_url, s3_key } = await treinosApi.uploadUrlMidia(alunoId, file.name, file.type)
+      await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
+      const tipo = file.type.startsWith('video') ? 'video_correcao' : 'foto_correcao'
+      await treinosApi.enviarCorrecao(alunoId, {
+        s3_key, tipo, exercicio_id: exercicio.exercicio_id, exercicio_nome: exercicio.nome,
+      })
+      show('Mídia de correção enviada.', 'success')
+      refetch()
+    } catch {
+      show('Não foi possível enviar a mídia.', 'error')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Fotos e vídeos — ${exercicio.nome}`} size="lg">
+      <div className="space-y-4">
+        <div>
+          <label className={`inline-flex items-center gap-1.5 text-sm cursor-pointer px-3 py-2 rounded-lg border border-border hover:bg-surface-elevated transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+            <Camera size={14} />
+            {uploading ? 'Enviando…' : 'Anexar correção (foto ou vídeo)'}
+            <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" disabled={uploading} onChange={handleUpload} />
+          </label>
+          <p className="text-xs text-text-muted mt-1">Visible ao aluno na aba Evolução.</p>
+        </div>
+        {isLoading ? (
+          <div className="flex justify-center py-4"><Spinner /></div>
+        ) : !midias?.length ? (
+          <p className="text-sm text-text-muted">Nenhuma mídia anexada ainda.</p>
+        ) : (
+          <MediaTimeline items={midias.map((m) => ({ ...m, ator: m.ator ?? 'ALUNO' }))} />
+        )}
+      </div>
+    </Modal>
   )
 }
