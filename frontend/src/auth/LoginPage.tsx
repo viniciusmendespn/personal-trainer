@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthProvider'
 import { Button, Input, ErrorText, Card } from '../components/ui'
+import { AppLogo } from '../components/AppLogo'
 
 export function LoginPage() {
   const { user, signIn } = useAuth()
@@ -35,7 +36,10 @@ export function LoginPage() {
       <Card variant="glass" className="w-full max-w-sm p-6 shadow-[var(--shadow-card)]">
         <form onSubmit={handle} className="space-y-4">
           <div className="text-center mb-2">
-            <h1 className="font-display text-2xl font-bold text-text">Personal Trainer</h1>
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <AppLogo size={32} radius={16} />
+              <h1 className="font-display text-2xl font-bold text-text">CoachPilot</h1>
+            </div>
             <p className="text-sm text-text-secondary">Acesse sua conta</p>
           </div>
           <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />

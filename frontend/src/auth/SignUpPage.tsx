@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { signUp, confirmSignUp, autoSignIn } from 'aws-amplify/auth'
 import { useAuth } from './AuthProvider'
 import { Button, Input, ErrorText, Card } from '../components/ui'
+import { AppLogo } from '../components/AppLogo'
 
 // Política do pool: 8+ caracteres, maiúscula, minúscula, número (sem símbolo obrigatório).
 function pwdOk(p: string) {
@@ -68,6 +69,10 @@ export function SignUpPage() {
       <Card variant="glass" className="w-full max-w-sm p-6 shadow-[var(--shadow-card)]">
         {step === 'form' ? (
           <form onSubmit={handleSignUp} className="space-y-4">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <AppLogo size={32} radius={16} />
+              <span className="font-display text-xl font-bold text-text">CoachPilot</span>
+            </div>
             <h1 className="font-display text-2xl font-bold text-text text-center">Criar conta</h1>
             <Input label="Nome" value={name} onChange={(e) => setName(e.target.value)} required />
             <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />

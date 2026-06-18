@@ -6,6 +6,7 @@ import { useAuth } from '../../auth/AuthProvider'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
 import { personalApi } from '../../api/personal'
 import { Avatar } from '../ui'
+import { AppLogo } from '../AppLogo'
 import { ChatWidget } from '../chat/ChatWidget'
 import { ChatContextProvider } from '../../context/ChatContext'
 
@@ -33,6 +34,10 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
 
   return (
     <div className="flex flex-col gap-1 h-full w-full">
+      <div className="px-2 mb-3 flex items-center gap-2">
+        <AppLogo size={22} radius={12} />
+        <span className="font-display text-xs font-bold text-text-secondary tracking-wide">CoachPilot</span>
+      </div>
       <div className="px-2 mb-4 flex items-center gap-2">
         <Avatar name={displayName} imageUrl={profile.data?.foto_url} size="sm" />
         <div className="min-w-0">
