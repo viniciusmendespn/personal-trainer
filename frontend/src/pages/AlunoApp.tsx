@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -87,9 +87,10 @@ const ANOTIF_ICON: Record<string, React.ReactNode> = {
   DUVIDA_RESPONDIDA: <HelpCircle size={14} className="text-info" />,
   MSG_PERSONAL: <MessageCircle size={14} className="text-energy" />,
   CORRECAO_EXERCICIO: <Wrench size={14} className="text-accent-hover" />,
+  MIDIA_PERSONAL: <Camera size={14} className="text-info" />,
 }
 
-const DEEP_LINK_TIPOS = ['DOR_RESPONDIDA', 'DUVIDA_RESPONDIDA', 'CORRECAO_EXERCICIO']
+const DEEP_LINK_TIPOS = ['DOR_RESPONDIDA', 'DUVIDA_RESPONDIDA', 'CORRECAO_EXERCICIO', 'MIDIA_PERSONAL']
 
 function NotifDrawer({ onClose, onNavigate }: { onClose: () => void; onNavigate: (tab: 'evolucao' | 'historico', exId?: string) => void }) {
   const qc = useQueryClient()
@@ -562,10 +563,10 @@ function HistoricoTab() {
 type AbaEvolucao = 'carga' | 'volume' | 'recordes' | 'feed'
 
 const ABA_EVOLUCAO: { key: AbaEvolucao; label: string; icon: React.ReactNode }[] = [
+  { key: 'feed', label: 'Feed', icon: <MessageCircle size={13} /> },
   { key: 'carga', label: 'Carga', icon: <TrendingUp size={13} /> },
   { key: 'volume', label: 'Volume', icon: <BarChart3 size={13} /> },
   { key: 'recordes', label: 'Recordes', icon: <Trophy size={13} /> },
-  { key: 'feed', label: 'Feed', icon: <MessageCircle size={13} /> },
 ]
 
 function Evolucao({ initialExId }: { initialExId?: string }) {
@@ -574,7 +575,7 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
   const resumo = useQuery({ queryKey: ['aluno-resumo'], queryFn: alunoApi.resumo })
   const exs = useQuery({ queryKey: ['aluno-exs'], queryFn: alunoApi.listExercicios })
   const [exId, setExId] = useState(initialExId ?? '')
-  const [aba, setAba] = useState<AbaEvolucao>(initialExId ? 'feed' : 'carga')
+  const [aba, setAba] = useState<AbaEvolucao>('feed')
   const [prQuery, setPrQuery] = useState('')
   const [prLimit, setPrLimit] = useState(12)
 

@@ -27,10 +27,10 @@ const axisTick = { fill: 'var(--color-text-secondary)', fontSize: 12 }
 type AbaEvolucao = 'carga' | 'volume' | 'recordes' | 'feed'
 
 const ABA_EVOLUCAO: { key: AbaEvolucao; label: string; icon: React.ReactNode }[] = [
+  { key: 'feed', label: 'Feed', icon: <MessageCircle size={13} /> },
   { key: 'carga', label: 'Carga', icon: <TrendingUp size={13} /> },
   { key: 'volume', label: 'Volume', icon: <BarChart3 size={13} /> },
   { key: 'recordes', label: 'Recordes', icon: <Trophy size={13} /> },
-  { key: 'feed', label: 'Feed', icon: <MessageCircle size={13} /> },
 ]
 
 export function AlunoEvolucaoPage() {
@@ -41,7 +41,7 @@ export function AlunoEvolucaoPage() {
   const { data: exercicios } = useExerciciosAluno(alunoId)
   const { data: resumo } = useResumo(alunoId)
   const [exId, setExId] = useState(highlightExId ?? '')
-  const [aba, setAba] = useState<AbaEvolucao>(highlightExId ? 'feed' : 'carga')
+  const [aba, setAba] = useState<AbaEvolucao>('feed')
   const [exporting, setExporting] = useState(false)
   const [exQuery, setExQuery] = useState('')
   const [prQuery, setPrQuery] = useState('')

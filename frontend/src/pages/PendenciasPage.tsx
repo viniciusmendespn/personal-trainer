@@ -59,24 +59,20 @@ function useQuickAction(item: Notificacao, markRead: ReturnType<typeof useMarkRe
       ? `/alunos/${item.aluno_id}/evolucao?highlight=${item.exercicio_id}`
       : `/alunos/${item.aluno_id}/evolucao`
     return {
-      label: 'Ver mídia',
+      label: 'Ver feed',
       icon: <PlaySquare size={15} />,
       fn: doAndRead(() => navigate(dest)),
     }
   }
   if (item.tipo === 'DOR' || item.tipo === 'DUVIDA') {
-    if (!item.relato_sk) {
-      const dest = item.exercicio_id
-        ? `/alunos/${item.aluno_id}/evolucao?highlight=${item.exercicio_id}`
-        : `/alunos/${item.aluno_id}`
-      return {
-        label: 'Ver histórico',
-        icon: item.tipo === 'DOR' ? <UserRound size={15} /> : <HelpCircle size={15} />,
-        fn: doAndRead(() => navigate(dest)),
-      }
+    const dest = item.exercicio_id
+      ? `/alunos/${item.aluno_id}/evolucao?highlight=${item.exercicio_id}`
+      : `/alunos/${item.aluno_id}/evolucao`
+    return {
+      label: 'Ver feed',
+      icon: <MessageSquareDot size={15} />,
+      fn: doAndRead(() => navigate(dest)),
     }
-    // Has relato_sk — thread is shown via the "thread" button below
-    return null
   }
   if (item.tipo === 'TREINO_FIM') {
     return {

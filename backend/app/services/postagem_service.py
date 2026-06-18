@@ -42,38 +42,54 @@ def criar_postagem(
     repo.put_item(keys.pk_aluno(aluno_id), sk, item)
 
     ex_nome = exercicio_nome or "um exercício"
-    if tipo == "DOR" and personal_id:
-        notif_service.criar(
-            personal_id, "DOR", "Relato de dor",
-            f"O aluno relatou dor em {ex_nome}: {descricao}",
-            aluno_id=aluno_id,
-            ref_extra={"relato_sk": sk, "relato_tipo": "dor", "exercicio_id": exercicio_id},
-        )
-    elif tipo == "DUVIDA" and personal_id:
-        notif_service.criar(
-            personal_id, "DUVIDA", "Dúvida do aluno",
-            f"O aluno teve uma dúvida em {ex_nome}: {descricao}",
-            aluno_id=aluno_id,
-            ref_extra={"relato_sk": sk, "relato_tipo": "duvida", "exercicio_id": exercicio_id},
-        )
-    elif tipo == "EXECUCAO" and personal_id:
-        notif_service.criar(
-            personal_id, "MIDIA", "Nova mídia de execução",
-            f"O aluno enviou uma mídia em {ex_nome} para você analisar.",
-            aluno_id=aluno_id,
-            ref_extra={"exercicio_id": exercicio_id, "exercicio_nome": exercicio_nome},
-        )
-    elif tipo == "OUTRO" and personal_id:
-        notif_service.criar(
-            personal_id, "DUVIDA", "Observação do aluno",
-            f"O aluno postou uma observação em {ex_nome}.",
-            aluno_id=aluno_id,
-            ref_extra={"relato_sk": sk, "relato_tipo": "outro", "exercicio_id": exercicio_id},
-        )
-    elif tipo == "CORRECAO":
-        anotif_service.criar(
-            aluno_id, "CORRECAO_EXERCICIO", "Correção do personal",
-            f"Seu personal postou uma correção em {ex_nome}.",
-            ref_extra={"ref_id": post_id, "exercicio_id": exercicio_id},
-        )
+    if ator == "ALUNO":
+        # Aluno posta → notifica o personal
+        if tipo == "DOR" and personal_id:
+            notif_service.criar(
+                personal_id, "DOR", "Relato de dor",
+                f"O aluno relatou dor em {ex_nome}: {descricao}",
+                aluno_id=aluno_id,
+                ref_extra={"relato_sk": sk, "relato_tipo": "dor", "exercicio_id": exercicio_id},
+            )
+        elif tipo == "DUVIDA" and personal_id:
+            notif_service.criar(
+                personal_id, "DUVIDA", "Dúvida do aluno",
+                f"O aluno teve uma dúvida em {ex_nome}: {descricao}",
+                aluno_id=aluno_id,
+                ref_extra={"relato_sk": sk, "relato_tipo": "duvida", "exercicio_id": exercicio_id},
+            )
+        elif tipo == "EXECUCAO" and personal_id:
+            notif_service.criar(
+                personal_id, "MIDIA", "Nova mídia de execução",
+                f"O aluno enviou uma mídia em {ex_nome} para você analisar.",
+                aluno_id=aluno_id,
+                ref_extra={"exercicio_id": exercicio_id, "exercicio_nome": exercicio_nome},
+            )
+        elif tipo == "OUTRO" and personal_id:
+            notif_service.criar(
+                personal_id, "DUVIDA", "Observação do aluno",
+                f"O aluno postou uma observação em {ex_nome}.",
+                aluno_id=aluno_id,
+                ref_extra={"relato_sk": sk, "relato_tipo": "outro", "exercicio_id": exercicio_id},
+            )
+    else:
+        # Personal posta → notifica o aluno
+        if tipo == "CORRECAO":
+            anotif_service.criar(
+                aluno_id, "CORRECAO_EXERCICIO", "Correção do personal",
+                f"Seu personal postou uma correção em {ex_nome}.",
+                ref_extra={"ref_id": post_id, "exercicio_id": exercicio_id},
+            )
+        elif tipo == "EXECUCAO":
+            anotif_service.criar(
+                aluno_id, "MIDIA_PERSONAL", "Demonstração do personal",
+                f"Seu personal postou uma demonstração em {ex_nome}.",
+                ref_extra={"ref_id": post_id, "exercicio_id": exercicio_id},
+            )
+        elif tipo == "OUTRO":
+            anotif_service.criar(
+                aluno_id, "MIDIA_PERSONAL", "Observação do personal",
+                f"Seu personal postou uma observação em {ex_nome}.",
+                ref_extra={"ref_id": post_id, "exercicio_id": exercicio_id},
+            )
     return item
