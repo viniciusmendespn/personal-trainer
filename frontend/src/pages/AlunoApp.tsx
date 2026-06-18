@@ -178,7 +178,7 @@ export function AlunoApp() {
       style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
     >
       <header className="px-4 pt-4 pb-2 shrink-0 flex items-center justify-between">
-        <h1 className="font-display text-lg font-bold text-text">Olá, {me.data?.nome ?? 'aluno'} 👋</h1>
+        <h1 className="font-display text-lg font-bold text-text">Olá, {me.data?.nome ?? 'aluno'}</h1>
         {token && <NotifBell onNavigate={handleNotifNavigate} />}
       </header>
       {tab === 'historico' ? (
@@ -220,14 +220,12 @@ export function AlunoApp() {
 
       {/* Chat drawer */}
       {chatOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col max-w-md mx-auto" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-          <div className="bg-black/40 flex-none h-14 flex items-center px-4 gap-3" onClick={() => setChatOpen(false)}>
-            <button onClick={() => setChatOpen(false)} className="text-white/80 hover:text-white"><X size={20} /></button>
-            <span className="text-sm font-medium text-white">Chat com o agente</span>
-          </div>
-          <div className="flex-1 bg-surface flex flex-col overflow-hidden">
-            <ChatTab />
-          </div>
+        <div className="fixed inset-0 z-50 flex flex-col bg-surface" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <header className="shrink-0 h-14 flex items-center px-4 gap-3 border-b border-border bg-surface-elevated">
+            <button onClick={() => setChatOpen(false)} className="text-text-secondary hover:text-text"><X size={20} /></button>
+            <span className="text-sm font-medium text-text">Chat com o agente</span>
+          </header>
+          <ChatTab />
         </div>
       )}
 
@@ -259,10 +257,7 @@ function ChatTab() {
   const sendDireto = useSendDiretoAlunoChat()
   const { show } = useToast()
   return (
-    <div
-      className="flex flex-col"
-      style={{ height: 'calc(100vh - 4rem - 4.5rem - env(safe-area-inset-bottom))' }}
-    >
+    <div className="flex-1 flex flex-col min-h-0">
       <ChatThread
         messages={messages ?? []}
         isLoading={isLoading}
