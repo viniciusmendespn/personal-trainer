@@ -204,6 +204,7 @@ export interface RankingItem {
   mes_atual: number
   posicao: number
   eu: boolean
+  foto_url?: string | null
 }
 
 export interface PontoLog {

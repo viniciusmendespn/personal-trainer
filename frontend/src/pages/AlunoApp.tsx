@@ -753,6 +753,8 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
   const { show } = useToast()
   const resumo = useQuery({ queryKey: ['aluno-resumo'], queryFn: alunoApi.resumo })
   const exs = useQuery({ queryKey: ['aluno-exs'], queryFn: alunoApi.listExercicios })
+  const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me })
+  const personal = useQuery({ queryKey: ['aluno-personal-profile'], queryFn: alunoApi.personalProfile, staleTime: 300_000 })
   const [exId, setExId] = useState(initialExId ?? '')
   const [aba, setAba] = useState<AbaEvolucao>('feed')
   const [prQuery, setPrQuery] = useState('')
@@ -911,6 +913,10 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
               items={feed.data ?? []}
               emptyText="Nenhuma postagem ainda. Use o botão acima para postar."
               viewerAtor="ALUNO"
+              alunoNome={me.data?.nome}
+              alunoFotoUrl={me.data?.foto_url}
+              personalNome={personal.data?.nome}
+              personalFotoUrl={personal.data?.foto_url}
               uploadMidia={async (file) => {
                 const { upload_url, s3_key } = await alunoApi.midiaUploadUrl(file.name, file.type)
                 await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })

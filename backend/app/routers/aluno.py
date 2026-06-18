@@ -464,4 +464,9 @@ def get_ranking(ctx: dict = Depends(get_current_aluno)):
     aluno_id = ctx["aluno_id"]
     for r in ranking:
         r["eu"] = r.get("aluno_id") == aluno_id
+        aid = r.get("aluno_id")
+        if aid:
+            profile = repo.get_item(keys.pk_aluno(aid), "PROFILE") or {}
+            s3_key = profile.get("foto_s3_key")
+            r["foto_url"] = media_service.gerar_presigned_view_url(s3_key) if s3_key else None
     return ranking

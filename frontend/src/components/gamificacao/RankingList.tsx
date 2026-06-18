@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Trophy, Medal } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { alunoApi, type RankingItem } from '../../api/alunoApp'
-import { Spinner, EmptyState } from '../ui'
+import { Avatar, Spinner, EmptyState } from '../ui'
 import { RankingRulesInfo } from './RankingRulesInfo'
 
 type Periodo = 'semana' | 'mes' | 'geral'
@@ -84,10 +84,11 @@ export function RankingList() {
                 : 'bg-surface-elevated border-border'
             }`}
           >
-            <span className={`w-6 text-center font-bold text-sm ${POSICAO_STYLE[r.posicao_periodo] ?? 'text-text-muted'}`}>
+            <span className={`w-6 text-center font-bold text-sm shrink-0 ${POSICAO_STYLE[r.posicao_periodo] ?? 'text-text-muted'}`}>
               {r.posicao_periodo <= 3 ? <Medal size={16} className="inline" /> : `#${r.posicao_periodo}`}
             </span>
-            <span className={`flex-1 text-sm font-medium ${r.eu ? 'text-energy' : 'text-text-primary'}`}>
+            <Avatar name={r.nome} imageUrl={r.foto_url} size="sm" />
+            <span className={`flex-1 text-sm font-medium truncate ${r.eu ? 'text-energy' : 'text-text-primary'}`}>
               {r.nome}{r.eu ? ' (você)' : ''}
             </span>
             <span className="text-sm font-semibold text-text-secondary">
