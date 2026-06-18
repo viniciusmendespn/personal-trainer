@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, AlertTriangle, CalendarClock, Clock, Image, Camera, HelpCircle, Pin, MailOpen, Link2, UserRound, Dumbbell, PlaySquare, MessageSquareDot } from 'lucide-react'
+import { Bell, AlertTriangle, CalendarClock, Clock, Image, Camera, HelpCircle, Pin, MailOpen, Link2, UserRound, Dumbbell, PlaySquare, MessageSquareDot, MessageCircle } from 'lucide-react'
 import { useNotificacoes, useMarkRead, useMarkAllRead, useVincularMidia } from '../hooks/useNotificacoes'
 import { useAlunos } from '../hooks/useAlunos'
 import { useExerciciosAluno } from '../hooks/useEvolucao'
@@ -16,6 +16,7 @@ const TIPO_ICON: Record<string, React.ReactNode> = {
   MIDIA: <Camera size={16} className="text-info" />,
   DUVIDA: <HelpCircle size={16} className="text-info" />,
   PERGUNTA_DIRETA: <Pin size={16} className="text-energy" />,
+  MSG_ALUNO_DIRETO: <MessageCircle size={16} className="text-energy" />,
 }
 const TIPO_TONE: Record<string, 'danger' | 'warning' | 'info' | 'neutral'> = {
   DOR: 'danger',
@@ -25,7 +26,17 @@ const TIPO_TONE: Record<string, 'danger' | 'warning' | 'info' | 'neutral'> = {
   MIDIA: 'info',
   DUVIDA: 'info',
   PERGUNTA_DIRETA: 'warning',
+  MSG_ALUNO_DIRETO: 'neutral',
 }
+
+const FILTROS: { label: string; tipo?: string }[] = [
+  { label: 'Todas' },
+  { label: 'Dor', tipo: 'DOR' },
+  { label: 'Dúvida', tipo: 'DUVIDA' },
+  { label: 'Mídia', tipo: 'MIDIA_PENDENTE' },
+  { label: 'Treino', tipo: 'TREINO_FIM' },
+  { label: 'Mensagem', tipo: 'MSG_ALUNO_DIRETO' },
+]
 
 interface QuickAction {
   label: string
@@ -44,7 +55,7 @@ function useQuickAction(item: Notificacao, markRead: ReturnType<typeof useMarkRe
     if (!item.lida) markRead.mutate(item.ref)
   }
 
-  if (item.tipo === 'PERGUNTA_DIRETA') {
+  if (item.tipo === 'PERGUNTA_DIRETA' || item.tipo === 'MSG_ALUNO_DIRETO') {
     return {
       label: 'Responder',
       icon: <MessageSquareDot size={15} />,
@@ -144,7 +155,8 @@ function NotifCard({ item, alunos, markRead, onVincular }: {
 }
 
 export function PendenciasPage() {
-  const { data: items, isLoading } = useNotificacoes()
+  const [tipoFiltro, setTipoFiltro] = useState<string | undefined>(undefined)
+  const { data: items, isLoading } = useNotificacoes(tipoFiltro)
   const markRead = useMarkRead()
   const markAll = useMarkAllRead()
   const alunos = useAlunos()
@@ -157,6 +169,22 @@ export function PendenciasPage() {
           <Bell size={20} className="text-accent-hover" /> Notificações
         </h2>
         <Button variant="ghost" size="sm" onClick={() => markAll.mutate()}>Marcar todas como lidas</Button>
+      </div>
+
+      <div className="flex gap-2 flex-wrap mb-3">
+        {FILTROS.map((f) => (
+          <button
+            key={f.tipo ?? 'all'}
+            onClick={() => setTipoFiltro(f.tipo)}
+            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+              tipoFiltro === f.tipo
+                ? 'bg-accent text-white border-accent'
+                : 'border-border text-text-secondary hover:border-accent-hover'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
       {isLoading ? (

@@ -1,10 +1,10 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { notifApi } from '../api/notificacoes'
 
-export function useNotificacoes() {
+export function useNotificacoes(tipo?: string) {
   const query = useInfiniteQuery({
-    queryKey: ['notificacoes'],
-    queryFn: ({ pageParam }: { pageParam?: string }) => notifApi.list({ cursor: pageParam }),
+    queryKey: ['notificacoes', tipo ?? 'all'],
+    queryFn: ({ pageParam }: { pageParam?: string }) => notifApi.list({ cursor: pageParam, tipo }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
   })

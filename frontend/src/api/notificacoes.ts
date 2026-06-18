@@ -42,7 +42,7 @@ export interface NotificacaoPage {
 }
 
 export const notifApi = {
-  list: (params: { cursor?: string; limit?: number } = {}) =>
+  list: (params: { cursor?: string; limit?: number; tipo?: string } = {}) =>
     api.get<NotificacaoPage>('/v1/notificacoes', { params }).then((r) => r.data),
   get: (ref: string) => api.get<Notificacao>('/v1/notificacoes/item', { params: { ref } }).then((r) => r.data),
   remove: (ref: string) => api.delete('/v1/notificacoes/item', { params: { ref } }),

@@ -154,6 +154,23 @@ async def receive(secret: str, request: Request):
         return _OK
     if agent_service.is_agente_pausado(aluno_id):
         agent_service.log_direct(personal_id, aluno_id, text, Ator.ALUNO, CanalOrigem.WHATSAPP)
+        _notificar_msg_direta(personal_id, aluno_id, nome, text)
         return _OK
     _handle_text(personal_id, aluno_id, nome, sender, text)
     return _OK
+
+
+def _notificar_msg_direta(personal_id: str, aluno_id: str, nome: str | None, text: str) -> None:
+    """Notifica o personal quando o aluno escreve enquanto o agente está pausado.
+    Cria no máximo 1 notificação por hora por aluno (dedup via listar_recentes)."""
+    nao_lidas = [n for n in notif_service.listar_recentes(
+        personal_id, "MSG_ALUNO_DIRETO", aluno_id=aluno_id, max_age_s=3600
+    ) if not n.get("lida")]
+    if nao_lidas:
+        return
+    preview = text[:80] + ("…" if len(text) > 80 else "")
+    notif_service.criar(
+        personal_id, "MSG_ALUNO_DIRETO",
+        f"Mensagem de {nome or 'aluno'}",
+        preview, aluno_id=aluno_id,
+    )

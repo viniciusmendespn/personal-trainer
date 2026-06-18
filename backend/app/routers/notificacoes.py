@@ -32,8 +32,9 @@ class ResponderBody(BaseModel):
 
 # ── Notificações ─────────────────────────────────────────────────────────────
 @router.get("/notificacoes")
-def listar(limit: int = 50, cursor: str | None = None, personal_id: str = Depends(get_current_personal_id)):
-    items, next_cursor = notif_service.listar(personal_id, limit, cursor)
+def listar(limit: int = 50, cursor: str | None = None, tipo: str | None = None,
+           personal_id: str = Depends(get_current_personal_id)):
+    items, next_cursor = notif_service.listar(personal_id, limit, cursor, tipo)
     return {"items": items, "next_cursor": next_cursor}
 
 

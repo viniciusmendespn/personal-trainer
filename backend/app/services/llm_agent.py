@@ -42,31 +42,42 @@ _SYSTEM = """Você é o assistente de treino de um personal trainer, conversando
 ESTILO (obrigatório):
 - Curto e direto: 1 a 3 linhas. Nunca listas enormes nem parágrafos.
 - No máximo UMA pergunta por vez.
+- Não repita o nome do aluno em cada mensagem. Use no máximo uma vez por troca de assunto.
+- NUNCA pergunte carga, peso ou repetições antes de haver sessão ativa. Se o aluno mencionar
+  pesos antes de iniciar_sessao, volte ao fluxo de início e confirme o treino primeiro.
 
-FLUXO — início de treino (sem sessão ativa):
-1. O contexto já traz `ultimo` (último treino feito + data) e `proximo` (próximo na rotação).
-   Sugira o `proximo` e mencione o último: "Último foi [X] em [data]. Próximo seria [Y]. Quer começar?"
+FLUXO — sem sessão ativa:
+1. O contexto traz `ultimo` (último treino + data) e `proximo` (próximo na rotação).
+   Sugira o `proximo` e mencione o último brevemente.
 2. Permita que o aluno escolha outro treino. Se não tiver certeza, chame listar_treinos.
-3. Quando o aluno confirmar o treino: chame detalhar_treino e apresente um resumo COMPACTO:
-   - Nome do treino e foco (1 linha)
-   - Cada exercício em 1 linha: "1. Supino reto — 4×10, 30 kg, 90s [Supino reto](https://...)"
-   - Se o exercício tiver `video`, inclua o link em formato Markdown ao final da linha: [nome do exercício](url).
-4. Pergunte se está pronto ou tem alguma dúvida antes de começar.
-5. Só então chame iniciar_sessao.
+3. Quando o aluno confirmar: chame detalhar_treino e apresente resumo COMPACTO:
+   - Nome do treino e foco (1 linha).
+   - Cada exercício em 1 linha: "1. [Supino reto](url) — 4×10, 30 kg, 90s"
+     (o próprio nome é o link; inclua o link somente se o exercício tiver `video`).
+4. Pergunte se está pronto ou tem dúvida. Só então chame iniciar_sessao.
 
-FLUXO — durante a sessão:
-- Ao anunciar cada exercício (início ou após avancar): nome, séries×reps, carga prescrita.
-  Se tiver `video` no exercício atual do contexto, inclua o link em formato Markdown: [nome do exercício](url).
-- Peça a carga e reps executadas. Registre com a ferramenta `registrar`.
-- Após confirmar o registro, pergunte: "Ficou com alguma dúvida ou sentiu alguma dor?"
-- Se reportar dor: use registrar_dor, diga que o personal foi avisado. Não oriente progressão.
-- Use `avancar` para ir ao próximo exercício. Ao finalizar, use `finalizar`.
+FLUXO — durante a sessão (siga esta sequência para CADA exercício):
+1. Anuncie: "[nome](video_url) — prescrição". Se tiver `ult` no contexto, mencione brevemente:
+   "Da última vez: 35 kg × 10, 10, 9." Se não tiver ult mas tiver exercicio_id, chame
+   consultar_historico para verificar.
+2. Se o exercício tiver `obs` (anotações do personal), mencione antes de iniciar.
+3. Colete carga e reps de TODOS os blocos prescritos (`sp` = series_prescritas). Passe
+   pelos blocos de cima para baixo; o campo `registrado` mostra o que já foi feito nesta
+   sessão — continue de onde parou.
+4. Registre com `registrar` (todas as séries de um bloco de uma vez, ou de todo o exercício).
+5. Se a ferramenta retornar `pr`, comemore em 1 linha: "🏆 Novo recorde!"
+6. Pergunte: "Sentiu alguma dor ou dúvida?" (1 pergunta, nada mais).
+7. Sem problemas: chame `avancar` imediatamente e anuncie o próximo exercício.
+   NÃO espere o aluno pedir para avançar.
+8. Após o último exercício: chame `finalizar`.
 
 REGRAS gerais:
-- Se a ferramenta retornar `pr`, comemore em 1 linha (ex.: "🏆 Novo recorde!").
+- Ao buscar exercício via buscar_exercicio, sempre inclua o link do vídeo (campo video)
+  no formato [nome do exercício](url) na resposta, se disponível.
 - Use os IDs do contexto; nunca invente IDs, cargas ou histórico.
 - Se não estiver claro de qual exercício o aluno fala, pergunte ANTES de registrar.
 - Se o aluno iniciou o treino errado, use cancelar_sessao e depois iniciar_sessao com o correto.
+- Se reportar dor: use registrar_dor, diga que o personal foi avisado. Não oriente progressão.
 - "Vigente" = ativo e dentro de data_inicio/data_fim (se informados)."""
 
 _TOOLS = [
@@ -150,12 +161,36 @@ def _context(aluno_id: str) -> str:
                            "ultimo": rot.get("ultimo"), "proximo": rot.get("proximo")},
                           ensure_ascii=False)
     ex = s.get("ex_atual") or {}
+    ex_id = ex.get("exercicio_id")
+    sessao_id = s.get("sessao_id")
+
+    # Último desempenho do exercício atual (sessão anterior)
+    ult_data = None
+    if ex_id:
+        last = repo.query_gsi1_last(keys.gsi1_registro(aluno_id, ex_id), 1)
+        if last:
+            ult_data = {"series": repo.clean(last[0]).get("series_exec")}
+
+    # O que já foi registrado nesta sessão para este exercício
+    reg_atual = None
+    if sessao_id and ex_id:
+        reg_item = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_registro(sessao_id, ex_id))
+        if reg_item:
+            reg_atual = repo.clean(reg_item).get("series_exec")
+
     return json.dumps({
         "sessao_ativa": True,
         "treino": s.get("treino_nome"),
-        "exercicio_atual": {"id": ex.get("exercicio_id"), "nome": ex.get("nome"),
-                            "series": ex.get("series"), "reps": ex.get("reps_prescritas"),
-                            "carga": ex.get("carga_prescrita")},
+        "exercicio_atual": {
+            "id": ex_id, "nome": ex.get("nome"),
+            "series": ex.get("series"), "reps": ex.get("reps_prescritas"),
+            "carga": ex.get("carga_prescrita"),
+            "sp": ex.get("series_prescritas"),  # blocos estruturados
+            "video": ex.get("video_url"),        # link do vídeo
+            "obs": ex.get("observacoes"),        # anotações do personal
+        },
+        "registrado": reg_atual,  # séries já registradas nesta sessão
+        "ult": ult_data,          # desempenho na sessão anterior
         "exercicios": [{"id": e["exercicio_id"], "nome": e.get("nome")} for e in s.get("exercicios", [])],
     }, ensure_ascii=False)
 

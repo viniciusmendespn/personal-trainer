@@ -10,6 +10,7 @@ export function useAlunoChat() {
     queryFn: ({ pageParam }: { pageParam?: string }) => alunoChatApi.history({ cursor: pageParam }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+    refetchInterval: 15_000,
   })
   // páginas vêm da mais recente p/ a mais antiga; inverter p/ exibir a thread em ordem cronológica
   const messages = query.data?.pages.slice().reverse().flatMap((p) => p.items)

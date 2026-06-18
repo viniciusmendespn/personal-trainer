@@ -10,6 +10,7 @@ export function usePersonalChat(alunoId: string | null) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
     enabled: !!alunoId,
+    refetchInterval: alunoId ? 15_000 : false,
   })
   // páginas vêm da mais recente p/ a mais antiga; inverter p/ exibir a thread em ordem cronológica
   const messages = query.data?.pages.slice().reverse().flatMap((p) => p.items)
