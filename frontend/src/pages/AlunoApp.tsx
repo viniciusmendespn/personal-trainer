@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -158,7 +158,7 @@ function NotifDrawer({ onClose, onNavigate }: { onClose: () => void; onNavigate:
 
 export function AlunoApp() {
   const token = useAlunoToken()
-  const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'feed'>('hoje')
+  const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'feed' | 'personal'>('hoje')
   const [highlightExId, setHighlightExId] = useState<string | undefined>(undefined)
   const [chatOpen, setChatOpen] = useState(false)
   const [showRanking, setShowRanking] = useState(false)
@@ -190,7 +190,16 @@ export function AlunoApp() {
       style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
     >
       <header className="px-4 pt-4 pb-2 shrink-0 flex items-center justify-between">
-        <h1 className="font-display text-lg font-bold text-text">Olá, {me.data?.nome ?? 'aluno'}</h1>
+        <div className="flex items-center gap-2">
+          {me.data?.foto_url ? (
+            <img src={me.data.foto_url} alt={me.data.nome ?? 'aluno'} className="w-8 h-8 rounded-full object-cover" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center">
+              <User size={16} className="text-accent-hover" />
+            </div>
+          )}
+          <h1 className="font-display text-lg font-bold text-text">Olá, {me.data?.nome ?? 'aluno'}</h1>
+        </div>
         <div className="flex items-center gap-1">
           {canInstall && (
             <button
@@ -214,6 +223,8 @@ export function AlunoApp() {
         <main className="px-4 flex-1 pt-2"><FeedGlobalTab /></main>
       ) : tab === 'evolucao' ? (
         <main className="px-4 flex-1"><Evolucao initialExId={highlightExId} /></main>
+      ) : tab === 'personal' ? (
+        <main className="px-4 flex-1 pt-2"><SobrePersonalTab /></main>
       ) : (
         <main className="px-4 flex-1">
           {showRanking ? (
@@ -265,9 +276,10 @@ export function AlunoApp() {
           ['evolucao', 'Evolução', <TrendingUp size={18} />],
           ['historico', 'Histórico', <History size={18} />],
           ['feed', 'Feed', <Newspaper size={18} />],
+          ['personal', 'Personal', <UserCircle size={18} />],
         ] as const).map(
           ([k, label, icon]) => (
-            <button key={k} onClick={() => { setTab(k); setShowRanking(false) }}
+            <button key={k} onClick={() => { setTab(k as typeof tab); setShowRanking(false) }}
               className={`flex-1 py-3 flex flex-col items-center gap-1 text-xs transition-colors ${tab === k ? 'text-energy' : 'text-text-muted'}`}>
               {icon}{label}
             </button>
@@ -299,6 +311,64 @@ function ChatTab() {
         onSendDireto={(text) => sendDireto.mutate(text, { onSuccess: () => show('Enviado direto pro seu personal.', 'success') })}
         disabled={send.isPending || sendDireto.isPending}
       />
+    </div>
+  )
+}
+
+function SobrePersonalTab() {
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['aluno-personal-profile'],
+    queryFn: alunoApi.personalProfile,
+    staleTime: 300_000,
+  })
+  const { data: me } = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me })
+
+  if (isLoading) return <div className="flex justify-center pt-8"><Spinner /></div>
+
+  return (
+    <div className="space-y-4 pb-4">
+      <Card className="flex flex-col items-center gap-3 py-6">
+        {profile?.foto_url ? (
+          <img
+            src={profile.foto_url}
+            alt={profile.nome ?? 'Personal'}
+            className="w-20 h-20 rounded-full object-cover border-2 border-energy"
+          />
+        ) : (
+          <div className="w-20 h-20 rounded-full bg-accent/15 flex items-center justify-center">
+            <User size={36} className="text-accent-hover" />
+          </div>
+        )}
+        <div className="text-center">
+          <p className="font-semibold text-text text-lg">{profile?.nome ?? '—'}</p>
+          {profile?.descricao && <p className="text-sm text-text-secondary mt-0.5">{profile.descricao}</p>}
+        </div>
+        {me?.nome && (
+          <p className="text-xs text-text-muted">Seu personal trainer</p>
+        )}
+      </Card>
+
+      {profile?.biografia && (
+        <Card>
+          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Sobre mim</p>
+          <p className="text-sm text-text whitespace-pre-wrap">{profile.biografia}</p>
+        </Card>
+      )}
+      {profile?.experiencia_profissional && (
+        <Card>
+          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Experiência profissional</p>
+          <p className="text-sm text-text whitespace-pre-wrap">{profile.experiencia_profissional}</p>
+        </Card>
+      )}
+      {profile?.formacao && (
+        <Card>
+          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Formação</p>
+          <p className="text-sm text-text whitespace-pre-wrap">{profile.formacao}</p>
+        </Card>
+      )}
+      {!profile?.biografia && !profile?.experiencia_profissional && !profile?.formacao && !isLoading && (
+        <p className="text-sm text-text-muted text-center py-8">Seu personal ainda não preencheu o perfil completo.</p>
+      )}
     </div>
   )
 }

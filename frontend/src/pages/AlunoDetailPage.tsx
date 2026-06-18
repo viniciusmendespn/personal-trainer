@@ -8,7 +8,7 @@ import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
-import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, useToast, useConfirm } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, useToast, useConfirm, AvatarUpload } from '../components/ui'
 import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
@@ -40,6 +40,7 @@ export function AlunoDetailPage() {
   const [eEndereco, setEEndereco] = useState('')
   const [eNascimento, setENascimento] = useState('')
   const [eObj, setEObj] = useState('')
+  const [eDescricao, setEDescricao] = useState('')
   const { show } = useToast()
   const { data: linkData } = useQuery({
     queryKey: ['aluno-link', alunoId],
@@ -59,7 +60,7 @@ export function AlunoDetailPage() {
   function startEdit() {
     setENome(aluno?.nome ?? ''); setETel(aluno?.telefone ?? '')
     setEEmail(aluno?.email ?? ''); setEEndereco(aluno?.endereco ?? ''); setENascimento(aluno?.data_nascimento ?? '')
-    setEObj(aluno?.objetivo ?? '')
+    setEObj(aluno?.objetivo ?? ''); setEDescricao(aluno?.descricao ?? '')
     setEditing(true)
   }
   async function saveEdit(e: React.FormEvent) {
@@ -68,6 +69,7 @@ export function AlunoDetailPage() {
       nome: eNome, telefone: eTel,
       email: eEmail || undefined, endereco: eEndereco || undefined,
       data_nascimento: eNascimento || undefined, objetivo: eObj || undefined,
+      descricao: eDescricao || undefined,
     })
     setEditing(false)
   }
@@ -141,9 +143,33 @@ export function AlunoDetailPage() {
       {tab === 'perfil' && (
         <div className="max-w-md space-y-4">
         <Card variant="elevated">
+          <div className="flex items-center gap-4 mb-4">
+            <AvatarUpload
+              name={aluno?.nome ?? '?'}
+              currentUrl={aluno?.foto_url}
+              size="lg"
+              getUploadUrl={(filename, contentType) =>
+                alunosApi.avatarUploadUrl(alunoId, filename, contentType)
+              }
+              onSuccess={(s3Key) =>
+                updateAluno.mutate({ foto_s3_key: s3Key })
+              }
+              onError={() => show('Erro ao enviar foto.', 'error')}
+            />
+            <div>
+              <p className="font-semibold text-text">{aluno?.nome}</p>
+              {aluno?.descricao && <p className="text-xs text-text-secondary mt-0.5">{aluno.descricao}</p>}
+            </div>
+          </div>
           {editing ? (
             <form onSubmit={saveEdit} className="space-y-3">
               <Input label="Nome" value={eNome} onChange={(e) => setENome(e.target.value)} />
+              <Input
+                label="Descrição curta"
+                value={eDescricao}
+                onChange={(e) => setEDescricao(e.target.value)}
+                placeholder="Ex.: Foco em hipertrofia"
+              />
               <Input label="Telefone" value={eTel} onChange={(e) => setETel(e.target.value)} />
               <Input label="E-mail" type="email" value={eEmail} onChange={(e) => setEEmail(e.target.value)} />
               <Input label="Data de nascimento" type="date" value={eNascimento} onChange={(e) => setENascimento(e.target.value)} />

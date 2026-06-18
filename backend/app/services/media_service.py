@@ -46,6 +46,26 @@ def gerar_presigned_upload_url(aluno_id: str, filename: str, content_type: str,
         return None
 
 
+def gerar_presigned_upload_url_perfil(entity_type: str, entity_id: str, filename: str,
+                                       content_type: str, expires_in: int = 900) -> dict | None:
+    """Presigned PUT URL para foto de perfil (personal ou aluno).
+    entity_type: 'personal' | 'aluno'. Key: perfil/{entity_type}/{entity_id}/avatar.{ext}"""
+    if not settings.media_bucket_name:
+        return None
+    ext = filename.rsplit(".", 1)[-1] if "." in filename else "jpg"
+    key = f"perfil/{entity_type}/{entity_id}/avatar.{ext}"
+    try:
+        url = _s3c().generate_presigned_url(
+            "put_object",
+            Params={"Bucket": settings.media_bucket_name, "Key": key, "ContentType": content_type},
+            ExpiresIn=expires_in,
+        )
+        return {"upload_url": url, "s3_key": key}
+    except Exception as e:
+        logger.warning("[media] presigned perfil url falhou: %s", e)
+        return None
+
+
 def registrar_midia_vinculada(aluno_id: str, exercicio_id: str, exercicio_nome: str | None,
                               tipo: str, s3_key: str, ator: Ator = Ator.ALUNO) -> dict:
     """Registra uma mídia já enviada (via presigned URL) — pelo próprio app do aluno ou

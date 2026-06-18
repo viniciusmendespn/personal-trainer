@@ -87,7 +87,23 @@ export interface ProximoTreino {
 }
 
 export const alunoApi = {
-  me: () => alunoClient.get<{ nome?: string }>('/v1/aluno/me').then((r) => r.data),
+  me: () => alunoClient.get<{ nome?: string; descricao?: string; foto_url?: string; foto_s3_key?: string }>('/v1/aluno/me').then((r) => r.data),
+  updateMe: (body: { nome?: string; descricao?: string; foto_s3_key?: string }) =>
+    alunoClient.put('/v1/aluno/me', body).then((r) => r.data),
+  meAvatarUploadUrl: (filename: string, contentType: string) =>
+    alunoClient.post<{ upload_url: string; s3_key: string }>('/v1/aluno/me/avatar/upload-url', {
+      filename, content_type: contentType,
+    }).then((r) => r.data),
+  personalProfile: () =>
+    alunoClient.get<{
+      personal_id?: string
+      nome?: string
+      descricao?: string
+      biografia?: string
+      experiencia_profissional?: string
+      formacao?: string
+      foto_url?: string
+    }>('/v1/aluno/personal').then((r) => r.data),
   hoje: () =>
     alunoClient
       .get<{ hoje: { id: string; nome: string }[]; treinos: Treino[]; ultimo: UltimoTreino | null; proximo: ProximoTreino | null }>('/v1/aluno/hoje')

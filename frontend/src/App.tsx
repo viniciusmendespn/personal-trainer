@@ -21,6 +21,7 @@ import { SettingsPage } from './pages/SettingsPage'
 import { AlunoApp } from './pages/AlunoApp'
 import { FeedGlobalPage } from './pages/FeedGlobalPage'
 import { RankingPage } from './pages/RankingPage'
+import { PersonalProfilePage } from './pages/PersonalProfilePage'
 
 Amplify.configure({
   Auth: {
@@ -62,6 +63,7 @@ const router = createBrowserRouter([
       { path: 'ranking', element: <RankingPage /> },
       { path: 'notificacoes', element: <PendenciasPage /> },
       { path: 'config', element: <SettingsPage /> },
+      { path: 'perfil', element: <PersonalProfilePage /> },
     ],
   },
 ])

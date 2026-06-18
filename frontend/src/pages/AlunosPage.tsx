@@ -106,7 +106,7 @@ export function AlunosPage() {
             {filtered.map((a) => (
               <Link key={a.aluno_id} to={`/alunos/${a.aluno_id}`}>
                 <Card variant="elevated" className="flex items-center gap-3 hover:border-accent/50 transition-colors h-full">
-                  <Avatar name={a.nome} />
+                  <Avatar name={a.nome} imageUrl={a.foto_url} />
                   <div className="min-w-0 flex-1">
                     <p className="font-medium truncate">{a.nome}</p>
                     <p className="text-xs text-text-muted truncate">{a.telefone}</p>

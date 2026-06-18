@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useMutation, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Heart, ChevronDown, Newspaper, Lightbulb, AlertCircle, MoreHorizontal } from 'lucide-react'
 import { alunoApi, type PostGlobal } from '../../api/alunoApp'
 import { renderMarkdownLite } from '../chat/markdownLite'
-import { Badge, Spinner, EmptyState } from '../ui'
+import { Avatar, Badge, Spinner, EmptyState } from '../ui'
 
 type Tone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'accent'
 const TIPO_META: Record<PostGlobal['tipo'], { label: string; icon: React.ReactNode; tone: Tone }> = {
@@ -14,7 +14,7 @@ const TIPO_META: Record<PostGlobal['tipo'], { label: string; icon: React.ReactNo
   OUTRO:     { label: 'Post',      icon: <MoreHorizontal size={12} />, tone: 'neutral' },
 }
 
-function PostCard({ post }: { post: PostGlobal }) {
+function PostCard({ post, personalNome, personalFotoUrl }: { post: PostGlobal; personalNome?: string; personalFotoUrl?: string }) {
   const qc = useQueryClient()
   const meta = TIPO_META[post.tipo] ?? TIPO_META.OUTRO
   const [curtido, setCurtido] = useState(post.curtido_por_mim)
@@ -36,11 +36,15 @@ function PostCard({ post }: { post: PostGlobal }) {
 
   return (
     <div className="bg-surface-elevated rounded-2xl p-4 space-y-3 border border-border">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Avatar name={personalNome ?? 'Personal'} imageUrl={personalFotoUrl} size="sm" />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-text truncate">{personalNome ?? 'Personal'}</p>
+          <p className="text-[10px] text-text-muted">{fmtData(post.data_hora)}</p>
+        </div>
         <Badge tone={meta.tone}>
           <span className="flex items-center gap-1">{meta.icon}{meta.label}</span>
         </Badge>
-        <span className="text-xs text-text-muted">{fmtData(post.data_hora)}</span>
       </div>
 
       <div className="text-sm text-text-primary leading-relaxed">
@@ -87,6 +91,12 @@ export function FeedGlobalTab() {
     getNextPageParam: (last) => last.next_cursor ?? undefined,
   })
 
+  const personalProfile = useQuery({
+    queryKey: ['aluno-personal-profile'],
+    queryFn: alunoApi.personalProfile,
+    staleTime: 300_000,
+  })
+
   const posts = data?.pages.flatMap((p) => p.items) ?? []
 
   if (isLoading) return <div className="flex justify-center pt-8"><Spinner /></div>
@@ -103,7 +113,14 @@ export function FeedGlobalTab() {
 
   return (
     <div className="space-y-3 pb-4">
-      {posts.map((post) => <PostCard key={post.post_id} post={post} />)}
+      {posts.map((post) => (
+        <PostCard
+          key={post.post_id}
+          post={post}
+          personalNome={personalProfile.data?.nome}
+          personalFotoUrl={personalProfile.data?.foto_url}
+        />
+      ))}
       {hasNextPage && (
         <button
           onClick={() => fetchNextPage()}

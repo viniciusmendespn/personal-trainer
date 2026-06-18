@@ -13,6 +13,7 @@ class AlunoCreate(BaseModel):
     data_nascimento: Optional[str] = None      # ISO date (YYYY-MM-DD)
     objetivo: Optional[str] = None
     observacoes: Optional[str] = None
+    descricao: Optional[str] = None            # tagline curta exibida no perfil
     custom: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -24,7 +25,9 @@ class AlunoUpdate(BaseModel):
     data_nascimento: Optional[str] = None
     objetivo: Optional[str] = None
     observacoes: Optional[str] = None
+    descricao: Optional[str] = None
     status: Optional[AlunoStatus] = None
+    foto_s3_key: Optional[str] = None          # chave S3 da foto de perfil
     custom: Optional[dict[str, Any]] = None
 
 
@@ -32,5 +35,7 @@ class Aluno(AlunoCreate):
     aluno_id: str
     personal_id: str
     status: AlunoStatus = AlunoStatus.ATIVO
+    foto_s3_key: Optional[str] = None
+    foto_url: Optional[str] = None             # presigned GET, gerado na resposta
     created_at: str
     updated_at: str

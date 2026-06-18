@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return '?'
@@ -13,18 +15,32 @@ const sizeStyles = {
 
 export function Avatar({
   name,
+  imageUrl,
   size = 'md',
   className = '',
 }: {
   name: string
+  imageUrl?: string | null
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }) {
+  const [imgError, setImgError] = useState(false)
+  const showImage = imageUrl && !imgError
+
   return (
     <div
-      className={`flex items-center justify-center rounded-full bg-accent/15 text-accent-hover font-display font-semibold shrink-0 ${sizeStyles[size]} ${className}`}
+      className={`flex items-center justify-center rounded-full bg-accent/15 text-accent-hover font-display font-semibold shrink-0 overflow-hidden ${sizeStyles[size]} ${className}`}
     >
-      {initials(name)}
+      {showImage ? (
+        <img
+          src={imageUrl}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        initials(name)
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
-import { Send, UserRound, Dumbbell, Paperclip, X } from 'lucide-react'
-import { Button, Textarea } from '../ui'
+import { Send, Paperclip, X } from 'lucide-react'
+import { Avatar, Button, Textarea } from '../ui'
 import type { Comentario } from '../../api/treinos'
 
 type MidiaRef = { s3_key: string; tipo: string }
@@ -37,15 +37,19 @@ interface BubbleProps {
   midias?: MidiaItem[]
   dataHora: string
   isViewer: boolean
+  personalNome?: string
+  personalFotoUrl?: string
+  alunoNome?: string
+  alunoFotoUrl?: string
 }
 
-function Bubble({ ator, texto, midias = [], dataHora, isViewer }: BubbleProps) {
+function Bubble({ ator, texto, midias = [], dataHora, isViewer, personalNome, personalFotoUrl, alunoNome, alunoFotoUrl }: BubbleProps) {
+  const nome = ator === 'PERSONAL' ? (personalNome ?? 'Personal') : (alunoNome ?? 'Aluno')
+  const fotoUrl = ator === 'PERSONAL' ? personalFotoUrl : alunoFotoUrl
   return (
     <div className={`flex gap-2 ${isViewer ? 'flex-row-reverse' : 'flex-row'}`}>
       <div className="shrink-0 mt-0.5">
-        {ator === 'PERSONAL'
-          ? <Dumbbell size={14} className="text-accent-hover" />
-          : <UserRound size={14} className="text-text-muted" />}
+        <Avatar name={nome} imageUrl={fotoUrl} size="sm" />
       </div>
       <div className={`max-w-[85%] rounded-xl px-3 py-2 space-y-0.5 ${
         isViewer
@@ -69,6 +73,10 @@ interface ThreadRelatoProps {
   onAddComentario: (texto: string | undefined, midias: MidiaRef[]) => Promise<void>
   uploadMidia?: (file: File) => Promise<MidiaRef>
   isPending?: boolean
+  personalNome?: string
+  personalFotoUrl?: string
+  alunoNome?: string
+  alunoFotoUrl?: string
 }
 
 export function ThreadRelato({
@@ -80,6 +88,10 @@ export function ThreadRelato({
   onAddComentario,
   uploadMidia,
   isPending,
+  personalNome,
+  personalFotoUrl,
+  alunoNome,
+  alunoFotoUrl,
 }: ThreadRelatoProps) {
   const [texto, setTexto] = useState('')
   const [sending, setSending] = useState(false)
@@ -126,6 +138,10 @@ export function ThreadRelato({
           texto={descricao}
           dataHora={descricaoDataHora}
           isViewer={descricaoAtor === viewerAtor}
+          personalNome={personalNome}
+          personalFotoUrl={personalFotoUrl}
+          alunoNome={alunoNome}
+          alunoFotoUrl={alunoFotoUrl}
         />
       )}
       {comentarios.map((c) => (
@@ -136,6 +152,10 @@ export function ThreadRelato({
           midias={c.midias}
           dataHora={c.data_hora}
           isViewer={c.ator === viewerAtor}
+          personalNome={personalNome}
+          personalFotoUrl={personalFotoUrl}
+          alunoNome={alunoNome}
+          alunoFotoUrl={alunoFotoUrl}
         />
       ))}
       <div className="flex flex-col gap-1 pt-1">

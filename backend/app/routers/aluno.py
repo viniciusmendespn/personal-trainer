@@ -1,6 +1,7 @@
 """App do aluno (ESPEC §1.5) — escopo limitado à própria partição, via JWT do magic-link.
 Sem Cognito (rota /v1/aluno/* com Authorizer NONE; o token é validado na Lambda)."""
 from datetime import date
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, model_validator
@@ -17,6 +18,17 @@ from app.utils import new_id, now_iso
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
 
 
+class AlunoProprioPerfil(BaseModel):
+    nome: Optional[str] = None
+    descricao: Optional[str] = None
+    foto_s3_key: Optional[str] = None
+
+
+class AvatarUploadUrlBody(BaseModel):
+    filename: str
+    content_type: str
+
+
 class StartBody(BaseModel):
     treino_id: str
 
@@ -29,7 +41,62 @@ class RegistroBody(BaseModel):
 @router.get("/me")
 def me(ctx: dict = Depends(get_current_aluno)):
     item = repo.get_item(keys.pk_aluno(ctx["aluno_id"]), keys.SK_PROFILE)
-    return repo.clean(item) or {}
+    if not item:
+        return {}
+    profile = repo.clean(item)
+    s3_key = profile.get("foto_s3_key")
+    if s3_key:
+        profile["foto_url"] = media_service.gerar_presigned_view_url(s3_key)
+    return profile
+
+
+@router.put("/me")
+def update_me(body: AlunoProprioPerfil, ctx: dict = Depends(get_current_aluno)):
+    fields = body.model_dump(exclude_none=True)
+    if not fields:
+        raise HTTPException(400, "Nenhum campo informado")
+    fields["updated_at"] = now_iso()
+    updated = repo.update_item(keys.pk_aluno(ctx["aluno_id"]), keys.SK_PROFILE, fields, return_values=True)
+    # Sync foto_s3_key no pointer do personal para atualizar a lista de alunos
+    if "foto_s3_key" in fields or "nome" in fields:
+        pointer = repo.get_item(keys.pk_personal(ctx["personal_id"]), keys.sk_aluno_pointer(ctx["aluno_id"]))
+        if pointer:
+            pointer_fields: dict = {}
+            if "nome" in fields:
+                pointer_fields["nome"] = fields["nome"]
+            if "foto_s3_key" in fields:
+                pointer_fields["foto_s3_key"] = fields["foto_s3_key"]
+            if pointer_fields:
+                repo.update_item(keys.pk_personal(ctx["personal_id"]),
+                                 keys.sk_aluno_pointer(ctx["aluno_id"]), pointer_fields)
+    result = repo.clean(updated)
+    s3_key = result.get("foto_s3_key")
+    if s3_key:
+        result["foto_url"] = media_service.gerar_presigned_view_url(s3_key)
+    return result
+
+
+@router.post("/me/avatar/upload-url")
+def me_avatar_upload_url(body: AvatarUploadUrlBody, ctx: dict = Depends(get_current_aluno)):
+    result = media_service.gerar_presigned_upload_url_perfil(
+        "aluno", ctx["aluno_id"], body.filename, body.content_type
+    )
+    if not result:
+        raise HTTPException(502, "Não foi possível gerar a URL de upload.")
+    return result
+
+
+@router.get("/personal")
+def get_personal_profile(ctx: dict = Depends(get_current_aluno)):
+    """Retorna o perfil público do personal — para a aba 'Sobre o Personal' no app do aluno."""
+    item = repo.get_item(keys.pk_personal(ctx["personal_id"]), keys.SK_PROFILE)
+    if not item:
+        return {"personal_id": ctx["personal_id"]}
+    profile = repo.clean(item)
+    s3_key = profile.get("foto_s3_key")
+    if s3_key:
+        profile["foto_url"] = media_service.gerar_presigned_view_url(s3_key)
+    return profile
 
 
 @router.get("/hoje")

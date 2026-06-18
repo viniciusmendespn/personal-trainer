@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Settings, LogOut, Menu, X, Newspaper, Trophy } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
+import { personalApi } from '../../api/personal'
+import { Avatar } from '../ui'
 import { ChatWidget } from '../chat/ChatWidget'
 import { ChatContextProvider } from '../../context/ChatContext'
 
@@ -16,20 +19,28 @@ const NAV_ITEMS = [
   { to: '/notificacoes', label: 'Notificações', icon: Bell },
   { to: '/biblioteca', label: 'Biblioteca', icon: BookOpen },
   { to: '/config', label: 'WhatsApp', icon: Settings },
+  { to: '/perfil', label: 'Meu Perfil', icon: UserCircle },
 ]
 
 function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: () => void }) {
   const { user, signOut } = useAuth()
+  const profile = useQuery({ queryKey: ['personal-profile'], queryFn: personalApi.getProfile, staleTime: 300_000 })
   const link = (active: boolean) =>
     `flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
       active ? 'bg-accent/15 text-accent-hover' : 'text-text-secondary hover:bg-white/5 hover:text-text'
     }`
+  const displayName = profile.data?.nome || user?.name || user?.email || 'Personal'
 
   return (
     <div className="flex flex-col gap-1 h-full w-full">
-      <div className="px-2 mb-4">
-        <h1 className="font-display text-lg font-bold text-text">Personal</h1>
-        <p className="text-xs text-text-muted truncate">{user?.name || user?.email}</p>
+      <div className="px-2 mb-4 flex items-center gap-2">
+        <Avatar name={displayName} imageUrl={profile.data?.foto_url} size="sm" />
+        <div className="min-w-0">
+          <h1 className="font-display text-sm font-bold text-text truncate">{displayName}</h1>
+          {profile.data?.descricao && (
+            <p className="text-xs text-text-muted truncate">{profile.data.descricao}</p>
+          )}
+        </div>
       </div>
       {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
         <NavLink key={to} to={to} onClick={onNavigate} className={({ isActive }) => link(isActive)}>

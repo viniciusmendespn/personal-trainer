@@ -18,6 +18,9 @@ export interface Aluno {
   data_nascimento?: string
   objetivo?: string
   observacoes?: string
+  descricao?: string
+  foto_s3_key?: string
+  foto_url?: string
   custom?: Custom
   created_at: string
   updated_at: string
@@ -31,6 +34,7 @@ export interface AlunoCreate {
   data_nascimento?: string
   objetivo?: string
   observacoes?: string
+  descricao?: string
   custom?: Custom
 }
 

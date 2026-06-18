@@ -1,7 +1,7 @@
 import { api } from './client'
 import type { Aluno, AlunoCreate, AlunoStatus } from '../types'
 
-export type AlunoUpdate = Partial<AlunoCreate> & { status?: AlunoStatus }
+export type AlunoUpdate = Partial<AlunoCreate> & { status?: AlunoStatus; foto_s3_key?: string }
 
 export interface AlunoPage {
   items: Aluno[]
@@ -20,4 +20,8 @@ export const alunosApi = {
     api.post<{ link: string; enviado: boolean }>(`/v1/alunos/${id}/enviar-link`).then((r) => r.data),
   gerarLink: (id: string) =>
     api.get<{ link: string }>(`/v1/alunos/${id}/link`).then((r) => r.data),
+  avatarUploadUrl: (id: string, filename: string, contentType: string) =>
+    api.post<{ upload_url: string; s3_key: string }>(`/v1/alunos/${id}/avatar/upload-url`, {
+      filename, content_type: contentType,
+    }).then((r) => r.data),
 }

@@ -11,9 +11,16 @@ from app.models.aluno import Aluno, AlunoCreate, AlunoUpdate
 from app.models.enums import AlunoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz
+from app.services import authz, media_service
 from app.services.wapi_service import WAPIClient
 from app.utils import new_id, now_iso
+
+from pydantic import BaseModel
+
+
+class AvatarUploadUrlBody(BaseModel):
+    filename: str
+    content_type: str
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +33,23 @@ def _pointer(aluno: dict) -> dict:
         "nome": aluno["nome"],
         "status": aluno["status"],
         "telefone": aluno.get("telefone"),
+        "foto_s3_key": aluno.get("foto_s3_key"),
         "updated_at": aluno["updated_at"],
     }
+
+
+def _add_foto_url(item: dict) -> dict:
+    s3_key = item.get("foto_s3_key")
+    if s3_key:
+        item["foto_url"] = media_service.gerar_presigned_view_url(s3_key)
+    return item
 
 
 @router.get("")
 def list_alunos(limit: int = 50, cursor: str | None = None, personal_id: str = Depends(get_current_personal_id)):
     items, next_cursor = repo.query_pk_page(keys.pk_personal(personal_id), "ALUNO#", limit, cursor)
-    return {"items": repo.clean_all(items), "next_cursor": next_cursor}
+    cleaned = [_add_foto_url(repo.clean(i)) for i in items]
+    return {"items": cleaned, "next_cursor": next_cursor}
 
 
 @router.post("", response_model=Aluno, status_code=201)
@@ -62,7 +78,19 @@ def get_aluno(aluno_id: str, personal_id: str = Depends(get_current_personal_id)
     item = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
     if not item:
         raise HTTPException(404, "Aluno não encontrado")
-    return repo.clean(item)
+    return _add_foto_url(repo.clean(item))
+
+
+@router.post("/{aluno_id}/avatar/upload-url")
+def avatar_upload_url(aluno_id: str, body: AvatarUploadUrlBody,
+                      personal_id: str = Depends(get_current_personal_id)):
+    authz.authorize_aluno(personal_id, aluno_id)
+    result = media_service.gerar_presigned_upload_url_perfil(
+        "aluno", aluno_id, body.filename, body.content_type
+    )
+    if not result:
+        raise HTTPException(502, "Não foi possível gerar a URL de upload.")
+    return result
 
 
 @router.put("/{aluno_id}")
