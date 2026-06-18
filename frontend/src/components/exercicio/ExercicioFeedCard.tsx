@@ -29,6 +29,62 @@ function ItemAvatar({ ator, ctx }: { ator?: 'ALUNO' | 'PERSONAL'; ctx: AvatarCtx
   )
 }
 
+function MediaGrid({ midias }: { midias: NonNullable<FeedItem['midias']> }) {
+  if (!midias.length) return null
+  return (
+    <div className="flex flex-wrap gap-2 pt-1">
+      {midias.map((m, i) =>
+        m.url ? (
+          m.tipo.startsWith('video') || m.tipo.includes('video') ? (
+            <video key={i} src={m.url} controls className="rounded-lg max-h-40 max-w-[180px] border border-border" />
+          ) : (
+            <a key={i} href={m.url} target="_blank" rel="noreferrer">
+              <img src={m.url} alt="mídia" className="rounded-lg max-h-40 max-w-[180px] border border-border object-cover" />
+            </a>
+          )
+        ) : null,
+      )}
+    </div>
+  )
+}
+
+function ReadOnlyBubble({
+  ator,
+  texto,
+  midias,
+  dataHora,
+  ctx,
+}: {
+  ator?: 'ALUNO' | 'PERSONAL'
+  texto?: string
+  midias?: FeedItem['midias']
+  dataHora: string
+  ctx: AvatarCtx
+}) {
+  if (!texto && !midias?.length) return null
+  return (
+    <div className="flex gap-2 mt-2">
+      <div className="shrink-0 mt-0.5">
+        <ItemAvatar ator={ator} ctx={ctx} />
+      </div>
+      <div className="max-w-[85%] rounded-xl rounded-tl-sm px-3 py-2 bg-white/5 border border-border space-y-0.5">
+        {texto && <p className="text-xs text-text leading-snug whitespace-pre-wrap">{texto}</p>}
+        <MediaGrid midias={midias ?? []} />
+        <p className="text-[10px] text-text-muted">{fmtDt(dataHora)}</p>
+      </div>
+    </div>
+  )
+}
+
+function threadProps(avatarCtx: AvatarCtx) {
+  return {
+    personalNome: avatarCtx.personalNome,
+    personalFotoUrl: avatarCtx.personalFotoUrl ?? undefined,
+    alunoNome: avatarCtx.alunoNome,
+    alunoFotoUrl: avatarCtx.alunoFotoUrl ?? undefined,
+  }
+}
+
 function RelatoItem({
   item,
   viewerAtor,
@@ -47,59 +103,34 @@ function RelatoItem({
 
   return (
     <div className={`rounded-lg p-2.5 space-y-1.5 ${isDor ? 'bg-danger/10 border border-danger/20' : 'bg-info/10 border border-info/20'}`}>
-      <div className="flex items-center gap-2">
-        <ItemAvatar ator="ALUNO" ctx={avatarCtx} />
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          {isDor
-            ? <AlertTriangle size={13} className="text-danger shrink-0" />
-            : <HelpCircle size={13} className="text-info shrink-0" />}
-          <span className={`text-xs font-medium ${isDor ? 'text-danger' : 'text-info'}`}>
-            {isDor ? 'Dor / desconforto' : 'Dúvida'}
-          </span>
-          <span className="text-[10px] text-text-muted ml-auto">{fmtDt(item.data_hora)}</span>
-        </div>
+      <div className="flex items-center gap-1.5">
+        {isDor
+          ? <AlertTriangle size={13} className="text-danger shrink-0" />
+          : <HelpCircle size={13} className="text-info shrink-0" />}
+        <span className={`text-xs font-medium ${isDor ? 'text-danger' : 'text-info'}`}>
+          {isDor ? 'Dor / desconforto' : 'Dúvida'}
+        </span>
+        <span className="text-[10px] text-text-muted ml-auto">{fmtDt(item.data_hora)}</span>
       </div>
-      <MediaGrid midias={item.midias ?? []} />
       {showThread ? (
         <ThreadRelato
           descricao={item.descricao}
+          descricaoAtor="ALUNO"
+          descricaoMidias={item.midias}
           descricaoDataHora={item.data_hora}
           comentarios={item.comentarios}
           viewerAtor={viewerAtor!}
           uploadMidia={uploadMidia}
           onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias, item.tipo)}
+          {...threadProps(avatarCtx)}
         />
       ) : (
         <>
-          {item.descricao && <p className="text-xs text-text-secondary">{item.descricao}</p>}
+          <ReadOnlyBubble ator="ALUNO" texto={item.descricao} midias={item.midias} dataHora={item.data_hora} ctx={avatarCtx} />
           {item.respondido && item.resposta_texto && (
-            <div className="mt-1 pl-2 border-l-2 border-accent/40">
-              <p className="text-[10px] text-text-muted mb-0.5">
-                Personal respondeu{item.respondido_em && <span> · {fmtDt(item.respondido_em)}</span>}
-              </p>
-              <p className="text-xs text-text">{item.resposta_texto}</p>
-            </div>
+            <ReadOnlyBubble ator="PERSONAL" texto={item.resposta_texto} dataHora={item.respondido_em ?? item.data_hora} ctx={avatarCtx} />
           )}
         </>
-      )}
-    </div>
-  )
-}
-
-function MediaGrid({ midias }: { midias: NonNullable<FeedItem['midias']> }) {
-  if (!midias.length) return null
-  return (
-    <div className="flex flex-wrap gap-2 pt-1">
-      {midias.map((m, i) =>
-        m.url ? (
-          m.tipo.startsWith('video') || m.tipo.includes('video') ? (
-            <video key={i} src={m.url} controls className="rounded-lg max-h-40 max-w-[180px] border border-border" />
-          ) : (
-            <a key={i} href={m.url} target="_blank" rel="noreferrer">
-              <img src={m.url} alt="mídia" className="rounded-lg max-h-40 max-w-[180px] border border-border object-cover" />
-            </a>
-          )
-        ) : null,
       )}
     </div>
   )
@@ -123,24 +154,25 @@ function ExecucaoItem({
 
   return (
     <div className="rounded-lg p-2.5 space-y-1.5 bg-success/10 border border-success/20">
-      <div className="flex items-center gap-2">
-        <ItemAvatar ator={item.ator} ctx={avatarCtx} />
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          <Camera size={13} className="text-success shrink-0" />
-          <span className="text-xs font-medium text-success">Execução · {autorLabel}</span>
-          <span className="text-[10px] text-text-muted ml-auto">{fmtDt(item.data_hora)}</span>
-        </div>
+      <div className="flex items-center gap-1.5">
+        <Camera size={13} className="text-success shrink-0" />
+        <span className="text-xs font-medium text-success">Execução · {autorLabel}</span>
+        <span className="text-[10px] text-text-muted ml-auto">{fmtDt(item.data_hora)}</span>
       </div>
-      {item.descricao && <p className="text-xs text-text-secondary whitespace-pre-wrap">{item.descricao}</p>}
-      <MediaGrid midias={item.midias ?? []} />
-      {showThread && (
+      {showThread ? (
         <ThreadRelato
+          descricao={item.descricao}
+          descricaoAtor={item.ator ?? 'ALUNO'}
+          descricaoMidias={item.midias}
           descricaoDataHora={item.data_hora}
           comentarios={item.comentarios}
           viewerAtor={viewerAtor!}
           uploadMidia={uploadMidia}
           onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias, item.tipo)}
+          {...threadProps(avatarCtx)}
         />
+      ) : (
+        <ReadOnlyBubble ator={item.ator} texto={item.descricao} midias={item.midias} dataHora={item.data_hora} ctx={avatarCtx} />
       )}
     </div>
   )
@@ -160,28 +192,29 @@ function CorrecaoItem({
   avatarCtx: AvatarCtx
 }) {
   const showThread = !!viewerAtor && !!onAddComentario && !!item.relato_sk
+  const descricao = item.descricao ?? item.texto
 
   return (
     <div className="rounded-lg p-2.5 space-y-1.5 bg-accent/10 border border-accent/20">
-      <div className="flex items-center gap-2">
-        <ItemAvatar ator="PERSONAL" ctx={avatarCtx} />
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          <Wrench size={13} className="text-accent-hover shrink-0" />
-          <span className="text-xs font-medium text-accent-hover">Correção do personal</span>
-          <span className="text-[10px] text-text-muted ml-auto">{fmtDt(item.data_hora)}</span>
-        </div>
+      <div className="flex items-center gap-1.5">
+        <Wrench size={13} className="text-accent-hover shrink-0" />
+        <span className="text-xs font-medium text-accent-hover">Correção do personal</span>
+        <span className="text-[10px] text-text-muted ml-auto">{fmtDt(item.data_hora)}</span>
       </div>
-      {item.descricao && <p className="text-xs text-text-secondary whitespace-pre-wrap">{item.descricao}</p>}
-      {item.texto && !item.descricao && <p className="text-xs text-text-secondary whitespace-pre-wrap">{item.texto}</p>}
-      <MediaGrid midias={item.midias ?? []} />
-      {showThread && (
+      {showThread ? (
         <ThreadRelato
+          descricao={descricao}
+          descricaoAtor="PERSONAL"
+          descricaoMidias={item.midias}
           descricaoDataHora={item.data_hora}
           comentarios={item.comentarios}
           viewerAtor={viewerAtor!}
           uploadMidia={uploadMidia}
           onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias, item.tipo)}
+          {...threadProps(avatarCtx)}
         />
+      ) : (
+        <ReadOnlyBubble ator="PERSONAL" texto={descricao} midias={item.midias} dataHora={item.data_hora} ctx={avatarCtx} />
       )}
     </div>
   )
@@ -205,24 +238,25 @@ function OutroItem({
 
   return (
     <div className="rounded-lg p-2.5 space-y-1.5 bg-surface-elevated border border-border">
-      <div className="flex items-center gap-2">
-        <ItemAvatar ator={item.ator} ctx={avatarCtx} />
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          <MessageCircle size={13} className="text-text-secondary shrink-0" />
-          <span className="text-xs font-medium text-text-secondary">Observação · {autorLabel}</span>
-          <span className="text-[10px] text-text-muted ml-auto">{fmtDt(item.data_hora)}</span>
-        </div>
+      <div className="flex items-center gap-1.5">
+        <MessageCircle size={13} className="text-text-secondary shrink-0" />
+        <span className="text-xs font-medium text-text-secondary">Observação · {autorLabel}</span>
+        <span className="text-[10px] text-text-muted ml-auto">{fmtDt(item.data_hora)}</span>
       </div>
-      {item.descricao && <p className="text-xs text-text-secondary whitespace-pre-wrap">{item.descricao}</p>}
-      <MediaGrid midias={item.midias ?? []} />
-      {showThread && (
+      {showThread ? (
         <ThreadRelato
+          descricao={item.descricao}
+          descricaoAtor={item.ator ?? 'ALUNO'}
+          descricaoMidias={item.midias}
           descricaoDataHora={item.data_hora}
           comentarios={item.comentarios}
           viewerAtor={viewerAtor!}
           uploadMidia={uploadMidia}
           onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias, item.tipo)}
+          {...threadProps(avatarCtx)}
         />
+      ) : (
+        <ReadOnlyBubble ator={item.ator} texto={item.descricao} midias={item.midias} dataHora={item.data_hora} ctx={avatarCtx} />
       )}
     </div>
   )

@@ -67,6 +67,7 @@ function Bubble({ ator, texto, midias = [], dataHora, isViewer, personalNome, pe
 interface ThreadRelatoProps {
   descricao?: string
   descricaoAtor?: 'ALUNO' | 'PERSONAL'
+  descricaoMidias?: MidiaItem[]
   descricaoDataHora: string
   comentarios?: Comentario[]
   viewerAtor: 'ALUNO' | 'PERSONAL'
@@ -82,6 +83,7 @@ interface ThreadRelatoProps {
 export function ThreadRelato({
   descricao,
   descricaoAtor = 'ALUNO',
+  descricaoMidias,
   descricaoDataHora,
   comentarios = [],
   viewerAtor,
@@ -132,10 +134,11 @@ export function ThreadRelato({
 
   return (
     <div className="space-y-2 mt-2">
-      {descricao && (
+      {(descricao || (descricaoMidias && descricaoMidias.length > 0)) && (
         <Bubble
           ator={descricaoAtor}
           texto={descricao}
+          midias={descricaoMidias}
           dataHora={descricaoDataHora}
           isViewer={descricaoAtor === viewerAtor}
           personalNome={personalNome}
