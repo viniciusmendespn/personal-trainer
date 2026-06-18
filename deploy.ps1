@@ -34,11 +34,19 @@ function Deploy-Frontend {
         --cache-control "no-cache, no-store, must-revalidate" `
         --content-type "text/html; charset=utf-8" `
         --region $Region --profile $Profile
-    aws s3 sync dist/ "s3://$Bucket/" --delete --exclude "index.html" `
+    # Manifestos PWA: sem cache (browsers precisam verificar atualizações do manifesto)
+    aws s3 sync dist/ "s3://$Bucket/" --delete `
+        --exclude "*" --include "*.webmanifest" `
+        --cache-control "no-cache, no-store, must-revalidate" `
+        --content-type "application/manifest+json" `
+        --region $Region --profile $Profile
+    # Demais assets (hashed): cache de 1 ano
+    aws s3 sync dist/ "s3://$Bucket/" --delete --exclude "index.html" --exclude "*.webmanifest" `
         --cache-control "public, max-age=31536000, immutable" `
         --region $Region --profile $Profile
 
-    aws cloudfront create-invalidation --distribution-id $CfId --paths "/index.html" `
+    aws cloudfront create-invalidation --distribution-id $CfId `
+        --paths "/index.html" "/manifest.webmanifest" "/manifest-aluno.webmanifest" `
         --region $Region --profile $Profile | Out-Null
     Set-Location ..
     Write-Host "Frontend deployed!" -ForegroundColor Green
