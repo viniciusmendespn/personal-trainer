@@ -14,7 +14,7 @@ import { ChatThread } from '../components/chat/ChatThread'
 import { ChatInputBar } from '../components/chat/ChatInputBar'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
 import { PostComposer } from '../components/exercicio/PostComposer'
-import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, useToast, useConfirm } from '../components/ui'
+import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSelect, useToast, useConfirm } from '../components/ui'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -578,6 +578,10 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
   const [aba, setAba] = useState<AbaEvolucao>('feed')
   const [prQuery, setPrQuery] = useState('')
   const [prLimit, setPrLimit] = useState(12)
+  const exsOptions = useMemo(
+    () => (exs.data ?? []).map((e) => ({ value: e.exercicio_id, label: e.nome })),
+    [exs.data]
+  )
 
   useEffect(() => {
     if (initialExId) { setExId(initialExId); setAba('feed'); return }
@@ -610,10 +614,12 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
 
       {/* Seletor de exercício */}
       {!!exs.data?.length && (
-        <select value={exId} onChange={(e) => setExId(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg bg-surface border border-border text-text text-sm focus:outline-none focus:border-accent">
-          {exs.data.map((ex) => <option key={ex.exercicio_id} value={ex.exercicio_id}>{ex.nome}</option>)}
-        </select>
+        <SearchableSelect
+          options={exsOptions}
+          value={exId}
+          onChange={setExId}
+          placeholder="Buscar exercício…"
+        />
       )}
 
       {/* Abas */}

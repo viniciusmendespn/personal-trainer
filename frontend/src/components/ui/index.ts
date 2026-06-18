@@ -1,6 +1,6 @@
 export { Spinner } from './Spinner'
 export { Button } from './Button'
-export { Input, Select, Textarea } from './Input'
+export { Input, Select, Textarea, SearchableSelect } from './Input'
 export { Card } from './Card'
 export { ErrorText } from './ErrorText'
 export { Badge } from './Badge'

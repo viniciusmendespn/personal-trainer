@@ -8,7 +8,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAluno } from '../hooks/useAlunos'
 import { useExerciciosAluno, useEvolucao, useResumo } from '../hooks/useEvolucao'
-import { Card, Spinner, Select, StatCard, Badge, EmptyState, Button, Input, useToast } from '../components/ui'
+import { Card, Spinner, StatCard, Badge, EmptyState, Button, Input, SearchableSelect, useToast } from '../components/ui'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
 import { PostComposer } from '../components/exercicio/PostComposer'
 import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
@@ -43,7 +43,6 @@ export function AlunoEvolucaoPage() {
   const [exId, setExId] = useState(highlightExId ?? '')
   const [aba, setAba] = useState<AbaEvolucao>('feed')
   const [exporting, setExporting] = useState(false)
-  const [exQuery, setExQuery] = useState('')
   const [prQuery, setPrQuery] = useState('')
   const [prLimit, setPrLimit] = useState(12)
   const { show } = useToast()
@@ -53,9 +52,9 @@ export function AlunoEvolucaoPage() {
     () => [...(exercicios ?? [])].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
     [exercicios]
   )
-  const exerciciosFiltrados = useMemo(
-    () => exerciciosOrdenados.filter((e) => e.nome.toLowerCase().includes(exQuery.toLowerCase())),
-    [exerciciosOrdenados, exQuery]
+  const exerciciosOptions = useMemo(
+    () => exerciciosOrdenados.map((e) => ({ value: e.exercicio_id, label: e.nome })),
+    [exerciciosOrdenados]
   )
   const prsFiltrados = useMemo(
     () => (resumo?.prs ?? []).filter((p) => p.exercicio.toLowerCase().includes(prQuery.toLowerCase())),
@@ -130,17 +129,13 @@ export function AlunoEvolucaoPage() {
       ) : (
         <>
           {/* Seletor de exercício */}
-          <div className="flex gap-2 mb-4 max-w-xs">
-            <div className="relative flex-1">
-              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-              <Input placeholder="Filtrar…" value={exQuery} onChange={(e) => setExQuery(e.target.value)} className="pl-8" />
-            </div>
-          </div>
-          <Select value={exId} onChange={(e) => setExId(e.target.value)} className="mb-4 max-w-xs">
-            {exerciciosFiltrados.map((ex) => (
-              <option key={ex.exercicio_id} value={ex.exercicio_id}>{ex.nome}</option>
-            ))}
-          </Select>
+          <SearchableSelect
+            options={exerciciosOptions}
+            value={exId}
+            onChange={setExId}
+            placeholder="Buscar exercício…"
+            className="mb-4 max-w-xs"
+          />
 
           {/* Abas */}
           <div className="flex gap-1 border-b border-border mb-4">
