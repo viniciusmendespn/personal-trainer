@@ -14,6 +14,14 @@ type Step = 'email' | 'password' | 'confirm'
 const STEP_LABELS = ['E-mail', 'Senha', 'Confirmação']
 const STEP_INDEX: Record<Step, number> = { email: 0, password: 1, confirm: 2 }
 
+/** Erros que indicam "esse e-mail já tem conta confirmada" — não erros transitórios. */
+function isAlreadyConfirmedError(err: unknown): boolean {
+  const name = (err as { name?: string })?.name ?? ''
+  if (name === 'LimitExceededException' || name === 'TooManyRequestsException') return false
+  if (name === 'UserNotFoundException') return false
+  return true
+}
+
 export function SignUpPage() {
   const { user, refresh } = useAuth()
   const navigate = useNavigate()
@@ -29,7 +37,7 @@ export function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
-  const [usernameExists, setUsernameExists] = useState(false)
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false)
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
 
@@ -41,20 +49,43 @@ export function SignUpPage() {
     }
   }, [location.state])
 
+  useEffect(() => {
+    if (!alreadyRegistered) return
+    const t = setTimeout(() => navigate('/login'), 1500)
+    return () => clearTimeout(t)
+  }, [alreadyRegistered, navigate])
+
   if (user) {
     navigate('/alunos', { replace: true })
     return null
   }
 
-  function handleEmailContinue(e: React.FormEvent) {
+  // E-mails sem conta (ou com cadastro pendente) recebem resposta "de sucesso" mascarada
+  // pelo PreventUserExistenceErrors do User Pool — só uma conta JÁ CONFIRMADA gera erro aqui.
+  async function handleEmailContinue(e: React.FormEvent) {
     e.preventDefault()
-    setStep('password')
+    setError('')
+    setAlreadyRegistered(false)
+    setLoading(true)
+    try {
+      await resendSignUpCode({ username: email })
+      setStep('password')
+    } catch (err) {
+      if (isAlreadyConfirmedError(err)) {
+        setAlreadyRegistered(true)
+        setError(cognitoErrorPtBr(err))
+      } else {
+        setError(cognitoErrorPtBr(err))
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    setUsernameExists(false)
+    setAlreadyRegistered(false)
     if (!passwordOk(password)) {
       setError('A senha não atende aos requisitos mínimos.')
       return
@@ -65,8 +96,6 @@ export function SignUpPage() {
     }
     setLoading(true)
     try {
-      // Se o e-mail já existir e estiver não confirmado, o Cognito reenvia o
-      // código automaticamente aqui (sem erro) — só conta confirmada gera UsernameExistsException.
       await signUp({
         username: email,
         password,
@@ -76,23 +105,19 @@ export function SignUpPage() {
     } catch (err) {
       const name = (err as { name?: string })?.name ?? ''
       if (name === 'UsernameExistsException') {
-        setUsernameExists(true)
+        // Ambíguo: e-mail já existe, mas não sabemos se está confirmado ou pendente.
+        // Tenta reenviar o código automaticamente — se funcionar, é cadastro pendente.
+        try {
+          await resendSignUpCode({ username: email })
+          show('Encontramos um cadastro pendente — reenviamos o código de confirmação.', 'info')
+          setStep('confirm')
+        } catch (resendErr) {
+          setAlreadyRegistered(true)
+          setError(cognitoErrorPtBr(resendErr))
+        }
+      } else {
+        setError(cognitoErrorPtBr(err))
       }
-      setError(cognitoErrorPtBr(err))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function handlePendingResend() {
-    setError('')
-    setLoading(true)
-    try {
-      await resendSignUpCode({ username: email })
-      show('Reenviamos o código de confirmação para seu e-mail.', 'info')
-      setStep('confirm')
-    } catch (err) {
-      setError(cognitoErrorPtBr(err))
     } finally {
       setLoading(false)
     }
@@ -141,8 +166,10 @@ export function SignUpPage() {
           <form onSubmit={handleEmailContinue} className="space-y-4 mt-3">
             <h1 className="font-display text-xl font-bold text-text text-center">Criar conta</h1>
             <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <Button type="submit" className="w-full">
-              Continuar
+            <ErrorText>{error}</ErrorText>
+            {alreadyRegistered && <p className="text-xs text-text-muted text-center">Redirecionando para o login…</p>}
+            <Button type="submit" className="w-full" disabled={loading || alreadyRegistered}>
+              {loading ? 'Verificando…' : 'Continuar'}
             </Button>
             <p className="text-center text-sm text-text-secondary">
               Já tem conta?{' '}
@@ -189,20 +216,11 @@ export function SignUpPage() {
               className={confirmPwd && confirmPwd !== password ? 'border-danger' : ''}
             />
             <ErrorText>{error}</ErrorText>
-            {usernameExists && (
-              <div className="space-y-2">
-                <Button type="button" variant="outline" className="w-full" onClick={() => navigate('/login')}>
-                  Ir para login
-                </Button>
-                <Button type="button" variant="ghost" className="w-full" onClick={handlePendingResend} disabled={loading}>
-                  Tenho um cadastro pendente — reenviar código
-                </Button>
-              </div>
-            )}
+            {alreadyRegistered && <p className="text-xs text-text-muted text-center">Redirecionando para o login…</p>}
             <Button
               type="submit"
               className="w-full"
-              disabled={loading || !passwordOk(password) || password !== confirmPwd}
+              disabled={loading || alreadyRegistered || !passwordOk(password) || password !== confirmPwd}
             >
               {loading ? 'Enviando…' : 'Cadastrar'}
             </Button>

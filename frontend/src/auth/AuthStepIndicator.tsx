@@ -18,7 +18,7 @@ export function AuthStepIndicator({ labels, currentIndex }: { labels: string[]; 
                 ? 'bg-accent text-white'
                 : i === currentIndex
                   ? 'bg-accent text-white shadow-[var(--shadow-glow-accent)] ring-2 ring-accent/30'
-                  : 'bg-white/5 border border-border-strong text-text-muted'
+                  : 'bg-surface-elevated border border-border-strong text-text-muted'
             }`}
           >
             {i < currentIndex ? <Check size={13} strokeWidth={2.5} /> : i + 1}
