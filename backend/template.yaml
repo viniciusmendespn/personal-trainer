@@ -179,6 +179,11 @@ Resources:
       Handler: app.main.handler
       CodeUri: ./
       Description: "Personal Trainer API (FastAPI + Mangum)"
+      FunctionUrlConfig:           # webhook W-API bate direto aqui — sem custo de API Gateway
+        AuthType: NONE
+        Cors:
+          AllowMethods: [POST]
+          AllowOrigins: ["*"]
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref MainTable
@@ -455,8 +460,11 @@ Outputs:
   MediaBucketName:
     Value: !Ref MediaBucket
   WebhookUrlBase:
-    Description: "Configure na W-API: {WebhookUrlBase}/v1/public/wapi/webhook/{WebhookSecret}"
+    Description: "Legado — API Gateway (não usar para webhook W-API, prefira WebhookFunctionUrl)"
     Value: !Sub "${ApiGateway.ApiEndpoint}/${Stage}"
+  WebhookFunctionUrl:
+    Description: "URL direta da Lambda para webhook W-API (sem custo de API Gateway). Usar: {WebhookFunctionUrl}v1/public/wapi/webhook/{WebhookSecret}"
+    Value: !GetAtt ApiFunctionUrl.FunctionUrl
   CloudFrontUrl:
     Condition: CreateFrontendInfra
     Value: !Sub "https://${CloudFrontDistribution.DomainName}"

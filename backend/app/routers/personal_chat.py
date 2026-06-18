@@ -36,9 +36,9 @@ def chat_history(
 @router.post("")
 def chat_send(aluno_id: str, body: ChatBody, personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)
-    enviado = agent_service.log_direct(personal_id, aluno_id, body.text, Ator.PERSONAL, CanalOrigem.PORTAL)
+    agent_service.log_direct(personal_id, aluno_id, body.text, Ator.PERSONAL, CanalOrigem.PORTAL)
     agent_service.set_agente_pausado(aluno_id, True)
-    return {"ok": 1, "whatsapp_enviado": enviado}
+    return {"ok": 1}
 
 
 @router.patch("/agente")

@@ -92,6 +92,10 @@ async def receive(secret: str, request: Request):
     verify_wapi_webhook(secret)   # 404 se inválido
     payload = await request.json()
 
+    # Ignora mensagens enviadas pelo número conectado (fromMe) — evita loop e falsos positivos.
+    if payload.get("fromMe") or payload.get("from_me") or payload.get("type") == "sent":
+        return _OK
+
     # ⚠️ Confirmar nomes exatos dos campos contra a doc da W-API (webhook-received).
     instance_id = payload.get("instanceId") or payload.get("instance_id")
     message_id = payload.get("messageId") or payload.get("id")

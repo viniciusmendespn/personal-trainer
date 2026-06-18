@@ -75,11 +75,10 @@ def enviar_whatsapp(personal_id: str, aluno_id: str, text: str) -> bool:
 def log_direct(personal_id: str, aluno_id: str, text: str, ator: Ator, canal: CanalOrigem,
                midia: dict | None = None) -> bool:
     """Mensagem marcada como 'direta' — não passa pelo agente, só fica registrada na
-    thread (compartilhada). Quando o ator é PERSONAL, também envia por WhatsApp (RF novo).
-    Aceita `midia` opcional (anexo de correção do personal, sem reenvio pelo WhatsApp)."""
-    _write_chat_msg(aluno_id, "user", text, ator, canal, direto=True, midia=midia)
-    if ator == Ator.PERSONAL:
-        return enviar_whatsapp(personal_id, aluno_id, text)
+    thread (compartilhada). Chat e WhatsApp são canais independentes: mensagens do portal
+    ficam apenas no chat, sem encaminhar ao WhatsApp."""
+    role = "assistant" if ator == Ator.PERSONAL else "user"
+    _write_chat_msg(aluno_id, role, text, ator, canal, direto=True, midia=midia)
     return True
 
 
