@@ -231,7 +231,9 @@ export function SignUpPage() {
         {step === 'confirm' && (
           <form onSubmit={handleConfirm} className="space-y-4 mt-3">
             <h1 className="font-display text-xl font-bold text-text text-center">Confirme o e-mail</h1>
-            <p className="text-sm text-text-secondary text-center">Enviamos um código para {email}.</p>
+            <p className="text-sm text-text-secondary text-center">
+              Enviamos um código para {email}. Não encontrou? Verifique a caixa de spam ou lixo eletrônico.
+            </p>
             <Input label="Código" value={code} onChange={(e) => setCode(e.target.value)} required />
             <ErrorText>{error}</ErrorText>
             <Button type="submit" className="w-full" disabled={loading}>

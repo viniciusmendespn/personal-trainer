@@ -99,7 +99,9 @@ export function ForgotPasswordPage() {
         {step === 'confirm' && (
           <form onSubmit={handleConfirm} className="space-y-4 mt-3">
             <h1 className="font-display text-xl font-bold text-text text-center">Redefinir senha</h1>
-            <p className="text-sm text-text-secondary text-center">Se {email} tiver uma conta, enviamos um código para lá.</p>
+            <p className="text-sm text-text-secondary text-center">
+              Se {email} tiver uma conta, enviamos um código para lá. Não encontrou? Verifique a caixa de spam ou lixo eletrônico.
+            </p>
             <Input label="Código" value={code} onChange={(e) => setCode(e.target.value)} required />
             <div>
               <span className="block text-xs font-medium text-text-secondary mb-1">Nova senha</span>
