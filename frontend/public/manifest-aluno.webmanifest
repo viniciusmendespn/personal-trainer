@@ -8,6 +8,6 @@
   "start_url": "/aluno",
   "scope": "/aluno",
   "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "/coach-icon.png", "sizes": "138x135", "type": "image/png", "purpose": "any" }
   ]
 }

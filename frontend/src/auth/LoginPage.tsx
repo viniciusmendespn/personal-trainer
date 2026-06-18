@@ -37,7 +37,7 @@ export function LoginPage() {
         <form onSubmit={handle} className="space-y-4">
           <div className="text-center mb-2">
             <div className="flex items-center justify-center gap-2 mb-1">
-              <AppLogo size={32} radius={16} />
+              <AppLogo size={32} />
               <h1 className="font-display text-2xl font-bold text-text">CoachPilot</h1>
             </div>
             <p className="text-sm text-text-secondary">Acesse sua conta</p>

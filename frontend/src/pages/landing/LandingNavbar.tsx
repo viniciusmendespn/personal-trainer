@@ -42,7 +42,7 @@ export default function LandingNavbar() {
     >
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'none' }}>
-          <AppLogo size={36} radius={10} />
+          <AppLogo size={36} />
           <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 18, color: '#fff', letterSpacing: '-0.3px' }}>
             Coach<span style={{ color: '#14b8a6' }}>Pilot</span>
           </span>

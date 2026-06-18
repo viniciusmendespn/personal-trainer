@@ -70,7 +70,7 @@ export function SignUpPage() {
         {step === 'form' ? (
           <form onSubmit={handleSignUp} className="space-y-4">
             <div className="flex items-center justify-center gap-2 mb-1">
-              <AppLogo size={32} radius={16} />
+              <AppLogo size={32} />
               <span className="font-display text-xl font-bold text-text">CoachPilot</span>
             </div>
             <h1 className="font-display text-2xl font-bold text-text text-center">Criar conta</h1>

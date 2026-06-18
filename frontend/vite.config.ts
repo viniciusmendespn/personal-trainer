@@ -11,7 +11,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      includeAssets: ['coach-icon.png'],
       manifest: {
         name: 'CoachPilot — Portal',
         short_name: 'CoachPilot',
@@ -21,7 +21,7 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/dashboard',
         scope: '/',
-        icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
+        icons: [{ src: 'coach-icon.png', sizes: '138x135', type: 'image/png', purpose: 'any' }],
       },
       workbox: {
         navigateFallback: null,

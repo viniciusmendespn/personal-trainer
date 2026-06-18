@@ -33,7 +33,7 @@ export default function LandingFooter() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 40, marginBottom: 40 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <AppLogo size={36} radius={10} />
+              <AppLogo size={36} />
               <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 17, color: '#fff' }}>
                 Coach<span style={{ color: '#14b8a6' }}>Pilot</span>
               </span>
