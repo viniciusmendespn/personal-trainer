@@ -127,5 +127,12 @@ def delete_aluno(aluno_id: str, personal_id: str = Depends(get_current_personal_
     repo.delete_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id))
     repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
     authz.invalidate(personal_id, aluno_id)
-    # TODO: cascade — treinos/sessões/registros do aluno permanecem na partição AL#
-    # (limpeza em lote ou marcar INATIVO em vez de hard delete). Decidir depois.
+    # Limpa entradas DUE# para evitar notificações fantasma após deleção do aluno.
+    # Dados completos (treinos/sessões/registros) permanecem em AL# — limpeza em lote futura.
+    treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
+    due_deletes = [
+        (keys.PK_SCHED, keys.sk_due(t["data_fim"], t["treino_id"]))
+        for t in treinos if t.get("data_fim") and t.get("treino_id")
+    ]
+    if due_deletes:
+        repo.batch_write(deletes=due_deletes)
