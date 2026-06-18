@@ -17,6 +17,9 @@ def handler(event, context):
     hi = keys.DUE_PREFIX + hoje + "￿"
     items = repo.query_between(keys.PK_SCHED, keys.DUE_PREFIX, hi)
     for it in items:
+        # Delete first — atomic claim prevents duplicate notifications on Lambda retries
+        if not repo.delete_item_if_exists(keys.PK_SCHED, it["SK"]):
+            continue
         personal_id = it.get("personal_id")
         if personal_id:
             nome = it.get("aluno_nome") or "um aluno"
@@ -25,6 +28,5 @@ def handler(event, context):
                 personal_id, "TREINO_FIM", "Treino chegou ao fim",
                 f"O treino '{tnome}' de {nome} venceu em {it.get('data_fim')}. "
                 f"Hora de renovar ou atualizar.", aluno_id=it.get("aluno_id"))
-        repo.delete_item(keys.PK_SCHED, it["SK"])
     logger.info("[scheduler] %d vencimento(s) notificado(s)", len(items))
     return {"processed": len(items)}
