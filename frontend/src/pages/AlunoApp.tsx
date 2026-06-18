@@ -18,6 +18,7 @@ import { ChatInputBar } from '../components/chat/ChatInputBar'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
 import { PostComposer } from '../components/exercicio/PostComposer'
 import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSelect, useToast, useConfirm } from '../components/ui'
+import { AlunoPerfilModal } from '../components/aluno/AlunoPerfilModal'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -164,6 +165,7 @@ export function AlunoApp() {
   const [showRanking, setShowRanking] = useState(false)
   const installPromptRef = useRef<Event & { prompt: () => Promise<void> } | null>(null)
   const [canInstall, setCanInstall] = useState(false)
+  const [showPerfilModal, setShowPerfilModal] = useState(false)
   const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false })
 
   useEffect(() => {
@@ -191,13 +193,19 @@ export function AlunoApp() {
     >
       <header className="px-4 pt-4 pb-2 shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {me.data?.foto_url ? (
-            <img src={me.data.foto_url} alt={me.data.nome ?? 'aluno'} className="w-8 h-8 rounded-full object-cover" />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center">
-              <User size={16} className="text-accent-hover" />
-            </div>
-          )}
+          <button
+            onClick={() => setShowPerfilModal(true)}
+            className="rounded-full focus:outline-none focus:ring-2 focus:ring-accent"
+            aria-label="Editar meu perfil"
+          >
+            {me.data?.foto_url ? (
+              <img src={me.data.foto_url} alt={me.data.nome ?? 'aluno'} className="w-8 h-8 rounded-full object-cover" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center">
+                <User size={16} className="text-accent-hover" />
+              </div>
+            )}
+          </button>
           <h1 className="font-display text-lg font-bold text-text">Olá, {me.data?.nome ?? 'aluno'}</h1>
         </div>
         <div className="flex items-center gap-1">
@@ -266,6 +274,14 @@ export function AlunoApp() {
           <ChatTab />
         </div>
       )}
+
+      <AlunoPerfilModal
+        isOpen={showPerfilModal}
+        onClose={() => setShowPerfilModal(false)}
+        nome={me.data?.nome}
+        descricao={me.data?.descricao}
+        foto_url={me.data?.foto_url}
+      />
 
       <nav
         className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-surface-elevated/80 backdrop-blur-xl border-t border-border flex"
