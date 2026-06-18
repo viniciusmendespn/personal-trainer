@@ -136,7 +136,7 @@ export const alunoApi = {
     alunoClient.post('/v1/aluno/notificacoes/lida', { ref }).then((r) => r.data),
   feedExercicio: (exercicioId: string) =>
     alunoClient.get<FeedItem[]>(`/v1/aluno/exercicios/${exercicioId}/feed`).then((r) => r.data),
-  comentarRelato: (body: { relato_sk: string; texto: string }) =>
+  comentarRelato: (body: { relato_sk: string; texto?: string; midias?: Array<{ s3_key: string; tipo: string }> }) =>
     alunoClient.post('/v1/aluno/relato/comentar', body).then((r) => r.data),
   criarPostagem: (
     exercicioId: string,
@@ -150,7 +150,7 @@ export const alunoApi = {
     alunoClient
       .post<{ ok: number; post_id: string }>(`/v1/aluno/exercicios/${exercicioId}/postagem`, body)
       .then((r) => r.data),
-  comentarPost: (body: { post_sk: string; texto: string }) =>
+  comentarPost: (body: { post_sk: string; texto?: string; midias?: Array<{ s3_key: string; tipo: string }> }) =>
     alunoClient.post('/v1/aluno/post/comentar', body).then((r) => r.data),
 }
 

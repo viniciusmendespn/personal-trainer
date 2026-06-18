@@ -732,12 +732,17 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
               items={feed.data ?? []}
               emptyText="Nenhuma postagem ainda. Use o botão acima para postar."
               viewerAtor="ALUNO"
-              onAddComentario={async (relatoSk, texto) => {
+              uploadMidia={async (file) => {
+                const { upload_url, s3_key } = await alunoApi.midiaUploadUrl(file.name, file.type)
+                await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
+                return { s3_key, tipo: file.type.startsWith('video') ? 'video_execucao' : 'foto_exercicio' }
+              }}
+              onAddComentario={async (relatoSk, texto, midias) => {
                 try {
                   if (relatoSk.startsWith('POST#')) {
-                    await alunoApi.comentarPost({ post_sk: relatoSk, texto })
+                    await alunoApi.comentarPost({ post_sk: relatoSk, texto, midias })
                   } else {
-                    await alunoApi.comentarRelato({ relato_sk: relatoSk, texto })
+                    await alunoApi.comentarRelato({ relato_sk: relatoSk, texto, midias })
                   }
                   qc.invalidateQueries({ queryKey: ['aluno-feed', exId] })
                 } catch {

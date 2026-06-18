@@ -1,13 +1,13 @@
 """Sessão de treino e registros pelo PORTAL (personal). Pelo agente, as mesmas
 operações vêm de agent_service. Tudo aninhado sob o aluno (ESPEC §3)."""
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from app.dependencies import get_current_personal_id
 from app.models.enums import Ator, CanalOrigem
 from app.models.registro import SerieExec
 from app.repositories import dynamo_repo as repo, keys
-from app.models.postagem import PostagemPersonalCreate
+from app.models.postagem import MidiaRef, PostagemPersonalCreate
 from app.services import agent_service, alerta_service, anotif_service, authz, correcao_service, media_service, nota_service, notif_service, postagem_service, sessao_service
 
 router = APIRouter(prefix="/v1/alunos/{aluno_id}", tags=["sessoes"])
@@ -208,22 +208,31 @@ def criar_postagem_personal(aluno_id: str, exercicio_id: str, body: PostagemPers
 
 class ComentarPostPersonalBody(BaseModel):
     post_sk: str
-    texto: str
+    texto: str | None = None
+    midias: list[MidiaRef] = []
+
+    @model_validator(mode="after")
+    def ao_menos_texto_ou_midia(self):
+        if not self.texto and not self.midias:
+            raise ValueError("Informe um texto ou ao menos uma mídia.")
+        return self
 
 
 @router.post("/post/comentar", status_code=201)
 def comentar_post_personal(aluno_id: str, body: ComentarPostPersonalBody,
                             personal_id: str = Depends(get_current_personal_id)):
-    """Personal adiciona comentário em thread de postagem (POST#)."""
+    """Personal adiciona comentário (com ou sem mídia) em thread de postagem (POST#)."""
     authz.authorize_aluno(personal_id, aluno_id)
-    ok = alerta_service.adicionar_comentario(aluno_id, body.post_sk, "PERSONAL", body.texto)
+    midias = [m.model_dump() for m in body.midias]
+    ok = alerta_service.adicionar_comentario(aluno_id, body.post_sk, "PERSONAL", body.texto, midias)
     if not ok:
         raise HTTPException(404, "Postagem não encontrada.")
     parts = body.post_sk.split("#")
     exercicio_id = parts[1] if len(parts) > 1 else None
+    preview = body.texto or "Enviou uma mídia"
     anotif_service.criar(
         aluno_id, "DOR_RESPONDIDA", "Resposta do seu personal",
-        body.texto[:120] + ("…" if len(body.texto) > 120 else ""),
+        preview[:120] + ("…" if len(preview) > 120 else ""),
         ref_extra={"exercicio_id": exercicio_id, "relato_sk": body.post_sk},
     )
     return {"ok": True}
@@ -231,22 +240,31 @@ def comentar_post_personal(aluno_id: str, body: ComentarPostPersonalBody,
 
 class ComentarRelatoPersonalBody(BaseModel):
     relato_sk: str
-    texto: str
+    texto: str | None = None
+    midias: list[MidiaRef] = []
+
+    @model_validator(mode="after")
+    def ao_menos_texto_ou_midia(self):
+        if not self.texto and not self.midias:
+            raise ValueError("Informe um texto ou ao menos uma mídia.")
+        return self
 
 
 @router.post("/relato/comentar")
 def comentar_relato_personal(aluno_id: str, body: ComentarRelatoPersonalBody,
                               personal_id: str = Depends(get_current_personal_id)):
-    """Personal adiciona comentário em thread de dor/dúvida direto da tela de histórico."""
+    """Personal adiciona comentário (com ou sem mídia) em thread de dor/dúvida."""
     authz.authorize_aluno(personal_id, aluno_id)
-    ok = alerta_service.adicionar_comentario(aluno_id, body.relato_sk, "PERSONAL", body.texto)
+    midias = [m.model_dump() for m in body.midias]
+    ok = alerta_service.adicionar_comentario(aluno_id, body.relato_sk, "PERSONAL", body.texto, midias)
     if not ok:
         raise HTTPException(404, "Relato não encontrado")
     parts = body.relato_sk.split("#")
     exercicio_id = parts[1] if len(parts) > 1 and parts[1] != "NA" else None
     tipo_notif = "DOR_RESPONDIDA" if body.relato_sk.startswith("DOR#") else "DUVIDA_RESPONDIDA"
+    preview = body.texto or "Enviou uma mídia"
     anotif_service.criar(aluno_id, tipo_notif, "Resposta do seu personal",
-                         body.texto[:120] + ("…" if len(body.texto) > 120 else ""),
+                         preview[:120] + ("…" if len(preview) > 120 else ""),
                          ref_extra={"exercicio_id": exercicio_id, "relato_sk": body.relato_sk})
     return {"ok": True}
 

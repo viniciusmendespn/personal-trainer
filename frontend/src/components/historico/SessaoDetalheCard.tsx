@@ -5,7 +5,7 @@ import { treinosApi } from '../../api/treinos'
 import { alunoApi } from '../../api/alunoApp'
 import { MediaTimeline, type MediaTimelineItem } from '../media/MediaTimeline'
 import { ExercicioFeedCard } from '../exercicio/ExercicioFeedCard'
-import { CorrecaoForm } from '../exercicio/CorrecaoForm'
+import { PostComposer } from '../exercicio/PostComposer'
 import { Modal } from '../ui'
 
 function fmtDur(secs: number) {
@@ -126,11 +126,12 @@ function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
 
       {alunoId && (
         <Modal open={correcaoOpen} onClose={() => setCorrecaoOpen(false)} title={`Correção — ${ex.exercicio_nome}`}>
-          <CorrecaoForm
-            alunoId={alunoId}
+          <PostComposer
             exercicioId={ex.exercicio_id}
             exercicioNome={ex.exercicio_nome}
-            onDone={() => setCorrecaoOpen(false)}
+            viewerAtor="PERSONAL"
+            alunoId={alunoId}
+            onSuccess={() => setCorrecaoOpen(false)}
           />
         </Modal>
       )}

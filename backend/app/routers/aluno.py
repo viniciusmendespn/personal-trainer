@@ -3,14 +3,14 @@ Sem Cognito (rota /v1/aluno/* com Authorizer NONE; o token é validado na Lambda
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from app.dependencies import get_current_aluno
 from app.models.enums import Ator, CanalOrigem, Classificacao
 from app.models.registro import SerieExec
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.models.postagem import PostagemCreate, PostagemTipo
+from app.models.postagem import MidiaRef, PostagemCreate, PostagemTipo
 from app.services import agent_service, alerta_service, anotif_service, correcao_service, media_service, notif_service, postagem_service, sessao_service
 from app.utils import new_id, now_iso
 
@@ -222,22 +222,30 @@ def relato(body: RelatoBody, ctx: dict = Depends(get_current_aluno)):
 
 class ComentarRelatoBody(BaseModel):
     relato_sk: str
-    texto: str
+    texto: str | None = None
+    midias: list[MidiaRef] = []
+
+    @model_validator(mode="after")
+    def ao_menos_texto_ou_midia(self):
+        if not self.texto and not self.midias:
+            raise ValueError("Informe um texto ou ao menos uma mídia.")
+        return self
 
 
 @router.post("/relato/comentar", status_code=201)
 def comentar_relato(body: ComentarRelatoBody, ctx: dict = Depends(get_current_aluno)):
-    """Aluno adiciona comentário em uma thread de dor ou dúvida."""
-    ok = alerta_service.adicionar_comentario(ctx["aluno_id"], body.relato_sk, Ator.ALUNO.value, body.texto)
+    """Aluno adiciona comentário (com ou sem mídia) em uma thread de dor ou dúvida."""
+    midias = [m.model_dump() for m in body.midias]
+    ok = alerta_service.adicionar_comentario(ctx["aluno_id"], body.relato_sk, Ator.ALUNO.value, body.texto, midias)
     if not ok:
         raise HTTPException(404, "Relato não encontrado")
-    # Parse exercicio_id from relato_sk (e.g. DOR#{exercicio_id}#{ts}#{id})
     parts = body.relato_sk.split("#")
     exercicio_id = parts[1] if len(parts) > 1 and parts[1] != "NA" else None
     tipo_notif = "DOR" if body.relato_sk.startswith("DOR#") else "DUVIDA"
+    preview = body.texto or "Enviou uma mídia"
     notif_service.criar(
         ctx["personal_id"], tipo_notif, "Novo comentário do aluno",
-        body.texto[:120] + ("…" if len(body.texto) > 120 else ""),
+        preview[:120] + ("…" if len(preview) > 120 else ""),
         aluno_id=ctx["aluno_id"],
         ref_extra={"relato_sk": body.relato_sk, "relato_tipo": tipo_notif.lower(),
                    "exercicio_id": exercicio_id},
@@ -296,20 +304,29 @@ def criar_postagem(exercicio_id: str, body: PostagemCreate, ctx: dict = Depends(
 
 class ComentarPostBody(BaseModel):
     post_sk: str
-    texto: str
+    texto: str | None = None
+    midias: list[MidiaRef] = []
+
+    @model_validator(mode="after")
+    def ao_menos_texto_ou_midia(self):
+        if not self.texto and not self.midias:
+            raise ValueError("Informe um texto ou ao menos uma mídia.")
+        return self
 
 
 @router.post("/post/comentar", status_code=201)
 def comentar_post(body: ComentarPostBody, ctx: dict = Depends(get_current_aluno)):
-    """Aluno adiciona comentário em thread de postagem (POST#)."""
-    ok = alerta_service.adicionar_comentario(ctx["aluno_id"], body.post_sk, "ALUNO", body.texto)
+    """Aluno adiciona comentário (com ou sem mídia) em thread de postagem (POST#)."""
+    midias = [m.model_dump() for m in body.midias]
+    ok = alerta_service.adicionar_comentario(ctx["aluno_id"], body.post_sk, "ALUNO", body.texto, midias)
     if not ok:
         raise HTTPException(404, "Postagem não encontrada.")
     parts = body.post_sk.split("#")
     exercicio_id = parts[1] if len(parts) > 1 else None
+    preview = body.texto or "Enviou uma mídia"
     notif_service.criar(
         ctx["personal_id"], "DOR", "Novo comentário do aluno",
-        body.texto[:120] + ("…" if len(body.texto) > 120 else ""),
+        preview[:120] + ("…" if len(preview) > 120 else ""),
         aluno_id=ctx["aluno_id"],
         ref_extra={"relato_sk": body.post_sk, "exercicio_id": exercicio_id},
     )

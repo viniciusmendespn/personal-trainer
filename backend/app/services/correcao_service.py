@@ -30,6 +30,16 @@ def _enrich_midias(midias: list[dict]) -> list[dict]:
     return [{**m, "url": media_service.gerar_presigned_view_url(m["s3_key"])} for m in midias]
 
 
+def _enrich_comentarios(comentarios: list[dict]) -> list[dict]:
+    result = []
+    for c in comentarios:
+        nc = {**c}
+        if nc.get("midias"):
+            nc["midias"] = _enrich_midias(nc["midias"])
+        result.append(nc)
+    return result
+
+
 def feed_exercicio(aluno_id: str, exercicio_id: str) -> list[dict]:
     """Retorna feed unificado: DOR + DUVIDA + CORRECAO + MIDIA + POST, por data_hora desc."""
     pk = keys.pk_aluno(aluno_id)
@@ -44,17 +54,23 @@ def feed_exercicio(aluno_id: str, exercicio_id: str) -> list[dict]:
         c = repo.clean(i)
         c["tipo"] = "DOR"
         c["relato_sk"] = i["SK"]
+        if c.get("comentarios"):
+            c["comentarios"] = _enrich_comentarios(c["comentarios"])
         feed.append(c)
     for i in duvidas:
         c = repo.clean(i)
         c["tipo"] = "DUVIDA"
         c["relato_sk"] = i["SK"]
+        if c.get("comentarios"):
+            c["comentarios"] = _enrich_comentarios(c["comentarios"])
         feed.append(c)
     for i in correcoes:
         c = repo.clean(i)
         c["tipo"] = "CORRECAO"
         c["midias"] = _enrich_midias(c.get("midias") or [])
         c["descricao"] = c.get("texto")
+        if c.get("comentarios"):
+            c["comentarios"] = _enrich_comentarios(c["comentarios"])
         feed.append(c)
     for i in midias:
         # Itens MIDIA legacy viram EXECUCAO no feed (sem thread de comentários)
@@ -67,6 +83,8 @@ def feed_exercicio(aluno_id: str, exercicio_id: str) -> list[dict]:
         c = repo.clean(i)
         c["midias"] = _enrich_midias(c.get("midias") or [])
         c["relato_sk"] = i["SK"]
+        if c.get("comentarios"):
+            c["comentarios"] = _enrich_comentarios(c["comentarios"])
         feed.append(c)
 
     feed.sort(key=lambda r: r.get("data_hora", ""), reverse=True)

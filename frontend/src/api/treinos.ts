@@ -66,9 +66,9 @@ export const treinosApi = {
 
   responderNotificacao: (body: { ref: string; texto: string; aluno_id: string }) =>
     api.post('/v1/notificacoes/responder', body).then((r) => r.data),
-  comentarRelato: (alunoId: string, body: { relato_sk: string; texto: string }) =>
+  comentarRelato: (alunoId: string, body: { relato_sk: string; texto?: string; midias?: Array<{ s3_key: string; tipo: string }> }) =>
     api.post(`/v1/alunos/${alunoId}/relato/comentar`, body).then((r) => r.data),
-  comentarPost: (alunoId: string, body: { post_sk: string; texto: string }) =>
+  comentarPost: (alunoId: string, body: { post_sk: string; texto?: string; midias?: Array<{ s3_key: string; tipo: string }> }) =>
     api.post(`/v1/alunos/${alunoId}/post/comentar`, body).then((r) => r.data),
 }
 
@@ -87,12 +87,13 @@ export interface Relato {
 export interface Comentario {
   com_id: string
   ator: 'ALUNO' | 'PERSONAL'
-  texto: string
+  texto?: string
   data_hora: string
+  midias?: Array<{ s3_key: string; tipo: string; url?: string }>
 }
 
 export interface FeedItem {
-  tipo: 'DOR' | 'DUVIDA' | 'CORRECAO' | 'EXECUCAO'
+  tipo: 'DOR' | 'DUVIDA' | 'CORRECAO' | 'EXECUCAO' | 'OUTRO'
   ator?: 'ALUNO' | 'PERSONAL'
   data_hora: string
   // Thread (DOR / DUVIDA / EXECUCAO com texto)

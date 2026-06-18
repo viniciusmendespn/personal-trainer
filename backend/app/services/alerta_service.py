@@ -75,8 +75,12 @@ def responder_relato(aluno_id: str, relato_sk: str, texto: str, personal_id: str
 
 
 # ── Comentário em thread (personal ou aluno) ─────────────────────────────────
-def adicionar_comentario(aluno_id: str, relato_sk: str, ator: str, texto: str) -> bool:
-    """Appends a comment to a DOR/DUVIDA thread. Returns False if item not found."""
-    return repo.list_append_item(keys.pk_aluno(aluno_id), relato_sk, "comentarios", {
-        "com_id": new_id(), "ator": ator, "texto": texto, "data_hora": now_iso(),
-    })
+def adicionar_comentario(aluno_id: str, relato_sk: str, ator: str,
+                         texto: str | None, midias: list[dict] | None = None) -> bool:
+    """Appends a comment to a DOR/DUVIDA/POST thread. Returns False if item not found."""
+    comentario: dict = {"com_id": new_id(), "ator": ator, "data_hora": now_iso()}
+    if texto:
+        comentario["texto"] = texto
+    if midias:
+        comentario["midias"] = midias
+    return repo.list_append_item(keys.pk_aluno(aluno_id), relato_sk, "comentarios", comentario)

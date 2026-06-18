@@ -255,12 +255,17 @@ export function AlunoEvolucaoPage() {
                 items={feed ?? []}
                 emptyText="Nenhuma postagem ainda."
                 viewerAtor="PERSONAL"
-                onAddComentario={async (relatoSk, texto) => {
+                uploadMidia={async (file) => {
+                  const { upload_url, s3_key } = await treinosApi.uploadUrlMidia(alunoId, file.name, file.type)
+                  await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
+                  return { s3_key, tipo: file.type.startsWith('video') ? 'video_correcao' : 'foto_correcao' }
+                }}
+                onAddComentario={async (relatoSk, texto, midias) => {
                   try {
                     if (relatoSk.startsWith('POST#')) {
-                      await treinosApi.comentarPost(alunoId, { post_sk: relatoSk, texto })
+                      await treinosApi.comentarPost(alunoId, { post_sk: relatoSk, texto, midias })
                     } else {
-                      await treinosApi.comentarRelato(alunoId, { relato_sk: relatoSk, texto })
+                      await treinosApi.comentarRelato(alunoId, { relato_sk: relatoSk, texto, midias })
                     }
                     qc.invalidateQueries({ queryKey: ['feed-exercicio', alunoId, exId] })
                   } catch {

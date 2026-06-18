@@ -1,6 +1,10 @@
-import { AlertTriangle, Camera, HelpCircle, Wrench } from 'lucide-react'
+import { AlertTriangle, Camera, HelpCircle, MessageCircle, Wrench } from 'lucide-react'
 import { ThreadRelato } from '../notificacoes/ThreadRelato'
 import type { FeedItem } from '../../api/treinos'
+
+type MidiaRef = { s3_key: string; tipo: string }
+type UploadFn = (file: File) => Promise<MidiaRef>
+type CommentFn = (relatoSk: string, texto: string | undefined, midias?: MidiaRef[]) => Promise<void>
 
 function fmtDt(iso: string) {
   return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
@@ -10,10 +14,12 @@ function RelatoItem({
   item,
   viewerAtor,
   onAddComentario,
+  uploadMidia,
 }: {
   item: FeedItem
   viewerAtor?: 'ALUNO' | 'PERSONAL'
-  onAddComentario?: (relatoSk: string, texto: string) => Promise<void>
+  onAddComentario?: CommentFn
+  uploadMidia?: UploadFn
 }) {
   const isDor = item.tipo === 'DOR'
   const showThread = !!viewerAtor && !!onAddComentario && !!item.relato_sk
@@ -29,13 +35,15 @@ function RelatoItem({
         </span>
         <span className="text-[10px] text-text-muted ml-auto">{fmtDt(item.data_hora)}</span>
       </div>
+      <MediaGrid midias={item.midias ?? []} />
       {showThread ? (
         <ThreadRelato
-          descricao={item.descricao ?? ''}
+          descricao={item.descricao}
           descricaoDataHora={item.data_hora}
           comentarios={item.comentarios}
           viewerAtor={viewerAtor!}
-          onAddComentario={(texto) => onAddComentario!(item.relato_sk!, texto)}
+          uploadMidia={uploadMidia}
+          onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias)}
         />
       ) : (
         <>
@@ -50,7 +58,6 @@ function RelatoItem({
           )}
         </>
       )}
-      <MediaGrid midias={item.midias ?? []} />
     </div>
   )
 }
@@ -78,10 +85,12 @@ function ExecucaoItem({
   item,
   viewerAtor,
   onAddComentario,
+  uploadMidia,
 }: {
   item: FeedItem
   viewerAtor?: 'ALUNO' | 'PERSONAL'
-  onAddComentario?: (relatoSk: string, texto: string) => Promise<void>
+  onAddComentario?: CommentFn
+  uploadMidia?: UploadFn
 }) {
   const showThread = !!viewerAtor && !!onAddComentario && !!item.relato_sk
   const autorLabel = item.ator === 'PERSONAL' ? 'Personal' : 'Aluno'
@@ -97,18 +106,30 @@ function ExecucaoItem({
       <MediaGrid midias={item.midias ?? []} />
       {showThread && (
         <ThreadRelato
-          descricao={item.descricao ?? ''}
           descricaoDataHora={item.data_hora}
           comentarios={item.comentarios}
           viewerAtor={viewerAtor!}
-          onAddComentario={(texto) => onAddComentario!(item.relato_sk!, texto)}
+          uploadMidia={uploadMidia}
+          onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias)}
         />
       )}
     </div>
   )
 }
 
-function CorrecaoItem({ item }: { item: FeedItem }) {
+function CorrecaoItem({
+  item,
+  viewerAtor,
+  onAddComentario,
+  uploadMidia,
+}: {
+  item: FeedItem
+  viewerAtor?: 'ALUNO' | 'PERSONAL'
+  onAddComentario?: CommentFn
+  uploadMidia?: UploadFn
+}) {
+  const showThread = !!viewerAtor && !!onAddComentario && !!item.relato_sk
+
   return (
     <div className="rounded-lg p-2.5 space-y-1.5 bg-accent/10 border border-accent/20">
       <div className="flex items-center gap-1.5">
@@ -116,8 +137,54 @@ function CorrecaoItem({ item }: { item: FeedItem }) {
         <span className="text-xs font-medium text-accent-hover">Correção do personal</span>
         <span className="text-[10px] text-text-muted ml-auto">{fmtDt(item.data_hora)}</span>
       </div>
-      {item.texto && <p className="text-xs text-text-secondary whitespace-pre-wrap">{item.texto}</p>}
+      {item.descricao && <p className="text-xs text-text-secondary whitespace-pre-wrap">{item.descricao}</p>}
+      {item.texto && !item.descricao && <p className="text-xs text-text-secondary whitespace-pre-wrap">{item.texto}</p>}
       <MediaGrid midias={item.midias ?? []} />
+      {showThread && (
+        <ThreadRelato
+          descricaoDataHora={item.data_hora}
+          comentarios={item.comentarios}
+          viewerAtor={viewerAtor!}
+          uploadMidia={uploadMidia}
+          onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias)}
+        />
+      )}
+    </div>
+  )
+}
+
+function OutroItem({
+  item,
+  viewerAtor,
+  onAddComentario,
+  uploadMidia,
+}: {
+  item: FeedItem
+  viewerAtor?: 'ALUNO' | 'PERSONAL'
+  onAddComentario?: CommentFn
+  uploadMidia?: UploadFn
+}) {
+  const showThread = !!viewerAtor && !!onAddComentario && !!item.relato_sk
+  const autorLabel = item.ator === 'PERSONAL' ? 'Personal' : 'Aluno'
+
+  return (
+    <div className="rounded-lg p-2.5 space-y-1.5 bg-surface-elevated border border-border">
+      <div className="flex items-center gap-1.5">
+        <MessageCircle size={13} className="text-text-secondary shrink-0" />
+        <span className="text-xs font-medium text-text-secondary">Observação · {autorLabel}</span>
+        <span className="text-[10px] text-text-muted ml-auto">{fmtDt(item.data_hora)}</span>
+      </div>
+      {item.descricao && <p className="text-xs text-text-secondary whitespace-pre-wrap">{item.descricao}</p>}
+      <MediaGrid midias={item.midias ?? []} />
+      {showThread && (
+        <ThreadRelato
+          descricaoDataHora={item.data_hora}
+          comentarios={item.comentarios}
+          viewerAtor={viewerAtor!}
+          uploadMidia={uploadMidia}
+          onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias)}
+        />
+      )}
     </div>
   )
 }
@@ -126,10 +193,11 @@ interface Props {
   items: FeedItem[]
   emptyText?: string
   viewerAtor?: 'ALUNO' | 'PERSONAL'
-  onAddComentario?: (relatoSk: string, texto: string) => Promise<void>
+  onAddComentario?: CommentFn
+  uploadMidia?: UploadFn
 }
 
-export function ExercicioFeedCard({ items, emptyText, viewerAtor, onAddComentario }: Props) {
+export function ExercicioFeedCard({ items, emptyText, viewerAtor, onAddComentario, uploadMidia }: Props) {
   if (!items.length) {
     if (emptyText) return <p className="text-xs text-text-muted py-1">{emptyText}</p>
     return null
@@ -138,9 +206,11 @@ export function ExercicioFeedCard({ items, emptyText, viewerAtor, onAddComentari
     <div className="space-y-2 mt-2">
       {items.map((item, i) => {
         const key = item.post_id ?? item.correcao_id ?? item.relato_sk ?? i
-        if (item.tipo === 'CORRECAO') return <CorrecaoItem key={key} item={item} />
-        if (item.tipo === 'EXECUCAO') return <ExecucaoItem key={key} item={item} viewerAtor={viewerAtor} onAddComentario={onAddComentario} />
-        return <RelatoItem key={key} item={item} viewerAtor={viewerAtor} onAddComentario={onAddComentario} />
+        const shared = { item, viewerAtor, onAddComentario, uploadMidia }
+        if (item.tipo === 'CORRECAO') return <CorrecaoItem key={key} {...shared} />
+        if (item.tipo === 'EXECUCAO') return <ExecucaoItem key={key} {...shared} />
+        if (item.tipo === 'OUTRO') return <OutroItem key={key} {...shared} />
+        return <RelatoItem key={key} {...shared} />
       })}
     </div>
   )
