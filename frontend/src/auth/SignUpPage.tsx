@@ -7,6 +7,7 @@ import { cognitoErrorPtBr, passwordOk } from './cognitoErrors'
 import { AuthStepIndicator } from './AuthStepIndicator'
 import { PasswordChecklist } from './PasswordChecklist'
 import { useResendCooldown } from './useResendCooldown'
+import { SpamNotice } from './SpamNotice'
 import { Button, Input, ErrorText, Card, useToast } from '../components/ui'
 import { AppLogo } from '../components/AppLogo'
 
@@ -231,9 +232,8 @@ export function SignUpPage() {
         {step === 'confirm' && (
           <form onSubmit={handleConfirm} className="space-y-4 mt-3">
             <h1 className="font-display text-xl font-bold text-text text-center">Confirme o e-mail</h1>
-            <p className="text-sm text-text-secondary text-center">
-              Enviamos um código para {email}. Não encontrou? Verifique a caixa de spam ou lixo eletrônico.
-            </p>
+            <p className="text-sm text-text-secondary text-center">Enviamos um código para {email}.</p>
+            <SpamNotice />
             <Input label="Código" value={code} onChange={(e) => setCode(e.target.value)} required />
             <ErrorText>{error}</ErrorText>
             <Button type="submit" className="w-full" disabled={loading}>

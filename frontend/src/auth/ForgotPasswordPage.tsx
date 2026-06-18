@@ -5,6 +5,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { cognitoErrorPtBr, passwordOk } from './cognitoErrors'
 import { AuthStepIndicator } from './AuthStepIndicator'
 import { PasswordChecklist } from './PasswordChecklist'
+import { SpamNotice } from './SpamNotice'
 import { Button, Input, ErrorText, Card, useToast } from '../components/ui'
 import { AppLogo } from '../components/AppLogo'
 
@@ -99,9 +100,8 @@ export function ForgotPasswordPage() {
         {step === 'confirm' && (
           <form onSubmit={handleConfirm} className="space-y-4 mt-3">
             <h1 className="font-display text-xl font-bold text-text text-center">Redefinir senha</h1>
-            <p className="text-sm text-text-secondary text-center">
-              Se {email} tiver uma conta, enviamos um código para lá. Não encontrou? Verifique a caixa de spam ou lixo eletrônico.
-            </p>
+            <p className="text-sm text-text-secondary text-center">Se {email} tiver uma conta, enviamos um código para lá.</p>
+            <SpamNotice />
             <Input label="Código" value={code} onChange={(e) => setCode(e.target.value)} required />
             <div>
               <span className="block text-xs font-medium text-text-secondary mb-1">Nova senha</span>
