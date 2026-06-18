@@ -63,6 +63,13 @@ def criar_postagem(
             aluno_id=aluno_id,
             ref_extra={"exercicio_id": exercicio_id, "exercicio_nome": exercicio_nome},
         )
+    elif tipo == "OUTRO" and personal_id:
+        notif_service.criar(
+            personal_id, "DUVIDA", "Observação do aluno",
+            f"O aluno postou uma observação em {ex_nome}.",
+            aluno_id=aluno_id,
+            ref_extra={"relato_sk": sk, "relato_tipo": "outro", "exercicio_id": exercicio_id},
+        )
     elif tipo == "CORRECAO":
         anotif_service.criar(
             aluno_id, "CORRECAO_EXERCICIO", "Correção do personal",

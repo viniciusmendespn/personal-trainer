@@ -275,7 +275,7 @@ def feed_exercicio_aluno(exercicio_id: str, ctx: dict = Depends(get_current_alun
 
 @router.post("/exercicios/{exercicio_id}/postagem", status_code=201)
 def criar_postagem(exercicio_id: str, body: PostagemCreate, ctx: dict = Depends(get_current_aluno)):
-    """Aluno cria postagem no exercício: execução (mídia), dor ou dúvida."""
+    """Aluno cria postagem no exercício: execução, dor, dúvida ou outro."""
     if body.tipo == PostagemTipo.CORRECAO:
         raise HTTPException(403, "Aluno não pode criar postagem do tipo CORRECAO.")
     sessao_ativa = sessao_service.get_active(ctx["aluno_id"])

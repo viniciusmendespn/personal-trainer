@@ -8,6 +8,7 @@ class PostagemTipo(str, Enum):
     DUVIDA = "DUVIDA"
     EXECUCAO = "EXECUCAO"    # mídia de execução do aluno
     CORRECAO = "CORRECAO"    # correção do personal
+    OUTRO = "OUTRO"          # observação livre
 
 
 class MidiaRef(BaseModel):
@@ -17,7 +18,6 @@ class MidiaRef(BaseModel):
 
 class PostagemCreate(BaseModel):
     tipo: PostagemTipo
-    exercicio_id: str
     exercicio_nome: str | None = None
     descricao: str | None = None
     midias: list[MidiaRef] = []
@@ -30,13 +30,19 @@ class PostagemCreate(BaseModel):
         return self
 
 
+_TIPOS_PERSONAL = {PostagemTipo.CORRECAO, PostagemTipo.EXECUCAO, PostagemTipo.OUTRO}
+
+
 class PostagemPersonalCreate(BaseModel):
+    tipo: PostagemTipo = PostagemTipo.CORRECAO
     exercicio_nome: str | None = None
     descricao: str | None = None
     midias: list[MidiaRef] = []
 
     @model_validator(mode="after")
-    def ao_menos_texto_ou_midia(self):
+    def validar(self):
+        if self.tipo not in _TIPOS_PERSONAL:
+            raise ValueError(f"Personal não pode postar tipo {self.tipo.value}.")
         if not self.descricao and not self.midias:
             raise ValueError("Informe um texto ou ao menos uma mídia.")
         return self

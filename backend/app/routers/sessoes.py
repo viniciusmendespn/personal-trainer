@@ -190,13 +190,13 @@ def feed_exercicio(aluno_id: str, exercicio_id: str,
 @router.post("/exercicios/{exercicio_id}/postagem", status_code=201)
 def criar_postagem_personal(aluno_id: str, exercicio_id: str, body: PostagemPersonalCreate,
                             personal_id: str = Depends(get_current_personal_id)):
-    """Personal cria postagem de correção no exercício do aluno."""
+    """Personal cria postagem no exercício do aluno (correção, execução ou outro)."""
     authz.authorize_aluno(personal_id, aluno_id)
     item = postagem_service.criar_postagem(
         aluno_id=aluno_id,
         exercicio_id=exercicio_id,
         exercicio_nome=body.exercicio_nome,
-        tipo="CORRECAO",
+        tipo=body.tipo.value,
         descricao=body.descricao,
         midias=[m.model_dump() for m in body.midias],
         sessao_id=None,

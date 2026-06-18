@@ -87,14 +87,14 @@ export function ThreadRelato({
           isViewer={c.ator === viewerAtor}
         />
       ))}
-      <div className="flex gap-2 pt-1 items-end">
+      <div className="flex flex-col gap-1 pt-1">
         <Textarea
           rows={1}
           placeholder="Responder…"
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           disabled={sending || isPending}
-          className="flex-1 resize-none"
+          className="w-full resize-none"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault()
@@ -102,14 +102,16 @@ export function ThreadRelato({
             }
           }}
         />
-        <Button
-          size="sm" variant="outline" iconOnly
-          aria-label="Enviar"
-          disabled={!texto.trim() || sending || isPending}
-          onClick={handleSend}
-        >
-          <Send size={13} />
-        </Button>
+        <div className="flex justify-end">
+          <Button
+            size="sm" variant="outline" iconOnly
+            aria-label="Enviar"
+            disabled={!texto.trim() || sending || isPending}
+            onClick={handleSend}
+          >
+            <Send size={13} />
+          </Button>
+        </div>
       </div>
     </div>
   )

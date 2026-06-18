@@ -58,7 +58,7 @@ export const treinosApi = {
   criarPostagemPersonal: (
     alunoId: string,
     exercicioId: string,
-    body: { exercicio_nome?: string; descricao?: string; midias?: Array<{ s3_key: string; tipo: string }> },
+    body: { tipo?: 'CORRECAO' | 'EXECUCAO' | 'OUTRO'; exercicio_nome?: string; descricao?: string; midias?: Array<{ s3_key: string; tipo: string }> },
   ) =>
     api
       .post<{ ok: number; post_id: string }>(`/v1/alunos/${alunoId}/exercicios/${exercicioId}/postagem`, body)

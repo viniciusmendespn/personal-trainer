@@ -141,7 +141,7 @@ export const alunoApi = {
   criarPostagem: (
     exercicioId: string,
     body: {
-      tipo: 'DOR' | 'DUVIDA' | 'EXECUCAO'
+      tipo: 'DOR' | 'DUVIDA' | 'EXECUCAO' | 'OUTRO'
       descricao?: string
       midias?: Array<{ s3_key: string; tipo: string }>
       exercicio_nome?: string

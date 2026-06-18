@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search } from 'lucide-react'
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import { alunoApi, type ExSessao, type SessaoAtiva, type SessaoHistorico } from '../api/alunoApp'
 import { SeriesPrescritasCompact } from '../components/exercicios/SeriesPrescritasEditor'
@@ -140,7 +140,7 @@ function NotifDrawer({ onClose, onNavigate }: { onClose: () => void; onNavigate:
                 <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{n.mensagem}</p>
                 <p className="text-[10px] text-text-muted mt-1">{new Date(n.data_hora).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
                 {DEEP_LINK_TIPOS.includes(n.tipo) && n.exercicio_id && (
-                  <p className="text-[10px] text-accent-hover mt-0.5">Toque para ver no histórico</p>
+                  <p className="text-[10px] text-accent-hover mt-0.5">Toque para ver</p>
                 )}
               </div>
               {!n.lida && <span className="w-2 h-2 rounded-full bg-energy shrink-0 mt-1.5" />}
@@ -559,22 +559,46 @@ function HistoricoTab() {
   )
 }
 
+type AbaEvolucao = 'carga' | 'volume' | 'recordes' | 'feed'
+
+const ABA_EVOLUCAO: { key: AbaEvolucao; label: string; icon: React.ReactNode }[] = [
+  { key: 'carga', label: 'Carga', icon: <TrendingUp size={13} /> },
+  { key: 'volume', label: 'Volume', icon: <BarChart3 size={13} /> },
+  { key: 'recordes', label: 'Recordes', icon: <Trophy size={13} /> },
+  { key: 'feed', label: 'Feed', icon: <MessageCircle size={13} /> },
+]
+
 function Evolucao({ initialExId }: { initialExId?: string }) {
   const qc = useQueryClient()
   const { show } = useToast()
   const resumo = useQuery({ queryKey: ['aluno-resumo'], queryFn: alunoApi.resumo })
   const exs = useQuery({ queryKey: ['aluno-exs'], queryFn: alunoApi.listExercicios })
   const [exId, setExId] = useState(initialExId ?? '')
+  const [aba, setAba] = useState<AbaEvolucao>(initialExId ? 'feed' : 'carga')
+  const [prQuery, setPrQuery] = useState('')
+  const [prLimit, setPrLimit] = useState(12)
+
   useEffect(() => {
-    if (initialExId) { setExId(initialExId); return }
+    if (initialExId) { setExId(initialExId); setAba('feed'); return }
     if (!exId && exs.data?.length) setExId(exs.data[0].exercicio_id)
   }, [exs.data, exId, initialExId])
-  const evo = useQuery({ queryKey: ['aluno-evo', exId], queryFn: () => alunoApi.evolucao(exId), enabled: !!exId })
-  const feed = useQuery({ queryKey: ['aluno-feed', exId], queryFn: () => alunoApi.feedExercicio(exId), enabled: !!exId })
 
-  const data = (evo.data?.serie ?? [])
+  const evo = useQuery({ queryKey: ['aluno-evo', exId], queryFn: () => alunoApi.evolucao(exId), enabled: !!exId && aba === 'carga' })
+  const feed = useQuery({ queryKey: ['aluno-feed', exId], queryFn: () => alunoApi.feedExercicio(exId), enabled: !!exId && aba === 'feed' })
+
+  const chartData = (evo.data?.serie ?? [])
     .filter((p) => p.carga_max != null)
     .map((p) => ({ data: new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), carga: p.carga_max }))
+
+  const semanas = useMemo(
+    () => (resumo.data?.semanas ?? []).map((w) => ({ semana: w.semana.replace(/^\d+-/, ''), volume: w.volume })),
+    [resumo.data]
+  )
+
+  const prsFiltrados = useMemo(
+    () => (resumo.data?.prs ?? []).filter((p) => p.exercicio.toLowerCase().includes(prQuery.toLowerCase())),
+    [resumo.data, prQuery]
+  )
 
   return (
     <div className="space-y-4">
@@ -582,49 +606,121 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
         <StatCard label="Sessões" value={resumo.data?.total_sessoes ?? 0} tone="accent" />
         <StatCard label="Esta semana" value={resumo.data?.sessoes_semana ?? 0} tone="success" />
       </div>
-      {!exs.data?.length ? (
-        <p className="text-text-muted text-sm">Sem exercícios ainda.</p>
-      ) : (
-        <>
-          <select value={exId} onChange={(e) => setExId(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg bg-surface border border-border text-text text-sm focus:outline-none focus:border-accent">
-            {exs.data.map((ex) => <option key={ex.exercicio_id} value={ex.exercicio_id}>{ex.nome}</option>)}
-          </select>
-          {!data.length ? (
-            <p className="text-text-muted text-sm">Sem registros com carga ainda.</p>
-          ) : (
-            <Card variant="elevated">
-              <div className="flex justify-between mb-2">
-                <span className="text-sm text-text-secondary">Carga por sessão</span>
-                <Badge tone="warning"><Trophy size={12} /> {evo.data?.pr?.carga ?? '—'} kg</Badge>
-              </div>
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={data} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-                  <defs>
-                    <linearGradient id="alunoCargaGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--color-energy)" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="var(--color-energy)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                  <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
-                  <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
-                  <Tooltip contentStyle={chartTip} />
-                  <Area type="monotone" dataKey="carga" stroke="var(--color-energy)" strokeWidth={2.5}
-                    fill="url(#alunoCargaGradient)" dot={{ r: 3, fill: 'var(--color-energy)' }} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </Card>
-          )}
-          {!!exId && (
-            <PostComposer
-              exercicioId={exId}
-              exercicioNome={exs.data?.find((e) => e.exercicio_id === exId)?.nome}
-              viewerAtor="ALUNO"
-            />
-          )}
-          <div className="space-y-1">
-            {!!exId && <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">Feed do exercício</p>}
+
+      {/* Seletor de exercício */}
+      {!!exs.data?.length && (
+        <select value={exId} onChange={(e) => setExId(e.target.value)}
+          className="w-full px-3 py-2 rounded-lg bg-surface border border-border text-text text-sm focus:outline-none focus:border-accent">
+          {exs.data.map((ex) => <option key={ex.exercicio_id} value={ex.exercicio_id}>{ex.nome}</option>)}
+        </select>
+      )}
+
+      {/* Abas */}
+      <div className="flex gap-1 border-b border-border pb-0">
+        {ABA_EVOLUCAO.map((a) => (
+          <button
+            key={a.key}
+            onClick={() => setAba(a.key)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-t-lg border-b-2 transition-colors ${
+              aba === a.key
+                ? 'border-accent text-accent-hover bg-accent/5'
+                : 'border-transparent text-text-muted hover:text-text'
+            }`}
+          >
+            {a.icon} {a.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Aba Carga */}
+      {aba === 'carga' && (
+        !exs.data?.length ? (
+          <p className="text-text-muted text-sm">Sem exercícios ainda.</p>
+        ) : !chartData.length ? (
+          <p className="text-text-muted text-sm">Sem registros com carga ainda.</p>
+        ) : (
+          <Card variant="elevated">
+            <div className="flex justify-between mb-2">
+              <span className="text-sm text-text-secondary">Carga por sessão</span>
+              <Badge tone="warning"><Trophy size={12} /> {evo.data?.pr?.carga ?? '—'} kg</Badge>
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                <defs>
+                  <linearGradient id="alunoCargaGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--color-energy)" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="var(--color-energy)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
+                <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
+                <Tooltip contentStyle={chartTip} />
+                <Area type="monotone" dataKey="carga" stroke="var(--color-energy)" strokeWidth={2.5}
+                  fill="url(#alunoCargaGradient)" dot={{ r: 3, fill: 'var(--color-energy)' }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </Card>
+        )
+      )}
+
+      {/* Aba Volume */}
+      {aba === 'volume' && (
+        !semanas.length ? (
+          <p className="text-text-muted text-sm">Sem dados de volume ainda.</p>
+        ) : (
+          <Card variant="elevated">
+            <p className="text-sm text-text-secondary mb-3">Volume por semana (kg)</p>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={semanas} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="semana" tick={axisTick} stroke="var(--color-border-strong)" />
+                <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
+                <Tooltip contentStyle={chartTip} />
+                <Bar dataKey="volume" fill="var(--color-accent)" radius={[6, 6, 0, 0]} name="Volume (kg)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        )
+      )}
+
+      {/* Aba Recordes */}
+      {aba === 'recordes' && (
+        !(resumo.data?.prs?.length) ? (
+          <p className="text-text-muted text-sm">Nenhum recorde ainda.</p>
+        ) : (
+          <Card variant="elevated">
+            <div className="relative mb-3">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+              <Input placeholder="Buscar exercício…" value={prQuery} onChange={(e) => setPrQuery(e.target.value)} className="pl-8" />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {prsFiltrados.slice(0, prLimit).map((p) => (
+                <Badge key={p.exercicio} tone="warning">{p.exercicio}: <b className="ml-1">{p.carga} kg</b></Badge>
+              ))}
+            </div>
+            {prsFiltrados.length > prLimit && (
+              <Button variant="ghost" size="sm" className="mt-2" onClick={() => setPrLimit((n) => n + 12)}>
+                Carregar mais ({prsFiltrados.length - prLimit} restantes)
+              </Button>
+            )}
+          </Card>
+        )
+      )}
+
+      {/* Aba Feed */}
+      {aba === 'feed' && (
+        !exs.data?.length ? (
+          <p className="text-text-muted text-sm">Sem exercícios ainda.</p>
+        ) : (
+          <div className="space-y-3">
+            {!!exId && (
+              <PostComposer
+                exercicioId={exId}
+                exercicioNome={exs.data?.find((e) => e.exercicio_id === exId)?.nome}
+                viewerAtor="ALUNO"
+              />
+            )}
             <ExercicioFeedCard
               items={feed.data ?? []}
               emptyText="Nenhuma postagem ainda. Use o botão acima para postar."
@@ -643,7 +739,7 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
               }}
             />
           </div>
-        </>
+        )
       )}
     </div>
   )
