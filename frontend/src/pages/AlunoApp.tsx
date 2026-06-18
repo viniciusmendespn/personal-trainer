@@ -381,14 +381,14 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
 
   const initRows = () => {
     if (ex.registrado?.length) {
-      return ex.registrado.map((s) => ({ carga: s.carga ?? '', reps: s.reps != null ? String(s.reps) : '' }))
+      return ex.registrado.map((s) => ({ carga: s.carga ?? '', reps: s.reps != null ? String(s.reps) : '', repsHint: '' }))
     }
     if (ex.series_prescritas?.length) {
       return ex.series_prescritas.flatMap((p) =>
-        Array.from({ length: p.series }, () => ({ carga: p.carga ?? '', reps: p.reps }))
+        Array.from({ length: p.series }, () => ({ carga: p.carga ?? '', reps: '', repsHint: p.reps ? String(p.reps) : '' }))
       )
     }
-    return Array.from({ length: ex.series ?? 1 }, () => ({ carga: ex.carga_prescrita ?? '', reps: '' }))
+    return Array.from({ length: ex.series ?? 1 }, () => ({ carga: ex.carga_prescrita ?? '', reps: '', repsHint: '' }))
   }
   const [rows, setRows] = useState(initRows)
   const upd = (i: number, f: 'carga' | 'reps', v: string) =>
@@ -449,7 +449,7 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
             <div key={i} className="flex gap-2 items-center">
               <span className="text-xs text-text-muted w-12">Sér {i + 1}</span>
               <Input className="w-24" placeholder="Carga" value={r.carga} onChange={(e) => upd(i, 'carga', e.target.value)} />
-              <Input className="w-20" placeholder="Reps" inputMode="numeric" value={r.reps} onChange={(e) => upd(i, 'reps', e.target.value)} />
+              <Input className="w-20" placeholder={r.repsHint || 'Reps'} inputMode="numeric" value={r.reps} onChange={(e) => upd(i, 'reps', e.target.value)} />
               {rows.length > 1 && (
                 <button type="button" onClick={() => removeRow(i)} aria-label="Remover série" className="text-text-muted hover:text-danger">
                   <X size={14} />
@@ -457,7 +457,7 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
               )}
             </div>
           ))}
-          <button onClick={() => setRows([...rows, { carga: '', reps: '' }])} className="text-xs text-accent-hover">+ série</button>
+          <button onClick={() => setRows([...rows, { carga: '', reps: '', repsHint: '' }])} className="text-xs text-accent-hover">+ série</button>
           {pr != null && (
             <Badge tone="warning" className="text-xs">
               <Trophy size={12} /> Novo recorde: {pr} kg!
