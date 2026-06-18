@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bell, AlertTriangle, CalendarClock, Clock, Image, Camera, HelpCircle, Pin, MailOpen, Link2, UserRound, Dumbbell, PlaySquare, MessageSquareDot } from 'lucide-react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNotificacoes, useMarkRead, useMarkAllRead, useVincularMidia } from '../hooks/useNotificacoes'
 import { useAlunos } from '../hooks/useAlunos'
 import { useExerciciosAluno } from '../hooks/useEvolucao'
-import { Card, Spinner, Button, Badge, EmptyState, Select, Modal, useToast } from '../components/ui'
+import { Card, Spinner, Button, Badge, EmptyState, Select, Modal } from '../components/ui'
 import { useChatContext } from '../context/ChatContext'
-import { notifApi } from '../api/notificacoes'
-import { ThreadRelato } from '../components/notificacoes/ThreadRelato'
 import type { Notificacao } from '../api/notificacoes'
 
 const TIPO_ICON: Record<string, React.ReactNode> = {
@@ -92,38 +89,6 @@ function useQuickAction(item: Notificacao, markRead: ReturnType<typeof useMarkRe
   return null
 }
 
-function ThreadInline({ item }: { item: Notificacao }) {
-  const qc = useQueryClient()
-  const { show } = useToast()
-  const relato = useQuery({
-    queryKey: ['notif-relato', item.ref, item.aluno_id],
-    queryFn: () => notifApi.getRelato(item.ref, item.aluno_id!),
-    enabled: !!item.aluno_id,
-  })
-
-  const comentar = useMutation({
-    mutationFn: (texto: string) => notifApi.comentarRelato({ ref: item.ref, aluno_id: item.aluno_id!, texto }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['notif-relato', item.ref, item.aluno_id] })
-      qc.invalidateQueries({ queryKey: ['notificacoes'] })
-    },
-    onError: () => show('Erro ao enviar comentário.', 'error'),
-  })
-
-  if (relato.isLoading) return <div className="mt-2"><Spinner /></div>
-  if (!relato.data) return null
-
-  return (
-    <ThreadRelato
-      descricao={relato.data.descricao}
-      descricaoDataHora={relato.data.data_hora}
-      comentarios={relato.data.comentarios}
-      viewerAtor="PERSONAL"
-      onAddComentario={async (texto) => { await comentar.mutateAsync(texto) }}
-      isPending={comentar.isPending}
-    />
-  )
-}
 
 function NotifCard({ item, alunos, markRead, onVincular }: {
   item: Notificacao
@@ -131,10 +96,8 @@ function NotifCard({ item, alunos, markRead, onVincular }: {
   markRead: ReturnType<typeof useMarkRead>
   onVincular: (item: Notificacao) => void
 }) {
-  const [threadOpen, setThreadOpen] = useState(false)
   const quickAction = useQuickAction(item, markRead)
   const nomeAluno = alunos?.find((a) => a.aluno_id === item.aluno_id)?.nome
-  const podeThread = (item.tipo === 'DOR' || item.tipo === 'DUVIDA') && !!item.relato_sk && !!item.aluno_id
 
   return (
     <Card
@@ -156,15 +119,6 @@ function NotifCard({ item, alunos, markRead, onVincular }: {
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          {podeThread && (
-            <Button variant="ghost" size="sm" iconOnly aria-label="Ver thread"
-              onClick={() => {
-                setThreadOpen((v) => !v)
-                if (!item.lida) markRead.mutate(item.ref)
-              }}>
-              <MessageSquareDot size={15} className={threadOpen ? 'text-accent-hover' : ''} />
-            </Button>
-          )}
           {quickAction && (
             <Button variant="ghost" size="sm" iconOnly aria-label={quickAction.label} onClick={quickAction.fn}>
               {quickAction.icon}
@@ -185,9 +139,6 @@ function NotifCard({ item, alunos, markRead, onVincular }: {
           </Button>
         </div>
       </div>
-      {threadOpen && podeThread && (
-        <ThreadInline item={item} />
-      )}
     </Card>
   )
 }
