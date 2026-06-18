@@ -4,7 +4,7 @@ import type { FeedItem } from '../../api/treinos'
 
 type MidiaRef = { s3_key: string; tipo: string }
 type UploadFn = (file: File) => Promise<MidiaRef>
-type CommentFn = (relatoSk: string, texto: string | undefined, midias?: MidiaRef[]) => Promise<void>
+type CommentFn = (relatoSk: string, texto: string | undefined, midias?: MidiaRef[], postTipo?: string) => Promise<void>
 
 function fmtDt(iso: string) {
   return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
@@ -43,7 +43,7 @@ function RelatoItem({
           comentarios={item.comentarios}
           viewerAtor={viewerAtor!}
           uploadMidia={uploadMidia}
-          onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias)}
+          onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias, item.tipo)}
         />
       ) : (
         <>
@@ -110,7 +110,7 @@ function ExecucaoItem({
           comentarios={item.comentarios}
           viewerAtor={viewerAtor!}
           uploadMidia={uploadMidia}
-          onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias)}
+          onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias, item.tipo)}
         />
       )}
     </div>
@@ -146,7 +146,7 @@ function CorrecaoItem({
           comentarios={item.comentarios}
           viewerAtor={viewerAtor!}
           uploadMidia={uploadMidia}
-          onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias)}
+          onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias, item.tipo)}
         />
       )}
     </div>
@@ -182,7 +182,7 @@ function OutroItem({
           comentarios={item.comentarios}
           viewerAtor={viewerAtor!}
           uploadMidia={uploadMidia}
-          onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias)}
+          onAddComentario={(texto, midias) => onAddComentario!(item.relato_sk!, texto, midias, item.tipo)}
         />
       )}
     </div>

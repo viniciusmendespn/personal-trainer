@@ -737,10 +737,10 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
                 await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
                 return { s3_key, tipo: file.type.startsWith('video') ? 'video_execucao' : 'foto_exercicio' }
               }}
-              onAddComentario={async (relatoSk, texto, midias) => {
+              onAddComentario={async (relatoSk, texto, midias, postTipo) => {
                 try {
                   if (relatoSk.startsWith('POST#')) {
-                    await alunoApi.comentarPost({ post_sk: relatoSk, texto, midias })
+                    await alunoApi.comentarPost({ post_sk: relatoSk, texto, midias, post_tipo: postTipo })
                   } else {
                     await alunoApi.comentarRelato({ relato_sk: relatoSk, texto, midias })
                   }

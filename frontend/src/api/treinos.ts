@@ -68,7 +68,7 @@ export const treinosApi = {
     api.post('/v1/notificacoes/responder', body).then((r) => r.data),
   comentarRelato: (alunoId: string, body: { relato_sk: string; texto?: string; midias?: Array<{ s3_key: string; tipo: string }> }) =>
     api.post(`/v1/alunos/${alunoId}/relato/comentar`, body).then((r) => r.data),
-  comentarPost: (alunoId: string, body: { post_sk: string; texto?: string; midias?: Array<{ s3_key: string; tipo: string }> }) =>
+  comentarPost: (alunoId: string, body: { post_sk: string; texto?: string; midias?: Array<{ s3_key: string; tipo: string }>; post_tipo?: string }) =>
     api.post(`/v1/alunos/${alunoId}/post/comentar`, body).then((r) => r.data),
 }
 

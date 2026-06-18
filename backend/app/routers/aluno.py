@@ -306,6 +306,7 @@ class ComentarPostBody(BaseModel):
     post_sk: str
     texto: str | None = None
     midias: list[MidiaRef] = []
+    post_tipo: str | None = None  # DOR | DUVIDA | EXECUCAO | CORRECAO | OUTRO
 
     @model_validator(mode="after")
     def ao_menos_texto_ou_midia(self):
@@ -324,8 +325,9 @@ def comentar_post(body: ComentarPostBody, ctx: dict = Depends(get_current_aluno)
     parts = body.post_sk.split("#")
     exercicio_id = parts[1] if len(parts) > 1 else None
     preview = body.texto or "Enviou uma mídia"
+    tipo_notif = "DOR" if body.post_tipo == "DOR" else "DUVIDA"
     notif_service.criar(
-        ctx["personal_id"], "DOR", "Novo comentário do aluno",
+        ctx["personal_id"], tipo_notif, "Novo comentário do aluno",
         preview[:120] + ("…" if len(preview) > 120 else ""),
         aluno_id=ctx["aluno_id"],
         ref_extra={"relato_sk": body.post_sk, "exercicio_id": exercicio_id},

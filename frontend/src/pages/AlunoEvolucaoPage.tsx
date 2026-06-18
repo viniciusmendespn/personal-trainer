@@ -260,10 +260,10 @@ export function AlunoEvolucaoPage() {
                   await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
                   return { s3_key, tipo: file.type.startsWith('video') ? 'video_correcao' : 'foto_correcao' }
                 }}
-                onAddComentario={async (relatoSk, texto, midias) => {
+                onAddComentario={async (relatoSk, texto, midias, postTipo) => {
                   try {
                     if (relatoSk.startsWith('POST#')) {
-                      await treinosApi.comentarPost(alunoId, { post_sk: relatoSk, texto, midias })
+                      await treinosApi.comentarPost(alunoId, { post_sk: relatoSk, texto, midias, post_tipo: postTipo })
                     } else {
                       await treinosApi.comentarRelato(alunoId, { relato_sk: relatoSk, texto, midias })
                     }

@@ -150,7 +150,7 @@ export const alunoApi = {
     alunoClient
       .post<{ ok: number; post_id: string }>(`/v1/aluno/exercicios/${exercicioId}/postagem`, body)
       .then((r) => r.data),
-  comentarPost: (body: { post_sk: string; texto?: string; midias?: Array<{ s3_key: string; tipo: string }> }) =>
+  comentarPost: (body: { post_sk: string; texto?: string; midias?: Array<{ s3_key: string; tipo: string }>; post_tipo?: string }) =>
     alunoClient.post('/v1/aluno/post/comentar', body).then((r) => r.data),
 }
 
