@@ -39,7 +39,7 @@ function RelatoItem({
         />
       ) : (
         <>
-          <p className="text-xs text-text-secondary">{item.descricao}</p>
+          {item.descricao && <p className="text-xs text-text-secondary">{item.descricao}</p>}
           {item.respondido && item.resposta_texto && (
             <div className="mt-1 pl-2 border-l-2 border-accent/40">
               <p className="text-[10px] text-text-muted mb-0.5">
@@ -50,6 +50,7 @@ function RelatoItem({
           )}
         </>
       )}
+      <MediaGrid midias={item.midias ?? []} />
     </div>
   )
 }
