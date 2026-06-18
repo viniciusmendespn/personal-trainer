@@ -10,17 +10,9 @@ import { useResendCooldown } from './useResendCooldown'
 import { Button, Input, ErrorText, Card, useToast } from '../components/ui'
 import { AppLogo } from '../components/AppLogo'
 
-type Step = 'email' | 'password' | 'confirm'
-const STEP_LABELS = ['E-mail', 'Senha', 'Confirmação']
-const STEP_INDEX: Record<Step, number> = { email: 0, password: 1, confirm: 2 }
-
-/** Erros que indicam "esse e-mail já tem conta confirmada" — não erros transitórios. */
-function isAlreadyConfirmedError(err: unknown): boolean {
-  const name = (err as { name?: string })?.name ?? ''
-  if (name === 'LimitExceededException' || name === 'TooManyRequestsException') return false
-  if (name === 'UserNotFoundException') return false
-  return true
-}
+type Step = 'form' | 'confirm'
+const STEP_LABELS = ['Cadastro', 'Confirmação']
+const STEP_INDEX: Record<Step, number> = { form: 0, confirm: 1 }
 
 export function SignUpPage() {
   const { user, refresh } = useAuth()
@@ -29,7 +21,7 @@ export function SignUpPage() {
   const { show } = useToast()
   const { cooldown, start: startCooldown } = useResendCooldown(60)
 
-  const [step, setStep] = useState<Step>('email')
+  const [step, setStep] = useState<Step>('form')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -58,28 +50,6 @@ export function SignUpPage() {
   if (user) {
     navigate('/alunos', { replace: true })
     return null
-  }
-
-  // E-mails sem conta (ou com cadastro pendente) recebem resposta "de sucesso" mascarada
-  // pelo PreventUserExistenceErrors do User Pool — só uma conta JÁ CONFIRMADA gera erro aqui.
-  async function handleEmailContinue(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
-    setAlreadyRegistered(false)
-    setLoading(true)
-    try {
-      await resendSignUpCode({ username: email })
-      setStep('password')
-    } catch (err) {
-      if (isAlreadyConfirmedError(err)) {
-        setAlreadyRegistered(true)
-        setError(cognitoErrorPtBr(err))
-      } else {
-        setError(cognitoErrorPtBr(err))
-      }
-    } finally {
-      setLoading(false)
-    }
   }
 
   async function handleSignUp(e: React.FormEvent) {
@@ -162,29 +132,11 @@ export function SignUpPage() {
         </div>
         <AuthStepIndicator labels={STEP_LABELS} currentIndex={STEP_INDEX[step]} />
 
-        {step === 'email' && (
-          <form onSubmit={handleEmailContinue} className="space-y-4 mt-3">
-            <h1 className="font-display text-xl font-bold text-text text-center">Criar conta</h1>
-            <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <ErrorText>{error}</ErrorText>
-            {alreadyRegistered && <p className="text-xs text-text-muted text-center">Redirecionando para o login…</p>}
-            <Button type="submit" className="w-full" disabled={loading || alreadyRegistered}>
-              {loading ? 'Verificando…' : 'Continuar'}
-            </Button>
-            <p className="text-center text-sm text-text-secondary">
-              Já tem conta?{' '}
-              <Link to="/login" className="text-accent-hover hover:underline">
-                Entrar
-              </Link>
-            </p>
-          </form>
-        )}
-
-        {step === 'password' && (
+        {step === 'form' && (
           <form onSubmit={handleSignUp} className="space-y-4 mt-3">
-            <h1 className="font-display text-xl font-bold text-text text-center">Quase lá</h1>
-            <p className="text-sm text-text-secondary text-center -mt-2">{email}</p>
+            <h1 className="font-display text-xl font-bold text-text text-center">Criar conta</h1>
             <Input label="Nome" value={name} onChange={(e) => setName(e.target.value)} required />
+            <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             <div>
               <span className="block text-xs font-medium text-text-secondary mb-1">Senha</span>
               <div className="relative">
@@ -224,13 +176,12 @@ export function SignUpPage() {
             >
               {loading ? 'Enviando…' : 'Cadastrar'}
             </Button>
-            <button
-              type="button"
-              onClick={() => setStep('email')}
-              className="block w-full text-center text-sm text-text-secondary hover:text-text"
-            >
-              Voltar
-            </button>
+            <p className="text-center text-sm text-text-secondary">
+              Já tem conta?{' '}
+              <Link to="/login" className="text-accent-hover hover:underline">
+                Entrar
+              </Link>
+            </p>
           </form>
         )}
 
@@ -246,7 +197,7 @@ export function SignUpPage() {
             <div className="flex items-center justify-between text-sm">
               <button
                 type="button"
-                onClick={() => setStep('email')}
+                onClick={() => setStep('form')}
                 className="text-text-secondary hover:text-text"
               >
                 Trocar e-mail
