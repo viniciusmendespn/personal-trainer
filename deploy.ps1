@@ -40,13 +40,20 @@ function Deploy-Frontend {
         --cache-control "no-cache, no-store, must-revalidate" `
         --content-type "application/manifest+json" `
         --region $Region --profile $Profile
+    # Service worker e seu runtime: sem cache (senão o navegador trava num SW antigo)
+    aws s3 sync dist/ "s3://$Bucket/" --delete `
+        --exclude "*" --include "sw.js" --include "workbox-*.js" --include "registerSW.js" `
+        --cache-control "no-cache, no-store, must-revalidate" `
+        --region $Region --profile $Profile
     # Demais assets (hashed): cache de 1 ano
-    aws s3 sync dist/ "s3://$Bucket/" --delete --exclude "index.html" --exclude "*.webmanifest" `
+    aws s3 sync dist/ "s3://$Bucket/" --delete `
+        --exclude "index.html" --exclude "*.webmanifest" `
+        --exclude "sw.js" --exclude "workbox-*.js" --exclude "registerSW.js" `
         --cache-control "public, max-age=31536000, immutable" `
         --region $Region --profile $Profile
 
     aws cloudfront create-invalidation --distribution-id $CfId `
-        --paths "/index.html" "/manifest.webmanifest" "/manifest-aluno.webmanifest" `
+        --paths "/index.html" "/manifest.webmanifest" "/manifest-aluno.webmanifest" "/sw.js" "/workbox-*.js" "/registerSW.js" `
         --region $Region --profile $Profile | Out-Null
     Set-Location ..
     Write-Host "Frontend deployed!" -ForegroundColor Green
