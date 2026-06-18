@@ -57,6 +57,10 @@ Parameters:
     Type: String
     Default: "false"
     AllowedValues: ["true", "false"]
+  DomainName:
+    Type: String
+    Default: "coachpilot.com.br"
+    Description: "Domínio apex custom do frontend (Route53 + ACM + CloudFront alias)."
 
 Conditions:
   CreateFrontendInfra: !Equals [!Ref DeployFrontendInfra, "true"]
@@ -321,6 +325,15 @@ Resources:
         SigningBehavior: always
         SigningProtocol: sigv4
 
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    Condition: CreateFrontendInfra
+    Properties:
+      Name: !Ref DomainName
+      HostedZoneTags:
+        - { Key: Project, Value: personal-trainer }
+        - { Key: ManagedBy, Value: SAM }
+
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     Condition: CreateFrontendInfra
@@ -375,3 +388,7 @@ Outputs:
   CloudFrontDistributionId:
     Condition: CreateFrontendInfra
     Value: !Ref CloudFrontDistribution
+  HostedZoneNameServers:
+    Condition: CreateFrontendInfra
+    Description: "Colar estes NS no painel da revenda (DNS do domínio coachpilot.com.br)."
+    Value: !Join [", ", !GetAtt HostedZone.NameServers]
