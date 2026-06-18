@@ -348,8 +348,6 @@ Resources:
           HostedZoneId: !Ref HostedZone
         - DomainName: !Sub "www.${DomainName}"
           HostedZoneId: !Ref HostedZone
-        - DomainName: !Sub "*.${DomainName}"
-          HostedZoneId: !Ref HostedZone
       Tags:
         - { Key: Project, Value: personal-trainer }
         - { Key: ManagedBy, Value: SAM }
