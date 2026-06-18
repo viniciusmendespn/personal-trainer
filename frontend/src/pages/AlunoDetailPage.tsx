@@ -141,7 +141,7 @@ export function AlunoDetailPage() {
       />
 
       {tab === 'perfil' && (
-        <div className="max-w-md space-y-4">
+        <div className="space-y-4">
         <Card variant="elevated">
           <div className="flex items-center gap-4 mb-4">
             <AvatarUpload

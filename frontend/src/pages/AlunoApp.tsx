@@ -307,7 +307,7 @@ export function AlunoApp() {
 }
 
 function ChatTab() {
-  const { messages, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useAlunoChat()
+  const { messages, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, agentePausado } = useAlunoChat()
   const send = useSendAlunoChat()
   const sendDireto = useSendDiretoAlunoChat()
   const { show } = useToast()
@@ -318,6 +318,7 @@ function ChatTab() {
         isLoading={isLoading}
         isSending={send.isPending}
         viewerRole="ALUNO"
+        agentePausado={agentePausado}
         onLoadMore={() => fetchNextPage()}
         hasMore={hasNextPage}
         isLoadingMore={isFetchingNextPage}

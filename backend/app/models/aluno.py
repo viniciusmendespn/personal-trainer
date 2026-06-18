@@ -37,5 +37,7 @@ class Aluno(AlunoCreate):
     status: AlunoStatus = AlunoStatus.ATIVO
     foto_s3_key: Optional[str] = None
     foto_url: Optional[str] = None             # presigned GET, gerado na resposta
+    agente_pausado: bool = False
+    pausado_em: Optional[str] = None           # ISO timestamp de quando foi pausado
     created_at: str
     updated_at: str

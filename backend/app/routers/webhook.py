@@ -148,9 +148,12 @@ async def receive(secret: str, request: Request):
             _send(personal_id, sender, "Recebi sua mídia. De qual exercício ela é?")
         return _OK
 
-    # Texto -> agente com memória de conversa.
+    # Texto -> agente com memória de conversa (se agente não estiver pausado).
     text = _extract_text(payload)
     if not text:
+        return _OK
+    if agent_service.is_agente_pausado(aluno_id):
+        agent_service.log_direct(personal_id, aluno_id, text, Ator.ALUNO, CanalOrigem.WHATSAPP)
         return _OK
     _handle_text(personal_id, aluno_id, nome, sender, text)
     return _OK

@@ -83,6 +83,18 @@ def log_direct(personal_id: str, aluno_id: str, text: str, ator: Ator, canal: Ca
     return True
 
 
+def is_agente_pausado(aluno_id: str) -> bool:
+    profile = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
+    return bool((profile or {}).get("agente_pausado"))
+
+
+def set_agente_pausado(aluno_id: str, pausado: bool) -> None:
+    repo.update_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, {
+        "agente_pausado": pausado,
+        "pausado_em": now_iso() if pausado else None,
+    })
+
+
 def list_chat_msgs(aluno_id: str, limit: int = 50, cursor: str | None = None) -> tuple[list[dict], str | None]:
     items, next_cursor = repo.query_pk_page(
         keys.pk_aluno(aluno_id), keys.CHAT_MSG_PREFIX, limit, cursor, forward=False

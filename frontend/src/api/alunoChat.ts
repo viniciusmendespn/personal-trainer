@@ -4,6 +4,7 @@ import type { ChatMensagem } from '../types'
 export interface ChatPage {
   items: ChatMensagem[]
   next_cursor: string | null
+  agente_pausado?: boolean
 }
 
 export const alunoChatApi = {

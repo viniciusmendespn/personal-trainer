@@ -13,7 +13,8 @@ export function useAlunoChat() {
   })
   // páginas vêm da mais recente p/ a mais antiga; inverter p/ exibir a thread em ordem cronológica
   const messages = query.data?.pages.slice().reverse().flatMap((p) => p.items)
-  return { ...query, messages }
+  const agentePausado = query.data?.pages[0]?.agente_pausado ?? false
+  return { ...query, messages, agentePausado }
 }
 
 function appendOptimistic(qc: ReturnType<typeof useQueryClient>, optimistic: ChatMensagem) {

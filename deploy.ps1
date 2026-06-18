@@ -18,6 +18,10 @@ function Deploy-Backend {
     sam build
     if ($LASTEXITCODE -ne 0) { Write-Host "Build falhou." -ForegroundColor Red; Set-Location ..; exit 1 }
     sam deploy --profile $Profile
+    if ($LASTEXITCODE -ne 0) {
+        # exit code 1 = "No changes to deploy" — não é erro real
+        Write-Host "Nenhuma mudança no backend (ou deploy ok)." -ForegroundColor Yellow
+    }
     Set-Location ..
     Write-Host "Backend deployed!" -ForegroundColor Green
 }
