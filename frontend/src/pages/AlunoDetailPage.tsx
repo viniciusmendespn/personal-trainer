@@ -8,7 +8,7 @@ import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
-import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, useToast, useConfirm, AvatarUpload } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, ErrorText, useToast, useConfirm, AvatarUpload } from '../components/ui'
 import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
@@ -16,7 +16,7 @@ import { useNotas, useCreateNota } from '../hooks/useNotas'
 import { treinosApi, type SessaoHistoricoPersonal } from '../api/treinos'
 import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
-import type { Treino, Exercicio, ExercicioCreate, SeriePrescrita } from '../types'
+import type { Treino, Exercicio, ExercicioCreate, SeriePrescrita, AlunoExistenteConflict } from '../types'
 
 export function AlunoDetailPage() {
   const { alunoId = '' } = useParams()
@@ -41,6 +41,9 @@ export function AlunoDetailPage() {
   const [eNascimento, setENascimento] = useState('')
   const [eObj, setEObj] = useState('')
   const [eDescricao, setEDescricao] = useState('')
+  const [editError, setEditError] = useState('')
+  const [conflict, setConflict] = useState<AlunoExistenteConflict | null>(null)
+  const reativarConflito = useUpdateAluno(conflict?.aluno_existente?.aluno_id ?? '')
   const { show } = useToast()
   const { data: linkData } = useQuery({
     queryKey: ['aluno-link', alunoId],
@@ -61,17 +64,34 @@ export function AlunoDetailPage() {
     setENome(aluno?.nome ?? ''); setETel(aluno?.telefone ?? '')
     setEEmail(aluno?.email ?? ''); setEEndereco(aluno?.endereco ?? ''); setENascimento(aluno?.data_nascimento ?? '')
     setEObj(aluno?.objetivo ?? ''); setEDescricao(aluno?.descricao ?? '')
+    setEditError(''); setConflict(null)
     setEditing(true)
   }
   async function saveEdit(e: React.FormEvent) {
     e.preventDefault()
-    await updateAluno.mutateAsync({
-      nome: eNome, telefone: eTel,
-      email: eEmail || undefined, endereco: eEndereco || undefined,
-      data_nascimento: eNascimento || undefined, objetivo: eObj || undefined,
-      descricao: eDescricao || undefined,
-    })
-    setEditing(false)
+    setEditError(''); setConflict(null)
+    try {
+      await updateAluno.mutateAsync({
+        nome: eNome, telefone: eTel,
+        email: eEmail || undefined, endereco: eEndereco || undefined,
+        data_nascimento: eNascimento || undefined, objetivo: eObj || undefined,
+        descricao: eDescricao || undefined,
+      })
+      setEditing(false)
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail
+      if (detail?.code === 'PHONE_ALREADY_REGISTERED') {
+        setConflict(detail)
+      } else {
+        setEditError(typeof detail === 'string' ? detail : 'Erro ao salvar aluno')
+      }
+    }
+  }
+  async function reativarExistente() {
+    const alvo = conflict?.aluno_existente
+    if (!alvo) return
+    await reativarConflito.mutateAsync({ status: 'ATIVO' })
+    navigate(`/alunos/${alvo.aluno_id}`)
   }
   async function remove() {
     const ok = await confirm({
@@ -175,6 +195,26 @@ export function AlunoDetailPage() {
               <Input label="Data de nascimento" type="date" value={eNascimento} onChange={(e) => setENascimento(e.target.value)} />
               <Input label="Endereço" value={eEndereco} onChange={(e) => setEEndereco(e.target.value)} />
               <Input label="Objetivo" value={eObj} onChange={(e) => setEObj(e.target.value)} />
+              <ErrorText>{editError}</ErrorText>
+              {conflict && (
+                <Card variant="elevated" className="border-warning/40 space-y-2">
+                  <p className="text-sm text-text-secondary">{conflict.message}</p>
+                  {conflict.aluno_existente && (
+                    conflict.aluno_existente.status === 'INATIVO' ? (
+                      <Button type="button" size="sm" variant="energy" onClick={reativarExistente} disabled={reativarConflito.isPending}>
+                        {reativarConflito.isPending ? 'Reativando…' : `Reativar ${conflict.aluno_existente.nome}`}
+                      </Button>
+                    ) : (
+                      <Link
+                        to={`/alunos/${conflict.aluno_existente.aluno_id}`}
+                        className="text-sm text-accent-hover hover:underline"
+                      >
+                        Ver {conflict.aluno_existente.nome}
+                      </Link>
+                    )
+                  )}
+                </Card>
+              )}
               <div className="flex gap-2 pt-1">
                 <Button type="submit" disabled={updateAluno.isPending}>Salvar</Button>
                 <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Cancelar</Button>

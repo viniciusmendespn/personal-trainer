@@ -7,6 +7,7 @@ import { ProtectedRoute } from './auth/ProtectedRoute'
 import { ToastProvider, ConfirmProvider } from './components/ui'
 import { LoginPage } from './auth/LoginPage'
 import { SignUpPage } from './auth/SignUpPage'
+import { ForgotPasswordPage } from './auth/ForgotPasswordPage'
 import LandingPage from './pages/landing/LandingPage'
 import { AppLayout } from './components/layout/AppLayout'
 import { DashboardPage } from './pages/DashboardPage'
@@ -44,6 +45,7 @@ const router = createBrowserRouter([
   { path: '/aluno', element: <AlunoApp /> },     // app do aluno (JWT do magic-link)
   { path: '/login', element: <LoginPage /> },
   { path: '/signup', element: <SignUpPage /> },
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
   {
     element: (
       <ProtectedRoute>

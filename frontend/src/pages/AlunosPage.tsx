@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Plus, ChevronRight, Search, Users } from 'lucide-react'
-import { useAlunosPaginated, useCreateAluno } from '../hooks/useAlunos'
+import { useAlunosPaginated, useCreateAluno, useUpdateAluno } from '../hooks/useAlunos'
 import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState } from '../components/ui'
+import type { AlunoExistenteConflict } from '../types'
 
 export function AlunosPage() {
+  const navigate = useNavigate()
   const { data: alunos, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useAlunosPaginated()
   const create = useCreateAluno()
   const [open, setOpen] = useState(false)
@@ -16,10 +18,13 @@ export function AlunosPage() {
   const [dataNascimento, setDataNascimento] = useState('')
   const [objetivo, setObjetivo] = useState('')
   const [error, setError] = useState('')
+  const [conflict, setConflict] = useState<AlunoExistenteConflict | null>(null)
+  const reativar = useUpdateAluno(conflict?.aluno_existente?.aluno_id ?? '')
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    setConflict(null)
     try {
       await create.mutateAsync({
         nome, telefone,
@@ -28,8 +33,21 @@ export function AlunosPage() {
       })
       setNome(''); setTelefone(''); setEmail(''); setEndereco(''); setDataNascimento(''); setObjetivo(''); setOpen(false)
     } catch (err: any) {
-      setError(err?.response?.data?.detail ?? 'Erro ao criar aluno')
+      const detail = err?.response?.data?.detail
+      if (detail?.code === 'PHONE_ALREADY_REGISTERED') {
+        setConflict(detail)
+      } else {
+        setError(typeof detail === 'string' ? detail : 'Erro ao criar aluno')
+      }
     }
+  }
+
+  async function handleReativar() {
+    const alvo = conflict?.aluno_existente
+    if (!alvo) return
+    await reativar.mutateAsync({ status: 'ATIVO' })
+    setOpen(false)
+    navigate(`/alunos/${alvo.aluno_id}`)
   }
 
   const filtered = useMemo(() => {
@@ -78,6 +96,25 @@ export function AlunosPage() {
           <Input label="Endereço" value={endereco} onChange={(e) => setEndereco(e.target.value)} />
           <Input label="Objetivo" value={objetivo} onChange={(e) => setObjetivo(e.target.value)} />
           <ErrorText>{error}</ErrorText>
+          {conflict && (
+            <Card variant="elevated" className="border-warning/40 space-y-2">
+              <p className="text-sm text-text-secondary">{conflict.message}</p>
+              {conflict.aluno_existente && (
+                conflict.aluno_existente.status === 'INATIVO' ? (
+                  <Button type="button" size="sm" variant="energy" onClick={handleReativar} disabled={reativar.isPending}>
+                    {reativar.isPending ? 'Reativando…' : `Reativar ${conflict.aluno_existente.nome}`}
+                  </Button>
+                ) : (
+                  <Link
+                    to={`/alunos/${conflict.aluno_existente.aluno_id}`}
+                    className="text-sm text-accent-hover hover:underline"
+                  >
+                    Ver {conflict.aluno_existente.nome}
+                  </Link>
+                )
+              )}
+            </Card>
+          )}
           <div className="flex gap-2 pt-1">
             <Button type="submit" disabled={create.isPending}>
               {create.isPending ? 'Salvando…' : 'Salvar'}

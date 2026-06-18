@@ -26,6 +26,12 @@ export interface Aluno {
   updated_at: string
 }
 
+export interface AlunoExistenteConflict {
+  code: 'PHONE_ALREADY_REGISTERED'
+  message: string
+  aluno_existente: { aluno_id: string; nome: string; status: AlunoStatus } | null
+}
+
 export interface AlunoCreate {
   nome: string
   telefone: string

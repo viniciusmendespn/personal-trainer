@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Eye, EyeOff } from 'lucide-react'
+import { resendSignUpCode } from 'aws-amplify/auth'
 import { useAuth } from './AuthProvider'
+import { cognitoErrorPtBr } from './cognitoErrors'
 import { Button, Input, ErrorText, Card } from '../components/ui'
 import { AppLogo } from '../components/AppLogo'
 
@@ -9,8 +12,11 @@ export function LoginPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [unconfirmed, setUnconfirmed] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
 
   if (user) {
     navigate('/alunos', { replace: true })
@@ -20,14 +26,30 @@ export function LoginPage() {
   async function handle(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    setUnconfirmed(false)
     setLoading(true)
     try {
       await signIn(email, password)
       navigate('/alunos', { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha no login')
+      if ((err as { name?: string })?.name === 'UserNotConfirmedException') {
+        setUnconfirmed(true)
+      }
+      setError(cognitoErrorPtBr(err))
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleResendConfirmation() {
+    setResending(true)
+    try {
+      await resendSignUpCode({ username: email })
+      navigate('/signup', { state: { email, step: 'confirm' } })
+    } catch (err) {
+      setError(cognitoErrorPtBr(err))
+    } finally {
+      setResending(false)
     }
   }
 
@@ -43,8 +65,44 @@ export function LoginPage() {
             <p className="text-sm text-text-secondary">Acesse sua conta</p>
           </div>
           <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Input label="Senha" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-medium text-text-secondary">Senha</span>
+              <Link to="/forgot-password" className="text-xs text-accent-hover hover:underline">
+                Esqueceu a senha?
+              </Link>
+            </div>
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                tabIndex={-1}
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
           <ErrorText>{error}</ErrorText>
+          {unconfirmed && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={handleResendConfirmation}
+              disabled={resending}
+            >
+              {resending ? 'Enviando…' : 'Reenviar código de confirmação'}
+            </Button>
+          )}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Entrando…' : 'Entrar'}
           </Button>

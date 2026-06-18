@@ -45,6 +45,21 @@ def _add_foto_url(item: dict) -> dict:
     return item
 
 
+def _phone_conflict(dono_id: str | None) -> HTTPException:
+    """409 estruturado de telefone duplicado, enriquecido com os dados do aluno
+    dono pra permitir ação de recuperação no front (ver/reativar) em vez de bloqueio cru."""
+    aluno_existente = None
+    if dono_id:
+        dono = repo.get_item(keys.pk_aluno(dono_id), keys.SK_PROFILE)
+        if dono:
+            aluno_existente = {"aluno_id": dono["aluno_id"], "nome": dono["nome"], "status": dono["status"]}
+    return HTTPException(409, {
+        "code": "PHONE_ALREADY_REGISTERED",
+        "message": "Telefone já cadastrado para outro aluno",
+        "aluno_existente": aluno_existente,
+    })
+
+
 @router.get("")
 def list_alunos(limit: int = 50, cursor: str | None = None, personal_id: str = Depends(get_current_personal_id)):
     items, next_cursor = repo.query_pk_page(keys.pk_personal(personal_id), "ALUNO#", limit, cursor)
@@ -66,7 +81,8 @@ def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_perso
             {"aluno_id": aluno_id, "nome": body.nome},
         )
         if not ok:
-            raise HTTPException(409, "Telefone já cadastrado para outro aluno")
+            phone_item = repo.get_item(keys.pk_phone(personal_id, body.telefone), "PHONE")
+            raise _phone_conflict(phone_item.get("aluno_id") if phone_item else None)
     repo.put_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, data)
     repo.put_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(data))
     return aluno
@@ -108,7 +124,8 @@ def update_aluno(aluno_id: str, body: AlunoUpdate, personal_id: str = Depends(ge
         nome = fields.get("nome") or current.get("nome")
         if not repo.put_item_if_absent(keys.pk_phone(personal_id, new_phone), "PHONE",
                                        {"aluno_id": aluno_id, "nome": nome}):
-            raise HTTPException(409, "Telefone já cadastrado para outro aluno")
+            phone_item = repo.get_item(keys.pk_phone(personal_id, new_phone), "PHONE")
+            raise _phone_conflict(phone_item.get("aluno_id") if phone_item else None)
         if old_phone:
             repo.delete_item(keys.pk_phone(personal_id, old_phone), "PHONE")
 
