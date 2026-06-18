@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -162,7 +162,19 @@ export function AlunoApp() {
   const [highlightExId, setHighlightExId] = useState<string | undefined>(undefined)
   const [chatOpen, setChatOpen] = useState(false)
   const [showRanking, setShowRanking] = useState(false)
+  const installPromptRef = useRef<Event & { prompt: () => Promise<void> } | null>(null)
+  const [canInstall, setCanInstall] = useState(false)
   const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false })
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault()
+      installPromptRef.current = e as Event & { prompt: () => Promise<void> }
+      setCanInstall(true)
+    }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
 
   function handleNotifNavigate(dest: 'evolucao' | 'historico', exId?: string) {
     setTab(dest)
@@ -179,7 +191,22 @@ export function AlunoApp() {
     >
       <header className="px-4 pt-4 pb-2 shrink-0 flex items-center justify-between">
         <h1 className="font-display text-lg font-bold text-text">Olá, {me.data?.nome ?? 'aluno'}</h1>
-        {token && <NotifBell onNavigate={handleNotifNavigate} />}
+        <div className="flex items-center gap-1">
+          {canInstall && (
+            <button
+              onClick={async () => {
+                await installPromptRef.current?.prompt()
+                setCanInstall(false)
+              }}
+              className="p-1 text-text-muted hover:text-energy transition-colors"
+              aria-label="Instalar app"
+              title="Instalar app no celular"
+            >
+              <Download size={18} />
+            </button>
+          )}
+          {token && <NotifBell onNavigate={handleNotifNavigate} />}
+        </div>
       </header>
       {tab === 'historico' ? (
         <main className="px-4 flex-1"><HistoricoTab /></main>

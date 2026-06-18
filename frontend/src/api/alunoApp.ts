@@ -163,7 +163,7 @@ export const alunoApi = {
 
   // Gamificação
   pontos: () =>
-    alunoClient.get<{ total?: number; semana_atual?: number; log_recente?: PontoLog[] }>('/v1/aluno/pontos').then((r) => r.data),
+    alunoClient.get<{ total?: number; semana_atual?: number; mes_atual?: number; log_recente?: PontoLog[] }>('/v1/aluno/pontos').then((r) => r.data),
   ranking: () =>
     alunoClient.get<RankingItem[]>('/v1/aluno/ranking').then((r) => r.data),
 }
@@ -184,6 +184,8 @@ export interface RankingItem {
   aluno_id: string
   nome: string
   total_pontos: number
+  semana_atual: number
+  mes_atual: number
   posicao: number
   eu: boolean
 }

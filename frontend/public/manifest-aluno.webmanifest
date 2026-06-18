@@ -1,0 +1,13 @@
+{
+  "name": "Meus Treinos",
+  "short_name": "Treinos",
+  "description": "Acompanhe e registre seus treinos com seu personal",
+  "theme_color": "#16a34a",
+  "background_color": "#052e16",
+  "display": "standalone",
+  "start_url": "/aluno",
+  "scope": "/aluno",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

@@ -20,6 +20,7 @@ import { PendenciasPage } from './pages/PendenciasPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { AlunoApp } from './pages/AlunoApp'
 import { FeedGlobalPage } from './pages/FeedGlobalPage'
+import { RankingPage } from './pages/RankingPage'
 
 Amplify.configure({
   Auth: {
@@ -58,6 +59,7 @@ const router = createBrowserRouter([
       { path: 'alunos/:alunoId/avaliacoes', element: <AvaliacoesPage /> },
       { path: 'biblioteca', element: <BibliotecaPage /> },
       { path: 'feed', element: <FeedGlobalPage /> },
+      { path: 'ranking', element: <RankingPage /> },
       { path: 'notificacoes', element: <PendenciasPage /> },
       { path: 'config', element: <SettingsPage /> },
     ],

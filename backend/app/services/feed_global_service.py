@@ -1,6 +1,6 @@
 """Posts globais do personal — visíveis para todos os alunos vinculados."""
 from app.repositories import dynamo_repo as repo, keys
-from app.services import media_service
+from app.services import media_service, pontos_service
 from app.utils import new_id, now_iso
 
 
@@ -61,6 +61,7 @@ def toggle_curtida(aluno_id: str, personal_id: str, post_id: str, post_sk: str) 
         return {"curtido": False}
     repo.put_item(pk_al, sk_curtida, {"post_id": post_id, "personal_id": personal_id, "data_hora": now_iso()})
     repo.increment_counter(pk_pt, post_sk, "total_curtidas", amount=1)
+    pontos_service.award(aluno_id, "CURTIDA", personal_id)
     return {"curtido": True}
 
 

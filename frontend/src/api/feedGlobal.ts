@@ -16,6 +16,8 @@ export interface RankingPersonalItem {
   aluno_id: string
   nome: string
   total_pontos: number
+  semana_atual: number
+  mes_atual: number
   posicao: number
 }
 

@@ -1,7 +1,17 @@
+import { useState } from 'react'
 import { Trophy, Medal } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { alunoApi } from '../../api/alunoApp'
+import { alunoApi, type RankingItem } from '../../api/alunoApp'
 import { Spinner, EmptyState } from '../ui'
+import { RankingRulesInfo } from './RankingRulesInfo'
+
+type Periodo = 'semana' | 'mes' | 'geral'
+
+const PERIODOS: { key: Periodo; label: string }[] = [
+  { key: 'semana', label: 'Semana' },
+  { key: 'mes', label: 'Mês' },
+  { key: 'geral', label: 'Geral' },
+]
 
 const POSICAO_STYLE: Record<number, string> = {
   1: 'text-yellow-400',
@@ -9,7 +19,19 @@ const POSICAO_STYLE: Record<number, string> = {
   3: 'text-amber-600',
 }
 
+function pontosPeriodo(r: RankingItem, periodo: Periodo): number {
+  if (periodo === 'semana') return r.semana_atual ?? 0
+  if (periodo === 'mes') return r.mes_atual ?? 0
+  return r.total_pontos ?? 0
+}
+
+function rankPorPeriodo(ranking: RankingItem[], periodo: Periodo): (RankingItem & { posicao_periodo: number })[] {
+  const sorted = [...ranking].sort((a, b) => pontosPeriodo(b, periodo) - pontosPeriodo(a, periodo))
+  return sorted.map((r, i) => ({ ...r, posicao_periodo: i + 1 }))
+}
+
 export function RankingList() {
+  const [periodo, setPeriodo] = useState<Periodo>('geral')
   const { data: ranking, isLoading } = useQuery({
     queryKey: ['aluno-ranking'],
     queryFn: alunoApi.ranking,
@@ -26,28 +48,54 @@ export function RankingList() {
     )
   }
 
+  const ranked = rankPorPeriodo(ranking, periodo)
+
   return (
-    <div className="space-y-2">
-      {ranking.map((r) => (
-        <div
-          key={r.aluno_id}
-          className={`flex items-center gap-3 rounded-2xl px-4 py-3 border transition-colors ${
-            r.eu
-              ? 'bg-energy/10 border-energy/30'
-              : 'bg-surface-elevated border-border'
-          }`}
-        >
-          <span className={`w-6 text-center font-bold text-sm ${POSICAO_STYLE[r.posicao] ?? 'text-text-muted'}`}>
-            {r.posicao <= 3 ? <Medal size={16} className="inline" /> : `#${r.posicao}`}
-          </span>
-          <span className={`flex-1 text-sm font-medium ${r.eu ? 'text-energy' : 'text-text-primary'}`}>
-            {r.nome}{r.eu ? ' (você)' : ''}
-          </span>
-          <span className="text-sm font-semibold text-text-secondary">
-            {r.total_pontos ?? 0} pts
-          </span>
+    <div className="space-y-3">
+      {/* Seletor de período */}
+      <div className="flex items-center gap-2">
+        <div className="flex bg-surface rounded-xl p-1 gap-1 flex-1">
+          {PERIODOS.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setPeriodo(key)}
+              className={`flex-1 text-xs font-medium py-1.5 px-2 rounded-lg transition-colors ${
+                periodo === key
+                  ? 'bg-energy text-white'
+                  : 'text-text-muted hover:text-text'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
-      ))}
+        <RankingRulesInfo />
+      </div>
+
+      {/* Lista */}
+      {ranked.map((r) => {
+        const pts = pontosPeriodo(r, periodo)
+        return (
+          <div
+            key={r.aluno_id}
+            className={`flex items-center gap-3 rounded-2xl px-4 py-3 border transition-colors ${
+              r.eu
+                ? 'bg-energy/10 border-energy/30'
+                : 'bg-surface-elevated border-border'
+            }`}
+          >
+            <span className={`w-6 text-center font-bold text-sm ${POSICAO_STYLE[r.posicao_periodo] ?? 'text-text-muted'}`}>
+              {r.posicao_periodo <= 3 ? <Medal size={16} className="inline" /> : `#${r.posicao_periodo}`}
+            </span>
+            <span className={`flex-1 text-sm font-medium ${r.eu ? 'text-energy' : 'text-text-primary'}`}>
+              {r.nome}{r.eu ? ' (você)' : ''}
+            </span>
+            <span className="text-sm font-semibold text-text-secondary">
+              {pts} pts
+            </span>
+          </div>
+        )
+      })}
     </div>
   )
 }
