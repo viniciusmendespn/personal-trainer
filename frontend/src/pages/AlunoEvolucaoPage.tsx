@@ -128,15 +128,6 @@ export function AlunoEvolucaoPage() {
         <EmptyState icon={<Activity />} title="Sem exercícios" description="Cadastre exercícios para acompanhar a evolução." />
       ) : (
         <>
-          {/* Seletor de exercício */}
-          <SearchableSelect
-            options={exerciciosOptions}
-            value={exId}
-            onChange={setExId}
-            placeholder="Buscar exercício…"
-            className="mb-4 max-w-xs"
-          />
-
           {/* Abas */}
           <div className="flex gap-1 border-b border-border mb-4">
             {ABA_EVOLUCAO.map((a) => (
@@ -156,38 +147,47 @@ export function AlunoEvolucaoPage() {
 
           {/* Aba Carga */}
           {aba === 'carga' && (
-            isLoading ? (
-              <Spinner />
-            ) : !chartData.length ? (
-              <p className="text-text-muted text-sm">Sem registros com carga numérica ainda.</p>
-            ) : (
-              <Card variant="elevated">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm text-text-secondary">Carga máxima por sessão</p>
-                  <Badge tone="warning"><Trophy size={12} /> PR {evo?.pr?.carga ?? '—'} kg</Badge>
-                </div>
-                <ResponsiveContainer width="100%" height={240}>
-                  <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-                    <defs>
-                      <linearGradient id="cargaGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                    <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
-                    <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
-                    <Tooltip contentStyle={chartTip} />
-                    {!isNaN(prescrita) && (
-                      <ReferenceLine y={prescrita} stroke="var(--color-text-muted)" strokeDasharray="4 4"
-                        label={{ value: `prescrita ${prescrita}`, fill: 'var(--color-text-muted)', fontSize: 11, position: 'insideTopRight' }} />
-                    )}
-                    <Area type="monotone" dataKey="carga" stroke="var(--color-accent)" strokeWidth={2.5}
-                      fill="url(#cargaGradient)" dot={{ r: 3, fill: 'var(--color-accent)' }} name="Carga (kg)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </Card>
-            )
+            <>
+              <SearchableSelect
+                options={exerciciosOptions}
+                value={exId}
+                onChange={setExId}
+                placeholder="Buscar exercício…"
+                className="mb-4 max-w-xs"
+              />
+              {isLoading ? (
+                <Spinner />
+              ) : !chartData.length ? (
+                <p className="text-text-muted text-sm">Sem registros com carga numérica ainda.</p>
+              ) : (
+                <Card variant="elevated">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm text-text-secondary">Carga máxima por sessão</p>
+                    <Badge tone="warning"><Trophy size={12} /> PR {evo?.pr?.carga ?? '—'} kg</Badge>
+                  </div>
+                  <ResponsiveContainer width="100%" height={240}>
+                    <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                      <defs>
+                        <linearGradient id="cargaGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.4} />
+                          <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                      <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
+                      <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
+                      <Tooltip contentStyle={chartTip} />
+                      {!isNaN(prescrita) && (
+                        <ReferenceLine y={prescrita} stroke="var(--color-text-muted)" strokeDasharray="4 4"
+                          label={{ value: `prescrita ${prescrita}`, fill: 'var(--color-text-muted)', fontSize: 11, position: 'insideTopRight' }} />
+                      )}
+                      <Area type="monotone" dataKey="carga" stroke="var(--color-accent)" strokeWidth={2.5}
+                        fill="url(#cargaGradient)" dot={{ r: 3, fill: 'var(--color-accent)' }} name="Carga (kg)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </Card>
+              )}
+            </>
           )}
 
           {/* Aba Volume */}
@@ -237,6 +237,13 @@ export function AlunoEvolucaoPage() {
           {/* Aba Feed */}
           {aba === 'feed' && (
             <div className="space-y-3">
+              <SearchableSelect
+                options={exerciciosOptions}
+                value={exId}
+                onChange={setExId}
+                placeholder="Buscar exercício…"
+                className="max-w-xs"
+              />
               {!!exId && (
                 <PostComposer
                   exercicioId={exId}

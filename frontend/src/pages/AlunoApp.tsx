@@ -793,16 +793,6 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
         <StatCard label="Esta semana" value={resumo.data?.sessoes_semana ?? 0} tone="success" />
       </div>
 
-      {/* Seletor de exercício */}
-      {!!exs.data?.length && (
-        <SearchableSelect
-          options={exsOptions}
-          value={exId}
-          onChange={setExId}
-          placeholder="Buscar exercício…"
-        />
-      )}
-
       {/* Abas */}
       <div className="flex gap-1 border-b border-border pb-0">
         {ABA_EVOLUCAO.map((a) => (
@@ -824,31 +814,41 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
       {aba === 'carga' && (
         !exs.data?.length ? (
           <p className="text-text-muted text-sm">Sem exercícios ainda.</p>
-        ) : !chartData.length ? (
-          <p className="text-text-muted text-sm">Sem registros com carga ainda.</p>
         ) : (
-          <Card variant="elevated">
-            <div className="flex justify-between mb-2">
-              <span className="text-sm text-text-secondary">Carga por sessão</span>
-              <Badge tone="warning"><Trophy size={12} /> {evo.data?.pr?.carga ?? '—'} kg</Badge>
-            </div>
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-                <defs>
-                  <linearGradient id="alunoCargaGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-energy)" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="var(--color-energy)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
-                <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
-                <Tooltip contentStyle={chartTip} />
-                <Area type="monotone" dataKey="carga" stroke="var(--color-energy)" strokeWidth={2.5}
-                  fill="url(#alunoCargaGradient)" dot={{ r: 3, fill: 'var(--color-energy)' }} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </Card>
+          <>
+            <SearchableSelect
+              options={exsOptions}
+              value={exId}
+              onChange={setExId}
+              placeholder="Buscar exercício…"
+            />
+            {!chartData.length ? (
+              <p className="text-text-muted text-sm">Sem registros com carga ainda.</p>
+            ) : (
+              <Card variant="elevated">
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm text-text-secondary">Carga por sessão</span>
+                  <Badge tone="warning"><Trophy size={12} /> {evo.data?.pr?.carga ?? '—'} kg</Badge>
+                </div>
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                    <defs>
+                      <linearGradient id="alunoCargaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--color-energy)" stopOpacity={0.4} />
+                        <stop offset="100%" stopColor="var(--color-energy)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                    <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
+                    <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
+                    <Tooltip contentStyle={chartTip} />
+                    <Area type="monotone" dataKey="carga" stroke="var(--color-energy)" strokeWidth={2.5}
+                      fill="url(#alunoCargaGradient)" dot={{ r: 3, fill: 'var(--color-energy)' }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </Card>
+            )}
+          </>
         )
       )}
 
@@ -902,6 +902,12 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
           <p className="text-text-muted text-sm">Sem exercícios ainda.</p>
         ) : (
           <div className="space-y-3">
+            <SearchableSelect
+              options={exsOptions}
+              value={exId}
+              onChange={setExId}
+              placeholder="Buscar exercício…"
+            />
             {!!exId && (
               <PostComposer
                 exercicioId={exId}
