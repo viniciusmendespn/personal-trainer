@@ -82,7 +82,7 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
 
   const isPersonal = viewerAtor === 'PERSONAL'
   const cfg = isPersonal ? TIPO_CONFIG_PERSONAL[tipoPersonal] : TIPO_CONFIG_ALUNO[tipoAluno]
-  const showFileButton = isPersonal || tipoAluno === 'EXECUCAO' || tipoAluno === 'OUTRO'
+  const showFileButton = true
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const picked = Array.from(e.target.files ?? [])
