@@ -11,7 +11,7 @@ from app.models.registro import SerieExec
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.models.postagem import MidiaRef, PostagemCreate, PostagemTipo
-from app.services import agent_service, alerta_service, anotif_service, correcao_service, media_service, notif_service, postagem_service, sessao_service
+from app.services import agent_service, alerta_service, anotif_service, correcao_service, feed_global_service, media_service, notif_service, pontos_service, postagem_service, sessao_service
 from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
@@ -100,6 +100,8 @@ def registrar(body: RegistroBody, ctx: dict = Depends(get_current_aluno)):
     out = repo.clean(registro)
     if pr:
         out["pr_novo"] = pr
+        pontos_service.award(ctx["aluno_id"], "PR", ctx["personal_id"], descricao=f"Novo recorde: {pr}")
+    pontos_service.award(ctx["aluno_id"], "SERIE", ctx["personal_id"], descricao="Série registrada")
     return out
 
 
@@ -299,6 +301,7 @@ def criar_postagem(exercicio_id: str, body: PostagemCreate, ctx: dict = Depends(
         ator="ALUNO",
         personal_id=ctx["personal_id"],
     )
+    pontos_service.award(ctx["aluno_id"], "POST", ctx["personal_id"], descricao=f"Post {body.tipo.value}")
     return {"ok": 1, "post_id": item["post_id"]}
 
 
@@ -332,6 +335,7 @@ def comentar_post(body: ComentarPostBody, ctx: dict = Depends(get_current_aluno)
         aluno_id=ctx["aluno_id"],
         ref_extra={"relato_sk": body.post_sk, "exercicio_id": exercicio_id},
     )
+    pontos_service.award(ctx["aluno_id"], "COMENTARIO", ctx["personal_id"], descricao="Comentário em post")
     return {"ok": 1}
 
 
@@ -356,3 +360,41 @@ def chat_send_personal(body: ChatBody, ctx: dict = Depends(get_current_aluno)):
         body.text, aluno_id=ctx["aluno_id"],
     )
     return {"ok": 1}
+
+
+# ── Feed global do personal ─────────────────────────────────────────────────
+
+@router.get("/feed")
+def listar_feed_global(limit: int = 20, cursor: str | None = None, ctx: dict = Depends(get_current_aluno)):
+    items, next_cursor = feed_global_service.listar_posts_global(
+        ctx["personal_id"], aluno_id=ctx["aluno_id"], limit=limit, cursor=cursor,
+    )
+    return {"items": items, "next_cursor": next_cursor}
+
+
+class CurtirFeedBody(BaseModel):
+    post_sk: str   # "FEED#{ts}#{post_id}"
+
+
+@router.post("/feed/curtir")
+def curtir_feed(body: CurtirFeedBody, ctx: dict = Depends(get_current_aluno)):
+    parts = body.post_sk.split("#")
+    post_id = parts[-1]
+    result = feed_global_service.toggle_curtida(ctx["aluno_id"], ctx["personal_id"], post_id, body.post_sk)
+    return result
+
+
+# ── Gamificação ─────────────────────────────────────────────────────────────
+
+@router.get("/pontos")
+def get_pontos(ctx: dict = Depends(get_current_aluno)):
+    return pontos_service.get_pontos(ctx["aluno_id"])
+
+
+@router.get("/ranking")
+def get_ranking(ctx: dict = Depends(get_current_aluno)):
+    ranking = pontos_service.get_ranking(ctx["personal_id"])
+    aluno_id = ctx["aluno_id"]
+    for r in ranking:
+        r["eu"] = r.get("aluno_id") == aluno_id
+    return ranking

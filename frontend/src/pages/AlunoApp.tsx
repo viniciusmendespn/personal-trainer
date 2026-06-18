@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -8,6 +8,9 @@ import { alunoApi, type ExSessao, type SessaoAtiva, type SessaoHistorico } from 
 import { SeriesPrescritasCompact } from '../components/exercicios/SeriesPrescritasEditor'
 import { AlunoSessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import { ALUNO_TOKEN_KEY } from '../api/alunoClient'
+import { FeedGlobalTab } from '../components/feed/FeedGlobalTab'
+import { PontosWidget } from '../components/gamificacao/PontosWidget'
+import { RankingList } from '../components/gamificacao/RankingList'
 import { useAlunoChat, useSendAlunoChat, useSendDiretoAlunoChat } from '../hooks/useAlunoChat'
 import { useAlunoTimeline } from '../hooks/useAlunoTimeline'
 import { ChatThread } from '../components/chat/ChatThread'
@@ -155,8 +158,10 @@ function NotifDrawer({ onClose, onNavigate }: { onClose: () => void; onNavigate:
 
 export function AlunoApp() {
   const token = useAlunoToken()
-  const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'chat'>('hoje')
+  const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'feed'>('hoje')
   const [highlightExId, setHighlightExId] = useState<string | undefined>(undefined)
+  const [chatOpen, setChatOpen] = useState(false)
+  const [showRanking, setShowRanking] = useState(false)
   const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false })
 
   function handleNotifNavigate(dest: 'evolucao' | 'historico', exId?: string) {
@@ -176,15 +181,56 @@ export function AlunoApp() {
         <h1 className="font-display text-lg font-bold text-text">Olá, {me.data?.nome ?? 'aluno'} 👋</h1>
         {token && <NotifBell onNavigate={handleNotifNavigate} />}
       </header>
-      {tab === 'chat' ? (
-        <ChatTab />
-      ) : tab === 'historico' ? (
+      {tab === 'historico' ? (
         <main className="px-4 flex-1"><HistoricoTab /></main>
+      ) : tab === 'feed' ? (
+        <main className="px-4 flex-1 pt-2"><FeedGlobalTab /></main>
+      ) : tab === 'evolucao' ? (
+        <main className="px-4 flex-1"><Evolucao initialExId={highlightExId} /></main>
       ) : (
         <main className="px-4 flex-1">
-          {tab === 'hoje' ? <Hoje /> : <Evolucao initialExId={highlightExId} />}
+          {showRanking ? (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowRanking(false)} className="text-text-muted hover:text-text transition-colors">
+                  <X size={18} />
+                </button>
+                <h2 className="font-semibold text-sm flex items-center gap-2"><Trophy size={16} className="text-energy" />Ranking</h2>
+              </div>
+              <RankingList />
+            </div>
+          ) : (
+            <div className="space-y-3 pt-2">
+              <PontosWidget onVerRanking={() => setShowRanking(true)} />
+              <Hoje />
+            </div>
+          )}
         </main>
       )}
+
+      {/* FAB — Chat */}
+      <button
+        onClick={() => setChatOpen(true)}
+        className="fixed right-4 z-40 w-12 h-12 rounded-full bg-energy shadow-lg flex items-center justify-center text-black transition-transform hover:scale-105 active:scale-95"
+        style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+        aria-label="Abrir chat"
+      >
+        <MessageCircle size={22} />
+      </button>
+
+      {/* Chat drawer */}
+      {chatOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col max-w-md mx-auto" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="bg-black/40 flex-none h-14 flex items-center px-4 gap-3" onClick={() => setChatOpen(false)}>
+            <button onClick={() => setChatOpen(false)} className="text-white/80 hover:text-white"><X size={20} /></button>
+            <span className="text-sm font-medium text-white">Chat com o agente</span>
+          </div>
+          <div className="flex-1 bg-surface flex flex-col overflow-hidden">
+            <ChatTab />
+          </div>
+        </div>
+      )}
+
       <nav
         className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-surface-elevated/80 backdrop-blur-xl border-t border-border flex"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
@@ -193,10 +239,10 @@ export function AlunoApp() {
           ['hoje', 'Treino', <Dumbbell size={18} />],
           ['evolucao', 'Evolução', <TrendingUp size={18} />],
           ['historico', 'Histórico', <History size={18} />],
-          ['chat', 'Chat', <MessageCircle size={18} />],
+          ['feed', 'Feed', <Newspaper size={18} />],
         ] as const).map(
           ([k, label, icon]) => (
-            <button key={k} onClick={() => setTab(k)}
+            <button key={k} onClick={() => { setTab(k); setShowRanking(false) }}
               className={`flex-1 py-3 flex flex-col items-center gap-1 text-xs transition-colors ${tab === k ? 'text-energy' : 'text-text-muted'}`}>
               {icon}{label}
             </button>
@@ -354,7 +400,32 @@ function SessaoTreino({ sessao }: { sessao: SessaoAtiva }) {
       </div>
       <p className="text-xs text-text-muted">Toque em um exercício para registrar — você pode começar por onde quiser e editar depois.</p>
       {exs.map((ex) => <ExercicioCard key={ex.exercicio_id} ex={ex} />)}
-      <Button variant="energy" className="w-full" onClick={() => finish.mutate()} disabled={finish.isPending}>
+      <Button
+        variant="energy"
+        className="w-full"
+        disabled={finish.isPending}
+        onClick={async () => {
+          const pendentes = exs.filter((e) => !e.registrado?.length)
+          const ok = await confirm({
+            title: 'Finalizar treino?',
+            message: pendentes.length > 0 ? (
+              <div className="space-y-2">
+                <p>
+                  {pendentes.length} exercício{pendentes.length > 1 ? 's' : ''} ainda não
+                  {pendentes.length > 1 ? ' foram executados' : ' foi executado'}:
+                </p>
+                <ul className="list-disc pl-4 space-y-0.5 text-text-muted">
+                  {pendentes.map((e) => <li key={e.exercicio_id}>{e.nome}</li>)}
+                </ul>
+                <p>Deseja finalizar mesmo assim?</p>
+              </div>
+            ) : 'Confirma a finalização do treino?',
+            confirmLabel: 'Finalizar',
+            cancelLabel: 'Continuar treinando',
+          })
+          if (ok) finish.mutate()
+        }}
+      >
         {finish.isPending ? 'Finalizando…' : 'Finalizar treino'}
       </Button>
       <Button

@@ -4,7 +4,7 @@ from mangum import Mangum
 
 from app.config import settings
 from app.routers import (agenda, aluno, alunos, avaliacoes, biblioteca, config, dashboard,
-                         notificacoes, personal_chat, sessoes, templates, treinos, wapi, webhook)
+                         feed_global, notificacoes, personal_chat, sessoes, templates, treinos, wapi, webhook)
 
 app = FastAPI(
     title="Personal Trainer",
@@ -34,6 +34,7 @@ app.include_router(aluno.router)      # /v1/aluno/* (app do aluno — JWT escopa
 app.include_router(agenda.router)     # /v1/agenda
 app.include_router(templates.router)  # /v1/templates
 app.include_router(personal_chat.router)  # /v1/alunos/{aluno_id}/chat
+app.include_router(feed_global.router)    # /v1/feed (posts globais do personal)
 
 
 @app.get("/v1/health")

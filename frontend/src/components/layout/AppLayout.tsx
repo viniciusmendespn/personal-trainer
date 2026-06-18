@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Settings, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Settings, LogOut, Menu, X, Newspaper } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
 import { ChatWidget } from '../chat/ChatWidget'
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: '/alunos', label: 'Alunos', icon: Users },
   { to: '/agenda', label: 'Agenda', icon: Calendar },
   { to: '/templates', label: 'Templates', icon: LayoutTemplate },
+  { to: '/feed', label: 'Feed', icon: Newspaper },
   { to: '/notificacoes', label: 'Notificações', icon: Bell },
   { to: '/biblioteca', label: 'Biblioteca', icon: BookOpen },
   { to: '/config', label: 'WhatsApp', icon: Settings },

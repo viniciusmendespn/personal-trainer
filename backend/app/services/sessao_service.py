@@ -12,6 +12,7 @@ from fastapi import HTTPException
 from app.models.enums import Ator, CanalOrigem, Classificacao, SessaoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
+from app.services import pontos_service
 from app.utils import epoch_ms, new_id, now_iso
 
 SESSION_TTL_S = 6 * 3600  # sessão abandonada cai sozinha (ESPEC §3)
@@ -128,6 +129,13 @@ def finish(aluno_id: str) -> dict:
         hoje = fim_iso[:10]
         repo.add_and_set(keys.pk_personal(personal_id), f"STATS#D#{hoje}",
                          add={"sessoes": 1}, set_={"data": hoje})
+        # Gamificação: pontos por sessão finalizada
+        total_ex = len(s.get("exercicios", []))
+        feitos_ex = len(snap.get("exercicios_exec", []))
+        completo = total_ex > 0 and feitos_ex >= total_ex
+        desc = "Sessão 100% completa" if completo else "Sessão finalizada"
+        pts = pontos_service.PONTOS["SESSAO"] + (pontos_service.PONTOS["SESSAO_COMPLETA_BONUS"] if completo else 0)
+        pontos_service.award(aluno_id, "SESSAO", personal_id, pts=pts, descricao=desc)
     return snap
 
 

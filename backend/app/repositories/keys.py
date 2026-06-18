@@ -182,6 +182,32 @@ def sk_anotif(ts: str, notif_id: str) -> str:
     return f"ANOTIF#{ts}#{notif_id}"
 
 
+# ── Feed global do personal (partição PT#) ──────────────────────────────────
+FEED_GLOBAL_PREFIX = "FEED#"
+
+
+def sk_feed_global(ts: str, post_id: str) -> str:
+    return f"FEED#{ts}#{post_id}"
+
+
+def sk_curtida_feed(post_id: str) -> str:
+    return f"CURTIDA#FEED#{post_id}"
+
+
+# ── Pontos e ranking de alunos ───────────────────────────────────────────────
+SK_PONTOS = "PONTOS#"
+PONTO_LOG_PREFIX = "PONTO_LOG#"
+RANKING_PREFIX = "RANKING#"
+
+
+def sk_ponto_log(ts: str) -> str:
+    return f"PONTO_LOG#{ts}"
+
+
+def sk_ranking_aluno(aluno_id: str) -> str:
+    return f"RANKING#{aluno_id}"
+
+
 # ── GSI1: "registros por exercício no tempo" (ESPEC §4.1) ────────────────────
 def gsi1_registro(aluno_id: str, exercicio_id: str) -> str:
     return f"AL#{aluno_id}#EX#{exercicio_id}"

@@ -152,6 +152,47 @@ export const alunoApi = {
       .then((r) => r.data),
   comentarPost: (body: { post_sk: string; texto?: string; midias?: Array<{ s3_key: string; tipo: string }>; post_tipo?: string }) =>
     alunoClient.post('/v1/aluno/post/comentar', body).then((r) => r.data),
+
+  // Feed global do personal
+  feedGlobal: (params?: { cursor?: string; limit?: number }) =>
+    alunoClient
+      .get<{ items: PostGlobal[]; next_cursor: string | null }>('/v1/aluno/feed', { params })
+      .then((r) => r.data),
+  curtirFeed: (post_sk: string) =>
+    alunoClient.post<{ curtido: boolean }>('/v1/aluno/feed/curtir', { post_sk }).then((r) => r.data),
+
+  // Gamificação
+  pontos: () =>
+    alunoClient.get<{ total?: number; semana_atual?: number; log_recente?: PontoLog[] }>('/v1/aluno/pontos').then((r) => r.data),
+  ranking: () =>
+    alunoClient.get<RankingItem[]>('/v1/aluno/ranking').then((r) => r.data),
+}
+
+export interface PostGlobal {
+  post_id: string
+  post_sk: string
+  personal_id: string
+  tipo: 'ARTIGO' | 'DICA' | 'MOTIVACAO' | 'AVISO' | 'OUTRO'
+  texto: string
+  midias: Array<{ s3_key: string; tipo: string; url?: string }>
+  total_curtidas: number
+  curtido_por_mim: boolean
+  data_hora: string
+}
+
+export interface RankingItem {
+  aluno_id: string
+  nome: string
+  total_pontos: number
+  posicao: number
+  eu: boolean
+}
+
+export interface PontoLog {
+  tipo: string
+  pts: number
+  descricao: string
+  data_hora: string
 }
 
 /** Pede a presigned URL e sobe o arquivo direto pro S3, depois registra vinculado ao exercício. */

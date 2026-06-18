@@ -16,9 +16,11 @@ const chartTip = {
   background: 'var(--color-surface-elevated)',
   border: '1px solid var(--color-border-strong)',
   borderRadius: 10,
-  color: 'var(--color-text)',
+  color: '#e2e8f0',
   fontSize: 12,
 }
+const chartTipItem = { color: '#e2e8f0' }
+const chartTipLabel = { color: '#94a3b8' }
 const axisTick = { fill: 'var(--color-text-secondary)', fontSize: 11 }
 
 function ymd(d: Date) { return d.toISOString().slice(0, 10) }
@@ -123,6 +125,8 @@ export function DashboardPage() {
                     <YAxis tick={axisTick} tickLine={false} axisLine={false} allowDecimals={false} />
                     <Tooltip
                       contentStyle={chartTip}
+                      itemStyle={chartTipItem}
+                      labelStyle={chartTipLabel}
                       formatter={(v: number) => [v, 'sessões']}
                       labelFormatter={(l) => `Dia ${l}`}
                     />

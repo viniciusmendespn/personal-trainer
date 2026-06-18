@@ -23,7 +23,7 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
       const link = /\[([^\]]+)\]\(([^)]+)\)/.exec(token)
       if (link) {
         nodes.push(
-          <a key={`${keyPrefix}-${i++}`} href={link[2]} target="_blank" rel="noreferrer" className="underline">
+          <a key={`${keyPrefix}-${i++}`} href={link[2]} target="_blank" rel="noreferrer" className="underline text-accent font-medium hover:opacity-80 transition-opacity">
             {link[1]}
           </a>
         )
