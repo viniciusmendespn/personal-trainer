@@ -334,6 +334,74 @@ Resources:
         - { Key: Project, Value: personal-trainer }
         - { Key: ManagedBy, Value: SAM }
 
+  SiteCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Condition: CreateFrontendInfra
+    Properties:
+      DomainName: !Ref DomainName
+      SubjectAlternativeNames:
+        - !Sub "www.${DomainName}"
+        - !Sub "*.${DomainName}"
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZone
+        - DomainName: !Sub "www.${DomainName}"
+          HostedZoneId: !Ref HostedZone
+        - DomainName: !Sub "*.${DomainName}"
+          HostedZoneId: !Ref HostedZone
+      Tags:
+        - { Key: Project, Value: personal-trainer }
+        - { Key: ManagedBy, Value: SAM }
+
+  ApexAliasRecordA:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateFrontendInfra
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Ref DomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+        EvaluateTargetHealth: false
+
+  ApexAliasRecordAAAA:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateFrontendInfra
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Ref DomainName
+      Type: AAAA
+      AliasTarget:
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+        EvaluateTargetHealth: false
+
+  WwwAliasRecordA:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateFrontendInfra
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub "www.${DomainName}"
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+        EvaluateTargetHealth: false
+
+  WwwAliasRecordAAAA:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateFrontendInfra
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub "www.${DomainName}"
+      Type: AAAA
+      AliasTarget:
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+        EvaluateTargetHealth: false
+
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     Condition: CreateFrontendInfra
@@ -341,6 +409,13 @@ Resources:
       DistributionConfig:
         Enabled: true
         DefaultRootObject: index.html
+        Aliases:
+          - !Ref DomainName
+          - !Sub "www.${DomainName}"
+        ViewerCertificate:
+          AcmCertificateArn: !Ref SiteCertificate
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
         Origins:
           - Id: S3Origin
             DomainName: !GetAtt FrontendBucket.RegionalDomainName
@@ -392,3 +467,9 @@ Outputs:
     Condition: CreateFrontendInfra
     Description: "Colar estes NS no painel da revenda (DNS do domínio coachpilot.com.br)."
     Value: !Join [", ", !GetAtt HostedZone.NameServers]
+  CertificateArn:
+    Condition: CreateFrontendInfra
+    Value: !Ref SiteCertificate
+  CustomDomainUrl:
+    Condition: CreateFrontendInfra
+    Value: !Sub "https://${DomainName}"
