@@ -12,3 +12,13 @@ alunoClient.interceptors.request.use((config) => {
   if (tk) config.headers.Authorization = `Bearer ${tk}`
   return config
 })
+
+alunoClient.interceptors.response.use(
+  (r) => r,
+  (error) => {
+    if (error?.response?.status === 403) {
+      window.dispatchEvent(new CustomEvent('pt:aluno:403'))
+    }
+    return Promise.reject(error)
+  }
+)

@@ -159,6 +159,7 @@ function NotifDrawer({ onClose, onNavigate }: { onClose: () => void; onNavigate:
 
 export function AlunoApp() {
   const token = useAlunoToken()
+  const [disabled, setDisabled] = useState(false)
   const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'feed' | 'personal'>('hoje')
   const [highlightExId, setHighlightExId] = useState<string | undefined>(undefined)
   const [chatOpen, setChatOpen] = useState(false)
@@ -167,6 +168,12 @@ export function AlunoApp() {
   const [canInstall, setCanInstall] = useState(false)
   const [showPerfilModal, setShowPerfilModal] = useState(false)
   const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false, staleTime: 0, refetchOnWindowFocus: true })
+
+  useEffect(() => {
+    const handler = () => setDisabled(true)
+    window.addEventListener('pt:aluno:403', handler)
+    return () => window.removeEventListener('pt:aluno:403', handler)
+  }, [])
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -184,13 +191,12 @@ export function AlunoApp() {
   }
 
   if (!token) return <Centered>Abra o aplicativo pelo link enviado no seu WhatsApp.</Centered>
-  if (me.isLoading || me.isFetching) return <Centered><Spinner /></Centered>
-  if (me.isError) {
-    const status = (me.error as { response?: { status?: number } })?.response?.status
+  if (disabled || me.isError) {
+    const is403 = disabled || (me.error as { response?: { status?: number } })?.response?.status === 403
     return (
       <Centered>
         <div className="space-y-2">
-          {status === 403 ? (
+          {is403 ? (
             <>
               <p className="font-semibold text-text">Acesso desativado</p>
               <p className="text-sm">Seu acesso foi desativado pelo seu personal. Entre em contato para reativar.</p>
@@ -202,6 +208,7 @@ export function AlunoApp() {
       </Centered>
     )
   }
+  if (me.isLoading || me.isFetching) return <Centered><Spinner /></Centered>
 
   return (
     <div
