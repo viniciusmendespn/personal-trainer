@@ -73,6 +73,10 @@ def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_perso
     now = now_iso()
     aluno = Aluno(aluno_id=aluno_id, personal_id=personal_id, status=AlunoStatus.ATIVO,
                   created_at=now, updated_at=now, **body.model_dump())
+    if body.telefone:
+        aluno.foto_s3_key = media_service.buscar_foto_perfil_whatsapp(personal_id, aluno_id, body.telefone)
+        if aluno.foto_s3_key:
+            aluno.foto_url = media_service.gerar_presigned_view_url(aluno.foto_s3_key)
     data = aluno.model_dump()
     # telefone único por personal (ESPEC §2): reserva o ponteiro antes de criar
     if body.telefone:

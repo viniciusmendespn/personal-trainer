@@ -167,6 +167,25 @@ def _stream_to_s3(url: str, key: str, content_type: str | None) -> bool:
         return False
 
 
+def buscar_foto_perfil_whatsapp(personal_id: str, aluno_id: str, telefone: str) -> str | None:
+    """Busca a foto de perfil do WhatsApp do aluno via W-API e salva no S3, se o personal
+    tiver instância configurada. Best-effort: nunca levanta exceção (cadastro do aluno não
+    pode falhar por causa disso)."""
+    cfg = repo.get_item(keys.pk_personal(personal_id), keys.SK_WAPI_CONFIG)
+    if not cfg:
+        return None
+    try:
+        data = WAPIClient(cfg["instance_id"], cfg["token"]).get_profile_picture(telefone)
+    except Exception as e:
+        logger.warning("[media] busca de foto de perfil falhou: %s", e)
+        return None
+    link = data.get("link")
+    if not link or not settings.media_bucket_name:
+        return None
+    key = f"perfil/aluno/{aluno_id}/avatar.jpg"
+    return key if _stream_to_s3(link, key, "image/jpeg") else None
+
+
 def transcrever_audio(cfg: dict, media: dict) -> str | None:
     """Áudio -> texto via OpenAI Whisper. Retorna a transcrição ou None."""
     if not settings.openai_api_key:

@@ -43,6 +43,9 @@ class WAPIClient:
     def get_pairing_code(self, phone: str) -> dict:
         return self._get("/v1/instance/pairing-code", params={"phoneNumber": phone})
 
+    def get_profile_picture(self, phone: str) -> dict:
+        return self._get("/v1/contacts/profile-picture", params={"phoneNumber": phone}, timeout=10)
+
     def set_received_webhook(self, url: str) -> dict:
         """Configura o webhook de mensagens recebidas (PUT update-webhook-received)."""
         with httpx.Client(timeout=15) as c:
