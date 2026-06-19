@@ -21,4 +21,4 @@ resolve_s3        = true
 # deles for incluído aqui com um valor (ex.: placeholder), o próximo deploy SOBRESCREVE o
 # segredo real em produção. Só passar via --parameter-overrides pontual quando for, de fato,
 # trocar o segredo.
-parameter_overrides = "Stage=prod DeployFrontendInfra=true"
+parameter_overrides = "Stage=prod DeployFrontendInfra=true FrontendUrl=https://coachpilot.com.br"

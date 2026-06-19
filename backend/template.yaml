@@ -28,7 +28,7 @@ Parameters:
   FrontendUrl:
     Type: String
     Default: ""
-    Description: "URL do frontend (CloudFront) — p/ o magic-link do app do aluno."
+    Description: "URL do frontend (domínio customizado coachpilot.com.br) — p/ o magic-link do app do aluno."
   OpenAiApiKey:
     Type: String
     Default: ""
