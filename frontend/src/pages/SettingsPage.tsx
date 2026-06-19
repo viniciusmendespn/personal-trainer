@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { QrCode, Phone, CheckCircle, AlertCircle, MessageCircle, WifiOff, RefreshCw, Copy } from 'lucide-react'
-import toast from 'react-hot-toast'
 import { wapiApi } from '../api/wapi'
 import { Button, Card, ErrorText } from '../components/ui'
+import { useToast } from '../components/ui'
 
 const SUPPORT_URL = `https://wa.me/5513988088204?text=${encodeURIComponent('Olá! Gostaria de configurar o WhatsApp no meu Personal Trainer.')}`
 
@@ -18,6 +18,7 @@ function getErrMsg(err: unknown): string {
 
 export function SettingsPage() {
   const qc = useQueryClient()
+  const { show: toast } = useToast()
   const [method, setMethod] = useState<Method>('qr')
   const [pairingPhone, setPairingPhone] = useState('')
 
@@ -53,7 +54,7 @@ export function SettingsPage() {
     mutationFn: wapiApi.disconnect,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['wapi-status'] })
-      toast.success('Desconectado com sucesso')
+      toast('Desconectado com sucesso')
     },
   })
 
@@ -229,7 +230,7 @@ export function SettingsPage() {
                   className="bg-surface-elevated rounded-xl p-6 text-center cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => {
                     navigator.clipboard.writeText(pairingQuery.data!.code)
-                    toast.success('Código copiado!')
+                    toast('Código copiado!')
                   }}
                   title="Clique para copiar"
                 >
