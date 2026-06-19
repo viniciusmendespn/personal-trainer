@@ -563,6 +563,8 @@ function SessaoTreino({ sessao }: { sessao: SessaoAtiva }) {
   )
 }
 
+const sanitizeCarga = (v: string) => v.replace(/[^\d.,]/g, '')
+
 function ExercicioCard({ ex }: { ex: ExSessao }) {
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
@@ -571,27 +573,31 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
 
   const initRows = () => {
     if (ex.registrado?.length) {
-      return ex.registrado.map((s) => ({ carga: s.carga ?? '', reps: s.reps != null ? String(s.reps) : '', repsHint: '' }))
+      return ex.registrado.map((s) => ({ carga: s.carga ?? '', reps: s.reps != null ? String(s.reps) : '', repsHint: '', cargaHint: '' }))
     }
     if (ex.series_prescritas?.length) {
       return ex.series_prescritas.flatMap((p) =>
-        Array.from({ length: p.series }, () => ({ carga: p.carga ?? '', reps: '', repsHint: p.reps ? String(p.reps) : '' }))
+        Array.from({ length: p.series }, () => ({ carga: '', reps: '', repsHint: p.reps ? String(p.reps) : '', cargaHint: p.carga ? String(p.carga) : '' }))
       )
     }
-    return Array.from({ length: ex.series ?? 1 }, () => ({ carga: ex.carga_prescrita ?? '', reps: '', repsHint: '' }))
+    return Array.from({ length: ex.series ?? 1 }, () => ({ carga: '', reps: '', repsHint: '', cargaHint: ex.carga_prescrita ?? '' }))
   }
   const [rows, setRows] = useState(initRows)
   const upd = (i: number, f: 'carga' | 'reps', v: string) =>
     setRows((rs) => rs.map((r, j) => (j === i ? { ...r, [f]: v } : r)))
   const removeRow = (i: number) => setRows((rs) => rs.filter((_, j) => j !== i))
+  const { show } = useToast()
 
   const save = useMutation({
     mutationFn: () => {
-      const series = rows
-        .filter((r) => r.carga || r.reps)
-        .map((r) => ({ carga: r.carga || undefined, reps: r.reps ? Number(r.reps) : undefined }))
+      const filled = rows.filter((r) => r.carga || r.reps)
+      if (filled.some((r) => !r.carga)) {
+        throw new Error('Informe a carga de todas as séries preenchidas.')
+      }
+      const series = filled.map((r) => ({ carga: r.carga || undefined, reps: r.reps ? Number(r.reps) : undefined }))
       return alunoApi.registrar(series, ex.exercicio_id)
     },
+    onError: (e: Error) => show(e.message, 'error'),
     onSuccess: (r) => {
       if (r.pr_novo) setPr(r.pr_novo)
       qc.invalidateQueries({ queryKey: ['aluno-sessao-exs'] })
@@ -638,7 +644,16 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
           {rows.map((r, i) => (
             <div key={i} className="flex gap-2 items-center">
               <span className="text-xs text-text-muted w-12">Sér {i + 1}</span>
-              <Input className="w-24" placeholder="Carga" value={r.carga} onChange={(e) => upd(i, 'carga', e.target.value)} />
+              <div className="relative w-24">
+                <Input
+                  className="pr-7"
+                  inputMode="decimal"
+                  placeholder={r.cargaHint || 'Carga'}
+                  value={r.carga}
+                  onChange={(e) => upd(i, 'carga', sanitizeCarga(e.target.value))}
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">kg</span>
+              </div>
               <Input className="w-20" placeholder={r.repsHint || 'Reps'} inputMode="numeric" value={r.reps} onChange={(e) => upd(i, 'reps', e.target.value)} />
               {rows.length > 1 && (
                 <button type="button" onClick={() => removeRow(i)} aria-label="Remover série" className="text-text-muted hover:text-danger">
@@ -647,7 +662,7 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
               )}
             </div>
           ))}
-          <button onClick={() => setRows([...rows, { carga: '', reps: '', repsHint: '' }])} className="text-xs text-accent-hover">+ série</button>
+          <button onClick={() => setRows([...rows, { carga: '', reps: '', repsHint: '', cargaHint: '' }])} className="text-xs text-accent-hover">+ série</button>
           {pr != null && (
             <Badge tone="warning" className="text-xs">
               <Trophy size={12} /> Novo recorde: {pr} kg!

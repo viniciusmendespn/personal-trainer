@@ -37,6 +37,9 @@ class WAPIClient:
     def get_status(self) -> dict:
         return self._get("/v1/instance/status-instance", timeout=10)
 
+    def get_device(self) -> dict:
+        return self._get("/v1/instance/device", timeout=10)
+
     def get_qr_code(self) -> dict:
         return self._get("/v1/instance/qr-code")
 
