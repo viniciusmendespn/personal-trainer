@@ -184,7 +184,16 @@ export function AlunoApp() {
   }
 
   if (!token) return <Centered>Abra o aplicativo pelo link enviado no seu WhatsApp.</Centered>
-  if (me.isError) return <Centered>Seu link expirou. Peça um novo ao seu personal no WhatsApp.</Centered>
+  if (me.isError) {
+    const status = (me.error as { response?: { status?: number } })?.response?.status
+    return (
+      <Centered>
+        {status === 403
+          ? 'Seu acesso foi desativado pelo seu personal.'
+          : 'Seu link expirou. Peça um novo ao seu personal no WhatsApp.'}
+      </Centered>
+    )
+  }
 
   return (
     <div

@@ -1,7 +1,7 @@
 import { useId, useRef, useState } from 'react'
 import { useMutation, useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote, Camera, Clock, RefreshCw, AlertCircle, History } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote, Camera, Clock, RefreshCw, AlertCircle, History, Power, PowerOff } from 'lucide-react'
 import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { alunosApi } from '../api/alunos'
 import {
@@ -104,6 +104,23 @@ export function AlunoDetailPage() {
     navigate('/alunos')
   }
 
+  async function toggleStatus() {
+    if (!aluno) return
+    if (aluno.status === 'ATIVO') {
+      const ok = await confirm({
+        title: 'Desativar acesso',
+        message: `${aluno.nome} perde acesso ao app imediatamente. Os dados são mantidos e o link continua o mesmo para quando reativar.`,
+        confirmLabel: 'Desativar', tone: 'danger',
+      })
+      if (!ok) return
+      await updateAluno.mutateAsync({ status: 'INATIVO' })
+      show('Acesso desativado.', 'success')
+    } else {
+      await updateAluno.mutateAsync({ status: 'ATIVO' })
+      show('Acesso reativado.', 'success')
+    }
+  }
+
   async function addTreino(e: React.FormEvent) {
     e.preventDefault()
     if (!nome) return
@@ -134,6 +151,19 @@ export function AlunoDetailPage() {
           <Link to={`/alunos/${alunoId}/avaliacoes`} className="inline-flex items-center gap-1 text-sm text-accent-hover hover:underline">
             <Scale size={16} /> Avaliação
           </Link>
+          {aluno && (
+            <Button
+              variant={aluno.status === 'ATIVO' ? 'outline' : 'energy'}
+              size="sm"
+              onClick={toggleStatus}
+              disabled={updateAluno.isPending}
+            >
+              <span className="flex items-center gap-1">
+                {aluno.status === 'ATIVO' ? <PowerOff size={14} /> : <Power size={14} />}
+                {aluno.status === 'ATIVO' ? 'Desativar acesso' : 'Reativar acesso'}
+              </span>
+            </Button>
+          )}
         </div>
       </div>
 

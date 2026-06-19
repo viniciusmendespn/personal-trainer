@@ -57,13 +57,21 @@ def get_current_personal_id(
 
 
 def get_current_aluno(creds: HTTPAuthorizationCredentials = Depends(security)) -> dict:
-    """App do aluno: valida o JWT escopado (HS256) e devolve {aluno_id, personal_id}."""
+    """App do aluno: valida o JWT escopado (HS256) e devolve {aluno_id, personal_id}.
+    Checa o status do aluno a cada request (sem cache) pra desativação ter efeito imediato."""
     from app import aluno_auth
+    from app.models.enums import AlunoStatus
+    from app.repositories import dynamo_repo as repo
+    from app.repositories import keys
     try:
         payload = aluno_auth.verify_token(creds.credentials)
     except Exception:
         raise HTTPException(status_code=401, detail="Token de aluno inválido")
-    return {"aluno_id": payload["aluno_id"], "personal_id": payload["personal_id"]}
+    aluno_id = payload["aluno_id"]
+    aluno = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
+    if not aluno or aluno.get("status") != AlunoStatus.ATIVO:
+        raise HTTPException(status_code=403, detail="Acesso desativado")
+    return {"aluno_id": aluno_id, "personal_id": payload["personal_id"]}
 
 
 def verify_wapi_webhook(secret: str) -> None:
