@@ -178,7 +178,8 @@ def buscar_exercicio(aluno_id: str, nome: str) -> dict:
     matches = [e for e in exs if nl in (e.get("nome", "").lower())] if nl else exs
     return {"ex": [{"id": e["exercicio_id"], "n": e.get("nome"),
                     "s": e.get("series"), "rp": e.get("reps_prescritas"),
-                    "cg": e.get("carga_prescrita"), "int": e.get("intervalo_s"),
+                    "cg": e.get("carga_prescrita"), "sp": e.get("series_prescritas"),
+                    "int": e.get("intervalo_s"),
                     "video": e.get("video_url"), "obs": e.get("observacoes")}
                    for e in matches[:5]]}
 
@@ -264,7 +265,8 @@ def detalhar_treino(aluno_id: str, treino_id: str) -> dict:
         "obs": treino.get("observacoes"),
         "ex": [{"id": e["exercicio_id"], "nome": e.get("nome"),
                 "s": e.get("series"), "rp": e.get("reps_prescritas"),
-                "cg": e.get("carga_prescrita"), "int": e.get("intervalo_s"),
+                "cg": e.get("carga_prescrita"), "sp": e.get("series_prescritas"),
+                "int": e.get("intervalo_s"),
                 "video": e.get("video_url"), "obs": e.get("observacoes"),
                 "dia": e.get("dia_semana")}
                for e in exs_clean],

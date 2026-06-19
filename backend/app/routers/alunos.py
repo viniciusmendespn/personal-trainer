@@ -133,6 +133,9 @@ def update_aluno(aluno_id: str, body: AlunoUpdate, personal_id: str = Depends(ge
             raise _phone_conflict(phone_item.get("aluno_id") if phone_item else None)
         if old_phone:
             repo.delete_item(keys.pk_phone(personal_id, old_phone), "PHONE")
+        foto_key = media_service.buscar_foto_perfil_whatsapp(personal_id, aluno_id, new_phone)
+        if foto_key:
+            fields["foto_s3_key"] = foto_key
 
     fields["updated_at"] = now_iso()
     updated = repo.update_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, fields, return_values=True)
@@ -141,7 +144,7 @@ def update_aluno(aluno_id: str, body: AlunoUpdate, personal_id: str = Depends(ge
     if novo_status and novo_status != current.get("status"):
         delta = 1 if novo_status == AlunoStatus.ATIVO else -1
         repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add={"ativos": delta})
-    return repo.clean(updated)
+    return _add_foto_url(repo.clean(updated))
 
 
 @router.get("/{aluno_id}/link")
