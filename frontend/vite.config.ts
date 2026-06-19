@@ -24,6 +24,8 @@ export default defineConfig({
         icons: [{ src: 'coach-icon.png', sizes: '138x135', type: 'image/png', purpose: 'any' }],
       },
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         navigateFallback: null,
         runtimeCaching: [{ urlPattern: /\/v1\//, handler: 'NetworkOnly' }],
       },

@@ -20,7 +20,7 @@ export function PontosWidget({ onVerRanking }: Props) {
   const total = pontos?.total ?? 0
   const semana = pontos?.semana_atual ?? 0
   const mes = pontos?.mes_atual ?? 0
-  const minhaPosicao = ranking?.find((r) => r.eu)?.posicao
+  const minhaPosicao = Array.isArray(ranking) ? ranking.find((r) => r.eu)?.posicao : undefined
   const totalAlunos = ranking?.length ?? 0
 
   return (
