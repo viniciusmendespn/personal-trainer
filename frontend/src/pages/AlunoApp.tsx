@@ -166,7 +166,7 @@ export function AlunoApp() {
   const installPromptRef = useRef<Event & { prompt: () => Promise<void> } | null>(null)
   const [canInstall, setCanInstall] = useState(false)
   const [showPerfilModal, setShowPerfilModal] = useState(false)
-  const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false })
+  const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false, staleTime: 0, refetchOnWindowFocus: true })
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -184,7 +184,7 @@ export function AlunoApp() {
   }
 
   if (!token) return <Centered>Abra o aplicativo pelo link enviado no seu WhatsApp.</Centered>
-  if (me.isLoading) return <Centered><Spinner /></Centered>
+  if (me.isLoading || me.isFetching) return <Centered><Spinner /></Centered>
   if (me.isError) {
     const status = (me.error as { response?: { status?: number } })?.response?.status
     return (
