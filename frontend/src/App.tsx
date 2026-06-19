@@ -12,6 +12,7 @@ import { ForgotPasswordPage } from './auth/ForgotPasswordPage'
 import LandingPage from './pages/landing/LandingPage'
 import { AppLayout } from './components/layout/AppLayout'
 import { ErrorPage } from './pages/ErrorPage'
+import { PortalErrorPage } from './pages/PortalErrorPage'
 
 // Code-splitting: cada página do portal autenticado e o app do aluno viram chunks
 // separados — o aluno (link de WhatsApp, rede móvel) não baixa o JS do portal inteiro
@@ -75,20 +76,27 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         children: [
-          { path: 'dashboard', element: lazyPage(<DashboardPage />) },
-          { path: 'alunos', element: lazyPage(<AlunosPage />) },
-          { path: 'agenda', element: lazyPage(<AgendaPage />) },
-          { path: 'templates', element: lazyPage(<TemplatesPage />) },
-          { path: 'alunos/:alunoId', element: lazyPage(<AlunoDetailPage />) },
-          { path: 'alunos/:alunoId/evolucao', element: lazyPage(<AlunoEvolucaoPage />) },
-          { path: 'alunos/:alunoId/avaliacoes', element: lazyPage(<AvaliacoesPage />) },
-          { path: 'biblioteca', element: lazyPage(<BibliotecaPage />) },
-          { path: 'feed', element: lazyPage(<FeedGlobalPage />) },
-          { path: 'ranking', element: lazyPage(<RankingPage />) },
-          { path: 'notificacoes', element: lazyPage(<PendenciasPage />) },
-          { path: 'config', element: lazyPage(<SettingsPage />) },
-          { path: 'perfil', element: lazyPage(<PersonalProfilePage />) },
-          { path: 'admin', element: lazyPage(<AdminPage />) },
+          {
+            // Wrapper pathless: errorElement renderiza dentro do Outlet do AppLayout,
+            // mantendo sidebar e topbar intactos.
+            errorElement: <PortalErrorPage />,
+            children: [
+              { path: 'dashboard', element: lazyPage(<DashboardPage />) },
+              { path: 'alunos', element: lazyPage(<AlunosPage />) },
+              { path: 'agenda', element: lazyPage(<AgendaPage />) },
+              { path: 'templates', element: lazyPage(<TemplatesPage />) },
+              { path: 'alunos/:alunoId', element: lazyPage(<AlunoDetailPage />) },
+              { path: 'alunos/:alunoId/evolucao', element: lazyPage(<AlunoEvolucaoPage />) },
+              { path: 'alunos/:alunoId/avaliacoes', element: lazyPage(<AvaliacoesPage />) },
+              { path: 'biblioteca', element: lazyPage(<BibliotecaPage />) },
+              { path: 'feed', element: lazyPage(<FeedGlobalPage />) },
+              { path: 'ranking', element: lazyPage(<RankingPage />) },
+              { path: 'notificacoes', element: lazyPage(<PendenciasPage />) },
+              { path: 'config', element: lazyPage(<SettingsPage />) },
+              { path: 'perfil', element: lazyPage(<PersonalProfilePage />) },
+              { path: 'admin', element: lazyPage(<AdminPage />) },
+            ],
+          },
         ],
       },
       { path: '*', element: <ErrorPage /> },
