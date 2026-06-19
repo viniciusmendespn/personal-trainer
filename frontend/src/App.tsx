@@ -29,6 +29,7 @@ const AlunoApp = lazy(() => import('./pages/AlunoApp').then((m) => ({ default: m
 const FeedGlobalPage = lazy(() => import('./pages/FeedGlobalPage').then((m) => ({ default: m.FeedGlobalPage })))
 const RankingPage = lazy(() => import('./pages/RankingPage').then((m) => ({ default: m.RankingPage })))
 const PersonalProfilePage = lazy(() => import('./pages/PersonalProfilePage').then((m) => ({ default: m.PersonalProfilePage })))
+const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })))
 
 function PageFallback() {
   return (
@@ -83,6 +84,7 @@ const router = createBrowserRouter([
       { path: 'notificacoes', element: lazyPage(<PendenciasPage />) },
       { path: 'config', element: lazyPage(<SettingsPage />) },
       { path: 'perfil', element: lazyPage(<PersonalProfilePage />) },
+      { path: 'admin', element: lazyPage(<AdminPage />) },
     ],
   },
 ])

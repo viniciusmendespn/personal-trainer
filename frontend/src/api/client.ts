@@ -10,6 +10,17 @@ export const api = axios.create({
 let _token: string | null = null
 let _exp = 0
 
+// Token de impersonação emitido por /v1/admin/impersonate — enviado em X-Impersonate
+let _impersonationToken: string | null = null
+
+export function setImpersonationToken(token: string | null) {
+  _impersonationToken = token
+}
+
+export function isImpersonating(): boolean {
+  return _impersonationToken !== null
+}
+
 async function getToken(): Promise<string | null> {
   if (_token && Date.now() < _exp - 120_000) return _token
   try {
@@ -27,6 +38,7 @@ async function getToken(): Promise<string | null> {
 api.interceptors.request.use(async (config) => {
   const token = await getToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
+  if (_impersonationToken) config.headers['X-Impersonate'] = _impersonationToken
   return config
 })
 

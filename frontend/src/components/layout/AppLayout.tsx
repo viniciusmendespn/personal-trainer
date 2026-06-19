@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
@@ -24,7 +24,7 @@ const NAV_ITEMS = [
 ]
 
 function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: () => void }) {
-  const { user, signOut } = useAuth()
+  const { user, signOut, isAdmin } = useAuth()
   const profile = useQuery({ queryKey: ['personal-profile'], queryFn: personalApi.getProfile, staleTime: 300_000 })
   const link = (active: boolean) =>
     `flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
@@ -57,11 +57,34 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
           )}
         </NavLink>
       ))}
+      {isAdmin && (
+        <NavLink to="/admin" onClick={onNavigate} className={({ isActive }) => link(isActive)}>
+          <Shield size={16} /> Admin
+        </NavLink>
+      )}
       <button
         onClick={() => signOut()}
         className="mt-auto flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-text-secondary hover:bg-white/5 hover:text-text"
       >
         <LogOut size={16} /> Sair
+      </button>
+    </div>
+  )
+}
+
+function ImpersonationBanner() {
+  const { impersonating, stopImpersonating } = useAuth()
+  if (!impersonating) return null
+  return (
+    <div className="flex items-center justify-between px-4 py-2 bg-amber-500/20 border-b border-amber-500/30 text-amber-300 text-xs shrink-0">
+      <span>
+        Visualizando como <strong>{impersonating.name}</strong>
+      </span>
+      <button
+        onClick={stopImpersonating}
+        className="ml-4 px-2 py-0.5 rounded bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 transition-colors"
+      >
+        Sair
       </button>
     </div>
   )
@@ -80,7 +103,9 @@ export function AppLayout() {
 
   return (
     <ChatContextProvider>
-    <div className="h-screen overflow-hidden flex">
+    <div className="h-screen overflow-hidden flex flex-col">
+      <ImpersonationBanner />
+      <div className="flex flex-1 min-h-0">
       {/* Desktop sidebar (lg+) */}
       <aside className="hidden lg:flex w-56 shrink-0 border-r border-border bg-surface/60 backdrop-blur-xl p-4">
         <SidebarContent unread={unread} />
@@ -130,6 +155,7 @@ export function AppLayout() {
       </div>
 
       <ChatWidget />
+      </div>
     </div>
     </ChatContextProvider>
   )

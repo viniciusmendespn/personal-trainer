@@ -3,7 +3,7 @@ import json
 import time
 import urllib.request
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, Header, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwk, jwt
 
@@ -44,8 +44,10 @@ def _verify_token(token: str) -> dict:
 
 def get_current_personal_id(
     creds: HTTPAuthorizationCredentials = Depends(security),
+    x_impersonate: str = Header(default=""),
 ) -> str:
-    """Tenant = personal. O `personal_id` é o `sub` do JWT do Cognito (ESPEC §1.1)."""
+    """Tenant = personal. Aceita JWT Cognito (RS256); suporta impersonação pelo admin
+    via header X-Impersonate contendo um token HS256 emitido por /v1/admin/impersonate."""
     try:
         payload = _verify_token(creds.credentials)
     except Exception:
@@ -53,6 +55,18 @@ def get_current_personal_id(
     personal_id = payload.get("sub")
     if not personal_id:
         raise HTTPException(status_code=401, detail="Token sem sub")
+
+    if x_impersonate and settings.admin_secret:
+        if payload.get("email") != settings.admin_email:
+            raise HTTPException(status_code=403, detail="Impersonação restrita ao admin")
+        try:
+            imp = jwt.decode(x_impersonate, settings.admin_secret, algorithms=["HS256"])
+        except Exception:
+            raise HTTPException(status_code=401, detail="Token de impersonação inválido")
+        if imp.get("scope") != "impersonation" or not imp.get("personal_id"):
+            raise HTTPException(status_code=401, detail="Token de impersonação inválido")
+        return imp["personal_id"]
+
     return personal_id
 
 

@@ -65,7 +65,11 @@ Parameters:
     Type: String
     Default: ""
     NoEcho: true
-    Description: "Chave para o header X-Admin-Key — protege POST /v1/wapi/config (só scripts admin)."
+    Description: "Chave para o header X-Admin-Key — protege POST /v1/wapi/config + assina tokens de impersonação."
+  AdminEmail:
+    Type: String
+    Default: "admin@coachpilot.com.br"
+    Description: "Email do superadmin — único usuário que pode chamar /v1/admin/* e usar impersonação."
 
 Conditions:
   CreateFrontendInfra: !Equals [!Ref DeployFrontendInfra, "true"]
@@ -98,6 +102,7 @@ Globals:
         FUSION_BASE_URL: !Ref FusionBaseUrl
         FUSION_API_VERSION: !Ref FusionApiVersion
         ADMIN_SECRET: !Ref AdminSecret
+        ADMIN_EMAIL: !Ref AdminEmail
 
 Resources:
 
@@ -166,7 +171,7 @@ Resources:
       StageName: !Ref Stage
       CorsConfiguration:
         AllowMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
-        AllowHeaders: [Content-Type, Authorization]
+        AllowHeaders: [Content-Type, Authorization, X-Impersonate]
         AllowOrigins: ["*"]
       Auth:
         DefaultAuthorizer: CognitoJwtAuthorizer
@@ -195,6 +200,10 @@ Resources:
             TableName: !Ref MainTable
         - S3CrudPolicy:
             BucketName: !Sub "${ProjectName}-media-${Stage}-${AWS::AccountId}"
+        - Statement:
+            - Effect: Allow
+              Action: cognito-idp:ListUsers
+              Resource: !GetAtt UserPool.Arn
       Events:
         HealthCheck:
           Type: HttpApi

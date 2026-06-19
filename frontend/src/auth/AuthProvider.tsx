@@ -6,6 +6,9 @@ import {
   fetchUserAttributes,
 } from 'aws-amplify/auth'
 import { useQueryClient } from '@tanstack/react-query'
+import { setImpersonationToken } from '../api/client'
+
+const ADMIN_EMAIL = 'admin@coachpilot.com.br'
 
 interface AuthUser {
   userId: string
@@ -14,12 +17,21 @@ interface AuthUser {
   name?: string
 }
 
+interface ImpersonatingState {
+  personalId: string
+  name: string
+}
+
 interface AuthContextValue {
   user: AuthUser | null
   isLoading: boolean
+  isAdmin: boolean
+  impersonating: ImpersonatingState | null
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   refresh: () => Promise<void>
+  impersonate: (personalId: string, name: string, token: string) => void
+  stopImpersonating: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -27,6 +39,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [impersonating, setImpersonating] = useState<ImpersonatingState | null>(null)
   const queryClient = useQueryClient()
 
   async function load() {
@@ -49,13 +62,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signOut() {
+    setImpersonationToken(null)
+    setImpersonating(null)
     await amplifySignOut()
     queryClient.clear()
     setUser(null)
   }
 
+  function impersonate(personalId: string, name: string, token: string) {
+    setImpersonationToken(token)
+    setImpersonating({ personalId, name })
+    queryClient.clear()
+  }
+
+  function stopImpersonating() {
+    setImpersonationToken(null)
+    setImpersonating(null)
+    queryClient.clear()
+  }
+
+  const isAdmin = user?.email === ADMIN_EMAIL
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signOut, refresh: load }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, isAdmin, impersonating, signIn, signOut, refresh: load, impersonate, stopImpersonating }}
+    >
       {children}
     </AuthContext.Provider>
   )

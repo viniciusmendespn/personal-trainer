@@ -1,0 +1,68 @@
+"""Superadmin: lista personals e emite tokens de impersonação (view-as).
+O admin loga com Cognito normalmente; este router valida o email do caller e emite
+tokens HS256 de curta duração que o frontend envia no header X-Impersonate."""
+import time
+
+import boto3
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import jwt
+
+from app.config import settings
+from app.dependencies import _verify_token
+
+router = APIRouter(prefix="/v1/admin", tags=["admin"])
+_security = HTTPBearer()
+_TOKEN_HOURS = 8
+
+
+def _require_admin(creds: HTTPAuthorizationCredentials = Depends(_security)) -> str:
+    """Valida JWT Cognito e exige que o caller seja o admin (email == admin_email)."""
+    try:
+        payload = _verify_token(creds.credentials)
+    except Exception:
+        raise HTTPException(401, "Token inválido")
+    if not settings.admin_email or payload.get("email") != settings.admin_email:
+        raise HTTPException(403, "Acesso restrito ao admin")
+    return payload.get("sub", "")
+
+
+@router.get("/personals")
+def list_personals(_: str = Depends(_require_admin)):
+    """Lista todos os personals cadastrados no Cognito, exceto o próprio admin."""
+    client = boto3.client("cognito-idp", region_name=settings.cognito_region)
+    users = []
+    paginator = client.get_paginator("list_users")
+    for page in paginator.paginate(UserPoolId=settings.cognito_user_pool_id):
+        for u in page["Users"]:
+            attrs = {a["Name"]: a["Value"] for a in u["Attributes"]}
+            email = attrs.get("email", "")
+            if email == settings.admin_email:
+                continue
+            users.append({
+                "personal_id": attrs.get("sub", ""),
+                "email": email,
+                "name": attrs.get("name", ""),
+                "status": u["UserStatus"],
+            })
+    return {"personals": users}
+
+
+@router.post("/impersonate/{personal_id}")
+def impersonate(personal_id: str, admin_sub: str = Depends(_require_admin)):
+    """Emite token HS256 de impersonação (8h). O frontend o envia em X-Impersonate."""
+    if not settings.admin_secret:
+        raise HTTPException(500, "admin_secret não configurado")
+    now = int(time.time())
+    token = jwt.encode(
+        {
+            "personal_id": personal_id,
+            "scope": "impersonation",
+            "admin_sub": admin_sub,
+            "exp": now + _TOKEN_HOURS * 3600,
+            "iat": now,
+        },
+        settings.admin_secret,
+        algorithm="HS256",
+    )
+    return {"token": token, "expires_in": _TOKEN_HOURS * 3600, "personal_id": personal_id}

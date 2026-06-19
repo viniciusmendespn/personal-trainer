@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     fusion_api_key: str = ""
     fusion_base_url: str = "https://fusion-llm.brq.com"
     fusion_api_version: str = "2025-03-01-preview"
-    admin_secret: str = ""                 # protege POST /v1/wapi/config (só scripts admin)
+    admin_secret: str = ""                 # protege POST /v1/wapi/config + assina tokens de impersonação
+    admin_email: str = "admin@coachpilot.com.br"  # email do superadmin (impersonação)
 
     class Config:
         env_file = (".env", ".env.local")
