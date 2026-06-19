@@ -4,6 +4,7 @@ import { QrCode, Phone, CheckCircle, AlertCircle, MessageCircle, WifiOff, Refres
 import { wapiApi } from '../api/wapi'
 import { Button, Card, ErrorText } from '../components/ui'
 import { useToast } from '../components/ui'
+import { PhoneInput } from '../components/PhoneInput'
 
 const SUPPORT_URL = `https://wa.me/5513988088204?text=${encodeURIComponent('Olá! Gostaria de configurar o WhatsApp no meu Personal Trainer.')}`
 
@@ -60,7 +61,8 @@ export function SettingsPage() {
 
   useEffect(() => {
     if (method === 'qr' && !noInstance && !connected && !status.isLoading) {
-      qrQuery.refetch()
+      const t = setTimeout(() => qrQuery.refetch(), 1500)
+      return () => clearTimeout(t)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [method, noInstance, connected, status.isLoading])
@@ -188,15 +190,17 @@ export function SettingsPage() {
                 </div>
               )}
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => qrQuery.refetch()}
-                disabled={qrQuery.isFetching}
-              >
-                <RefreshCw size={14} className={qrQuery.isFetching ? 'animate-spin' : ''} />
-                {qrQuery.data?.qr_code ? 'Atualizar QR Code' : 'Gerar QR Code'}
-              </Button>
+              <div className="flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => qrQuery.refetch()}
+                  disabled={qrQuery.isFetching}
+                >
+                  <RefreshCw size={14} className={qrQuery.isFetching ? 'animate-spin' : ''} />
+                  {qrQuery.data?.qr_code ? 'Atualizar QR Code' : 'Gerar QR Code'}
+                </Button>
+              </div>
 
               <div className="text-xs text-text-secondary space-y-0.5">
                 <p>1. Abra o WhatsApp no seu celular</p>
@@ -208,48 +212,55 @@ export function SettingsPage() {
 
           {method === 'pairing' && (
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-text-secondary mb-1">
-                  Número de WhatsApp (com DDI e DDD)
-                </label>
-                <input
-                  type="tel"
-                  placeholder="5511987654321"
-                  value={pairingPhone}
-                  onChange={(e) => setPairingPhone(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-surface-elevated border border-border text-sm focus:outline-none focus:ring-1 focus:ring-accent"
-                />
-              </div>
+              <PhoneInput
+                label="Número de WhatsApp"
+                value={pairingPhone}
+                onChange={setPairingPhone}
+                disabled={pairingQuery.isFetching}
+              />
 
               {pairingQuery.isError && (
                 <ErrorText>{getErrMsg(pairingQuery.error)}</ErrorText>
               )}
 
-              {pairingQuery.data?.code && (
-                <div
-                  className="bg-surface-elevated rounded-xl p-6 text-center cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => {
-                    navigator.clipboard.writeText(pairingQuery.data!.code)
-                    toast('Código copiado!')
-                  }}
-                  title="Clique para copiar"
-                >
-                  <p className="text-xs text-text-secondary mb-1">Digite este código no WhatsApp</p>
-                  <p className="text-3xl font-mono font-bold tracking-widest">{pairingQuery.data.code}</p>
-                  <p className="text-xs text-text-secondary mt-2 flex items-center justify-center gap-1">
-                    <Copy size={12} /> Clique para copiar
-                  </p>
-                </div>
-              )}
+              <div className="text-center">
+                {pairingQuery.data?.code ? (
+                  <div
+                    className="bg-surface-elevated rounded-xl p-6 cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors group mb-4"
+                    onClick={() => {
+                      navigator.clipboard.writeText(pairingQuery.data!.code)
+                      toast('Código copiado!')
+                    }}
+                    title="Clique para copiar"
+                  >
+                    <p className="text-xs text-text-secondary mb-1">Digite este código no WhatsApp</p>
+                    <p className="text-3xl font-mono font-bold tracking-widest">{pairingQuery.data.code}</p>
+                    <p className="text-xs text-text-muted mt-2 flex items-center justify-center gap-1 group-hover:text-text-secondary transition-colors">
+                      <Copy size={12} /> Clique para copiar
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-surface-elevated rounded-xl p-8 flex flex-col items-center gap-2 mb-4">
+                    {pairingQuery.isFetching
+                      ? <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                      : <Phone className="w-10 h-10 text-text-secondary/30" />}
+                    <p className="text-text-muted text-sm">
+                      {pairingQuery.isFetching ? 'Gerando código...' : 'Informe o número e clique em gerar'}
+                    </p>
+                  </div>
+                )}
 
-              <Button
-                variant="outline"
-                onClick={() => pairingQuery.refetch()}
-                disabled={pairingQuery.isFetching || !pairingPhone.trim()}
-              >
-                <RefreshCw size={14} className={pairingQuery.isFetching ? 'animate-spin' : ''} />
-                {pairingQuery.data?.code ? 'Gerar novo código' : 'Gerar código'}
-              </Button>
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => pairingQuery.refetch()}
+                    disabled={pairingQuery.isFetching || !pairingPhone.trim()}
+                  >
+                    <RefreshCw size={14} className={pairingQuery.isFetching ? 'animate-spin' : ''} />
+                    {pairingQuery.data?.code ? 'Gerar novo código' : 'Gerar código'}
+                  </Button>
+                </div>
+              </div>
 
               <div className="text-xs text-text-secondary space-y-0.5">
                 <p>1. Abra o WhatsApp no celular</p>

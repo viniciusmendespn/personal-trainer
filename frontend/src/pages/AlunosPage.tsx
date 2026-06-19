@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Plus, ChevronRight, Search, Users } from 'lucide-react'
 import { useAlunosPaginated, useCreateAluno, useUpdateAluno } from '../hooks/useAlunos'
 import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState } from '../components/ui'
+import { PhoneInput } from '../components/PhoneInput'
 import type { AlunoExistenteConflict } from '../types'
 
 export function AlunosPage() {
@@ -82,12 +83,7 @@ export function AlunosPage() {
         <form onSubmit={submit} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input label="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
-            <Input
-              label="Telefone (E.164, ex: 5531999998888)"
-              value={telefone}
-              onChange={(e) => setTelefone(e.target.value)}
-              required
-            />
+            <PhoneInput label="Telefone" value={telefone} onChange={setTelefone} required />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
