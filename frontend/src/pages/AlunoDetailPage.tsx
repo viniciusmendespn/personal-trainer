@@ -317,11 +317,26 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
     return d.toISOString().slice(0, 10)
   }
 
-  async function reordenar(a: Treino, b: Treino) {
+  async function reordenar(fromIdx: number, toIdx: number) {
     setReordering(true)
+    const newList = [...vigentes]
+    ;[newList[fromIdx], newList[toIdx]] = [newList[toIdx], newList[fromIdx]]
     try {
-      await updTreino.mutateAsync({ treinoId: a.treino_id, body: { nome: a.nome, foco: a.foco, observacoes: a.observacoes, ativo: a.ativo, data_inicio: a.data_inicio, data_fim: a.data_fim, custom: a.custom, ordem: b.ordem } })
-      await updTreino.mutateAsync({ treinoId: b.treino_id, body: { nome: b.nome, foco: b.foco, observacoes: b.observacoes, ativo: b.ativo, data_inicio: b.data_inicio, data_fim: b.data_fim, custom: b.custom, ordem: a.ordem } })
+      await Promise.all(
+        newList
+          .map((t, idx) => ({ t, idx }))
+          .filter(({ t, idx }) => t.ordem !== idx)
+          .map(({ t, idx }) =>
+            updTreino.mutateAsync({
+              treinoId: t.treino_id,
+              body: {
+                nome: t.nome, foco: t.foco, observacoes: t.observacoes,
+                ativo: t.ativo, data_inicio: t.data_inicio, data_fim: t.data_fim,
+                custom: t.custom, ordem: idx,
+              },
+            })
+          )
+      )
     } finally {
       setReordering(false)
     }
@@ -348,18 +363,19 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
     <div className="space-y-3">
       {vigentes.map((t, idx) => (
         <div key={t.treino_id} className="flex items-start gap-1">
-          <div className="flex flex-col gap-0.5 pt-2.5 shrink-0">
+          <div className="flex flex-col items-center gap-0.5 pt-1.5 shrink-0 w-5">
             <button
               disabled={idx === 0 || reordering}
-              onClick={() => reordenar(t, vigentes[idx - 1])}
+              onClick={() => reordenar(idx, idx - 1)}
               className="p-0.5 text-text-muted hover:text-text disabled:opacity-25 transition-opacity"
               aria-label="Mover para cima"
             >
               <ChevronUp size={13} />
             </button>
+            <span className="text-[10px] font-mono text-text-muted leading-none select-none">{idx + 1}</span>
             <button
               disabled={idx === vigentes.length - 1 || reordering}
-              onClick={() => reordenar(t, vigentes[idx + 1])}
+              onClick={() => reordenar(idx, idx + 1)}
               className="p-0.5 text-text-muted hover:text-text disabled:opacity-25 transition-opacity"
               aria-label="Mover para baixo"
             >
