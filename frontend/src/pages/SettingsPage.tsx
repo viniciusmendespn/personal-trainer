@@ -76,7 +76,7 @@ export function SettingsPage() {
   })
 
   useEffect(() => {
-    if (method === 'qr' && !noInstance && !connected && !status.isLoading) {
+    if (method === 'qr' && !connected && status.isSuccess) {
       const t = setTimeout(() => qrQuery.refetch(), 1500)
       return () => clearTimeout(t)
     }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus, ChevronRight, Search, Users } from 'lucide-react'
+import { Plus, ChevronRight, Search, Users, Bot } from 'lucide-react'
 import { useAlunosPaginated, useCreateAluno, useUpdateAluno } from '../hooks/useAlunos'
 import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
@@ -143,7 +143,12 @@ export function AlunosPage() {
                   <div className="min-w-0 flex-1">
                     <p className="font-medium truncate">{a.nome}</p>
                     <p className="text-xs text-text-muted truncate">{a.telefone}</p>
-                    <Badge tone={a.status === 'ATIVO' ? 'success' : 'neutral'} className="mt-1">{a.status}</Badge>
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      <Badge tone={a.status === 'ATIVO' ? 'success' : 'neutral'}>{a.status}</Badge>
+                      <Badge tone={a.agente_habilitado ? 'success' : 'neutral'} className="flex items-center gap-0.5">
+                        <Bot size={10} />{a.agente_habilitado ? 'Agente ativo' : 'Agente inativo'}
+                      </Badge>
+                    </div>
                   </div>
                   <ChevronRight size={18} className="text-text-muted shrink-0" />
                 </Card>

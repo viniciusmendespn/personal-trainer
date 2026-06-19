@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { MessageCircle, X, ChevronLeft, Search } from 'lucide-react'
 import { useAlunos } from '../../hooks/useAlunos'
 import { useExerciciosAluno } from '../../hooks/useEvolucao'
-import { usePersonalChat, useSendPersonalChat, useEnviarCorrecao, useRetomarAgente } from '../../hooks/usePersonalChat'
+import { usePersonalChat, useSendPersonalChat, useEnviarCorrecao } from '../../hooks/usePersonalChat'
 import { Avatar, Spinner, Modal, Select, Button } from '../ui'
 import { ChatThread } from './ChatThread'
 import { ChatInputBar } from './ChatInputBar'
@@ -11,42 +11,15 @@ import { useChatContext } from '../../context/ChatContext'
 export function ChatWidget() {
   const { open, setOpen, alunoId, setAlunoId } = useChatContext()
   const [anexo, setAnexo] = useState<File | null>(null)
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null)
   const [busca, setBusca] = useState('')
   const alunos = useAlunos()
   const history = usePersonalChat(alunoId)
   const send = useSendPersonalChat(alunoId)
-  const retomar = useRetomarAgente(alunoId)
   const aluno = alunos.data?.find((a) => a.aluno_id === alunoId)
   const alunosFiltrados = useMemo(
     () => alunos.data?.filter((a) => a.nome.toLowerCase().includes(busca.toLowerCase())) ?? [],
     [alunos.data, busca],
   )
-
-  function guardedClose() {
-    if (alunoId && history.agentePausado) {
-      setPendingAction(() => () => setOpen(false))
-      setConfirmOpen(true)
-    } else {
-      setOpen(false)
-    }
-  }
-
-  function guardedBack() {
-    if (history.agentePausado) {
-      setPendingAction(() => () => setAlunoId(null))
-      setConfirmOpen(true)
-    } else {
-      setAlunoId(null)
-    }
-  }
-
-  async function confirmarEncerramento() {
-    await retomar.mutateAsync()
-    setConfirmOpen(false)
-    pendingAction?.()
-  }
 
   if (!open) {
     return (
@@ -64,14 +37,14 @@ export function ChatWidget() {
     <div className="fixed inset-0 sm:inset-auto sm:bottom-5 sm:right-5 z-40 sm:w-[400px] sm:max-w-[calc(100vw-2.5rem)] sm:h-[600px] sm:max-h-[calc(100vh-2.5rem)] sm:rounded-2xl overflow-hidden bg-surface border border-border shadow-2xl flex flex-col">
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border bg-surface-elevated shrink-0">
         {alunoId && (
-          <button onClick={guardedBack} aria-label="Voltar" className="p-1 -ml-1 text-text-secondary hover:text-text">
+          <button onClick={() => setAlunoId(null)} aria-label="Voltar" className="p-1 -ml-1 text-text-secondary hover:text-text">
             <ChevronLeft size={18} />
           </button>
         )}
         <h3 className="font-display font-semibold text-text flex-1 truncate">
           {aluno ? aluno.nome : 'Conversas'}
         </h3>
-        <button onClick={guardedClose} aria-label="Fechar" className="p-1 text-text-secondary hover:text-text">
+        <button onClick={() => setOpen(false)} aria-label="Fechar" className="p-1 text-text-secondary hover:text-text">
           <X size={18} />
         </button>
       </header>
@@ -119,7 +92,7 @@ export function ChatWidget() {
             isLoading={history.isLoading}
             viewerRole="PERSONAL"
             alunoNome={aluno?.nome}
-            agentePausado={history.agentePausado}
+            agenteHabilitado={history.agenteHabilitado}
             onLoadMore={() => history.fetchNextPage()}
             hasMore={history.hasNextPage}
             isLoadingMore={history.isFetchingNextPage}
@@ -142,17 +115,6 @@ export function ChatWidget() {
         )}
       </Modal>
 
-      <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} title="Encerrar conversa?">
-        <p className="text-sm text-text-secondary mb-4">
-          O agente será reabilitado para responder as mensagens de <strong>{aluno?.nome}</strong>.
-        </p>
-        <div className="flex gap-2 justify-end">
-          <Button variant="ghost" onClick={() => setConfirmOpen(false)}>Cancelar</Button>
-          <Button onClick={confirmarEncerramento} disabled={retomar.isPending}>
-            {retomar.isPending ? 'Reabilitando…' : 'Confirmar e reabilitar'}
-          </Button>
-        </div>
-      </Modal>
     </div>
   )
 }

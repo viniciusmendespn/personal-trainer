@@ -33,38 +33,42 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
   const displayName = profile.data?.nome || user?.name || user?.email || 'Personal'
 
   return (
-    <div className="flex flex-col gap-1 h-full w-full">
-      <div className="px-2 mb-3 flex items-center gap-2">
-        <AppLogo size={22} />
-        <span className="font-display text-xs font-bold text-text-secondary tracking-wide">CoachPilot</span>
-      </div>
-      <div className="px-2 mb-4 flex items-center gap-2">
-        <Avatar name={displayName} imageUrl={profile.data?.foto_url} size="sm" />
-        <div className="min-w-0">
-          <h1 className="font-display text-sm font-bold text-text truncate">{displayName}</h1>
-          {profile.data?.descricao && (
-            <p className="text-xs text-text-muted truncate">{profile.data.descricao}</p>
-          )}
+    <div className="flex flex-col h-full w-full">
+      <div className="shrink-0">
+        <div className="px-2 mb-3 flex items-center gap-2">
+          <AppLogo size={22} />
+          <span className="font-display text-xs font-bold text-text-secondary tracking-wide">CoachPilot</span>
+        </div>
+        <div className="px-2 mb-4 flex items-center gap-2">
+          <Avatar name={displayName} imageUrl={profile.data?.foto_url} size="sm" />
+          <div className="min-w-0">
+            <h1 className="font-display text-sm font-bold text-text truncate">{displayName}</h1>
+            {profile.data?.descricao && (
+              <p className="text-xs text-text-muted truncate">{profile.data.descricao}</p>
+            )}
+          </div>
         </div>
       </div>
-      {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-        <NavLink key={to} to={to} onClick={onNavigate} className={({ isActive }) => link(isActive)}>
-          <Icon size={16} /> {label}
-          {to === '/notificacoes' && unread > 0 && (
-            <span className="ml-auto text-[10px] bg-accent text-white rounded-full px-1.5 min-w-5 text-center leading-5">
-              {unread}
-            </span>
-          )}
-        </NavLink>
-      ))}
-      {isAdmin && (
-        <NavLink to="/admin" onClick={onNavigate} className={({ isActive }) => link(isActive)}>
-          <Shield size={16} /> Admin
-        </NavLink>
-      )}
+      <nav className="flex flex-col gap-1 flex-1 overflow-y-auto min-h-0">
+        {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+          <NavLink key={to} to={to} onClick={onNavigate} className={({ isActive }) => link(isActive)}>
+            <Icon size={16} /> {label}
+            {to === '/notificacoes' && unread > 0 && (
+              <span className="ml-auto text-[10px] bg-accent text-white rounded-full px-1.5 min-w-5 text-center leading-5">
+                {unread}
+              </span>
+            )}
+          </NavLink>
+        ))}
+        {isAdmin && (
+          <NavLink to="/admin" onClick={onNavigate} className={({ isActive }) => link(isActive)}>
+            <Shield size={16} /> Admin
+          </NavLink>
+        )}
+      </nav>
       <button
         onClick={() => signOut()}
-        className="mt-auto flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-text-secondary hover:bg-white/5 hover:text-text"
+        className="shrink-0 mt-2 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-text-secondary hover:bg-white/5 hover:text-text"
       >
         <LogOut size={16} /> Sair
       </button>

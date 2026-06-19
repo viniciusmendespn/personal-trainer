@@ -82,15 +82,14 @@ def log_direct(personal_id: str, aluno_id: str, text: str, ator: Ator, canal: Ca
     return True
 
 
-def is_agente_pausado(aluno_id: str) -> bool:
+def is_agente_habilitado(aluno_id: str) -> bool:
     profile = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
-    return bool((profile or {}).get("agente_pausado"))
+    return bool((profile or {}).get("agente_habilitado"))
 
 
-def set_agente_pausado(aluno_id: str, pausado: bool) -> None:
+def set_agente_habilitado(aluno_id: str, habilitado: bool) -> None:
     repo.update_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, {
-        "agente_pausado": pausado,
-        "pausado_em": now_iso() if pausado else None,
+        "agente_habilitado": habilitado,
     })
 
 

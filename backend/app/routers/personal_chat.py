@@ -16,7 +16,7 @@ class ChatBody(BaseModel):
 
 
 class AgenteBody(BaseModel):
-    pausado: bool
+    habilitado: bool
 
 
 @router.get("")
@@ -29,7 +29,7 @@ def chat_history(
     return {
         "items": items,
         "next_cursor": next_cursor,
-        "agente_pausado": agent_service.is_agente_pausado(aluno_id),
+        "agente_habilitado": agent_service.is_agente_habilitado(aluno_id),
     }
 
 
@@ -37,12 +37,11 @@ def chat_history(
 def chat_send(aluno_id: str, body: ChatBody, personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)
     agent_service.log_direct(personal_id, aluno_id, body.text, Ator.PERSONAL, CanalOrigem.PORTAL)
-    agent_service.set_agente_pausado(aluno_id, True)
     return {"ok": 1}
 
 
 @router.patch("/agente")
 def toggle_agente(aluno_id: str, body: AgenteBody, personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)
-    agent_service.set_agente_pausado(aluno_id, body.pausado)
-    return {"ok": 1, "agente_pausado": body.pausado}
+    agent_service.set_agente_habilitado(aluno_id, body.habilitado)
+    return {"ok": 1, "agente_habilitado": body.habilitado}

@@ -1,8 +1,9 @@
 import { useId, useRef, useState } from 'react'
 import { useMutation, useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote, Camera, Clock, RefreshCw, AlertCircle, History, Power, PowerOff } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote, Camera, Clock, RefreshCw, AlertCircle, History, Power, PowerOff, Bot } from 'lucide-react'
 import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
+import { useToggleAgenteHabilitado } from '../hooks/usePersonalChat'
 import { alunosApi } from '../api/alunos'
 import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
@@ -26,6 +27,7 @@ export function AlunoDetailPage() {
   const createTreino = useCreateTreino(alunoId)
   const updateAluno = useUpdateAluno(alunoId)
   const deleteAluno = useDeleteAluno()
+  const toggleAgente = useToggleAgenteHabilitado(alunoId)
   const confirm = useConfirm()
   const [tab, setTab] = useState<'perfil' | 'treinos' | 'historico'>('treinos')
   const [showAddTreino, setShowAddTreino] = useState(false)
@@ -161,6 +163,19 @@ export function AlunoDetailPage() {
               <span className="flex items-center gap-1">
                 {aluno.status === 'ATIVO' ? <PowerOff size={14} /> : <Power size={14} />}
                 {aluno.status === 'ATIVO' ? 'Desativar acesso' : 'Reativar acesso'}
+              </span>
+            </Button>
+          )}
+          {aluno && (
+            <Button
+              variant={aluno.agente_habilitado ? 'outline' : 'primary'}
+              size="sm"
+              onClick={() => toggleAgente.mutate(!aluno.agente_habilitado)}
+              disabled={toggleAgente.isPending}
+            >
+              <span className="flex items-center gap-1">
+                <Bot size={14} />
+                {aluno.agente_habilitado ? 'Desabilitar agente' : 'Habilitar agente'}
               </span>
             </Button>
           )}

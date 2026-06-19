@@ -22,6 +22,7 @@ export interface Aluno {
   foto_s3_key?: string
   foto_url?: string
   custom?: Custom
+  agente_habilitado?: boolean
   created_at: string
   updated_at: string
 }

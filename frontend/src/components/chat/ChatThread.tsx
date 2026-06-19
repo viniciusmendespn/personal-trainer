@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
-import { Bot, User, UserCog, Pin, PauseCircle, UserCheck } from 'lucide-react'
+import { Bot, User, UserCog, Pin, BotOff, UserCheck } from 'lucide-react'
 import { Spinner } from '../ui'
 import { renderMarkdownLite } from './markdownLite'
 import type { Ator, ChatMensagem } from '../../types'
@@ -10,7 +10,7 @@ interface ChatThreadProps {
   isSending?: boolean
   viewerRole: Ator
   alunoNome?: string
-  agentePausado?: boolean
+  agenteHabilitado?: boolean
   onLoadMore?: () => void
   hasMore?: boolean
   isLoadingMore?: boolean
@@ -75,7 +75,7 @@ function Bubble({ msg, viewerRole, alunoNome }: { msg: ChatMensagem; viewerRole:
 }
 
 export function ChatThread({
-  messages, isLoading, isSending, viewerRole, alunoNome, agentePausado, onLoadMore, hasMore, isLoadingMore,
+  messages, isLoading, isSending, viewerRole, alunoNome, agenteHabilitado, onLoadMore, hasMore, isLoadingMore,
 }: ChatThreadProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -112,16 +112,16 @@ export function ChatThread({
 
   return (
     <>
-      {agentePausado && viewerRole === 'PERSONAL' && (
+      {!agenteHabilitado && viewerRole === 'PERSONAL' && (
         <div className="bg-warning/10 border-b border-warning/30 px-4 py-2 text-xs text-warning flex items-center gap-1.5 shrink-0">
-          <PauseCircle size={12} />
-          Agente pausado — você está conversando diretamente
+          <BotOff size={12} />
+          Agente desabilitado — este aluno não receberá respostas do assistente
         </div>
       )}
-      {agentePausado && viewerRole === 'ALUNO' && (
+      {!agenteHabilitado && viewerRole === 'ALUNO' && (
         <div className="bg-info/10 border-b border-info/30 px-4 py-2 text-xs text-info flex items-center gap-1.5 shrink-0">
           <UserCheck size={12} />
-          Seu personal está respondendo diretamente
+          Seu personal irá responder diretamente
         </div>
       )}
     <div ref={containerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">

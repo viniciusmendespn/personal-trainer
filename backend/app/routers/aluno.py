@@ -413,16 +413,16 @@ def chat_history(limit: int = 50, cursor: str | None = None, ctx: dict = Depends
     return {
         "items": items,
         "next_cursor": next_cursor,
-        "agente_pausado": agent_service.is_agente_pausado(ctx["aluno_id"]),
+        "agente_habilitado": agent_service.is_agente_habilitado(ctx["aluno_id"]),
     }
 
 
 @router.post("/chat")
 def chat_send(body: ChatBody, ctx: dict = Depends(get_current_aluno)):
-    if agent_service.is_agente_pausado(ctx["aluno_id"]):
+    if not agent_service.is_agente_habilitado(ctx["aluno_id"]):
         agent_service.log_direct(ctx["personal_id"], ctx["aluno_id"],
                                  body.text, Ator.ALUNO, CanalOrigem.PORTAL)
-        return {"reply": "Seu personal irá responder em breve.", "pausado": True}
+        return {"reply": "Seu personal irá responder em breve.", "habilitado": False}
     reply = agent_service.handle_chat_turn(ctx["personal_id"], ctx["aluno_id"], body.text, Ator.ALUNO)
     return {"reply": reply}
 

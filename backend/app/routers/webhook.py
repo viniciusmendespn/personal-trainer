@@ -232,7 +232,7 @@ def _route(personal_id: str, sender: str | None, payload: dict) -> None:
     text = _extract_text(payload)
     if not text:
         return
-    if agent_service.is_agente_pausado(aluno_id):
+    if not agent_service.is_agente_habilitado(aluno_id):
         agent_service.log_direct(personal_id, aluno_id, text, Ator.ALUNO, CanalOrigem.WHATSAPP)
         _notificar_msg_direta(personal_id, aluno_id, nome, text)
         return

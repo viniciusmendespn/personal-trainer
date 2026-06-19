@@ -14,16 +14,20 @@ export function usePersonalChat(alunoId: string | null) {
   })
   // páginas vêm da mais recente p/ a mais antiga; inverter p/ exibir a thread em ordem cronológica
   const messages = query.data?.pages.slice().reverse().flatMap((p) => p.items)
-  // agente_pausado vem sempre da página mais recente (primeira carregada = mais recente)
-  const agentePausado = query.data?.pages[0]?.agente_pausado ?? false
-  return { ...query, messages, agentePausado }
+  // agente_habilitado vem sempre da página mais recente (primeira carregada = mais recente)
+  const agenteHabilitado = query.data?.pages[0]?.agente_habilitado ?? false
+  return { ...query, messages, agenteHabilitado }
 }
 
-export function useRetomarAgente(alunoId: string | null) {
+export function useToggleAgenteHabilitado(alunoId: string | null) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: () => personalChatApi.toggleAgente(alunoId!, false),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['personal-chat', alunoId] }),
+    mutationFn: (habilitado: boolean) => personalChatApi.setAgenteHabilitado(alunoId!, habilitado),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['personal-chat', alunoId] })
+      qc.invalidateQueries({ queryKey: ['aluno', alunoId] })
+      qc.invalidateQueries({ queryKey: ['alunos'] })
+    },
   })
 }
 
