@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User } from 'lucide-react'
 import {
@@ -157,9 +157,31 @@ function NotifDrawer({ onClose, onNavigate }: { onClose: () => void; onNavigate:
   )
 }
 
+class AlunoErrorBoundary extends React.Component<
+  { children: React.ReactNode; onCrash: () => void },
+  { hasError: boolean }
+> {
+  state = { hasError: false }
+  static getDerivedStateFromError() { return { hasError: true } }
+  componentDidCatch() { this.props.onCrash() }
+  render() {
+    if (this.state.hasError)
+      return (
+        <div className="min-h-screen flex items-center justify-center p-6 text-center text-text-secondary">
+          <div className="space-y-2">
+            <p className="font-semibold text-text">Acesso desativado</p>
+            <p className="text-sm">Seu acesso foi desativado pelo seu personal. Entre em contato para reativar.</p>
+          </div>
+        </div>
+      )
+    return this.props.children
+  }
+}
+
 export function AlunoApp() {
   const token = useAlunoToken()
   const [disabled, setDisabled] = useState(false)
+  const [sessionConfirmed, setSessionConfirmed] = useState(false)
   const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'feed' | 'personal'>('hoje')
   const [highlightExId, setHighlightExId] = useState<string | undefined>(undefined)
   const [chatOpen, setChatOpen] = useState(false)
@@ -167,13 +189,17 @@ export function AlunoApp() {
   const installPromptRef = useRef<Event & { prompt: () => Promise<void> } | null>(null)
   const [canInstall, setCanInstall] = useState(false)
   const [showPerfilModal, setShowPerfilModal] = useState(false)
-  const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false, staleTime: 0, refetchOnWindowFocus: true })
+  const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false, staleTime: 0, refetchOnWindowFocus: true, refetchInterval: 30_000 })
 
   useEffect(() => {
     const handler = () => setDisabled(true)
     window.addEventListener('pt:aluno:403', handler)
     return () => window.removeEventListener('pt:aluno:403', handler)
   }, [])
+
+  useEffect(() => {
+    if (me.isSuccess) setSessionConfirmed(true)
+  }, [me.isSuccess])
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -208,9 +234,10 @@ export function AlunoApp() {
       </Centered>
     )
   }
-  if (me.isLoading || me.isFetching) return <Centered><Spinner /></Centered>
+  if (!sessionConfirmed) return <Centered><Spinner /></Centered>
 
   return (
+    <AlunoErrorBoundary onCrash={() => setDisabled(true)}>
     <div
       className="min-h-screen max-w-md mx-auto flex flex-col"
       style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
@@ -327,6 +354,7 @@ export function AlunoApp() {
         )}
       </nav>
     </div>
+    </AlunoErrorBoundary>
   )
 }
 
