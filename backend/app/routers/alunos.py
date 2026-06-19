@@ -114,6 +114,30 @@ def avatar_upload_url(aluno_id: str, body: AvatarUploadUrlBody,
     return result
 
 
+@router.post("/{aluno_id}/sync-foto")
+def sync_foto(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
+    """Best-effort: busca foto do WhatsApp para alunos sem foto_s3_key.
+    Idempotente — se já tem foto, só devolve a URL presignada sem chamar o WhatsApp."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    item = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
+    if not item:
+        raise HTTPException(404, "Aluno não encontrado")
+    if item.get("foto_s3_key"):
+        return {"foto_url": media_service.gerar_presigned_view_url(item["foto_s3_key"])}
+    telefone = item.get("telefone")
+    if not telefone:
+        return {"foto_url": None}
+    foto_key = media_service.buscar_foto_perfil_whatsapp(personal_id, aluno_id, telefone)
+    if not foto_key:
+        return {"foto_url": None}
+    updated = repo.update_item(
+        keys.pk_aluno(aluno_id), keys.SK_PROFILE,
+        {"foto_s3_key": foto_key, "updated_at": now_iso()}, return_values=True,
+    )
+    repo.put_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(updated))
+    return {"foto_url": media_service.gerar_presigned_view_url(foto_key)}
+
+
 @router.put("/{aluno_id}")
 def update_aluno(aluno_id: str, body: AlunoUpdate, personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)

@@ -1,5 +1,5 @@
-import { useId, useRef, useState } from 'react'
-import { useMutation, useQuery, useInfiniteQuery } from '@tanstack/react-query'
+import { useEffect, useId, useRef, useState } from 'react'
+import { useMutation, useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote, Camera, Clock, RefreshCw, AlertCircle, History, Power, PowerOff, Bot } from 'lucide-react'
 import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
@@ -17,12 +17,25 @@ import { useNotas, useCreateNota } from '../hooks/useNotas'
 import { treinosApi, type SessaoHistoricoPersonal } from '../api/treinos'
 import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
-import type { Treino, Exercicio, ExercicioCreate, SeriePrescrita, AlunoExistenteConflict } from '../types'
+import type { Treino, Exercicio, ExercicioCreate, SeriePrescrita, AlunoExistenteConflict, Aluno, WapiStatus } from '../types'
 
 export function AlunoDetailPage() {
   const { alunoId = '' } = useParams()
   const navigate = useNavigate()
   const { data: aluno } = useAluno(alunoId)
+  const qc = useQueryClient()
+
+  useEffect(() => {
+    if (!aluno || aluno.foto_url) return
+    const wapiStatus = qc.getQueryData<WapiStatus>(['wapi-status'])
+    if (!wapiStatus?.connected) return
+    alunosApi.syncFoto(alunoId).then(({ foto_url }) => {
+      if (!foto_url) return
+      qc.setQueryData<Aluno>(['aluno', alunoId], (prev) => prev ? { ...prev, foto_url } : prev)
+      qc.invalidateQueries({ queryKey: ['alunos'] })
+    }).catch(() => {})
+  }, [aluno?.aluno_id, !!aluno?.foto_url]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const { data: treinos, isLoading } = useTreinos(alunoId)
   const createTreino = useCreateTreino(alunoId)
   const updateAluno = useUpdateAluno(alunoId)

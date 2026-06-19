@@ -24,4 +24,6 @@ export const alunosApi = {
     api.post<{ upload_url: string; s3_key: string }>(`/v1/alunos/${id}/avatar/upload-url`, {
       filename, content_type: contentType,
     }).then((r) => r.data),
+  syncFoto: (id: string) =>
+    api.post<{ foto_url: string | null }>(`/v1/alunos/${id}/sync-foto`).then((r) => r.data),
 }
