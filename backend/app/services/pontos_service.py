@@ -76,7 +76,8 @@ def award(aluno_id: str, tipo: str, personal_id: str, pts: int | None = None, de
             add={"total_pontos": pts},
             set_={
                 "aluno_id": aluno_id, "nome": nome, "foto_s3_key": foto_s3_key, "atualizado_em": ts,
-                "semana_atual": semana_atual, "mes_atual": mes_atual,
+                "semana_semana": semana_key, "semana_atual": semana_atual,
+                "mes_mes": mes_key, "mes_atual": mes_atual,
             },
         )
         return pts
