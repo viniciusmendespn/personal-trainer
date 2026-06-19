@@ -17,6 +17,13 @@ export function setImpersonationToken(token: string | null) {
   _impersonationToken = token
 }
 
+// Limpa o cache de token em memória — chamar em signOut/signIn para não
+// vazar o idToken do usuário anterior entre trocas de conta.
+export function resetTokenCache() {
+  _token = null
+  _exp = 0
+}
+
 export function isImpersonating(): boolean {
   return _impersonationToken !== null
 }

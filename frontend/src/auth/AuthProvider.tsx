@@ -6,7 +6,7 @@ import {
   fetchUserAttributes,
 } from 'aws-amplify/auth'
 import { useQueryClient } from '@tanstack/react-query'
-import { setImpersonationToken } from '../api/client'
+import { setImpersonationToken, resetTokenCache } from '../api/client'
 
 const ADMIN_EMAIL = 'admin@coachpilot.com.br'
 
@@ -63,6 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   async function signIn(email: string, password: string) {
+    resetTokenCache()
+    queryClient.clear()
     const result = await amplifySignIn({ username: email, password })
     if (result.isSignedIn) await load()
   }
@@ -72,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setImpersonationToken(null)
     setImpersonating(null)
     await amplifySignOut()
+    resetTokenCache()
     queryClient.clear()
     setUser(null)
   }
