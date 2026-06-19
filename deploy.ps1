@@ -12,12 +12,34 @@ $StackName  = "personal-trainer-prod"
 $Bucket     = "personal-trainer-frontend-prod-421219980792"
 $CfId       = "E3JZ6U88Q0GYGF"   # CloudFrontDistributionId
 
+function Get-EnvLocal {
+    param([string]$Key)
+    $envFile = Join-Path $PSScriptRoot "backend\.env.local"
+    if (-not (Test-Path $envFile)) { return "" }
+    foreach ($line in Get-Content $envFile) {
+        if ($line -match "^$Key=(.+)$") { return $Matches[1] }
+    }
+    return ""
+}
+
 function Deploy-Backend {
     Write-Host "`n=== Deploy Backend ===" -ForegroundColor Green
+
+    # Secrets NoEcho: lidos do .env.local e passados como override pontual
+    # (não ficam no samconfig.toml para não sobrescrever acidentalmente em produção)
+    $AdminSecret = Get-EnvLocal "ADMIN_SECRET"
+    $ExtraOverrides = ""
+    if ($AdminSecret) { $ExtraOverrides = " AdminSecret=$AdminSecret" }
+
     Set-Location backend
     sam build
     if ($LASTEXITCODE -ne 0) { Write-Host "Build falhou." -ForegroundColor Red; Set-Location ..; exit 1 }
-    sam deploy --profile $Profile
+
+    if ($ExtraOverrides) {
+        sam deploy --profile $Profile --parameter-overrides "Stage=prod DeployFrontendInfra=true$ExtraOverrides"
+    } else {
+        sam deploy --profile $Profile
+    }
     if ($LASTEXITCODE -ne 0) {
         # exit code 1 = "No changes to deploy" — não é erro real
         Write-Host "Nenhuma mudança no backend (ou deploy ok)." -ForegroundColor Yellow

@@ -1,4 +1,4 @@
-import { Users, Dumbbell, Activity, Calendar, Smartphone, Trophy } from 'lucide-react'
+import { Users, Dumbbell, Activity, Calendar, Smartphone, Trophy, MessageCircle, BarChart2, Bell } from 'lucide-react'
 import { useState } from 'react'
 
 const FEATURES = [
@@ -38,6 +38,24 @@ const FEATURES = [
     desc: 'Engaje seus alunos com ranking de frequência e desempenho. Quem treina mais, sobe no ranking — e continua motivado.',
     color: '#10b981',
   },
+  {
+    icon: <MessageCircle size={28} />,
+    title: 'Assistente via WhatsApp',
+    desc: 'Seus alunos tiram dúvidas de treino e recebem orientações diretamente no WhatsApp, respondidas por IA 24 horas por dia.',
+    color: '#14b8a6',
+  },
+  {
+    icon: <BarChart2 size={28} />,
+    title: 'Relatórios e Métricas',
+    desc: 'Visualize evolução de força, cardio e composição corporal com gráficos detalhados. Mostre resultados concretos para seus alunos.',
+    color: '#10b981',
+  },
+  {
+    icon: <Bell size={28} />,
+    title: 'Notificações Automáticas',
+    desc: 'Lembretes de treino, avaliação e renovação enviados automaticamente pelo WhatsApp — sem você precisar fazer nada manualmente.',
+    color: '#14b8a6',
+  },
 ]
 
 export default function FeaturesSection() {
@@ -66,7 +84,12 @@ export default function FeaturesSection() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}
+          className="features-grid">
+          <style>{`
+            @media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+            @media (max-width: 580px) { .features-grid { grid-template-columns: 1fr !important; } }
+          `}</style>
           {FEATURES.map((f, i) => (
             <div
               key={i}
