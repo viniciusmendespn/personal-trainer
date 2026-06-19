@@ -9,6 +9,13 @@ export interface PersonalProfile {
   formacao?: string
   foto_s3_key?: string
   foto_url?: string
+  instagram_url?: string
+  tiktok_url?: string
+  youtube_url?: string
+  linkedin_url?: string
+  facebook_url?: string
+  x_url?: string
+  site_url?: string
   updated_at?: string
 }
 

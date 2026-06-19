@@ -17,7 +17,7 @@ import { ChatThread } from '../components/chat/ChatThread'
 import { ChatInputBar } from '../components/chat/ChatInputBar'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
 import { PostComposer } from '../components/exercicio/PostComposer'
-import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSelect, useToast, useConfirm } from '../components/ui'
+import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSelect, SocialLinks, useToast, useConfirm } from '../components/ui'
 import { AlunoPerfilModal } from '../components/aluno/AlunoPerfilModal'
 
 const chartTip = {
@@ -412,6 +412,15 @@ function SobrePersonalTab() {
           <p className="font-semibold text-text text-lg">{profile?.nome ?? '—'}</p>
           {profile?.descricao && <p className="text-sm text-text-secondary mt-0.5">{profile.descricao}</p>}
         </div>
+        <SocialLinks
+          instagramUrl={profile?.instagram_url}
+          tiktokUrl={profile?.tiktok_url}
+          youtubeUrl={profile?.youtube_url}
+          linkedinUrl={profile?.linkedin_url}
+          facebookUrl={profile?.facebook_url}
+          xUrl={profile?.x_url}
+          siteUrl={profile?.site_url}
+        />
         {me?.nome && (
           <p className="text-xs text-text-muted">Seu personal trainer</p>
         )}

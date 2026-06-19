@@ -20,6 +20,13 @@ class PersonalProfileUpdate(BaseModel):
     experiencia_profissional: Optional[str] = None
     formacao: Optional[str] = None
     foto_s3_key: Optional[str] = None
+    instagram_url: Optional[str] = None
+    tiktok_url: Optional[str] = None
+    youtube_url: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    facebook_url: Optional[str] = None
+    x_url: Optional[str] = None
+    site_url: Optional[str] = None
 
 
 class AvatarUploadUrlBody(BaseModel):
