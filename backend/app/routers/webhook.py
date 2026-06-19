@@ -31,10 +31,12 @@ _cache_personal: dict[str, tuple[str | None, float]] = {}
 _cache_aluno: dict[tuple[str, str], tuple[dict | None, float]] = {}
 
 
-def _digits(phone: str | None) -> str | None:
+def _digits(phone) -> str | None:
     if not phone:
         return None
-    d = re.sub(r"\D", "", phone)   # tira '+', '@c.us', espaços
+    if isinstance(phone, dict):
+        phone = phone.get("id") or phone.get("phone") or ""
+    d = re.sub(r"\D", "", str(phone))
     return d or None
 
 
@@ -52,9 +54,13 @@ def _br_phone_variant(digits: str) -> str | None:
 
 
 def _extract_text(payload: dict) -> str | None:
-    """Texto da mensagem — formato exato da W-API a confirmar; tenta os campos comuns."""
-    for v in (payload.get("text"), payload.get("message"), payload.get("body"),
-              payload.get("conversation")):
+    msg_content = payload.get("msgContent") or {}
+    for v in (
+        payload.get("text"), payload.get("message"),
+        payload.get("body"), payload.get("conversation"),
+        msg_content.get("conversation"), msg_content.get("text"),
+        msg_content.get("message"),
+    ):
         if isinstance(v, str) and v.strip():
             return v.strip()
         if isinstance(v, dict):
@@ -137,9 +143,13 @@ def _handle_text(personal_id: str, aluno_id: str, nome: str | None, sender: str,
 async def receive(secret: str, request: Request):
     verify_wapi_webhook(secret)   # 404 se inválido
     payload = await request.json()
+    logger.info("[webhook] payload: %s", payload)
 
     # Ignora mensagens enviadas pelo número conectado (fromMe) — evita loop e falsos positivos.
     if payload.get("fromMe") or payload.get("from_me") or payload.get("type") == "sent":
+        return _OK
+
+    if payload.get("isGroup"):
         return _OK
 
     # ⚠️ Confirmar nomes exatos dos campos contra a doc da W-API (webhook-received).
