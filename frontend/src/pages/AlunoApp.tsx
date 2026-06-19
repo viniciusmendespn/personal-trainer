@@ -590,11 +590,10 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
 
   const save = useMutation({
     mutationFn: () => {
-      const filled = rows.filter((r) => r.carga || r.reps)
-      if (filled.some((r) => !r.carga)) {
-        throw new Error('Informe a carga de todas as séries preenchidas.')
+      if (rows.some((r) => !r.carga || !r.reps)) {
+        throw new Error('Preencha a carga e as repetições de todas as séries.')
       }
-      const series = filled.map((r) => ({ carga: r.carga || undefined, reps: r.reps ? Number(r.reps) : undefined }))
+      const series = rows.map((r) => ({ carga: r.carga, reps: Number(r.reps) }))
       return alunoApi.registrar(series, ex.exercicio_id)
     },
     onError: (e: Error) => show(e.message, 'error'),
@@ -644,17 +643,26 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
           {rows.map((r, i) => (
             <div key={i} className="flex gap-2 items-center">
               <span className="text-xs text-text-muted w-12">Sér {i + 1}</span>
-              <div className="relative w-24">
+              <div className="relative flex-1">
                 <Input
                   className="pr-7"
                   inputMode="decimal"
-                  placeholder={r.cargaHint || 'Carga'}
+                  placeholder={r.cargaHint || '0'}
                   value={r.carga}
                   onChange={(e) => upd(i, 'carga', sanitizeCarga(e.target.value))}
                 />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">kg</span>
               </div>
-              <Input className="w-20" placeholder={r.repsHint || 'Reps'} inputMode="numeric" value={r.reps} onChange={(e) => upd(i, 'reps', e.target.value)} />
+              <div className="relative flex-1">
+                <Input
+                  className="pr-10"
+                  inputMode="numeric"
+                  placeholder={r.repsHint || '0'}
+                  value={r.reps}
+                  onChange={(e) => upd(i, 'reps', e.target.value.replace(/[^\d]/g, ''))}
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">reps</span>
+              </div>
               {rows.length > 1 && (
                 <button type="button" onClick={() => removeRow(i)} aria-label="Remover série" className="text-text-muted hover:text-danger">
                   <X size={14} />
