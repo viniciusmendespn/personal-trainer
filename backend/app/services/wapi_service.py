@@ -5,6 +5,7 @@ import logging
 import httpx
 
 from app.config import settings
+from app.services.wa_format import markdown_to_whatsapp
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -67,7 +68,8 @@ class WAPIClient:
     # ── Mensagens ──────────────────────────────────────────────────────────────
     def send_text(self, phone: str, message: str, delay_ms: int = 0) -> dict:
         return self._post("/v1/message/send-text",
-                          {"phone": phone, "message": message, "delayMessage": delay_ms})
+                          {"phone": phone, "message": markdown_to_whatsapp(message),
+                           "delayMessage": delay_ms})
 
     def download_media(self, media_key: str, direct_path: str, media_type: str, mimetype: str) -> dict:
         return self._post("/v1/message/download-media",
