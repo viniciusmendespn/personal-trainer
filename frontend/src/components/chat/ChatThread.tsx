@@ -25,7 +25,7 @@ function formatHora(iso: string) {
 }
 
 function Bubble({ msg, viewerRole, alunoNome }: { msg: ChatMensagem; viewerRole: Ator; alunoNome?: string }) {
-  const isAssistant = msg.role === 'assistant'
+  const isAssistant = msg.role === 'assistant' && !msg.direto
   const isMine = !isAssistant && msg.ator === viewerRole
   const align = isMine ? 'items-end' : 'items-start'
 
