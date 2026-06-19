@@ -18,6 +18,14 @@ export function useCreateAvaliacao(alunoId: string) {
   })
 }
 
+export function useDeleteAvaliacao(alunoId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (tsId: string) => avaliacoesApi.remove(alunoId, tsId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['avaliacoes', alunoId] }),
+  })
+}
+
 export function useBiblioteca() {
   return useQuery({ queryKey: ['biblioteca'], queryFn: bibliotecaApi.list })
 }

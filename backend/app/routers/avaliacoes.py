@@ -27,7 +27,9 @@ def upload_url(aluno_id: str, body: UploadUrlBody, personal_id: str = Depends(ge
 
 
 def _with_view_urls(item: dict) -> dict:
+    ts_id = item["SK"].removeprefix(keys.AVAL_PREFIX)
     c = repo.clean(item)
+    c["ts_id"] = ts_id
     c["fotos_urls"] = [u for u in (media_service.gerar_presigned_view_url(k) for k in c.get("fotos_s3_keys", [])) if u]
     if c.get("bio_scan_s3_key"):
         c["bio_scan_url"] = media_service.gerar_presigned_view_url(c["bio_scan_s3_key"])

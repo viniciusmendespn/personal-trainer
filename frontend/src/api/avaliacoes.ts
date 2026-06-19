@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { Avaliacao, Custom } from '../types'
+import type { Avaliacao, Custom, MetricaCustomizada } from '../types'
 
 export interface AvaliacaoCreate {
   data?: string
@@ -7,6 +7,7 @@ export interface AvaliacaoCreate {
   altura_cm?: number
   percentual_gordura?: number
   medidas?: Custom
+  metricas?: MetricaCustomizada[]
   observacoes?: string
   fotos_s3_keys?: string[]
   bio_scan_s3_key?: string
@@ -17,6 +18,8 @@ export const avaliacoesApi = {
     api.get<Avaliacao[]>(`/v1/alunos/${alunoId}/avaliacoes`).then((r) => r.data),
   create: (alunoId: string, body: AvaliacaoCreate) =>
     api.post<Avaliacao>(`/v1/alunos/${alunoId}/avaliacoes`, body).then((r) => r.data),
+  remove: (alunoId: string, tsId: string) =>
+    api.delete(`/v1/alunos/${alunoId}/avaliacoes/${tsId}`),
   getUploadUrl: (alunoId: string, filename: string, contentType: string) =>
     api.post<{ upload_url: string; s3_key: string }>(`/v1/alunos/${alunoId}/avaliacoes/upload-url`, {
       filename, content_type: contentType,

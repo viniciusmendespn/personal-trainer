@@ -70,14 +70,22 @@ export interface TreinoCreate {
   custom?: Custom
 }
 
+export interface MetricaCustomizada {
+  nome: string
+  unidade: string
+  valor: number
+}
+
 export interface Avaliacao {
   avaliacao_id: string
   aluno_id: string
+  ts_id?: string
   data?: string
   peso?: number
   altura_cm?: number
   percentual_gordura?: number
   medidas?: Custom
+  metricas?: MetricaCustomizada[]
   observacoes?: string
   fotos_s3_keys?: string[]
   bio_scan_s3_key?: string

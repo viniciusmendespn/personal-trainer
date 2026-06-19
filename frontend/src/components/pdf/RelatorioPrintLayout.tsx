@@ -1,15 +1,56 @@
 type Pr = { exercicio: string; carga: number }
 type Semana = { semana: string; volume: number }
 type AvaliacaoRow = { data: string; peso?: number; percentual_gordura?: number }
+type MetricaSerie = { nome: string; unidade?: string; pontos: { data: string; valor: number }[] }
+
+const MINI_CHART_W = 696
+const MINI_CHART_H = 90
+
+/** Mini-gráfico de linha em SVG puro (sem Recharts) — capturado via html2canvas num container
+ * off-screen, onde SVG simples é mais confiável que um ResponsiveContainer detached do layout. */
+function MiniLineChart({ serie }: { serie: MetricaSerie }) {
+  const valores = serie.pontos.map((p) => p.valor)
+  const min = Math.min(...valores)
+  const max = Math.max(...valores)
+  const range = max - min || 1
+  const padX = 8
+  const padY = 10
+  const innerW = MINI_CHART_W - padX * 2
+  const innerH = MINI_CHART_H - padY * 2
+  const coords = serie.pontos.map((p, i) => {
+    const x = padX + (serie.pontos.length === 1 ? innerW / 2 : (i / (serie.pontos.length - 1)) * innerW)
+    const y = padY + innerH - ((p.valor - min) / range) * innerH
+    return { x, y }
+  })
+  const points = coords.map((c) => `${c.x},${c.y}`).join(' ')
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+        {serie.nome}{serie.unidade ? ` (${serie.unidade})` : ''}
+      </p>
+      <svg width={MINI_CHART_W} height={MINI_CHART_H} style={{ display: 'block' }}>
+        <polyline points={points} fill="none" stroke="#6366f1" strokeWidth={2} />
+        {coords.map((c, i) => <circle key={i} cx={c.x} cy={c.y} r={2.5} fill="#6366f1" />)}
+      </svg>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#64748b' }}>
+        <span>{new Date(serie.pontos[0].data).toLocaleDateString('pt-BR')} · {min}{serie.unidade ?? ''}</span>
+        <span>{new Date(serie.pontos[serie.pontos.length - 1].data).toLocaleDateString('pt-BR')} · {max}{serie.unidade ?? ''}</span>
+      </div>
+    </div>
+  )
+}
 
 export function RelatorioPrintLayout({
   alunoNome,
   resumo,
   avaliacoes,
+  metricas,
 }: {
   alunoNome: string
   resumo?: { total_sessoes: number; total_volume: number; sessoes_semana: number; prs: Pr[]; semanas: Semana[] }
   avaliacoes?: AvaliacaoRow[]
+  metricas?: MetricaSerie[]
 }) {
   const maxVolume = Math.max(1, ...(resumo?.semanas.map((s) => s.volume) ?? [1]))
 
@@ -69,6 +110,13 @@ export function RelatorioPrintLayout({
             </div>
           )}
         </>
+      )}
+
+      {metricas && metricas.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Evolução das métricas</p>
+          {metricas.map((m) => <MiniLineChart key={m.nome} serie={m} />)}
+        </div>
       )}
 
       {avaliacoes && avaliacoes.length > 0 && (
