@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { QrCode, Phone, CheckCircle, AlertCircle, MessageCircle, WifiOff, RefreshCw, Copy } from 'lucide-react'
+import { QrCode, Phone, CheckCircle, AlertCircle, MessageCircle, WifiOff, RefreshCw, Copy, Smartphone } from 'lucide-react'
 import { wapiApi } from '../api/wapi'
 import { Button, Card, ErrorText } from '../components/ui'
 import { useToast } from '../components/ui'
@@ -9,6 +9,13 @@ import { PhoneInput } from '../components/PhoneInput'
 const SUPPORT_URL = `https://wa.me/5513988088204?text=${encodeURIComponent('Olá! Gostaria de configurar o WhatsApp no meu Personal Trainer.')}`
 
 type Method = 'qr' | 'pairing'
+
+function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, '').replace(/^55/, '')
+  if (digits.length === 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+  if (digits.length === 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
+  return raw
+}
 
 function getErrMsg(err: unknown): string {
   const e = err as { response?: { data?: { detail?: string }; status?: number }; message?: string }
@@ -37,6 +44,14 @@ export function SettingsPage() {
   const noInstance = status.isError && (status.error as any)?.response?.status === 404
   const connected = status.data?.connected === true
 
+  const deviceInfo = useQuery({
+    queryKey: ['wapi-device-info'],
+    queryFn: wapiApi.deviceInfo,
+    enabled: connected,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  })
+
   const qrQuery = useQuery({
     queryKey: ['wapi-qr'],
     queryFn: wapiApi.qr,
@@ -55,6 +70,7 @@ export function SettingsPage() {
     mutationFn: wapiApi.disconnect,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['wapi-status'] })
+      qc.removeQueries({ queryKey: ['wapi-device-info'] })
       toast('Desconectado com sucesso')
     },
   })
@@ -275,10 +291,35 @@ export function SettingsPage() {
 
       {/* Conectado */}
       {!noInstance && connected && (
-        <Card variant="glass" className="border-success/30 text-center py-6 space-y-2">
-          <CheckCircle className="w-10 h-10 text-success mx-auto" />
-          <p className="font-semibold text-success">WhatsApp conectado com sucesso!</p>
-          <p className="text-sm text-text-secondary">
+        <Card variant="glass" className="border-success/30 text-center py-6 space-y-3">
+          <div className="flex justify-center">
+            {deviceInfo.data?.photo_url ? (
+              <div className="relative">
+                <img
+                  src={deviceInfo.data.photo_url}
+                  alt="Foto de perfil WhatsApp"
+                  className="w-16 h-16 rounded-full object-cover ring-2 ring-success/40"
+                />
+                <span className="absolute bottom-0 right-0 w-4 h-4 bg-success rounded-full ring-2 ring-[var(--color-surface)]" />
+              </div>
+            ) : (
+              <div className="relative">
+                <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center">
+                  <Smartphone className="w-7 h-7 text-success" />
+                </div>
+                <span className="absolute bottom-0 right-0 w-4 h-4 bg-success rounded-full ring-2 ring-[var(--color-surface)]" />
+              </div>
+            )}
+          </div>
+          <div>
+            <p className="font-semibold text-success">WhatsApp conectado</p>
+            {(deviceInfo.data?.phone || status.data?.phone) && (
+              <p className="text-sm text-text-secondary mt-0.5">
+                {formatPhone(deviceInfo.data?.phone || status.data?.phone || '')}
+              </p>
+            )}
+          </div>
+          <p className="text-xs text-text-secondary">
             Seus alunos já podem enviar mensagens para o assistente.
           </p>
         </Card>

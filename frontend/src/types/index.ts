@@ -150,6 +150,11 @@ export interface WapiStatus {
   phone?: string
 }
 
+export interface WapiDeviceInfo {
+  phone: string
+  photo_url: string | null
+}
+
 export type AgendamentoStatus = 'AGENDADO' | 'CONFIRMADO' | 'CANCELADO' | 'CONCLUIDO'
 
 export interface Agendamento {

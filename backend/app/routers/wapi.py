@@ -107,6 +107,30 @@ def get_pairing_code(phone: str, personal_id: str = Depends(get_current_personal
         raise HTTPException(502, f"Erro ao obter código: {e}")
 
 
+@router.get("/device-info")
+def get_device_info(personal_id: str = Depends(get_current_personal_id)):
+    cfg = _load_config(personal_id)
+    client = WAPIClient(cfg["instance_id"], cfg["token"])
+    try:
+        data = client.get_status()
+        connected = bool(data.get("connected"))
+        if not connected:
+            raise HTTPException(400, "WhatsApp não está conectado.")
+        phone = data.get("phone") or data.get("number") or ""
+        photo_url = None
+        if phone:
+            try:
+                pic = client.get_profile_picture(phone)
+                photo_url = pic.get("link")
+            except Exception as e:
+                logger.warning("[wapi] falha ao buscar foto de perfil: %s", e)
+        return {"phone": phone, "photo_url": photo_url}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(502, f"Erro ao obter info do dispositivo: {e}")
+
+
 @router.post("/disconnect", status_code=204)
 def disconnect(personal_id: str = Depends(get_current_personal_id)):
     cfg = _load_config(personal_id)
