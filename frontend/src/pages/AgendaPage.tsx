@@ -37,6 +37,16 @@ const statusTone: Record<AgendamentoStatus, 'accent' | 'success' | 'danger' | 'n
   CONCLUIDO: 'neutral',
 }
 
+function getStatusEfetivo(a: Agendamento): AgendamentoStatus {
+  if (
+    (a.status === 'AGENDADO' || a.status === 'CONFIRMADO') &&
+    new Date(a.data_hora_inicio) < new Date()
+  ) {
+    return 'CONCLUIDO'
+  }
+  return a.status
+}
+
 export function AgendaPage() {
   const [view, setView] = useState<'semana' | 'mes'>('semana')
   const [anchor, setAnchor] = useState(() => new Date())
@@ -94,7 +104,7 @@ export function AgendaPage() {
       </div>
 
       <Modal open={open} onClose={() => setOpen(false)} title="Novo agendamento">
-        <AgendamentoForm alunos={alunos ?? []} onDone={() => setOpen(false)} defaultDate={weekStart} />
+        <AgendamentoForm alunos={alunos ?? []} onDone={() => setOpen(false)} defaultDate={new Date()} />
       </Modal>
 
       {isLoading ? (
@@ -134,6 +144,7 @@ function AgendamentoRow({ a, alunoNome }: { a: Agendamento; alunoNome?: string }
   const confirm = useConfirm()
   const [editOpen, setEditOpen] = useState(false)
   const hora = new Date(a.data_hora_inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  const statusEfetivo = getStatusEfetivo(a)
 
   async function cancelar() {
     const ok = await confirm({
@@ -165,18 +176,19 @@ function AgendamentoRow({ a, alunoNome }: { a: Agendamento; alunoNome?: string }
         {a.observacao && <p className="text-xs text-text-muted truncate">{a.observacao}</p>}
       </div>
       <div className="flex items-center gap-1.5 shrink-0">
-        <Badge tone={statusTone[a.status]}>{a.status}</Badge>
-        {a.status === 'AGENDADO' && (
+        <Badge tone={statusTone[statusEfetivo]}>{statusEfetivo}</Badge>
+        {statusEfetivo === 'AGENDADO' && (
           <Button variant="ghost" size="sm" iconOnly aria-label="Confirmar" onClick={() => setStatus.mutate({ a, status: 'CONFIRMADO' })}>
             <Check size={14} />
           </Button>
         )}
-        {a.status === 'CANCELADO' && (
+        {statusEfetivo === 'CANCELADO' && (
           <Button variant="ghost" size="sm" iconOnly aria-label="Reativar e confirmar" onClick={() => setStatus.mutate({ a, status: 'CONFIRMADO' })}>
             <Check size={14} />
           </Button>
         )}
-        {(a.status === 'AGENDADO' || a.status === 'CONFIRMADO') && (
+        {(statusEfetivo === 'AGENDADO' || statusEfetivo === 'CONFIRMADO' ||
+          (statusEfetivo === 'CONCLUIDO' && a.status !== 'CONCLUIDO')) && (
           <Button variant="ghost" size="sm" iconOnly aria-label="Cancelar" onClick={cancelar} className="hover:text-danger">
             <X size={14} />
           </Button>
