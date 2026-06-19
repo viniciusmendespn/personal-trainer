@@ -47,6 +47,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const u = await getCurrentUser()
       const attrs = (await fetchUserAttributes().catch(() => ({}))) as Record<string, string>
       setUser({ userId: u.userId, username: u.username, email: attrs.email, name: attrs.name })
+      const saved = sessionStorage.getItem('pt:impersonation')
+      if (saved) {
+        const { personalId, name, token } = JSON.parse(saved)
+        setImpersonationToken(token)
+        setImpersonating({ personalId, name })
+      }
     } catch {
       setUser(null)
     }
@@ -62,6 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signOut() {
+    sessionStorage.removeItem('pt:impersonation')
     setImpersonationToken(null)
     setImpersonating(null)
     await amplifySignOut()
@@ -70,12 +77,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   function impersonate(personalId: string, name: string, token: string) {
+    sessionStorage.setItem('pt:impersonation', JSON.stringify({ personalId, name, token }))
     setImpersonationToken(token)
     setImpersonating({ personalId, name })
     queryClient.clear()
   }
 
   function stopImpersonating() {
+    sessionStorage.removeItem('pt:impersonation')
     setImpersonationToken(null)
     setImpersonating(null)
     queryClient.clear()

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
@@ -78,14 +78,21 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
 
 function ImpersonationBanner() {
   const { impersonating, stopImpersonating } = useAuth()
+  const navigate = useNavigate()
   if (!impersonating) return null
+
+  function handleStop() {
+    stopImpersonating()
+    navigate('/admin')
+  }
+
   return (
     <div className="flex items-center justify-between px-4 py-2 bg-amber-500/20 border-b border-amber-500/30 text-amber-300 text-xs shrink-0">
       <span>
         Visualizando como <strong>{impersonating.name}</strong>
       </span>
       <button
-        onClick={stopImpersonating}
+        onClick={handleStop}
         className="ml-4 px-2 py-0.5 rounded bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 transition-colors"
       >
         Sair
