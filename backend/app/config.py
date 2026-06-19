@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     fusion_api_key: str = ""
     fusion_base_url: str = "https://fusion-llm.brq.com"
     fusion_api_version: str = "2025-03-01-preview"
+    admin_secret: str = ""                 # protege POST /v1/wapi/config (só scripts admin)
 
     class Config:
         env_file = (".env", ".env.local")

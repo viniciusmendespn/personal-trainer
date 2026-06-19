@@ -2,9 +2,10 @@
 Credenciais ficam na partição PT#; ao salvar, registra o ponteiro WAPI#{instance}->personal
 para o webhook conseguir rotear de volta."""
 import logging
+import secrets
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 
 from app.config import settings
@@ -31,7 +32,13 @@ def _load_config(personal_id: str) -> dict:
 
 
 @router.post("/config", status_code=201)
-def save_config(body: WapiConfig, personal_id: str = Depends(get_current_personal_id)):
+def save_config(
+    body: WapiConfig,
+    personal_id: str = Depends(get_current_personal_id),
+    x_admin_key: str = Header(default=""),
+):
+    if not settings.admin_secret or not secrets.compare_digest(x_admin_key, settings.admin_secret):
+        raise HTTPException(403, "Proibido.")
     now = datetime.now(timezone.utc).isoformat()
     repo.put_item(keys.pk_personal(personal_id), keys.SK_WAPI_CONFIG, {
         "instance_id": body.instance_id,

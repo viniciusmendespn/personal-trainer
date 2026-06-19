@@ -61,6 +61,11 @@ Parameters:
     Type: String
     Default: "coachpilot.com.br"
     Description: "Domínio apex custom do frontend (Route53 + ACM + CloudFront alias)."
+  AdminSecret:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: "Chave para o header X-Admin-Key — protege POST /v1/wapi/config (só scripts admin)."
 
 Conditions:
   CreateFrontendInfra: !Equals [!Ref DeployFrontendInfra, "true"]
@@ -92,6 +97,7 @@ Globals:
         FUSION_API_KEY: !Ref FusionApiKey
         FUSION_BASE_URL: !Ref FusionBaseUrl
         FUSION_API_VERSION: !Ref FusionApiVersion
+        ADMIN_SECRET: !Ref AdminSecret
 
 Resources:
 
