@@ -11,6 +11,7 @@ import { SignUpPage } from './auth/SignUpPage'
 import { ForgotPasswordPage } from './auth/ForgotPasswordPage'
 import LandingPage from './pages/landing/LandingPage'
 import { AppLayout } from './components/layout/AppLayout'
+import { ErrorPage } from './pages/ErrorPage'
 
 // Code-splitting: cada página do portal autenticado e o app do aluno viram chunks
 // separados — o aluno (link de WhatsApp, rede móvel) não baixa o JS do portal inteiro
@@ -59,32 +60,38 @@ const queryClient = new QueryClient({
 })
 
 const router = createBrowserRouter([
-  { path: '/', element: <LandingPage /> },
-  { path: '/aluno', element: lazyPage(<AlunoApp />) },     // app do aluno (JWT do magic-link)
-  { path: '/login', element: <LoginPage /> },
-  { path: '/signup', element: <SignUpPage /> },
-  { path: '/forgot-password', element: <ForgotPasswordPage /> },
   {
-    element: (
-      <ProtectedRoute>
-        <AppLayout />
-      </ProtectedRoute>
-    ),
+    errorElement: <ErrorPage />,
     children: [
-      { path: 'dashboard', element: lazyPage(<DashboardPage />) },
-      { path: 'alunos', element: lazyPage(<AlunosPage />) },
-      { path: 'agenda', element: lazyPage(<AgendaPage />) },
-      { path: 'templates', element: lazyPage(<TemplatesPage />) },
-      { path: 'alunos/:alunoId', element: lazyPage(<AlunoDetailPage />) },
-      { path: 'alunos/:alunoId/evolucao', element: lazyPage(<AlunoEvolucaoPage />) },
-      { path: 'alunos/:alunoId/avaliacoes', element: lazyPage(<AvaliacoesPage />) },
-      { path: 'biblioteca', element: lazyPage(<BibliotecaPage />) },
-      { path: 'feed', element: lazyPage(<FeedGlobalPage />) },
-      { path: 'ranking', element: lazyPage(<RankingPage />) },
-      { path: 'notificacoes', element: lazyPage(<PendenciasPage />) },
-      { path: 'config', element: lazyPage(<SettingsPage />) },
-      { path: 'perfil', element: lazyPage(<PersonalProfilePage />) },
-      { path: 'admin', element: lazyPage(<AdminPage />) },
+      { path: '/', element: <LandingPage /> },
+      { path: '/aluno', element: lazyPage(<AlunoApp />) },     // app do aluno (JWT do magic-link)
+      { path: '/login', element: <LoginPage /> },
+      { path: '/signup', element: <SignUpPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      {
+        element: (
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          { path: 'dashboard', element: lazyPage(<DashboardPage />) },
+          { path: 'alunos', element: lazyPage(<AlunosPage />) },
+          { path: 'agenda', element: lazyPage(<AgendaPage />) },
+          { path: 'templates', element: lazyPage(<TemplatesPage />) },
+          { path: 'alunos/:alunoId', element: lazyPage(<AlunoDetailPage />) },
+          { path: 'alunos/:alunoId/evolucao', element: lazyPage(<AlunoEvolucaoPage />) },
+          { path: 'alunos/:alunoId/avaliacoes', element: lazyPage(<AvaliacoesPage />) },
+          { path: 'biblioteca', element: lazyPage(<BibliotecaPage />) },
+          { path: 'feed', element: lazyPage(<FeedGlobalPage />) },
+          { path: 'ranking', element: lazyPage(<RankingPage />) },
+          { path: 'notificacoes', element: lazyPage(<PendenciasPage />) },
+          { path: 'config', element: lazyPage(<SettingsPage />) },
+          { path: 'perfil', element: lazyPage(<PersonalProfilePage />) },
+          { path: 'admin', element: lazyPage(<AdminPage />) },
+        ],
+      },
+      { path: '*', element: <ErrorPage /> },
     ],
   },
 ])

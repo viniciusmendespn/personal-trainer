@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 
 // Injeta o manifesto correto antes de montar o React para que o browser
 // exiba o nome/ícone certo no prompt de instalação do PWA.
@@ -19,6 +20,8 @@ import App from './App'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 )
