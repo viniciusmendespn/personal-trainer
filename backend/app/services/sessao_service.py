@@ -167,6 +167,7 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
         "aluno_id": aluno_id, "data_hora": now_iso(),
         "canal_origem": canal.value, "classificacao": classificacao.value, "ator": ator.value,
         "GSI1PK": keys.gsi1_registro(aluno_id, ex_id), "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
+        "ttl": int(time.time()) + SESSION_TTL_S,   # expira junto com a sessão se abandonada
     }
     updated = repo.append_series(pk, keys.sk_registro(s["sessao_id"], ex_id), series, on_insert)
 
@@ -222,6 +223,7 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
         "aluno_id": aluno_id, "data_hora": now_iso(),
         "canal_origem": canal.value, "classificacao": classificacao.value, "ator": ator.value,
         "GSI1PK": keys.gsi1_registro(aluno_id, ex_id), "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
+        "ttl": int(time.time()) + SESSION_TTL_S,   # expira junto com a sessão se abandonada
     }
     updated = repo.put_series(pk, sk, series, on_insert)
     delta = _volume(series) - old_vol

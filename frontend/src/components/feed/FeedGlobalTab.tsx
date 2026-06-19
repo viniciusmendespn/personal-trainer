@@ -56,13 +56,13 @@ function PostCard({ post, personalNome, personalFotoUrl }: { post: PostGlobal; p
           {post.midias.map((m, i) => (
             m.tipo.includes('video') || m.tipo.includes('audio') ? (
               m.tipo.includes('audio') ? (
-                <audio key={i} controls src={m.url} className="col-span-2 w-full rounded-lg" />
+                <audio key={i} controls preload="none" src={m.url} className="col-span-2 w-full rounded-lg" />
               ) : (
-                <video key={i} controls src={m.url} className="col-span-2 w-full rounded-xl max-h-64 object-cover" />
+                <video key={i} controls preload="none" src={m.url} className="col-span-2 w-full rounded-xl max-h-64 object-cover" />
               )
             ) : (
               <a key={i} href={m.url} target="_blank" rel="noreferrer">
-                <img src={m.url} alt="mídia" className="w-full rounded-xl object-cover aspect-square" />
+                <img src={m.url} alt="mídia" loading="lazy" className="w-full rounded-xl object-cover aspect-square" />
               </a>
             )
           ))}

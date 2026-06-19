@@ -6,6 +6,7 @@ diferença de que o loop de tool-calling roda aqui. Persona e estilo: FUNCIONAL 
 """
 import json
 import logging
+import time
 
 import httpx
 
@@ -19,6 +20,19 @@ logger = logging.getLogger(__name__)
 
 _OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 _MAX_STEPS = 5
+_RATE_LIMIT_PER_MIN = 10
+
+
+def _check_rate_limit(aluno_id: str, limite: int = _RATE_LIMIT_PER_MIN) -> bool:
+    """True se dentro do limite (e já contabiliza esta mensagem); False se estourou.
+    Janela fixa de 1 minuto, contador atômico com TTL — mesmo padrão de pontos_service.award()."""
+    minuto = str(int(time.time()) // 60)
+    attrs = repo.add_and_set(
+        keys.pk_aluno(aluno_id), keys.sk_quota_agente(minuto),
+        add={"n": 1}, set_={"ttl": int(time.time()) + 120},
+        return_values=True,
+    )
+    return int(attrs.get("n", 0)) <= limite
 
 
 def _active_key() -> str:
@@ -237,6 +251,9 @@ def run(personal_id: str, aluno_id: str, nome: str | None, text: str,
     if not _active_key():
         logger.warning("[agent] chave da LLM ausente (provider=%s) — sem resposta", settings.llm_provider)
         return ""
+    if not _check_rate_limit(aluno_id):
+        logger.warning("[agent] rate limit estourado: aluno=%s", aluno_id)
+        return "Calma, vamos com calma! Manda de novo em 1 min."
     url, headers = _endpoint_and_headers()
     messages = [
         {"role": "system", "content": _SYSTEM},
@@ -256,7 +273,12 @@ def run(personal_id: str, aluno_id: str, nome: str | None, text: str,
         if not r.is_success:
             logger.error("[agent] openai %d: %s", r.status_code, r.text[:300])
             return "Tive um problema agora. Pode repetir?"
-        msg = r.json()["choices"][0]["message"]
+        body = r.json()
+        usage = body.get("usage", {})
+        cached = usage.get("prompt_tokens_details", {}).get("cached_tokens", 0)
+        logger.info("[agent] tokens: prompt=%d cached=%d completion=%d",
+                   usage.get("prompt_tokens", 0), cached, usage.get("completion_tokens", 0))
+        msg = body["choices"][0]["message"]
         tool_calls = msg.get("tool_calls")
         if not tool_calls:
             return (msg.get("content") or "").strip()

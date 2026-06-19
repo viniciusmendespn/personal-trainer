@@ -28,7 +28,7 @@ export const feedGlobalApi = {
   criar: (body: { tipo: PostGlobalTipo; texto: string; midias: Array<{ s3_key: string; tipo: string }> }) =>
     api.post<{ ok: number; post_id: string }>('/v1/feed', body).then((r) => r.data),
 
-  deletar: (postId: string) => api.delete(`/v1/feed/${postId}`),
+  deletar: (postSk: string) => api.delete('/v1/feed', { params: { post_sk: postSk } }),
 
   uploadUrl: (filename: string, contentType: string) =>
     api

@@ -37,9 +37,9 @@ def feed_midia_upload_url(body: MidiaUploadUrlBody, personal_id: str = Depends(g
     return result
 
 
-@router.delete("/{post_id}", status_code=204)
-def deletar_post(post_id: str, personal_id: str = Depends(get_current_personal_id)):
-    found = feed_global_service.deletar_post(personal_id, post_id)
+@router.delete("", status_code=204)
+def deletar_post(post_sk: str, personal_id: str = Depends(get_current_personal_id)):
+    found = feed_global_service.deletar_post(personal_id, post_sk)
     if not found:
         raise HTTPException(404, "Post não encontrado")
 

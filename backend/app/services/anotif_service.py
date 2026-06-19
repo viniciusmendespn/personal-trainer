@@ -17,9 +17,11 @@ def criar(aluno_id: str, tipo: str, titulo: str, mensagem: str,
     item = {
         "notif_id": nid, "tipo": tipo, "titulo": titulo, "mensagem": mensagem,
         "lida": False, "data_hora": now_iso(),
+        "ttl": int(time.time()) + ANOTIF_TTL_S,
         **(ref_extra or {}),
     }
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_anotif(epoch_ms(), nid), item)
+    repo.increment_counter(keys.pk_aluno(aluno_id), keys.SK_STATS_ANOTIF, "nao_lidas", 1)
     return nid
 
 
@@ -32,12 +34,23 @@ def listar(aluno_id: str, limit: int = 30,
 
 
 def nao_lidas(aluno_id: str) -> int:
-    items = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.ANOTIF_PREFIX)
-    return sum(1 for i in items if not i.get("lida"))
+    pk = keys.pk_aluno(aluno_id)
+    stats = repo.get_item(pk, keys.SK_STATS_ANOTIF)
+    if stats is not None:
+        return int(stats.get("nao_lidas", 0))
+    items = repo.query_pk(pk, sk_prefix=keys.ANOTIF_PREFIX)
+    valor = sum(1 for i in items if not i.get("lida"))
+    repo.update_item(pk, keys.SK_STATS_ANOTIF, {"nao_lidas": valor})
+    return valor
 
 
 def marcar_lida(aluno_id: str, ref: str) -> None:
+    pk = keys.pk_aluno(aluno_id)
+    atual = repo.get_item(pk, ref)
+    if atual is None or atual.get("lida"):
+        return
     repo.update_item_if_exists(
-        keys.pk_aluno(aluno_id), ref,
+        pk, ref,
         {"lida": True, "ttl": int(time.time()) + ANOTIF_TTL_S},
     )
+    repo.increment_counter(pk, keys.SK_STATS_ANOTIF, "nao_lidas", -1)

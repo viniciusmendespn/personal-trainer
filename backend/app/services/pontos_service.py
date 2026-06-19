@@ -66,15 +66,16 @@ def award(aluno_id: str, tipo: str, personal_id: str, pts: int | None = None, de
         repo.put_item(pk_al, keys.sk_ponto_log(ts), {
             "tipo": tipo, "pts": pts, "descricao": descricao, "data_hora": ts,
         })
-        # Atualiza ranking no personal (denormaliza semana e mês para evitar queries extras)
+        # Atualiza ranking no personal (denormaliza semana, mês e foto p/ evitar queries extras)
         perfil = repo.get_item(pk_al, "PROFILE") or {}
         nome = perfil.get("nome", "Aluno")
+        foto_s3_key = perfil.get("foto_s3_key")
         repo.add_and_set(
             keys.pk_personal(personal_id),
             keys.sk_ranking_aluno(aluno_id),
             add={"total_pontos": pts},
             set_={
-                "aluno_id": aluno_id, "nome": nome, "atualizado_em": ts,
+                "aluno_id": aluno_id, "nome": nome, "foto_s3_key": foto_s3_key, "atualizado_em": ts,
                 "semana_atual": semana_atual, "mes_atual": mes_atual,
             },
         )

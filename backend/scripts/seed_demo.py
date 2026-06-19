@@ -231,7 +231,7 @@ for aluno in alunos_criados:
 
         if data_fim:
             # mantém o sistema coerente: agenda global de vencimento (lida pelo scheduler) + notificação já gerada
-            repo.put_item(keys.PK_SCHED, keys.sk_due(data_fim, treino_id), {
+            repo.put_item(keys.pk_sched(data_fim), keys.sk_due(treino_id), {
                 "personal_id": PERSONAL_ID, "aluno_id": aluno_id, "treino_id": treino_id,
                 "treino_nome": nome, "aluno_nome": aluno["nome"], "data_fim": data_fim, "tipo": "TREINO_FIM",
             })

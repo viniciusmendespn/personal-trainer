@@ -27,9 +27,9 @@ function Gallery({ items, onSelect }: { items: MediaTimelineItem[]; onSelect: (i
       {items.map((item) => (
         <button key={item.midia_id} onClick={() => onSelect(item)} className="shrink-0 relative">
           {item.tipo.includes('video') ? (
-            <video src={item.url} className="w-20 h-20 object-cover rounded-lg border border-border" />
+            <video src={item.url} preload="none" className="w-20 h-20 object-cover rounded-lg border border-border" />
           ) : (
-            <img src={item.url} alt="" className="w-20 h-20 object-cover rounded-lg border border-border" />
+            <img src={item.url} alt="" loading="lazy" className="w-20 h-20 object-cover rounded-lg border border-border" />
           )}
           <span
             className={`absolute -bottom-1 -right-1 p-0.5 rounded-full border border-border ${item.ator === 'PERSONAL' ? 'bg-accent/20' : 'bg-surface-elevated'}`}

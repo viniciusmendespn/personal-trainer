@@ -24,6 +24,12 @@ router = APIRouter(prefix="/v1/public/wapi", tags=["webhook"])
 _OK = {"ok": 1}
 _TTL_DEDUP = 24 * 3600
 
+# Cache em memória do container quente, TTL curto — mesmo padrão de authz.py (ESPEC §5):
+# evita 2 GetItems por mensagem em instanceId->personal e telefone->aluno.
+_CACHE_TTL = 120
+_cache_personal: dict[str, tuple[str | None, float]] = {}
+_cache_aluno: dict[tuple[str, str], tuple[dict | None, float]] = {}
+
 
 def _digits(phone: str | None) -> str | None:
     if not phone:
@@ -48,8 +54,27 @@ def _extract_text(payload: dict) -> str | None:
 def _resolve_personal(instance_id: str | None) -> str | None:
     if not instance_id:
         return None
+    now = time.time()
+    cached = _cache_personal.get(instance_id)
+    if cached and cached[1] > now:
+        return cached[0]
     item = repo.get_item(keys.pk_wapi(instance_id), "WAPI")
-    return item.get("personal_id") if item else None
+    personal_id = item.get("personal_id") if item else None
+    _cache_personal[instance_id] = (personal_id, now + _CACHE_TTL)
+    return personal_id
+
+
+def _resolve_aluno(personal_id: str, sender: str | None) -> dict | None:
+    if not sender:
+        return None
+    now = time.time()
+    key = (personal_id, sender)
+    cached = _cache_aluno.get(key)
+    if cached and cached[1] > now:
+        return cached[0]
+    item = repo.get_item(keys.pk_phone(personal_id, sender), "PHONE")
+    _cache_aluno[key] = (item, now + _CACHE_TTL)
+    return item
 
 
 def _extract_media(payload: dict) -> dict | None:
@@ -106,21 +131,41 @@ async def receive(secret: str, request: Request):
         logger.warning("[webhook] instância desconhecida: %s", instance_id)
         return _OK
 
-    # Dedup idempotente (ESPEC §7): só a 1ª entrega passa.
-    if message_id:
+    # Dedup idempotente (ESPEC §7), com estado intermediário: marca PROCESSING antes de
+    # processar (não DONE) — se a Lambda morrer por timeout no meio do agente, uma reentrega
+    # da W-API depois da janela ainda processa, em vez de ser descartada silenciosamente.
+    sk_seen = f"MSGSEEN#{message_id}" if message_id else None
+    if sk_seen:
         novo = repo.put_item_if_absent(
-            keys.pk_personal(personal_id), f"MSGSEEN#{message_id}",
-            {"ttl": int(time.time()) + _TTL_DEDUP},
+            keys.pk_personal(personal_id), sk_seen,
+            {"status": "PROCESSING", "started_at": int(time.time()), "ttl": int(time.time()) + 35},
         )
         if not novo:
-            return _OK
+            existing = repo.get_item(keys.pk_personal(personal_id), sk_seen)
+            ainda_processando = (
+                existing and existing.get("status") == "PROCESSING"
+                and int(time.time()) - int(existing.get("started_at", 0)) <= 35
+            )
+            if ainda_processando or (existing and existing.get("status") == "DONE"):
+                return _OK
 
+    _route(personal_id, sender, payload)
+
+    if sk_seen:
+        repo.update_item(keys.pk_personal(personal_id), sk_seen,
+                         {"status": "DONE", "ttl": int(time.time()) + _TTL_DEDUP})
+    return _OK
+
+
+def _route(personal_id: str, sender: str | None, payload: dict) -> None:
+    """Resolve o aluno e despacha mídia/texto. Levanta exceção em caso de erro — o dedup só
+    marca DONE depois deste retornar com sucesso (ver `receive`)."""
     # Resolve aluno pelo telefone (escopo por personal).
-    phone_item = repo.get_item(keys.pk_phone(personal_id, sender), "PHONE") if sender else None
+    phone_item = _resolve_aluno(personal_id, sender)
     if not phone_item:
         # Aluno desconhecido (ESPEC §8 #4) — TODO: boas-vindas / pendência de identificação.
         logger.info("[webhook] telefone não cadastrado: personal=%s phone=%s", personal_id, sender)
-        return _OK
+        return
     aluno_id = phone_item["aluno_id"]
     nome = phone_item.get("nome")
 
@@ -133,7 +178,7 @@ async def receive(secret: str, request: Request):
             transcrito = media_service.transcrever_audio(cfg, media)
             if transcrito:
                 _handle_text(personal_id, aluno_id, nome, sender, transcrito)
-                return _OK
+                return
         # Foto/vídeo -> S3; vincula ao exercício atual se houver sessão, senão pendência.
         sess = sessao_service.get_active(aluno_id)
         ex = (sess or {}).get("ex_atual") or {}
@@ -142,35 +187,31 @@ async def receive(secret: str, request: Request):
         if ex.get("exercicio_id") and saved:
             _send(personal_id, sender, f"Mídia vinculada a {ex.get('nome')}.")
         else:
-            payload = saved or media or {}
+            midia_info = saved or media or {}
             notif_service.criar(
                 personal_id, "MIDIA_PENDENTE", "Mídia sem exercício",
                 "Mídia recebida sem exercício vinculado",
                 aluno_id=aluno_id,
-                ref_extra={"midia_id": payload.get("midia_id"), "s3_key": payload.get("s3_key")},
+                ref_extra={"midia_id": midia_info.get("midia_id"), "s3_key": midia_info.get("s3_key")},
             )
             _send(personal_id, sender, "Recebi sua mídia. De qual exercício ela é?")
-        return _OK
+        return
 
     # Texto -> agente com memória de conversa (se agente não estiver pausado).
     text = _extract_text(payload)
     if not text:
-        return _OK
+        return
     if agent_service.is_agente_pausado(aluno_id):
         agent_service.log_direct(personal_id, aluno_id, text, Ator.ALUNO, CanalOrigem.WHATSAPP)
         _notificar_msg_direta(personal_id, aluno_id, nome, text)
-        return _OK
+        return
     _handle_text(personal_id, aluno_id, nome, sender, text)
-    return _OK
 
 
 def _notificar_msg_direta(personal_id: str, aluno_id: str, nome: str | None, text: str) -> None:
     """Notifica o personal quando o aluno escreve enquanto o agente está pausado.
-    Cria no máximo 1 notificação por hora por aluno (dedup via listar_recentes)."""
-    nao_lidas = [n for n in notif_service.listar_recentes(
-        personal_id, "MSG_ALUNO_DIRETO", aluno_id=aluno_id, max_age_s=3600
-    ) if not n.get("lida")]
-    if nao_lidas:
+    Cria no máximo 1 notificação por hora por aluno (dedup via chave dedicada com TTL)."""
+    if not notif_service.deve_notificar_msg_direta(personal_id, aluno_id):
         return
     preview = text[:80] + ("…" if len(text) > 80 else "")
     notif_service.criar(

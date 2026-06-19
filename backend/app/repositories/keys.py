@@ -42,15 +42,27 @@ def sk_aluno_pointer(aluno_id: str) -> str:
     return f"ALUNO#{aluno_id}"
 
 
+SK_STATS_ALUNOS = "STATS#ALUNOS"   # contador agregado: total/ativos (ARCHITECTURE §5.5 Nível A)
+
+
 def sk_alerta(ts: str, alerta_id: str) -> str:
     return f"ALERT#{ts}#{alerta_id}"
 
 
 NOTIF_PREFIX = "NOTIF#"
+SK_STATS_NOTIF = "STATS#NOTIF"   # contador agregado de não-lidas (ARCHITECTURE §5.5 Nível A)
 
 
 def sk_notif(ts: str, notif_id: str) -> str:
     return f"NOTIF#{ts}#{notif_id}"
+
+
+def sk_dedup_msgdireto(aluno_id: str) -> str:
+    return f"DEDUP#MSGDIRETO#{aluno_id}"
+
+
+def sk_quota_agente(minuto: str) -> str:
+    return f"QUOTA#AGENTE#{minuto}"
 
 
 # ── Agenda do personal (compromissos com alunos, partição PT#) ──────────────
@@ -69,13 +81,17 @@ def sk_template(template_id: str) -> str:
     return f"TEMPLATE#{template_id}"
 
 
-# ── Agenda global de vencimentos (scheduler diário) ──────────────────────────
-PK_SCHED = "SYSTEM#SCHED"
+# ── Agenda de vencimentos (scheduler diário) — 1 partição por dia de vencimento,
+# evita hot-partition global (1 só PK pra todo o sistema, ESPEC §2.1 risco identificado).
 DUE_PREFIX = "DUE#"
 
 
-def sk_due(data_fim: str, treino_id: str) -> str:
-    return f"DUE#{data_fim}#{treino_id}"   # data_fim = YYYY-MM-DD (ordenável)
+def pk_sched(data_fim: str) -> str:
+    return f"SCHED#{data_fim}"   # data_fim = YYYY-MM-DD (1 partição por dia)
+
+
+def sk_due(treino_id: str) -> str:
+    return f"DUE#{treino_id}"
 
 
 # ── SKs do aluno (partição AL#) ──────────────────────────────────────────────
@@ -180,6 +196,9 @@ ANOTIF_PREFIX = "ANOTIF#"
 
 def sk_anotif(ts: str, notif_id: str) -> str:
     return f"ANOTIF#{ts}#{notif_id}"
+
+
+SK_STATS_ANOTIF = "STATS#ANOTIF"   # contador agregado de não-lidas do aluno
 
 
 # ── Feed global do personal (partição PT#) ──────────────────────────────────

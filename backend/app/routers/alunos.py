@@ -85,6 +85,7 @@ def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_perso
             raise _phone_conflict(phone_item.get("aluno_id") if phone_item else None)
     repo.put_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, data)
     repo.put_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(data))
+    repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add={"total": 1, "ativos": 1})
     return aluno
 
 
@@ -132,6 +133,10 @@ def update_aluno(aluno_id: str, body: AlunoUpdate, personal_id: str = Depends(ge
     fields["updated_at"] = now_iso()
     updated = repo.update_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, fields, return_values=True)
     repo.put_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(updated))
+    novo_status = fields.get("status")
+    if novo_status and novo_status != current.get("status"):
+        delta = 1 if novo_status == AlunoStatus.ATIVO else -1
+        repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add={"ativos": delta})
     return repo.clean(updated)
 
 
@@ -172,11 +177,15 @@ def delete_aluno(aluno_id: str, personal_id: str = Depends(get_current_personal_
     repo.delete_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id))
     repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
     authz.invalidate(personal_id, aluno_id)
+    decremento = {"total": -1}
+    if current and current.get("status") == AlunoStatus.ATIVO:
+        decremento["ativos"] = -1
+    repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add=decremento)
     # Limpa entradas DUE# para evitar notificações fantasma após deleção do aluno.
     # Dados completos (treinos/sessões/registros) permanecem em AL# — limpeza em lote futura.
     treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
     due_deletes = [
-        (keys.PK_SCHED, keys.sk_due(t["data_fim"], t["treino_id"]))
+        (keys.pk_sched(t["data_fim"]), keys.sk_due(t["treino_id"]))
         for t in treinos if t.get("data_fim") and t.get("treino_id")
     ]
     if due_deletes:

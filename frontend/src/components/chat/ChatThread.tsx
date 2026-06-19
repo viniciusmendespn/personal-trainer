@@ -63,9 +63,9 @@ function Bubble({ msg, viewerRole, alunoNome }: { msg: ChatMensagem; viewerRole:
         {isAssistant ? renderMarkdownLite(msg.texto) : msg.texto}
         {msg.midia?.url && (
           msg.midia.tipo.includes('video') ? (
-            <video src={msg.midia.url} controls className="rounded-lg max-w-full mt-2" />
+            <video src={msg.midia.url} controls preload="none" className="rounded-lg max-w-full mt-2" />
           ) : (
-            <img src={msg.midia.url} alt="Anexo" className="rounded-lg max-w-full mt-2" />
+            <img src={msg.midia.url} alt="Anexo" loading="lazy" className="rounded-lg max-w-full mt-2" />
           )
         )}
       </div>

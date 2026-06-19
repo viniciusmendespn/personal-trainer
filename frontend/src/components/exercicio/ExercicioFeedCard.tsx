@@ -36,10 +36,10 @@ function MediaGrid({ midias }: { midias: NonNullable<FeedItem['midias']> }) {
       {midias.map((m, i) =>
         m.url ? (
           m.tipo.startsWith('video') || m.tipo.includes('video') ? (
-            <video key={i} src={m.url} controls className="rounded-lg max-h-40 max-w-[180px] border border-border" />
+            <video key={i} src={m.url} controls preload="none" className="rounded-lg max-h-40 max-w-[180px] border border-border" />
           ) : (
             <a key={i} href={m.url} target="_blank" rel="noreferrer">
-              <img src={m.url} alt="mídia" className="rounded-lg max-h-40 max-w-[180px] border border-border object-cover" />
+              <img src={m.url} alt="mídia" loading="lazy" className="rounded-lg max-h-40 max-w-[180px] border border-border object-cover" />
             </a>
           )
         ) : null,

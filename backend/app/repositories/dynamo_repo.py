@@ -225,8 +225,11 @@ def increment_counter(pk: str, sk: str, field: str, amount: int = 1) -> None:
     )
 
 
-def add_and_set(pk: str, sk: str, add: dict | None = None, set_: dict | None = None) -> None:
-    """ADD (contadores) + SET (rótulos) num único write — agregação na escrita (ESPEC §3.1)."""
+def add_and_set(pk: str, sk: str, add: dict | None = None, set_: dict | None = None,
+                return_values: bool = False) -> dict:
+    """ADD (contadores) + SET (rótulos) num único write — agregação na escrita (ESPEC §3.1).
+    `return_values=True` devolve o item pós-write (ALL_NEW) — opt-in, evita 1 read extra
+    quando o chamador precisa do valor atualizado (ex.: rate limit)."""
     names: dict = {}
     values: dict = {}
     parts: list[str] = []
@@ -240,8 +243,12 @@ def add_and_set(pk: str, sk: str, add: dict | None = None, set_: dict | None = N
             names[f"#a{k}"] = k
             values[f":a{k}"] = _san(v)
         parts.append("ADD " + ", ".join(f"#a{k} :a{k}" for k in add))
-    _get_table().update_item(Key={"PK": pk, "SK": sk}, UpdateExpression=" ".join(parts),
-                             ExpressionAttributeNames=names, ExpressionAttributeValues=values)
+    resp = _get_table().update_item(
+        Key={"PK": pk, "SK": sk}, UpdateExpression=" ".join(parts),
+        ExpressionAttributeNames=names, ExpressionAttributeValues=values,
+        ReturnValues="ALL_NEW" if return_values else "NONE",
+    )
+    return resp.get("Attributes", {})
 
 
 def update_if_greater(pk: str, sk: str, field: str, value, extra: dict | None = None) -> bool:

@@ -133,7 +133,7 @@ function PostItem({ post, onDelete }: { post: ReturnType<typeof usePosts>['posts
         <Badge tone={tipoMeta.tone}>{tipoMeta.label}</Badge>
         <div className="flex items-center gap-3">
           <span className="text-xs text-text-muted">{fmtData(post.data_hora)}</span>
-          <button onClick={() => onDelete(post.post_id)} className="text-text-muted hover:text-danger transition-colors">
+          <button onClick={() => onDelete(post.post_sk)} className="text-text-muted hover:text-danger transition-colors">
             <Trash2 size={14} />
           </button>
         </div>

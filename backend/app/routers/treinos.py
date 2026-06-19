@@ -27,11 +27,12 @@ def _aluno_nome(personal_id: str, aluno_id: str) -> str | None:
 
 def _sync_due(personal_id: str, aluno_id: str, treino_id: str, treino_nome: str,
               data_fim: str | None, old_data_fim: str | None = None) -> None:
-    """Mantém a agenda global de vencimento do treino (o scheduler diário lê e notifica)."""
+    """Mantém a agenda de vencimento do treino (o scheduler diário lê e notifica) — 1
+    partição por dia (`SCHED#{data_fim}`), distribuída em vez de uma única partição global."""
     if old_data_fim and old_data_fim != data_fim:
-        repo.delete_item(keys.PK_SCHED, keys.sk_due(old_data_fim, treino_id))
+        repo.delete_item(keys.pk_sched(old_data_fim), keys.sk_due(treino_id))
     if data_fim:
-        repo.put_item(keys.PK_SCHED, keys.sk_due(data_fim, treino_id), {
+        repo.put_item(keys.pk_sched(data_fim), keys.sk_due(treino_id), {
             "personal_id": personal_id, "aluno_id": aluno_id, "treino_id": treino_id,
             "treino_nome": treino_nome, "aluno_nome": _aluno_nome(personal_id, aluno_id),
             "data_fim": data_fim, "tipo": "TREINO_FIM",
@@ -108,7 +109,7 @@ def delete_treino(aluno_id: str, treino_id: str, personal_id: str = Depends(get_
     deletes = [(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id))]
     deletes += [(keys.pk_aluno(aluno_id), e["SK"]) for e in exs]
     if treino and treino.get("data_fim"):
-        deletes.append((keys.PK_SCHED, keys.sk_due(treino["data_fim"], treino_id)))
+        deletes.append((keys.pk_sched(treino["data_fim"]), keys.sk_due(treino_id)))
     repo.batch_write(deletes=deletes)
 
 

@@ -1,7 +1,7 @@
 import hmac
 import json
+import time
 import urllib.request
-from functools import lru_cache
 
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -11,15 +11,27 @@ from app.config import settings
 
 security = HTTPBearer()
 
+_JWKS_TTL_S = 3600
+_jwks_cache: dict | None = None
+_jwks_exp: float = 0
 
-@lru_cache(maxsize=1)
+
 def _get_jwks() -> dict:
+    """Cache em memória com TTL (não @lru_cache eterno) — se o Cognito rotacionar as
+    chaves, um container quente pega a chave nova em até 1h, em vez de só no próximo
+    cold start (PERFORMANCE_ESCALA.md §2.7)."""
+    global _jwks_cache, _jwks_exp
+    now = time.time()
+    if _jwks_cache is not None and _jwks_exp > now:
+        return _jwks_cache
     url = (
         f"https://cognito-idp.{settings.cognito_region}.amazonaws.com"
         f"/{settings.cognito_user_pool_id}/.well-known/jwks.json"
     )
     with urllib.request.urlopen(url) as r:
-        return json.loads(r.read())
+        _jwks_cache = json.loads(r.read())
+    _jwks_exp = now + _JWKS_TTL_S
+    return _jwks_cache
 
 
 def _verify_token(token: str) -> dict:

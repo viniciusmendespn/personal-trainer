@@ -228,6 +228,8 @@ Resources:
       Handler: app.scheduler.handler
       CodeUri: ./
       Description: "Notifica o personal sobre treinos vencendo (diário)"
+      Timeout: 60        # processa lote (30 dias x partições) — 29s do Globals (CRUD) não basta
+      MemorySize: 512
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref MainTable

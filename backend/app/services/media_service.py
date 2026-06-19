@@ -130,6 +130,43 @@ def _bytes(url: str) -> bytes | None:
         return None
 
 
+class _StreamReader:
+    """Adapta um httpx.Response em streaming para a interface file-like que
+    boto3 upload_fileobj espera (.read(size)) — evita materializar o arquivo
+    inteiro em memória de uma vez (relevante para vídeos, PERFORMANCE_ESCALA.md §2.4)."""
+
+    def __init__(self, response: httpx.Response):
+        self._iter = response.iter_bytes()
+        self._buf = b""
+
+    def read(self, size: int = -1) -> bytes:
+        if size is None or size < 0:
+            chunks = [self._buf, *self._iter]
+            self._buf = b""
+            return b"".join(chunks)
+        while len(self._buf) < size:
+            try:
+                self._buf += next(self._iter)
+            except StopIteration:
+                break
+        data, self._buf = self._buf[:size], self._buf[size:]
+        return data
+
+
+def _stream_to_s3(url: str, key: str, content_type: str | None) -> bool:
+    """Baixa via streaming e sobe ao S3 sem carregar o arquivo inteiro em memória."""
+    try:
+        with httpx.Client(timeout=30) as c:
+            with c.stream("GET", url) as r:
+                r.raise_for_status()
+                extra = {"ContentType": content_type} if content_type else {}
+                _s3c().upload_fileobj(_StreamReader(r), settings.media_bucket_name, key, ExtraArgs=extra)
+        return True
+    except Exception as e:
+        logger.warning("[media] stream upload falhou: %s", e)
+        return False
+
+
 def transcrever_audio(cfg: dict, media: dict) -> str | None:
     """Áudio -> texto via OpenAI Whisper. Retorna a transcrição ou None."""
     if not settings.openai_api_key:
@@ -157,17 +194,13 @@ def transcrever_audio(cfg: dict, media: dict) -> str | None:
 
 def salvar_midia(cfg: dict, media: dict, aluno_id: str, exercicio_id: str | None,
                  exercicio_nome: str | None, tipo: str) -> dict | None:
-    """Baixa foto/vídeo, sobe no S3 e cria o item MIDIA (vinculada se há exercício)."""
+    """Baixa foto/vídeo (streaming) e sobe no S3, cria o item MIDIA (vinculada se há exercício)."""
     link = _download_link(cfg, media)
-    content = _bytes(link) if link else None
-    if not content or not settings.media_bucket_name:
+    if not link or not settings.media_bucket_name:
         return None
     key = f"midia/{aluno_id}/{uuid.uuid4()}"
-    try:
-        _s3c().put_object(Bucket=settings.media_bucket_name, Key=key, Body=content,
-                          ContentType=media.get("mimetype") or "application/octet-stream")
-    except Exception as e:
-        logger.warning("[media] upload S3 falhou: %s", e)
+    ok = _stream_to_s3(link, key, media.get("mimetype") or "application/octet-stream")
+    if not ok:
         return None
     midia_id = new_id()
     item = {
