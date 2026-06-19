@@ -38,6 +38,19 @@ def _digits(phone: str | None) -> str | None:
     return d or None
 
 
+def _br_phone_variant(digits: str) -> str | None:
+    """Gera a variante alternativa (com/sem 9º dígito) pra celular BR (DDI 55).
+    A W-API às vezes entrega o telefone sem o 9º dígito; o cadastro sempre guarda com."""
+    if not digits.startswith("55"):
+        return None
+    resto = digits[2:]
+    if len(resto) == 11 and resto[2] == "9":          # tem o 9º -> gera sem
+        return "55" + resto[:2] + resto[3:]
+    if len(resto) == 10:                                # sem o 9º -> gera com
+        return "55" + resto[:2] + "9" + resto[2:]
+    return None
+
+
 def _extract_text(payload: dict) -> str | None:
     """Texto da mensagem — formato exato da W-API a confirmar; tenta os campos comuns."""
     for v in (payload.get("text"), payload.get("message"), payload.get("body"),
@@ -64,17 +77,25 @@ def _resolve_personal(instance_id: str | None) -> str | None:
     return personal_id
 
 
-def _resolve_aluno(personal_id: str, sender: str | None) -> dict | None:
-    if not sender:
-        return None
+def _get_phone_item(personal_id: str, phone: str) -> dict | None:
     now = time.time()
-    key = (personal_id, sender)
+    key = (personal_id, phone)
     cached = _cache_aluno.get(key)
     if cached and cached[1] > now:
         return cached[0]
-    item = repo.get_item(keys.pk_phone(personal_id, sender), "PHONE")
+    item = repo.get_item(keys.pk_phone(personal_id, phone), "PHONE")
     _cache_aluno[key] = (item, now + _CACHE_TTL)
     return item
+
+
+def _resolve_aluno(personal_id: str, sender: str | None) -> dict | None:
+    if not sender:
+        return None
+    item = _get_phone_item(personal_id, sender)
+    if item:
+        return item
+    alt = _br_phone_variant(sender)
+    return _get_phone_item(personal_id, alt) if alt else None
 
 
 def _extract_media(payload: dict) -> dict | None:
