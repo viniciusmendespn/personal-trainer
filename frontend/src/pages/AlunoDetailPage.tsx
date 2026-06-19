@@ -9,7 +9,7 @@ import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
-import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, ErrorText, useToast, useConfirm, AvatarUpload } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar } from '../components/ui'
 import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
@@ -17,7 +17,7 @@ import { useNotas, useCreateNota } from '../hooks/useNotas'
 import { treinosApi, type SessaoHistoricoPersonal } from '../api/treinos'
 import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
-import type { Treino, Exercicio, ExercicioCreate, SeriePrescrita, AlunoExistenteConflict, Aluno, WapiStatus } from '../types'
+import type { Treino, Exercicio, ExercicioCreate, SeriePrescrita, AlunoExistenteConflict, Aluno } from '../types'
 
 export function AlunoDetailPage() {
   const { alunoId = '' } = useParams()
@@ -27,8 +27,6 @@ export function AlunoDetailPage() {
 
   useEffect(() => {
     if (!aluno || aluno.foto_url) return
-    const wapiStatus = qc.getQueryData<WapiStatus>(['wapi-status'])
-    if (!wapiStatus?.connected) return
     alunosApi.syncFoto(alunoId).then(({ foto_url }) => {
       if (!foto_url) return
       qc.setQueryData<Aluno>(['aluno', alunoId], (prev) => prev ? { ...prev, foto_url } : prev)
@@ -155,9 +153,12 @@ export function AlunoDetailPage() {
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-        <div>
-          <h2 className="font-display text-xl font-semibold">{aluno?.nome ?? '…'}</h2>
-          {aluno && <Badge tone={aluno.status === 'ATIVO' ? 'success' : 'neutral'} className="mt-1">{aluno.status}</Badge>}
+        <div className="flex items-center gap-3">
+          <Avatar name={aluno?.nome ?? ''} imageUrl={aluno?.foto_url} size="lg" />
+          <div>
+            <h2 className="font-display text-xl font-semibold">{aluno?.nome ?? '…'}</h2>
+            {aluno && <Badge tone={aluno.status === 'ATIVO' ? 'success' : 'neutral'} className="mt-1">{aluno.status}</Badge>}
+          </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <Link to={`/alunos/${alunoId}/evolucao`} className="inline-flex items-center gap-1 text-sm text-accent-hover hover:underline">
