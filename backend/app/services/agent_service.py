@@ -10,7 +10,7 @@ from app.models.enums import Ator, CanalOrigem, Classificacao
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import alerta_service, sessao_service
-from app.utils import epoch_ms, new_id, now_iso
+from app.utils import epoch_ms, new_id, now_iso, treino_vigente
 
 logger = logging.getLogger(__name__)
 
@@ -198,17 +198,6 @@ def enviar_link_portal(aluno_id: str, personal_id: str) -> dict:
     return {"link": aluno_auth.magic_link(aluno_id, personal_id)}
 
 
-def _treino_vigente(t: dict, hoje_str: str) -> bool:
-    """True se o treino está ativo e dentro do período (campos opcionais)."""
-    if not t.get("ativo", True):
-        return False
-    if t.get("data_inicio") and hoje_str < t["data_inicio"]:
-        return False
-    if t.get("data_fim") and hoje_str > t["data_fim"]:
-        return False
-    return True
-
-
 def treino_de_hoje(aluno_id: str) -> dict:
     """Treino(s) com exercícios agendados para hoje (vigentes + dia da semana ou diários)."""
     from datetime import date, datetime, timezone
@@ -219,7 +208,7 @@ def treino_de_hoje(aluno_id: str) -> dict:
     ids_hoje = {e["treino_id"] for e in exs if e.get("dia_semana") in (None, hoje)}
     treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
     matches = [t for t in treinos
-               if t["treino_id"] in ids_hoje and _treino_vigente(t, hoje_str)]
+               if t["treino_id"] in ids_hoje and treino_vigente(t, hoje_str)]
     # Conta exercícios de cada treino para hoje
     counts: dict[str, int] = {}
     for e in exs:
@@ -243,7 +232,7 @@ def listar_treinos(aluno_id: str) -> dict:
         counts[tid] = counts.get(tid, 0) + 1
     return {"treinos": [
         {"id": t["treino_id"], "nome": t.get("nome"), "foco": t.get("foco"),
-         "ativo": t.get("ativo", True), "vigente": _treino_vigente(t, hoje_str),
+         "ativo": t.get("ativo", True), "vigente": treino_vigente(t, hoje_str),
          "num_ex": counts.get(t["treino_id"], 0),
          "inicio": t.get("data_inicio"), "fim": t.get("data_fim")}
         for t in treinos

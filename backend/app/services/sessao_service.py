@@ -5,7 +5,7 @@ Sessão ativa = 1 item denormalizado `SESSION#ACTIVE` que embute a sequência de
 (sessão, exercício) com séries acumuladas via list_append (1 write). Usado pelo portal e
 pelo agente."""
 import time
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from fastapi import HTTPException
 
@@ -13,7 +13,7 @@ from app.models.enums import Ator, CanalOrigem, Classificacao, SessaoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import pontos_service
-from app.utils import epoch_ms, new_id, now_iso
+from app.utils import epoch_ms, new_id, now_iso, treino_vigente
 
 SESSION_TTL_S = 6 * 3600  # sessão abandonada cai sozinha (ESPEC §3)
 
@@ -302,7 +302,9 @@ def ultimo_e_proximo(aluno_id: str) -> dict:
     ultima_raw = next((c for c in candidatos if c.get("status") != SessaoStatus.EM_ANDAMENTO.value), None)
     ultima = repo.clean(ultima_raw) if ultima_raw else None
 
+    hoje_str = date.today().isoformat()
     treinos = repo.clean_all(repo.query_pk(pk, sk_prefix=keys.SK_TREINO_PREFIX))
+    treinos = [t for t in treinos if treino_vigente(t, hoje_str)]
     treinos.sort(key=lambda t: t.get("ordem", 0))
 
     proximo = None

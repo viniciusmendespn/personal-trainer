@@ -106,7 +106,8 @@ def hoje(ctx: dict = Depends(get_current_aluno)):
     hoje_str = date.today().isoformat()
     treinos = [
         t for t in treinos
-        if (not t.get("data_inicio") or t["data_inicio"] <= hoje_str)
+        if t.get("ativo", True)
+        and (not t.get("data_inicio") or t["data_inicio"] <= hoje_str)
         and (not t.get("data_fim") or t["data_fim"] >= hoje_str)
     ]
     treinos.sort(key=lambda t: t.get("ordem", 0))

@@ -15,6 +15,7 @@ from app.models.enums import Ator, CanalOrigem
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import agent_service, sessao_service
+from app.utils import treino_vigente
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +194,7 @@ def _context(aluno_id: str) -> str:
         hoje_str = date.today().isoformat()
         treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
         lst = [{"id": t["treino_id"], "nome": t.get("nome"), "foco": t.get("foco"),
-                "vigente": agent_service._treino_vigente(t, hoje_str)}
+                "vigente": treino_vigente(t, hoje_str)}
                for t in treinos if t.get("ativo", True)]
         rot = sessao_service.ultimo_e_proximo(aluno_id)
         return json.dumps({"sessao_ativa": False, "treinos": lst,
