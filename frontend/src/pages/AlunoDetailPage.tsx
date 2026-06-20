@@ -470,9 +470,11 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
           {showExpirados && (
             <div className="space-y-3 mt-2">
               {expirados.map((t) => (
-                <div key={t.treino_id} className="opacity-70">
-                  <TreinoCard alunoId={alunoId} treino={t} />
-                  <div className="flex justify-end -mt-1 pb-1">
+                <div key={t.treino_id}>
+                  <div className="opacity-70">
+                    <TreinoCard alunoId={alunoId} treino={t} />
+                  </div>
+                  <div className="flex justify-end mt-2">
                     <Button size="sm" variant="outline" onClick={() => renovar(t)}>
                       <span className="flex items-center gap-1"><RefreshCw size={12} /> Renovar vigência</span>
                     </Button>
