@@ -4,8 +4,9 @@ import './index.css'
 import App from './App'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 
-// Injeta o manifesto correto antes de montar o React para que o browser
-// exiba o nome/ícone certo no prompt de instalação do PWA.
+// Injeta o manifesto e as meta tags corretas antes de montar o React para que o
+// browser exiba o nome/ícone certo no prompt de instalação do PWA (Android) e no
+// Add to Home Screen do Safari (iOS, que lê apple-mobile-web-app-title, não o manifest).
 ;(function injectManifest() {
   const isAluno = window.location.pathname.startsWith('/aluno')
   if (!isAluno) return
@@ -16,6 +17,9 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary'
     document.head.appendChild(link)
   }
   link.href = '/manifest-aluno.webmanifest'
+
+  const titleMeta = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]')
+  if (titleMeta) titleMeta.content = 'Treinos'
 })()
 
 createRoot(document.getElementById('root')!).render(

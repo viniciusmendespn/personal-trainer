@@ -11,7 +11,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['coach-icon.png'],
+      includeAssets: ['coach-icon.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'CoachPilot — Portal',
         short_name: 'CoachPilot',
@@ -21,7 +21,11 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/dashboard',
         scope: '/',
-        icons: [{ src: 'coach-icon.png', sizes: '138x135', type: 'image/png', purpose: 'any' }],
+        icons: [
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
       },
       workbox: {
         skipWaiting: true,
