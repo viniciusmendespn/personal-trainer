@@ -949,12 +949,15 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
       </div>
 
       {/* Abas */}
-      <div className="flex gap-1 border-b border-border pb-0">
+      <div
+        className="flex gap-1 border-b border-border overflow-x-auto"
+        style={{ scrollbarWidth: 'none' } as React.CSSProperties}
+      >
         {ABA_EVOLUCAO.map((a) => (
           <button
             key={a.key}
             onClick={() => setAba(a.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-t-lg border-b-2 transition-colors ${
+            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium whitespace-nowrap rounded-t-lg border-b-2 transition-colors ${
               aba === a.key
                 ? 'border-accent text-accent-hover bg-accent/5'
                 : 'border-transparent text-text-muted hover:text-text'
