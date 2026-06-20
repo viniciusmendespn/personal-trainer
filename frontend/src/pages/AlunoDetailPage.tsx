@@ -175,10 +175,10 @@ export function AlunoDetailPage() {
               size="sm"
               onClick={toggleStatus}
               disabled={updateAluno.isPending}
-              className="flex-col gap-0.5 px-2.5 py-1.5 h-auto text-[9px] leading-tight"
+              className="gap-1.5 px-2.5 py-1.5 h-auto text-[9px] leading-tight items-center"
             >
-              {aluno.status === 'ATIVO' ? <PowerOff size={13} /> : <Power size={13} />}
-              <span className="text-center">{aluno.status === 'ATIVO' ? <>Desativar<br/>acesso</> : <>Ativar<br/>acesso</>}</span>
+              {aluno.status === 'ATIVO' ? <PowerOff size={13} className="shrink-0" /> : <Power size={13} className="shrink-0" />}
+              <span className="text-left">{aluno.status === 'ATIVO' ? <>Desativar<br/>acesso</> : <>Ativar<br/>acesso</>}</span>
             </Button>
           )}
           {aluno && (
@@ -187,10 +187,10 @@ export function AlunoDetailPage() {
               size="sm"
               onClick={() => toggleAgente.mutate(!aluno.agente_habilitado)}
               disabled={toggleAgente.isPending}
-              className="flex-col gap-0.5 px-2.5 py-1.5 h-auto text-[9px] leading-tight"
+              className="gap-1.5 px-2.5 py-1.5 h-auto text-[9px] leading-tight items-center"
             >
-              <Bot size={13} />
-              <span className="text-center">{aluno.agente_habilitado ? <>Desabilitar<br/>agente</> : <>Habilitar<br/>agente</>}</span>
+              <Bot size={13} className="shrink-0" />
+              <span className="text-left">{aluno.agente_habilitado ? <>Desabilitar<br/>agente</> : <>Habilitar<br/>agente</>}</span>
             </Button>
           )}
         </div>
