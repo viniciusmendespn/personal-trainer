@@ -57,8 +57,8 @@ def alterar_status(aluno_id: str, ts: str, meta_id: str, novo_status: str) -> di
     return repo.clean(updated) if updated else None
 
 
-def excluir(aluno_id: str, ts: str, meta_id: str) -> None:
-    repo.delete_item(keys.pk_aluno(aluno_id), keys.sk_meta(ts, meta_id))
+def excluir(aluno_id: str, ts: str, meta_id: str) -> bool:
+    return repo.delete_item_if_exists(keys.pk_aluno(aluno_id), keys.sk_meta(ts, meta_id))
 
 
 def _concluir(aluno_id: str, personal_id: str, meta: dict, valor_atingido: float) -> None:

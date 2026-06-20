@@ -56,6 +56,8 @@ def alterar_status_portal(aluno_id: str, ts_id: str, body: StatusBody,
     if body.status not in ("APROVADA", "CANCELADA", "CONCLUIDA"):
         raise HTTPException(400, "Status inválido")
     parts = ts_id.split("#", 1)
+    if len(parts) != 2:
+        raise HTTPException(400, "ts_id inválido")
     updated = meta_service.alterar_status(aluno_id, parts[0], parts[1], body.status)
     if updated is None:
         raise HTTPException(404, "Meta não encontrada")
@@ -67,7 +69,10 @@ def delete_meta_portal(aluno_id: str, ts_id: str,
                        personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)
     parts = ts_id.split("#", 1)
-    meta_service.excluir(aluno_id, parts[0], parts[1])
+    if len(parts) != 2:
+        raise HTTPException(400, "ts_id inválido")
+    if not meta_service.excluir(aluno_id, parts[0], parts[1]):
+        raise HTTPException(404, "Meta não encontrada")
 
 
 @router.get("/v1/alunos/{aluno_id}/badges")

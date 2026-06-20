@@ -75,4 +75,5 @@ def update_avaliacao(
 def delete_avaliacao(aluno_id: str, ts_id: str, personal_id: str = Depends(get_current_personal_id)):
     """ts_id = '{ts}#{avaliacao_id}' (do SK)."""
     authz.authorize_aluno(personal_id, aluno_id)
-    repo.delete_item(keys.pk_aluno(aluno_id), f"AVAL#{ts_id}")
+    if not repo.delete_item_if_exists(keys.pk_aluno(aluno_id), f"AVAL#{ts_id}"):
+        raise HTTPException(404, "Avaliação não encontrada")

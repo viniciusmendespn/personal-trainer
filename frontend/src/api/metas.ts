@@ -41,11 +41,11 @@ export const metasApi = {
   create: (alunoId: string, body: MetaCreate) =>
     api.post<Meta>(`/v1/alunos/${alunoId}/metas`, body).then((r) => r.data),
   update: (alunoId: string, tsId: string, body: Partial<MetaCreate>) =>
-    api.put<Meta>(`/v1/alunos/${alunoId}/metas/${tsId}`, body).then((r) => r.data),
+    api.put<Meta>(`/v1/alunos/${alunoId}/metas/${encodeURIComponent(tsId)}`, body).then((r) => r.data),
   alterarStatus: (alunoId: string, tsId: string, status: MetaStatus) =>
-    api.patch<Meta>(`/v1/alunos/${alunoId}/metas/${tsId}/status`, { status }).then((r) => r.data),
+    api.patch<Meta>(`/v1/alunos/${alunoId}/metas/${encodeURIComponent(tsId)}/status`, { status }).then((r) => r.data),
   remove: (alunoId: string, tsId: string) =>
-    api.delete(`/v1/alunos/${alunoId}/metas/${tsId}`),
+    api.delete(`/v1/alunos/${alunoId}/metas/${encodeURIComponent(tsId)}`),
 }
 
 export const alunoMetasApi = {

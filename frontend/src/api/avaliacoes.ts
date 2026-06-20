@@ -19,7 +19,7 @@ export const avaliacoesApi = {
   create: (alunoId: string, body: AvaliacaoCreate) =>
     api.post<Avaliacao>(`/v1/alunos/${alunoId}/avaliacoes`, body).then((r) => r.data),
   remove: (alunoId: string, tsId: string) =>
-    api.delete(`/v1/alunos/${alunoId}/avaliacoes/${tsId}`),
+    api.delete(`/v1/alunos/${alunoId}/avaliacoes/${encodeURIComponent(tsId)}`),
   getUploadUrl: (alunoId: string, filename: string, contentType: string) =>
     api.post<{ upload_url: string; s3_key: string }>(`/v1/alunos/${alunoId}/avaliacoes/upload-url`, {
       filename, content_type: contentType,
