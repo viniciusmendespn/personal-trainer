@@ -78,7 +78,7 @@ export function ChatWidget() {
                   onClick={() => setAlunoId(a.aluno_id)}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left border-b border-border/50"
                 >
-                  <Avatar name={a.nome} size="sm" />
+                  <Avatar name={a.nome} imageUrl={a.foto_url} size="sm" />
                   <span className="text-sm text-text truncate">{a.nome}</span>
                 </button>
               ))
