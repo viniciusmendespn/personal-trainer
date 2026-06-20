@@ -470,33 +470,27 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
           {showExpirados && (
             <div className="space-y-3 mt-2">
               {expirados.map((t) => (
-                <div key={t.treino_id}>
-                  <div className="opacity-70">
-                    <TreinoCard alunoId={alunoId} treino={t} />
-                  </div>
-                  <div className="flex justify-end mt-2">
-                    <Button size="sm" variant="outline" onClick={() => renovar(t)}>
-                      <span className="flex items-center gap-1"><RefreshCw size={12} /> Renovar vigência</span>
-                    </Button>
-                  </div>
-                  {renovandoId === t.treino_id && (
-                    <Modal open onClose={() => setRenovandoId(null)} title={`Renovar "${t.nome}"`} size="md">
-                      <div className="space-y-3">
-                        <Input
-                          label="Nova data de término"
-                          type="date"
-                          value={novaDataFim}
-                          onChange={(e) => setNovaDataFim(e.target.value)}
-                        />
-                        <Button className="w-full" disabled={updTreino.isPending} onClick={() => confirmarRenovacao(t)}>
-                          {updTreino.isPending ? 'Salvando…' : 'Confirmar renovação'}
-                        </Button>
-                      </div>
-                    </Modal>
-                  )}
-                </div>
+                <TreinoCard key={t.treino_id} alunoId={alunoId} treino={t} expired onRenovar={() => renovar(t)} />
               ))}
             </div>
+          )}
+          {renovandoId && (
+            <Modal open onClose={() => setRenovandoId(null)} title={`Renovar "${expirados.find(t => t.treino_id === renovandoId)?.nome ?? ''}"`} size="md">
+              <div className="space-y-3">
+                <Input
+                  label="Nova data de término"
+                  type="date"
+                  value={novaDataFim}
+                  onChange={(e) => setNovaDataFim(e.target.value)}
+                />
+                <Button className="w-full" disabled={updTreino.isPending} onClick={() => {
+                  const t = expirados.find(t => t.treino_id === renovandoId)
+                  if (t) confirmarRenovacao(t)
+                }}>
+                  {updTreino.isPending ? 'Salvando…' : 'Confirmar renovação'}
+                </Button>
+              </div>
+            </Modal>
           )}
         </div>
       )}
@@ -545,7 +539,7 @@ function NotasTimeline({ alunoId }: { alunoId: string }) {
   )
 }
 
-function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
+function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; treino: Treino; expired?: boolean; onRenovar?: () => void }) {
   const [open, setOpen] = useState(false)
   const [editT, setEditT] = useState(false)
   const [addingEx, setAddingEx] = useState(false)
@@ -605,16 +599,17 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
   }
 
   return (
-    <Card variant="elevated">
+    <Card variant="elevated" className={expired ? 'opacity-70' : ''}>
       <div className="flex items-center justify-between gap-2">
-        <button className="flex items-center gap-2 text-left min-w-0" onClick={() => setOpen((v) => !v)}>
+        <button className="flex-1 min-w-0 overflow-hidden flex items-center gap-2 text-left" onClick={() => setOpen((v) => !v)}>
           {open ? <ChevronDown size={16} className="shrink-0" /> : <ChevronRight size={16} className="shrink-0" />}
-          <span className="min-w-0">
-            <span className="font-medium">{treino.nome}</span>
-            {treino.foco && <span className="text-xs text-text-muted ml-2">{treino.foco}</span>}
-            {(treino.data_inicio || treino.data_fim) && (
-              <span className="text-xs text-accent-hover/80 ml-2">
-                {fmtDate(treino.data_inicio)}{treino.data_fim ? ` – ${fmtDate(treino.data_fim)}` : ''}
+          <span className="min-w-0 overflow-hidden">
+            <span className="font-medium truncate block">{treino.nome}</span>
+            {(treino.foco || treino.data_inicio || treino.data_fim) && (
+              <span className="text-xs text-text-muted truncate block">
+                {treino.foco && treino.foco}
+                {treino.foco && (treino.data_inicio || treino.data_fim) && ' · '}
+                {(treino.data_inicio || treino.data_fim) && `${fmtDate(treino.data_inicio)}${treino.data_fim ? ` – ${fmtDate(treino.data_fim)}` : ''}`}
               </span>
             )}
           </span>
@@ -627,7 +622,10 @@ function TreinoCard({ alunoId, treino }: { alunoId: string; treino: Treino }) {
           >
             <LayoutTemplate size={15} />
           </Button>
-          <Button variant="ghost" size="sm" iconOnly aria-label="Editar treino" onClick={() => setEditT(true)}><Pencil size={15} /></Button>
+          {expired
+            ? <Button variant="ghost" size="sm" iconOnly aria-label="Renovar vigência" onClick={onRenovar}><RefreshCw size={15} /></Button>
+            : <Button variant="ghost" size="sm" iconOnly aria-label="Editar treino" onClick={() => setEditT(true)}><Pencil size={15} /></Button>
+          }
           <Button variant="ghost" size="sm" iconOnly aria-label="Excluir treino" onClick={removerTreino} className="hover:text-danger"><Trash2 size={16} /></Button>
         </div>
       </div>
