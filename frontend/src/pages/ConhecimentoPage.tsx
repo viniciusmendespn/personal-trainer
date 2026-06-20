@@ -12,6 +12,10 @@ function formatSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+}
+
 export function ConhecimentoPage() {
   const { data: arquivos, isLoading } = useConhecimentoArquivos()
   const del = useDeleteConhecimentoArquivo()
@@ -98,7 +102,7 @@ export function ConhecimentoPage() {
                 <FileText size={18} className="text-text-muted shrink-0" />
                 <div className="min-w-0">
                   <p className="font-medium truncate">{a.filename}</p>
-                  <p className="text-xs text-text-muted">{formatSize(a.size_bytes)}</p>
+                  <p className="text-xs text-text-muted">{formatSize(a.size_bytes)} · enviado em {formatDate(a.uploaded_at)}</p>
                 </div>
               </div>
               <Button variant="ghost" size="sm" iconOnly aria-label="Remover" onClick={() => remove(a)} className="hover:text-danger">
