@@ -16,7 +16,8 @@ export const conhecimentoApi = {
 /** Pede a presigned URL e sobe o arquivo direto pro S3, depois registra no backend. */
 export async function uploadConhecimentoArquivo(file: File): Promise<string> {
   const { upload_url, s3_key } = await conhecimentoApi.getUploadUrl(file.name, file.type)
-  await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
+  const putResp = await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
+  if (!putResp.ok) throw new Error(`Falha ao enviar "${file.name}" para o armazenamento.`)
   const { arquivo_id } = await conhecimentoApi.registrar({
     filename: file.name, content_type: file.type, size_bytes: file.size, s3_key,
   })

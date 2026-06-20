@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Brain, Download, FileText, Trash2, Upload } from 'lucide-react'
 import { useConhecimentoArquivos, useDeleteConhecimentoArquivo } from '../hooks/useDominio'
 import { conhecimentoApi, uploadConhecimentoArquivo } from '../api/conhecimento'
@@ -16,6 +17,7 @@ export function ConhecimentoPage() {
   const del = useDeleteConhecimentoArquivo()
   const confirm = useConfirm()
   const toast = useToast()
+  const qc = useQueryClient()
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [downloading, setDownloading] = useState(false)
@@ -31,6 +33,7 @@ export function ConhecimentoPage() {
       toast.show(err instanceof Error ? err.message : 'Falha ao enviar arquivo.', 'error')
     } finally {
       setUploading(false)
+      qc.invalidateQueries({ queryKey: ['conhecimento'] })
     }
   }
 
