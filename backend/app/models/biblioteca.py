@@ -14,3 +14,13 @@ class ExLibCreate(BaseModel):
 
 class ExLib(ExLibCreate):
     exlib_id: str
+
+
+class ImportarExerciciosBody(BaseModel):
+    exercicios: list[ExLibCreate]
+
+
+class ImportarResult(BaseModel):
+    importados: int
+    pulados: int
+    erros: list[str]

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { avaliacoesApi, type AvaliacaoCreate } from '../api/avaliacoes'
 import { bibliotecaApi, type ExLibCreate } from '../api/biblioteca'
+import type { ImportarResult } from '../api/biblioteca'
 
 export function useAvaliacoes(alunoId: string) {
   return useQuery({
@@ -50,6 +51,14 @@ export function useDeleteExLib() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => bibliotecaApi.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['biblioteca'] }),
+  })
+}
+
+export function useImportarExercicios() {
+  const qc = useQueryClient()
+  return useMutation<ImportarResult, Error, ExLibCreate[]>({
+    mutationFn: (exercicios) => bibliotecaApi.importar(exercicios),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['biblioteca'] }),
   })
 }

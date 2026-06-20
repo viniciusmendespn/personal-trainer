@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.dependencies import get_current_personal_id
-from app.models.biblioteca import ExLib, ExLibCreate
+from app.models.biblioteca import ExLib, ExLibCreate, ImportarExerciciosBody, ImportarResult
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.utils import new_id
@@ -43,3 +43,31 @@ def update_exlib(exlib_id: str, body: ExLibCreate, personal_id: str = Depends(ge
 @router.delete("/{exlib_id}", status_code=204)
 def delete_exlib(exlib_id: str, personal_id: str = Depends(get_current_personal_id)):
     repo.delete_item(keys.pk_personal(personal_id), keys.sk_exlib(exlib_id))
+
+
+@router.post("/importar", response_model=ImportarResult, status_code=200)
+def importar_exlib(body: ImportarExerciciosBody, personal_id: str = Depends(get_current_personal_id)):
+    pk = keys.pk_personal(personal_id)
+    existentes = repo.query_pk(pk, sk_prefix=keys.EXLIB_PREFIX)
+    nomes_existentes = {e.get("nome", "").strip().lower() for e in existentes}
+
+    puts = []
+    pulados = 0
+    erros: list[str] = []
+
+    for item in body.exercicios:
+        nome = item.nome.strip()
+        if not nome:
+            erros.append("Exercício sem nome ignorado")
+            continue
+        if nome.lower() in nomes_existentes:
+            pulados += 1
+            continue
+        ex = ExLib(exlib_id=new_id(), **item.model_dump())
+        puts.append({"PK": pk, "SK": keys.sk_exlib(ex.exlib_id), **ex.model_dump()})
+        nomes_existentes.add(nome.lower())
+
+    if puts:
+        repo.batch_write(puts=puts)
+
+    return ImportarResult(importados=len(puts), pulados=pulados, erros=erros)

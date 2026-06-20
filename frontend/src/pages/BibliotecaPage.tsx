@@ -1,7 +1,8 @@
 import { useId, useMemo, useState } from 'react'
-import { Plus, Trash2, Video, Pencil, BookOpen, Search } from 'lucide-react'
+import { Plus, Trash2, Video, Pencil, BookOpen, Search, Upload } from 'lucide-react'
 import { useBiblioteca, useCreateExLib, useUpdateExLib, useDeleteExLib } from '../hooks/useDominio'
 import { Button, Card, Input, Textarea, Spinner, EmptyState, Modal, useConfirm } from '../components/ui'
+import { ImportarExerciciosModal } from '../components/ImportarExerciciosModal'
 import type { ExLibCreate } from '../api/biblioteca'
 import type { ExLib } from '../types'
 
@@ -9,6 +10,7 @@ export function BibliotecaPage() {
   const { data: exs, isLoading } = useBiblioteca()
   const create = useCreateExLib()
   const [showAdd, setShowAdd] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [query, setQuery] = useState('')
 
   const grupos = useMemo(
@@ -32,13 +34,18 @@ export function BibliotecaPage() {
     <div className="max-w-3xl mx-auto">
       <div className="flex items-start justify-between gap-3 mb-1">
         <h2 className="font-display text-xl font-semibold">Biblioteca de exercícios</h2>
-        <Button onClick={() => setShowAdd(true)}><span className="flex items-center gap-1"><Plus size={16} /> Adicionar</span></Button>
+        <div className="flex gap-2">
+          <Button variant="ghost" onClick={() => setShowImport(true)}><span className="flex items-center gap-1"><Upload size={16} /> Importar</span></Button>
+          <Button onClick={() => setShowAdd(true)}><span className="flex items-center gap-1"><Plus size={16} /> Adicionar</span></Button>
+        </div>
       </div>
       <p className="text-sm text-text-secondary mb-4">Catálogo reutilizável com vídeo e recomendações (o agente usa nas respostas).</p>
 
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Novo exercício" size="lg">
         <ExLibForm grupos={grupos} submitLabel="Adicionar" submitting={create.isPending} onSubmit={addExLib} />
       </Modal>
+
+      <ImportarExerciciosModal open={showImport} onClose={() => setShowImport(false)} />
 
       {isLoading ? (
         <Spinner />
