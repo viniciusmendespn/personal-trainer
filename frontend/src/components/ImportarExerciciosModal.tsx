@@ -5,18 +5,25 @@ import { parseCsvBiblioteca } from '../utils/parseCsv'
 import { useImportarExercicios } from '../hooks/useDominio'
 import type { ImportarResult } from '../api/biblioteca'
 
-const CHATGPT_PROMPT = `Converta o arquivo anexado em CSV com exatamente estas colunas, separadas por vírgula:
+const CHATGPT_PROMPT = `Analise o arquivo anexado e extraia todos os exercícios físicos que encontrar (podem estar em uma planilha, lista, tabela, ficha de treino ou qualquer outro formato).
+
+Para cada exercício encontrado, gere uma linha no formato CSV com exatamente estas 5 colunas:
 nome,grupo,video_url,descricao,recomendacoes
 
-Regras:
+Descrição dos campos:
+- nome: nome do exercício (obrigatório)
+- grupo: grupo muscular principal (ex: Peito, Costas, Ombros, Bíceps, Tríceps, Pernas, Glúteos, Abdômen, Cardio, Funcional) — infira pelo contexto se não estiver explícito
+- video_url: URL de vídeo de referência, se houver
+- descricao: breve descrição do movimento, se houver
+- recomendacoes: dicas de execução, cuidados ou observações técnicas, se houver
+
+Regras de formatação:
 - Inclua a linha de cabeçalho exatamente como acima
 - Uma linha por exercício
-- Se um campo não existir, deixe vazio (não omita a vírgula)
-- Se um campo contiver vírgula, envolva-o em aspas duplas
-- Não adicione colunas extras
-- Responda APENAS com o CSV, sem explicações
-
-Exemplos de grupos: Peito, Costas, Ombros, Bíceps, Tríceps, Pernas, Glúteos, Abdômen, Cardio, Funcional`
+- Campos ausentes devem ficar vazios (não omita as vírgulas)
+- Campos que contenham vírgula devem ser envolvidos em aspas duplas
+- Não invente informações — deixe o campo vazio se não souber
+- Responda APENAS com o CSV, sem explicações nem comentários`
 
 interface Props {
   open: boolean
