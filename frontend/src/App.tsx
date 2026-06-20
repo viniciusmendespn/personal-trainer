@@ -25,6 +25,7 @@ const AlunoDetailPage = lazy(() => import('./pages/AlunoDetailPage').then((m) =>
 const AlunoEvolucaoPage = lazy(() => import('./pages/AlunoEvolucaoPage').then((m) => ({ default: m.AlunoEvolucaoPage })))
 const AvaliacoesPage = lazy(() => import('./pages/AvaliacoesPage').then((m) => ({ default: m.AvaliacoesPage })))
 const BibliotecaPage = lazy(() => import('./pages/BibliotecaPage').then((m) => ({ default: m.BibliotecaPage })))
+const ConhecimentoPage = lazy(() => import('./pages/ConhecimentoPage').then((m) => ({ default: m.ConhecimentoPage })))
 const PendenciasPage = lazy(() => import('./pages/PendenciasPage').then((m) => ({ default: m.PendenciasPage })))
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const AlunoApp = lazy(() => import('./pages/AlunoApp').then((m) => ({ default: m.AlunoApp })))
@@ -91,6 +92,7 @@ const router = createBrowserRouter([
               { path: 'alunos/:alunoId/evolucao', element: lazyPage(<AlunoEvolucaoPage />) },
               { path: 'alunos/:alunoId/avaliacoes', element: lazyPage(<AvaliacoesPage />) },
               { path: 'biblioteca', element: lazyPage(<BibliotecaPage />) },
+              { path: 'conhecimento', element: lazyPage(<ConhecimentoPage />) },
               { path: 'feed', element: lazyPage(<FeedGlobalPage />) },
               { path: 'ranking', element: lazyPage(<RankingPage />) },
               { path: 'notificacoes', element: lazyPage(<PendenciasPage />) },

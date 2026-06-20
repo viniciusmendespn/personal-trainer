@@ -256,6 +256,15 @@ SK_ANAMNESE_TEMPLATE = "CONFIG#ANAMNESE"   # PT#{personal_id}
 SK_ANAMNESE_ALUNO = "ANAMNESE#"            # AL#{aluno_id}
 
 
+# ── Base de conhecimento para IA (arquivos do personal, partição PT#) ────────
+KB_PREFIX = "KB#"
+SK_KB_BUNDLE = "KB_BUNDLE"   # metadado do zip cacheado: s3_key, built_at, file_count, total_size
+
+
+def sk_kb(arquivo_id: str) -> str:
+    return f"KB#{arquivo_id}"
+
+
 # ── GSI1: "registros por exercício no tempo" (ESPEC §4.1) ────────────────────
 def gsi1_registro(aluno_id: str, exercicio_id: str) -> str:
     return f"AL#{aluno_id}#EX#{exercicio_id}"

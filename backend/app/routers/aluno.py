@@ -12,7 +12,7 @@ from app.models.registro import SerieExec
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.models.postagem import MidiaRef, PostagemCreate, PostagemTipo
-from app.services import agent_service, alerta_service, anotif_service, badge_service, correcao_service, feed_global_service, media_service, meta_service, notif_service, pontos_service, postagem_service, sessao_service
+from app.services import agent_service, alerta_service, anotif_service, badge_service, conhecimento_service, correcao_service, feed_global_service, media_service, meta_service, notif_service, pontos_service, postagem_service, sessao_service
 from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
@@ -97,6 +97,23 @@ def get_personal_profile(ctx: dict = Depends(get_current_aluno)):
     if s3_key:
         profile["foto_url"] = media_service.gerar_presigned_view_url(s3_key)
     return profile
+
+
+@router.get("/conhecimento")
+def conhecimento_listar(ctx: dict = Depends(get_current_aluno)):
+    """Nomes dos arquivos da base de conhecimento do personal — só pra exibir antes de baixar."""
+    return [{"filename": a["filename"]} for a in conhecimento_service.list_arquivos(ctx["personal_id"])]
+
+
+@router.get("/conhecimento/download")
+def conhecimento_download(ctx: dict = Depends(get_current_aluno)):
+    try:
+        url = conhecimento_service.gerar_zip_download_url(ctx["personal_id"])
+    except ValueError as e:
+        raise HTTPException(413, str(e))
+    if not url:
+        raise HTTPException(404, "Seu personal ainda não disponibilizou material.")
+    return {"download_url": url}
 
 
 @router.get("/hoje")

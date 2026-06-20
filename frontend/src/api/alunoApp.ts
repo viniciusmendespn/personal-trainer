@@ -94,6 +94,10 @@ export const alunoApi = {
     alunoClient.post<{ upload_url: string; s3_key: string }>('/v1/aluno/me/avatar/upload-url', {
       filename, content_type: contentType,
     }).then((r) => r.data),
+  conhecimentoList: () =>
+    alunoClient.get<{ filename: string }[]>('/v1/aluno/conhecimento').then((r) => r.data),
+  conhecimentoDownload: () =>
+    alunoClient.get<{ download_url: string }>('/v1/aluno/conhecimento/download').then((r) => r.data),
   personalProfile: () =>
     alunoClient.get<{
       personal_id?: string

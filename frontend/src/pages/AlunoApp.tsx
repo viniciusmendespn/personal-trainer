@@ -448,7 +448,43 @@ function SobrePersonalTab() {
       {!profile?.biografia && !profile?.experiencia_profissional && !profile?.formacao && !isLoading && (
         <p className="text-sm text-text-muted text-center py-8">Seu personal ainda não preencheu o perfil completo.</p>
       )}
+      <ConhecimentoTab />
     </div>
+  )
+}
+
+function ConhecimentoTab() {
+  const toast = useToast()
+  const [downloading, setDownloading] = useState(false)
+  const { data: arquivos } = useQuery({ queryKey: ['aluno-conhecimento'], queryFn: alunoApi.conhecimentoList, retry: false })
+
+  if (!arquivos?.length) return null
+
+  async function baixar() {
+    setDownloading(true)
+    try {
+      const { download_url } = await alunoApi.conhecimentoDownload()
+      window.location.href = download_url
+    } catch {
+      toast.show('Não foi possível baixar o material agora. Tente novamente.', 'error')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  return (
+    <Card className="space-y-2">
+      <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide">Base de conhecimento</p>
+      <p className="text-sm text-text-secondary">
+        Baixe todo o material que seu personal reuniu sobre treino e exercícios — vem com instruções
+        pra você colar numa IA (ChatGPT etc.) e tirar dúvidas com base só nesses documentos.
+      </p>
+      <Button variant="outline" onClick={baixar} disabled={downloading} className="w-full">
+        <span className="flex items-center justify-center gap-1.5">
+          <Download size={16} /> {downloading ? 'Gerando…' : 'Baixar material (.zip)'}
+        </span>
+      </Button>
+    </Card>
   )
 }
 

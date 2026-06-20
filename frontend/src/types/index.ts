@@ -104,6 +104,15 @@ export interface ExLib {
   recomendacoes?: string
 }
 
+export interface ArquivoConhecimento {
+  arquivo_id: string
+  filename: string
+  content_type: string
+  size_bytes: number
+  descricao?: string
+  uploaded_at: string
+}
+
 export interface SeriePrescrita {
   series: number
   reps: string

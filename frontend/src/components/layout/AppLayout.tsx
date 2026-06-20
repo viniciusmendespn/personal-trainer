@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronDown } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Brain, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronDown } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { to: '/ranking', label: 'Ranking', icon: Trophy },
   { to: '/notificacoes', label: 'Notificações', icon: Bell },
   { to: '/biblioteca', label: 'Biblioteca', icon: BookOpen },
+  { to: '/conhecimento', label: 'Base de IA', icon: Brain },
 ]
 
 const TITLE_MAP: Record<string, string> = { '/config': 'WhatsApp', '/perfil': 'Meu Perfil' }
