@@ -12,7 +12,7 @@ from app.models.registro import SerieExec
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.models.postagem import MidiaRef, PostagemCreate, PostagemTipo
-from app.services import agent_service, alerta_service, anotif_service, correcao_service, feed_global_service, media_service, notif_service, pontos_service, postagem_service, sessao_service
+from app.services import agent_service, alerta_service, anotif_service, badge_service, correcao_service, feed_global_service, media_service, meta_service, notif_service, pontos_service, postagem_service, sessao_service
 from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
@@ -166,10 +166,18 @@ def registrar(body: RegistroBody, ctx: dict = Depends(get_current_aluno)):
         ctx["aluno_id"], body.exercicio_id, series,
         canal=CanalOrigem.PORTAL, classificacao=Classificacao.AUTO, ator=Ator.ALUNO)
     out = repo.clean(registro)
+    # Streak atual para aplicar multiplicador (1 GetItem, compartilhado entre os awards)
+    st = repo.get_item(keys.pk_aluno(ctx["aluno_id"]), keys.SK_STATS_ALUNO) or {}
+    streak = int(st.get("streak_atual", 0))
     if pr:
         out["pr_novo"] = pr
-        pontos_service.award(ctx["aluno_id"], "PR", ctx["personal_id"], descricao=f"Novo recorde: {pr}")
-    pontos_service.award(ctx["aluno_id"], "SERIE", ctx["personal_id"], descricao="Série registrada")
+        pontos_service.award(ctx["aluno_id"], "PR", ctx["personal_id"],
+                             descricao=f"Novo recorde: {pr}", streak=streak)
+        meta_service.verificar_metas_carga(
+            ctx["aluno_id"], ctx["personal_id"], body.exercicio_id or "", float(pr)
+        )
+    pontos_service.award(ctx["aluno_id"], "SERIE", ctx["personal_id"],
+                        descricao="Série registrada", streak=streak)
     return out
 
 
@@ -464,7 +472,19 @@ def curtir_feed(body: CurtirFeedBody, ctx: dict = Depends(get_current_aluno)):
 
 @router.get("/pontos")
 def get_pontos(ctx: dict = Depends(get_current_aluno)):
-    return pontos_service.get_pontos(ctx["aluno_id"])
+    result = pontos_service.get_pontos(ctx["aluno_id"])
+    # Inclui streak e multiplicador para o widget de pontos
+    st = repo.get_item(keys.pk_aluno(ctx["aluno_id"]), keys.SK_STATS_ALUNO) or {}
+    streak_atual = int(st.get("streak_atual", 0))
+    result["streak_atual"] = streak_atual
+    result["streak_maximo"] = int(st.get("streak_maximo", 0))
+    result["multiplicador_atual"] = pontos_service.multiplicador_streak(streak_atual)
+    return result
+
+
+@router.get("/badges")
+def listar_badges(ctx: dict = Depends(get_current_aluno)):
+    return badge_service.listar_badges_aluno(ctx["aluno_id"])
 
 
 @router.get("/ranking")
@@ -477,3 +497,28 @@ def get_ranking(ctx: dict = Depends(get_current_aluno)):
         s3_key = r.get("foto_s3_key")
         r["foto_url"] = media_service.gerar_presigned_view_url(s3_key) if s3_key else None
     return ranking
+
+
+# ── Metas / objetivos ────────────────────────────────────────────────────────
+
+class MetaPropostaBody(BaseModel):
+    tipo: str
+    titulo: str
+    descricao: str | None = None
+    valor_alvo: float
+    unidade: str
+    exercicio_id: str | None = None
+    exercicio_nome: str | None = None
+    campo_medida: str | None = None
+    data_limite: str | None = None
+
+
+@router.get("/metas")
+def listar_metas_aluno(ctx: dict = Depends(get_current_aluno)):
+    return meta_service.listar(ctx["aluno_id"], status=None)
+
+
+@router.post("/metas", status_code=201)
+def propor_meta_aluno(body: MetaPropostaBody, ctx: dict = Depends(get_current_aluno)):
+    return meta_service.criar(ctx["aluno_id"], ctx["personal_id"],
+                              body.model_dump(), criado_por="ALUNO")

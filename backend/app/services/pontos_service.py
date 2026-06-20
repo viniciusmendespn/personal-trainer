@@ -1,6 +1,7 @@
 """Gamificação: pontos por atividades e ranking entre alunos do mesmo personal."""
 import logging
 from datetime import date
+from math import floor
 
 from app.repositories import dynamo_repo as repo, keys
 from app.utils import new_id, now_iso
@@ -15,7 +16,24 @@ PONTOS = {
     "POST": 3,
     "CURTIDA": 1,
     "COMENTARIO": 2,
+    "META": 50,                   # meta/objetivo atingido
 }
+
+# Streak multiplicador: semanas consecutivas → multiplicador de pontos
+STREAK_MULTIPLIERS = [
+    (12, 3.0),
+    (8,  2.5),
+    (5,  2.0),
+    (3,  1.5),
+    (1,  1.0),
+]
+
+
+def multiplicador_streak(streak: int) -> float:
+    for min_streak, mult in STREAK_MULTIPLIERS:
+        if streak >= min_streak:
+            return mult
+    return 1.0
 
 
 def _semana_key() -> str:
@@ -29,13 +47,23 @@ def _mes_key() -> str:
     return f"{d.year}-{d.month:02d}"
 
 
-def award(aluno_id: str, tipo: str, personal_id: str, pts: int | None = None, descricao: str = "") -> int:
+def award(aluno_id: str, tipo: str, personal_id: str, pts: int | None = None,
+          descricao: str = "", streak: int | None = None) -> int:
     """Registra pontos para o aluno e atualiza o ranking do personal.
+    streak: se fornecido, aplica multiplicador para tipos SESSAO/SERIE.
     Retorna os pontos concedidos."""
     try:
-        pts = pts if pts is not None else PONTOS.get(tipo, 0)
-        if pts <= 0:
+        base_pts = pts if pts is not None else PONTOS.get(tipo, 0)
+        if base_pts <= 0:
             return 0
+        # Aplica multiplicador de streak somente para pontos de execução
+        if tipo in ("SESSAO", "SERIE"):
+            if streak is None:
+                st = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_STATS_ALUNO) or {}
+                streak = int(st.get("streak_atual", 0))
+            pts = max(1, floor(base_pts * multiplicador_streak(streak)))
+        else:
+            pts = base_pts
         ts = now_iso()
         pk_al = keys.pk_aluno(aluno_id)
         semana_key = _semana_key()

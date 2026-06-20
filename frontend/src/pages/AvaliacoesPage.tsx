@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowDown, ArrowUp, Plus, Scale, FileDown, X, Paperclip, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowDown, ArrowUp, Plus, Scale, FileDown, X, Paperclip, Trash2, SplitSquareHorizontal } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -8,6 +8,7 @@ import { useAluno } from '../hooks/useAlunos'
 import { useAvaliacoes, useCreateAvaliacao, useDeleteAvaliacao } from '../hooks/useDominio'
 import { uploadAvaliacaoFile } from '../api/avaliacoes'
 import { Button, Card, Input, SearchableSelect, Textarea, Spinner, Modal, EmptyState, useToast, useConfirm } from '../components/ui'
+import { FotoComparacaoModal } from '../components/avaliacoes/FotoComparacaoModal'
 import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
 import { renderNodeToPdf } from '../utils/exportPdf'
 import type { Avaliacao } from '../types'
@@ -114,6 +115,7 @@ export function AvaliacoesPage() {
   const deleteAvaliacao = useDeleteAvaliacao(alunoId)
   const confirm = useConfirm()
   const [open, setOpen] = useState(false)
+  const [openComparar, setOpenComparar] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [lightbox, setLightbox] = useState<string | null>(null)
   const { show } = useToast()
@@ -185,6 +187,11 @@ export function AvaliacoesPage() {
       <div className="flex items-center justify-between mb-4 gap-2">
         <h2 className="font-display text-xl font-semibold">Avaliação física</h2>
         <div className="flex items-center gap-2">
+          {(avs?.filter((a) => a.fotos_urls && a.fotos_urls.length > 0).length ?? 0) >= 2 && (
+            <Button variant="outline" size="sm" onClick={() => setOpenComparar(true)}>
+              <span className="flex items-center gap-1"><SplitSquareHorizontal size={14} /> Comparar</span>
+            </Button>
+          )}
           {!!avs?.length && (
             <Button variant="outline" size="sm" onClick={exportarPdf} disabled={exporting}>
               <span className="flex items-center gap-1"><FileDown size={14} /> {exporting ? 'Gerando…' : 'PDF'}</span>
@@ -197,6 +204,8 @@ export function AvaliacoesPage() {
       <Modal open={open} onClose={() => setOpen(false)} title="Nova avaliação" size="lg">
         <NovaAvaliacaoForm alunoId={alunoId} nomesMetricasConhecidos={nomesMetricasConhecidos} onDone={() => setOpen(false)} />
       </Modal>
+
+      <FotoComparacaoModal open={openComparar} onClose={() => setOpenComparar(false)} avaliacoes={avs ?? []} />
 
       <Modal open={!!lightbox} onClose={() => setLightbox(null)} title="Foto">
         {lightbox && <img src={lightbox} alt="Foto da avaliação" className="w-full rounded-lg" />}

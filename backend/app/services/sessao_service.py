@@ -5,14 +5,14 @@ Sessão ativa = 1 item denormalizado `SESSION#ACTIVE` que embute a sequência de
 (sessão, exercício) com séries acumuladas via list_append (1 write). Usado pelo portal e
 pelo agente."""
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import HTTPException
 
 from app.models.enums import Ator, CanalOrigem, Classificacao, SessaoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import pontos_service
+from app.services import badge_service, pontos_service
 from app.utils import epoch_ms, new_id, now_iso, treino_vigente
 
 SESSION_TTL_S = 6 * 3600  # sessão abandonada cai sozinha (ESPEC §3)
@@ -21,6 +21,14 @@ SESSION_TTL_S = 6 * 3600  # sessão abandonada cai sozinha (ESPEC §3)
 def _isoweek() -> str:
     y, w, _ = datetime.now(timezone.utc).isocalendar()
     return f"{y}-W{w:02d}"
+
+
+def _semana_anterior(semana: str) -> str:
+    """Retorna a semana ISO anterior. Ex: '2026-W25' → '2026-W24' (lida com virada de ano)."""
+    year, week = int(semana.split("-W")[0]), int(semana.split("-W")[1])
+    monday = date.fromisocalendar(year, week, 1)
+    prev = (monday - timedelta(weeks=1)).isocalendar()
+    return f"{prev[0]}-W{prev[1]:02d}"
 
 
 def _snapshot(ex: dict) -> dict:
@@ -148,8 +156,25 @@ def finish(aluno_id: str) -> dict:
     repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE)
     # Agregação na escrita: conta a sessão (aluno + semana) — ESPEC §3.1
     pk = keys.pk_aluno(aluno_id)
-    repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_sessoes": 1}, set_={"ultimo_treino": fim_iso})
+    # Lê stats antes do update para calcular streak (1 GetItem extra, inevitável)
+    st_atual = repo.clean(repo.get_item(pk, keys.SK_STATS_ALUNO, consistent=True)) or {}
+    total_sessoes_novo = int(st_atual.get("total_sessoes", 0)) + 1
+    # Cálculo do streak de semanas consecutivas
     wk = _isoweek()
+    ultima_semana = st_atual.get("streak_ultima_semana", "")
+    if ultima_semana == wk:
+        novo_streak = int(st_atual.get("streak_atual", 1))
+    elif ultima_semana == _semana_anterior(wk):
+        novo_streak = int(st_atual.get("streak_atual", 0)) + 1
+    else:
+        novo_streak = 1
+    novo_streak_maximo = max(novo_streak, int(st_atual.get("streak_maximo", 0)))
+    repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_sessoes": 1}, set_={
+        "ultimo_treino": fim_iso,
+        "streak_atual": novo_streak,
+        "streak_maximo": novo_streak_maximo,
+        "streak_ultima_semana": wk,
+    })
     repo.add_and_set(pk, keys.sk_stats_week(wk), add={"sessoes": 1}, set_={"semana": wk})
     # Agregado diário por personal (para gráfico do dashboard)
     personal_id = s.get("personal_id")
@@ -157,13 +182,16 @@ def finish(aluno_id: str) -> dict:
         hoje = fim_iso[:10]
         repo.add_and_set(keys.pk_personal(personal_id), f"STATS#D#{hoje}",
                          add={"sessoes": 1}, set_={"data": hoje})
-        # Gamificação: pontos por sessão finalizada
+        # Gamificação: pontos por sessão finalizada (com multiplicador de streak)
         total_ex = len(s.get("exercicios", []))
         feitos_ex = len(snap.get("exercicios_exec", []))
         completo = total_ex > 0 and feitos_ex >= total_ex
         desc = "Sessão 100% completa" if completo else "Sessão finalizada"
         pts = pontos_service.PONTOS["SESSAO"] + (pontos_service.PONTOS["SESSAO_COMPLETA_BONUS"] if completo else 0)
-        pontos_service.award(aluno_id, "SESSAO", personal_id, pts=pts, descricao=desc)
+        pontos_service.award(aluno_id, "SESSAO", personal_id, pts=pts, descricao=desc, streak=novo_streak)
+        # Badges: verifica conquistas de sessão e streak
+        badge_service.verificar_e_conceder(aluno_id, personal_id,
+                                           total_sessoes=total_sessoes_novo, streak_atual=novo_streak)
         _touch_atividade(
             personal_id, aluno_id, status=SessaoStatus.FINALIZADA.value, treino_nome=s.get("treino_nome"),
             exercicio_atual=None, ordem_atual=None, total_ex=s.get("total_ex"),
@@ -369,19 +397,28 @@ def list_exercicios_aluno(aluno_id: str) -> list[dict]:
     return repo.clean_all(items)
 
 
-def resumo_aluno(aluno_id: str, semanas: int = 8) -> dict:
+def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
     """Resumo de evolução do aluno lido de agregados (1 GetItem + queries curtas, sem scan)."""
+    from app.services import pontos_service as _ps
     pk = keys.pk_aluno(aluno_id)
     st = repo.clean(repo.get_item(pk, keys.SK_STATS_ALUNO)) or {}
     weeks = [repo.clean(w) for w in repo.query_pk_last_n(pk, "STATS#W#", semanas)]
     weeks.sort(key=lambda w: w.get("semana", ""))
     prs = [repo.clean(p) for p in repo.query_pk(pk, sk_prefix="STATS#PR#")]
     wk_atual = _isoweek()
+    streak_atual = int(st.get("streak_atual", 0))
+    total_sessoes = int(st.get("total_sessoes", 0))
+    semanas_com_treino = sum(1 for w in weeks if w.get("sessoes", 0) > 0)
+    media_semana = round(total_sessoes / semanas_com_treino, 1) if semanas_com_treino > 0 else 0.0
     return {
-        "total_sessoes": st.get("total_sessoes", 0),
+        "total_sessoes": total_sessoes,
         "total_volume": st.get("total_volume", 0),
         "ultimo_treino": st.get("ultimo_treino"),
         "sessoes_semana": next((w.get("sessoes", 0) for w in weeks if w.get("semana") == wk_atual), 0),
+        "streak_atual": streak_atual,
+        "streak_maximo": int(st.get("streak_maximo", 0)),
+        "multiplicador_atual": _ps.multiplicador_streak(streak_atual),
+        "media_sessoes_semana": media_semana,
         "semanas": [{"semana": w.get("semana"), "volume": w.get("volume", 0), "sessoes": w.get("sessoes", 0)} for w in weeks],
         "prs": sorted(
             [{"exercicio": p.get("exercicio_nome"), "carga": p.get("carga"), "data": p.get("data")} for p in prs],

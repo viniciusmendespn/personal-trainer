@@ -186,9 +186,18 @@ export const alunoApi = {
 
   // Gamificação
   pontos: () =>
-    alunoClient.get<{ total?: number; semana_atual?: number; mes_atual?: number; log_recente?: PontoLog[] }>('/v1/aluno/pontos').then((r) => r.data),
+    alunoClient.get<{
+      total?: number; semana_atual?: number; mes_atual?: number; log_recente?: PontoLog[]
+      streak_atual?: number; streak_maximo?: number; multiplicador_atual?: number
+    }>('/v1/aluno/pontos').then((r) => r.data),
   ranking: () =>
     alunoClient.get<RankingItem[]>('/v1/aluno/ranking').then((r) => r.data),
+  badges: () =>
+    alunoClient.get<Array<{ tipo: string; titulo: string; descricao: string; emoji: string; categoria: string; unlocked: boolean; unlocked_at?: string }>>('/v1/aluno/badges').then((r) => r.data),
+  metas: () =>
+    alunoClient.get<Array<{ meta_id: string; ts_id: string; tipo: string; titulo: string; descricao?: string; valor_alvo: number; unidade: string; status: string; criado_por: string; created_at: string; data_limite?: string; valor_atingido?: number; data_conclusao?: string }>>('/v1/aluno/metas').then((r) => r.data),
+  criarMeta: (body: { tipo: string; titulo: string; descricao?: string; valor_alvo: number; unidade: string; exercicio_id?: string; campo_medida?: string; data_limite?: string }) =>
+    alunoClient.post('/v1/aluno/metas', body).then((r) => r.data),
 }
 
 export interface PostGlobal {

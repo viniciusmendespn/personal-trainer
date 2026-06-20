@@ -235,6 +235,27 @@ def sk_ranking_aluno(aluno_id: str) -> str:
     return f"RANKING#{aluno_id}"
 
 
+# ── Badges / conquistas do aluno (partição AL#) ──────────────────────────────
+BADGE_PREFIX = "BADGE#"
+
+
+def sk_badge(tipo: str) -> str:
+    return f"BADGE#{tipo}"
+
+
+# ── Metas / objetivos do aluno (partição AL#) ────────────────────────────────
+META_PREFIX = "META#"
+
+
+def sk_meta(ts: str, meta_id: str) -> str:
+    return f"META#{ts}#{meta_id}"
+
+
+# ── Anamnese (ficha de saúde) ─────────────────────────────────────────────────
+SK_ANAMNESE_TEMPLATE = "CONFIG#ANAMNESE"   # PT#{personal_id}
+SK_ANAMNESE_ALUNO = "ANAMNESE#"            # AL#{aluno_id}
+
+
 # ── GSI1: "registros por exercício no tempo" (ESPEC §4.1) ────────────────────
 def gsi1_registro(aluno_id: str, exercicio_id: str) -> str:
     return f"AL#{aluno_id}#EX#{exercicio_id}"

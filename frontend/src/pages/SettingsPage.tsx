@@ -5,6 +5,7 @@ import { wapiApi } from '../api/wapi'
 import { Button, Card, ErrorText } from '../components/ui'
 import { useToast } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
+import { AnamneseEditor } from '../components/anamnese/AnamneseEditor'
 
 const SUPPORT_URL = `https://wa.me/5513988088204?text=${encodeURIComponent('Olá! Gostaria de configurar o WhatsApp no meu Personal Trainer.')}`
 
@@ -84,7 +85,8 @@ export function SettingsPage() {
   }, [method, noInstance, connected, status.isLoading])
 
   return (
-    <div className="max-w-xl mx-auto">
+    <div className="max-w-xl mx-auto space-y-8">
+      <div>
       <h2 className="font-display text-xl font-semibold mb-1">Conexão WhatsApp</h2>
       <p className="text-sm text-text-secondary mb-4">
         Conecte seu número para que seus alunos conversem com o assistente.
@@ -324,6 +326,15 @@ export function SettingsPage() {
           </p>
         </Card>
       )}
+      </div>
+
+      <div>
+        <h2 className="font-display text-xl font-semibold mb-1">Anamnese e auto-cadastro</h2>
+        <p className="text-sm text-text-secondary mb-4">
+          Configure o questionário de saúde e gere um link para o aluno se cadastrar sozinho.
+        </p>
+        <AnamneseEditor />
+      </div>
     </div>
   )
 }

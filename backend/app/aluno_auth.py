@@ -27,3 +27,23 @@ def verify_token(token: str) -> dict:
 
 def magic_link(aluno_id: str, personal_id: str) -> str:
     return f"{settings.frontend_url}/aluno?token={issue_token(aluno_id, personal_id)}"
+
+
+def issue_cadastro_token(personal_id: str, days: int = 30) -> str:
+    """Token para o link de auto-cadastro (sem aluno_id — aluno ainda não existe)."""
+    payload = {
+        "sub": personal_id, "personal_id": personal_id,
+        "scope": "cadastro", "exp": int(time.time()) + days * 86400,
+    }
+    return jwt.encode(payload, settings.webhook_secret, algorithm=_ALGO)
+
+
+def verify_cadastro_token(token: str) -> dict:
+    payload = jwt.decode(token, settings.webhook_secret, algorithms=[_ALGO])
+    if payload.get("scope") != "cadastro":
+        raise ValueError("escopo inválido")
+    return payload
+
+
+def cadastro_link(personal_id: str) -> str:
+    return f"{settings.frontend_url}/cadastro?token={issue_cadastro_token(personal_id)}"

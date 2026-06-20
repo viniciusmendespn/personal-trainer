@@ -32,6 +32,7 @@ const FeedGlobalPage = lazy(() => import('./pages/FeedGlobalPage').then((m) => (
 const RankingPage = lazy(() => import('./pages/RankingPage').then((m) => ({ default: m.RankingPage })))
 const PersonalProfilePage = lazy(() => import('./pages/PersonalProfilePage').then((m) => ({ default: m.PersonalProfilePage })))
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })))
+const CadastroPage = lazy(() => import('./pages/CadastroPage').then((m) => ({ default: m.CadastroPage })))
 
 function PageFallback() {
   return (
@@ -66,6 +67,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <LandingPage /> },
       { path: '/aluno', element: lazyPage(<AlunoApp />) },     // app do aluno (JWT do magic-link)
+      { path: '/cadastro', element: lazyPage(<CadastroPage />) },  // auto-cadastro via link de anamnese
       { path: '/login', element: <LoginPage /> },
       { path: '/signup', element: <SignUpPage /> },
       { path: '/forgot-password', element: <ForgotPasswordPage /> },

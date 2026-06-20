@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -299,6 +299,7 @@ export function AlunoApp() {
           ) : (
             <div className="space-y-3 pt-2">
               <PontosWidget onVerRanking={() => setShowRanking(true)} />
+              <StreakBanner />
               <Hoje />
             </div>
           )}
@@ -501,6 +502,74 @@ function Hoje() {
             <Button variant="energy" onClick={() => start.mutate(t.id)} disabled={start.isPending}>Iniciar</Button>
           </Card>
         ))
+      )}
+    </div>
+  )
+}
+
+function StreakBanner() {
+  const { data: pontos } = useQuery({ queryKey: ['aluno-pontos'], queryFn: alunoApi.pontos })
+  const streak = pontos?.streak_atual ?? 0
+  const mult = pontos?.multiplicador_atual ?? 1.0
+
+  if (streak === 0) return null
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20">
+      <Flame size={16} className="text-orange-400 shrink-0" />
+      <p className="text-sm text-text flex-1">
+        <span className="font-semibold text-orange-400">{streak} {streak === 1 ? 'semana' : 'semanas'} seguidas!</span>
+        {mult > 1.0 && <span className="text-text-secondary"> Multiplicador de pontos: <span className="font-bold text-energy">×{mult.toFixed(1)}</span></span>}
+      </p>
+    </div>
+  )
+}
+
+function ConquistasTab() {
+  const { data: badges, isLoading } = useQuery({
+    queryKey: ['aluno-badges'],
+    queryFn: alunoApi.badges,
+  })
+
+  if (isLoading) return <div className="flex justify-center py-6"><Spinner /></div>
+  if (!badges?.length) return <p className="text-text-muted text-sm py-4 text-center">Ainda não há conquistas definidas.</p>
+
+  const unlocked = badges.filter((b) => b.unlocked)
+  const locked = badges.filter((b) => !b.unlocked)
+
+  return (
+    <div className="space-y-4">
+      {unlocked.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Desbloqueadas</p>
+          <div className="grid grid-cols-3 gap-2">
+            {unlocked.map((b) => (
+              <div key={b.tipo} className="flex flex-col items-center gap-1 p-3 bg-surface-elevated rounded-xl border border-border/60">
+                <span className="text-2xl">{b.emoji}</span>
+                <p className="text-[11px] font-medium text-center leading-tight">{b.titulo}</p>
+                <p className="text-[10px] text-text-muted text-center leading-tight">{b.descricao}</p>
+                {b.unlocked_at && (
+                  <p className="text-[9px] text-text-muted">{new Date(b.unlocked_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {locked.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Bloqueadas</p>
+          <div className="grid grid-cols-3 gap-2">
+            {locked.map((b) => (
+              <div key={b.tipo} className="flex flex-col items-center gap-1 p-3 bg-surface rounded-xl border border-border opacity-50">
+                <span className="text-2xl grayscale">❓</span>
+                <p className="text-[11px] text-text-muted text-center leading-tight">{b.categoria}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {unlocked.length === 0 && locked.length === 0 && (
+        <p className="text-text-muted text-sm py-4 text-center">Complete treinos e mantenha sua sequência para desbloquear conquistas!</p>
       )}
     </div>
   )
@@ -824,13 +893,14 @@ function HistoricoTab() {
   )
 }
 
-type AbaEvolucao = 'carga' | 'volume' | 'recordes' | 'feed'
+type AbaEvolucao = 'carga' | 'volume' | 'recordes' | 'feed' | 'conquistas'
 
 const ABA_EVOLUCAO: { key: AbaEvolucao; label: string; icon: React.ReactNode }[] = [
   { key: 'feed', label: 'Feed', icon: <MessageCircle size={13} /> },
   { key: 'carga', label: 'Carga', icon: <TrendingUp size={13} /> },
   { key: 'volume', label: 'Volume', icon: <BarChart3 size={13} /> },
   { key: 'recordes', label: 'Recordes', icon: <Trophy size={13} /> },
+  { key: 'conquistas', label: 'Conquistas', icon: <Medal size={13} /> },
 ]
 
 function Evolucao({ initialExId }: { initialExId?: string }) {
@@ -980,6 +1050,9 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
           </Card>
         )
       )}
+
+      {/* Aba Conquistas */}
+      {aba === 'conquistas' && <ConquistasTab />}
 
       {/* Aba Feed */}
       {aba === 'feed' && (

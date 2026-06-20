@@ -18,6 +18,8 @@ import { treinosApi, type SessaoHistoricoPersonal } from '../api/treinos'
 import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import type { Treino, Exercicio, ExercicioCreate, SeriePrescrita, AlunoExistenteConflict, Aluno } from '../types'
+import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
+import { MetasTab } from '../components/aluno/MetasTab'
 
 export function AlunoDetailPage() {
   const { alunoId = '' } = useParams()
@@ -40,7 +42,7 @@ export function AlunoDetailPage() {
   const deleteAluno = useDeleteAluno()
   const toggleAgente = useToggleAgenteHabilitado(alunoId)
   const confirm = useConfirm()
-  const [tab, setTab] = useState<'perfil' | 'treinos' | 'historico'>('treinos')
+  const [tab, setTab] = useState<'perfil' | 'treinos' | 'historico' | 'frequencia' | 'metas'>('treinos')
   const [showAddTreino, setShowAddTreino] = useState(false)
   const [nome, setNome] = useState('')
   const [foco, setFoco] = useState('')
@@ -214,9 +216,15 @@ export function AlunoDetailPage() {
 
       <Tabs
         className="mb-4"
-        tabs={[{ key: 'treinos', label: 'Treinos' }, { key: 'historico', label: 'Histórico' }, { key: 'perfil', label: 'Perfil' }]}
+        tabs={[
+          { key: 'treinos', label: 'Treinos' },
+          { key: 'historico', label: 'Histórico' },
+          { key: 'frequencia', label: 'Frequência' },
+          { key: 'metas', label: 'Metas' },
+          { key: 'perfil', label: 'Perfil' },
+        ]}
         active={tab}
-        onChange={(k) => setTab(k as 'perfil' | 'treinos' | 'historico')}
+        onChange={(k) => setTab(k as typeof tab)}
       />
 
       {tab === 'perfil' && (
@@ -345,6 +353,8 @@ export function AlunoDetailPage() {
       )}
 
       {tab === 'historico' && <HistoricoPersonal alunoId={alunoId} />}
+      {tab === 'frequencia' && <FrequenciaTab alunoId={alunoId} />}
+      {tab === 'metas' && <MetasTab alunoId={alunoId} />}
     </div>
   )
 }

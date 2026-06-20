@@ -27,6 +27,10 @@ export interface Resumo {
   sessoes_semana: number
   semanas: ResumoSemana[]
   prs: { exercicio: string; carga: number; data: string }[]
+  streak_atual?: number
+  streak_maximo?: number
+  multiplicador_atual?: number
+  media_sessoes_semana?: number
 }
 
 export const evolucaoApi = {

@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
 from app.config import settings
-from app.routers import (admin, agenda, aluno, alunos, avaliacoes, biblioteca, config, dashboard,
-                         feed_global, notificacoes, personal, personal_chat, sessoes, templates, treinos, wapi, webhook)
+from app.routers import (admin, agenda, aluno, alunos, anamnese, avaliacoes, biblioteca, config, dashboard,
+                         feed_global, metas, notificacoes, personal, personal_chat, sessoes, templates, treinos, wapi, webhook)
 
 app = FastAPI(
     title="Personal Trainer",
@@ -37,6 +37,8 @@ app.include_router(templates.router)  # /v1/templates
 app.include_router(personal_chat.router)  # /v1/alunos/{aluno_id}/chat
 app.include_router(feed_global.router)    # /v1/feed (posts globais do personal)
 app.include_router(personal.router)      # /v1/personal/me (perfil do personal)
+app.include_router(metas.router)          # /v1/alunos/{id}/metas
+app.include_router(anamnese.router)       # /v1/anamnese/... + /v1/public/anamnese
 
 
 @app.get("/v1/health")

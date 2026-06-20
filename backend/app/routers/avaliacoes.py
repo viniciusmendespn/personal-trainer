@@ -6,7 +6,7 @@ from app.dependencies import get_current_personal_id
 from app.models.avaliacao import Avaliacao, AvaliacaoCreate, AvaliacaoUpdate
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz, media_service
+from app.services import authz, media_service, meta_service
 from app.utils import epoch_ms, new_id, now_iso
 
 router = APIRouter(prefix="/v1/alunos/{aluno_id}/avaliacoes", tags=["avaliacoes"])
@@ -50,6 +50,10 @@ def create_avaliacao(aluno_id: str, body: AvaliacaoCreate, personal_id: str = De
     av = Avaliacao(avaliacao_id=new_id(), aluno_id=aluno_id, created_at=now,
                    **{**body.model_dump(), "data": body.data or now})
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_avaliacao(epoch_ms(), av.avaliacao_id), av.model_dump())
+    # Verifica metas de peso e medidas após nova avaliação
+    meta_service.verificar_metas_avaliacao(
+        aluno_id, personal_id, peso=body.peso, medidas=body.medidas or {}
+    )
     return av
 
 
