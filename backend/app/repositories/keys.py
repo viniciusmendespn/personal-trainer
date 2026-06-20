@@ -45,6 +45,14 @@ def sk_aluno_pointer(aluno_id: str) -> str:
 SK_STATS_ALUNOS = "STATS#ALUNOS"   # contador agregado: total/ativos (ARCHITECTURE §5.5 Nível A)
 
 
+def sk_atividade(aluno_id: str) -> str:
+    return f"ATIVIDADE#{aluno_id}"
+
+
+def gsi1_atividade(personal_id: str) -> str:
+    return f"PT#{personal_id}#ATIVIDADE"
+
+
 def sk_alerta(ts: str, alerta_id: str) -> str:
     return f"ALERT#{ts}#{alerta_id}"
 

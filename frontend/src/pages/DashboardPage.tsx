@@ -10,7 +10,7 @@ import { useAgenda } from '../hooks/useAgenda'
 import { useAlunos } from '../hooks/useAlunos'
 import { useTemplates } from '../hooks/useTemplates'
 import { wapiApi } from '../api/wapi'
-import { Card, StatCard, SkeletonCard, EmptyState } from '../components/ui'
+import { Card, StatCard, SkeletonCard, EmptyState, Avatar, Badge } from '../components/ui'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -37,6 +37,17 @@ function fmtDia(iso: string) {
   return `${d}`
 }
 
+function tempoRelativo(iso: string) {
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const min = Math.floor(diffMs / 60000)
+  if (min < 1) return 'agora'
+  if (min < 60) return `há ${min} min`
+  const h = Math.floor(min / 60)
+  if (h < 24) return `há ${h}h`
+  const d = Math.floor(h / 24)
+  return d === 1 ? 'ontem' : `há ${d}d`
+}
+
 export function DashboardPage() {
   const { data, isLoading } = useDashboard()
   const status = useQuery({ queryKey: ['wapi-status'], queryFn: wapiApi.status, retry: false })
@@ -57,13 +68,11 @@ export function DashboardPage() {
 
   const sessoesHoje = agendaHoje?.length ?? 0
   const sessoesSemana = agendaSemana?.length ?? 0
-  const concluidas = (agendaSemana ?? []).filter((a) => a.status === 'CONCLUIDO').length
-  const aderencia = sessoesSemana > 0 ? Math.round((concluidas / sessoesSemana) * 100) : 0
   const aniversariantes = (alunos ?? []).filter((a) => {
     if (!a.data_nascimento) return false
     const m = new Date(a.data_nascimento + 'T12:00:00').getMonth()
     return m === mesAtual
-  }).length
+  })
 
   const chartData = (data?.sessoes_por_dia ?? []).map((d) => ({
     ...d,
@@ -107,11 +116,10 @@ export function DashboardPage() {
           {/* Linha principal: stats à esquerda + gráfico à direita */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Stats principais */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <StatCard icon={<Users />} label="Alunos" value={data?.alunos ?? 0} tone="accent" />
               <StatCard icon={<UserCheck />} label="Ativos" value={data?.alunos_ativos ?? 0} tone="success" />
               <StatCard icon={<Calendar />} label="Sessões hoje" value={sessoesHoje} tone="accent" />
-              <StatCard icon={<CalendarCheck />} label={`Aderência (${aderencia}%)`} value={`${concluidas}/${sessoesSemana}`} tone={aderencia >= 70 ? 'success' : aderencia >= 40 ? 'warning' : 'danger'} />
             </div>
 
             {/* Gráfico de frequência de sessões */}
@@ -149,13 +157,69 @@ export function DashboardPage() {
             </Card>
           </div>
 
-          {/* Cards secundários em grid 2×2 simétrico */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* Cards secundários em grid simétrico */}
+          <div className="grid grid-cols-3 gap-3">
             <StatCard icon={<CalendarCheck />} label="Sessões na semana" value={sessoesSemana} tone="energy" />
             <StatCard icon={<Bell />} label="Notificações" value={data?.notificacoes_nao_lidas ?? 0} tone="danger" />
-            <StatCard icon={<Cake />} label="Aniversariantes" value={aniversariantes} tone="warning" />
             <StatCard icon={<LayoutTemplate />} label="Templates" value={templates?.length ?? 0} tone="accent" />
           </div>
+
+          {/* Atividade recente: últimos alunos que treinaram / estão treinando */}
+          <Card variant="elevated">
+            <p className="text-xs font-medium text-text-secondary mb-3">Atividade recente</p>
+            {data?.atividade_recente && data.atividade_recente.length > 0 ? (
+              <div className="space-y-3">
+                {data.atividade_recente.map((a) => (
+                  <div key={a.aluno_id} className="flex items-center gap-3">
+                    <Avatar name={a.aluno_nome} imageUrl={a.foto_url} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium truncate">{a.aluno_nome}</span>
+                        <Badge tone={a.status === 'EM_ANDAMENTO' ? 'success' : 'neutral'}>
+                          {a.status === 'EM_ANDAMENTO' ? 'Treinando agora' : 'Concluído'}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-text-muted truncate">
+                        {a.treino_nome}
+                        {a.status === 'EM_ANDAMENTO' && a.exercicio_atual && (
+                          <> — {a.exercicio_atual} ({(a.ordem_atual ?? 0) + 1}/{a.total_ex})</>
+                        )}
+                      </p>
+                    </div>
+                    <span className="text-xs text-text-muted shrink-0">{tempoRelativo(a.atualizado_em)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center text-xs text-text-muted py-4">
+                Nenhuma atividade recente
+              </div>
+            )}
+          </Card>
+
+          {/* Aniversariantes do mês — lista de nomes, não cabe num StatCard */}
+          {aniversariantes.length > 0 && (
+            <Card variant="elevated">
+              <p className="text-xs font-medium text-text-secondary mb-3 flex items-center gap-1.5">
+                <Cake size={14} /> Aniversariantes do mês ({aniversariantes.length})
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {aniversariantes.map((a) => (
+                  <div key={a.aluno_id} className="flex items-center gap-2">
+                    <Avatar name={a.nome} imageUrl={a.foto_url} size="sm" />
+                    <div>
+                      <p className="text-sm font-medium">{a.nome}</p>
+                      {a.data_nascimento && (
+                        <p className="text-xs text-text-muted">
+                          {a.data_nascimento.slice(8, 10)}/{a.data_nascimento.slice(5, 7)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
         </>
       )}
 

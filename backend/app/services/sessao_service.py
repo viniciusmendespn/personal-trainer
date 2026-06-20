@@ -41,6 +41,24 @@ def get_active(aluno_id: str, consistent: bool = False) -> dict | None:
     return repo.get_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE, consistent=consistent)
 
 
+def _touch_atividade(personal_id: str, aluno_id: str, *, status: str, treino_nome: str | None,
+                     exercicio_atual: str | None, ordem_atual: int | None, total_ex: int | None) -> None:
+    """Denormaliza 'última atividade' na partição do personal (1 item por aluno, upsert
+    direto) para o dashboard listar os últimos alunos que treinaram/estão treinando sem
+    varrer N partições de aluno — via GSI1 (ESPEC §4.1, mesmo índice já usado p/ registros)."""
+    repo.update_item(keys.pk_personal(personal_id), keys.sk_atividade(aluno_id), {
+        "aluno_id": aluno_id,
+        "status": status,
+        "treino_nome": treino_nome,
+        "exercicio_atual": exercicio_atual,
+        "ordem_atual": ordem_atual,
+        "total_ex": total_ex,
+        "atualizado_em": now_iso(),
+        "GSI1PK": keys.gsi1_atividade(personal_id),
+        "GSI1SK": epoch_ms(),
+    })
+
+
 def start_session(personal_id: str, aluno_id: str, treino_id: str) -> dict:
     treino = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id))
     if not treino:
@@ -65,6 +83,10 @@ def start_session(personal_id: str, aluno_id: str, treino_id: str) -> dict:
         "ttl": int(time.time()) + SESSION_TTL_S,
     }
     repo.put_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE, item)
+    _touch_atividade(
+        personal_id, aluno_id, status=SessaoStatus.EM_ANDAMENTO.value, treino_nome=treino.get("nome"),
+        exercicio_atual=snaps[0]["nome"] if snaps else None, ordem_atual=0, total_ex=len(snaps),
+    )
     return item
 
 
@@ -79,6 +101,12 @@ def advance(aluno_id: str) -> dict:
     repo.update_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE,
                      {"ordem_atual": nxt, "ex_atual": snaps[nxt]})
     s["ordem_atual"], s["ex_atual"] = nxt, snaps[nxt]
+    personal_id = s.get("personal_id")
+    if personal_id:
+        _touch_atividade(
+            personal_id, aluno_id, status=SessaoStatus.EM_ANDAMENTO.value, treino_nome=s.get("treino_nome"),
+            exercicio_atual=snaps[nxt].get("nome"), ordem_atual=nxt, total_ex=len(snaps),
+        )
     return s
 
 
@@ -136,6 +164,10 @@ def finish(aluno_id: str) -> dict:
         desc = "Sessão 100% completa" if completo else "Sessão finalizada"
         pts = pontos_service.PONTOS["SESSAO"] + (pontos_service.PONTOS["SESSAO_COMPLETA_BONUS"] if completo else 0)
         pontos_service.award(aluno_id, "SESSAO", personal_id, pts=pts, descricao=desc)
+        _touch_atividade(
+            personal_id, aluno_id, status=SessaoStatus.FINALIZADA.value, treino_nome=s.get("treino_nome"),
+            exercicio_atual=None, ordem_atual=None, total_ex=s.get("total_ex"),
+        )
     return snap
 
 
