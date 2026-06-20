@@ -115,8 +115,8 @@ export function DashboardPage() {
         <>
           {/* Linha principal: stats à esquerda + gráfico à direita */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Stats principais */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* Stats principais — empilhado em telas estreitas/junto ao gráfico p/ não espremer o texto */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
               <StatCard icon={<Users />} label="Alunos" value={data?.alunos ?? 0} tone="accent" />
               <StatCard icon={<UserCheck />} label="Ativos" value={data?.alunos_ativos ?? 0} tone="success" />
               <StatCard icon={<Calendar />} label="Sessões hoje" value={sessoesHoje} tone="accent" />
@@ -157,8 +157,8 @@ export function DashboardPage() {
             </Card>
           </div>
 
-          {/* Cards secundários em grid simétrico */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* Cards secundários — empilhados no mobile, 3 colunas a partir de sm (full width) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <StatCard icon={<CalendarCheck />} label="Sessões na semana" value={sessoesSemana} tone="energy" />
             <StatCard icon={<Bell />} label="Notificações" value={data?.notificacoes_nao_lidas ?? 0} tone="danger" />
             <StatCard icon={<LayoutTemplate />} label="Templates" value={templates?.length ?? 0} tone="accent" />
