@@ -173,26 +173,24 @@ export function AlunoDetailPage() {
             <Button
               variant={aluno.status === 'ATIVO' ? 'outline' : 'energy'}
               size="sm"
+              iconOnly
+              aria-label={aluno.status === 'ATIVO' ? 'Desativar acesso' : 'Reativar acesso'}
               onClick={toggleStatus}
               disabled={updateAluno.isPending}
             >
-              <span className="flex items-center gap-1">
-                {aluno.status === 'ATIVO' ? <PowerOff size={14} /> : <Power size={14} />}
-                {aluno.status === 'ATIVO' ? 'Desativar acesso' : 'Reativar acesso'}
-              </span>
+              {aluno.status === 'ATIVO' ? <PowerOff size={15} /> : <Power size={15} />}
             </Button>
           )}
           {aluno && (
             <Button
               variant={aluno.agente_habilitado ? 'outline' : 'primary'}
               size="sm"
+              iconOnly
+              aria-label={aluno.agente_habilitado ? 'Desabilitar agente' : 'Habilitar agente'}
               onClick={() => toggleAgente.mutate(!aluno.agente_habilitado)}
               disabled={toggleAgente.isPending}
             >
-              <span className="flex items-center gap-1">
-                <Bot size={14} />
-                {aluno.agente_habilitado ? 'Desabilitar agente' : 'Habilitar agente'}
-              </span>
+              <Bot size={15} />
             </Button>
           )}
         </div>

@@ -60,10 +60,10 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
         </div>
 
         {/* User menu trigger */}
-        <div ref={menuRef}>
+        <div ref={menuRef} className="relative mb-2">
           <button
             onClick={() => setMenuOpen(v => !v)}
-            className="w-full px-2 mb-1 flex items-center gap-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
+            className="w-full px-2 flex items-center gap-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
           >
             <Avatar name={displayName} imageUrl={profile.data?.foto_url} size="sm" />
             <div className="min-w-0 flex-1 text-left">
@@ -78,9 +78,9 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
             />
           </button>
 
-          {/* Dropdown */}
+          {/* Floating popover */}
           {menuOpen && (
-            <div className="mb-3 mx-1 rounded-lg border border-border bg-surface-elevated shadow-lg overflow-hidden">
+            <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-border bg-surface-elevated shadow-xl overflow-hidden">
               <NavLink
                 to="/perfil"
                 onClick={closeMenu}
