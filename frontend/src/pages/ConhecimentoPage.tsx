@@ -22,10 +22,10 @@ export function ConhecimentoPage() {
   const [uploading, setUploading] = useState(false)
   const [downloading, setDownloading] = useState(false)
 
-  async function handleFiles(files: FileList) {
+  async function handleFiles(files: File[]) {
     setUploading(true)
     try {
-      for (const file of Array.from(files)) {
+      for (const file of files) {
         await uploadConhecimentoArquivo(file)
       }
       toast.show('Arquivo(s) enviado(s) com sucesso.')
@@ -38,9 +38,11 @@ export function ConhecimentoPage() {
   }
 
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files
+    // Copia pra um array ANTES de resetar o value — limpar e.target.value pode esvaziar
+    // a FileList original em alguns browsers (ela é uma referência ao vivo do input).
+    const files = e.target.files ? Array.from(e.target.files) : []
     e.target.value = ''
-    if (files?.length) handleFiles(files)
+    if (files.length) handleFiles(files)
   }
 
   async function remove(arquivo: ArquivoConhecimento) {
