@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronDown } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
@@ -19,18 +19,37 @@ const NAV_ITEMS = [
   { to: '/ranking', label: 'Ranking', icon: Trophy },
   { to: '/notificacoes', label: 'Notificações', icon: Bell },
   { to: '/biblioteca', label: 'Biblioteca', icon: BookOpen },
-  { to: '/config', label: 'WhatsApp', icon: Settings },
-  { to: '/perfil', label: 'Meu Perfil', icon: UserCircle },
 ]
+
+const TITLE_MAP: Record<string, string> = { '/config': 'WhatsApp', '/perfil': 'Meu Perfil' }
 
 function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: () => void }) {
   const { user, signOut, isAdmin } = useAuth()
   const profile = useQuery({ queryKey: ['personal-profile'], queryFn: personalApi.getProfile, staleTime: 300_000 })
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
   const link = (active: boolean) =>
     `flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
       active ? 'bg-accent/15 text-accent-hover' : 'text-text-secondary hover:bg-white/5 hover:text-text'
     }`
   const displayName = profile.data?.nome || user?.name || user?.email || 'Personal'
+
+  function closeMenu() {
+    setMenuOpen(false)
+    onNavigate?.()
+  }
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [menuOpen])
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -39,16 +58,59 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
           <AppLogo size={22} />
           <span className="font-display text-xs font-bold text-text-secondary tracking-wide">CoachPilot</span>
         </div>
-        <div className="px-2 mb-4 flex items-center gap-2">
-          <Avatar name={displayName} imageUrl={profile.data?.foto_url} size="sm" />
-          <div className="min-w-0">
-            <h1 className="font-display text-sm font-bold text-text truncate">{displayName}</h1>
-            {profile.data?.descricao && (
-              <p className="text-xs text-text-muted truncate">{profile.data.descricao}</p>
-            )}
-          </div>
+
+        {/* User menu trigger */}
+        <div ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            className="w-full px-2 mb-1 flex items-center gap-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
+          >
+            <Avatar name={displayName} imageUrl={profile.data?.foto_url} size="sm" />
+            <div className="min-w-0 flex-1 text-left">
+              <p className="font-display text-sm font-bold text-text truncate">{displayName}</p>
+              {profile.data?.descricao && (
+                <p className="text-xs text-text-muted truncate">{profile.data.descricao}</p>
+              )}
+            </div>
+            <ChevronDown
+              size={14}
+              className={`shrink-0 text-text-muted transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {/* Dropdown */}
+          {menuOpen && (
+            <div className="mb-3 mx-1 rounded-lg border border-border bg-surface-elevated shadow-lg overflow-hidden">
+              <NavLink
+                to="/perfil"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `flex items-center gap-2 px-3 py-2 text-sm transition-colors ${isActive ? 'text-accent-hover bg-accent/10' : 'text-text-secondary hover:bg-white/5 hover:text-text'}`
+                }
+              >
+                <UserCircle size={15} /> Meu Perfil
+              </NavLink>
+              <NavLink
+                to="/config"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `flex items-center gap-2 px-3 py-2 text-sm transition-colors ${isActive ? 'text-accent-hover bg-accent/10' : 'text-text-secondary hover:bg-white/5 hover:text-text'}`
+                }
+              >
+                <Settings size={15} /> WhatsApp
+              </NavLink>
+              <div className="border-t border-border/40 my-0.5" />
+              <button
+                onClick={() => { signOut(); closeMenu() }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+              >
+                <LogOut size={15} /> Sair
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
       <nav className="flex flex-col gap-1 flex-1 overflow-y-auto min-h-0">
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
           <NavLink key={to} to={to} onClick={onNavigate} className={({ isActive }) => link(isActive)}>
@@ -66,12 +128,6 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
           </NavLink>
         )}
       </nav>
-      <button
-        onClick={() => signOut()}
-        className="shrink-0 mt-2 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-text-secondary hover:bg-white/5 hover:text-text"
-      >
-        <LogOut size={16} /> Sair
-      </button>
     </div>
   )
 }
@@ -110,7 +166,10 @@ export function AppLayout() {
     setDrawerOpen(false)
   }, [location.pathname])
 
-  const pageTitle = NAV_ITEMS.find((i) => location.pathname.startsWith(i.to))?.label ?? 'Personal'
+  const pageTitle =
+    NAV_ITEMS.find((i) => location.pathname.startsWith(i.to))?.label ??
+    TITLE_MAP[location.pathname] ??
+    'Personal'
 
   return (
     <ChatContextProvider>
