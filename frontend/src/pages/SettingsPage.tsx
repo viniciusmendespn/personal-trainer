@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { QrCode, Phone, CheckCircle, AlertCircle, MessageCircle, WifiOff, RefreshCw, Copy, Smartphone } from 'lucide-react'
 import { wapiApi } from '../api/wapi'
@@ -8,6 +9,13 @@ import { PhoneInput } from '../components/PhoneInput'
 import { AnamneseEditor } from '../components/anamnese/AnamneseEditor'
 
 const SUPPORT_URL = `https://wa.me/5513988088204?text=${encodeURIComponent('Olá! Gostaria de configurar o WhatsApp no meu Personal Trainer.')}`
+
+type TabId = 'whatsapp' | 'anamnese'
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'whatsapp', label: 'WhatsApp' },
+  { id: 'anamnese', label: 'Anamnese' },
+]
 
 type Method = 'qr' | 'pairing'
 
@@ -25,7 +33,7 @@ function getErrMsg(err: unknown): string {
   return e?.message || 'Erro desconhecido'
 }
 
-export function SettingsPage() {
+function WhatsAppTab() {
   const qc = useQueryClient()
   const { show: toast } = useToast()
   const [method, setMethod] = useState<Method>('qr')
@@ -85,10 +93,8 @@ export function SettingsPage() {
   }, [method, noInstance, connected, status.isLoading])
 
   return (
-    <div className="max-w-xl mx-auto space-y-8">
-      <div>
-      <h2 className="font-display text-xl font-semibold mb-1">Conexão WhatsApp</h2>
-      <p className="text-sm text-text-secondary mb-4">
+    <div className="space-y-4">
+      <p className="text-sm text-text-secondary">
         Conecte seu número para que seus alunos conversem com o assistente.
       </p>
 
@@ -118,7 +124,7 @@ export function SettingsPage() {
 
       {/* Status bar */}
       {!noInstance && (
-        <Card variant="elevated" className="mb-4">
+        <Card variant="elevated">
           <div className="flex items-center gap-3">
             {connected
               ? <CheckCircle className="w-5 h-5 text-success flex-shrink-0" />
@@ -158,7 +164,7 @@ export function SettingsPage() {
 
       {/* Painel de conexão */}
       {!noInstance && !connected && (
-        <Card variant="elevated" className="mb-4">
+        <Card variant="elevated">
           <div className="flex gap-2 mb-5">
             {(['qr', 'pairing'] as Method[]).map((m) => (
               <button
@@ -326,15 +332,53 @@ export function SettingsPage() {
           </p>
         </Card>
       )}
+    </div>
+  )
+}
+
+function AnamneseTab() {
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-text-secondary">
+        Configure o questionário de saúde e gere um link para o aluno se cadastrar sozinho.
+      </p>
+      <AnamneseEditor />
+    </div>
+  )
+}
+
+export function SettingsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const rawTab = searchParams.get('tab') as TabId | null
+  const activeTab: TabId = TABS.some(t => t.id === rawTab) ? rawTab! : 'whatsapp'
+
+  function selectTab(id: TabId) {
+    setSearchParams({ tab: id }, { replace: true })
+  }
+
+  return (
+    <div className="max-w-xl mx-auto">
+      <h1 className="font-display text-xl font-semibold mb-4">Configurações</h1>
+
+      {/* Tab bar */}
+      <div className="flex gap-1 border-b border-border mb-6">
+        {TABS.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => selectTab(tab.id)}
+            className={`px-4 py-2 text-sm font-medium transition-colors -mb-px border-b-2 ${
+              activeTab === tab.id
+                ? 'border-accent text-accent-hover'
+                : 'border-transparent text-text-secondary hover:text-text'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      <div>
-        <h2 className="font-display text-xl font-semibold mb-1">Anamnese e auto-cadastro</h2>
-        <p className="text-sm text-text-secondary mb-4">
-          Configure o questionário de saúde e gere um link para o aluno se cadastrar sozinho.
-        </p>
-        <AnamneseEditor />
-      </div>
+      {activeTab === 'whatsapp' && <WhatsAppTab />}
+      {activeTab === 'anamnese' && <AnamneseTab />}
     </div>
   )
 }

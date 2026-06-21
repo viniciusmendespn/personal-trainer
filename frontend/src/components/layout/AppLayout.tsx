@@ -22,7 +22,7 @@ const NAV_ITEMS = [
   { to: '/conhecimento', label: 'Base de IA', icon: Brain },
 ]
 
-const TITLE_MAP: Record<string, string> = { '/config': 'WhatsApp', '/perfil': 'Meu Perfil' }
+const TITLE_MAP: Record<string, string> = { '/config': 'Configurações', '/perfil': 'Meu Perfil' }
 
 function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: () => void }) {
   const { user, signOut, isAdmin } = useAuth()
@@ -98,7 +98,7 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
                   `flex items-center gap-2 px-3 py-2 text-sm transition-colors ${isActive ? 'text-accent-hover bg-accent/10' : 'text-text-secondary hover:bg-white/5 hover:text-text'}`
                 }
               >
-                <Settings size={15} /> WhatsApp
+                <Settings size={15} /> Configurações
               </NavLink>
               <div className="border-t border-border/40 my-0.5" />
               <button

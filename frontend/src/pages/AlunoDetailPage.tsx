@@ -525,7 +525,7 @@ function QuestionarioSaudeCard({ alunoId }: { alunoId: string }) {
       <Card variant="elevated">
         {header}
         <p className="text-xs text-text-muted">
-          Nenhuma pergunta configurada. <Link to="/config" className="text-accent-hover hover:underline">Configurar perguntas</Link>
+          Nenhuma pergunta configurada. <Link to="/config?tab=anamnese" className="text-accent-hover hover:underline">Configurar perguntas</Link>
         </p>
       </Card>
     )

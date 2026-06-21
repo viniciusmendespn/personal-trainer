@@ -74,7 +74,7 @@ export function AlunosPage() {
       <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
         <h2 className="font-display text-xl font-semibold">Alunos</h2>
         <div className="flex items-center gap-2 flex-wrap">
-          <Link to="/config">
+          <Link to="/config?tab=anamnese">
             <Button variant="outline" size="sm">
               <span className="flex items-center gap-1"><Settings size={14} /> Configurar auto-cadastro</span>
             </Button>
