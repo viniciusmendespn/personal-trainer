@@ -280,3 +280,47 @@ def gsi1_registro(aluno_id: str, exercicio_id: str) -> str:
 
 def gsi1sk_registro(ts: str) -> str:
     return f"R#{ts}"
+
+
+# ── Financeiro: config e cobranças por aluno (partição AL#) ──────────────────
+SK_COBRANCA_CFG = "COBRANCA_CONFIG"   # underscore evita colisão com begins_with("COBRANCA#")
+COBRANCA_PREFIX = "COBRANCA#"
+COBRANCA_IDX_PREFIX = "COBRANCA_IDX#"
+
+
+def sk_cobranca(ano_mes: str, cobranca_id: str) -> str:
+    return f"COBRANCA#{ano_mes}#{cobranca_id}"
+
+
+def sk_cobranca_idx(cobranca_id: str) -> str:
+    return f"COBRANCA_IDX#{cobranca_id}"
+
+
+# ── Financeiro: ponteiro de alunos com cobrança ativa (partição PT#) ─────────
+COBRANCA_ALUNO_PREFIX = "COBRANCA_ALUNO#"
+
+
+def sk_cobranca_aluno(aluno_id: str) -> str:
+    return f"COBRANCA_ALUNO#{aluno_id}"
+
+
+# ── Financeiro: config Mercado Pago (partição PT#) ───────────────────────────
+SK_CONFIG_MP = "CONFIG#MERCADOPAGO"
+
+
+# ── Financeiro: entradas do scheduler (partição SCHED#) ─────────────────────
+BILLING_GERAR_PREFIX = "BILLING_GERAR#"
+BILLING_VENCER_PREFIX = "BILLING_VENCER#"
+
+
+def sk_sched_billing_gerar(aluno_id: str) -> str:
+    return f"BILLING_GERAR#{aluno_id}"
+
+
+def sk_sched_billing_vencer(aluno_id: str, cobranca_id: str) -> str:
+    return f"BILLING_VENCER#{aluno_id}#{cobranca_id}"
+
+
+# ── Mercado Pago: idempotência de webhook ────────────────────────────────────
+def pk_mp_lock(payment_id: str) -> str:
+    return f"MP_LOCK#{payment_id}"

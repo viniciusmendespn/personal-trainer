@@ -66,3 +66,19 @@ class CustomFieldType(str, Enum):
     BOOL = "BOOL"
     SELECT = "SELECT"
     DATE = "DATE"
+
+
+class CobrancaStatus(str, Enum):
+    PENDENTE = "PENDENTE"
+    PAGA = "PAGA"
+    VENCIDA = "VENCIDA"
+
+
+class Recorrencia(str, Enum):
+    MENSAL = "MENSAL"
+    ANUAL = "ANUAL"
+
+
+class FormaPagamento(str, Enum):
+    MANUAL = "MANUAL"
+    PIX_MP = "PIX_MP"

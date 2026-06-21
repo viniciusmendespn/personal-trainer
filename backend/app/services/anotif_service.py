@@ -11,11 +11,14 @@ logger = logging.getLogger(__name__)
 
 ANOTIF_TTL_S = 30 * 24 * 3600
 
-# Tipos: DOR_RESPONDIDA, DUVIDA_RESPONDIDA, MSG_PERSONAL, CORRECAO_EXERCICIO, NOVO_POST_FEED
+# Tipos: DOR_RESPONDIDA, DUVIDA_RESPONDIDA, MSG_PERSONAL, CORRECAO_EXERCICIO, NOVO_POST_FEED,
+#         COBRANCA_VENCER, COBRANCA_VENCIDA
 
 _URL_MAP: dict[str, str] = {
-    "MSG_PERSONAL":   "/aluno/chat",
-    "NOVO_POST_FEED": "/aluno/feed",
+    "MSG_PERSONAL":    "/aluno/chat",
+    "NOVO_POST_FEED":  "/aluno/feed",
+    "COBRANCA_VENCER": "/aluno/financeiro",
+    "COBRANCA_VENCIDA": "/aluno/financeiro",
 }
 
 

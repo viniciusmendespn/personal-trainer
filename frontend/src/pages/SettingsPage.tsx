@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { QrCode, Phone, CheckCircle, AlertCircle, MessageCircle, WifiOff, RefreshCw, Copy, Smartphone } from 'lucide-react'
+import { QrCode, Phone, CheckCircle, AlertCircle, MessageCircle, WifiOff, RefreshCw, Copy, Smartphone, Banknote, Trash2 } from 'lucide-react'
 import { wapiApi } from '../api/wapi'
+import { financeiroApi } from '../api/financeiro'
 import { Button, Card, ErrorText } from '../components/ui'
 import { useToast } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
@@ -10,11 +11,12 @@ import { AnamneseEditor } from '../components/anamnese/AnamneseEditor'
 
 const SUPPORT_URL = `https://wa.me/5513988088204?text=${encodeURIComponent('Olá! Gostaria de configurar o WhatsApp no meu Personal Trainer.')}`
 
-type TabId = 'whatsapp' | 'anamnese'
+type TabId = 'whatsapp' | 'anamnese' | 'pagamentos'
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'whatsapp', label: 'WhatsApp' },
   { id: 'anamnese', label: 'Anamnese' },
+  { id: 'pagamentos', label: 'Pagamentos' },
 ]
 
 type Method = 'qr' | 'pairing'
@@ -347,6 +349,121 @@ function AnamneseTab() {
   )
 }
 
+function PagamentosTab() {
+  const qc = useQueryClient()
+  const { show: toast } = useToast()
+  const [token, setToken] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const status = useQuery({
+    queryKey: ['mp-config'],
+    queryFn: financeiroApi.getMpConfig,
+  })
+
+  const configurado = status.data?.configurado === true
+
+  async function handleSalvar(e: React.FormEvent) {
+    e.preventDefault()
+    if (!token.trim()) return
+    setSaving(true)
+    try {
+      await financeiroApi.setMpConfig(token.trim())
+      setToken('')
+      qc.invalidateQueries({ queryKey: ['mp-config'] })
+      toast('Access Token salvo com sucesso.', 'success')
+    } catch {
+      toast('Erro ao salvar o token.', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleRemover() {
+    try {
+      await financeiroApi.deleteMpConfig()
+      qc.invalidateQueries({ queryKey: ['mp-config'] })
+      toast('Integração removida.', 'success')
+    } catch {
+      toast('Erro ao remover integração.', 'error')
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card variant="elevated">
+        <div className="flex items-center gap-3 mb-3">
+          <Banknote size={20} className="text-accent-hover" />
+          <div>
+            <p className="font-semibold text-text">Mercado Pago — Pix</p>
+            <p className="text-xs text-text-secondary">Opcional · permite que alunos paguem via Pix</p>
+          </div>
+          {configurado && (
+            <span className="ml-auto text-xs font-medium text-success flex items-center gap-1">
+              <CheckCircle size={13} /> Configurado
+            </span>
+          )}
+        </div>
+
+        {configurado ? (
+          <div className="space-y-3">
+            <p className="text-sm text-text-secondary">
+              Access Token configurado. Para atualizar, insira um novo token abaixo e salve.
+            </p>
+            <form onSubmit={handleSalvar} className="space-y-3">
+              <input
+                type="password"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-text text-sm placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+                placeholder="Novo Access Token (APP_USR-…)"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                autoComplete="off"
+              />
+              <div className="flex gap-2">
+                <Button type="submit" variant="primary" size="sm" disabled={saving || !token.trim()}>
+                  {saving ? 'Salvando…' : 'Atualizar token'}
+                </Button>
+                <Button type="button" variant="ghost" size="sm" className="text-danger gap-1"
+                  onClick={handleRemover}>
+                  <Trash2 size={14} /> Remover integração
+                </Button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          <form onSubmit={handleSalvar} className="space-y-3">
+            <p className="text-sm text-text-secondary">
+              Informe seu Access Token de produção do Mercado Pago para habilitar pagamentos via Pix.
+              O token é salvo com segurança e nunca é exibido.
+            </p>
+            <input
+              type="password"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-text text-sm placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+              placeholder="APP_USR-…"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              required
+              autoComplete="off"
+            />
+            <Button type="submit" variant="primary" size="sm" disabled={saving || !token.trim()}>
+              {saving ? 'Salvando…' : 'Salvar Access Token'}
+            </Button>
+          </form>
+        )}
+      </Card>
+
+      <Card variant="elevated" className="text-xs text-text-muted leading-relaxed">
+        <p className="font-medium text-text-secondary mb-1">Sobre as taxas do Mercado Pago</p>
+        <p>
+          Pagamentos via Pix pelo Mercado Pago podem ter taxa de processamento cobrada pelo próprio Mercado Pago.
+          A taxa divulgada atualmente para Pix com QR Code é de aproximadamente 0,49% por transação, mas esse
+          valor pode variar conforme sua conta, condições comerciais ou regras vigentes do Mercado Pago.
+          Consulte sua conta Mercado Pago para confirmar as taxas aplicáveis.
+        </p>
+      </Card>
+    </div>
+  )
+}
+
 export function SettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const rawTab = searchParams.get('tab') as TabId | null
@@ -361,12 +478,12 @@ export function SettingsPage() {
       <h1 className="font-display text-xl font-semibold mb-4">Configurações</h1>
 
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-border mb-6">
+      <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto">
         {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => selectTab(tab.id)}
-            className={`px-4 py-2 text-sm font-medium transition-colors -mb-px border-b-2 ${
+            className={`px-4 py-2 text-sm font-medium transition-colors -mb-px border-b-2 whitespace-nowrap ${
               activeTab === tab.id
                 ? 'border-accent text-accent-hover'
                 : 'border-transparent text-text-secondary hover:text-text'
@@ -379,6 +496,7 @@ export function SettingsPage() {
 
       {activeTab === 'whatsapp' && <WhatsAppTab />}
       {activeTab === 'anamnese' && <AnamneseTab />}
+      {activeTab === 'pagamentos' && <PagamentosTab />}
     </div>
   )
 }

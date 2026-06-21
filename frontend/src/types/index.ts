@@ -223,6 +223,64 @@ export interface TreinoTemplateCreate {
 export type CanalOrigem = 'WHATSAPP' | 'PORTAL'
 export type Ator = 'ALUNO' | 'PERSONAL'
 
+// ── Financeiro ────────────────────────────────────────────────────────────────
+export type CobrancaStatus = 'PENDENTE' | 'PAGA' | 'VENCIDA'
+export type Recorrencia = 'MENSAL' | 'ANUAL'
+export type FormaPagamento = 'MANUAL' | 'PIX_MP'
+
+export interface CobrancaConfig {
+  aluno_id: string
+  personal_id: string
+  valor: number
+  recorrencia: Recorrencia
+  dia_vencimento: number
+  ativo: boolean
+  dias_antecedencia: number
+  criado_em: string
+  atualizado_em: string
+}
+
+export interface CobrancaConfigIn {
+  valor: number
+  recorrencia: Recorrencia
+  dia_vencimento: number
+  ativo?: boolean
+  dias_antecedencia?: number
+}
+
+export interface Cobranca {
+  ref: string
+  cobranca_id: string
+  aluno_id: string
+  personal_id: string
+  valor: number
+  recorrencia: Recorrencia
+  vencimento: string
+  status: CobrancaStatus
+  forma_pagamento?: FormaPagamento
+  origem?: string
+  data_pagamento?: string
+  mp_payment_id?: string
+  mp_valor_liquido?: number
+  mp_taxa?: number
+  notas?: string
+  criado_em: string
+  atualizado_em: string
+}
+
+export interface NovaCobrancaIn {
+  valor: number
+  vencimento: string
+  recorrencia?: Recorrencia
+  notas?: string
+}
+
+export interface RegistrarPagamentoIn {
+  data_pagamento: string
+  notas?: string
+  forma_pagamento?: FormaPagamento
+}
+
 export interface ChatMidia {
   midia_id: string
   tipo: string

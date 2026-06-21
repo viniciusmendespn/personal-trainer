@@ -22,6 +22,7 @@ import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import type { Treino, Exercicio, ExercicioCreate, SeriePrescrita, AlunoExistenteConflict, Aluno } from '../types'
 import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
 import { MetasTab } from '../components/aluno/MetasTab'
+import { FinanceiroTab } from '../components/financeiro/FinanceiroTab'
 
 export function AlunoDetailPage() {
   const { alunoId = '' } = useParams()
@@ -44,7 +45,7 @@ export function AlunoDetailPage() {
   const deleteAluno = useDeleteAluno()
   const toggleAgente = useToggleAgenteHabilitado(alunoId)
   const confirm = useConfirm()
-  const [tab, setTab] = useState<'perfil' | 'treinos' | 'historico' | 'frequencia' | 'metas'>('treinos')
+  const [tab, setTab] = useState<'perfil' | 'treinos' | 'historico' | 'frequencia' | 'metas' | 'financeiro'>('treinos')
   const [showAddTreino, setShowAddTreino] = useState(false)
   const [nome, setNome] = useState('')
   const [foco, setFoco] = useState('')
@@ -221,6 +222,7 @@ export function AlunoDetailPage() {
           { key: 'historico', label: 'Histórico' },
           { key: 'frequencia', label: 'Frequência' },
           { key: 'metas', label: 'Metas' },
+          { key: 'financeiro', label: 'Financeiro' },
           { key: 'perfil', label: 'Perfil' },
         ]}
         active={tab}
@@ -356,6 +358,7 @@ export function AlunoDetailPage() {
       {tab === 'historico' && <HistoricoPersonal alunoId={alunoId} />}
       {tab === 'frequencia' && <FrequenciaTab alunoId={alunoId} />}
       {tab === 'metas' && <MetasTab alunoId={alunoId} />}
+      {tab === 'financeiro' && <FinanceiroTab alunoId={alunoId} />}
     </div>
   )
 }

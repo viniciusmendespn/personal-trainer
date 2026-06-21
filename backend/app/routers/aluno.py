@@ -12,7 +12,7 @@ from app.models.registro import SerieExec
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.models.postagem import MidiaRef, PostagemCreate, PostagemTipo
-from app.services import agent_service, alerta_service, anotif_service, badge_service, conhecimento_service, correcao_service, feed_global_service, media_service, meta_service, notif_service, pontos_service, postagem_service, sessao_service
+from app.services import agent_service, alerta_service, anotif_service, badge_service, conhecimento_service, correcao_service, feed_global_service, financeiro_service, media_service, meta_service, notif_service, pontos_service, postagem_service, sessao_service
 from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
@@ -539,3 +539,11 @@ def listar_metas_aluno(ctx: dict = Depends(get_current_aluno)):
 def propor_meta_aluno(body: MetaPropostaBody, ctx: dict = Depends(get_current_aluno)):
     return meta_service.criar(ctx["aluno_id"], ctx["personal_id"],
                               body.model_dump(), criado_por="ALUNO")
+
+
+@router.get("/financeiro")
+def listar_cobranças_aluno(ctx: dict = Depends(get_current_aluno)):
+    """Cobranças do próprio aluno — somente leitura."""
+    items, _ = financeiro_service.listar_cobranças(
+        ctx["personal_id"], ctx["aluno_id"], limit=100)
+    return {"items": items}
