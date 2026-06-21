@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { QrCode, Phone, CheckCircle, AlertCircle, MessageCircle, WifiOff, RefreshCw, Copy, Smartphone, Banknote, Trash2 } from 'lucide-react'
+import { QrCode, Phone, CheckCircle, AlertCircle, MessageCircle, WifiOff, RefreshCw, Copy, Smartphone, Banknote, Trash2, Info } from 'lucide-react'
 import { wapiApi } from '../api/wapi'
 import { financeiroApi } from '../api/financeiro'
-import { Button, Card, ErrorText, Tabs } from '../components/ui'
+import { Button, Card, ErrorText, Tabs, Modal } from '../components/ui'
 import { useToast } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { AnamneseEditor } from '../components/anamnese/AnamneseEditor'
@@ -354,6 +354,7 @@ function PagamentosTab() {
   const { show: toast } = useToast()
   const [token, setToken] = useState('')
   const [saving, setSaving] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
 
   const status = useQuery({
     queryKey: ['mp-config'],
@@ -397,6 +398,14 @@ function PagamentosTab() {
             <p className="font-semibold text-text">Mercado Pago — Pix</p>
             <p className="text-xs text-text-secondary">Opcional · permite que alunos paguem via Pix</p>
           </div>
+          <button
+            type="button"
+            onClick={() => setHelpOpen(true)}
+            className={`p-1 text-text-muted hover:text-text transition-colors ${configurado ? '' : 'ml-auto'}`}
+            aria-label="Como obter o Access Token"
+          >
+            <Info size={16} />
+          </button>
           {configurado && (
             <span className="ml-auto text-xs font-medium text-success flex items-center gap-1">
               <CheckCircle size={13} /> Configurado
@@ -460,6 +469,36 @@ function PagamentosTab() {
           Consulte sua conta Mercado Pago para confirmar as taxas aplicáveis.
         </p>
       </Card>
+
+      <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title="Como obter o Access Token">
+        <ol className="space-y-2 text-sm text-text-secondary list-decimal list-inside">
+          <li>Pré-requisito: ter conta no Mercado Pago.</li>
+          <li>
+            Acesse{' '}
+            <a
+              href="https://www.mercadopago.com.br/developers/panel/app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent underline"
+            >
+              mercadopago.com.br/developers/panel/app
+            </a>
+            .
+          </li>
+          <li>Clique em <strong>Criar aplicação</strong>.</li>
+          <li>Dê um nome para a aplicação, ex.: <strong>"CoachPilot - Vinicius"</strong>.</li>
+          <li>Em "Como você vai usar o Mercado Pago", selecione <strong>Pagamentos online</strong>.</li>
+          <li>Selecione <strong>Com um desenvolvimento próprio</strong>.</li>
+          <li>Informe a URL da loja, ex.: <strong>https://coachpilot.com.br</strong>.</li>
+          <li>Selecione <strong>Checkout Transparente</strong>.</li>
+          <li>Selecione <strong>API de Orders</strong>.</li>
+          <li>Autorize os termos e condições e confirme a criação.</li>
+          <li>Após criar a integração, clique em <strong>Credenciais de produção</strong>.</li>
+          <li>Selecione o Setor: <strong>Serviços de consultoria</strong>.</li>
+          <li>Autorize os termos e ative as credenciais de produção.</li>
+          <li>Copie o <strong>Access Token</strong> (começa com <strong>APP_USR-</strong>) e cole no campo abaixo.</li>
+        </ol>
+      </Modal>
     </div>
   )
 }
