@@ -7,6 +7,7 @@ export interface ExLibCreate {
   video_url?: string
   descricao?: string
   recomendacoes?: string
+  links_uteis?: string[]
 }
 
 export interface ImportarResult {

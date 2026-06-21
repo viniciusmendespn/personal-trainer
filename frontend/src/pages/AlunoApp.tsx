@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
-import { alunoApi, type ExSessao, type SessaoAtiva, type SessaoHistorico } from '../api/alunoApp'
+import { alunoApi, type ExSessao, type SessaoAtiva, type SessaoHistorico, type PostGlobal } from '../api/alunoApp'
 import { usePushNotification } from '../hooks/usePushNotification'
 import { SeriesPrescritasCompact } from '../components/exercicios/SeriesPrescritasEditor'
 import { AlunoSessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
@@ -18,7 +18,8 @@ import { ChatThread } from '../components/chat/ChatThread'
 import { ChatInputBar } from '../components/chat/ChatInputBar'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
 import { PostComposer } from '../components/exercicio/PostComposer'
-import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSelect, SocialLinks, useToast, useConfirm } from '../components/ui'
+import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSelect, SocialLinks, useToast, useConfirm, Modal } from '../components/ui'
+import { renderMarkdownLite } from '../components/chat/markdownLite'
 import { AlunoPerfilModal } from '../components/aluno/AlunoPerfilModal'
 import { alunoFinanceiroApi } from '../api/financeiro'
 import { PixModal } from '../components/financeiro/PixModal'
@@ -982,11 +983,41 @@ function SessaoTreino({ sessao }: { sessao: SessaoAtiva }) {
 
 const sanitizeCarga = (v: string) => v.replace(/[^\d.,]/g, '')
 
+function RecursosModal({ recursos, onClose }: { recursos: PostGlobal[]; onClose: () => void }) {
+  return (
+    <Modal open onClose={onClose} title="Recursos educacionais" size="lg">
+      <div className="space-y-4">
+        {recursos.map((r) => (
+          <div key={r.post_sk} className="space-y-2">
+            <div className="text-sm text-text-primary leading-relaxed">{renderMarkdownLite(r.texto)}</div>
+            {r.midias?.length > 0 && (
+              <div className="grid grid-cols-3 gap-1">
+                {r.midias.map((m, i) =>
+                  m.tipo?.includes('video') ? (
+                    <video key={i} src={m.url} controls className="col-span-3 rounded-xl w-full max-h-56 object-cover" />
+                  ) : m.tipo?.includes('audio') ? (
+                    <audio key={i} src={m.url} controls className="col-span-3 w-full rounded-xl" />
+                  ) : (
+                    <img key={i} src={m.url} alt="" className="rounded-xl w-full aspect-square object-cover" />
+                  )
+                )}
+              </div>
+            )}
+            {recursos.length > 1 && <hr className="border-border" />}
+          </div>
+        ))}
+      </div>
+    </Modal>
+  )
+}
+
 function ExercicioCard({ ex }: { ex: ExSessao }) {
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
+  const [recursosOpen, setRecursosOpen] = useState(false)
   const [pr, setPr] = useState<number | null>(null)
   const feito = !!ex.registrado?.length
+  const temRecursos = (ex.recursos?.length ?? 0) > 0
 
   const initRows = () => {
     if (ex.registrado?.length) {
@@ -1024,19 +1055,33 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
 
   return (
     <Card variant="elevated">
-      <button className="w-full flex items-center justify-between text-left"
-        onClick={() => { if (!open) { setRows(initRows()); setPr(null) } setOpen((o) => !o) }}>
-        <span>
-          <span className="font-medium">{ex.nome}</span>
-          <span className="ml-2">
-            {ex.series_prescritas?.length
-              ? <SeriesPrescritasCompact items={ex.series_prescritas} />
-              : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
-            }
+      {recursosOpen && temRecursos && (
+        <RecursosModal recursos={ex.recursos!} onClose={() => setRecursosOpen(false)} />
+      )}
+      <div className="flex items-center gap-1">
+        <button className="flex-1 flex items-center justify-between text-left min-w-0"
+          onClick={() => { if (!open) { setRows(initRows()); setPr(null) } setOpen((o) => !o) }}>
+          <span className="min-w-0">
+            <span className="font-medium">{ex.nome}</span>
+            <span className="ml-2">
+              {ex.series_prescritas?.length
+                ? <SeriesPrescritasCompact items={ex.series_prescritas} />
+                : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
+              }
+            </span>
           </span>
-        </span>
-        {feito ? <Check size={16} className="text-success" /> : <ChevronRight size={16} className="text-text-muted" />}
-      </button>
+          {feito ? <Check size={16} className="text-success shrink-0" /> : <ChevronRight size={16} className="text-text-muted shrink-0" />}
+        </button>
+        {temRecursos && (
+          <button
+            onClick={() => setRecursosOpen(true)}
+            aria-label="Ver recursos educacionais"
+            className="shrink-0 text-accent hover:text-accent-hover transition-colors p-1"
+          >
+            <Info size={15} />
+          </button>
+        )}
+      </div>
 
       {(ex.video_url || ex.observacoes) && (
         <div className="mt-2 space-y-1">

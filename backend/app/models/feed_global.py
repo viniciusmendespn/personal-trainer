@@ -10,6 +10,7 @@ class PostGlobalTipo(str, Enum):
     MOTIVACAO = "MOTIVACAO"
     AVISO = "AVISO"
     OUTRO = "OUTRO"
+    RECURSO = "RECURSO"   # conteúdo educacional vinculado a exercícios (explica siglas de carga)
 
 
 class PostGlobalCreate(BaseModel):

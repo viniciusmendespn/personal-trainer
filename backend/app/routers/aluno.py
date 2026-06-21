@@ -149,10 +149,43 @@ def get_sessao(ctx: dict = Depends(get_current_aluno)):
     return repo.clean(sessao_service.get_active(ctx["aluno_id"]))
 
 
+def _enrich_sessao_recursos(sessao: dict, personal_id: str) -> None:
+    """Adiciona campo `recursos` em cada exercício da sessão via match de nome com a ExLib."""
+    exs = sessao.get("exercicios") or []
+    if not exs:
+        return
+    lib = repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.EXLIB_PREFIX)
+    nome_to_links: dict[str, list[str]] = {}
+    for item in lib:
+        links = item.get("links_uteis") or []
+        if links:
+            nome_to_links[item.get("nome", "").strip().lower()] = links
+    if not nome_to_links:
+        return
+    pk_pt = keys.pk_personal(personal_id)
+    all_sks = list({sk for links in nome_to_links.values() for sk in links})
+    posts_by_sk: dict[str, dict] = {}
+    for sk in all_sks:
+        raw = repo.get_item(pk_pt, sk)
+        if raw:
+            p = repo.clean(raw)
+            for m in p.get("midias") or []:
+                if m.get("s3_key") and not m.get("url"):
+                    m["url"] = media_service.gerar_presigned_view_url(m["s3_key"])
+            p["post_sk"] = sk
+            posts_by_sk[sk] = p
+    for ex in exs:
+        links = nome_to_links.get((ex.get("nome") or "").strip().lower(), [])
+        ex["recursos"] = [posts_by_sk[sk] for sk in links if sk in posts_by_sk]
+
+
 @router.get("/sessao/exercicios")
 def sessao_exercicios(ctx: dict = Depends(get_current_aluno)):
     """Sessão ativa com todos os exercícios + o que já foi registrado (ver treino todo)."""
-    return sessao_service.sessao_exercicios(ctx["aluno_id"])
+    result = sessao_service.sessao_exercicios(ctx["aluno_id"])
+    if result:
+        _enrich_sessao_recursos(result, ctx["personal_id"])
+    return result
 
 
 @router.post("/sessao/start", status_code=201)
@@ -471,6 +504,12 @@ def listar_feed_global(limit: int = 20, cursor: str | None = None, ctx: dict = D
         ctx["personal_id"], aluno_id=ctx["aluno_id"], limit=limit, cursor=cursor,
     )
     return {"items": items, "next_cursor": next_cursor}
+
+
+@router.get("/feed/recursos")
+def listar_feed_recursos(ctx: dict = Depends(get_current_aluno)):
+    """Posts educacionais (tipo RECURSO) do personal — para busca no app do aluno."""
+    return feed_global_service.listar_recursos(ctx["personal_id"])
 
 
 class CurtirFeedBody(BaseModel):

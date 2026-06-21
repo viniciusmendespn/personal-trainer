@@ -92,6 +92,12 @@ def toggle_curtida(aluno_id: str, personal_id: str, post_id: str, post_sk: str) 
     return {"curtido": True}
 
 
+def listar_recursos(personal_id: str) -> list[dict]:
+    """Posts de tipo RECURSO do personal — sem paginação (conjunto pequeno)."""
+    all_items = repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.FEED_GLOBAL_PREFIX)
+    return [_enrich(raw) for raw in all_items if raw.get("tipo") == "RECURSO"]
+
+
 def deletar_post(personal_id: str, post_sk: str) -> bool:
     """Deleta direto pelo SK (post_sk = "FEED#{ts}#{post_id}", já conhecido pelo cliente —
     mesmo padrão de toggle_curtida). Sem varrer a partição. Retorna False se não encontrado."""

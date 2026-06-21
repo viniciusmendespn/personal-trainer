@@ -102,6 +102,7 @@ export interface ExLib {
   video_url?: string
   descricao?: string
   recomendacoes?: string
+  links_uteis?: string[]
 }
 
 export interface ArquivoConhecimento {

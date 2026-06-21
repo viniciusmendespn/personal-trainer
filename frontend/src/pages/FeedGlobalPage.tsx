@@ -10,6 +10,7 @@ const TIPOS: Array<{ value: PostGlobalTipo; label: string; tone: 'accent' | 'suc
   { value: 'MOTIVACAO', label: 'Motivação', tone: 'info' },
   { value: 'ARTIGO', label: 'Artigo', tone: 'accent' },
   { value: 'AVISO', label: 'Aviso', tone: 'warning' },
+  { value: 'RECURSO', label: 'Recurso Educacional', tone: 'accent' },
   { value: 'OUTRO', label: 'Outro', tone: 'neutral' },
 ]
 

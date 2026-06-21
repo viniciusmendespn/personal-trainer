@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { useMutation, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Heart, ChevronDown, Newspaper, Lightbulb, AlertCircle, MoreHorizontal } from 'lucide-react'
+import { Heart, ChevronDown, Newspaper, Lightbulb, AlertCircle, MoreHorizontal, BookOpen } from 'lucide-react'
 import { alunoApi, type PostGlobal } from '../../api/alunoApp'
 import { renderMarkdownLite } from '../chat/markdownLite'
 import { Avatar, Badge, Spinner, EmptyState } from '../ui'
 
 type Tone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'accent'
 const TIPO_META: Record<PostGlobal['tipo'], { label: string; icon: React.ReactNode; tone: Tone }> = {
-  ARTIGO:    { label: 'Artigo',    icon: <Newspaper size={12} />,      tone: 'accent' },
-  DICA:      { label: 'Dica',      icon: <Lightbulb size={12} />,      tone: 'success' },
-  MOTIVACAO: { label: 'Motivação', icon: <Heart size={12} />,           tone: 'info' },
-  AVISO:     { label: 'Aviso',     icon: <AlertCircle size={12} />,    tone: 'warning' },
-  OUTRO:     { label: 'Post',      icon: <MoreHorizontal size={12} />, tone: 'neutral' },
+  ARTIGO:    { label: 'Artigo',             icon: <Newspaper size={12} />,      tone: 'accent' },
+  DICA:      { label: 'Dica',               icon: <Lightbulb size={12} />,      tone: 'success' },
+  MOTIVACAO: { label: 'Motivação',          icon: <Heart size={12} />,          tone: 'info' },
+  AVISO:     { label: 'Aviso',              icon: <AlertCircle size={12} />,    tone: 'warning' },
+  RECURSO:   { label: 'Recurso Educacional', icon: <BookOpen size={12} />,      tone: 'accent' },
+  OUTRO:     { label: 'Post',               icon: <MoreHorizontal size={12} />, tone: 'neutral' },
 }
 
 function PostCard({ post, personalNome, personalFotoUrl }: { post: PostGlobal; personalNome?: string; personalFotoUrl?: string }) {

@@ -68,6 +68,7 @@ export interface ExSessao {
   video_url?: string
   observacoes?: string
   registrado?: SerieInput[] | null
+  recursos?: PostGlobal[]
 }
 
 export interface SessaoExercicios {
@@ -185,6 +186,8 @@ export const alunoApi = {
     alunoClient
       .get<{ items: PostGlobal[]; next_cursor: string | null }>('/v1/aluno/feed', { params })
       .then((r) => r.data),
+  feedRecursos: () =>
+    alunoClient.get<PostGlobal[]>('/v1/aluno/feed/recursos').then((r) => r.data),
   curtirFeed: (post_sk: string) =>
     alunoClient.post<{ curtido: boolean }>('/v1/aluno/feed/curtir', { post_sk }).then((r) => r.data),
 
@@ -208,7 +211,7 @@ export interface PostGlobal {
   post_id: string
   post_sk: string
   personal_id: string
-  tipo: 'ARTIGO' | 'DICA' | 'MOTIVACAO' | 'AVISO' | 'OUTRO'
+  tipo: 'ARTIGO' | 'DICA' | 'MOTIVACAO' | 'AVISO' | 'OUTRO' | 'RECURSO'
   texto: string
   midias: Array<{ s3_key: string; tipo: string; url?: string }>
   total_curtidas: number

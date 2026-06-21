@@ -1,6 +1,6 @@
 import { api } from './client'
 
-export type PostGlobalTipo = 'ARTIGO' | 'DICA' | 'MOTIVACAO' | 'AVISO' | 'OUTRO'
+export type PostGlobalTipo = 'ARTIGO' | 'DICA' | 'MOTIVACAO' | 'AVISO' | 'OUTRO' | 'RECURSO'
 
 export interface PostGlobalItem {
   post_id: string
@@ -36,6 +36,9 @@ export const feedGlobalApi = {
         filename, content_type: contentType,
       })
       .then((r) => r.data),
+
+  recursos: () =>
+    api.get<PostGlobalItem[]>('/v1/feed/recursos').then((r) => r.data),
 
   ranking: () =>
     api.get<RankingPersonalItem[]>('/v1/feed/ranking').then((r) => r.data),

@@ -44,6 +44,12 @@ def deletar_post(post_sk: str, personal_id: str = Depends(get_current_personal_i
         raise HTTPException(404, "Post não encontrado")
 
 
+@router.get("/recursos")
+def listar_recursos(personal_id: str = Depends(get_current_personal_id)):
+    """Lista todos os posts do tipo RECURSO — usados para vincular explicações a exercícios."""
+    return feed_global_service.listar_recursos(personal_id)
+
+
 @router.get("/ranking")
 def ranking(personal_id: str = Depends(get_current_personal_id)):
     return pontos_service.get_ranking(personal_id)

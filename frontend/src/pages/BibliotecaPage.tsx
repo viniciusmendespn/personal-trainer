@@ -1,8 +1,10 @@
 import { useId, useMemo, useState } from 'react'
-import { Plus, Trash2, Video, Pencil, BookOpen, Search, Upload } from 'lucide-react'
+import { Plus, Trash2, Video, Pencil, BookOpen, Search, Upload, Link2, X as XIcon } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useBiblioteca, useCreateExLib, useUpdateExLib, useDeleteExLib } from '../hooks/useDominio'
 import { Button, Card, Input, Textarea, Spinner, EmptyState, Modal, useConfirm } from '../components/ui'
 import { ImportarExerciciosModal } from '../components/ImportarExerciciosModal'
+import { feedGlobalApi, type PostGlobalItem } from '../api/feedGlobal'
 import type { ExLibCreate } from '../api/biblioteca'
 import type { ExLib } from '../types'
 
@@ -66,6 +68,64 @@ export function BibliotecaPage() {
   )
 }
 
+function LinksUteisSelector({
+  value, onChange,
+}: { value: string[]; onChange: (v: string[]) => void }) {
+  const { data: recursos } = useQuery({
+    queryKey: ['feed-recursos'],
+    queryFn: feedGlobalApi.recursos,
+  })
+  const [search, setSearch] = useState('')
+
+  const selecionados: PostGlobalItem[] = (recursos ?? []).filter((r) => value.includes(r.post_sk))
+  const disponiveis: PostGlobalItem[] = (recursos ?? []).filter(
+    (r) => !value.includes(r.post_sk) &&
+      (search.trim() === '' || r.texto.toLowerCase().includes(search.trim().toLowerCase()))
+  )
+
+  if (!recursos?.length) return null
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium text-text-secondary flex items-center gap-1">
+        <Link2 size={14} /> Links Úteis
+      </p>
+      {selecionados.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {selecionados.map((r) => (
+            <span key={r.post_sk}
+              className="inline-flex items-center gap-1 bg-accent/10 text-accent text-xs px-2 py-1 rounded-full">
+              {r.texto.slice(0, 40)}{r.texto.length > 40 ? '…' : ''}
+              <button type="button" onClick={() => onChange(value.filter((s) => s !== r.post_sk))}
+                className="hover:text-danger">
+                <XIcon size={10} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <Input
+        placeholder="Buscar recurso educacional…"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="text-xs"
+      />
+      {disponiveis.length > 0 && (
+        <div className="max-h-40 overflow-y-auto space-y-1 border border-border rounded-xl p-2">
+          {disponiveis.map((r) => (
+            <button key={r.post_sk} type="button"
+              onClick={() => onChange([...value, r.post_sk])}
+              className="w-full text-left text-xs px-2 py-1.5 rounded-lg hover:bg-surface-elevated transition-colors flex items-center gap-2">
+              <Link2 size={10} className="shrink-0 text-accent" />
+              {r.texto.slice(0, 60)}{r.texto.length > 60 ? '…' : ''}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ExLibForm({
   initial, grupos, onSubmit, submitting, submitLabel,
 }: {
@@ -81,6 +141,7 @@ function ExLibForm({
   const [video, setVideo] = useState(initial?.video_url ?? '')
   const [descricao, setDescricao] = useState(initial?.descricao ?? '')
   const [rec, setRec] = useState(initial?.recomendacoes ?? '')
+  const [linksUteis, setLinksUteis] = useState<string[]>(initial?.links_uteis ?? [])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -88,6 +149,7 @@ function ExLibForm({
     await onSubmit({
       nome, grupo: grupo || undefined, video_url: video || undefined,
       descricao: descricao || undefined, recomendacoes: rec || undefined,
+      links_uteis: linksUteis,
     })
   }
 
@@ -101,6 +163,7 @@ function ExLibForm({
       <Input label="Vídeo (URL)" value={video} onChange={(e) => setVideo(e.target.value)} />
       <Textarea label="Descrição" rows={2} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
       <Textarea label="Recomendações (técnica, cuidados, dicas…)" rows={3} value={rec} onChange={(e) => setRec(e.target.value)} />
+      <LinksUteisSelector value={linksUteis} onChange={setLinksUteis} />
       <Button type="submit" className="w-full" disabled={submitting || !nome}>
         {submitting ? 'Salvando…' : submitLabel}
       </Button>

@@ -10,6 +10,7 @@ class ExLibCreate(BaseModel):
     video_url: Optional[str] = None
     descricao: Optional[str] = None
     recomendacoes: Optional[str] = None        # texto livre do personal (técnica, cuidados…)
+    links_uteis: list[str] = []                # post_sks de posts RECURSO do feed vinculados
 
 
 class ExLib(ExLibCreate):
