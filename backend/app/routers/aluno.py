@@ -584,10 +584,20 @@ def criar_pix_aluno(cobranca_id: str, ctx: dict = Depends(get_current_aluno)):
 
 @router.get("/financeiro/pix/{payment_id}/status")
 def pix_status_aluno(payment_id: str, ctx: dict = Depends(get_current_aluno)):
-    """Polling de status do pagamento PIX. Retorna {payment_id, status, valor_liquido, taxa}."""
+    """Polling de status do pagamento PIX. Retorna {payment_id, status, valor_liquido, taxa}.
+    Quando approved: aciona processar_webhook para registrar o pagamento imediatamente,
+    sem depender do webhook assíncrono do MP (que pode demorar ou não chegar)."""
     from app.services import mp_service
 
     try:
-        return mp_service.get_payment_status(ctx["personal_id"], payment_id)
+        result = mp_service.get_payment_status(ctx["personal_id"], payment_id)
     except ValueError as exc:
         raise HTTPException(503, str(exc))
+
+    if result.get("status") == "approved":
+        try:
+            mp_service.processar_webhook({"action": "payment.updated", "data": {"id": payment_id}})
+        except Exception:
+            pass  # idempotente via MP_LOCK# — falha silenciosa não bloqueia a resposta
+
+    return result

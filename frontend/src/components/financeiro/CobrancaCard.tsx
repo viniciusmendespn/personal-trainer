@@ -52,7 +52,7 @@ export function CobrancaCard({ cobranca: c, onPagar, onCancelar }: Props) {
         </div>
       </div>
       {(c.status === 'PENDENTE' || c.status === 'VENCIDA') && (
-        <div className="flex flex-col gap-1 shrink-0">
+        <div className="flex flex-col sm:flex-row gap-1 shrink-0">
           {onPagar && (
             <Button size="sm" variant="primary" className="gap-1 text-xs" onClick={() => onPagar(c)}>
               <DollarSign size={13} /> Pagar

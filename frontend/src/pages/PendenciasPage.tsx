@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, AlertTriangle, CalendarClock, Clock, Image, Camera, HelpCircle, Pin, MailOpen, Link2, UserRound, Dumbbell, PlaySquare, MessageSquareDot, MessageCircle } from 'lucide-react'
+import { Bell, AlertTriangle, CalendarClock, Clock, Image, Camera, HelpCircle, Pin, MailOpen, Link2, UserRound, Dumbbell, PlaySquare, MessageSquareDot, MessageCircle, DollarSign } from 'lucide-react'
 import { useNotificacoes, useMarkRead, useMarkAllRead, useVincularMidia } from '../hooks/useNotificacoes'
 import { useAlunos } from '../hooks/useAlunos'
 import { useExerciciosAluno } from '../hooks/useEvolucao'
@@ -17,6 +17,9 @@ const TIPO_ICON: Record<string, React.ReactNode> = {
   DUVIDA: <HelpCircle size={16} className="text-info" />,
   PERGUNTA_DIRETA: <Pin size={16} className="text-energy" />,
   MSG_ALUNO_DIRETO: <MessageCircle size={16} className="text-energy" />,
+  COBRANCA_VENCER: <DollarSign size={16} className="text-warning" />,
+  COBRANCA_VENCIDA: <DollarSign size={16} className="text-danger" />,
+  COBRANCA_PAGA: <DollarSign size={16} className="text-success" />,
 }
 const TIPO_TONE: Record<string, 'danger' | 'warning' | 'info' | 'neutral'> = {
   DOR: 'danger',
@@ -27,6 +30,9 @@ const TIPO_TONE: Record<string, 'danger' | 'warning' | 'info' | 'neutral'> = {
   DUVIDA: 'info',
   PERGUNTA_DIRETA: 'warning',
   MSG_ALUNO_DIRETO: 'neutral',
+  COBRANCA_VENCER: 'warning',
+  COBRANCA_VENCIDA: 'danger',
+  COBRANCA_PAGA: 'neutral',
 }
 
 const FILTROS: { label: string; tipo?: string }[] = [
@@ -94,6 +100,13 @@ function useQuickAction(item: Notificacao, markRead: ReturnType<typeof useMarkRe
       label: 'Ver aluno',
       icon: <UserRound size={15} />,
       fn: doAndRead(() => navigate(`/alunos/${item.aluno_id}`)),
+    }
+  }
+  if (item.tipo === 'COBRANCA_VENCER' || item.tipo === 'COBRANCA_VENCIDA' || item.tipo === 'COBRANCA_PAGA') {
+    return {
+      label: 'Ver financeiro',
+      icon: <DollarSign size={15} />,
+      fn: doAndRead(() => navigate(`/alunos/${item.aluno_id}?tab=financeiro`)),
     }
   }
 
