@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -680,6 +680,12 @@ function Hoje() {
   const qc = useQueryClient()
   const sessao = useQuery({ queryKey: ['aluno-sessao'], queryFn: alunoApi.sessao, retry: false })
   const hoje = useQuery({ queryKey: ['aluno-hoje'], queryFn: alunoApi.hoje, retry: false })
+  const [previewId, setPreviewId] = useState<string | null>(null)
+  const previewExs = useQuery({
+    queryKey: ['aluno-treino-preview', previewId],
+    queryFn: () => alunoApi.exercicios(previewId!),
+    enabled: !!previewId,
+  })
   const start = useMutation({
     mutationFn: (id: string) => alunoApi.start(id),
     onSuccess: () => {
@@ -695,6 +701,72 @@ function Hoje() {
   const lista = agendados.length ? agendados : (hoje.data?.treinos ?? []).map((t) => ({ id: t.treino_id, nome: t.nome }))
   const ultimo = hoje.data?.ultimo
   const proximo = hoje.data?.proximo
+
+  if (previewId) {
+    const nomeTreino = lista.find((t) => t.id === previewId)?.nome ?? 'Treino'
+    const exs = previewExs.data ?? []
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPreviewId(null)}
+            className="p-1 -ml-1 text-text-muted hover:text-text transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <h2 className="font-display font-semibold flex-1">{nomeTreino}</h2>
+        </div>
+
+        {previewExs.isLoading ? (
+          <div className="flex justify-center py-6"><Spinner /></div>
+        ) : (
+          <div className="space-y-2">
+            {exs.map((ex, i) => (
+              <Card key={ex.exercicio_id} variant="elevated" className="space-y-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2 min-w-0">
+                    <span className="text-xs font-medium text-text-muted mt-0.5 shrink-0">{i + 1}.</span>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm">{ex.nome}</p>
+                      <p className="text-xs text-text-secondary mt-0.5">
+                        {ex.series_prescritas?.length
+                          ? <SeriesPrescritasCompact items={ex.series_prescritas} />
+                          : <>{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</>
+                        }
+                      </p>
+                      {ex.observacoes && (
+                        <p className="text-xs text-text-muted mt-1 leading-snug">{ex.observacoes}</p>
+                      )}
+                    </div>
+                  </div>
+                  {ex.video_url && (
+                    <a
+                      href={ex.video_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 text-text-muted hover:text-energy transition-colors"
+                      title="Ver vídeo"
+                    >
+                      <Video size={16} />
+                    </a>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        <Button
+          variant="energy"
+          className="w-full"
+          onClick={() => start.mutate(previewId)}
+          disabled={start.isPending || previewExs.isLoading}
+        >
+          {start.isPending ? 'Iniciando…' : 'Iniciar Treino'}
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-3">
@@ -723,7 +795,7 @@ function Hoje() {
         lista.map((t) => (
           <Card key={t.id} variant="elevated" className="flex items-center justify-between">
             <span className="font-medium">{t.nome}</span>
-            <Button variant="energy" onClick={() => start.mutate(t.id)} disabled={start.isPending}>Iniciar</Button>
+            <Button variant="energy" onClick={() => setPreviewId(t.id)}>Ver treino</Button>
           </Card>
         ))
       )}
