@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { Card } from './Card'
 
 export function StatCard({
@@ -8,6 +9,7 @@ export function StatCard({
   hint,
   tone = 'accent',
   className = '',
+  to,
 }: {
   icon?: ReactNode
   label: string
@@ -15,6 +17,7 @@ export function StatCard({
   hint?: string
   tone?: 'accent' | 'energy' | 'success' | 'warning' | 'danger'
   className?: string
+  to?: string
 }) {
   const toneStyles = {
     accent: 'bg-accent/15 text-accent-hover',
@@ -24,8 +27,11 @@ export function StatCard({
     danger: 'bg-danger/15 text-danger',
   }[tone]
 
-  return (
-    <Card variant="elevated" className={`flex items-start gap-3 ${className}`}>
+  const card = (
+    <Card
+      variant="elevated"
+      className={`flex items-start gap-3 ${to ? 'cursor-pointer hover:opacity-80 active:scale-[0.98] transition-all' : ''} ${className}`}
+    >
       {icon && <div className={`p-2 rounded-lg ${toneStyles} [&>svg]:w-5 [&>svg]:h-5`}>{icon}</div>}
       <div className="min-w-0">
         <p className="text-xs text-text-secondary">{label}</p>
@@ -34,4 +40,6 @@ export function StatCard({
       </div>
     </Card>
   )
+
+  return to ? <Link to={to} className="block">{card}</Link> : card
 }

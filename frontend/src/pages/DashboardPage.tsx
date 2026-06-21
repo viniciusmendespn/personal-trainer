@@ -115,11 +115,11 @@ export function DashboardPage() {
         <>
           {/* KPIs principais — grade única e consistente: 2 colunas no mobile, 3 a partir do tablet (2 fileiras de 3) */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <StatCard icon={<Users />} label="Alunos" value={data?.alunos ?? 0} tone="accent" />
-            <StatCard icon={<UserCheck />} label="Ativos" value={data?.alunos_ativos ?? 0} tone="success" />
+            <StatCard icon={<Users />} label="Alunos" value={data?.alunos ?? 0} tone="accent" to="/alunos" />
+            <StatCard icon={<UserCheck />} label="Ativos" value={data?.alunos_ativos ?? 0} tone="success" to="/alunos" />
             <StatCard icon={<Calendar />} label="Sessões hoje" value={sessoesHoje} tone="accent" />
             <StatCard icon={<CalendarCheck />} label="Sessões na semana" value={sessoesSemana} tone="energy" />
-            <StatCard icon={<Bell />} label="Notificações" value={data?.notificacoes_nao_lidas ?? 0} tone="danger" />
+            <StatCard icon={<Bell />} label="Notificações" value={data?.notificacoes_nao_lidas ?? 0} tone="danger" to="/notificacoes" />
             <StatCard icon={<LayoutTemplate />} label="Templates" value={templates?.length ?? 0} tone="accent" />
           </div>
 
@@ -218,10 +218,6 @@ export function DashboardPage() {
         </>
       )}
 
-      <div className="flex flex-wrap gap-4 pt-1">
-        <Link to="/alunos" className="text-accent-hover text-sm hover:underline">→ Gerenciar alunos</Link>
-        <Link to="/notificacoes" className="text-accent-hover text-sm hover:underline">→ Ver notificações</Link>
-      </div>
     </div>
   )
 }
