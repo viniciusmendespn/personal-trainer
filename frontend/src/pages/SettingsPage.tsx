@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { QrCode, Phone, CheckCircle, AlertCircle, MessageCircle, WifiOff, RefreshCw, Copy, Smartphone, Banknote, Trash2 } from 'lucide-react'
 import { wapiApi } from '../api/wapi'
 import { financeiroApi } from '../api/financeiro'
-import { Button, Card, ErrorText } from '../components/ui'
+import { Button, Card, ErrorText, Tabs } from '../components/ui'
 import { useToast } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { AnamneseEditor } from '../components/anamnese/AnamneseEditor'
@@ -477,22 +477,12 @@ export function SettingsPage() {
     <div className="max-w-xl mx-auto">
       <h1 className="font-display text-xl font-semibold mb-4">Configurações</h1>
 
-      {/* Tab bar */}
-      <div className="flex border-b border-border mb-6">
-        {TABS.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => selectTab(tab.id)}
-            className={`flex-1 py-2 text-sm font-medium transition-colors -mb-px border-b-2 ${
-              activeTab === tab.id
-                ? 'border-accent text-accent-hover'
-                : 'border-transparent text-text-secondary hover:text-text'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        tabs={TABS.map(t => ({ key: t.id, label: t.label }))}
+        active={activeTab}
+        onChange={(k) => selectTab(k as TabId)}
+        className="mb-6"
+      />
 
       {activeTab === 'whatsapp' && <WhatsAppTab />}
       {activeTab === 'anamnese' && <AnamneseTab />}
