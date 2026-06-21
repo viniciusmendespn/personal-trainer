@@ -1,10 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { useMutation, useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote, Camera, Clock, RefreshCw, AlertCircle, History, Power, PowerOff, Bot } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote, Camera, Clock, RefreshCw, AlertCircle, History, Power, PowerOff, Bot, ClipboardList } from 'lucide-react'
 import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { useToggleAgenteHabilitado } from '../hooks/usePersonalChat'
 import { alunosApi } from '../api/alunos'
+import { anamneseApi } from '../api/anamnese'
 import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
@@ -315,6 +316,7 @@ export function AlunoDetailPage() {
             </div>
           )}
         </Card>
+        <QuestionarioSaudeCard alunoId={alunoId} />
         <NotasTimeline alunoId={alunoId} />
         </div>
       )}
@@ -494,6 +496,89 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
         </div>
       )}
     </div>
+  )
+}
+
+function QuestionarioSaudeCard({ alunoId }: { alunoId: string }) {
+  const { data: template, isLoading: loadingTemplate } = useQuery({
+    queryKey: ['anamnese-template'],
+    queryFn: anamneseApi.getTemplate,
+  })
+  const { data: resposta, isLoading: loadingResposta } = useQuery({
+    queryKey: ['aluno-anamnese', alunoId],
+    queryFn: () => anamneseApi.getAlunoAnamnese(alunoId),
+  })
+
+  const header = (
+    <p className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-1">
+      <ClipboardList size={14} /> Questionário de saúde
+    </p>
+  )
+
+  if (loadingTemplate || loadingResposta) {
+    return <Card variant="elevated">{header}<Spinner /></Card>
+  }
+
+  const perguntas = template?.perguntas ?? []
+  if (perguntas.length === 0) {
+    return (
+      <Card variant="elevated">
+        {header}
+        <p className="text-xs text-text-muted">
+          Nenhuma pergunta configurada. <Link to="/config" className="text-accent-hover hover:underline">Configurar perguntas</Link>
+        </p>
+      </Card>
+    )
+  }
+
+  const respostas = resposta?.respostas ?? {}
+  if (Object.keys(respostas).length === 0) {
+    return (
+      <Card variant="elevated">
+        {header}
+        <p className="text-xs text-text-muted">Aluno ainda não respondeu o questionário.</p>
+      </Card>
+    )
+  }
+
+  function formatValor(pergunta: { type: string }, valor: unknown) {
+    if (valor === undefined || valor === null || valor === '') return '—'
+    if (pergunta.type === 'BOOL') return valor === true ? 'Sim' : valor === false ? 'Não' : '—'
+    if (pergunta.type === 'DATE') return fmtDateFull(String(valor))
+    return String(valor)
+  }
+
+  const chavesConhecidas = new Set(perguntas.map((p) => p.key))
+  const orfas = Object.entries(respostas).filter(([key]) => !chavesConhecidas.has(key))
+
+  return (
+    <Card variant="elevated">
+      {header}
+      <div className="space-y-3">
+        {perguntas.map((p) => (
+          <div key={p.key}>
+            <p className="text-xs text-text-muted">{p.label}</p>
+            <p className="text-sm">{formatValor(p, respostas[p.key])}</p>
+          </div>
+        ))}
+        {orfas.length > 0 && (
+          <div className="pt-2 border-t border-border">
+            <p className="text-xs text-text-muted mb-1.5">Outras respostas (pergunta removida ou alterada)</p>
+            {orfas.map(([key, valor]) => (
+              <div key={key}>
+                <p className="text-xs text-text-muted">{key}</p>
+                <p className="text-sm">{String(valor)}</p>
+              </div>
+            ))}
+          </div>
+        )}
+        {resposta?.preenchido_em && (
+          <p className="text-[11px] text-text-muted pt-1">
+            Respondido por {resposta.preenchido_por === 'PERSONAL' ? 'personal' : 'aluno'} em {new Date(resposta.preenchido_em).toLocaleString('pt-BR')}
+          </p>
+        )}
+      </div>
+    </Card>
   )
 }
 
