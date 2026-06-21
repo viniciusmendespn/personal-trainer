@@ -1,5 +1,7 @@
-"""Cria uma instância W-API configurada (webhook + leitura automática + rejeitar ligações)
-e gera o link de pagamento PIX para a instância recém-criada.
+"""Cria uma instância W-API configurada (webhook) e gera o link de pagamento PIX.
+
+Leitura automática e rejeição de ligações são desabilitadas intencionalmente —
+o personal pode configurar isso no painel W-API conforme sua preferência.
 
 Uso:
     cd backend
@@ -34,11 +36,6 @@ LAMBDA_FUNCTION_URL = os.getenv(
 
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
 
-CALL_REJECT_MSG = (
-    "Olá! No momento não é possível atender ligações por aqui. "
-    "Envie uma mensagem de texto que o assistente irá te ajudar! 💪"
-)
-
 
 def _headers(api_key: str) -> dict:
     return {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
@@ -57,9 +54,8 @@ def criar_instancia(api_key: str, instance_name: str, webhook_received_url: str)
         "webhookDisconnectedUrl": "",
         "webhookStatusUrl": "",
         "webhookPresenceUrl": "",
-        "automaticReading": True,
-        "rejectCalls": True,
-        "callMessage": CALL_REJECT_MSG,
+        "automaticReading": False,
+        "rejectCalls": False,
     }
     with httpx.Client(timeout=30) as c:
         r = c.post(
