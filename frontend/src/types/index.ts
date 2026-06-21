@@ -133,6 +133,7 @@ export interface Exercicio {
   intervalo_s?: number
   video_url?: string
   observacoes?: string
+  links_uteis?: string[]
   custom?: Custom
 }
 
@@ -146,6 +147,7 @@ export interface ExercicioCreate {
   intervalo_s?: number
   video_url?: string
   observacoes?: string
+  links_uteis?: string[]
   custom?: Custom
 }
 
@@ -204,6 +206,7 @@ export interface ExercicioTemplate {
   intervalo_s?: number
   video_url?: string
   observacoes?: string
+  links_uteis?: string[]
 }
 
 export interface TreinoTemplate {

@@ -18,6 +18,7 @@ import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
 import { useNotas, useCreateNota } from '../hooks/useNotas'
 import { treinosApi, type SessaoHistoricoPersonal } from '../api/treinos'
 import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
+import { LinksUteisSelector } from '../components/exercicios/LinksUteisSelector'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import type { Treino, Exercicio, ExercicioCreate, SeriePrescrita, AlunoExistenteConflict, Aluno } from '../types'
 import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
@@ -753,7 +754,7 @@ function ExercicioForm({
   initial, biblioteca, onSubmit, submitting, submitLabel,
 }: {
   initial?: Partial<Exercicio>
-  biblioteca?: { exlib_id: string; nome: string; video_url?: string }[]
+  biblioteca?: { exlib_id: string; nome: string; video_url?: string; links_uteis?: string[] }[]
   onSubmit: (body: ExercicioCreate) => Promise<void>
   submitting?: boolean
   submitLabel: string
@@ -765,11 +766,13 @@ function ExercicioForm({
   )
   const [vid, setVid] = useState(initial?.video_url ?? '')
   const [obs, setObs] = useState(initial?.observacoes ?? '')
+  const [linksUteis, setLinksUteis] = useState<string[]>(initial?.links_uteis ?? [])
 
   function onNome(v: string) {
     setNome(v)
     const lib = biblioteca?.find((b) => b.nome.toLowerCase() === v.toLowerCase())
     if (lib?.video_url) setVid(lib.video_url)
+    if (lib?.links_uteis?.length) setLinksUteis(lib.links_uteis)
   }
 
   async function submit(e: React.FormEvent) {
@@ -781,6 +784,7 @@ function ExercicioForm({
       series_prescritas: validas.length ? validas : undefined,
       video_url: vid || undefined,
       observacoes: obs || undefined,
+      links_uteis: linksUteis.length ? linksUteis : undefined,
     })
   }
 
@@ -808,6 +812,7 @@ function ExercicioForm({
           />
         </div>
       </div>
+      <LinksUteisSelector value={linksUteis} onChange={setLinksUteis} />
       <Button type="submit" className="w-full" disabled={submitting || !nome}>
         {submitting ? 'Salvando…' : submitLabel}
       </Button>

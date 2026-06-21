@@ -19,6 +19,7 @@ class ExercicioCreate(BaseModel):
     intervalo_s: Optional[int] = None
     video_url: Optional[str] = None
     observacoes: Optional[str] = None
+    links_uteis: list[str] = []                # post_sks de recursos educacionais vinculados
     custom: dict[str, Any] = Field(default_factory=dict)
 
 
