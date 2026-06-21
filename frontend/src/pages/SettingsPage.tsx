@@ -478,12 +478,12 @@ export function SettingsPage() {
       <h1 className="font-display text-xl font-semibold mb-4">Configurações</h1>
 
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto">
+      <div className="flex border-b border-border mb-6">
         {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => selectTab(tab.id)}
-            className={`px-4 py-2 text-sm font-medium transition-colors -mb-px border-b-2 whitespace-nowrap ${
+            className={`flex-1 py-2 text-sm font-medium transition-colors -mb-px border-b-2 ${
               activeTab === tab.id
                 ? 'border-accent text-accent-hover'
                 : 'border-transparent text-text-secondary hover:text-text'
