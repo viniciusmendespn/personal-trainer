@@ -19,7 +19,8 @@ class ExercicioCreate(BaseModel):
     intervalo_s: Optional[int] = None
     video_url: Optional[str] = None
     observacoes: Optional[str] = None
-    links_uteis_excluidos: list[str] = []       # post_sks excluídos da biblioteca para este exercício
+    links_uteis: list[str] = []                 # post_sks adicionados diretamente a este exercício
+    links_uteis_excluidos: list[str] = []       # post_sks da biblioteca ocultados para este aluno
     custom: dict[str, Any] = Field(default_factory=dict)
 
 

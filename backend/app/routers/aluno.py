@@ -151,7 +151,7 @@ def get_sessao(ctx: dict = Depends(get_current_aluno)):
 
 def _enrich_sessao_recursos(sessao: dict, personal_id: str) -> None:
     """Adiciona campo `recursos` em cada exercício.
-    Fonte = biblioteca ao vivo (por nome); links_uteis_excluidos do exercício remove itens específicos.
+    Fórmula: (biblioteca_ao_vivo - links_uteis_excluidos) | links_uteis (adições diretas).
     """
     exs = sessao.get("exercicios") or []
     if not exs:
@@ -164,6 +164,8 @@ def _enrich_sessao_recursos(sessao: dict, personal_id: str) -> None:
     all_sks: set[str] = set()
     for ex in exs:
         for sk in nome_to_links.get((ex.get("nome") or "").strip().lower(), []):
+            all_sks.add(sk)
+        for sk in (ex.get("links_uteis") or []):
             all_sks.add(sk)
     if not all_sks:
         return
@@ -182,7 +184,8 @@ def _enrich_sessao_recursos(sessao: dict, personal_id: str) -> None:
         nome_lower = (ex.get("nome") or "").strip().lower()
         lib_sks = set(nome_to_links.get(nome_lower, []))
         excluded = set(ex.get("links_uteis_excluidos") or [])
-        effective = lib_sks - excluded
+        additions = set(ex.get("links_uteis") or [])
+        effective = (lib_sks - excluded) | additions
         ex["recursos"] = [posts_by_sk[sk] for sk in effective if sk in posts_by_sk]
 
 

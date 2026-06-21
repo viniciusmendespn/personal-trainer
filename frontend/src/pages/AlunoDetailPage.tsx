@@ -19,6 +19,7 @@ import { useNotas, useCreateNota } from '../hooks/useNotas'
 import { treinosApi, type SessaoHistoricoPersonal } from '../api/treinos'
 import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
 import { LinksUteisSelector } from '../components/exercicios/LinksUteisSelector'
+import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import type { Treino, Exercicio, ExercicioCreate, SeriePrescrita, AlunoExistenteConflict, Aluno } from '../types'
 import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
@@ -766,6 +767,7 @@ function ExercicioForm({
   )
   const [vid, setVid] = useState(initial?.video_url ?? '')
   const [obs, setObs] = useState(initial?.observacoes ?? '')
+  const [linksUteis, setLinksUteis] = useState<string[]>(initial?.links_uteis ?? [])
   const [linksUteisExcluidos, setLinksUteisExcluidos] = useState<string[]>(initial?.links_uteis_excluidos ?? [])
 
   function onNome(v: string) {
@@ -783,6 +785,7 @@ function ExercicioForm({
       series_prescritas: validas.length ? validas : undefined,
       video_url: vid || undefined,
       observacoes: obs || undefined,
+      links_uteis: linksUteis.length ? linksUteis : undefined,
       links_uteis_excluidos: linksUteisExcluidos.length ? linksUteisExcluidos : undefined,
     })
   }
@@ -812,6 +815,7 @@ function ExercicioForm({
         </div>
       </div>
       <LinksUteisSelector exercicioNome={nome} biblioteca={biblioteca ?? []} value={linksUteisExcluidos} onChange={setLinksUteisExcluidos} />
+      <LinksUteisIncluirSelector value={linksUteis} onChange={setLinksUteis} />
       <Button type="submit" className="w-full" disabled={submitting || !nome}>
         {submitting ? 'Salvando…' : submitLabel}
       </Button>
