@@ -1,15 +1,26 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus, ChevronRight, Search, Users, Bot } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { Plus, ChevronRight, Search, Users, Bot, Settings, Copy } from 'lucide-react'
 import { useAlunosPaginated, useCreateAluno, useUpdateAluno } from '../hooks/useAlunos'
-import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState } from '../components/ui'
+import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState, useToast } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
+import { anamneseApi } from '../api/anamnese'
 import type { AlunoExistenteConflict } from '../types'
 
 export function AlunosPage() {
   const navigate = useNavigate()
   const { data: alunos, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useAlunosPaginated()
   const create = useCreateAluno()
+  const { show } = useToast()
+  const gerarLink = useMutation({
+    mutationFn: anamneseApi.gerarLink,
+    onSuccess: (data) => {
+      navigator.clipboard?.writeText(data.url)
+      show('Link copiado para a área de transferência!', 'success')
+    },
+    onError: () => show('Erro ao gerar link.', 'error'),
+  })
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [nome, setNome] = useState('')
@@ -60,11 +71,21 @@ export function AlunosPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6 gap-3">
+      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
         <h2 className="font-display text-xl font-semibold">Alunos</h2>
-        <Button onClick={() => setOpen(true)}>
-          <span className="flex items-center gap-1"><Plus size={16} /> Novo aluno</span>
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link to="/config">
+            <Button variant="outline" size="sm">
+              <span className="flex items-center gap-1"><Settings size={14} /> Configurar auto-cadastro</span>
+            </Button>
+          </Link>
+          <Button variant="outline" size="sm" onClick={() => gerarLink.mutate()} disabled={gerarLink.isPending}>
+            <span className="flex items-center gap-1"><Copy size={14} /> Copiar link</span>
+          </Button>
+          <Button onClick={() => setOpen(true)}>
+            <span className="flex items-center gap-1"><Plus size={16} /> Novo aluno</span>
+          </Button>
+        </div>
       </div>
 
       {!!alunos?.length && (

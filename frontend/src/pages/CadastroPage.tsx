@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { anamneseApi, type AnamneseTemplate } from '../api/anamnese'
 import { Button, Input, Spinner } from '../components/ui'
+import { PhoneInput } from '../components/PhoneInput'
 
 type Etapa = 'dados' | 'questionario' | 'sucesso'
 
@@ -103,10 +104,7 @@ function CadastroFlow({
           <form onSubmit={avancarDados} className="space-y-4">
             <h2 className="font-semibold text-text">Seus dados</h2>
             <Input label="Nome completo *" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="João Silva" required />
-            <Input
-              label="Telefone (WhatsApp) *" value={telefone} onChange={(e) => setTelefone(e.target.value)}
-              placeholder="(11) 99999-9999" inputMode="tel" required
-            />
+            <PhoneInput label="Telefone (WhatsApp)" value={telefone} onChange={setTelefone} required />
             {template.solicitar_email && (
               <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             )}
@@ -169,7 +167,7 @@ function PerguntaField({
               onClick={() => onChange(opt === 'Sim')}
               className={`px-4 py-2 text-sm rounded-lg border transition ${
                 (opt === 'Sim' && value === true) || (opt === 'Não' && value === false)
-                  ? 'bg-primary text-white border-primary'
+                  ? 'bg-accent text-white border-accent'
                   : 'border-border text-text-secondary hover:border-border-strong'
               }`}
             >{opt}</button>
@@ -187,7 +185,7 @@ function PerguntaField({
           value={strVal}
           onChange={(e) => onChange(e.target.value)}
           required={pergunta.required}
-          className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
         >
           <option value="">Selecione…</option>
           {pergunta.options.map((o) => <option key={o} value={o}>{o}</option>)}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, Copy, ExternalLink } from 'lucide-react'
+import { Plus, Trash2, X, Copy, ExternalLink } from 'lucide-react'
 import { anamneseApi, type AnamneseTemplate, type PerguntaAnamnese } from '../../api/anamnese'
 import { Button, Card, Input, Spinner, useToast } from '../ui'
 
@@ -68,6 +68,22 @@ export function AnamneseEditor() {
     setPerguntas((ps) => ps.filter((_, j) => j !== i))
   }
 
+  function addOption(i: number) {
+    setPerguntas((ps) => ps.map((p, j) => (j === i ? { ...p, options: [...(p.options ?? []), ''] } : p)))
+  }
+
+  function updateOption(i: number, optIdx: number, value: string) {
+    setPerguntas((ps) =>
+      ps.map((p, j) => (j === i ? { ...p, options: (p.options ?? []).map((o, k) => (k === optIdx ? value : o)) } : p))
+    )
+  }
+
+  function removeOption(i: number, optIdx: number) {
+    setPerguntas((ps) =>
+      ps.map((p, j) => (j === i ? { ...p, options: (p.options ?? []).filter((_, k) => k !== optIdx) } : p))
+    )
+  }
+
   function save(e: React.FormEvent) {
     e.preventDefault()
     saveTemplate.mutate({
@@ -118,13 +134,12 @@ export function AnamneseEditor() {
           <div className="space-y-3">
             {perguntas.map((p, i) => (
               <div key={p.key} className="p-3 rounded-xl border border-border bg-surface space-y-2">
-                <div className="flex gap-2">
-                  <Input
-                    className="flex-1"
-                    placeholder="Pergunta (ex.: Tem alguma lesão?)"
-                    value={p.label}
-                    onChange={(e) => updatePergunta(i, { label: e.target.value })}
-                  />
+                <Input
+                  placeholder="Pergunta (ex.: Tem alguma lesão?)"
+                  value={p.label}
+                  onChange={(e) => updatePergunta(i, { label: e.target.value })}
+                />
+                <div className="flex items-center gap-2 flex-wrap">
                   <select
                     value={p.type}
                     onChange={(e) => updatePergunta(i, { type: e.target.value as PerguntaAnamnese['type'] })}
@@ -134,25 +149,42 @@ export function AnamneseEditor() {
                       <option key={v} value={v}>{l}</option>
                     ))}
                   </select>
-                  <Button type="button" variant="ghost" size="sm" iconOnly aria-label="Remover" onClick={() => removePergunta(i)} className="hover:text-danger">
+                  <label className="flex items-center gap-2">
+                    <input
+                      id={`req-${i}`} type="checkbox" checked={p.required}
+                      onChange={(e) => updatePergunta(i, { required: e.target.checked })}
+                      className="w-4 h-4 accent-accent"
+                    />
+                    <span className="text-xs text-text-secondary">Obrigatória</span>
+                  </label>
+                  <Button type="button" variant="ghost" size="sm" iconOnly aria-label="Remover" onClick={() => removePergunta(i)} className="hover:text-danger ml-auto">
                     <Trash2 size={14} />
                   </Button>
                 </div>
                 {p.type === 'SELECT' && (
-                  <Input
-                    placeholder="Opções separadas por vírgula (ex.: Sim, Não, Às vezes)"
-                    value={p.options?.join(', ') ?? ''}
-                    onChange={(e) => updatePergunta(i, { options: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })}
-                  />
+                  <div className="space-y-1.5 pt-1">
+                    <p className="text-xs text-text-secondary">Opções</p>
+                    {(p.options ?? []).map((opt, optIdx) => (
+                      <div key={optIdx} className="flex gap-2">
+                        <Input
+                          className="flex-1"
+                          placeholder={`Opção ${optIdx + 1}`}
+                          value={opt}
+                          onChange={(e) => updateOption(i, optIdx, e.target.value)}
+                        />
+                        <Button
+                          type="button" variant="ghost" size="sm" iconOnly aria-label="Remover opção"
+                          onClick={() => removeOption(i, optIdx)} className="hover:text-danger"
+                        >
+                          <X size={14} />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button type="button" variant="ghost" size="sm" onClick={() => addOption(i)}>
+                      <span className="flex items-center gap-1"><Plus size={14} /> Adicionar opção</span>
+                    </Button>
+                  </div>
                 )}
-                <div className="flex items-center gap-2">
-                  <input
-                    id={`req-${i}`} type="checkbox" checked={p.required}
-                    onChange={(e) => updatePergunta(i, { required: e.target.checked })}
-                    className="w-4 h-4 accent-primary"
-                  />
-                  <label htmlFor={`req-${i}`} className="text-xs text-text-secondary">Obrigatória</label>
-                </div>
               </div>
             ))}
           </div>
@@ -178,7 +210,7 @@ export function AnamneseEditor() {
 function Toggle({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
     <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
-      <input type="checkbox" checked={value} onChange={(e) => onChange(e.target.checked)} className="w-4 h-4 accent-primary" />
+      <input type="checkbox" checked={value} onChange={(e) => onChange(e.target.checked)} className="w-4 h-4 accent-accent" />
       {label}
     </label>
   )

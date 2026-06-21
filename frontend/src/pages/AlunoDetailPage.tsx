@@ -10,6 +10,7 @@ import {
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
 import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar } from '../components/ui'
+import { PhoneInput } from '../components/PhoneInput'
 import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
@@ -255,7 +256,7 @@ export function AlunoDetailPage() {
                 onChange={(e) => setEDescricao(e.target.value)}
                 placeholder="Ex.: Foco em hipertrofia"
               />
-              <Input label="Telefone" value={eTel} onChange={(e) => setETel(e.target.value)} />
+              <PhoneInput label="Telefone" value={eTel} onChange={setETel} />
               <Input label="E-mail" type="email" value={eEmail} onChange={(e) => setEEmail(e.target.value)} />
               <Input label="Data de nascimento" type="date" value={eNascimento} onChange={(e) => setENascimento(e.target.value)} />
               <Input label="Endereço" value={eEndereco} onChange={(e) => setEEndereco(e.target.value)} />
