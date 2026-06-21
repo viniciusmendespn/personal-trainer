@@ -542,9 +542,9 @@ def propor_meta_aluno(body: MetaPropostaBody, ctx: dict = Depends(get_current_al
 
 
 @router.get("/financeiro")
-def listar_cobranças_aluno(ctx: dict = Depends(get_current_aluno)):
+def listar_cobrancas_aluno(ctx: dict = Depends(get_current_aluno)):
     """Cobranças do próprio aluno — somente leitura."""
-    items, _ = financeiro_service.listar_cobranças(
+    items, _ = financeiro_service.listar_cobrancas(
         ctx["personal_id"], ctx["aluno_id"], limit=100)
     return {"items": items}
 
@@ -565,7 +565,7 @@ def criar_pix_aluno(cobranca_id: str, ctx: dict = Depends(get_current_aluno)):
     personal_id = ctx["personal_id"]
     aluno_id = ctx["aluno_id"]
 
-    items, _ = financeiro_service.listar_cobranças(personal_id, aluno_id, limit=100)
+    items, _ = financeiro_service.listar_cobrancas(personal_id, aluno_id, limit=100)
     cobranca = next((c for c in items if c["cobranca_id"] == cobranca_id), None)
     if not cobranca:
         raise HTTPException(404, "Cobrança não encontrada.")

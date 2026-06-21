@@ -563,7 +563,7 @@ function SobrePersonalTab() {
 function MensalidadeCard() {
   const { data, isLoading } = useQuery({
     queryKey: ['aluno-financeiro'],
-    queryFn: alunoFinanceiroApi.listCobranças,
+    queryFn: alunoFinanceiroApi.listCobrancas,
     staleTime: 60_000,
   })
   const { data: mpData } = useQuery({

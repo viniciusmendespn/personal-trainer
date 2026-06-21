@@ -58,7 +58,7 @@ def set_config(personal_id: str, aluno_id: str, body: dict) -> dict:
 
 # ── Listagem de cobranças ─────────────────────────────────────────────────────
 
-def listar_cobranças(personal_id: str, aluno_id: str,
+def listar_cobrancas(personal_id: str, aluno_id: str,
                      limit: int = 50, cursor: str | None = None,
                      status: str | None = None) -> tuple[list[dict], str | None]:
     items, next_cursor = repo.query_pk_page(

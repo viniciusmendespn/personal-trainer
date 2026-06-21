@@ -35,7 +35,7 @@ export function FinanceiroTab({ alunoId }: { alunoId: string }) {
 
   const { data: cobranças, isLoading } = useQuery({
     queryKey: ['cobranças', alunoId, filtro],
-    queryFn: () => financeiroApi.listCobranças(alunoId, filtro !== 'TODAS' ? { status: filtro } : undefined),
+    queryFn: () => financeiroApi.listCobrancas(alunoId, filtro !== 'TODAS' ? { status: filtro } : undefined),
     enabled: !!alunoId,
   })
 

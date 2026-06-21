@@ -19,7 +19,7 @@ export const financeiroApi = {
   setConfig: (alunoId: string, body: CobrancaConfigIn) =>
     api.put<CobrancaConfig>(`/v1/alunos/${alunoId}/financeiro/config`, body).then((r) => r.data),
 
-  listCobranças: (alunoId: string, params?: { status?: CobrancaStatus; cursor?: string }) =>
+  listCobrancas: (alunoId: string, params?: { status?: CobrancaStatus; cursor?: string }) =>
     api.get<CobrancasResponse>(`/v1/alunos/${alunoId}/financeiro/cobrancas`, { params }).then((r) => r.data),
 
   createCobranca: (alunoId: string, body: NovaCobrancaIn) =>
@@ -56,7 +56,7 @@ export interface PixStatusResponse {
 }
 
 export const alunoFinanceiroApi = {
-  listCobranças: () =>
+  listCobrancas: () =>
     alunoClient.get<CobrancasResponse>('/v1/aluno/financeiro').then((r) => r.data),
 
   getMpConfigurado: () =>
