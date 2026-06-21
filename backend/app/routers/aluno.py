@@ -150,26 +150,15 @@ def get_sessao(ctx: dict = Depends(get_current_aluno)):
 
 
 def _enrich_sessao_recursos(sessao: dict, personal_id: str) -> None:
-    """Adiciona campo `recursos` em cada exercício combinando:
-    1) links_uteis do próprio exercício (campo direto, mais preciso)
-    2) links_uteis da entrada da biblioteca com mesmo nome (fallback automático)
+    """Adiciona campo `recursos` em cada exercício a partir do campo links_uteis do próprio exercício.
+    A biblioteca atua como template na criação (frontend auto-popula), não como fallback ao vivo.
     """
     exs = sessao.get("exercicios") or []
     if not exs:
         return
-    # Carrega ExLib para o fallback por nome
-    lib = repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.EXLIB_PREFIX)
-    nome_to_links: dict[str, list[str]] = {}
-    for item in lib:
-        links = item.get("links_uteis") or []
-        if links:
-            nome_to_links[item.get("nome", "").strip().lower()] = links
-    # Coleta todos os post_sks únicos relevantes
     all_sks: set[str] = set()
     for ex in exs:
         for sk in (ex.get("links_uteis") or []):
-            all_sks.add(sk)
-        for sk in nome_to_links.get((ex.get("nome") or "").strip().lower(), []):
             all_sks.add(sk)
     if not all_sks:
         return
@@ -185,9 +174,8 @@ def _enrich_sessao_recursos(sessao: dict, personal_id: str) -> None:
             p["post_sk"] = sk
             posts_by_sk[sk] = p
     for ex in exs:
-        ex_sks = set(ex.get("links_uteis") or [])
-        lib_sks = set(nome_to_links.get((ex.get("nome") or "").strip().lower(), []))
-        ex["recursos"] = [posts_by_sk[sk] for sk in (ex_sks | lib_sks) if sk in posts_by_sk]
+        sks = ex.get("links_uteis") or []
+        ex["recursos"] = [posts_by_sk[sk] for sk in sks if sk in posts_by_sk]
 
 
 @router.get("/sessao/exercicios")
