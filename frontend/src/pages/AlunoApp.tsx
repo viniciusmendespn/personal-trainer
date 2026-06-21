@@ -173,6 +173,73 @@ function NotifDrawer({ onClose, onNavigate, onOpenChat }: {
   )
 }
 
+const FAQ_ALUNO = [
+  { q: 'Como inicio meu treino do dia?', a: 'Na aba Treino, você verá a lista de exercícios prescritos. Toque em "Iniciar Treino" para começar a sessão.' },
+  { q: 'Como registro o peso e as repetições?', a: 'Com a sessão ativa, toque no exercício atual, preencha carga (kg) e repetições para cada série e toque em "Registrar". Repita para cada série.' },
+  { q: 'O que é RPE e preciso preencher?', a: 'RPE é o índice de esforço percebido (0–10). 0–3 = muito fácil, 7–8 = difícil, 9–10 = máximo. É opcional, mas ajuda seu personal a ajustar as cargas.' },
+  { q: 'Como vejo meu histórico de treinos?', a: 'Acesse a aba "Histórico" na barra inferior. Lá estão todas as suas sessões finalizadas com data, exercícios e séries.' },
+  { q: 'Como funcionam os pontos?', a: 'Você ganha pontos por série (1pt), sessão finalizada (8pt), sessão 100% completa (+7pt), novo recorde/PR (10pt), post no feed (3pt) e meta atingida (50pt).' },
+  { q: 'O que é o streak e o multiplicador?', a: 'Streak é o número de semanas seguidas em que você treinou. Com 3–8 semanas seus pontos dobram (2x); com 9+ semanas triplicam (3x). Se pular uma semana, o streak zera.' },
+  { q: 'Como reporto uma dor para meu personal?', a: 'Durante a sessão ou pelo feed, toque em "Relatar Dor", selecione o exercício e descreva o que sentiu. Seu personal é notificado na hora.' },
+  { q: 'Como envio uma foto ou vídeo da execução?', a: 'Toque no ícone de câmera durante a sessão ativa ou pelo feed. Grave ou fotografe e envie — aparece no feed e no histórico do exercício.' },
+  { q: 'Como vejo minha evolução de cargas?', a: 'Acesse Evolução → aba "Carga", busque pelo nome do exercício. O gráfico mostra o peso levantado ao longo do tempo.' },
+  { q: 'Como desbloquear badges (conquistas)?', a: 'As badges são automáticas: finalize sessões (1ª, 10ª, 25ª, 50ª, 100ª) ou mantenha streak (3, 8 e 12 semanas seguidas). Veja suas conquistas em Evolução → Conquistas.' },
+  { q: 'Como ativo as notificações do app?', a: 'Quando o app perguntar "Deseja receber notificações?", toque em Permitir. Se não aparecer, acesse as configurações do seu navegador e permita notificações para o site.' },
+  { q: 'Como falo com o assistente de IA?', a: 'Toque no ícone de chat (balão flutuante). Você pode perguntar sobre seu treino, registrar cargas pela conversa ou reportar dores. Para falar direto com o personal, toque em "Falar com personal".' },
+]
+
+function HelpModal({ onClose }: { onClose: () => void }) {
+  const [open, setOpen] = useState<number | null>(null)
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col" onClick={onClose}>
+      <div className="flex-1" />
+      <div
+        className="bg-surface-elevated rounded-t-2xl shadow-lg max-h-[80vh] flex flex-col"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+          <div className="flex items-center gap-2">
+            <HelpCircle size={16} className="text-accent-hover" />
+            <h2 className="font-semibold text-sm">Ajuda</h2>
+          </div>
+          <button onClick={onClose} className="text-text-muted hover:text-text"><X size={18} /></button>
+        </div>
+        <div className="overflow-y-auto flex-1 px-4 py-3 space-y-2">
+          {FAQ_ALUNO.map((item, i) => (
+            <div key={i} className="rounded-xl border border-border bg-surface overflow-hidden">
+              <button
+                onClick={() => setOpen(open === i ? null : i)}
+                className="w-full flex items-start justify-between gap-3 px-3 py-3 text-left hover:bg-white/5 transition-colors"
+              >
+                <span className="text-xs font-medium text-text leading-snug">{item.q}</span>
+                <ChevronDown size={14} className={`shrink-0 mt-0.5 text-text-muted transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`} />
+              </button>
+              {open === i && (
+                <div className="px-3 pb-3">
+                  <p className="text-xs text-text-secondary leading-relaxed">{item.a}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="px-4 py-3 border-t border-border shrink-0">
+          <a
+            href="/ajuda-aluno.md"
+            download="coachpilot-guia-aluno.md"
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-accent/15 hover:bg-accent/25 text-accent-hover text-xs font-medium transition-colors"
+          >
+            <Download size={14} />
+            Baixar guia completo (.md) — para usar no ChatGPT
+          </a>
+          <p className="text-[10px] text-text-muted text-center mt-2">Baixe, abra o ChatGPT e arraste o arquivo junto com sua dúvida.</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 class AlunoErrorBoundary extends React.Component<
   { children: React.ReactNode; onCrash: () => void },
   { hasError: boolean }
@@ -206,6 +273,7 @@ export function AlunoApp() {
   const installPromptRef = useRef<Event & { prompt: () => Promise<void> } | null>(null)
   const [canInstall, setCanInstall] = useState(false)
   const [showPerfilModal, setShowPerfilModal] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
   const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false, staleTime: 0, refetchOnWindowFocus: true, refetchInterval: 30_000 })
 
   useEffect(() => {
@@ -263,24 +331,22 @@ export function AlunoApp() {
       className="min-h-screen max-w-md mx-auto flex flex-col"
       style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
     >
-      <header className="px-4 pt-4 pb-2 shrink-0 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowPerfilModal(true)}
-            className="rounded-full focus:outline-none focus:ring-2 focus:ring-accent"
-            aria-label="Editar meu perfil"
-          >
-            {me.data?.foto_url ? (
-              <img src={me.data.foto_url} alt={me.data.nome ?? 'aluno'} className="w-8 h-8 rounded-full object-cover" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center">
-                <User size={16} className="text-accent-hover" />
-              </div>
-            )}
-          </button>
-          <h1 className="font-display text-lg font-bold text-text">Olá, {me.data?.nome ?? 'aluno'}</h1>
-        </div>
-        <div className="flex items-center gap-1">
+      <header className="px-4 pt-4 pb-2 shrink-0 flex items-center gap-2">
+        <button
+          onClick={() => setShowPerfilModal(true)}
+          className="rounded-full focus:outline-none focus:ring-2 focus:ring-accent shrink-0"
+          aria-label="Editar meu perfil"
+        >
+          {me.data?.foto_url ? (
+            <img src={me.data.foto_url} alt={me.data.nome ?? 'aluno'} className="w-8 h-8 rounded-full object-cover" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center">
+              <User size={16} className="text-accent-hover" />
+            </div>
+          )}
+        </button>
+        <h1 className="font-display text-lg font-bold text-text truncate min-w-0 flex-1">Olá, {me.data?.nome ?? 'aluno'}</h1>
+        <div className="flex items-center gap-1 shrink-0">
           {canInstall && (
             <button
               onClick={async () => {
@@ -294,9 +360,17 @@ export function AlunoApp() {
               <Download size={18} />
             </button>
           )}
+          <button
+            onClick={() => setHelpOpen(true)}
+            className="relative p-1 text-text-muted hover:text-text transition-colors"
+            aria-label="Ajuda"
+          >
+            <HelpCircle size={20} />
+          </button>
           {token && <NotifBell onNavigate={handleNotifNavigate} onOpenChat={() => setChatOpen(true)} />}
         </div>
       </header>
+      {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
       {tab === 'historico' ? (
         <main className="px-4 flex-1"><HistoricoTab /></main>
       ) : tab === 'feed' ? (

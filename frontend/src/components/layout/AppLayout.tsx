@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Brain, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronDown } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Brain, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronDown, HelpCircle } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
@@ -20,9 +20,10 @@ const NAV_ITEMS = [
   { to: '/notificacoes', label: 'Notificações', icon: Bell },
   { to: '/biblioteca', label: 'Biblioteca', icon: BookOpen },
   { to: '/conhecimento', label: 'Base de IA', icon: Brain },
+  { to: '/ajuda', label: 'Ajuda', icon: HelpCircle },
 ]
 
-const TITLE_MAP: Record<string, string> = { '/config': 'Configurações', '/perfil': 'Meu Perfil' }
+const TITLE_MAP: Record<string, string> = { '/config': 'Configurações', '/perfil': 'Meu Perfil', '/ajuda': 'Ajuda' }
 
 function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: () => void }) {
   const { user, signOut, isAdmin } = useAuth()
@@ -217,6 +218,9 @@ export function AppLayout() {
                 {unread}
               </span>
             )}
+          </NavLink>
+          <NavLink to="/ajuda" aria-label="Ajuda" className="p-1.5 rounded-lg text-text-secondary hover:bg-white/5 hover:text-text">
+            <HelpCircle size={20} />
           </NavLink>
         </header>
 
