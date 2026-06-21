@@ -35,7 +35,7 @@ def listar_cobrancas(
     status: Optional[str] = Query(default=None, pattern="^(PENDENTE|PAGA|VENCIDA)$"),
     personal_id: str = Depends(_aluno_do_personal),
 ):
-    items, next_cursor = financeiro_service.listar_cobrancas(
+    items, next_cursor = financeiro_service.listar_cobranças(
         personal_id, aluno_id, limit=limit, cursor=cursor, status=status)
     return {"items": items, "next_cursor": next_cursor}
 
