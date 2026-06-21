@@ -4,7 +4,7 @@ from mangum import Mangum
 
 from app.config import settings
 from app.routers import (admin, agenda, aluno, alunos, anamnese, avaliacoes, biblioteca, conhecimento, config, dashboard,
-                         feed_global, metas, notificacoes, personal, personal_chat, sessoes, templates, treinos, wapi, webhook)
+                         feed_global, metas, notificacoes, personal, personal_chat, push, sessoes, templates, treinos, wapi, webhook)
 
 app = FastAPI(
     title="Personal Trainer",
@@ -40,6 +40,7 @@ app.include_router(personal.router)      # /v1/personal/me (perfil do personal)
 app.include_router(metas.router)          # /v1/alunos/{id}/metas
 app.include_router(anamnese.router)       # /v1/anamnese/... + /v1/public/anamnese
 app.include_router(conhecimento.router)   # /v1/conhecimento (base de conhecimento para IA)
+app.include_router(push.router)           # /v1/aluno/push (Web Push subscriptions)
 
 
 @app.get("/v1/health")

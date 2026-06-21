@@ -1,7 +1,12 @@
 """Posts globais do personal — visíveis para todos os alunos vinculados."""
+import logging
+from concurrent.futures import ThreadPoolExecutor
+
 from app.repositories import dynamo_repo as repo, keys
 from app.services import media_service, pontos_service
 from app.utils import new_id, now_iso
+
+logger = logging.getLogger(__name__)
 
 
 def criar_post_global(personal_id: str, tipo: str, texto: str, midias: list[dict]) -> dict:
@@ -18,7 +23,29 @@ def criar_post_global(personal_id: str, tipo: str, texto: str, midias: list[dict
         "data_hora": ts,
     }
     repo.put_item(keys.pk_personal(personal_id), sk, item)
+    _broadcast_anotif(personal_id, texto[:80])
     return {**item, "post_sk": sk}
+
+
+def _broadcast_anotif(personal_id: str, corpo: str) -> None:
+    """Cria anotif NOVO_POST_FEED para cada aluno do personal em paralelo (push segue
+    automaticamente via anotif_service.criar). ThreadPoolExecutor(10) evita timeout."""
+    from app.services import anotif_service   # import tardio — evita ciclo
+
+    ptrs = repo.query_pk(keys.pk_personal(personal_id), sk_prefix="ALUNO#")
+    if not ptrs:
+        return
+
+    def _one(ptr: dict) -> None:
+        aluno_id = ptr["SK"].split("#", 1)[1]
+        try:
+            anotif_service.criar(aluno_id, "NOVO_POST_FEED",
+                                 "Novo post do seu personal", corpo)
+        except Exception as exc:
+            logger.warning("[feed_global] anotif falhou para aluno %s: %s", aluno_id, exc)
+
+    with ThreadPoolExecutor(max_workers=10) as ex:
+        list(ex.map(_one, ptrs))
 
 
 def _enrich(raw: dict) -> dict:

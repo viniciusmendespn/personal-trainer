@@ -1,14 +1,22 @@
 """Notificações para o aluno — partição AL#{aluno_id} com SK ANOTIF#{ts}#{id}.
 Espelho de notif_service.py, mas no lado do aluno (não do personal)."""
+import logging
 import time
 
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.utils import epoch_ms, new_id, now_iso
 
+logger = logging.getLogger(__name__)
+
 ANOTIF_TTL_S = 30 * 24 * 3600
 
-# Tipos: DOR_RESPONDIDA, DUVIDA_RESPONDIDA, MSG_PERSONAL, CORRECAO_EXERCICIO
+# Tipos: DOR_RESPONDIDA, DUVIDA_RESPONDIDA, MSG_PERSONAL, CORRECAO_EXERCICIO, NOVO_POST_FEED
+
+_URL_MAP: dict[str, str] = {
+    "MSG_PERSONAL":   "/aluno/chat",
+    "NOVO_POST_FEED": "/aluno/feed",
+}
 
 
 def criar(aluno_id: str, tipo: str, titulo: str, mensagem: str,
@@ -22,7 +30,17 @@ def criar(aluno_id: str, tipo: str, titulo: str, mensagem: str,
     }
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_anotif(epoch_ms(), nid), item)
     repo.increment_counter(keys.pk_aluno(aluno_id), keys.SK_STATS_ANOTIF, "nao_lidas", 1)
+    _disparar_push(aluno_id, titulo, mensagem, tipo)
     return nid
+
+
+def _disparar_push(aluno_id: str, titulo: str, mensagem: str, tipo: str) -> None:
+    try:
+        from app.services import push_service   # import tardio — evita ciclo
+        url = _URL_MAP.get(tipo, "/aluno/notificacoes")
+        push_service.send_push(aluno_id, titulo, mensagem, url=url)
+    except Exception as exc:
+        logger.warning("[anotif] push falhou para aluno %s: %s", aluno_id, exc)
 
 
 def listar(aluno_id: str, limit: int = 30,

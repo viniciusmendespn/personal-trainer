@@ -265,6 +265,14 @@ def sk_kb(arquivo_id: str) -> str:
     return f"KB#{arquivo_id}"
 
 
+# ── Push subscriptions do aluno (partição AL#) ──────────────────────────────
+PUSH_PREFIX = "PUSH#"
+
+
+def sk_push(sub_id: str) -> str:
+    return f"PUSH#{sub_id}"
+
+
 # ── GSI1: "registros por exercício no tempo" (ESPEC §4.1) ────────────────────
 def gsi1_registro(aluno_id: str, exercicio_id: str) -> str:
     return f"AL#{aluno_id}#EX#{exercicio_id}"

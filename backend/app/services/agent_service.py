@@ -79,6 +79,9 @@ def log_direct(personal_id: str, aluno_id: str, text: str, ator: Ator, canal: Ca
     ficam apenas no chat, sem encaminhar ao WhatsApp."""
     role = "assistant" if ator == Ator.PERSONAL else "user"
     _write_chat_msg(aluno_id, role, text, ator, canal, direto=True, midia=midia)
+    if ator == Ator.PERSONAL:
+        from app.services import anotif_service   # import tardio — evita ciclo
+        anotif_service.criar(aluno_id, "MSG_PERSONAL", "Mensagem do seu personal", text[:80])
     return True
 
 

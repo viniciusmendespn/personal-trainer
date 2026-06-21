@@ -5,6 +5,7 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import { alunoApi, type ExSessao, type SessaoAtiva, type SessaoHistorico } from '../api/alunoApp'
+import { usePushNotification } from '../hooks/usePushNotification'
 import { SeriesPrescritasCompact } from '../components/exercicios/SeriesPrescritasEditor'
 import { AlunoSessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import { ALUNO_TOKEN_KEY } from '../api/alunoClient'
@@ -92,6 +93,7 @@ const ANOTIF_ICON: Record<string, React.ReactNode> = {
   MSG_PERSONAL: <MessageCircle size={14} className="text-energy" />,
   CORRECAO_EXERCICIO: <Wrench size={14} className="text-accent-hover" />,
   MIDIA_PERSONAL: <Camera size={14} className="text-info" />,
+  NOVO_POST_FEED: <Newspaper size={14} className="text-accent-hover" />,
 }
 
 const DEEP_LINK_TIPOS = ['DOR_RESPONDIDA', 'DUVIDA_RESPONDIDA', 'CORRECAO_EXERCICIO', 'MIDIA_PERSONAL']
@@ -182,6 +184,7 @@ export function AlunoApp() {
   const token = useAlunoToken()
   const [disabled, setDisabled] = useState(false)
   const [sessionConfirmed, setSessionConfirmed] = useState(false)
+  const { isSubscribed, requestAndSubscribe } = usePushNotification()
   const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'feed' | 'personal'>('hoje')
   const [highlightExId, setHighlightExId] = useState<string | undefined>(undefined)
   const [chatOpen, setChatOpen] = useState(false)
@@ -200,6 +203,10 @@ export function AlunoApp() {
   useEffect(() => {
     if (me.isSuccess) setSessionConfirmed(true)
   }, [me.isSuccess])
+
+  useEffect(() => {
+    if (sessionConfirmed && !isSubscribed) requestAndSubscribe()
+  }, [sessionConfirmed]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const handler = (e: Event) => {

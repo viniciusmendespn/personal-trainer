@@ -70,6 +70,19 @@ Parameters:
     Type: String
     Default: "admin@coachpilot.com.br"
     Description: "Email do superadmin — único usuário que pode chamar /v1/admin/* e usar impersonação."
+  VapidPrivateKey:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: "Chave privada VAPID (PEM, newlines escapados como \\n) para Web Push notifications."
+  VapidPublicKey:
+    Type: String
+    Default: ""
+    Description: "Chave pública VAPID (base64url, 65 bytes) — exposta ao frontend para applicationServerKey."
+  VapidSubject:
+    Type: String
+    Default: "mailto:admin@coachpilot.com.br"
+    Description: "Email de contato para o servidor de push (sub do JWT VAPID)."
 
 Conditions:
   CreateFrontendInfra: !Equals [!Ref DeployFrontendInfra, "true"]
@@ -103,6 +116,9 @@ Globals:
         FUSION_API_VERSION: !Ref FusionApiVersion
         ADMIN_SECRET: !Ref AdminSecret
         ADMIN_EMAIL: !Ref AdminEmail
+        VAPID_PRIVATE_KEY: !Ref VapidPrivateKey
+        VAPID_PUBLIC_KEY: !Ref VapidPublicKey
+        VAPID_SUBJECT: !Ref VapidSubject
 
 Resources:
 
