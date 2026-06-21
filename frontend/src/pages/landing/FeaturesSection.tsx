@@ -40,8 +40,8 @@ const FEATURES = [
   },
   {
     icon: <MessageCircle size={28} />,
-    title: 'Assistente via WhatsApp',
-    desc: 'Seus alunos tiram dúvidas de treino e recebem orientações diretamente no WhatsApp, respondidas por IA 24 horas por dia.',
+    title: 'Canal WhatsApp (opcional)',
+    desc: 'Add-on opcional por +R$29,90/mês. Conecte um número de WhatsApp para facilitar a comunicação com seus alunos e, se quiser, ativar o assistente IA via WA.',
     color: '#14b8a6',
   },
   {

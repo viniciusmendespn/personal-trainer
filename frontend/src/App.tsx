@@ -35,6 +35,7 @@ const PersonalProfilePage = lazy(() => import('./pages/PersonalProfilePage').the
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })))
 const CadastroPage = lazy(() => import('./pages/CadastroPage').then((m) => ({ default: m.CadastroPage })))
 const AjudaPage = lazy(() => import('./pages/AjudaPage').then((m) => ({ default: m.AjudaPage })))
+const DivulgadoresPage = lazy(() => import('./pages/landing/DivulgadoresPage').then((m) => ({ default: m.DivulgadoresPage })))
 
 function PageFallback() {
   return (
@@ -73,6 +74,7 @@ const router = createBrowserRouter([
       { path: '/login', element: <LoginPage /> },
       { path: '/signup', element: <SignUpPage /> },
       { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/divulgadores', element: lazyPage(<DivulgadoresPage />) },
       {
         element: (
           <ProtectedRoute>

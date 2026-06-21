@@ -1,18 +1,13 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Users, Smartphone, Sparkles } from 'lucide-react'
+import { ArrowRight, Users, Smartphone, PlusCircle } from 'lucide-react'
 
 const STATS = [
-  { icon: <Users size={16} />, label: '+500 alunos gerenciados' },
-  { icon: <Smartphone size={16} />, label: 'App do aluno incluso' },
-  { icon: <Sparkles size={16} />, label: 'IA integrada' },
+  { icon: <Users size={16} />, label: 'Grátis para até 3 alunos' },
+  { icon: <Smartphone size={16} />, label: 'Gestão Pro por R$39,90/mês' },
+  { icon: <PlusCircle size={16} />, label: 'Add-ons opcionais de IA e WhatsApp' },
 ]
 
 export default function HeroSection() {
-  function scrollToFeatures() {
-    const el = document.querySelector('#features')
-    if (el) window.scrollTo({ top: (el as HTMLElement).getBoundingClientRect().top + window.scrollY - 72, behavior: 'smooth' })
-  }
-
   return (
     <section style={{
       minHeight: '100vh',
@@ -49,21 +44,20 @@ export default function HeroSection() {
               background: 'rgba(20,184,166,0.12)', border: '1px solid rgba(20,184,166,0.3)',
               borderRadius: 20, padding: '6px 14px', marginBottom: 24,
             }}>
-              <span style={{ fontSize: 16 }}>🚀</span>
-              <span style={{ color: '#14b8a6', fontSize: 13, fontWeight: 600 }}>Gestão completa de alunos por R$69,90/mês</span>
+              <span style={{ fontSize: 16 }}>✅</span>
+              <span style={{ color: '#14b8a6', fontSize: 13, fontWeight: 600 }}>Grátis para até 3 alunos · Gestão Pro R$39,90/mês</span>
             </div>
 
             <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 20, letterSpacing: '-1px' }}>
-              Gerencie seus{' '}
+              Organize seus{' '}
               <span style={{ background: 'linear-gradient(135deg, #14b8a6, #10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                alunos e treinos
+                alunos, treinos e evolução
               </span>
-              {' '}de forma profissional
+              {' '}em uma plataforma profissional
             </h1>
 
             <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, marginBottom: 36, maxWidth: 520 }}>
-              Substitua planilhas e anotações soltas por um sistema único: agenda, avaliações físicas, treinos e um app exclusivo para seus alunos.{' '}
-              <strong style={{ color: 'rgba(255,255,255,0.85)' }}>Tudo em um só lugar.</strong>
+              Comece grátis com até 3 alunos. Cadastre treinos, avaliações, agenda e acompanhe a evolução dos seus alunos em um app moderno feito para personal trainers.
             </p>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 48 }}>
@@ -80,10 +74,13 @@ export default function HeroSection() {
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 30px rgba(20,184,166,0.45)' }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 25px rgba(20,184,166,0.35)' }}
               >
-                Começar Grátis Agora <ArrowRight size={18} />
+                Começar grátis agora <ArrowRight size={18} />
               </Link>
               <button
-                onClick={scrollToFeatures}
+                onClick={() => {
+                  const el = document.querySelector('#pricing')
+                  if (el) window.scrollTo({ top: (el as HTMLElement).getBoundingClientRect().top + window.scrollY - 72, behavior: 'smooth' })
+                }}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 8,
                   background: 'transparent', border: '1.5px solid rgba(255,255,255,0.25)',
@@ -94,7 +91,7 @@ export default function HeroSection() {
                 onMouseEnter={e => { e.currentTarget.style.borderColor = '#14b8a6'; e.currentTarget.style.color = '#14b8a6' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)' }}
               >
-                Ver como funciona
+                Ver planos
               </button>
             </div>
 

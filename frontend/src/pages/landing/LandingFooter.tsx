@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom'
 import { AppLogo } from '../../components/AppLogo'
 
+
 const NAV_LINKS = [
   { label: 'Funcionalidades', href: '#features' },
   { label: 'Como funciona', href: '#how' },
+  { label: 'Planos', href: '#pricing' },
   { label: 'Comparativo', href: '#compare' },
-  { label: 'Preços', href: '#pricing' },
-  { label: 'Depoimentos', href: '#testimonials' },
 ]
 
 function scrollTo(href: string) {
@@ -59,6 +59,14 @@ export default function LandingFooter() {
                   {l.label}
                 </button>
               ))}
+              <Link
+                to="/divulgadores"
+                style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
+              >
+                Divulgadores
+              </Link>
             </div>
           </div>
 

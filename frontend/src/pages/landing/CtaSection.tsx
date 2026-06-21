@@ -32,18 +32,18 @@ export default function CtaSection() {
           borderRadius: 20, padding: '6px 16px', marginBottom: 24,
         }}>
           <span style={{ fontSize: 16 }}>💪</span>
-          <span style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>Plano único · R$69,90/mês · Tudo ilimitado</span>
+          <span style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>Grátis até 3 alunos · Gestão Pro R$39,90/mês</span>
         </div>
 
         <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(28px, 5vw, 50px)', fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 18, letterSpacing: '-1px' }}>
-          Pronto para profissionalizar sua{' '}
+          Comece grátis e profissionalize sua{' '}
           <span style={{ background: 'rgba(255,255,255,0.9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            gestão de alunos?
+            gestão de alunos
           </span>
         </h2>
 
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 18, lineHeight: 1.6, marginBottom: 36, maxWidth: 520, margin: '0 auto 36px' }}>
-          Junte-se a personal trainers que já estão organizando treinos, agenda e evolução dos alunos em um só lugar.
+          Cadastre até 3 alunos sem pagar nada. Quando quiser crescer, desbloqueie alunos ilimitados por R$39,90/mês.
         </p>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 14 }}>
@@ -62,26 +62,29 @@ export default function CtaSection() {
           >
             Criar Conta Grátis <ArrowRight size={18} />
           </Link>
-          <Link
-            to="/login"
+          <button
+            onClick={() => {
+              const el = document.querySelector('#pricing')
+              if (el) window.scrollTo({ top: (el as HTMLElement).getBoundingClientRect().top + window.scrollY - 72, behavior: 'smooth' })
+            }}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               background: 'rgba(255,255,255,0.1)',
               backdropFilter: 'blur(10px)',
               border: '1.5px solid rgba(255,255,255,0.3)',
-              color: '#fff', fontWeight: 600, fontSize: 16, textDecoration: 'none',
+              color: '#fff', fontWeight: 600, fontSize: 16, cursor: 'pointer',
               padding: '16px 28px', borderRadius: 12,
               transition: 'background 0.2s, border-color 0.2s',
             }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)' }}
           >
-            Já tenho conta
-          </Link>
+            Ver planos
+          </button>
         </div>
 
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 20 }}>
-          Ativação imediata · Suporte via WhatsApp · Cancele quando quiser
+          Sem fidelidade · Sem cartão obrigatório na entrada · Add-ons opcionais de WhatsApp e IA
         </p>
       </div>
     </section>
