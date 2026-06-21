@@ -41,7 +41,30 @@ export const financeiroApi = {
     api.delete('/v1/config/mercadopago'),
 }
 
+export interface PixResponse {
+  payment_id: string
+  qr_code: string
+  qr_code_base64: string
+  expires_at: string
+}
+
+export interface PixStatusResponse {
+  payment_id: string
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled' | string
+  valor_liquido: number
+  taxa: number
+}
+
 export const alunoFinanceiroApi = {
   listCobranças: () =>
     alunoClient.get<CobrancasResponse>('/v1/aluno/financeiro').then((r) => r.data),
+
+  getMpConfigurado: () =>
+    alunoClient.get<{ configurado: boolean }>('/v1/aluno/financeiro/mp/configurado').then((r) => r.data),
+
+  criarPix: (cobrancaId: string) =>
+    alunoClient.post<PixResponse>(`/v1/aluno/financeiro/${cobrancaId}/pix`).then((r) => r.data),
+
+  getPixStatus: (paymentId: string) =>
+    alunoClient.get<PixStatusResponse>(`/v1/aluno/financeiro/pix/${paymentId}/status`).then((r) => r.data),
 }

@@ -22,6 +22,7 @@ app.add_middleware(
 
 app.include_router(admin.router)      # /v1/admin/... (superadmin — impersonação)
 app.include_router(webhook.router)   # /v1/public/wapi/... (sem auth)
+app.include_router(webhook.mp_router)  # /v1/public/mp/... (MP webhook — sem auth)
 app.include_router(wapi.router)      # /v1/wapi/... (JWT do personal)
 app.include_router(config.router)    # /v1/config/...
 app.include_router(alunos.router)    # /v1/alunos

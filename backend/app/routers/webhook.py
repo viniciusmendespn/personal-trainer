@@ -250,3 +250,24 @@ def _notificar_msg_direta(personal_id: str, aluno_id: str, nome: str | None, tex
         f"Mensagem de {nome or 'aluno'}",
         preview, aluno_id=aluno_id,
     )
+
+
+# ── Mercado Pago webhook ───────────────────────────────────────────────────────
+
+mp_router = APIRouter(prefix="/v1/public/mp", tags=["mp-webhook"])
+
+
+@mp_router.post("/webhook")
+async def mp_webhook(request: Request):
+    """Recebe notificações do Mercado Pago. Sempre retorna 200 (spec MP).
+    400 apenas se o body não for JSON parseável."""
+    from app.services import mp_service
+    try:
+        body = await request.json()
+    except Exception:
+        return {"ok": 0}   # body inválido — retorna 200 mesmo assim (MP exige)
+    try:
+        mp_service.processar_webhook(body)
+    except Exception as exc:
+        logger.exception("MP webhook erro interno: %s", exc)
+    return {"ok": 1}

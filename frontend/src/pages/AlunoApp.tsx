@@ -21,6 +21,8 @@ import { PostComposer } from '../components/exercicio/PostComposer'
 import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSelect, SocialLinks, useToast, useConfirm } from '../components/ui'
 import { AlunoPerfilModal } from '../components/aluno/AlunoPerfilModal'
 import { alunoFinanceiroApi } from '../api/financeiro'
+import { PixModal } from '../components/financeiro/PixModal'
+import type { Cobranca } from '../types'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -564,10 +566,17 @@ function MensalidadeCard() {
     queryFn: alunoFinanceiroApi.listCobranças,
     staleTime: 60_000,
   })
+  const { data: mpData } = useQuery({
+    queryKey: ['aluno-mp-configurado'],
+    queryFn: alunoFinanceiroApi.getMpConfigurado,
+    staleTime: 5 * 60_000,
+  })
+  const [pixCobranca, setPixCobranca] = useState<Cobranca | null>(null)
 
   const cobranças = data?.items ?? []
   const pendentes = cobranças.filter((c) => c.status === 'PENDENTE' || c.status === 'VENCIDA')
   const ultima = cobranças[0]
+  const mpConfigurado = mpData?.configurado ?? false
 
   if (isLoading || !ultima) return null
 
@@ -586,33 +595,49 @@ function MensalidadeCard() {
   }
 
   return (
-    <Card className="space-y-2">
-      <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide">Mensalidade</p>
-      {pendentes.length > 0 && (
-        <div className="rounded-xl bg-warning/10 px-3 py-2 text-sm">
-          <p className={`font-semibold ${pendentes[0].status === 'VENCIDA' ? 'text-danger' : 'text-warning'}`}>
-            {pendentes[0].status === 'VENCIDA' ? 'Mensalidade vencida' : 'Pagamento pendente'}
-          </p>
-          <p className="text-xs text-text-secondary mt-0.5">
-            {fmtValor(pendentes[0].valor)} · vence em {fmtData(pendentes[0].vencimento)}
-          </p>
-          <p className="text-xs text-text-muted mt-1">Fale com seu personal para mais informações.</p>
-        </div>
-      )}
-      <div className="divide-y divide-border">
-        {cobranças.slice(0, 5).map((c) => (
-          <div key={c.cobranca_id} className="flex items-center justify-between py-2">
+    <>
+      <Card className="space-y-2">
+        <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide">Mensalidade</p>
+        {pendentes.length > 0 && (
+          <div className="rounded-xl bg-warning/10 px-3 py-2 text-sm space-y-2">
             <div>
-              <p className="text-sm text-text">{fmtValor(c.valor)}</p>
-              <p className="text-xs text-text-muted">Vence: {fmtData(c.vencimento)}</p>
+              <p className={`font-semibold ${pendentes[0].status === 'VENCIDA' ? 'text-danger' : 'text-warning'}`}>
+                {pendentes[0].status === 'VENCIDA' ? 'Mensalidade vencida' : 'Pagamento pendente'}
+              </p>
+              <p className="text-xs text-text-secondary mt-0.5">
+                {fmtValor(pendentes[0].valor)} · vence em {fmtData(pendentes[0].vencimento)}
+              </p>
             </div>
-            <span className={`text-xs font-medium ${STATUS_STYLE[c.status] ?? 'text-text-muted'}`}>
-              {c.status === 'PAGA' ? 'Paga' : c.status === 'VENCIDA' ? 'Vencida' : 'Pendente'}
-            </span>
+            {mpConfigurado ? (
+              <button
+                onClick={() => setPixCobranca(pendentes[0])}
+                className="w-full text-center text-xs font-semibold text-accent bg-accent/10 hover:bg-accent/20 rounded-lg py-1.5 transition-colors"
+              >
+                Pagar via Pix
+              </button>
+            ) : (
+              <p className="text-xs text-text-muted">Fale com seu personal para mais informações.</p>
+            )}
           </div>
-        ))}
-      </div>
-    </Card>
+        )}
+        <div className="divide-y divide-border">
+          {cobranças.slice(0, 5).map((c) => (
+            <div key={c.cobranca_id} className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-sm text-text">{fmtValor(c.valor)}</p>
+                <p className="text-xs text-text-muted">Vence: {fmtData(c.vencimento)}</p>
+              </div>
+              <span className={`text-xs font-medium ${STATUS_STYLE[c.status] ?? 'text-text-muted'}`}>
+                {c.status === 'PAGA' ? 'Paga' : c.status === 'VENCIDA' ? 'Vencida' : 'Pendente'}
+              </span>
+            </div>
+          ))}
+        </div>
+      </Card>
+      {pixCobranca && (
+        <PixModal cobranca={pixCobranca} onClose={() => setPixCobranca(null)} />
+      )}
+    </>
   )
 }
 

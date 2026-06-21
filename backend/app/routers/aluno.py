@@ -547,3 +547,47 @@ def listar_cobranças_aluno(ctx: dict = Depends(get_current_aluno)):
     items, _ = financeiro_service.listar_cobranças(
         ctx["personal_id"], ctx["aluno_id"], limit=100)
     return {"items": items}
+
+
+@router.get("/financeiro/mp/configurado")
+def mp_configurado_aluno(ctx: dict = Depends(get_current_aluno)):
+    """Informa se o personal tem Mercado Pago configurado (sem expor o token)."""
+    from app.services import mp_service
+    return {"configurado": mp_service.is_configured(ctx["personal_id"])}
+
+
+@router.post("/financeiro/{cobranca_id}/pix", status_code=201)
+def criar_pix_aluno(cobranca_id: str, ctx: dict = Depends(get_current_aluno)):
+    """Gera QR Code PIX para a cobrança. Retorna {payment_id, qr_code, qr_code_base64, expires_at}."""
+    from app.services import mp_service
+    from app.repositories import keys as k
+
+    personal_id = ctx["personal_id"]
+    aluno_id = ctx["aluno_id"]
+
+    items, _ = financeiro_service.listar_cobranças(personal_id, aluno_id, limit=100)
+    cobranca = next((c for c in items if c["cobranca_id"] == cobranca_id), None)
+    if not cobranca:
+        raise HTTPException(404, "Cobrança não encontrada.")
+    if cobranca["status"] not in ("PENDENTE", "VENCIDA"):
+        raise HTTPException(400, "Apenas cobranças pendentes ou vencidas aceitam PIX.")
+
+    aluno = repo.get_item(k.pk_aluno(aluno_id), k.SK_PROFILE) or {}
+    aluno["aluno_id"] = aluno_id
+
+    try:
+        result = mp_service.criar_pix(personal_id, aluno, cobranca)
+    except ValueError as exc:
+        raise HTTPException(503, str(exc))
+    return result
+
+
+@router.get("/financeiro/pix/{payment_id}/status")
+def pix_status_aluno(payment_id: str, ctx: dict = Depends(get_current_aluno)):
+    """Polling de status do pagamento PIX. Retorna {payment_id, status, valor_liquido, taxa}."""
+    from app.services import mp_service
+
+    try:
+        return mp_service.get_payment_status(ctx["personal_id"], payment_id)
+    except ValueError as exc:
+        raise HTTPException(503, str(exc))
