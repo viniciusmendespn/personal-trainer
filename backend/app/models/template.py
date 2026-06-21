@@ -16,7 +16,7 @@ class ExercicioTemplate(BaseModel):
     intervalo_s: Optional[int] = None
     video_url: Optional[str] = None
     observacoes: Optional[str] = None
-    links_uteis: list[str] = []
+    links_uteis_excluidos: list[str] = []
 
 
 class TreinoTemplateCreate(BaseModel):

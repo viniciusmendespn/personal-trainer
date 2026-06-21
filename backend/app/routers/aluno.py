@@ -150,15 +150,20 @@ def get_sessao(ctx: dict = Depends(get_current_aluno)):
 
 
 def _enrich_sessao_recursos(sessao: dict, personal_id: str) -> None:
-    """Adiciona campo `recursos` em cada exercício a partir do campo links_uteis do próprio exercício.
-    A biblioteca atua como template na criação (frontend auto-popula), não como fallback ao vivo.
+    """Adiciona campo `recursos` em cada exercício.
+    Fonte = biblioteca ao vivo (por nome); links_uteis_excluidos do exercício remove itens específicos.
     """
     exs = sessao.get("exercicios") or []
     if not exs:
         return
+    lib = repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.EXLIB_PREFIX)
+    nome_to_links: dict[str, list[str]] = {
+        item["nome"].strip().lower(): item.get("links_uteis") or []
+        for item in lib if item.get("links_uteis")
+    }
     all_sks: set[str] = set()
     for ex in exs:
-        for sk in (ex.get("links_uteis") or []):
+        for sk in nome_to_links.get((ex.get("nome") or "").strip().lower(), []):
             all_sks.add(sk)
     if not all_sks:
         return
@@ -174,8 +179,11 @@ def _enrich_sessao_recursos(sessao: dict, personal_id: str) -> None:
             p["post_sk"] = sk
             posts_by_sk[sk] = p
     for ex in exs:
-        sks = ex.get("links_uteis") or []
-        ex["recursos"] = [posts_by_sk[sk] for sk in sks if sk in posts_by_sk]
+        nome_lower = (ex.get("nome") or "").strip().lower()
+        lib_sks = set(nome_to_links.get(nome_lower, []))
+        excluded = set(ex.get("links_uteis_excluidos") or [])
+        effective = lib_sks - excluded
+        ex["recursos"] = [posts_by_sk[sk] for sk in effective if sk in posts_by_sk]
 
 
 @router.get("/sessao/exercicios")

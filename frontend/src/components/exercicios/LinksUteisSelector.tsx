@@ -1,76 +1,75 @@
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link2, X as XIcon } from 'lucide-react'
+import { BookOpen, EyeOff } from 'lucide-react'
 import { feedGlobalApi, type PostGlobalItem } from '../../api/feedGlobal'
-import { Input } from '../ui'
+import type { ExLib } from '../../types'
 
 interface Props {
-  value: string[]
+  exercicioNome: string
+  biblioteca: ExLib[]
+  value: string[]       // post_sks excluídos da exibição
   onChange: (v: string[]) => void
 }
 
-export function LinksUteisSelector({ value, onChange }: Props) {
+export function LinksUteisSelector({ exercicioNome, biblioteca, value, onChange }: Props) {
   const { data: recursos } = useQuery({
     queryKey: ['feed-recursos'],
     queryFn: feedGlobalApi.recursos,
   })
-  const [search, setSearch] = useState('')
 
-  if (!recursos?.length) return null
-
-  const selecionados: PostGlobalItem[] = recursos.filter((r) => value.includes(r.post_sk))
-  const disponiveis: PostGlobalItem[] = recursos.filter(
-    (r) =>
-      !value.includes(r.post_sk) &&
-      (search.trim() === '' || r.texto.toLowerCase().includes(search.trim().toLowerCase())),
+  const libEntry = biblioteca.find(
+    (b) => b.nome.toLowerCase() === exercicioNome.trim().toLowerCase(),
   )
+  const libLinks: string[] = libEntry?.links_uteis ?? []
+
+  if (!libLinks.length) return null
+
+  const postsMap = new Map<string, PostGlobalItem>(
+    (recursos ?? []).map((r) => [r.post_sk, r]),
+  )
+
+  const libPosts = libLinks.map((sk) => postsMap.get(sk)).filter(Boolean) as PostGlobalItem[]
+  if (!libPosts.length) return null
+
+  function toggle(sk: string) {
+    onChange(
+      value.includes(sk) ? value.filter((s) => s !== sk) : [...value, sk],
+    )
+  }
 
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-text-secondary flex items-center gap-1">
-        <Link2 size={14} /> Links Úteis
+        <BookOpen size={14} /> Recursos da biblioteca
       </p>
-      {selecionados.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {selecionados.map((r) => (
-            <span
+      <div className="space-y-1">
+        {libPosts.map((r) => {
+          const excluido = value.includes(r.post_sk)
+          return (
+            <label
               key={r.post_sk}
-              className="inline-flex items-center gap-1 bg-accent/10 text-accent text-xs px-2 py-1 rounded-full"
+              className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                excluido ? 'opacity-40' : 'hover:bg-surface-elevated'
+              }`}
             >
-              {r.texto.slice(0, 40)}
-              {r.texto.length > 40 ? '…' : ''}
-              <button
-                type="button"
-                onClick={() => onChange(value.filter((s) => s !== r.post_sk))}
-                className="hover:text-danger"
-              >
-                <XIcon size={10} />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-      <Input
-        placeholder="Buscar recurso educacional…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="text-xs"
-      />
-      {disponiveis.length > 0 && (
-        <div className="max-h-40 overflow-y-auto space-y-1 border border-border rounded-xl p-2">
-          {disponiveis.map((r) => (
-            <button
-              key={r.post_sk}
-              type="button"
-              onClick={() => onChange([...value, r.post_sk])}
-              className="w-full text-left text-xs px-2 py-1.5 rounded-lg hover:bg-surface-elevated transition-colors flex items-center gap-2"
-            >
-              <Link2 size={10} className="shrink-0 text-accent" />
-              {r.texto.slice(0, 60)}
-              {r.texto.length > 60 ? '…' : ''}
-            </button>
-          ))}
-        </div>
+              <input
+                type="checkbox"
+                checked={!excluido}
+                onChange={() => toggle(r.post_sk)}
+                className="accent-accent shrink-0"
+              />
+              <span className="text-xs flex-1 truncate">
+                {r.texto.slice(0, 60)}
+                {r.texto.length > 60 ? '…' : ''}
+              </span>
+              {excluido && <EyeOff size={12} className="shrink-0 text-text-muted" />}
+            </label>
+          )
+        })}
+      </div>
+      {value.length > 0 && (
+        <p className="text-xs text-text-muted">
+          {value.length} recurso{value.length > 1 ? 's' : ''} oculto{value.length > 1 ? 's' : ''} para este aluno
+        </p>
       )}
     </div>
   )

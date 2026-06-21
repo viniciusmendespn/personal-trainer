@@ -3,7 +3,7 @@ import { Plus, Trash2, Video, Pencil, BookOpen, Search, Upload } from 'lucide-re
 import { useBiblioteca, useCreateExLib, useUpdateExLib, useDeleteExLib } from '../hooks/useDominio'
 import { Button, Card, Input, Textarea, Spinner, EmptyState, Modal, useConfirm } from '../components/ui'
 import { ImportarExerciciosModal } from '../components/ImportarExerciciosModal'
-import { LinksUteisSelector } from '../components/exercicios/LinksUteisSelector'
+import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
 import type { ExLibCreate } from '../api/biblioteca'
 import type { ExLib } from '../types'
 
@@ -104,7 +104,7 @@ function ExLibForm({
       <Input label="Vídeo (URL)" value={video} onChange={(e) => setVideo(e.target.value)} />
       <Textarea label="Descrição" rows={2} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
       <Textarea label="Recomendações (técnica, cuidados, dicas…)" rows={3} value={rec} onChange={(e) => setRec(e.target.value)} />
-      <LinksUteisSelector value={linksUteis} onChange={setLinksUteis} />
+      <LinksUteisIncluirSelector value={linksUteis} onChange={setLinksUteis} />
       <Button type="submit" className="w-full" disabled={submitting || !nome}>
         {submitting ? 'Salvando…' : submitLabel}
       </Button>

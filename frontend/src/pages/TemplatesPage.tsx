@@ -4,7 +4,6 @@ import { useAlunos } from '../hooks/useAlunos'
 import { useTemplates, useCreateTemplate, useDeleteTemplate, useUpdateTemplate, useAplicarTemplate } from '../hooks/useTemplates'
 import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm } from '../components/ui'
 import { SeriesPrescritasEditor, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
-import { LinksUteisSelector } from '../components/exercicios/LinksUteisSelector'
 import type { ExercicioTemplate, TreinoTemplate, SeriePrescrita } from '../types'
 
 
@@ -220,10 +219,6 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                   <Textarea label="Observações" rows={2} value={ex.observacoes ?? ''} onChange={(e) => updateEx(i, { observacoes: e.target.value || undefined })} />
                 </div>
               </div>
-              <LinksUteisSelector
-                value={ex.links_uteis ?? []}
-                onChange={(v) => updateEx(i, { links_uteis: v.length ? v : undefined })}
-              />
             </div>
           </Card>
         ))}

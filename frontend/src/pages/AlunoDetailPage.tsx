@@ -766,13 +766,12 @@ function ExercicioForm({
   )
   const [vid, setVid] = useState(initial?.video_url ?? '')
   const [obs, setObs] = useState(initial?.observacoes ?? '')
-  const [linksUteis, setLinksUteis] = useState<string[]>(initial?.links_uteis ?? [])
+  const [linksUteisExcluidos, setLinksUteisExcluidos] = useState<string[]>(initial?.links_uteis_excluidos ?? [])
 
   function onNome(v: string) {
     setNome(v)
     const lib = biblioteca?.find((b) => b.nome.toLowerCase() === v.toLowerCase())
     if (lib?.video_url) setVid(lib.video_url)
-    if (lib?.links_uteis?.length) setLinksUteis(lib.links_uteis)
   }
 
   async function submit(e: React.FormEvent) {
@@ -784,7 +783,7 @@ function ExercicioForm({
       series_prescritas: validas.length ? validas : undefined,
       video_url: vid || undefined,
       observacoes: obs || undefined,
-      links_uteis: linksUteis.length ? linksUteis : undefined,
+      links_uteis_excluidos: linksUteisExcluidos.length ? linksUteisExcluidos : undefined,
     })
   }
 
@@ -812,7 +811,7 @@ function ExercicioForm({
           />
         </div>
       </div>
-      <LinksUteisSelector value={linksUteis} onChange={setLinksUteis} />
+      <LinksUteisSelector exercicioNome={nome} biblioteca={biblioteca ?? []} value={linksUteisExcluidos} onChange={setLinksUteisExcluidos} />
       <Button type="submit" className="w-full" disabled={submitting || !nome}>
         {submitting ? 'Salvando…' : submitLabel}
       </Button>
