@@ -32,7 +32,7 @@ export function RegistrarPagamentoModal({ cobranca, onConfirm, onClose }: Props)
   const valor = cobranca.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
   return (
-    <Modal title="Registrar pagamento" onClose={onClose}>
+    <Modal open title="Registrar pagamento" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <p className="text-sm text-text-secondary">
           Cobrança de <span className="font-semibold text-text">{valor}</span> — vencimento em{' '}

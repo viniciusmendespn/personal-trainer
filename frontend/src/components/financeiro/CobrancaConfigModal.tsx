@@ -36,7 +36,7 @@ export function CobrancaConfigModal({ current, onConfirm, onClose }: Props) {
   }
 
   return (
-    <Modal title={current ? 'Editar faturamento recorrente' : 'Configurar faturamento recorrente'} onClose={onClose}>
+    <Modal open title={current ? 'Editar faturamento recorrente' : 'Configurar faturamento recorrente'} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <p className="text-sm text-text-secondary">
           Define as cobranças automáticas para este aluno. Cobranças já existentes não são alteradas.

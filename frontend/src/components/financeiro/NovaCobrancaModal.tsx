@@ -32,7 +32,7 @@ export function NovaCobrancaModal({ onConfirm, onClose }: Props) {
   }
 
   return (
-    <Modal title="Nova cobrança" onClose={onClose}>
+    <Modal open title="Nova cobrança" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Valor (R$)"

@@ -100,7 +100,7 @@ export function FinanceiroTab({ alunoId }: { alunoId: string }) {
           <div>
             <p className="text-xs text-text-secondary mb-1">Faturamento recorrente</p>
             {loadingConfig ? (
-              <Spinner size="sm" />
+              <Spinner className="w-4 h-4" />
             ) : config && (config as any).valor ? (
               <div className="space-y-0.5">
                 <p className="font-semibold text-text">
