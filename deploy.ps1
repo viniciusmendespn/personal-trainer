@@ -27,9 +27,11 @@ function Deploy-Backend {
 
     # Secrets NoEcho: lidos do .env.local e passados como override pontual
     # (não ficam no samconfig.toml para não sobrescrever acidentalmente em produção)
-    $AdminSecret = Get-EnvLocal "ADMIN_SECRET"
+    $AdminSecret    = Get-EnvLocal "ADMIN_SECRET"
+    $VapidPrivate   = Get-EnvLocal "VAPID_PRIVATE_KEY"
     $ExtraOverrides = ""
-    if ($AdminSecret) { $ExtraOverrides = " AdminSecret=$AdminSecret" }
+    if ($AdminSecret)  { $ExtraOverrides += " AdminSecret=$AdminSecret" }
+    if ($VapidPrivate) { $ExtraOverrides += " VapidPrivateKey=$VapidPrivate" }
 
     Set-Location backend
     sam build
