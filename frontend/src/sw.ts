@@ -4,6 +4,11 @@ declare const self: ServiceWorkerGlobalScope & typeof globalThis
 
 precacheAndRoute(self.__WB_MANIFEST)
 
+self.addEventListener('install', () => self.skipWaiting())
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim())
+})
+
 self.addEventListener('push', (event) => {
   const data = event.data?.json() ?? {}
   const title: string = data.title ?? 'CoachPilot'

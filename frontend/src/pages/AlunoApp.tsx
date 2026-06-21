@@ -59,7 +59,10 @@ function useAlunoToken() {
   return token
 }
 
-function NotifBell({ onNavigate }: { onNavigate: (tab: 'evolucao' | 'historico', exId?: string) => void }) {
+function NotifBell({ onNavigate, onOpenChat }: {
+  onNavigate: (tab: 'evolucao' | 'historico' | 'feed', exId?: string) => void
+  onOpenChat: () => void
+}) {
   const count = useQuery({
     queryKey: ['aluno-notif-count'],
     queryFn: alunoApi.notificacoesCount,
@@ -82,7 +85,7 @@ function NotifBell({ onNavigate }: { onNavigate: (tab: 'evolucao' | 'historico',
           </span>
         )}
       </button>
-      {open && <NotifDrawer onClose={() => setOpen(false)} onNavigate={onNavigate} />}
+      {open && <NotifDrawer onClose={() => setOpen(false)} onNavigate={onNavigate} onOpenChat={onOpenChat} />}
     </>
   )
 }
@@ -97,8 +100,13 @@ const ANOTIF_ICON: Record<string, React.ReactNode> = {
 }
 
 const DEEP_LINK_TIPOS = ['DOR_RESPONDIDA', 'DUVIDA_RESPONDIDA', 'CORRECAO_EXERCICIO', 'MIDIA_PERSONAL']
+const TAPPABLE_TIPOS = [...DEEP_LINK_TIPOS, 'MSG_PERSONAL', 'NOVO_POST_FEED']
 
-function NotifDrawer({ onClose, onNavigate }: { onClose: () => void; onNavigate: (tab: 'evolucao' | 'historico', exId?: string) => void }) {
+function NotifDrawer({ onClose, onNavigate, onOpenChat }: {
+  onClose: () => void
+  onNavigate: (tab: 'evolucao' | 'historico' | 'feed', exId?: string) => void
+  onOpenChat: () => void
+}) {
   const qc = useQueryClient()
   const notifs = useQuery({
     queryKey: ['aluno-notifs'],
@@ -112,7 +120,13 @@ function NotifDrawer({ onClose, onNavigate }: { onClose: () => void; onNavigate:
       qc.invalidateQueries({ queryKey: ['aluno-notifs'] })
       qc.invalidateQueries({ queryKey: ['aluno-notif-count'] })
     }
-    if (DEEP_LINK_TIPOS.includes(n.tipo) && n.exercicio_id) {
+    if (n.tipo === 'MSG_PERSONAL') {
+      onOpenChat()
+      onClose()
+    } else if (n.tipo === 'NOVO_POST_FEED') {
+      onNavigate('feed')
+      onClose()
+    } else if (DEEP_LINK_TIPOS.includes(n.tipo) && n.exercicio_id) {
       onNavigate('evolucao', n.exercicio_id)
       onClose()
     }
@@ -146,7 +160,7 @@ function NotifDrawer({ onClose, onNavigate }: { onClose: () => void; onNavigate:
                 <p className="text-sm font-medium text-text leading-tight">{n.titulo}</p>
                 <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{n.mensagem}</p>
                 <p className="text-[10px] text-text-muted mt-1">{new Date(n.data_hora).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
-                {DEEP_LINK_TIPOS.includes(n.tipo) && n.exercicio_id && (
+                {TAPPABLE_TIPOS.includes(n.tipo) && (
                   <p className="text-[10px] text-accent-hover mt-0.5">Toque para ver</p>
                 )}
               </div>
@@ -218,7 +232,7 @@ export function AlunoApp() {
     return () => window.removeEventListener('beforeinstallprompt', handler)
   }, [])
 
-  function handleNotifNavigate(dest: 'evolucao' | 'historico', exId?: string) {
+  function handleNotifNavigate(dest: 'evolucao' | 'historico' | 'feed', exId?: string) {
     setTab(dest)
     if (exId) setHighlightExId(exId)
   }
@@ -280,7 +294,7 @@ export function AlunoApp() {
               <Download size={18} />
             </button>
           )}
-          {token && <NotifBell onNavigate={handleNotifNavigate} />}
+          {token && <NotifBell onNavigate={handleNotifNavigate} onOpenChat={() => setChatOpen(true)} />}
         </div>
       </header>
       {tab === 'historico' ? (
