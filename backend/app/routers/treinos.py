@@ -43,6 +43,14 @@ def _guard(personal_id: str, aluno_id: str) -> None:
     authz.authorize_aluno(personal_id, aluno_id)
 
 
+def _touch_aluno_pointer(personal_id: str, aluno_id: str) -> None:
+    """Atualiza só o updated_at do ponteiro (PT#{personal}/ALUNO#{aluno}) — a tela de
+    Alunos lê o ponteiro pra mostrar 'última atualização' sem precisar varrer treinos."""
+    repo.update_item_if_exists(
+        keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), {"updated_at": now_iso()}
+    )
+
+
 # ── Treinos ──────────────────────────────────────────────────────────────────
 @router.get("")
 def list_treinos(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
@@ -61,6 +69,7 @@ def create_treino(aluno_id: str, body: TreinoCreate, personal_id: str = Depends(
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id), treino.model_dump())
     if body.data_fim:
         _sync_due(personal_id, aluno_id, treino_id, body.nome, body.data_fim)
+    _touch_aluno_pointer(personal_id, aluno_id)
     return treino
 
 
@@ -85,6 +94,7 @@ def copiar_treino(aluno_id: str, body: CopiarBody, personal_id: str = Depends(ge
         ne.update({"exercicio_id": new_eid, "treino_id": new_tid, "aluno_id": aluno_id})
         puts.append({"PK": dest_pk, "SK": keys.sk_exercicio(new_tid, new_eid), **ne})
     repo.batch_write(puts=puts)
+    _touch_aluno_pointer(personal_id, aluno_id)
     return {"treino_id": new_tid, "exercicios": len(exs)}
 
 
@@ -97,6 +107,7 @@ def update_treino(aluno_id: str, treino_id: str, body: TreinoCreate, personal_id
     fields = {**body.model_dump(), "updated_at": now_iso()}
     updated = repo.update_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id), fields, return_values=True)
     _sync_due(personal_id, aluno_id, treino_id, body.nome, body.data_fim, old.get("data_fim"))
+    _touch_aluno_pointer(personal_id, aluno_id)
     return repo.clean(updated)
 
 
@@ -111,6 +122,7 @@ def delete_treino(aluno_id: str, treino_id: str, personal_id: str = Depends(get_
     if treino and treino.get("data_fim"):
         deletes.append((keys.pk_sched(treino["data_fim"]), keys.sk_due(treino_id)))
     repo.batch_write(deletes=deletes)
+    _touch_aluno_pointer(personal_id, aluno_id)
 
 
 # ── Exercícios (do treino) ───────────────────────────────────────────────────
@@ -129,6 +141,7 @@ def create_exercicio(aluno_id: str, treino_id: str, body: ExercicioCreate,
     exercicio_id = new_id()
     ex = Exercicio(exercicio_id=exercicio_id, treino_id=treino_id, aluno_id=aluno_id, **body.model_dump())
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_exercicio(treino_id, exercicio_id), ex.model_dump())
+    _touch_aluno_pointer(personal_id, aluno_id)
     return ex
 
 
@@ -141,6 +154,7 @@ def update_exercicio(aluno_id: str, treino_id: str, exercicio_id: str, body: Exe
     )
     if updated is None:
         raise HTTPException(404, "Exercício não encontrado")
+    _touch_aluno_pointer(personal_id, aluno_id)
     return repo.clean(updated)
 
 
@@ -149,3 +163,4 @@ def delete_exercicio(aluno_id: str, treino_id: str, exercicio_id: str,
                      personal_id: str = Depends(get_current_personal_id)):
     _guard(personal_id, aluno_id)
     repo.delete_item(keys.pk_aluno(aluno_id), keys.sk_exercicio(treino_id, exercicio_id))
+    _touch_aluno_pointer(personal_id, aluno_id)

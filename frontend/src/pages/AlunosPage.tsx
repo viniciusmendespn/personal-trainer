@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
-import { Plus, ChevronRight, Search, Users, Bot, Settings, Copy } from 'lucide-react'
+import { Plus, ChevronRight, Search, Users, Bot, Settings, Copy, Clock } from 'lucide-react'
 import { useAlunosPaginated, useCreateAluno, useUpdateAluno } from '../hooks/useAlunos'
 import { usePlanoStatus } from '../hooks/usePlano'
 import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState, useToast } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { anamneseApi } from '../api/anamnese'
+import { tempoRelativo } from '../utils/datetime'
 import type { AlunoExistenteConflict, PlanoLimitConflict } from '../types'
 
 export function AlunosPage() {
@@ -183,14 +184,17 @@ export function AlunosPage() {
                 <Card variant="elevated" className="flex items-center gap-3 hover:border-accent/50 transition-colors h-full">
                   <Avatar name={a.nome} imageUrl={a.foto_url} />
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{a.nome}</p>
-                    <p className="text-xs text-text-muted truncate">{a.telefone}</p>
-                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                      <Badge tone={a.status === 'ATIVO' ? 'success' : 'neutral'}>{a.status}</Badge>
-                      <Badge tone={a.agente_habilitado ? 'success' : 'neutral'} className="flex items-center gap-0.5">
-                        <Bot size={10} />{a.agente_habilitado ? 'Agente ativo' : 'Agente inativo'}
-                      </Badge>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-medium truncate">{a.nome}</p>
+                      {a.status === 'INATIVO' && <Badge tone="neutral">Inativo</Badge>}
+                      {a.agente_habilitado && (
+                        <Bot size={12} className="text-success shrink-0" aria-label="Agente ativo" />
+                      )}
                     </div>
+                    <p className="text-xs text-text-muted truncate">{a.telefone}</p>
+                    <p className="flex items-center gap-1 text-[11px] text-text-muted mt-0.5">
+                      <Clock size={10} className="shrink-0" /> Atualizado {tempoRelativo(a.updated_at)}
+                    </p>
                   </div>
                   <ChevronRight size={18} className="text-text-muted shrink-0" />
                 </Card>

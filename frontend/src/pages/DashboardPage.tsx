@@ -11,6 +11,7 @@ import { useAlunos } from '../hooks/useAlunos'
 import { useTemplates } from '../hooks/useTemplates'
 import { wapiApi } from '../api/wapi'
 import { Card, StatCard, SkeletonCard, EmptyState, Avatar, Badge } from '../components/ui'
+import { tempoRelativo } from '../utils/datetime'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -37,16 +38,6 @@ function fmtDia(iso: string) {
   return `${d}`
 }
 
-function tempoRelativo(iso: string) {
-  const diffMs = Date.now() - new Date(iso).getTime()
-  const min = Math.floor(diffMs / 60000)
-  if (min < 1) return 'agora'
-  if (min < 60) return `há ${min} min`
-  const h = Math.floor(min / 60)
-  if (h < 24) return `há ${h}h`
-  const d = Math.floor(h / 24)
-  return d === 1 ? 'ontem' : `há ${d}d`
-}
 
 export function DashboardPage() {
   const { data, isLoading } = useDashboard()
