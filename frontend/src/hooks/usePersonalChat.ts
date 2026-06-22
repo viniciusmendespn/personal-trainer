@@ -2,6 +2,7 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import { personalChatApi, type ChatPage } from '../api/personalChat'
 import { treinosApi } from '../api/treinos'
 import type { ChatMensagem } from '../types'
+import { prepareMediaForUpload } from '../utils/media'
 
 export function usePersonalChat(alunoId: string | null) {
   const query = useInfiniteQuery({
@@ -63,9 +64,10 @@ export function useEnviarCorrecao(alunoId: string | null) {
     mutationFn: async ({
       file, exercicioId, exercicioNome, texto,
     }: { file: File; exercicioId: string; exercicioNome?: string; texto?: string }) => {
-      const tipo = file.type.startsWith('video') ? 'video_correcao' : 'foto_correcao'
-      const { upload_url, s3_key } = await treinosApi.uploadUrlMidia(alunoId!, file.name, file.type)
-      await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
+      const prepared = await prepareMediaForUpload(file)
+      const tipo = prepared.type.startsWith('video') ? 'video_correcao' : 'foto_correcao'
+      const { upload_url, s3_key } = await treinosApi.uploadUrlMidia(alunoId!, prepared.name, prepared.type)
+      await fetch(upload_url, { method: 'PUT', body: prepared, headers: { 'Content-Type': prepared.type } })
       return treinosApi.enviarCorrecao(alunoId!, {
         s3_key, tipo, exercicio_id: exercicioId, exercicio_nome: exercicioNome, texto,
       })

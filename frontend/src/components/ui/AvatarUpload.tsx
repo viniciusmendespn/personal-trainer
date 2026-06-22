@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Camera, Loader2 } from 'lucide-react'
 import { Avatar } from './Avatar'
 import axios from 'axios'
+import { prepareMediaForUpload } from '../../utils/media'
 
 interface AvatarUploadProps {
   name: string
@@ -22,8 +23,9 @@ export function AvatarUpload({ name, currentUrl, size = 'lg', getUploadUrl, onSu
     setPreview(localPreview)
     setUploading(true)
     try {
-      const { upload_url, s3_key } = await getUploadUrl(file.name, file.type)
-      await axios.put(upload_url, file, { headers: { 'Content-Type': file.type } })
+      const prepared = await prepareMediaForUpload(file)
+      const { upload_url, s3_key } = await getUploadUrl(prepared.name, prepared.type)
+      await axios.put(upload_url, prepared, { headers: { 'Content-Type': prepared.type } })
       onSuccess(s3_key)
     } catch (err) {
       setPreview(null)

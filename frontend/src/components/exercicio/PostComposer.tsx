@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Button, Textarea, useToast } from '../ui'
 import { alunoApi } from '../../api/alunoApp'
 import { treinosApi } from '../../api/treinos'
+import { MediaValidationError, prepareMediaForUpload } from '../../utils/media'
 
 type TipoAluno = 'EXECUCAO' | 'DOR' | 'DUVIDA' | 'OUTRO'
 type TipoPersonal = 'CORRECAO' | 'EXECUCAO' | 'OUTRO'
@@ -79,6 +80,7 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
   const [descricao, setDescricao] = useState('')
   const [files, setFiles] = useState<FilePreview[]>([])
   const [loading, setLoading] = useState(false)
+  const [stage, setStage] = useState<'comprimindo' | 'enviando' | null>(null)
 
   const isPersonal = viewerAtor === 'PERSONAL'
   const cfg = isPersonal ? TIPO_CONFIG_PERSONAL[tipoPersonal] : TIPO_CONFIG_ALUNO[tipoAluno]
@@ -99,11 +101,14 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
   }
 
   async function uploadFile(file: File): Promise<{ s3_key: string; tipo: string }> {
+    setStage('comprimindo')
+    const prepared = await prepareMediaForUpload(file)
+    setStage('enviando')
     const { upload_url, s3_key } = isPersonal && alunoId
-      ? await treinosApi.uploadUrlMidia(alunoId, file.name, file.type)
-      : await alunoApi.midiaUploadUrl(file.name, file.type)
-    await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
-    const isVideo = file.type.startsWith('video')
+      ? await treinosApi.uploadUrlMidia(alunoId, prepared.name, prepared.type)
+      : await alunoApi.midiaUploadUrl(prepared.name, prepared.type)
+    await fetch(upload_url, { method: 'PUT', body: prepared, headers: { 'Content-Type': prepared.type } })
+    const isVideo = prepared.type.startsWith('video')
     const midiaTipo = isPersonal
       ? (isVideo ? 'video_correcao' : 'foto_correcao')
       : (isVideo ? 'video_execucao' : 'foto_exercicio')
@@ -114,7 +119,8 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
     if (!descricao.trim() && !files.length) return
     setLoading(true)
     try {
-      const midias = await Promise.all(files.map((f) => uploadFile(f.file)))
+      const midias: { s3_key: string; tipo: string }[] = []
+      for (const f of files) midias.push(await uploadFile(f.file))
 
       if (isPersonal && alunoId) {
         await treinosApi.criarPostagemPersonal(alunoId, exercicioId, {
@@ -140,10 +146,12 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
       setOpen(false)
       show(isPersonal ? 'Postagem enviada!' : 'Enviado! Seu personal vai ver.', 'success')
       onSuccess?.()
-    } catch {
-      show('Não foi possível enviar. Tente novamente.', 'error')
+    } catch (err) {
+      const message = err instanceof MediaValidationError ? err.message : 'Não foi possível enviar. Tente novamente.'
+      show(message, 'error')
     } finally {
       setLoading(false)
+      setStage(null)
     }
   }
 
@@ -251,7 +259,7 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
           onClick={submit}
           disabled={loading || (!descricao.trim() && !files.length)}
         >
-          <Send size={13} /> {loading ? 'Enviando…' : 'Enviar'}
+          <Send size={13} /> {stage === 'comprimindo' ? 'Comprimindo…' : loading ? 'Enviando…' : 'Enviar'}
         </Button>
       </div>
     </div>

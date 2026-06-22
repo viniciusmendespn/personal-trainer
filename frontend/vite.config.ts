@@ -36,6 +36,11 @@ export default defineConfig({
         navigateFallback: null,
         runtimeCaching: [{ urlPattern: /\/v1\//, handler: 'NetworkOnly' }],
       },
+      // ffmpeg-core.wasm (~32MB) é buscado sob demanda só quando o usuário envia um vídeo
+      // grande — não faz sentido pré-cachear no install do service worker.
+      injectManifest: {
+        globIgnores: ['ffmpeg/**'],
+      },
     }),
   ],
   server: {
