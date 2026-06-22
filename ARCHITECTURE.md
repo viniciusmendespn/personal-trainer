@@ -1466,6 +1466,14 @@ Não implementar preventivamente — adicione apenas quando o custo aparecer:
 - [ ] `auth/`: AuthProvider, LoginPage, SignUpPage, ProtectedRoute
 - [ ] `types/index.ts`: interfaces para todas as entidades
 
+### SEO (páginas públicas)
+- [ ] `public/robots.txt` — bloquear `/dashboard/`, `/aluno/`, `/login`, etc.; apontar sitemap
+- [ ] `public/sitemap.xml` — listar apenas as rotas públicas (ex.: `/`, `/divulgadores`)
+- [ ] `public/og-image.png` (1200×630 px) — imagem de compartilhamento social
+- [ ] `index.html`: meta `description`, `robots`, `canonical`, OG (og:title/description/image/url/type), Twitter Card, JSON-LD (`SoftwareApplication`)
+- [ ] Páginas públicas com `useEffect` para sobrescrever `document.title`, `description` e `canonical` específicos de cada rota
+- [ ] Registrar no Google Search Console + submeter `sitemap.xml` + solicitar indexação
+
 ### Regras de desenvolvimento
 - [ ] Valores monetários: `Decimal` no backend, `string` no frontend
 - [ ] Todo item DynamoDB: PK = `USER#{user_id}`
@@ -1629,3 +1637,164 @@ aws ce get-cost-and-usage \
 - [ ] `AWS::ServiceCatalogAppRegistry::Application` + `ResourceAssociation`
 - [ ] Ativar a tag `Project` em Billing → Cost allocation tags (1x, até 24h p/ propagar)
 - [ ] Validar com `aws ce get-cost-and-usage` agrupando por `Project`
+
+---
+
+## 13. SEO — Indexação por Motores de Busca
+
+> Contexto: SPAs servidas por S3 + CloudFront são estáticas. O Googlebot executa JavaScript
+> (desde 2019) e indexa SPAs na "segunda onda" — pode levar dias ou semanas. Para garantir
+> indexação imediata e correta, siga estas práticas desde o início do projeto.
+
+### 13.1 O problema da SPA para SEO
+
+| Situação | O que acontece |
+|---|---|
+| Googlebot rastreia `/` | Vê o HTML do `index.html` (shell vazio) — renderiza o JS em 2ª onda |
+| Bot do WhatsApp/Telegram/Slack rastreia `/` | Não executa JS → vê só o `index.html` estático |
+| Bot do WhatsApp rastreia `/outra-rota` | CloudFront retorna o mesmo `index.html` → OG tags erradas |
+| Site não está no Google Search Console | Google pode levar meses para descobrir o site |
+
+**Consequência prática:** sem as ações abaixo, o site demora para aparecer nas buscas e os
+links compartilhados no WhatsApp mostram preview genérico ou errado.
+
+### 13.2 Ações obrigatórias (zero custo, zero complexidade)
+
+#### `public/robots.txt`
+```
+User-agent: *
+Allow: /
+Allow: /divulgadores
+Disallow: /dashboard/
+Disallow: /aluno/
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /cadastro
+
+Sitemap: https://seudominio.com.br/sitemap.xml
+```
+
+#### `public/sitemap.xml`
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://seudominio.com.br/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+```
+
+#### `index.html` — meta tags mínimas
+```html
+<!-- SEO -->
+<meta name="description" content="Descrição clara do produto em 120–160 caracteres." />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://seudominio.com.br/" />
+
+<!-- Open Graph (WhatsApp, LinkedIn, Facebook) -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://seudominio.com.br/" />
+<meta property="og:title" content="Nome do Produto — Tagline curta" />
+<meta property="og:description" content="Mesma descrição, até 200 caracteres." />
+<meta property="og:image" content="https://seudominio.com.br/og-image.png" />
+<meta property="og:locale" content="pt_BR" />
+<meta property="og:site_name" content="NomeDoProduto" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Nome do Produto — Tagline curta" />
+<meta name="twitter:description" content="Mesma descrição." />
+<meta name="twitter:image" content="https://seudominio.com.br/og-image.png" />
+
+<!-- JSON-LD -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "NomeDoProduto",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "description": "...",
+  "url": "https://seudominio.com.br",
+  "inLanguage": "pt-BR"
+}
+</script>
+```
+
+#### `og-image.png`
+- Dimensão: **1200×630 px**
+- Salvar em `public/og-image.png`
+- WhatsApp, LinkedIn e Twitter usam essa imagem no preview de link
+- Sem ela, o compartilhamento mostra ícone genérico ou nada
+
+### 13.3 Meta tags dinâmicas por rota (SPA)
+
+Como a SPA usa um único `index.html`, as meta tags do `<head>` são as mesmas para todas as rotas.
+Para que cada página pública tenha title/description específicos (importante para SEO e preview
+de links), use `useEffect` no componente da rota:
+
+```tsx
+// Em cada página pública (LandingPage, DivulgadoresPage, etc.)
+useEffect(() => {
+  document.title = 'Título específico desta página'
+  document.querySelector('meta[name="description"]')
+    ?.setAttribute('content', 'Descrição específica desta página.')
+  document.querySelector('link[rel="canonical"]')
+    ?.setAttribute('href', 'https://seudominio.com.br/esta-rota')
+  return () => {
+    // Restaurar para o padrão ao sair da rota
+    document.querySelector('link[rel="canonical"]')
+      ?.setAttribute('href', 'https://seudominio.com.br/')
+  }
+}, [])
+```
+
+> **Limitação:** bots do WhatsApp/Telegram/Slack **não executam JavaScript** — eles leem apenas
+> o HTML estático do `index.html`. Para eles, as meta tags dinâmicas não funcionam. A solução
+> completa é prerendering (§13.4), mas para a maioria dos casos as tags do `index.html` são
+> suficientes.
+
+### 13.4 Prerendering (opcional — só se necessário)
+
+Prerendering gera HTML estático de rotas específicas em tempo de build, eliminando o delay de
+renderização JavaScript para crawlers. Aplicável quando:
+- O Google demora semanas para indexar e isso está causando problema real
+- Bots de redes sociais precisam de OG tags corretas em múltiplas rotas
+
+**Por que não é obrigatório:**
+- Google executa JS e indexa SPAs — é mais lento mas funciona
+- Adiciona Puppeteer/Chrome como dependência de build (~150 MB)
+- Conflita com auth providers que mostram spinner antes do conteúdo
+- Para 1–2 páginas públicas, Google Search Console + sitemap resolvem na prática
+
+**Se quiser implementar:** usar `@prerenderer/vite-plugin` + `@prerenderer/renderer-puppeteer`.
+Requer também uma CloudFront Function para reescrever `/rota` → `/rota/index.html` no S3,
+já que o CloudFront só serve `index.html` como DefaultRootObject para `/`.
+
+### 13.5 Google Search Console — passo manual obrigatório
+
+Este é o passo de maior impacto para ser indexado rapidamente:
+
+1. Acessar [search.google.com/search-console](https://search.google.com/search-console)
+2. **Add property** → `https://seudominio.com.br` (tipo "URL prefix")
+3. **Verificar** via DNS TXT record no provedor do domínio (Route 53 ou similar)
+4. **Sitemaps** → submeter `https://seudominio.com.br/sitemap.xml`
+5. **URL Inspection** → inserir a URL da landing page → "Request Indexing"
+
+Após esses passos, o Google rastreia em horas/dias (não semanas).
+
+### 13.6 O que ranqueia de verdade
+
+Aparecer no Google (indexar) é diferente de aparecer bem (ranquear). O que determina posição:
+
+| Fator | Peso | Como agir |
+|---|---|---|
+| Conteúdo relevante | Alto | Textos com as palavras que o usuário busca (ex.: "personal trainer gestão alunos") |
+| Core Web Vitals | Alto | LCP < 2.5s, CLS < 0.1, FID < 100ms (CloudFront + Vite já ajudam) |
+| Backlinks | Alto | Outros sites linkando para o seu |
+| Mobile-friendly | Médio | TailwindCSS + viewport meta já cobre |
+| HTTPS | Obrigatório | CloudFront com ACM já cobre |
+| Dados estruturados | Baixo | JSON-LD (coberto no §13.2) |

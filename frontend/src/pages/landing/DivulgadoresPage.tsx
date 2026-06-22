@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, ArrowLeft, Check, ChevronDown, ChevronUp, Users, Share2, DollarSign, TrendingUp } from 'lucide-react'
 import LandingFooter from './LandingFooter'
@@ -101,6 +101,18 @@ function FaqItem({ pergunta, resposta }: { pergunta: string; resposta: string })
 }
 
 export function DivulgadoresPage() {
+  useEffect(() => {
+    document.title = 'Seja um Divulgador CoachPilot — Ganhe comissão recorrente'
+    document.querySelector('meta[name="description"]')
+      ?.setAttribute('content', 'Divulgue o CoachPilot e ganhe comissão recorrente de até 35% enquanto o personal indicado permanecer ativo. Programa de divulgadores para personal trainers.')
+    document.querySelector('link[rel="canonical"]')
+      ?.setAttribute('href', 'https://coachpilot.com.br/divulgadores')
+    return () => {
+      document.querySelector('link[rel="canonical"]')
+        ?.setAttribute('href', 'https://coachpilot.com.br/')
+    }
+  }, [])
+
   return (
     <div style={{ fontFamily: "'Sora', sans-serif", background: '#fff', minHeight: '100vh' }}>
       {/* Header mínimo */}

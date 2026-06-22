@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Allow: /divulgadores
+Disallow: /dashboard/
+Disallow: /aluno/
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /cadastro
+Disallow: /admin
+
+Sitemap: https://coachpilot.com.br/sitemap.xml

@@ -52,6 +52,14 @@ export default function LandingPage() {
     }
   }, [user, isLoading, navigate])
 
+  useEffect(() => {
+    document.title = 'CoachPilot — Gestão para Personal Trainers'
+    document.querySelector('meta[name="description"]')
+      ?.setAttribute('content', 'CoachPilot — Plataforma completa para personal trainers. Gerencie alunos, treinos, avaliações físicas e agenda em um só lugar. Experimente grátis.')
+    document.querySelector('link[rel="canonical"]')
+      ?.setAttribute('href', 'https://coachpilot.com.br/')
+  }, [])
+
   if (isLoading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0e1a' }}>
