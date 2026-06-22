@@ -324,3 +324,27 @@ def sk_sched_billing_vencer(aluno_id: str, cobranca_id: str) -> str:
 # ── Mercado Pago: idempotência de webhook ────────────────────────────────────
 def pk_mp_lock(payment_id: str) -> str:
     return f"MP_LOCK#{payment_id}"
+
+
+# ── Assinatura da plataforma (cobrança do personal, não do aluno) ────────────
+SK_ASSINATURA = "ASSINATURA"   # partição PT#{personal_id}
+
+
+def pk_system() -> str:
+    return "SYSTEM#PLATFORM"
+
+
+SK_CONFIG_PLANOS = "CONFIG#PLANOS"   # catálogo de planos (preço, limite de alunos)
+
+
+def pk_mp_lock_assinatura(payment_id: str) -> str:
+    # Prefixo distinto de pk_mp_lock: contas Mercado Pago diferentes (token da
+    # plataforma vs. token configurado por cada personal para cobrar seus alunos).
+    return f"MP_LOCK_ASSINATURA#{payment_id}"
+
+
+ASSINATURA_AVISO_PREFIX = "ASSINATURA_AVISO#"
+
+
+def sk_sched_assinatura_aviso(personal_id: str) -> str:
+    return f"ASSINATURA_AVISO#{personal_id}"

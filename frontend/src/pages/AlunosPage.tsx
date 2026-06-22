@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { Plus, ChevronRight, Search, Users, Bot, Settings, Copy } from 'lucide-react'
 import { useAlunosPaginated, useCreateAluno, useUpdateAluno } from '../hooks/useAlunos'
+import { usePlanoStatus } from '../hooks/usePlano'
 import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState, useToast } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { anamneseApi } from '../api/anamnese'
-import type { AlunoExistenteConflict } from '../types'
+import type { AlunoExistenteConflict, PlanoLimitConflict } from '../types'
 
 export function AlunosPage() {
   const navigate = useNavigate()
@@ -31,12 +32,16 @@ export function AlunosPage() {
   const [objetivo, setObjetivo] = useState('')
   const [error, setError] = useState('')
   const [conflict, setConflict] = useState<AlunoExistenteConflict | null>(null)
+  const [limitConflict, setLimitConflict] = useState<PlanoLimitConflict | null>(null)
   const reativar = useUpdateAluno(conflict?.aluno_existente?.aluno_id ?? '')
+  const { data: plano } = usePlanoStatus()
+  const limiteAtingido = plano?.alunos_limit != null && plano.alunos_count >= plano.alunos_limit
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setConflict(null)
+    setLimitConflict(null)
     try {
       await create.mutateAsync({
         nome, telefone,
@@ -48,6 +53,8 @@ export function AlunosPage() {
       const detail = err?.response?.data?.detail
       if (detail?.code === 'PHONE_ALREADY_REGISTERED') {
         setConflict(detail)
+      } else if (detail?.code === 'PLAN_ALUNO_LIMIT_EXCEEDED') {
+        setLimitConflict(detail)
       } else {
         setError(typeof detail === 'string' ? detail : 'Erro ao criar aluno')
       }
@@ -82,7 +89,11 @@ export function AlunosPage() {
           <Button variant="outline" size="sm" onClick={() => gerarLink.mutate()} disabled={gerarLink.isPending}>
             <span className="flex items-center gap-1"><Copy size={14} /> Copiar link</span>
           </Button>
-          <Button onClick={() => setOpen(true)}>
+          <Button
+            onClick={() => setOpen(true)}
+            disabled={limiteAtingido}
+            title={limiteAtingido ? 'Limite do Plano Grátis atingido — assine o Gestão Pro' : undefined}
+          >
             <span className="flex items-center gap-1"><Plus size={16} /> Novo aluno</span>
           </Button>
         </div>
@@ -113,6 +124,16 @@ export function AlunosPage() {
           <Input label="Endereço" value={endereco} onChange={(e) => setEndereco(e.target.value)} />
           <Input label="Objetivo" value={objetivo} onChange={(e) => setObjetivo(e.target.value)} />
           <ErrorText>{error}</ErrorText>
+          {limitConflict && (
+            <Card variant="elevated" className="border-accent/40 space-y-2">
+              <p className="text-sm text-text-secondary">
+                Plano Grátis permite até {limitConflict.limit} alunos. Assine o Gestão Pro para cadastrar alunos ilimitados.
+              </p>
+              <Link to="/plano" className="text-sm text-accent-hover hover:underline">
+                Ver planos
+              </Link>
+            </Card>
+          )}
           {conflict && (
             <Card variant="elevated" className="border-warning/40 space-y-2">
               <p className="text-sm text-text-secondary">{conflict.message}</p>

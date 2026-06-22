@@ -29,9 +29,11 @@ function Deploy-Backend {
     # (não ficam no samconfig.toml para não sobrescrever acidentalmente em produção)
     $AdminSecret    = Get-EnvLocal "ADMIN_SECRET"
     $VapidPrivate   = Get-EnvLocal "VAPID_PRIVATE_KEY"
+    $MlAccessToken  = Get-EnvLocal "ML_ACCESS_TOKEN"
     $ExtraOverrides = ""
-    if ($AdminSecret)  { $ExtraOverrides += " AdminSecret=$AdminSecret" }
-    if ($VapidPrivate) { $ExtraOverrides += " VapidPrivateKey=$VapidPrivate" }
+    if ($AdminSecret)   { $ExtraOverrides += " AdminSecret=$AdminSecret" }
+    if ($VapidPrivate)  { $ExtraOverrides += " VapidPrivateKey=$VapidPrivate" }
+    if ($MlAccessToken) { $ExtraOverrides += " MlAccessToken=$MlAccessToken" }
 
     Set-Location backend
     sam build

@@ -57,6 +57,27 @@ def _processar_dia_billing_gerar(data: str) -> int:
     return n
 
 
+def _processar_dia_assinatura_aviso(data: str) -> int:
+    """Notifica o personal 7 dias antes do vencimento da assinatura (Gestão Pro)."""
+    n = 0
+    cursor = None
+    while True:
+        items, cursor = repo.query_pk_page(
+            keys.pk_sched(data), keys.ASSINATURA_AVISO_PREFIX, limit=50, cursor=cursor)
+        for it in items:
+            if not repo.delete_item_if_exists(keys.pk_sched(data), it["SK"]):
+                continue
+            personal_id = it.get("personal_id")
+            if personal_id:
+                notif_service.criar(
+                    personal_id, "ASSINATURA_VENCENDO", "Sua assinatura vence em breve",
+                    "Seu plano Gestão Pro vence em 7 dias. Renove para manter alunos ilimitados.")
+            n += 1
+        if cursor is None:
+            break
+    return n
+
+
 def _processar_dia_billing_vencer(data: str) -> int:
     """Marca cobranças como VENCIDA quando a data de vencimento chega."""
     n = 0
@@ -83,17 +104,20 @@ def handler(event, context):
     treinos_total = 0
     billing_gerar_total = 0
     billing_vencer_total = 0
+    assinatura_aviso_total = 0
     for i in range(_JANELA_DIAS, -1, -1):
         data = (hoje - timedelta(days=i)).isoformat()
         treinos_total += _processar_dia_treinos(data)
         billing_gerar_total += _processar_dia_billing_gerar(data)
         billing_vencer_total += _processar_dia_billing_vencer(data)
+        assinatura_aviso_total += _processar_dia_assinatura_aviso(data)
     logger.info(
-        "[scheduler] treinos=%d billing_gerar=%d billing_vencer=%d",
-        treinos_total, billing_gerar_total, billing_vencer_total,
+        "[scheduler] treinos=%d billing_gerar=%d billing_vencer=%d assinatura_aviso=%d",
+        treinos_total, billing_gerar_total, billing_vencer_total, assinatura_aviso_total,
     )
     return {
         "treinos": treinos_total,
         "billing_gerar": billing_gerar_total,
         "billing_vencer": billing_vencer_total,
+        "assinatura_aviso": assinatura_aviso_total,
     }

@@ -11,7 +11,7 @@ from app.models.aluno import Aluno, AlunoCreate, AlunoUpdate
 from app.models.enums import AlunoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz, media_service
+from app.services import assinatura_service, authz, media_service
 from app.services.wapi_service import WAPIClient
 from app.utils import new_id, now_iso
 
@@ -69,6 +69,7 @@ def list_alunos(limit: int = 50, cursor: str | None = None, personal_id: str = D
 
 @router.post("", response_model=Aluno, status_code=201)
 def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_personal_id)):
+    assinatura_service.verificar_limite_alunos(personal_id)
     aluno_id = new_id()
     now = now_iso()
     aluno = Aluno(aluno_id=aluno_id, personal_id=personal_id, status=AlunoStatus.ATIVO,
@@ -189,7 +190,7 @@ def enviar_link(aluno_id: str, personal_id: str = Depends(get_current_personal_i
     enviado = False
     cfg = repo.get_item(keys.pk_personal(personal_id), keys.SK_WAPI_CONFIG)
     telefone = aluno.get("telefone")
-    if cfg and telefone:
+    if cfg and telefone and assinatura_service.has_addon(personal_id, "whatsapp"):
         try:
             WAPIClient(cfg["instance_id"], cfg["token"]).send_text(
                 telefone, f"Olá, {aluno.get('nome', '')}! Acesse seu app de treino: {link}")

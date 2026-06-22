@@ -36,6 +36,7 @@ const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default:
 const CadastroPage = lazy(() => import('./pages/CadastroPage').then((m) => ({ default: m.CadastroPage })))
 const AjudaPage = lazy(() => import('./pages/AjudaPage').then((m) => ({ default: m.AjudaPage })))
 const DivulgadoresPage = lazy(() => import('./pages/landing/DivulgadoresPage').then((m) => ({ default: m.DivulgadoresPage })))
+const PlanoPage = lazy(() => import('./pages/PlanoPage').then((m) => ({ default: m.PlanoPage })))
 
 function PageFallback() {
   return (
@@ -99,6 +100,7 @@ const router = createBrowserRouter([
               { path: 'feed', element: lazyPage(<FeedGlobalPage />) },
               { path: 'ranking', element: lazyPage(<RankingPage />) },
               { path: 'notificacoes', element: lazyPage(<PendenciasPage />) },
+              { path: 'plano', element: lazyPage(<PlanoPage />) },
               { path: 'config', element: lazyPage(<SettingsPage />) },
               { path: 'perfil', element: lazyPage(<PersonalProfilePage />) },
               { path: 'admin', element: lazyPage(<AdminPage />) },

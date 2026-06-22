@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     fusion_api_version: str = "2025-03-01-preview"
     admin_secret: str = ""                 # protege POST /v1/wapi/config + assina tokens de impersonação
     admin_email: str = "admin@coachpilot.com.br"  # email do superadmin (impersonação)
+    ml_access_token: str = ""              # token MP da PLATAFORMA — cobra o personal (assinatura), nunca o aluno
 
     class Config:
         env_file = (".env", ".env.local")

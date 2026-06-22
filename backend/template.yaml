@@ -83,6 +83,11 @@ Parameters:
     Type: String
     Default: "mailto:admin@coachpilot.com.br"
     Description: "Email de contato para o servidor de push (sub do JWT VAPID)."
+  MlAccessToken:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: "Access Token Mercado Pago DA PLATAFORMA — cobra o personal pela assinatura (Gestão Pro). Distinto do token que cada personal configura para cobrar seus próprios alunos."
 
 Conditions:
   CreateFrontendInfra: !Equals [!Ref DeployFrontendInfra, "true"]
@@ -119,6 +124,7 @@ Globals:
         VAPID_PRIVATE_KEY: !Ref VapidPrivateKey
         VAPID_PUBLIC_KEY: !Ref VapidPublicKey
         VAPID_SUBJECT: !Ref VapidSubject
+        ML_ACCESS_TOKEN: !Ref MlAccessToken
 
 Resources:
 

@@ -15,7 +15,7 @@ from app.dependencies import verify_wapi_webhook
 from app.models.enums import Ator, CanalOrigem
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import agent_service, llm_agent, media_service, notif_service, sessao_service
+from app.services import agent_service, assinatura_service, llm_agent, media_service, notif_service, sessao_service
 from app.services.wapi_service import WAPIClient
 
 logger = logging.getLogger(__name__)
@@ -119,7 +119,7 @@ def _extract_media(payload: dict) -> dict | None:
 
 def _send(personal_id: str, phone: str, text: str) -> None:
     cfg = repo.get_item(keys.pk_personal(personal_id), keys.SK_WAPI_CONFIG)
-    if cfg:
+    if cfg and assinatura_service.has_addon(personal_id, "whatsapp"):
         try:
             WAPIClient(cfg["instance_id"], cfg["token"]).send_text(phone, text)
         except Exception as e:
@@ -270,4 +270,25 @@ async def mp_webhook(request: Request):
         mp_service.processar_webhook(body)
     except Exception as exc:
         logger.exception("MP webhook erro interno: %s", exc)
+    return {"ok": 1}
+
+
+# ── Mercado Pago webhook — assinatura da plataforma (cobra o personal) ─────────
+
+assinatura_mp_router = APIRouter(prefix="/v1/public/assinatura", tags=["assinatura-webhook"])
+
+
+@assinatura_mp_router.post("/webhook")
+async def assinatura_mp_webhook(request: Request):
+    """Mesmo contrato de `mp_webhook` (sempre 200, exceto body inválido), mas para
+    pagamentos da assinatura da plataforma (token próprio, não o do personal)."""
+    from app.services import mp_assinatura_service
+    try:
+        body = await request.json()
+    except Exception:
+        return {"ok": 0}
+    try:
+        mp_assinatura_service.processar_webhook(body)
+    except Exception as exc:
+        logger.exception("MP assinatura webhook erro interno: %s", exc)
     return {"ok": 1}

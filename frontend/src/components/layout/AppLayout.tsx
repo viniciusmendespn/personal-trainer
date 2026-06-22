@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Brain, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronDown, HelpCircle } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Brain, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronDown, HelpCircle, CreditCard } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
@@ -9,6 +9,8 @@ import { Avatar } from '../ui'
 import { AppLogo } from '../AppLogo'
 import { ChatWidget } from '../chat/ChatWidget'
 import { ChatContextProvider } from '../../context/ChatContext'
+import { TrialBanner } from '../billing/TrialBanner'
+import { RenewalBanner } from '../billing/RenewalBanner'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Visão geral', icon: LayoutDashboard },
@@ -18,6 +20,7 @@ const NAV_ITEMS = [
   { to: '/feed', label: 'Feed', icon: Newspaper },
   { to: '/ranking', label: 'Ranking', icon: Trophy },
   { to: '/notificacoes', label: 'Notificações', icon: Bell },
+  { to: '/plano', label: 'Plano', icon: CreditCard },
   { to: '/biblioteca', label: 'Biblioteca', icon: BookOpen },
   { to: '/conhecimento', label: 'Base de IA', icon: Brain },
   { to: '/ajuda', label: 'Ajuda', icon: HelpCircle },
@@ -177,6 +180,8 @@ export function AppLayout() {
     <ChatContextProvider>
     <div className="h-screen overflow-hidden flex flex-col">
       <ImpersonationBanner />
+      <TrialBanner />
+      <RenewalBanner />
       <div className="flex flex-1 min-h-0">
       {/* Desktop sidebar (lg+) */}
       <aside className="hidden lg:flex w-56 shrink-0 border-r border-border bg-surface/60 backdrop-blur-xl p-4">

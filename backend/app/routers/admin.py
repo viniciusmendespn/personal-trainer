@@ -7,9 +7,11 @@ import boto3
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
+from pydantic import BaseModel
 
 from app.config import settings
 from app.dependencies import _verify_token
+from app.services import assinatura_service
 
 router = APIRouter(prefix="/v1/admin", tags=["admin"])
 _security = HTTPBearer()
@@ -66,3 +68,16 @@ def impersonate(personal_id: str, admin_sub: str = Depends(_require_admin)):
         algorithm="HS256",
     )
     return {"token": token, "expires_in": _TOKEN_HOURS * 3600, "personal_id": personal_id}
+
+
+class ConcederAssinaturaBody(BaseModel):
+    dias: int
+    addons: list[str] = []   # subset de ["whatsapp", "ia"]
+
+
+@router.post("/personal/{personal_id}/assinatura")
+def conceder_assinatura(personal_id: str, body: ConcederAssinaturaBody, _: str = Depends(_require_admin)):
+    """Concessão manual de Gestão Pro + add-ons — suporte e bootstrap de contas internas.
+    Nunca apaga/altera dados do personal (alunos, templates, etc.) — só estende a
+    validade da assinatura e liga flags de add-on."""
+    return assinatura_service.conceder_admin(personal_id, dias=body.dias, addons=body.addons)

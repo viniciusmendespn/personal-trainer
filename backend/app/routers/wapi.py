@@ -13,6 +13,7 @@ from app.dependencies import get_current_personal_id
 from app.models.enums import InstanceStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
+from app.services import assinatura_service
 from app.services.wapi_service import WAPIClient
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ def save_config(
 ):
     if not settings.admin_secret or not secrets.compare_digest(x_admin_key, settings.admin_secret):
         raise HTTPException(403, "Proibido.")
+    assinatura_service.require_addon(personal_id, "whatsapp")
     now = datetime.now(timezone.utc).isoformat()
     repo.put_item(keys.pk_personal(personal_id), keys.SK_WAPI_CONFIG, {
         "instance_id": body.instance_id,

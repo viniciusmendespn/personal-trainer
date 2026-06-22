@@ -4,6 +4,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote, Camera, Clock, RefreshCw, AlertCircle, History, Power, PowerOff, Bot, ClipboardList } from 'lucide-react'
 import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { useToggleAgenteHabilitado } from '../hooks/usePersonalChat'
+import { usePlanoStatus } from '../hooks/usePlano'
 import { alunosApi } from '../api/alunos'
 import { anamneseApi } from '../api/anamnese'
 import {
@@ -46,6 +47,20 @@ export function AlunoDetailPage() {
   const updateAluno = useUpdateAluno(alunoId)
   const deleteAluno = useDeleteAluno()
   const toggleAgente = useToggleAgenteHabilitado(alunoId)
+  const { data: plano } = usePlanoStatus()
+  const addonIaAtivo = plano?.addon_ia_ativo ?? false
+
+  function handleToggleAgente(habilitado: boolean) {
+    toggleAgente.mutate(habilitado, {
+      onError: (err: any) => {
+        if (err?.response?.data?.detail?.code === 'ADDON_REQUIRED') {
+          show('Assistente IA é um add-on opcional — em breve disponível para contratação.', 'error')
+        } else {
+          show('Erro ao atualizar o agente.', 'error')
+        }
+      },
+    })
+  }
   const confirm = useConfirm()
   const [tab, setTab] = useState<'perfil' | 'treinos' | 'historico' | 'frequencia' | 'metas' | 'financeiro'>('treinos')
   const [showAddTreino, setShowAddTreino] = useState(false)
@@ -190,8 +205,9 @@ export function AlunoDetailPage() {
             <Button
               variant={aluno.agente_habilitado ? 'outline' : 'primary'}
               size="sm"
-              onClick={() => toggleAgente.mutate(!aluno.agente_habilitado)}
-              disabled={toggleAgente.isPending}
+              onClick={() => handleToggleAgente(!aluno.agente_habilitado)}
+              disabled={toggleAgente.isPending || (!aluno.agente_habilitado && !addonIaAtivo)}
+              title={!aluno.agente_habilitado && !addonIaAtivo ? 'Assistente IA é um add-on em breve' : undefined}
               className="gap-1.5 px-2.5 py-1.5 h-auto text-[9px] leading-tight items-center"
             >
               <Bot size={13} className="shrink-0" />

@@ -8,6 +8,7 @@ import { Button, Card, ErrorText, Tabs, Modal } from '../components/ui'
 import { useToast } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { AnamneseEditor } from '../components/anamnese/AnamneseEditor'
+import { usePlanoStatus } from '../hooks/usePlano'
 
 const SUPPORT_URL = `https://wa.me/5513988088204?text=${encodeURIComponent('Olá! Gostaria de configurar o WhatsApp no meu Personal Trainer.')}`
 
@@ -40,6 +41,8 @@ function WhatsAppTab() {
   const { show: toast } = useToast()
   const [method, setMethod] = useState<Method>('qr')
   const [pairingPhone, setPairingPhone] = useState('')
+  const { data: plano } = usePlanoStatus()
+  const addonAtivo = plano?.addon_whatsapp_ativo ?? false
 
   const status = useQuery({
     queryKey: ['wapi-status'],
@@ -99,6 +102,15 @@ function WhatsAppTab() {
       <p className="text-sm text-text-secondary">
         Conecte seu número para que seus alunos conversem com o assistente.
       </p>
+
+      {!addonAtivo && (
+        <Card variant="elevated" className="border-accent/30">
+          <p className="text-sm text-text-secondary">
+            Canal WhatsApp é um add-on opcional — em breve disponível para contratação.
+            Acompanhe novidades em <span className="text-accent-hover">Plano</span>.
+          </p>
+        </Card>
+      )}
 
       {/* Sem instância configurada */}
       {noInstance && (

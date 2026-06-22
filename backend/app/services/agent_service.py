@@ -87,7 +87,13 @@ def log_direct(personal_id: str, aluno_id: str, text: str, ator: Ator, canal: Ca
 
 def is_agente_habilitado(aluno_id: str) -> bool:
     profile = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
-    return bool((profile or {}).get("agente_habilitado"))
+    if not profile or not profile.get("agente_habilitado"):
+        return False
+    # Defesa em runtime: o toggle já exige o add-on IA pra habilitar, mas alunos que
+    # já tinham agente_habilitado=true antes desse gate existir não podem continuar
+    # respondendo sem o add-on ativo na assinatura do personal.
+    from app.services import assinatura_service
+    return assinatura_service.has_addon(profile["personal_id"], "ia")
 
 
 def set_agente_habilitado(aluno_id: str, habilitado: bool) -> None:

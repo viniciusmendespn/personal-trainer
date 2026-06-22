@@ -33,6 +33,39 @@ export interface AlunoExistenteConflict {
   aluno_existente: { aluno_id: string; nome: string; status: AlunoStatus } | null
 }
 
+export type PlanoTipo = 'TRIAL' | 'GESTAO_PRO'
+export type AssinaturaStatusTipo = 'TRIAL' | 'ATIVO' | 'EXPIRADO'
+
+export interface AssinaturaStatus {
+  plano: PlanoTipo
+  status: AssinaturaStatusTipo
+  trial_iniciado_em: string
+  valida_ate?: string | null
+  dias_restantes?: number | null
+  alunos_limit: number | null
+  alunos_count: number
+  addon_whatsapp_ativo: boolean
+  addon_ia_ativo: boolean
+}
+
+export interface PlanoCatalogoItem {
+  nome: string
+  preco: string
+  alunos_limit: number | null
+}
+
+export interface PlanoLimitConflict {
+  code: 'PLAN_ALUNO_LIMIT_EXCEEDED'
+  limit: number
+  current: number
+  plano: PlanoTipo
+}
+
+export interface AddonRequiredConflict {
+  code: 'ADDON_REQUIRED'
+  addon: 'whatsapp' | 'ia'
+}
+
 export interface AlunoCreate {
   nome: string
   telefone: string
