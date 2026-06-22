@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { alunosApi, type AlunoUpdate } from '../api/alunos'
 import type { AlunoCreate } from '../types'
+import { PLANO_KEY } from './usePlano'
 
 const KEY = ['alunos']
 const KEY_PAGE = ['alunos', 'page']
@@ -43,6 +44,7 @@ export function useCreateAluno() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEY })
       qc.invalidateQueries({ queryKey: KEY_PAGE })
+      qc.invalidateQueries({ queryKey: PLANO_KEY })
     },
   })
 }
@@ -55,6 +57,7 @@ export function useUpdateAluno(id: string) {
       qc.invalidateQueries({ queryKey: KEY })
       qc.invalidateQueries({ queryKey: KEY_PAGE })
       qc.invalidateQueries({ queryKey: ['aluno', id] })
+      qc.invalidateQueries({ queryKey: PLANO_KEY })
     },
   })
 }
@@ -66,6 +69,7 @@ export function useDeleteAluno() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEY })
       qc.invalidateQueries({ queryKey: KEY_PAGE })
+      qc.invalidateQueries({ queryKey: PLANO_KEY })
     },
   })
 }

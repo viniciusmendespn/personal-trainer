@@ -2,7 +2,8 @@ import { useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { planoApi } from '../api/plano'
 
-const KEY = ['plano']
+export const PLANO_KEY = ['plano']
+const KEY = PLANO_KEY
 
 export function usePlanoStatus() {
   return useQuery({ queryKey: KEY, queryFn: planoApi.getStatus, staleTime: 30_000 })
