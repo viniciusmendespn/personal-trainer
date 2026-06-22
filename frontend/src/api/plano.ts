@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { AssinaturaStatus, PlanoCatalogoItem } from '../types'
+import type { AssinaturaStatus, PagamentoAssinatura, PlanoCatalogoItem } from '../types'
 
 export interface PixPayment {
   payment_id: string
@@ -18,4 +18,5 @@ export const planoApi = {
   getCatalogo: () => api.get<Record<string, PlanoCatalogoItem>>('/v1/plano/catalogo').then((r) => r.data),
   criarPix: () => api.post<PixPayment>('/v1/plano/pix').then((r) => r.data),
   getPixStatus: (paymentId: string) => api.get<PixStatus>(`/v1/plano/pix/${paymentId}`).then((r) => r.data),
+  getPagamentos: () => api.get<PagamentoAssinatura[]>('/v1/plano/pagamentos').then((r) => r.data),
 }

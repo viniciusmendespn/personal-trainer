@@ -13,7 +13,7 @@ from fastapi import HTTPException
 
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.utils import now_iso
+from app.utils import new_id, now_iso
 
 PLANO_TRIAL = "TRIAL"
 PLANO_GESTAO_PRO = "GESTAO_PRO"
@@ -137,9 +137,14 @@ def _reagendar_aviso(personal_id: str, assinatura_atual: dict, nova_valida_ate: 
     return nova_aviso_data
 
 
-def aplicar_pagamento(personal_id: str, dias: int = 30) -> dict:
+def aplicar_pagamento(
+    personal_id: str, dias: int = 30, *,
+    payment_id: str | None = None, valor: float | None = None,
+    origem: Literal["PIX", "ADMIN"] = "PIX",
+) -> dict:
     """Estende a validade de forma cumulativa: se ainda ativa, soma a partir do
-    vencimento atual; se expirada/trial, soma a partir de hoje."""
+    vencimento atual; se expirada/trial, soma a partir de hoje. Registra também o
+    histórico de pagamentos (PIX aprovado ou concessão ADMIN — ver conceder_admin)."""
     assinatura = _ensure_assinatura(personal_id)
     hoje = _hoje()
     valida_ate_atual = assinatura.get("valida_ate")
@@ -153,13 +158,33 @@ def aplicar_pagamento(personal_id: str, dias: int = 30) -> dict:
         "atualizado_em": now_iso(),
     }
     updated = repo.update_item(keys.pk_personal(personal_id), keys.SK_ASSINATURA, fields, return_values=True)
+
+    processado_em = now_iso()
+    repo.put_item(
+        keys.pk_personal(personal_id),
+        keys.sk_pagamento_assinatura(processado_em, payment_id or new_id()),
+        {
+            "payment_id": payment_id,
+            "origem": origem,
+            "valor": valor,
+            "dias_concedidos": dias,
+            "plano": PLANO_GESTAO_PRO,
+            "valida_ate": nova_valida_ate.isoformat(),
+            "processado_em": processado_em,
+        },
+    )
     return repo.clean(updated)
+
+
+def listar_pagamentos(personal_id: str, limit: int = 24) -> list[dict]:
+    items = repo.query_pk_last_n(keys.pk_personal(personal_id), keys.PAGAMENTO_ASSINATURA_PREFIX, limit)
+    return [repo.clean(it) for it in items]
 
 
 def conceder_admin(personal_id: str, dias: int, addons: list[str] | None = None) -> dict:
     """Concessão manual (admin) — mesmo efeito de um pagamento aprovado, mais os
     add-ons indicados. Usado no bootstrap das contas internas e em suporte futuro."""
-    resultado = aplicar_pagamento(personal_id, dias=dias)
+    resultado = aplicar_pagamento(personal_id, dias=dias, origem="ADMIN")
     fields = {}
     for addon in addons or []:
         if addon == "whatsapp":

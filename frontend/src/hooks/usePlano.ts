@@ -28,6 +28,10 @@ export function usePixStatus(paymentId: string | undefined, enabled: boolean) {
   })
 }
 
+export function usePagamentos() {
+  return useQuery({ queryKey: ['plano', 'pagamentos'], queryFn: planoApi.getPagamentos, staleTime: 30_000 })
+}
+
 export function useInvalidatePlano() {
   const qc = useQueryClient()
   return useCallback(() => qc.invalidateQueries({ queryKey: KEY }), [qc])

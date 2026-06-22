@@ -48,6 +48,16 @@ export interface AssinaturaStatus {
   addon_ia_ativo: boolean
 }
 
+export interface PagamentoAssinatura {
+  payment_id: string | null
+  origem: 'PIX' | 'ADMIN'
+  valor: number | null
+  dias_concedidos: number
+  plano: PlanoTipo
+  valida_ate: string
+  processado_em: string
+}
+
 export interface PlanoCatalogoItem {
   nome: string
   preco: string

@@ -169,7 +169,10 @@ def processar_webhook(body: dict) -> None:
         "ttl": int(time.time()) + _LOCK_TTL_S,
     })
 
-    assinatura_service.aplicar_pagamento(personal_id, dias=_PIX_DIAS_CONCEDIDOS)
+    assinatura_service.aplicar_pagamento(
+        personal_id, dias=_PIX_DIAS_CONCEDIDOS,
+        payment_id=payment_id, valor=resp.get("transaction_amount"), origem="PIX",
+    )
 
     from app.services import notif_service
     notif_service.criar(

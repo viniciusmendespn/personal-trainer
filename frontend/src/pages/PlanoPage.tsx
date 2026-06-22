@@ -1,16 +1,26 @@
 import { useState } from 'react'
-import { Bot, Calendar, Check, CreditCard, MessageCircle, Users } from 'lucide-react'
+import { Bot, Calendar, Check, CreditCard, MessageCircle, Receipt, Users } from 'lucide-react'
 import { Badge, Button, Card } from '../components/ui'
 import { PixPaymentModal } from '../components/billing/PixPaymentModal'
-import { usePlanoStatus } from '../hooks/usePlano'
+import { usePagamentos, usePlanoStatus } from '../hooks/usePlano'
 
 function formatDate(iso?: string | null) {
   if (!iso) return '—'
   return new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR')
 }
 
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+}
+
+function formatValor(valor: number | null) {
+  if (valor == null) return 'Concedido'
+  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
 export function PlanoPage() {
   const { data, isLoading } = usePlanoStatus()
+  const { data: pagamentos } = usePagamentos()
   const [pixOpen, setPixOpen] = useState(false)
 
   if (isLoading || !data) {
@@ -100,6 +110,41 @@ export function PlanoPage() {
             )}
           </div>
         </div>
+      </Card>
+
+      <Card variant="flat" className="p-6">
+        <h3 className="font-display text-sm font-bold text-text mb-1">Histórico de pagamentos</h3>
+        <p className="text-xs text-text-secondary mb-4">
+          Pagamentos do plano Gestão Pro confirmados via Pix.
+        </p>
+        {!pagamentos || pagamentos.length === 0 ? (
+          <p className="text-sm text-text-muted">Nenhum pagamento registrado ainda.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {pagamentos.map((p) => (
+              <div
+                key={`${p.processado_em}-${p.payment_id ?? 'admin'}`}
+                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-surface"
+              >
+                <div className="flex items-center gap-2">
+                  <Receipt size={18} className="text-text-muted shrink-0" />
+                  <div>
+                    <p className="text-sm text-text font-medium">{formatDateTime(p.processado_em)}</p>
+                    <p className="text-xs text-text-muted">
+                      {p.dias_concedidos} dias · válido até {formatDate(p.valida_ate)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-text-secondary">{formatValor(p.valor)}</span>
+                  <Badge tone={p.origem === 'PIX' ? 'success' : 'neutral'}>
+                    {p.origem === 'PIX' ? 'Pix' : 'Admin'}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       <PixPaymentModal open={pixOpen} onClose={() => setPixOpen(false)} />

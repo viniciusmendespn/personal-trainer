@@ -31,3 +31,8 @@ def get_pix_status(payment_id: str, personal_id: str = Depends(get_current_perso
         return mp_assinatura_service.get_payment_status(payment_id)
     except ValueError as e:
         raise HTTPException(502, str(e))
+
+
+@router.get("/pagamentos")
+def listar_pagamentos(personal_id: str = Depends(get_current_personal_id)):
+    return assinatura_service.listar_pagamentos(personal_id)

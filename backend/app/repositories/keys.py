@@ -348,3 +348,10 @@ ASSINATURA_AVISO_PREFIX = "ASSINATURA_AVISO#"
 
 def sk_sched_assinatura_aviso(personal_id: str) -> str:
     return f"ASSINATURA_AVISO#{personal_id}"
+
+
+PAGAMENTO_ASSINATURA_PREFIX = "PAGAMENTO_ASSINATURA#"   # histórico, partição PT#{personal_id}
+
+
+def sk_pagamento_assinatura(ts: str, payment_id: str) -> str:
+    return f"PAGAMENTO_ASSINATURA#{ts}#{payment_id}"
