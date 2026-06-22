@@ -35,6 +35,7 @@ O portal possui um **menu lateral (sidebar)** com as seguintes seções:
 - **Feed** — feed unificado de publicações
 - **Ranking** — gamificação e ranking de frequência
 - **Notificações** — central de alertas e pendências
+- **Plano** — assinatura da plataforma (Trial grátis x Gestão Pro)
 - **Biblioteca** — upload de materiais para os alunos
 - **Base de IA** — arquivos de conhecimento para o agente de IA
 - **Ajuda** — esta central de ajuda
@@ -216,6 +217,7 @@ O feed unificado mostra as publicações de todos os alunos e do personal. Acess
 - **Dor** — relato de dor/lesão
 - **Dúvida** — pergunta sobre exercício
 - **Correção** — feedback do personal sobre execução
+- **Recurso Educacional** — publicação de conteúdo (texto, foto, vídeo) que pode ser vinculada a exercícios como material de apoio (ver seção **LINKS ÚTEIS NOS EXERCÍCIOS**)
 - **Outro** — postagem genérica
 
 **Como publicar:**
@@ -403,6 +405,88 @@ Acesse **Admin** no menu (visível apenas para o administrador do sistema).
 
 ---
 
+### 21. LINKS ÚTEIS NOS EXERCÍCIOS
+
+Você pode vincular publicações do tipo **Recurso Educacional** (feitas no **Feed**) a exercícios, para que o aluno veja esse material de apoio direto na execução do treino.
+
+**Como funciona a vinculação automática (biblioteca):**
+1. Acesse **Biblioteca** ou edite um exercício na página do aluno
+2. No campo **"Links Úteis"**, busque e selecione os Recursos Educacionais do feed que deseja associar àquele exercício
+3. Todo treino que use um exercício com esse nome passa a exibir automaticamente esses recursos para o aluno
+
+**Como personalizar por aluno:**
+Na página do aluno, ao editar um exercício do treino:
+- Em **"Recursos da biblioteca"**, desmarque os recursos que não quer exibir para aquele aluno específico (exclusão individual, sem afetar os outros alunos)
+- Em **"Links Úteis"**, adicione recursos extras só para aquele aluno, além dos vindos da biblioteca
+
+O aluno vê os recursos vinculados tocando no ícone de livro ao lado do exercício, durante a sessão de treino.
+
+---
+
+### 22. FINANCEIRO DOS ALUNOS (MENSALIDADES E COBRANÇAS)
+
+Controle as mensalidades e cobranças de cada aluno. Acesse a página do aluno → aba **"Financeiro"**.
+
+**Configurar faturamento recorrente:**
+1. Clique em **"Configurar"** (ou **"Editar"**, se já configurado)
+2. Defina: valor, recorrência (mensal ou anual), dia de vencimento e antecedência (quantos dias antes do vencimento a cobrança é gerada)
+3. Salve — o sistema passa a gerar cobranças automaticamente com base nessa configuração
+4. Alterações futuras não afetam cobranças já geradas (o histórico fica preservado)
+
+**Status das cobranças:**
+- **Pendente** — gerada, aguardando pagamento
+- **Vencida** — passou da data de vencimento sem pagamento
+- **Paga** — pagamento confirmado (manual ou via Pix)
+
+**Criar cobrança avulsa:** Clique em **"Nova cobrança"** e preencha valor e vencimento, sem precisar configurar faturamento recorrente.
+
+**Registrar pagamento manualmente:** Na cobrança pendente/vencida, clique em **"Pagar"** (ícone de pagamento) e confirme os dados.
+
+**Cancelar cobrança:** Disponível no card da cobrança, com confirmação.
+
+**Filtros:** Todas, Pendentes, Vencidas, Pagas.
+
+#### Pagamento via Pix (Mercado Pago)
+
+Se você configurar a integração com o Mercado Pago (ver **Configurações → Pagamentos**), o aluno pode pagar a mensalidade via Pix direto pelo app dele, sem precisar de pagamento manual. O sistema confirma o pagamento automaticamente assim que o Mercado Pago notifica.
+
+**Como configurar:**
+1. Acesse **Configurações** → aba **"Pagamentos"**
+2. Informe o **Access Token** da sua conta Mercado Pago (clique no ícone de informação para ver o passo a passo de como obter)
+3. Salve
+
+Sem o token configurado, a gestão financeira continua funcionando normalmente — o aluno só não terá a opção de pagar via Pix, e os pagamentos seguem sendo manuais.
+
+> Pagamentos via Pix pelo Mercado Pago podem ter taxa de processamento cobrada pelo próprio Mercado Pago.
+
+---
+
+### 23. ASSINATURA DA PLATAFORMA (PLANO)
+
+Esta é a assinatura do **seu** acesso ao CoachPilot — diferente do Financeiro dos alunos (seção anterior), que é a cobrança que você faz aos seus alunos.
+
+Acesse **Plano** no menu lateral.
+
+**Planos disponíveis:**
+- **Plano Grátis (Trial)** — até **3 alunos** cadastrados, sem custo
+- **Gestão Pro** — alunos ilimitados, pago via Pix
+
+**Como assinar ou renovar:**
+1. Na página **Plano**, clique em **"Assinar Gestão Pro"** (ou **"Renovar mais um mês"**, se já for Pro)
+2. Escaneie o QR Code Pix exibido ou copie o código copia-e-cola
+3. O sistema confirma o pagamento automaticamente e libera o plano por mais 30 dias
+
+**O que acontece quando o limite é atingido ou o plano vence:**
+- No Plano Grátis, ao atingir 3 alunos, novos cadastros ficam bloqueados até você assinar o Gestão Pro
+- Se a assinatura Gestão Pro vencer, os alunos que excederem o limite de 3 ficam marcados como **"Bloqueado"** na lista de Alunos — você não consegue mais abrir o perfil deles até renovar
+- Um banner no topo do portal avisa quando o plano está no grátis, quando a assinatura Pro está perto de vencer (7 dias ou menos) ou quando já venceu
+
+**Add-ons:** Canal WhatsApp e Assistente IA são contratados separadamente da gestão de alunos. A página **Plano** mostra se cada um está ativo na sua conta.
+
+**Histórico de pagamentos:** Na página **Plano**, a seção "Histórico de pagamentos" lista todos os pagamentos do Gestão Pro confirmados via Pix (ou concedidos manualmente pelo suporte), com data, dias concedidos e validade resultante.
+
+---
+
 ## PERGUNTAS FREQUENTES (FAQ)
 
 **P: Como faço para que o aluno acesse o app?**
@@ -434,6 +518,15 @@ R: Vá até as avaliações do aluno, clique em "Comparar Fotos", selecione a fo
 
 **P: Os alunos conseguem ver o ranking uns dos outros?**
 R: Sim. O ranking é visível para todos os alunos do mesmo personal. Mostra nome, foto, pontuação e badges dos demais.
+
+**P: Qual a diferença entre o Financeiro do aluno e a página Plano?**
+R: Financeiro (aba na página do aluno) é a mensalidade que você cobra dos seus alunos. Plano (menu lateral) é a sua assinatura do CoachPilot — Trial grátis até 3 alunos ou Gestão Pro ilimitado.
+
+**P: O que acontece com meus alunos se eu não renovar o Gestão Pro?**
+R: Os alunos que excedem o limite de 3 ficam com o perfil bloqueado (você não consegue mais abri-lo) até a renovação. Os dados não são apagados.
+
+**P: Sou obrigado a configurar o Mercado Pago para cobrar meus alunos?**
+R: Não. Sem o Access Token configurado, você gerencia cobranças e pagamentos manualmente. O Mercado Pago só adiciona a opção de o aluno pagar via Pix sozinho.
 
 ---
 

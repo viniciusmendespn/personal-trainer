@@ -66,6 +66,11 @@ Mostra os exercícios do seu treino atual com:
 - Intervalo de descanso (em segundos)
 - Link de vídeo de referência (quando disponível)
 
+#### Como ver o treino antes de iniciar
+1. Na aba **Treino**, toque em **"Ver treino"** sobre o treino do dia
+2. Você vê a lista completa de exercícios com séries, repetições, carga prescrita e observações do personal, sem ainda começar a sessão
+3. Toque em **"Iniciar Treino"** nessa tela de pré-visualização para começar, ou na seta para voltar
+
 #### Como iniciar um treino
 1. Na aba **Treino**, você verá a lista de exercícios
 2. Toque em **"Iniciar Treino"**
@@ -94,6 +99,9 @@ Após registrar o último exercício, toque em **"Finalizar Treino"**. O app sal
 
 #### Novo Personal Record (PR)
 Quando você levanta uma carga maior do que já registrou em um exercício, o app exibe uma celebração de **"Novo Recorde!"** e você ganha 10 pontos extras.
+
+#### Recursos educacionais do exercício
+Quando seu personal vincula um material de apoio (texto, foto ou vídeo) a um exercício, aparece um ícone de **livro** ao lado dele, tanto na pré-visualização quanto na sessão ativa. Toque nele para abrir o conteúdo.
 
 ---
 
@@ -161,6 +169,12 @@ Mostra o perfil do seu personal trainer:
 **Biblioteca de materiais:**
 - Lista os materiais que seu personal compartilhou (PDFs, vídeos educativos, etc.)
 - Toque em **"Baixar todos"** para baixar os arquivos em formato ZIP
+
+**Mensalidade:**
+- Se seu personal cobra mensalidade pelo app, você vê aqui o valor, vencimento e status (pendente, vencida, paga) das suas últimas cobranças
+- Quando há uma cobrança pendente ou vencida, aparece um aviso no topo da aba
+- Se seu personal tiver Pix configurado, toque em **"Pagar via Pix"** para gerar o QR Code e pagar na hora
+- Sem Pix configurado, fale diretamente com seu personal para regularizar o pagamento
 
 ---
 
@@ -316,6 +330,7 @@ O ícone de sino no topo da tela mostra o número de notificações não lidas.
 - Novo post no feed
 - Correção de exercício pelo personal
 - Mídia enviada pelo personal
+- Mensalidade próxima do vencimento ou vencida (toque para ir direto à aba **Personal**, onde você pode pagar via Pix)
 
 Toque na notificação para ir direto para o conteúdo relacionado.
 
@@ -381,6 +396,12 @@ R: Acesse a aba **Evolução → Carga**, busque pelo nome do exercício e o gr�
 
 **P: Como reporto uma dor para meu personal?**
 R: Durante a sessão ativa toque em "Relatar Dor", selecione o exercício e descreva o problema. Seu personal é notificado imediatamente.
+
+**P: Posso ver o treino antes de começar?**
+R: Sim. Na aba Treino, toque em "Ver treino" para conferir todos os exercícios, séries e cargas antes de tocar em "Iniciar Treino".
+
+**P: Como pago minha mensalidade pelo app?**
+R: Na aba Personal, se seu personal tiver o Pix configurado, toque em "Pagar via Pix" na cobrança pendente. Se não houver essa opção, fale diretamente com seu personal.
 
 ---
 
