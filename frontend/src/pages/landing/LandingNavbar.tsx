@@ -59,14 +59,6 @@ export default function LandingNavbar() {
               {l.label}
             </button>
           ))}
-          <Link
-            to="/divulgadores"
-            style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.75)')}
-          >
-            Divulgadores
-          </Link>
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }} className="hidden lg:flex">
@@ -78,23 +70,20 @@ export default function LandingNavbar() {
           >
             Entrar
           </Link>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            <Link
-              to="/signup"
-              style={{
-                background: 'linear-gradient(135deg, #14b8a6, #10b981)',
-                color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none',
-                padding: '9px 20px', borderRadius: 8,
-                boxShadow: '0 4px 15px rgba(20,184,166,0.3)',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(20,184,166,0.4)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(20,184,166,0.3)' }}
-            >
-              Começar grátis
-            </Link>
-            <span style={{ color: '#14b8a6', fontSize: 10, fontWeight: 600 }}>Até 3 alunos grátis</span>
-          </div>
+          <Link
+            to="/signup"
+            style={{
+              background: 'linear-gradient(135deg, #14b8a6, #10b981)',
+              color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none',
+              padding: '9px 20px', borderRadius: 8,
+              boxShadow: '0 4px 15px rgba(20,184,166,0.3)',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(20,184,166,0.4)' }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(20,184,166,0.3)' }}
+          >
+            Começar grátis
+          </Link>
         </div>
 
         <button
@@ -117,13 +106,6 @@ export default function LandingNavbar() {
               {l.label}
             </button>
           ))}
-          <Link
-            to="/divulgadores"
-            onClick={() => setMenuOpen(false)}
-            style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15, fontWeight: 500, textDecoration: 'none', padding: '8px 0' }}
-          >
-            Divulgadores
-          </Link>
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <Link to="/login" onClick={() => setMenuOpen(false)} style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 500, padding: '10px 0', textAlign: 'center' }}>
               Entrar
@@ -135,7 +117,6 @@ export default function LandingNavbar() {
             >
               Começar grátis
             </Link>
-            <span style={{ color: '#14b8a6', fontSize: 11, fontWeight: 600, textAlign: 'center' }}>Até 3 alunos grátis</span>
           </div>
         </div>
       )}

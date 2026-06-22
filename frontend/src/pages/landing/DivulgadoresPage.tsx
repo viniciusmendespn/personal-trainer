@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Check, ChevronDown, ChevronUp, Users, Share2, DollarSign, TrendingUp } from 'lucide-react'
-import LandingNavbar from './LandingNavbar'
+import { ArrowRight, ArrowLeft, Check, ChevronDown, ChevronUp, Users, Share2, DollarSign, TrendingUp } from 'lucide-react'
 import LandingFooter from './LandingFooter'
+import { AppLogo } from '../../components/AppLogo'
 
 const WA_DIVULGADOR = 'https://wa.me/5513988088204?text=Oi%2C%20quero%20ser%20divulgador%20do%20CoachPilot'
 const WA_EMBAIXADOR = 'https://wa.me/5513988088204?text=Oi%2C%20quero%20conversar%20sobre%20ser%20Embaixador%20CoachPilot'
@@ -103,7 +103,25 @@ function FaqItem({ pergunta, resposta }: { pergunta: string; resposta: string })
 export function DivulgadoresPage() {
   return (
     <div style={{ fontFamily: "'Sora', sans-serif", background: '#fff', minHeight: '100vh' }}>
-      <LandingNavbar />
+      {/* Header mínimo */}
+      <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: 'rgba(10,14,26,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.06)', height: 60 }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+            <AppLogo size={30} />
+            <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 17, color: '#fff', letterSpacing: '-0.3px' }}>
+              Coach<span style={{ color: '#14b8a6' }}>Pilot</span>
+            </span>
+          </Link>
+          <Link
+            to="/"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.6)', fontSize: 14, textDecoration: 'none', fontWeight: 500, transition: 'color 0.2s' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
+          >
+            <ArrowLeft size={14} /> Voltar ao site
+          </Link>
+        </div>
+      </header>
 
       {/* Hero */}
       <section style={{
@@ -113,7 +131,7 @@ export function DivulgadoresPage() {
         display: 'flex',
         alignItems: 'center',
         overflow: 'hidden',
-        paddingTop: 68,
+        paddingTop: 60,
       }}>
         <div style={{ position: 'absolute', inset: 0, opacity: 0.12, backgroundImage: 'radial-gradient(rgba(20,184,166,0.6) 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
         <div style={{ position: 'absolute', top: '15%', left: '5%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(20,184,166,0.12) 0%, transparent 70%)', filter: 'blur(40px)' }} />
