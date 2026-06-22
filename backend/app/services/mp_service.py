@@ -24,6 +24,7 @@ import urllib.request
 import urllib.error
 from datetime import datetime, timezone, timedelta
 
+from app.config import settings
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.utils import now_iso
@@ -97,6 +98,8 @@ def criar_pix(personal_id: str, aluno: dict, cobranca: dict) -> dict:
         "external_reference": external_reference,
         "date_of_expiration": expires_at,
     }
+    if settings.webhook_base_url:
+        payload["notification_url"] = f"{settings.webhook_base_url}/v1/public/mp/webhook"
     try:
         resp = _mp_request("POST", "/v1/payments", token, payload,
                            idempotency_key=cobranca_id)

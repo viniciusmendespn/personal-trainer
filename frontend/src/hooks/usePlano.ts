@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { planoApi } from '../api/plano'
 
@@ -15,16 +16,18 @@ export function useCriarPix() {
   return useMutation({ mutationFn: planoApi.criarPix })
 }
 
+const PIX_TERMINAL_STATUSES = ['approved', 'rejected', 'cancelled']
+
 export function usePixStatus(paymentId: string | undefined, enabled: boolean) {
   return useQuery({
     queryKey: ['plano', 'pix', paymentId],
     queryFn: () => planoApi.getPixStatus(paymentId as string),
     enabled: enabled && !!paymentId,
-    refetchInterval: 4_000,
+    refetchInterval: (query) => (PIX_TERMINAL_STATUSES.includes(query.state.data?.status ?? '') ? false : 4_000),
   })
 }
 
 export function useInvalidatePlano() {
   const qc = useQueryClient()
-  return () => qc.invalidateQueries({ queryKey: KEY })
+  return useCallback(() => qc.invalidateQueries({ queryKey: KEY }), [qc])
 }

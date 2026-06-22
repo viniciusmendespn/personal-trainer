@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Check, Copy } from 'lucide-react'
 import { Modal, Button, Spinner, useToast } from '../ui'
 import { useCriarPix, useInvalidatePlano, usePixStatus } from '../../hooks/usePlano'
@@ -11,6 +11,7 @@ export function PixPaymentModal({ open, onClose }: { open: boolean; onClose: () 
   const paymentId = criarPix.data?.payment_id
   const pixStatus = usePixStatus(paymentId, open && !!paymentId)
   const aprovado = pixStatus.data?.status === 'approved'
+  const aprovadoProcessado = useRef(false)
 
   useEffect(() => {
     if (open && !criarPix.data && !criarPix.isPending) {
@@ -23,12 +24,14 @@ export function PixPaymentModal({ open, onClose }: { open: boolean; onClose: () 
     if (!open) {
       criarPix.reset()
       setCopiado(false)
+      aprovadoProcessado.current = false
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   useEffect(() => {
-    if (aprovado) {
+    if (aprovado && !aprovadoProcessado.current) {
+      aprovadoProcessado.current = true
       invalidatePlano()
       show('Pagamento confirmado! Seu Gestão Pro foi renovado.', 'success')
     }

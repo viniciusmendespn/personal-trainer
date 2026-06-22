@@ -77,6 +77,10 @@ def criar_pix(personal_id: str, payer_email: str | None = None) -> dict:
         "external_reference": external_reference,
         "date_of_expiration": expires_at,
     }
+    # Sem isso o MP não tem pra onde notificar (causa raiz de pagamento aprovado e nunca
+    # aplicado — o polling do frontend só reflete o status no MP, não credita a assinatura).
+    if settings.webhook_base_url:
+        payload["notification_url"] = f"{settings.webhook_base_url}/v1/public/assinatura/webhook"
     try:
         resp = _mp_request("POST", "/v1/payments", token, payload, idempotency_key=idempotency_key)
     except urllib.error.HTTPError as exc:
