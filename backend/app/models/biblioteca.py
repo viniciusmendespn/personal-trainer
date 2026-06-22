@@ -1,6 +1,7 @@
+import re
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class ExLibCreate(BaseModel):
@@ -11,6 +12,19 @@ class ExLibCreate(BaseModel):
     descricao: Optional[str] = None
     recomendacoes: Optional[str] = None        # texto livre do personal (técnica, cuidados…)
     links_uteis: list[str] = []                # post_sks de posts RECURSO do feed vinculados
+
+    @field_validator("video_url")
+    @classmethod
+    def normaliza_video_url(cls, v: Optional[str]) -> Optional[str]:
+        """Sem isso, um link colado sem http(s):// vira href relativo e resolve para o domínio do app."""
+        if not v:
+            return None
+        v = v.strip()
+        if not v:
+            return None
+        if not re.match(r"^https?://", v, re.IGNORECASE):
+            v = f"https://{v}"
+        return v
 
 
 class ExLib(ExLibCreate):
