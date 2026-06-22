@@ -192,6 +192,33 @@ export default function PricingSection() {
               </div>
             </div>
 
+            {/* Bônus FinPilot */}
+            <div style={{
+              marginBottom: 20,
+              padding: '12px 14px',
+              borderRadius: 10,
+              background: 'linear-gradient(135deg, rgba(20,184,166,0.12) 0%, rgba(16,185,129,0.08) 100%)',
+              border: '1px solid rgba(20,184,166,0.25)',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 10,
+            }}>
+              <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>🎁</span>
+              <div>
+                <div style={{ color: '#14b8a6', fontWeight: 700, fontSize: 13, marginBottom: 2 }}>
+                  Bônus: 1 mês grátis no FinPilot por mês pago
+                </div>
+                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, lineHeight: 1.5 }}>
+                  A cada pagamento confirmado, você recebe um código promocional para usar no{' '}
+                  <a href="https://finpilot.ia.br" target="_blank" rel="noopener noreferrer"
+                    style={{ color: 'rgba(20,184,166,0.9)', textDecoration: 'none' }}>
+                    FinPilot
+                  </a>
+                  {' '}— planilha inteligente com IA para controle financeiro pessoal.
+                </div>
+              </div>
+            </div>
+
             <Link
               to="/signup"
               style={{
