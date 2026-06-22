@@ -6,7 +6,6 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
 } from 'recharts'
 import { useDashboard } from '../hooks/useDashboard'
-import { useAgenda } from '../hooks/useAgenda'
 import { useAlunos } from '../hooks/useAlunos'
 import { useTemplates } from '../hooks/useTemplates'
 import { wapiApi } from '../api/wapi'
@@ -52,13 +51,19 @@ export function DashboardPage() {
   }, [])
   const mesAtual = useMemo(() => new Date().getMonth(), [])
 
-  const { data: agendaHoje } = useAgenda(hoje, hoje)
-  const { data: agendaSemana } = useAgenda(semanaInicio, semanaFim)
   const { data: alunos } = useAlunos()
   const { data: templates } = useTemplates()
 
-  const sessoesHoje = agendaHoje?.length ?? 0
-  const sessoesSemana = agendaSemana?.length ?? 0
+  const sessoesHoje = useMemo(
+    () => (data?.sessoes_por_dia ?? []).find((d) => d.data === hoje)?.total ?? 0,
+    [data, hoje],
+  )
+  const sessoesSemana = useMemo(
+    () => (data?.sessoes_por_dia ?? [])
+      .filter((d) => d.data >= semanaInicio && d.data <= semanaFim)
+      .reduce((acc, d) => acc + d.total, 0),
+    [data, semanaInicio, semanaFim],
+  )
   const aniversariantes = (alunos ?? []).filter((a) => {
     if (!a.data_nascimento) return false
     const m = new Date(a.data_nascimento + 'T12:00:00').getMonth()
