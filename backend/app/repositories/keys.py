@@ -174,6 +174,14 @@ def sk_stats_pr(exercicio_id: str) -> str:
     return f"STATS#PR#{exercicio_id}"
 
 
+def sk_stats_week_grupo(week: str, grupo: str) -> str:
+    return f"STATS#WG#{week}#{grupo}"   # prefixo distinto de "STATS#W#" (8º char diverge: 'G' vs '#')
+
+
+def sk_stats_grupo(grupo: str) -> str:
+    return f"STATS#G#{grupo}"   # cumulativo all-time por grupo muscular
+
+
 # ── Dúvidas do aluno (partição AL#) ─────────────────────────────────────────
 DUVIDA_PREFIX = "DUVIDA#"
 

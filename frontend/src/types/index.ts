@@ -170,6 +170,7 @@ export interface Exercicio {
   treino_id: string
   aluno_id: string
   nome: string
+  grupo?: string
   ordem: number
   series?: number
   reps_prescritas?: string
@@ -185,6 +186,7 @@ export interface Exercicio {
 
 export interface ExercicioCreate {
   nome: string
+  grupo?: string
   ordem?: number
   series?: number
   reps_prescritas?: string

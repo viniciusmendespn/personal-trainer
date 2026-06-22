@@ -35,6 +35,7 @@ def _snapshot(ex: dict) -> dict:
     return {
         "exercicio_id": ex["exercicio_id"],
         "nome": ex.get("nome"),
+        "grupo": ex.get("grupo"),
         "series": ex.get("series"),
         "reps_prescritas": ex.get("reps_prescritas"),
         "carga_prescrita": ex.get("carga_prescrita"),
@@ -219,8 +220,10 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
     if not s:
         raise HTTPException(409, "Sem sessão ativa para registrar")
     ex = s.get("ex_atual") or {}
+    snaps = s.get("exercicios", [])
     ex_id = exercicio_id or ex.get("exercicio_id")
     ex_nome = exercicio_nome or ex.get("nome")
+    ex_grupo = next((e.get("grupo") for e in snaps if e.get("exercicio_id") == ex_id), ex.get("grupo")) or "Sem grupo"
     if not ex_id:
         raise HTTPException(400, "Exercício não identificado")
     pk = keys.pk_aluno(aluno_id)
@@ -244,6 +247,8 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
         wk = _isoweek()
         repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_volume": volume}, set_={"ultimo_treino": now_iso()})
         repo.add_and_set(pk, keys.sk_stats_week(wk), add={"volume": volume}, set_={"semana": wk})
+        repo.add_and_set(pk, keys.sk_stats_week_grupo(wk, ex_grupo), add={"volume": volume}, set_={"semana": wk, "grupo": ex_grupo})
+        repo.add_and_set(pk, keys.sk_stats_grupo(ex_grupo), add={"volume": volume}, set_={"grupo": ex_grupo})
     pr_novo = None
     if cargas:
         carga_max = max(cargas)
@@ -276,6 +281,7 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
     if not ex_id:
         raise HTTPException(400, "Exercício não identificado")
     ex_nome = next((e.get("nome") for e in snaps if e.get("exercicio_id") == ex_id), ex_atual.get("nome"))
+    ex_grupo = next((e.get("grupo") for e in snaps if e.get("exercicio_id") == ex_id), ex_atual.get("grupo")) or "Sem grupo"
     pk = keys.pk_aluno(aluno_id)
     sk = keys.sk_registro(s["sessao_id"], ex_id)
     old = repo.get_item(pk, sk)
@@ -293,6 +299,8 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
         wk = _isoweek()
         repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_volume": delta}, set_={"ultimo_treino": now_iso()})
         repo.add_and_set(pk, keys.sk_stats_week(wk), add={"volume": delta}, set_={"semana": wk})
+        repo.add_and_set(pk, keys.sk_stats_week_grupo(wk, ex_grupo), add={"volume": delta}, set_={"semana": wk, "grupo": ex_grupo})
+        repo.add_and_set(pk, keys.sk_stats_grupo(ex_grupo), add={"volume": delta}, set_={"grupo": ex_grupo})
     pr_novo = None
     cargas = [c for c in (_num(it.get("carga")) for it in series) if c is not None]
     if cargas and repo.update_if_greater(pk, keys.sk_stats_pr(ex_id), "carga", max(cargas),
@@ -407,6 +415,14 @@ def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
     weeks = [repo.clean(w) for w in repo.query_pk_last_n(pk, "STATS#W#", semanas)]
     weeks.sort(key=lambda w: w.get("semana", ""))
     prs = [repo.clean(p) for p in repo.query_pk(pk, sk_prefix="STATS#PR#")]
+    wk_grupos = [repo.clean(w) for w in repo.query_pk(pk, sk_prefix="STATS#WG#")]
+    grupos_totais = [repo.clean(g) for g in repo.query_pk(pk, sk_prefix="STATS#G#")]
+    semanas_validas = {w.get("semana") for w in weeks}
+    volume_por_semana_grupo: dict[str, dict[str, float]] = {}
+    for wg in wk_grupos:
+        sem, grp = wg.get("semana"), wg.get("grupo")
+        if sem in semanas_validas and grp:
+            volume_por_semana_grupo.setdefault(sem, {})[grp] = wg.get("volume", 0)
     wk_atual = _isoweek()
     streak_atual = int(st.get("streak_atual", 0))
     total_sessoes = int(st.get("total_sessoes", 0))
@@ -421,9 +437,19 @@ def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
         "streak_maximo": int(st.get("streak_maximo", 0)),
         "multiplicador_atual": _ps.multiplicador_streak(streak_atual),
         "media_sessoes_semana": media_semana,
-        "semanas": [{"semana": w.get("semana"), "volume": w.get("volume", 0), "sessoes": w.get("sessoes", 0)} for w in weeks],
+        "semanas": [
+            {
+                "semana": w.get("semana"), "volume": w.get("volume", 0), "sessoes": w.get("sessoes", 0),
+                "grupos": volume_por_semana_grupo.get(w.get("semana"), {}),
+            }
+            for w in weeks
+        ],
         "prs": sorted(
             [{"exercicio": p.get("exercicio_nome"), "carga": p.get("carga"), "data": p.get("data")} for p in prs],
             key=lambda x: x.get("carga") or 0, reverse=True,
+        ),
+        "volume_por_grupo": sorted(
+            [{"grupo": g.get("grupo"), "volume": g.get("volume", 0)} for g in grupos_totais],
+            key=lambda x: x.get("volume") or 0, reverse=True,
         ),
     }

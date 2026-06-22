@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote, Camera, Clock, RefreshCw, AlertCircle, History, Power, PowerOff, Bot, ClipboardList } from 'lucide-react'
@@ -789,13 +789,15 @@ function ExercicioForm({
   initial, biblioteca, onSubmit, submitting, submitLabel,
 }: {
   initial?: Partial<Exercicio>
-  biblioteca?: { exlib_id: string; nome: string; video_url?: string; links_uteis?: string[] }[]
+  biblioteca?: { exlib_id: string; nome: string; grupo?: string; video_url?: string; links_uteis?: string[] }[]
   onSubmit: (body: ExercicioCreate) => Promise<void>
   submitting?: boolean
   submitLabel: string
 }) {
   const listId = useId()
+  const grupoListId = useId()
   const [nome, setNome] = useState(initial?.nome ?? '')
+  const [grupo, setGrupo] = useState(initial?.grupo ?? '')
   const [seriesPrescritas, setSeriesPrescritas] = useState<SeriePrescrita[]>(() =>
     initSeriesPrescritas(initial?.series_prescritas, initial?.series, initial?.reps_prescritas, initial?.carga_prescrita)
   )
@@ -804,10 +806,16 @@ function ExercicioForm({
   const [linksUteis, setLinksUteis] = useState<string[]>(initial?.links_uteis ?? [])
   const [linksUteisExcluidos, setLinksUteisExcluidos] = useState<string[]>(initial?.links_uteis_excluidos ?? [])
 
+  const grupos = useMemo(
+    () => Array.from(new Set((biblioteca ?? []).map((b) => b.grupo).filter((g): g is string => !!g))).sort(),
+    [biblioteca]
+  )
+
   function onNome(v: string) {
     setNome(v)
     const lib = biblioteca?.find((b) => b.nome.toLowerCase() === v.toLowerCase())
     if (lib?.video_url) setVid(lib.video_url)
+    if (lib?.grupo) setGrupo(lib.grupo)
   }
 
   async function submit(e: React.FormEvent) {
@@ -816,6 +824,7 @@ function ExercicioForm({
     const validas = seriesPrescritas.filter((s) => s.reps || s.carga)
     await onSubmit({
       nome,
+      grupo: grupo || undefined,
       series_prescritas: validas.length ? validas : undefined,
       video_url: vid || undefined,
       observacoes: obs || undefined,
@@ -828,11 +837,15 @@ function ExercicioForm({
     <form onSubmit={submit} className="space-y-4">
       <div>
         <p className="text-xs font-medium text-text-secondary mb-2">Identificação</p>
-        <Input
-          label="Exercício" list={listId} autoFocus
-          value={nome} onChange={(e) => onNome(e.target.value)}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Input
+            label="Exercício" list={listId} autoFocus
+            value={nome} onChange={(e) => onNome(e.target.value)}
+          />
+          <Input label="Grupo muscular" list={grupoListId} value={grupo} onChange={(e) => setGrupo(e.target.value)} />
+        </div>
         <datalist id={listId}>{biblioteca?.map((b) => <option key={b.exlib_id} value={b.nome} />)}</datalist>
+        <datalist id={grupoListId}>{grupos.map((g) => <option key={g} value={g} />)}</datalist>
       </div>
       <div>
         <p className="text-xs font-medium text-text-secondary mb-2">Prescrição — séries × reps · carga</p>
@@ -859,7 +872,7 @@ function ExercicioForm({
 
 function ExercicioRow({
   alunoId, treinoId, ex, biblioteca,
-}: { alunoId: string; treinoId: string; ex: Exercicio; biblioteca?: { exlib_id: string; nome: string; video_url?: string }[] }) {
+}: { alunoId: string; treinoId: string; ex: Exercicio; biblioteca?: { exlib_id: string; nome: string; grupo?: string; video_url?: string }[] }) {
   const [edit, setEdit] = useState(false)
   const [mediaOpen, setMediaOpen] = useState(false)
   const upd = useUpdateExercicio(alunoId, treinoId)

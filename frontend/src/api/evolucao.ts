@@ -18,6 +18,7 @@ export interface ResumoSemana {
   semana: string
   volume: number
   sessoes: number
+  grupos?: Record<string, number>
 }
 
 export interface Resumo {
@@ -31,6 +32,7 @@ export interface Resumo {
   streak_maximo?: number
   multiplicador_atual?: number
   media_sessoes_semana?: number
+  volume_por_grupo?: { grupo: string; volume: number }[]
 }
 
 export const evolucaoApi = {

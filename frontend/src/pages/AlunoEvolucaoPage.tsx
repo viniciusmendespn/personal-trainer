@@ -23,6 +23,10 @@ const chartTip = {
   fontSize: 12,
 }
 const axisTick = { fill: 'var(--color-text-secondary)', fontSize: 12 }
+const PALETA_GRUPOS = [
+  'var(--color-accent)', 'var(--color-energy)', 'var(--color-success)',
+  'var(--color-warning)', 'var(--color-danger)', 'var(--color-info)',
+]
 
 type AbaEvolucao = 'carga' | 'volume' | 'recordes' | 'feed'
 
@@ -100,6 +104,21 @@ export function AlunoEvolucaoPage() {
   const semanas = useMemo(
     () => (resumo?.semanas ?? []).map((w) => ({ semana: w.semana.replace(/^\d+-/, ''), volume: w.volume })),
     [resumo]
+  )
+
+  const gruposNomes = useMemo(() => {
+    if (resumo?.volume_por_grupo?.length) return resumo.volume_por_grupo.map((g) => g.grupo)
+    const set = new Set<string>()
+    for (const w of resumo?.semanas ?? []) Object.keys(w.grupos ?? {}).forEach((g) => set.add(g))
+    return Array.from(set)
+  }, [resumo])
+
+  const semanasPorGrupo = useMemo(
+    () => (resumo?.semanas ?? []).map((w) => ({
+      semana: w.semana.replace(/^\d+-/, ''),
+      ...Object.fromEntries(gruposNomes.map((g) => [g, w.grupos?.[g] ?? 0])),
+    })),
+    [resumo, gruposNomes]
   )
 
   return (
@@ -208,6 +227,24 @@ export function AlunoEvolucaoPage() {
                 </ResponsiveContainer>
               </Card>
             )
+          )}
+
+          {/* Volume por grupo muscular (empilhado por semana) */}
+          {aba === 'volume' && gruposNomes.length > 0 && (
+            <Card variant="elevated" className="mt-3">
+              <p className="text-sm text-text-secondary mb-3">Volume por grupo muscular (kg)</p>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={semanasPorGrupo} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                  <XAxis dataKey="semana" tick={axisTick} stroke="var(--color-border-strong)" />
+                  <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
+                  <Tooltip contentStyle={chartTip} />
+                  {gruposNomes.map((g, i) => (
+                    <Bar key={g} dataKey={g} stackId="grupo" fill={PALETA_GRUPOS[i % PALETA_GRUPOS.length]} name={g} radius={i === gruposNomes.length - 1 ? [6, 6, 0, 0] : undefined} />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
           )}
 
           {/* Aba Recordes */}

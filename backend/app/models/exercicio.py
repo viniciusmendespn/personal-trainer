@@ -11,6 +11,7 @@ class SeriePrescrita(BaseModel):
 
 class ExercicioCreate(BaseModel):
     nome: str                                  # ex.: "Supino reto"
+    grupo: Optional[str] = None                # ex.: "Peito", "Pernas" — herdado da biblioteca ou livre
     ordem: int = 0
     series: Optional[int] = None               # legado — leitura de itens antigos
     reps_prescritas: Optional[str] = None      # legado — leitura de itens antigos
