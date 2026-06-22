@@ -15,6 +15,9 @@ from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.utils import new_id, now_iso
 
+_bloqueados_cache: dict[str, tuple[float, set[str]]] = {}
+_BLOQUEADOS_TTL = 60  # s
+
 PLANO_TRIAL = "TRIAL"
 PLANO_GESTAO_PRO = "GESTAO_PRO"
 TRIAL_ALUNOS_LIMIT = 3
@@ -108,6 +111,31 @@ def verificar_limite_alunos(personal_id: str) -> None:
         })
 
 
+def get_alunos_bloqueados(personal_id: str) -> set[str]:
+    """Retorna o conjunto de aluno_ids inacessíveis porque excedem o limite do plano.
+    Os alunos permitidos são os `alunos_limit` mais antigos por `created_at`.
+    Resultado cacheado por 60s por personal para evitar fan-out por chamada."""
+    now = time.time()
+    cached = _bloqueados_cache.get(personal_id)
+    if cached and cached[0] > now:
+        return cached[1]
+    status = get_status(personal_id)
+    limit = status["alunos_limit"]
+    if limit is None:
+        result: set[str] = set()
+        _bloqueados_cache[personal_id] = (now + _BLOQUEADOS_TTL, result)
+        return result
+    ponteiros = repo.query_pk(keys.pk_personal(personal_id), sk_prefix="ALUNO#")
+    ponteiros.sort(key=lambda p: p.get("created_at") or p.get("updated_at") or "")
+    bloqueados = {p["aluno_id"] for p in ponteiros[limit:]}
+    _bloqueados_cache[personal_id] = (now + _BLOQUEADOS_TTL, bloqueados)
+    return bloqueados
+
+
+def invalidate_alunos_bloqueados(personal_id: str) -> None:
+    _bloqueados_cache.pop(personal_id, None)
+
+
 def has_addon(personal_id: str, addon: Literal["whatsapp", "ia"]) -> bool:
     assinatura = _ensure_assinatura(personal_id)
     field = "addon_whatsapp_ativo" if addon == "whatsapp" else "addon_ia_ativo"
@@ -158,6 +186,7 @@ def aplicar_pagamento(
         "atualizado_em": now_iso(),
     }
     updated = repo.update_item(keys.pk_personal(personal_id), keys.SK_ASSINATURA, fields, return_values=True)
+    invalidate_alunos_bloqueados(personal_id)
 
     processado_em = now_iso()
     repo.put_item(

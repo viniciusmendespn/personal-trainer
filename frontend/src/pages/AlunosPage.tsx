@@ -73,8 +73,8 @@ export function AlunosPage() {
   const filtered = useMemo(() => {
     if (!alunos) return alunos
     const q = query.trim().toLowerCase()
-    if (!q) return alunos
-    return alunos.filter((a) => a.nome.toLowerCase().includes(q) || a.telefone.includes(q))
+    const base = q ? alunos.filter((a) => a.nome.toLowerCase().includes(q) || a.telefone.includes(q)) : alunos
+    return [...base].sort((a, b) => Number(!!a.bloqueado) - Number(!!b.bloqueado))
   }, [alunos, query])
 
   return (
@@ -186,8 +186,9 @@ export function AlunosPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       <p className="font-medium truncate">{a.nome}</p>
-                      {a.status === 'INATIVO' && <Badge tone="neutral">Inativo</Badge>}
-                      {a.agente_habilitado && (
+                      {a.bloqueado && <Badge tone="warning">Bloqueado</Badge>}
+                      {!a.bloqueado && a.status === 'INATIVO' && <Badge tone="neutral">Inativo</Badge>}
+                      {!a.bloqueado && a.agente_habilitado && (
                         <Bot size={12} className="text-success shrink-0" aria-label="Agente ativo" />
                       )}
                     </div>

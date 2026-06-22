@@ -35,6 +35,7 @@ def _pointer(aluno: dict) -> dict:
         "telefone": aluno.get("telefone"),
         "foto_s3_key": aluno.get("foto_s3_key"),
         "updated_at": aluno["updated_at"],
+        "created_at": aluno.get("created_at", aluno["updated_at"]),
     }
 
 
@@ -63,7 +64,8 @@ def _phone_conflict(dono_id: str | None) -> HTTPException:
 @router.get("")
 def list_alunos(limit: int = 50, cursor: str | None = None, personal_id: str = Depends(get_current_personal_id)):
     items, next_cursor = repo.query_pk_page(keys.pk_personal(personal_id), "ALUNO#", limit, cursor)
-    cleaned = [_add_foto_url(repo.clean(i)) for i in items]
+    bloqueados = assinatura_service.get_alunos_bloqueados(personal_id)
+    cleaned = [{**_add_foto_url(repo.clean(i)), "bloqueado": i.get("aluno_id", "") in bloqueados} for i in items]
     return {"items": cleaned, "next_cursor": next_cursor}
 
 
@@ -91,6 +93,7 @@ def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_perso
     repo.put_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, data)
     repo.put_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(data))
     repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add={"total": 1, "ativos": 1})
+    assinatura_service.invalidate_alunos_bloqueados(personal_id)
     return aluno
 
 
@@ -209,6 +212,7 @@ def delete_aluno(aluno_id: str, personal_id: str = Depends(get_current_personal_
     repo.delete_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id))
     repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
     authz.invalidate(personal_id, aluno_id)
+    assinatura_service.invalidate_alunos_bloqueados(personal_id)
     decremento = {"total": -1}
     if current and current.get("status") == AlunoStatus.ATIVO:
         decremento["ativos"] = -1

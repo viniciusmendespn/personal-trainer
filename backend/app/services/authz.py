@@ -7,6 +7,7 @@ from fastapi import HTTPException
 
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
+from app.services import assinatura_service
 
 _cache: dict[tuple[str, str], float] = {}
 _TTL = 120  # s
@@ -21,6 +22,8 @@ def authorize_aluno(personal_id: str, aluno_id: str) -> None:
     ptr = repo.get_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id))
     if not ptr:
         raise HTTPException(404, "Aluno não encontrado")
+    if aluno_id in assinatura_service.get_alunos_bloqueados(personal_id):
+        raise HTTPException(403, {"code": "ALUNO_BLOCKED_BY_PLAN"})
     _cache[key] = now + _TTL
 
 

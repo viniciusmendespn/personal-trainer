@@ -30,7 +30,7 @@ import { FinanceiroTab } from '../components/financeiro/FinanceiroTab'
 export function AlunoDetailPage() {
   const { alunoId = '' } = useParams()
   const navigate = useNavigate()
-  const { data: aluno } = useAluno(alunoId)
+  const { data: aluno, error: alunoError } = useAluno(alunoId)
   const qc = useQueryClient()
 
   useEffect(() => {
@@ -166,6 +166,24 @@ export function AlunoDetailPage() {
     })
     setNome(''); setFoco(''); setDtIni(''); setDtFim('')
     setShowAddTreino(false)
+  }
+
+  const isBlocked = (alunoError as any)?.response?.data?.detail?.code === 'ALUNO_BLOCKED_BY_PLAN'
+  if (isBlocked) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <Link to="/alunos" className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text mb-4">
+          <ArrowLeft size={16} /> Alunos
+        </Link>
+        <Card variant="elevated" className="space-y-3 mt-2">
+          <p className="font-semibold text-text">Aluno bloqueado pelo plano</p>
+          <p className="text-sm text-text-secondary">
+            Limite de alunos do seu plano atingido. Este aluno não pode ser acessado até você renovar a assinatura.
+          </p>
+          <Link to="/plano" className="text-sm text-accent-hover hover:underline">Ver planos e renovar</Link>
+        </Card>
+      </div>
+    )
   }
 
   return (

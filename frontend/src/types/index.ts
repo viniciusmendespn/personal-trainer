@@ -23,6 +23,7 @@ export interface Aluno {
   foto_url?: string
   custom?: Custom
   agente_habilitado?: boolean
+  bloqueado?: boolean
   created_at: string
   updated_at: string
 }
