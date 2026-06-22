@@ -7,6 +7,7 @@ export function TrialBanner() {
   const navigate = useNavigate()
 
   if (!data || data.alunos_limit == null) return null
+  if (data.plano === 'GESTAO_PRO') return null
 
   const limit = data.alunos_limit
   const expirado = data.status === 'EXPIRADO'

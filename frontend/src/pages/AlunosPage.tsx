@@ -179,9 +179,9 @@ export function AlunosPage() {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filtered.map((a) => (
-              <Link key={a.aluno_id} to={`/alunos/${a.aluno_id}`}>
-                <Card variant="elevated" className="flex items-center gap-3 hover:border-accent/50 transition-colors h-full">
+            {filtered.map((a) => {
+              const cardContent = (
+                <>
                   <Avatar name={a.nome} imageUrl={a.foto_url} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
@@ -197,10 +197,23 @@ export function AlunosPage() {
                       <Clock size={10} className="shrink-0" /> Atualizado {tempoRelativo(a.updated_at)}
                     </p>
                   </div>
-                  <ChevronRight size={18} className="text-text-muted shrink-0" />
-                </Card>
-              </Link>
-            ))}
+                  {!a.bloqueado && <ChevronRight size={18} className="text-text-muted shrink-0" />}
+                </>
+              )
+              return a.bloqueado ? (
+                <div key={a.aluno_id} className="cursor-not-allowed opacity-60">
+                  <Card variant="elevated" className="flex items-center gap-3 h-full pointer-events-none">
+                    {cardContent}
+                  </Card>
+                </div>
+              ) : (
+                <Link key={a.aluno_id} to={`/alunos/${a.aluno_id}`}>
+                  <Card variant="elevated" className="flex items-center gap-3 hover:border-accent/50 transition-colors h-full">
+                    {cardContent}
+                  </Card>
+                </Link>
+              )
+            })}
           </div>
           {hasNextPage && !query && (
             <div className="flex justify-center mt-4">
