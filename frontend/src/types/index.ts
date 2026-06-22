@@ -57,6 +57,7 @@ export interface PagamentoAssinatura {
   plano: PlanoTipo
   valida_ate: string
   processado_em: string
+  finpilot_code?: string | null
 }
 
 export interface PlanoCatalogoItem {

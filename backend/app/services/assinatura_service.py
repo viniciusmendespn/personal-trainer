@@ -11,6 +11,7 @@ from typing import Literal
 
 from fastapi import HTTPException
 
+from app.config import settings
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.utils import new_id, now_iso
@@ -188,19 +189,27 @@ def aplicar_pagamento(
     updated = repo.update_item(keys.pk_personal(personal_id), keys.SK_ASSINATURA, fields, return_values=True)
     invalidate_alunos_bloqueados(personal_id)
 
+    finpilot_code: str | None = None
+    if origem == "PIX" and settings.promo_code_secret:
+        from app.services.promo_code_service import generate_code
+        finpilot_code = generate_code(settings.promo_code_secret, valid_for_days=90)
+
     processado_em = now_iso()
+    pagamento_item: dict = {
+        "payment_id": payment_id,
+        "origem": origem,
+        "valor": valor,
+        "dias_concedidos": dias,
+        "plano": PLANO_GESTAO_PRO,
+        "valida_ate": nova_valida_ate.isoformat(),
+        "processado_em": processado_em,
+    }
+    if finpilot_code is not None:
+        pagamento_item["finpilot_code"] = finpilot_code
     repo.put_item(
         keys.pk_personal(personal_id),
         keys.sk_pagamento_assinatura(processado_em, payment_id or new_id()),
-        {
-            "payment_id": payment_id,
-            "origem": origem,
-            "valor": valor,
-            "dias_concedidos": dias,
-            "plano": PLANO_GESTAO_PRO,
-            "valida_ate": nova_valida_ate.isoformat(),
-            "processado_em": processado_em,
-        },
+        pagamento_item,
     )
     return repo.clean(updated)
 

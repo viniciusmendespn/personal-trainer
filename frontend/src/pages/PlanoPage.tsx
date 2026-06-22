@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bot, Calendar, Check, CreditCard, MessageCircle, Receipt, Users } from 'lucide-react'
+import { Bot, Calendar, Check, Copy, CreditCard, ExternalLink, Gift, MessageCircle, Receipt, Users } from 'lucide-react'
 import { Badge, Button, Card } from '../components/ui'
 import { PixPaymentModal } from '../components/billing/PixPaymentModal'
 import { usePagamentos, usePlanoStatus } from '../hooks/usePlano'
@@ -22,6 +22,14 @@ export function PlanoPage() {
   const { data, isLoading } = usePlanoStatus()
   const { data: pagamentos } = usePagamentos()
   const [pixOpen, setPixOpen] = useState(false)
+  const [copiedCode, setCopiedCode] = useState<string | null>(null)
+
+  function copyCode(code: string) {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopiedCode(code)
+      setTimeout(() => setCopiedCode(null), 2000)
+    })
+  }
 
   if (isLoading || !data) {
     return <div className="text-sm text-text-secondary">Carregando plano...</div>
@@ -122,25 +130,53 @@ export function PlanoPage() {
         ) : (
           <div className="flex flex-col gap-2">
             {pagamentos.map((p) => (
-              <div
-                key={`${p.processado_em}-${p.payment_id ?? 'admin'}`}
-                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-surface"
-              >
-                <div className="flex items-center gap-2">
-                  <Receipt size={18} className="text-text-muted shrink-0" />
-                  <div>
-                    <p className="text-sm text-text font-medium">{formatDateTime(p.processado_em)}</p>
-                    <p className="text-xs text-text-muted">
-                      {p.dias_concedidos} dias · válido até {formatDate(p.valida_ate)}
-                    </p>
+              <div key={`${p.processado_em}-${p.payment_id ?? 'admin'}`} className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-surface">
+                  <div className="flex items-center gap-2">
+                    <Receipt size={18} className="text-text-muted shrink-0" />
+                    <div>
+                      <p className="text-sm text-text font-medium">{formatDateTime(p.processado_em)}</p>
+                      <p className="text-xs text-text-muted">
+                        {p.dias_concedidos} dias · válido até {formatDate(p.valida_ate)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-text-secondary">{formatValor(p.valor)}</span>
+                    <Badge tone={p.origem === 'PIX' ? 'success' : 'neutral'}>
+                      {p.origem === 'PIX' ? 'Pix' : 'Admin'}
+                    </Badge>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-text-secondary">{formatValor(p.valor)}</span>
-                  <Badge tone={p.origem === 'PIX' ? 'success' : 'neutral'}>
-                    {p.origem === 'PIX' ? 'Pix' : 'Admin'}
-                  </Badge>
-                </div>
+                {p.finpilot_code && (
+                  <div className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border border-border bg-surface-secondary">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Gift size={15} className="text-accent shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-text">1 mês grátis no FinPilot</p>
+                        <p className="text-xs text-text-muted font-mono truncate">{p.finpilot_code}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <a
+                        href="https://finpilot.ia.br"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded hover:bg-surface transition-colors text-text-muted hover:text-text"
+                        title="Abrir FinPilot"
+                      >
+                        <ExternalLink size={14} />
+                      </a>
+                      <button
+                        onClick={() => copyCode(p.finpilot_code!)}
+                        className="p-1.5 rounded hover:bg-surface transition-colors text-text-muted hover:text-text"
+                        title="Copiar código"
+                      >
+                        {copiedCode === p.finpilot_code ? <Check size={14} className="text-success" /> : <Copy size={14} />}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

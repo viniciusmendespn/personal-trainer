@@ -88,6 +88,11 @@ Parameters:
     Default: ""
     NoEcho: true
     Description: "Access Token Mercado Pago DA PLATAFORMA — cobra o personal pela assinatura (Gestão Pro). Distinto do token que cada personal configura para cobrar seus próprios alunos."
+  PromoCodeSecret:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: "Segredo compartilhado com o FinPilot para geração de códigos promocionais (HMAC-SHA256). Gerado com openssl rand -hex 32."
 
 Conditions:
   CreateFrontendInfra: !Equals [!Ref DeployFrontendInfra, "true"]
@@ -125,6 +130,7 @@ Globals:
         VAPID_PUBLIC_KEY: !Ref VapidPublicKey
         VAPID_SUBJECT: !Ref VapidSubject
         ML_ACCESS_TOKEN: !Ref MlAccessToken
+        PROMO_CODE_SECRET: !Ref PromoCodeSecret
 
 Resources:
 

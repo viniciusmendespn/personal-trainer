@@ -23,4 +23,5 @@ resolve_s3        = true
 # trocar o segredo.
 parameter_overrides = "Stage=prod DeployFrontendInfra=true FrontendUrl=https://coachpilot.com.br VapidPublicKey=BLnFHVWhjZpTrAAzkJzfnA_rCAOEmlU0NgnWSGl7hgylqfqpypD0BZ_J01axmeqr6dU64uFZo8egzO2gEeiLRvQ"
 # VapidPrivateKey (NoEcho) — passar 1x via: sam deploy --parameter-overrides "VapidPrivateKey=SQzjIeP4b6L6xysKyYB8gPdxYUoApoCsA-ZQ_q6CFgc"
+# PromoCodeSecret (NoEcho) — passar 1x via: sam deploy --parameter-overrides "PromoCodeSecret=<valor do .env.local>"
 # Após o primeiro deploy o CloudFormation retém o valor; deploys futuros omitem o override.
