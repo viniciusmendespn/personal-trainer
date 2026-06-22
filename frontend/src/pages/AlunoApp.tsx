@@ -1383,7 +1383,7 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
             </div>
             <div className="flex flex-wrap gap-2">
               {prsFiltrados.slice(0, prLimit).map((p) => (
-                <Badge key={p.exercicio} tone="warning">{p.exercicio}: <b className="ml-1">{p.carga} kg</b></Badge>
+                <Badge key={p.exercicio} tone="warning">{p.exercicio}: <b className="ml-1">{p.carga} kg</b><span className="ml-1 text-xs opacity-70">{new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span></Badge>
               ))}
             </div>
             {prsFiltrados.length > prLimit && (
