@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Bot, Calendar, Check, Copy, CreditCard, ExternalLink, Gift, MessageCircle, Receipt, Users } from 'lucide-react'
 import { Badge, Button, Card } from '../components/ui'
 import { PixPaymentModal } from '../components/billing/PixPaymentModal'
+import { FinPilotBenefitCard } from '../components/billing/FinPilotBenefitCard'
 import { usePagamentos, usePlanoStatus } from '../hooks/usePlano'
 
 function formatDate(iso?: string | null) {
@@ -119,6 +120,8 @@ export function PlanoPage() {
           </div>
         </div>
       </Card>
+
+      {isPro && <FinPilotBenefitCard />}
 
       <Card variant="flat" className="p-6">
         <h3 className="font-display text-sm font-bold text-text mb-1">Histórico de pagamentos</h3>

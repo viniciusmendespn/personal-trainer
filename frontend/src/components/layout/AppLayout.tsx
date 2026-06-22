@@ -11,7 +11,6 @@ import { ChatWidget } from '../chat/ChatWidget'
 import { ChatContextProvider } from '../../context/ChatContext'
 import { TrialBanner } from '../billing/TrialBanner'
 import { RenewalBanner } from '../billing/RenewalBanner'
-import { FinPilotBanner } from '../billing/FinPilotBanner'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Visão geral', icon: LayoutDashboard },
@@ -183,7 +182,6 @@ export function AppLayout() {
       <ImpersonationBanner />
       <TrialBanner />
       <RenewalBanner />
-      <FinPilotBanner />
       <div className="flex flex-1 min-h-0">
       {/* Desktop sidebar (lg+) */}
       <aside className="hidden lg:flex w-56 shrink-0 border-r border-border bg-surface/60 backdrop-blur-xl p-4">

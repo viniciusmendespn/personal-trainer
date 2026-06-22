@@ -192,33 +192,6 @@ export default function PricingSection() {
               </div>
             </div>
 
-            {/* Bônus FinPilot */}
-            <div style={{
-              marginBottom: 20,
-              padding: '12px 14px',
-              borderRadius: 10,
-              background: 'linear-gradient(135deg, rgba(20,184,166,0.12) 0%, rgba(16,185,129,0.08) 100%)',
-              border: '1px solid rgba(20,184,166,0.25)',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 10,
-            }}>
-              <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>🎁</span>
-              <div>
-                <div style={{ color: '#14b8a6', fontWeight: 700, fontSize: 13, marginBottom: 2 }}>
-                  Bônus: 1 mês grátis no FinPilot por mês pago
-                </div>
-                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, lineHeight: 1.5 }}>
-                  A cada pagamento confirmado, você recebe um código promocional para usar no{' '}
-                  <a href="https://finpilot.ia.br" target="_blank" rel="noopener noreferrer"
-                    style={{ color: 'rgba(20,184,166,0.9)', textDecoration: 'none' }}>
-                    FinPilot
-                  </a>
-                  {' '}— planilha inteligente com IA para controle financeiro pessoal.
-                </div>
-              </div>
-            </div>
-
             <Link
               to="/signup"
               style={{
@@ -305,6 +278,93 @@ export default function PricingSection() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Seção FinPilot */}
+        <div style={{
+          background: 'linear-gradient(160deg, #071a10 0%, #030d07 55%, #020617 100%)',
+          border: '1px solid rgba(74, 222, 128, 0.2)',
+          borderRadius: 20,
+          padding: 'clamp(28px, 4vw, 48px)',
+          marginBottom: 56,
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          {/* glows */}
+          <div style={{ position: 'absolute', top: -100, right: -100, width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(22,163,74,0.15) 0%, transparent 70%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: -80, left: -80, width: 250, height: 250, borderRadius: '50%', background: 'radial-gradient(circle, rgba(74,222,128,0.07) 0%, transparent 70%)', filter: 'blur(30px)', pointerEvents: 'none' }} />
+
+          {/* header */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, marginBottom: 24, position: 'relative' }}>
+            <img src="https://djkvxxf33pska.cloudfront.net/pwa-64x64.png" alt="FinPilot" style={{ width: 52, height: 52, borderRadius: 12 }} />
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <span style={{ color: '#f1f5f9', fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 'clamp(18px, 3vw, 24px)' }}>FinPilot</span>
+                <span style={{ background: 'linear-gradient(135deg, #4ade80, #16a34a)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Bônus Gestão Pro
+                </span>
+              </div>
+              <p style={{ color: '#64748b', fontSize: 14, margin: '2px 0 0' }}>
+                Planilha inteligente com IA para controle financeiro pessoal
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 32, alignItems: 'center', position: 'relative' }}>
+            {/* texto esquerda */}
+            <div>
+              <h3 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 'clamp(18px, 2.5vw, 26px)', fontWeight: 800, color: '#f1f5f9', lineHeight: 1.3, marginBottom: 12 }}>
+                A cada mês pago no Gestão Pro,<br />
+                <span style={{ background: 'linear-gradient(135deg, #4ade80, #16a34a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  1 mês grátis no FinPilot.
+                </span>
+              </h3>
+              <p style={{ color: '#94a3b8', fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>
+                Assine o Gestão Pro e receba automaticamente um código promocional após cada pagamento confirmado. Gerencie suas finanças pessoais com a praticidade de uma planilha e o poder de uma IA em português.
+              </p>
+              <a
+                href="https://finpilot.ia.br"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  background: 'linear-gradient(135deg, #4ade80, #16a34a)',
+                  color: '#fff', fontWeight: 700, fontSize: 14,
+                  padding: '11px 22px', borderRadius: 8,
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 20px rgba(22,163,74,0.35)',
+                }}
+              >
+                Conhecer o FinPilot
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+              </a>
+            </div>
+
+            {/* features direita */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {[
+                { icon: '📊', label: 'Planilha digital', desc: 'Edição inline igual ao Excel — sem fórmulas' },
+                { icon: '🤖', label: 'IA em português', desc: '"Adicione R$ 200 de mercado em março"' },
+                { icon: '📅', label: 'Visão anual', desc: 'Gráfico de saldo nos 12 meses' },
+                { icon: '💳', label: 'Controle de cartões', desc: 'Gastos integrados à conta' },
+                { icon: '⏱️', label: 'Checkpoints', desc: 'Restaure qualquer estado financeiro' },
+                { icon: '📱', label: 'App no celular', desc: 'PWA — instala sem loja de apps' },
+              ].map((f) => (
+                <div key={f.label} style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  borderRadius: 10, padding: '10px 12px',
+                  display: 'flex', alignItems: 'flex-start', gap: 8,
+                }}>
+                  <span style={{ fontSize: 16, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>{f.icon}</span>
+                  <div>
+                    <p style={{ color: '#e2e8f0', fontSize: 12, fontWeight: 600, margin: 0 }}>{f.label}</p>
+                    <p style={{ color: '#475569', fontSize: 11, margin: '2px 0 0', lineHeight: 1.4 }}>{f.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
