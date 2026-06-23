@@ -40,7 +40,7 @@ O portal possui um **menu lateral (sidebar)** com as seguintes seções:
 - **Base de IA** — arquivos de conhecimento para o agente de IA
 - **Ajuda** — esta central de ajuda
 
-No canto superior esquerdo está o **menu do usuário** (foto de perfil + nome) com acesso a:
+No **rodapé do menu lateral** está o **menu do usuário** (foto de perfil + nome), com acesso a:
 - Meu Perfil
 - Configurações
 - Sair
@@ -100,6 +100,9 @@ Na página do aluno, clique em **"Editar"** para atualizar nome, telefone, statu
 #### Desativar aluno
 Edite o aluno e mude o status para **Inativo**. O aluno perde acesso ao app até ser reativado.
 
+#### Filtrar e ordenar a lista de alunos
+No topo da página **Alunos**, use os botões **"Ativos"**, **"Inativos"** ou **"Todos"** para filtrar a lista por status (o padrão ao abrir a página é "Ativos"). A lista é sempre ordenada automaticamente pela **última atualização** (alunos com mudanças mais recentes aparecem primeiro), e cada card mostra "Atualizado há [tempo]".
+
 ---
 
 ### 3. TREINOS
@@ -121,6 +124,17 @@ Edite o aluno e mude o status para **Inativo**. O aluno perde acesso ao app até
    - Intervalo entre séries (segundos)
    - Link de vídeo de referência (opcional)
 4. Arraste para reordenar os exercícios
+
+Ao digitar o nome do exercício, o campo sugere automaticamente (autocomplete) tanto os exercícios da biblioteca quanto os exercícios que **esse mesmo aluno já usou antes** em outros treinos. Se você escolher um nome já usado pelo aluno, o link de vídeo e o grupo muscular são preenchidos automaticamente com base no último uso. Exercícios com o mesmo nome em treinos diferentes têm a evolução de carga e os recordes (PRs) **unificados automaticamente** na aba Evolução/Recordes do aluno — não é preciso recriar o exercício do zero para manter o histórico.
+
+#### Exercícios substitutos
+Você pode cadastrar **substitutos** para um exercício — alternativas que o aluno pode escolher executar no lugar do original durante a sessão (ex.: por falta de equipamento ou preferência).
+
+**Como configurar:**
+- **Pela Biblioteca:** ao cadastrar um exercício na biblioteca, defina substitutos que valem para todos os alunos que usarem aquele exercício.
+- **Por treino:** na página do aluno, ao montar ou editar um exercício do treino, defina substitutos específicos só para aquele aluno/treino, complementando os da biblioteca.
+
+Durante a sessão, o aluno toca no ícone de **substituição (setas ↔)** ao lado do exercício e escolhe entre o original e os substitutos disponíveis. O substituto escolhido ganha seu próprio bloco de séries (que pode ter prescrição diferente do original) e aparece marcado como "substituído por" no histórico da sessão.
 
 #### Copiar treino (templates)
 1. Na página do aluno, clique no treino que deseja copiar
@@ -485,6 +499,9 @@ Acesse **Plano** no menu lateral.
 
 **Histórico de pagamentos:** Na página **Plano**, a seção "Histórico de pagamentos" lista todos os pagamentos do Gestão Pro confirmados via Pix (ou concedidos manualmente pelo suporte), com data, dias concedidos e validade resultante.
 
+#### Benefício FinPilot
+A cada mês pago no **Gestão Pro**, você recebe automaticamente um código para **1 mês grátis no FinPilot** — um gerenciador financeiro pessoal (não relacionado à gestão de alunos) com planilha digital e um assistente de IA em português. O código fica disponível na seção "Histórico de pagamentos" da página **Plano**. Quando o Gestão Pro está ativo, um banner no topo do portal mostra **"1 mês grátis no FinPilot"** com o botão **"Ver código"**, que leva direto à página Plano. Use o botão **"Conhecer o FinPilot"** no card para acessar o site do FinPilot e ativar o código.
+
 ---
 
 ## PERGUNTAS FREQUENTES (FAQ)
@@ -527,6 +544,12 @@ R: Os alunos que excedem o limite de 3 ficam com o perfil bloqueado (você não 
 
 **P: Sou obrigado a configurar o Mercado Pago para cobrar meus alunos?**
 R: Não. Sem o Access Token configurado, você gerencia cobranças e pagamentos manualmente. O Mercado Pago só adiciona a opção de o aluno pagar via Pix sozinho.
+
+**P: O que é o FinPilot?**
+R: É um benefício exclusivo para assinantes do Gestão Pro — um gerenciador financeiro pessoal (separado do CoachPilot) que você ganha gratuitamente por 1 mês a cada mensalidade paga. O código fica no histórico de pagamentos da página Plano.
+
+**P: Para que serve o exercício substituto?**
+R: Permite que o aluno troque um exercício prescrito por uma alternativa equivalente durante a sessão (por exemplo, por falta de equipamento). Você cadastra os substitutos na Biblioteca ou diretamente no treino do aluno, e ele escolhe qual executar na hora do treino.
 
 ---
 

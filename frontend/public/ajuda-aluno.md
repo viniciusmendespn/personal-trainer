@@ -64,7 +64,9 @@ Mostra os exercícios do seu treino atual com:
 - Séries × Repetições prescritas
 - Carga prescrita (em kg)
 - Intervalo de descanso (em segundos)
-- Link de vídeo de referência (quando disponível)
+- Link de vídeo de referência — se seu personal não cadastrou um vídeo específico, o app busca automaticamente o exercício no YouTube para você ter uma referência
+
+Quando você tem mais de um treino cadastrado (ex.: Treino A, Treino B), eles aparecem numerados (1, 2, 3...) na ordem definida pelo seu personal.
 
 #### Como ver o treino antes de iniciar
 1. Na aba **Treino**, toque em **"Ver treino"** sobre o treino do dia
@@ -97,11 +99,20 @@ Preencher o RPE é opcional mas ajuda seu personal a ajustar as cargas.
 #### Como finalizar o treino
 Após registrar o último exercício, toque em **"Finalizar Treino"**. O app salva sua sessão, calcula pontos e verifica se você bateu algum recorde.
 
+#### Como cancelar o treino
+Se precisar interromper a sessão sem registrar nada, toque em **"Cancelar treino"** (ao lado de "Finalizar treino") e confirme. Nada do que foi feito naquela sessão é salvo — ela é descartada por completo.
+
 #### Novo Personal Record (PR)
 Quando você levanta uma carga maior do que já registrou em um exercício, o app exibe uma celebração de **"Novo Recorde!"** e você ganha 10 pontos extras.
 
 #### Recursos educacionais do exercício
 Quando seu personal vincula um material de apoio (texto, foto ou vídeo) a um exercício, aparece um ícone de **livro** ao lado dele, tanto na pré-visualização quanto na sessão ativa. Toque nele para abrir o conteúdo.
+
+#### Ver feed do exercício
+Durante a sessão ativa, cada exercício tem um ícone de **balão de mensagem** que leva direto para as publicações daquele exercício no feed (relatos, dúvidas, correções do personal). É diferente do ícone de livro: o livro mostra material de apoio, o balão mostra o histórico de publicações sobre aquele exercício.
+
+#### Exercícios substitutos
+Se seu personal cadastrou alternativas para um exercício, aparece um ícone de **substituição (setas ↔)** ao lado dele. Toque para ver as opções e escolher entre o exercício original e os substitutos disponíveis (por exemplo, se o equipamento prescrito não estiver disponível na academia). O substituto escolhido tem seu próprio bloco de séries para você registrar, e fica marcado como "substituído por" no histórico da sessão.
 
 ---
 
@@ -114,12 +125,14 @@ Mostra cinco sub-abas:
 **Carga** — gráfico de linha mostrando a evolução do peso levantado em cada exercício ao longo do tempo
 - Selecione o exercício que quer ver pelo campo de busca
 - O gráfico mostra os últimos registros
+- Se você fez o mesmo exercício (mesmo nome) em treinos diferentes, a evolução é unificada automaticamente em um único gráfico — não fica dividida por treino
 
-**Volume** — gráfico de barras mostrando o volume de treino semanal (séries × reps × carga)
+**Volume** — gráfico de barras empilhadas mostrando o volume de treino semanal (séries × reps × carga), dividido por **grupo muscular** (cada cor representa um grupo). Ajuda a ver se o treino está balanceado entre os grupos ao longo das semanas.
 
 **Recordes** — seus personal records (PRs) em cada exercício
 - Busque pelo nome do exercício
 - Mostra a melhor carga já registrada e a data
+- Exercícios com o mesmo nome em treinos diferentes contam para o mesmo recorde — o PR é único por nome de exercício, não por treino
 
 **Conquistas** — galeria das 8 badges disponíveis
 - Badges desbloqueadas aparecem coloridas
@@ -402,6 +415,12 @@ R: Sim. Na aba Treino, toque em "Ver treino" para conferir todos os exercícios,
 
 **P: Como pago minha mensalidade pelo app?**
 R: Na aba Personal, se seu personal tiver o Pix configurado, toque em "Pagar via Pix" na cobrança pendente. Se não houver essa opção, fale diretamente com seu personal.
+
+**P: Posso trocar um exercício por outro durante o treino?**
+R: Só se seu personal tiver cadastrado um substituto para aquele exercício. Quando existir, aparece um ícone de setas (↔) ao lado do exercício — toque nele para escolher entre o original e os substitutos disponíveis.
+
+**P: Errei e quero descartar o treino que comecei. Dá para fazer isso?**
+R: Sim. Toque em "Cancelar treino" durante a sessão ativa e confirme. A sessão é descartada e nada é salvo.
 
 ---
 
