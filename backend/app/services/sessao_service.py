@@ -5,6 +5,7 @@ Sessão ativa = 1 item denormalizado `SESSION#ACTIVE` que embute a sequência de
 (sessão, exercício) com séries acumuladas via list_append (1 write). Usado pelo portal e
 pelo agente."""
 import time
+import unicodedata
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import HTTPException
@@ -232,12 +233,13 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
     ex_grupo = next((e.get("grupo") for e in snaps if e.get("exercicio_id") == ex_id), ex.get("grupo")) or "Sem grupo"
     if not ex_id:
         raise HTTPException(400, "Exercício não identificado")
+    chave = chave_exercicio(ex_nome)
     pk = keys.pk_aluno(aluno_id)
     on_insert = {
         "sessao_id": s["sessao_id"], "exercicio_id": ex_id, "exercicio_nome": ex_nome,
         "aluno_id": aluno_id, "data_hora": now_iso(),
         "canal_origem": canal.value, "classificacao": classificacao.value, "ator": ator.value,
-        "GSI1PK": keys.gsi1_registro(aluno_id, ex_id), "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
+        "GSI1PK": keys.gsi1_registro(aluno_id, chave), "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
         "ttl": int(time.time()) + SESSION_TTL_S,   # expira junto com a sessão se abandonada
     }
     updated = repo.append_series(pk, keys.sk_registro(s["sessao_id"], ex_id), series, on_insert)
@@ -258,7 +260,7 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
     pr_novo = None
     if cargas:
         carga_max = max(cargas)
-        if repo.update_if_greater(pk, keys.sk_stats_pr(ex_id), "carga", carga_max,
+        if repo.update_if_greater(pk, keys.sk_stats_pr(chave), "carga", carga_max,
                                   extra={"exercicio_nome": ex_nome, "data": now_iso()}):
             pr_novo = carga_max
     return updated, pr_novo
@@ -291,6 +293,7 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
         raise HTTPException(400, "Exercício não identificado")
     ex_nome = next((e.get("nome") for e in snaps if e.get("exercicio_id") == ex_id), ex_atual.get("nome"))
     ex_grupo = next((e.get("grupo") for e in snaps if e.get("exercicio_id") == ex_id), ex_atual.get("grupo")) or "Sem grupo"
+    chave = chave_exercicio(ex_nome)
     pk = keys.pk_aluno(aluno_id)
     sk = keys.sk_registro(s["sessao_id"], ex_id)
     old = repo.get_item(pk, sk)
@@ -299,7 +302,7 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
         "sessao_id": s["sessao_id"], "exercicio_id": ex_id, "exercicio_nome": ex_nome,
         "aluno_id": aluno_id, "data_hora": now_iso(),
         "canal_origem": canal.value, "classificacao": classificacao.value, "ator": ator.value,
-        "GSI1PK": keys.gsi1_registro(aluno_id, ex_id), "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
+        "GSI1PK": keys.gsi1_registro(aluno_id, chave), "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
         "ttl": int(time.time()) + SESSION_TTL_S,   # expira junto com a sessão se abandonada
     }
     updated = repo.put_series(pk, sk, series, on_insert, set_always={"substituto_nome": substituto_nome})
@@ -313,7 +316,7 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
     pr_novo = None
     if not substituto_nome:
         cargas = [c for c in (_num(it.get("carga")) for it in series) if c is not None]
-        if cargas and repo.update_if_greater(pk, keys.sk_stats_pr(ex_id), "carga", max(cargas),
+        if cargas and repo.update_if_greater(pk, keys.sk_stats_pr(chave), "carga", max(cargas),
                                              extra={"exercicio_nome": ex_nome, "data": now_iso()}):
             pr_novo = max(cargas)
     return updated, pr_novo
@@ -341,7 +344,8 @@ def sessao_exercicios(aluno_id: str) -> dict | None:
 
 def historico_exercicio(aluno_id: str, exercicio_id: str, limit: int = 1) -> list[dict]:
     """Último(s) registro(s) do exercício via GSI1 — sem varrer histórico (ESPEC §4.1)."""
-    return repo.clean_all(repo.query_gsi1_last(keys.gsi1_registro(aluno_id, exercicio_id), limit))
+    chave = chave_exercicio(nome_por_exercicio_id(aluno_id, exercicio_id))
+    return repo.clean_all(repo.query_gsi1_last(keys.gsi1_registro(aluno_id, chave), limit))
 
 
 def _num(v) -> float | None:
@@ -353,10 +357,30 @@ def _num(v) -> float | None:
         return None
 
 
+def chave_exercicio(nome: str | None) -> str:
+    """Chave canônica do nome do exercício (sem acento/caixa/espaços extras) — usada para
+    agrupar métricas (evolução/PR) de exercícios homônimos cadastrados em treinos diferentes,
+    já que cada `Exercicio` ganha um `exercicio_id` próprio mesmo quando repete o nome."""
+    if not nome:
+        return ""
+    sem_acento = unicodedata.normalize("NFKD", nome).encode("ascii", "ignore").decode()
+    return " ".join(sem_acento.lower().split())
+
+
+def nome_por_exercicio_id(aluno_id: str, exercicio_id: str) -> str | None:
+    """Resolve o nome atual de um exercício do aluno a partir do `exercicio_id` (mesma query
+    de `list_exercicios_aluno`, sem scan — ESPEC §4.1)."""
+    items = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")
+    return next((i.get("nome") for i in items if i.get("exercicio_id") == exercicio_id), None)
+
+
 def evolucao_exercicio(aluno_id: str, exercicio_id: str, limit: int = 100) -> dict:
     """Série temporal (carga máx + tonelagem por sessão) + PR de um exercício, via GSI1
-    (query targeted, não scan — ESPEC §4.1). Carga não-numérica é ignorada nos cálculos."""
-    items = repo.query_gsi1_last(keys.gsi1_registro(aluno_id, exercicio_id), limit)
+    (query targeted, não scan — ESPEC §4.1). Carga não-numérica é ignorada nos cálculos.
+    Agrupa por nome (chave_exercicio): exercícios homônimos cadastrados em treinos diferentes
+    compartilham a mesma evolução."""
+    chave = chave_exercicio(nome_por_exercicio_id(aluno_id, exercicio_id))
+    items = repo.query_gsi1_last(keys.gsi1_registro(aluno_id, chave), limit)
     items.sort(key=lambda i: i.get("GSI1SK", ""))  # ascendente por tempo
     serie: list[dict] = []
     pr: dict | None = None

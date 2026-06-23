@@ -15,6 +15,7 @@ import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal,
 import { PhoneInput } from '../components/PhoneInput'
 import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
+import { useExerciciosAluno } from '../hooks/useEvolucao'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
 import { useNotas, useCreateNota } from '../hooks/useNotas'
 import { treinosApi, type SessaoHistoricoPersonal } from '../api/treinos'
@@ -675,6 +676,7 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
   const confirm = useConfirm()
   const { data: exs } = useExercicios(alunoId, open ? treino.treino_id : '')
   const { data: biblioteca } = useBiblioteca()
+  const { data: exerciciosAluno } = useExerciciosAluno(alunoId)
   const createEx = useCreateExercicio(alunoId, treino.treino_id)
   const [tNome, setTNome] = useState(treino.nome)
   const [tFoco, setTFoco] = useState(treino.foco ?? '')
@@ -772,7 +774,7 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
       {open && (
         <div className="mt-3 pl-2 sm:pl-6 space-y-1">
           {(exs ?? []).sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)).map((ex) => (
-            <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} biblioteca={biblioteca} />
+            <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} />
           ))}
           <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={() => setAddingEx(true)}>
             <span className="flex items-center gap-1"><Plus size={14} /> Exercício</span>
@@ -781,17 +783,18 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
       )}
 
       <Modal open={addingEx} onClose={() => setAddingEx(false)} title="Novo exercício" size="lg">
-        <ExercicioForm biblioteca={biblioteca} submitLabel="Adicionar exercício" submitting={createEx.isPending} onSubmit={addEx} />
+        <ExercicioForm biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} submitLabel="Adicionar exercício" submitting={createEx.isPending} onSubmit={addEx} />
       </Modal>
     </Card>
   )
 }
 
 function ExercicioForm({
-  initial, biblioteca, onSubmit, submitting, submitLabel,
+  initial, biblioteca, exerciciosAluno, onSubmit, submitting, submitLabel,
 }: {
   initial?: Partial<Exercicio>
   biblioteca?: { exlib_id: string; nome: string; grupo?: string; video_url?: string; links_uteis?: string[]; substitutos?: ExercicioSubstituto[] }[]
+  exerciciosAluno?: Exercicio[]
   onSubmit: (body: ExercicioCreate) => Promise<void>
   submitting?: boolean
   submitLabel: string
@@ -810,16 +813,33 @@ function ExercicioForm({
   const [substitutos, setSubstitutos] = useState<ExercicioSubstituto[]>(initial?.substitutos ?? [])
   const [substitutosExcluidos, setSubstitutosExcluidos] = useState<string[]>(initial?.substitutos_excluidos ?? [])
 
+  const exerciciosAlunoUnicos = useMemo(() => {
+    const porNome = new Map<string, Exercicio>()
+    for (const e of exerciciosAluno ?? []) {
+      const k = e.nome.toLowerCase()
+      if (!porNome.has(k)) porNome.set(k, e)
+    }
+    return Array.from(porNome.values())
+  }, [exerciciosAluno])
+
   const grupos = useMemo(
-    () => Array.from(new Set((biblioteca ?? []).map((b) => b.grupo).filter((g): g is string => !!g))).sort(),
-    [biblioteca]
+    () => Array.from(new Set([
+      ...exerciciosAlunoUnicos.map((e) => e.grupo),
+      ...(biblioteca ?? []).map((b) => b.grupo),
+    ].filter((g): g is string => !!g))).sort(),
+    [biblioteca, exerciciosAlunoUnicos]
   )
 
   function onNome(v: string) {
     setNome(v)
+    // Prioriza o uso anterior do próprio aluno (mais específico) sobre a biblioteca geral —
+    // ao repetir o nome, a evolução é unificada automaticamente (agrupada por nome no backend).
+    const usado = exerciciosAlunoUnicos.find((e) => e.nome.toLowerCase() === v.toLowerCase())
     const lib = biblioteca?.find((b) => b.nome.toLowerCase() === v.toLowerCase())
-    if (lib?.video_url) setVid(lib.video_url)
-    if (lib?.grupo) setGrupo(lib.grupo)
+    const video = usado?.video_url || lib?.video_url
+    const grp = usado?.grupo || lib?.grupo
+    if (video) setVid(video)
+    if (grp) setGrupo(grp)
   }
 
   async function submit(e: React.FormEvent) {
@@ -850,7 +870,10 @@ function ExercicioForm({
           />
           <Input label="Grupo muscular" list={grupoListId} value={grupo} onChange={(e) => setGrupo(e.target.value)} />
         </div>
-        <datalist id={listId}>{biblioteca?.map((b) => <option key={b.exlib_id} value={b.nome} />)}</datalist>
+        <datalist id={listId}>
+          {exerciciosAlunoUnicos.map((e) => <option key={e.exercicio_id} value={e.nome} />)}
+          {biblioteca?.map((b) => <option key={b.exlib_id} value={b.nome} />)}
+        </datalist>
         <datalist id={grupoListId}>{grupos.map((g) => <option key={g} value={g} />)}</datalist>
       </div>
       <div>
@@ -886,10 +909,11 @@ function ExercicioForm({
 }
 
 function ExercicioRow({
-  alunoId, treinoId, ex, biblioteca,
+  alunoId, treinoId, ex, biblioteca, exerciciosAluno,
 }: {
   alunoId: string; treinoId: string; ex: Exercicio
   biblioteca?: { exlib_id: string; nome: string; grupo?: string; video_url?: string; substitutos?: ExercicioSubstituto[] }[]
+  exerciciosAluno?: Exercicio[]
 }) {
   const [edit, setEdit] = useState(false)
   const [mediaOpen, setMediaOpen] = useState(false)
@@ -937,7 +961,7 @@ function ExercicioRow({
       </div>
 
       <Modal open={edit} onClose={() => setEdit(false)} title="Editar exercício" size="lg">
-        <ExercicioForm initial={ex} biblioteca={biblioteca} submitLabel="Salvar" submitting={upd.isPending} onSubmit={save} />
+        <ExercicioForm initial={ex} biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} submitLabel="Salvar" submitting={upd.isPending} onSubmit={save} />
       </Modal>
 
       <ExercicioMediaModal

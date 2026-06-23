@@ -207,7 +207,8 @@ def _context(aluno_id: str) -> str:
     # Último desempenho do exercício atual (sessão anterior)
     ult_data = None
     if ex_id:
-        last = repo.query_gsi1_last(keys.gsi1_registro(aluno_id, ex_id), 1)
+        chave = sessao_service.chave_exercicio(ex.get("nome"))
+        last = repo.query_gsi1_last(keys.gsi1_registro(aluno_id, chave), 1)
         if last:
             ult_data = {"series": repo.clean(last[0]).get("series_exec")}
 

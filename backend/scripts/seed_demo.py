@@ -63,6 +63,7 @@ from app.models.treino import Treino  # noqa: E402
 from app.repositories import dynamo_repo as repo  # noqa: E402
 from app.repositories import keys  # noqa: E402
 from app.services import alerta_service, feed_global_service, notif_service, pontos_service, postagem_service  # noqa: E402
+from app.services import sessao_service  # noqa: E402
 from app.utils import new_id  # noqa: E402
 
 NOW = datetime.now(timezone.utc)
@@ -362,8 +363,9 @@ def registrar_sessao_historica(aluno_id: str, treino: dict, dt: datetime) -> tup
             sessao_id=sessao_id, exercicio_id=ex["exercicio_id"], exercicio_nome=ex["nome"], aluno_id=aluno_id,
             series_exec=series, data_hora=iso_at(dt), canal_origem=canal, classificacao=classificacao, ator=ator,
         )
+        chave = sessao_service.chave_exercicio(ex["nome"])
         item = registro.model_dump()
-        item["GSI1PK"] = keys.gsi1_registro(aluno_id, ex["exercicio_id"])
+        item["GSI1PK"] = keys.gsi1_registro(aluno_id, chave)
         item["GSI1SK"] = keys.gsi1sk_registro(epoch_ms_at(dt))
         repo.put_item(pk, keys.sk_registro(sessao_id, ex["exercicio_id"]), item)
         exercicios_exec.append({
@@ -383,7 +385,7 @@ def registrar_sessao_historica(aluno_id: str, treino: dict, dt: datetime) -> tup
             repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_volume": volume}, set_={"ultimo_treino": iso_at(dt)})
             repo.add_and_set(pk, keys.sk_stats_week(isoweek_at(dt)), add={"volume": volume}, set_={"semana": isoweek_at(dt)})
         if cargas:
-            repo.update_if_greater(pk, keys.sk_stats_pr(ex["exercicio_id"]), "carga", max(cargas),
+            repo.update_if_greater(pk, keys.sk_stats_pr(chave), "carga", max(cargas),
                                    extra={"exercicio_nome": ex["nome"], "data": iso_at(dt)})
 
     duracao_s = 50 * 60 + rng.randint(-600, 600)

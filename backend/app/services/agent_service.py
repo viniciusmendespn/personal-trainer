@@ -130,10 +130,11 @@ def handle_chat_turn(personal_id: str, aluno_id: str, text: str, ator: Ator) -> 
     return reply
 
 
-def _ult(aluno_id: str, exercicio_id: str | None) -> dict | None:
+def _ult(aluno_id: str, exercicio_id: str | None, nome: str | None) -> dict | None:
     if not exercicio_id:
         return None
-    last = repo.query_gsi1_last(keys.gsi1_registro(aluno_id, exercicio_id), 1)
+    chave = sessao_service.chave_exercicio(nome)
+    last = repo.query_gsi1_last(keys.gsi1_registro(aluno_id, chave), 1)
     if not last:
         return None
     return {"series": repo.clean(last[0]).get("series_exec")}
@@ -151,7 +152,7 @@ def montar_contexto(aluno_id: str, nome: str | None = None) -> dict:
                "s": ex.get("series"), "rp": ex.get("reps_prescritas"), "cg": ex.get("carga_prescrita")},
         "ord": s.get("ordem_atual"), "tot": s.get("total_ex"),
     }
-    ult = _ult(aluno_id, ex.get("exercicio_id"))
+    ult = _ult(aluno_id, ex.get("exercicio_id"), ex.get("nome"))
     if ult:
         out["ult"] = ult
     return out
@@ -172,7 +173,8 @@ def registrar(aluno_id: str, series: list, exercicio_id: str | None = None,
 
 
 def consultar_historico(aluno_id: str, exercicio_id: str) -> dict:
-    last = repo.query_gsi1_last(keys.gsi1_registro(aluno_id, exercicio_id), 1)
+    chave = sessao_service.chave_exercicio(sessao_service.nome_por_exercicio_id(aluno_id, exercicio_id))
+    last = repo.query_gsi1_last(keys.gsi1_registro(aluno_id, chave), 1)
     if not last:
         return {"vazio": 1}
     le = repo.clean(last[0])
