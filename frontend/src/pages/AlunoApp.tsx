@@ -23,7 +23,7 @@ import { renderMarkdownLite } from '../components/chat/markdownLite'
 import { AlunoPerfilModal } from '../components/aluno/AlunoPerfilModal'
 import { alunoFinanceiroApi } from '../api/financeiro'
 import { PixModal } from '../components/financeiro/PixModal'
-import type { Cobranca, ExercicioSubstituto } from '../types'
+import type { Cobranca, ExercicioSubstituto, SeriePrescrita } from '../types'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -1026,21 +1026,78 @@ function RecursosModal({ recursos, onClose }: { recursos: PostGlobal[]; onClose:
   )
 }
 
-function SubstitutosModal({ substitutos, onClose }: { substitutos: ExercicioSubstituto[]; onClose: () => void }) {
+function SubstitutoOpcao({
+  nome, series_prescritas, video_url, observacao, selecionado, interativo, onClick,
+}: {
+  nome: string
+  series_prescritas?: SeriePrescrita[]
+  video_url?: string
+  observacao?: string
+  selecionado: boolean
+  interativo: boolean
+  onClick?: () => void
+}) {
+  const conteudo = (
+    <div className="space-y-1">
+      <p className={`text-sm font-medium ${selecionado && interativo ? 'text-accent' : ''}`}>
+        {nome}{selecionado && interativo ? ' ✓' : ''}
+      </p>
+      {series_prescritas?.length ? <SeriesPrescritasCompact items={series_prescritas} /> : null}
+      {video_url && (
+        <a href={video_url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1 text-xs text-accent-hover hover:underline">
+          <Video size={12} /> Ver vídeo de execução
+        </a>
+      )}
+      {observacao && <p className="text-xs text-text-secondary whitespace-pre-wrap">{observacao}</p>}
+    </div>
+  )
+  if (!interativo) return conteudo
   return (
-    <Modal open onClose={onClose} title="Alternativas para este exercício" size="lg">
-      <div className="space-y-3">
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full text-left p-2 rounded-lg border transition-colors ${selecionado ? 'border-accent bg-accent/5' : 'border-border hover:bg-surface-elevated'}`}
+    >
+      {conteudo}
+    </button>
+  )
+}
+
+function SubstitutosModal({
+  substitutos, onClose, original, ativo, onEscolher,
+}: {
+  substitutos: ExercicioSubstituto[]
+  onClose: () => void
+  original?: { nome: string; series_prescritas?: SeriePrescrita[]; video_url?: string; observacao?: string }
+  ativo?: string | null
+  onEscolher?: (item: ExercicioSubstituto | null) => void
+}) {
+  const interativo = !!onEscolher
+  return (
+    <Modal open onClose={onClose} title={interativo ? 'Escolher exercício' : 'Alternativas para este exercício'} size="lg">
+      <div className="space-y-2">
+        {original && (
+          <SubstitutoOpcao
+            nome={original.nome}
+            series_prescritas={original.series_prescritas}
+            video_url={original.video_url}
+            observacao={original.observacao}
+            selecionado={!ativo}
+            interativo={interativo}
+            onClick={() => { onEscolher?.(null); onClose() }}
+          />
+        )}
         {substitutos.map((s) => (
-          <div key={s.nome} className="space-y-1">
-            <p className="text-sm font-medium">{s.nome}</p>
-            {s.series_prescritas?.length ? <SeriesPrescritasCompact items={s.series_prescritas} /> : null}
-            {s.video_url && (
-              <a href={s.video_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-accent-hover hover:underline">
-                <Video size={12} /> Ver vídeo de execução
-              </a>
-            )}
-            {s.observacao && <p className="text-xs text-text-secondary whitespace-pre-wrap">{s.observacao}</p>}
-          </div>
+          <SubstitutoOpcao
+            key={s.nome}
+            nome={s.nome}
+            series_prescritas={s.series_prescritas}
+            video_url={s.video_url}
+            observacao={s.observacao}
+            selecionado={ativo === s.nome}
+            interativo={interativo}
+            onClick={() => { onEscolher?.(s); onClose() }}
+          />
         ))}
       </div>
     </Modal>
@@ -1053,26 +1110,42 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
   const [recursosOpen, setRecursosOpen] = useState(false)
   const [substitutosOpen, setSubstitutosOpen] = useState(false)
   const [pr, setPr] = useState<number | null>(null)
+  const [variante, setVariante] = useState<ExercicioSubstituto | null>(
+    () => ex.substitutos_efetivos?.find((s) => s.nome === ex.substituto_executado) ?? null
+  )
   const feito = !!ex.registrado?.length
   const temRecursos = (ex.recursos?.length ?? 0) > 0
   const temSubstitutos = (ex.substitutos_efetivos?.length ?? 0) > 0
+  const nomeAtivo = variante?.nome ?? ex.nome
+  const videoAtivo = variante?.video_url ?? ex.video_url
+  const obsAtiva = variante?.observacao ?? ex.observacoes
+  const seriesAtivas = variante?.series_prescritas?.length ? variante.series_prescritas : ex.series_prescritas
 
-  const initRows = () => {
-    if (ex.registrado?.length) {
+  const buildRows = (v: ExercicioSubstituto | null) => {
+    const variantNome = v?.nome ?? null
+    const registradoNome = ex.substituto_executado ?? null
+    if (ex.registrado?.length && variantNome === registradoNome) {
       return ex.registrado.map((s) => ({ carga: s.carga ?? '', reps: s.reps != null ? String(s.reps) : '', repsHint: '', cargaHint: '' }))
     }
-    if (ex.series_prescritas?.length) {
-      return ex.series_prescritas.flatMap((p) =>
+    const prescritas = v?.series_prescritas?.length ? v.series_prescritas : ex.series_prescritas
+    if (prescritas?.length) {
+      return prescritas.flatMap((p) =>
         Array.from({ length: p.series }, () => ({ carga: '', reps: '', repsHint: p.reps ? String(p.reps) : '', cargaHint: p.carga ? String(p.carga) : '' }))
       )
     }
     return Array.from({ length: ex.series ?? 1 }, () => ({ carga: '', reps: '', repsHint: '', cargaHint: ex.carga_prescrita ?? '' }))
   }
-  const [rows, setRows] = useState(initRows)
+  const [rows, setRows] = useState(() => buildRows(variante))
   const upd = (i: number, f: 'carga' | 'reps', v: string) =>
     setRows((rs) => rs.map((r, j) => (j === i ? { ...r, [f]: v } : r)))
   const removeRow = (i: number) => setRows((rs) => rs.filter((_, j) => j !== i))
   const { show } = useToast()
+
+  function escolherVariante(item: ExercicioSubstituto | null) {
+    setVariante(item)
+    setRows(buildRows(item))
+    setPr(null)
+  }
 
   const save = useMutation({
     mutationFn: () => {
@@ -1080,7 +1153,7 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
         throw new Error('Preencha a carga e as repetições de todas as séries.')
       }
       const series = rows.map((r) => ({ carga: r.carga, reps: Number(r.reps) }))
-      return alunoApi.registrar(series, ex.exercicio_id)
+      return alunoApi.registrar(series, ex.exercicio_id, variante?.nome)
     },
     onError: (e: Error) => show(e.message, 'error'),
     onSuccess: (r) => {
@@ -1097,16 +1170,23 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
         <RecursosModal recursos={ex.recursos!} onClose={() => setRecursosOpen(false)} />
       )}
       {substitutosOpen && temSubstitutos && (
-        <SubstitutosModal substitutos={ex.substitutos_efetivos!} onClose={() => setSubstitutosOpen(false)} />
+        <SubstitutosModal
+          substitutos={ex.substitutos_efetivos!}
+          original={{ nome: ex.nome, series_prescritas: ex.series_prescritas, video_url: ex.video_url, observacao: ex.observacoes }}
+          ativo={variante?.nome ?? null}
+          onEscolher={escolherVariante}
+          onClose={() => setSubstitutosOpen(false)}
+        />
       )}
       <div className="flex items-center gap-1">
         <button className="flex-1 flex items-center justify-between text-left min-w-0"
-          onClick={() => { if (!open) { setRows(initRows()); setPr(null) } setOpen((o) => !o) }}>
+          onClick={() => { if (!open) { setRows(buildRows(variante)); setPr(null) } setOpen((o) => !o) }}>
           <span className="min-w-0">
-            <span className="font-medium">{ex.nome}</span>
+            <span className="font-medium">{nomeAtivo}</span>
+            {variante && <span className="ml-1.5 text-[10px] text-accent align-middle">substituto</span>}
             <span className="ml-2">
-              {ex.series_prescritas?.length
-                ? <SeriesPrescritasCompact items={ex.series_prescritas} />
+              {seriesAtivas?.length
+                ? <SeriesPrescritasCompact items={seriesAtivas} />
                 : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
               }
             </span>
@@ -1116,7 +1196,7 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
         {temSubstitutos && (
           <button
             onClick={() => setSubstitutosOpen(true)}
-            aria-label="Ver alternativas"
+            aria-label="Trocar exercício"
             className="shrink-0 text-accent hover:text-accent-hover transition-colors p-1"
           >
             <Repeat size={15} />
@@ -1133,15 +1213,15 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
         )}
       </div>
 
-      {(ex.video_url || ex.observacoes) && (
+      {(videoAtivo || obsAtiva) && (
         <div className="mt-2 space-y-1">
-          {ex.video_url && (
-            <a href={ex.video_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-accent-hover hover:underline">
+          {videoAtivo && (
+            <a href={videoAtivo} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-accent-hover hover:underline">
               <Video size={12} /> Ver vídeo de execução
             </a>
           )}
-          {ex.observacoes && (
-            <p className="text-xs text-text-secondary bg-white/5 rounded-lg px-2 py-1.5 whitespace-pre-wrap">{ex.observacoes}</p>
+          {obsAtiva && (
+            <p className="text-xs text-text-secondary bg-white/5 rounded-lg px-2 py-1.5 whitespace-pre-wrap">{obsAtiva}</p>
           )}
         </div>
       )}
@@ -1192,7 +1272,7 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
             {save.isPending ? 'Salvando…' : feito ? 'Atualizar' : 'Registrar'}
           </Button>
 
-          <PostComposer exercicioId={ex.exercicio_id} exercicioNome={ex.nome} viewerAtor="ALUNO" />
+          <PostComposer exercicioId={ex.exercicio_id} exercicioNome={nomeAtivo} viewerAtor="ALUNO" />
         </div>
       )}
     </Card>

@@ -147,6 +147,7 @@ def finish(aluno_id: str) -> dict:
             "series": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("series"),
             "reps_prescritas": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("reps_prescritas"),
             "carga_prescrita": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("carga_prescrita"),
+            "substituto_nome": r.get("substituto_nome"),
         }
         for r in regs
     ]
@@ -269,9 +270,12 @@ def _volume(series: list | None) -> float:
 
 def set_series(aluno_id: str, exercicio_id: str | None, series: list,
                canal: CanalOrigem = CanalOrigem.PORTAL, classificacao: Classificacao = Classificacao.AUTO,
-               ator: Ator = Ator.ALUNO) -> tuple[dict, float | None]:
+               ator: Ator = Ator.ALUNO, substituto_nome: str | None = None) -> tuple[dict, float | None]:
     """Substitui as séries de um exercício na sessão (permite editar após registrar).
-    Ajusta os agregados pela diferença de volume. Retorna (registro, novo_PR | None)."""
+    Ajusta os agregados pela diferença de volume. Retorna (registro, novo_PR | None).
+    `substituto_nome`: se o aluno executou um substituto em vez do exercício prescrito —
+    o registro continua sob o mesmo `exercicio_id`, mas o PR não é atualizado (carga de um
+    exercício diferente não é comparável ao recorde do original)."""
     s = get_active(aluno_id, consistent=True)
     if not s:
         raise HTTPException(409, "Sem sessão ativa")
@@ -293,7 +297,7 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
         "GSI1PK": keys.gsi1_registro(aluno_id, ex_id), "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
         "ttl": int(time.time()) + SESSION_TTL_S,   # expira junto com a sessão se abandonada
     }
-    updated = repo.put_series(pk, sk, series, on_insert)
+    updated = repo.put_series(pk, sk, series, on_insert, set_always={"substituto_nome": substituto_nome})
     delta = _volume(series) - old_vol
     if delta:
         wk = _isoweek()
@@ -302,10 +306,11 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
         repo.add_and_set(pk, keys.sk_stats_week_grupo(wk, ex_grupo), add={"volume": delta}, set_={"semana": wk, "grupo": ex_grupo})
         repo.add_and_set(pk, keys.sk_stats_grupo(ex_grupo), add={"volume": delta}, set_={"grupo": ex_grupo})
     pr_novo = None
-    cargas = [c for c in (_num(it.get("carga")) for it in series) if c is not None]
-    if cargas and repo.update_if_greater(pk, keys.sk_stats_pr(ex_id), "carga", max(cargas),
-                                         extra={"exercicio_nome": ex_nome, "data": now_iso()}):
-        pr_novo = max(cargas)
+    if not substituto_nome:
+        cargas = [c for c in (_num(it.get("carga")) for it in series) if c is not None]
+        if cargas and repo.update_if_greater(pk, keys.sk_stats_pr(ex_id), "carga", max(cargas),
+                                             extra={"exercicio_nome": ex_nome, "data": now_iso()}):
+            pr_novo = max(cargas)
     return updated, pr_novo
 
 
@@ -315,10 +320,17 @@ def sessao_exercicios(aluno_id: str) -> dict | None:
     if not s:
         return None
     regs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=f"REG#{s['sessao_id']}#")
-    feito = {r.get("exercicio_id"): repo.clean(r).get("series_exec") for r in regs}
+    regs_by_ex = {r.get("exercicio_id"): repo.clean(r) for r in regs}
     return {
         "sessao_id": s["sessao_id"], "treino_nome": s.get("treino_nome"),
-        "exercicios": [{**e, "registrado": feito.get(e.get("exercicio_id"))} for e in s.get("exercicios", [])],
+        "exercicios": [
+            {
+                **e,
+                "registrado": regs_by_ex.get(e.get("exercicio_id"), {}).get("series_exec"),
+                "substituto_executado": regs_by_ex.get(e.get("exercicio_id"), {}).get("substituto_nome"),
+            }
+            for e in s.get("exercicios", [])
+        ],
     }
 
 

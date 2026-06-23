@@ -180,8 +180,10 @@ def update_item_if_exists(pk: str, sk: str, fields: dict) -> dict | None:
         raise
 
 
-def put_series(pk: str, sk: str, series: list, on_insert: dict) -> dict:
-    """Substitui `series_exec` (edição). Metadados de criação via if_not_exists."""
+def put_series(pk: str, sk: str, series: list, on_insert: dict, set_always: dict | None = None) -> dict:
+    """Substitui `series_exec` (edição). Metadados de criação via if_not_exists;
+    `set_always` sobrescreve incondicionalmente a cada chamada (ex.: qual variante/substituto
+    foi executada — precisa mudar a cada edição, ao contrário dos metadados de criação)."""
     names = {"#se": "series_exec"}
     values = {":new": _san(series)}
     parts = ["#se = :new"]
@@ -189,6 +191,10 @@ def put_series(pk: str, sk: str, series: list, on_insert: dict) -> dict:
         names[f"#k{i}"] = k
         values[f":v{i}"] = _san(v)
         parts.append(f"#k{i} = if_not_exists(#k{i}, :v{i})")
+    for i, (k, v) in enumerate((set_always or {}).items()):
+        names[f"#a{i}"] = k
+        values[f":a{i}"] = _san(v)
+        parts.append(f"#a{i} = :a{i}")
     resp = _get_table().update_item(
         Key={"PK": pk, "SK": sk}, UpdateExpression="SET " + ", ".join(parts),
         ExpressionAttributeNames=names, ExpressionAttributeValues=values, ReturnValues="ALL_NEW")

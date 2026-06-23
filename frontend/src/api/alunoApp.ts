@@ -70,6 +70,7 @@ export interface ExSessao {
   registrado?: SerieInput[] | null
   recursos?: PostGlobal[]
   substitutos_efetivos?: ExercicioSubstituto[]
+  substituto_executado?: string | null
 }
 
 export interface SessaoExercicios {
@@ -129,8 +130,8 @@ export const alunoApi = {
   advance: () => alunoClient.post('/v1/aluno/sessao/advance').then((r) => r.data),
   finish: () => alunoClient.post('/v1/aluno/sessao/finish').then((r) => r.data),
   cancel: () => alunoClient.post('/v1/aluno/sessao/cancel').then((r) => r.data),
-  registrar: (series: SerieInput[], exercicio_id?: string) =>
-    alunoClient.post<{ pr_novo?: number }>('/v1/aluno/registros', { series, exercicio_id }).then((r) => r.data),
+  registrar: (series: SerieInput[], exercicio_id?: string, substituto_nome?: string) =>
+    alunoClient.post<{ pr_novo?: number }>('/v1/aluno/registros', { series, exercicio_id, substituto_nome }).then((r) => r.data),
   resumo: () => alunoClient.get<Resumo>('/v1/aluno/resumo').then((r) => r.data),
   listExercicios: () => alunoClient.get<Exercicio[]>('/v1/aluno/exercicios').then((r) => r.data),
   evolucao: (id: string) => alunoClient.get<Evolucao>(`/v1/aluno/exercicios/${id}/evolucao`).then((r) => r.data),

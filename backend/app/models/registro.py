@@ -19,6 +19,7 @@ class Registro(BaseModel):
     aluno_id: str
     series_exec: list[SerieExec] = Field(default_factory=list)
     rm: Optional[str] = None                   # repetição máxima, se informado
+    substituto_nome: Optional[str] = None       # nome do substituto executado, se houver
     data_hora: str
     # Rastreabilidade (RN010 / ESPEC §4)
     canal_origem: CanalOrigem

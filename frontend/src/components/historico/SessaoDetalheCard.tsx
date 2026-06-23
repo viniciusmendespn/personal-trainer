@@ -36,6 +36,7 @@ interface ExecEx {
   carga_prescrita?: string
   midia?: Array<{ midia_id: string; tipo: string; url?: string; data_hora: string; ator?: 'ALUNO' | 'PERSONAL' }>
   relatos?: Relato[]
+  substituto_nome?: string
 }
 
 interface ExercicioDetalheProps {
@@ -91,6 +92,10 @@ function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
           </button>
         )}
       </div>
+
+      {ex.substituto_nome && (
+        <p className="text-xs text-accent">↔ Substituído por: {ex.substituto_nome}</p>
+      )}
 
       {prescrito && (
         <div className="flex gap-2 text-xs">
