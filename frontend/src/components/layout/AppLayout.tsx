@@ -6,7 +6,6 @@ import { useAuth } from '../../auth/AuthProvider'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
 import { personalApi } from '../../api/personal'
 import { Avatar } from '../ui'
-import { AppLogo } from '../AppLogo'
 import { ChatWidget } from '../chat/ChatWidget'
 import { ChatContextProvider } from '../../context/ChatContext'
 import { TrialBanner } from '../billing/TrialBanner'
@@ -59,9 +58,8 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
   return (
     <div className="flex flex-col h-full w-full">
       <div className="shrink-0">
-        <div className="px-2 mb-3 flex items-center gap-2">
-          <AppLogo size={22} />
-          <span className="font-display text-xs font-bold text-text-secondary tracking-wide">CoachPilot</span>
+        <div className="px-2 mb-3">
+          <img src="/novo-logo-slogan-removebg-preview.png" height={28} alt="CoachPilot" style={{ objectFit: 'contain' }} />
         </div>
 
         {/* User menu trigger */}

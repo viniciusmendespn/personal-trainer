@@ -5,7 +5,6 @@ import { resendSignUpCode } from 'aws-amplify/auth'
 import { useAuth } from './AuthProvider'
 import { cognitoErrorPtBr } from './cognitoErrors'
 import { Button, Input, ErrorText, Card } from '../components/ui'
-import { AppLogo } from '../components/AppLogo'
 
 export function LoginPage() {
   const { user, signIn } = useAuth()
@@ -58,9 +57,8 @@ export function LoginPage() {
       <Card variant="glass" className="w-full max-w-sm p-6 shadow-[var(--shadow-card)]">
         <form onSubmit={handle} className="space-y-4">
           <div className="text-center mb-2">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <AppLogo size={32} />
-              <h1 className="font-display text-2xl font-bold text-text">CoachPilot</h1>
+            <div className="flex items-center justify-center mb-1">
+              <img src="/novo-logo-slogan-removebg-preview.png" height={48} alt="CoachPilot" style={{ objectFit: 'contain' }} />
             </div>
             <p className="text-sm text-text-secondary">Acesse sua conta</p>
           </div>
