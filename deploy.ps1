@@ -11,7 +11,7 @@ $StackName  = "personal-trainer-prod"
 # Preencher após o 1º deploy com DeployFrontendInfra=true (ler dos Outputs do stack):
 $Bucket     = "personal-trainer-frontend-prod-421219980792"
 $CfId       = "E3JZ6U88Q0GYGF"   # CloudFrontDistributionId (portal — coachpilot.com.br)
-$AlunoCfId  = ""                  # Preencher após 1º deploy: output AlunoCloudFrontDistributionId
+$AlunoCfId  = "E2IHNZ34C3PI8V"   # AlunoCloudFrontDistributionId (aluno — app.coachpilot.com.br)
 
 function Get-EnvLocal {
     param([string]$Key)

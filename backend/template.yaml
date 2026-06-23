@@ -567,9 +567,6 @@ Resources:
         CustomErrorResponses:
           - { ErrorCode: 403, ResponseCode: 200, ResponsePagePath: /index.html }
           - { ErrorCode: 404, ResponseCode: 200, ResponsePagePath: /index.html }
-        Tags:
-          - { Key: Project, Value: personal-trainer }
-          - { Key: ManagedBy, Value: SAM }
 
   AlunoCloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
@@ -613,9 +610,6 @@ Resources:
         CustomErrorResponses:
           - { ErrorCode: 403, ResponseCode: 200, ResponsePagePath: /aluno.html }
           - { ErrorCode: 404, ResponseCode: 200, ResponsePagePath: /aluno.html }
-        Tags:
-          - { Key: Project, Value: personal-trainer }
-          - { Key: ManagedBy, Value: SAM }
 
 Outputs:
   ApiUrl:
