@@ -360,7 +360,7 @@ export function AppLayout() {
       </div>
     )}
 
-    {splashVisible && <SplashScreen />}
+    {splashVisible && <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" rounded={false} />}
     </ChatContextProvider>
   )
 }

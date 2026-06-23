@@ -519,7 +519,7 @@ export function AlunoApp() {
       </div>
     )}
 
-    {splashVisible && <SplashScreen src="/novo-logo-slogan-vertical.png" rounded={false} />}
+    {splashVisible && <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" rounded={false} />}
     </AlunoErrorBoundary>
   )
 }
