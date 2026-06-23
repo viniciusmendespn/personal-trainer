@@ -15,10 +15,10 @@ ANOTIF_TTL_S = 30 * 24 * 3600
 #         COBRANCA_VENCER, COBRANCA_VENCIDA
 
 _URL_MAP: dict[str, str] = {
-    "MSG_PERSONAL":    "/aluno/chat",
-    "NOVO_POST_FEED":  "/aluno/feed",
-    "COBRANCA_VENCER": "/aluno/financeiro",
-    "COBRANCA_VENCIDA": "/aluno/financeiro",
+    "MSG_PERSONAL":    "/aluno",
+    "NOVO_POST_FEED":  "/aluno",
+    "COBRANCA_VENCER": "/aluno",
+    "COBRANCA_VENCIDA": "/aluno",
 }
 
 
@@ -40,7 +40,7 @@ def criar(aluno_id: str, tipo: str, titulo: str, mensagem: str,
 def _disparar_push(aluno_id: str, titulo: str, mensagem: str, tipo: str) -> None:
     try:
         from app.services import push_service   # import tardio — evita ciclo
-        url = _URL_MAP.get(tipo, "/aluno/notificacoes")
+        url = _URL_MAP.get(tipo, "/aluno")
         push_service.send_push(aluno_id, titulo, mensagem, url=url)
     except Exception as exc:
         logger.warning("[anotif] push falhou para aluno %s: %s", aluno_id, exc)
