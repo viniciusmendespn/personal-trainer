@@ -183,6 +183,8 @@ export interface Exercicio {
   grupo?: string
   ordem: number
   tipo_exercicio?: TipoExercicio
+  unidade_carga?: string
+  unidade_reps?: string
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
@@ -203,6 +205,8 @@ export interface ExercicioCreate {
   grupo?: string
   ordem?: number
   tipo_exercicio?: TipoExercicio
+  unidade_carga?: string
+  unidade_reps?: string
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string

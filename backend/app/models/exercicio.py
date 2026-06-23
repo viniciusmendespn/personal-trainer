@@ -33,6 +33,8 @@ class ExercicioCreate(BaseModel):
     intervalo_s: Optional[int] = None
     video_url: Optional[str] = None
     observacoes: Optional[str] = None
+    unidade_carga: Optional[str] = None          # ex: "kg", "%1RM", "lb" — sufixo do campo carga
+    unidade_reps: Optional[str] = None           # ex: "reps", "min", "m" — sufixo do campo reps
     links_uteis: list[str] = []                 # post_sks adicionados diretamente a este exercício
     links_uteis_excluidos: list[str] = []       # post_sks da biblioteca ocultados para este aluno
     substitutos: list[ExercicioSubstituto] = []        # substitutos adicionados diretamente neste treino

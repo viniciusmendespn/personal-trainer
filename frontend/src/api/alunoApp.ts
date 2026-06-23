@@ -63,6 +63,8 @@ export interface ExSessao {
   exercicio_id: string
   nome: string
   tipo_exercicio?: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL'
+  unidade_carga?: string
+  unidade_reps?: string
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string

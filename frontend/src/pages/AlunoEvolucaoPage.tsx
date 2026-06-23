@@ -195,7 +195,7 @@ const chartData = (evo?.serie ?? [])
                       <Trophy size={12} />
                       {' PR '}
                       {evo?.pr?.carga != null
-                        ? tipoEvo === 'PESO_CORPORAL' ? `${evo.pr.carga} reps` : tipoEvo === 'CARDIO' ? String(evo.pr.carga) : `${evo.pr.carga} kg`
+                        ? tipoEvo === 'PESO_CORPORAL' ? `${evo.pr.carga} reps` : tipoEvo === 'CARDIO' ? String(evo.pr.carga) : `${evo.pr.carga} ${exSel?.unidade_carga ?? 'kg'}`
                         : '—'}
                     </Badge>
                   </div>
@@ -216,8 +216,8 @@ const chartData = (evo?.serie ?? [])
                       <Tooltip
                         contentStyle={chartTip}
                         formatter={(v: number) => [
-                          tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? String(v) : `${v} kg`,
-                          tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : 'Carga',
+                          tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? String(v) : `${v} ${exSel?.unidade_carga ?? 'kg'}`,
+                          tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : (exSel?.unidade_carga ?? 'kg'),
                         ]}
                       />
                       {tipoEvo === 'FORCA' && !isNaN(prescrita) && (
@@ -290,7 +290,7 @@ const chartData = (evo?.serie ?? [])
                       ? `${p.carga} reps`
                       : tipoPr === 'CARDIO'
                         ? String(p.carga)
-                        : `${p.carga} kg`
+                        : `${p.carga} ${exPr?.unidade_carga ?? 'kg'}`
                     return (
                       <Badge key={p.exercicio} tone="warning">
                         {p.exercicio}: <b className="ml-1">{valorPr}</b>

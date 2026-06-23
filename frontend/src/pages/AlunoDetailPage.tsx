@@ -807,6 +807,8 @@ function ExercicioForm({
   const [seriesPrescritas, setSeriesPrescritas] = useState<SeriePrescrita[]>(() =>
     initSeriesPrescritas(initial?.series_prescritas, initial?.series, initial?.reps_prescritas, initial?.carga_prescrita)
   )
+  const [unidadeCarga, setUnidadeCarga] = useState(initial?.unidade_carga ?? '')
+  const [unidadeReps, setUnidadeReps] = useState(initial?.unidade_reps ?? '')
   const [vid, setVid] = useState(initial?.video_url ?? '')
   const [obs, setObs] = useState(initial?.observacoes ?? '')
   const [linksUteis, setLinksUteis] = useState<string[]>(initial?.links_uteis ?? [])
@@ -852,6 +854,8 @@ function ExercicioForm({
       nome,
       grupo: grupo || undefined,
       tipo_exercicio: tipo,
+      unidade_carga: unidadeCarga || undefined,
+      unidade_reps: unidadeReps || undefined,
       series_prescritas: validas.length ? validas : undefined,
       video_url: vid || undefined,
       observacoes: obs || undefined,
@@ -903,9 +907,33 @@ function ExercicioForm({
         </div>
       </div>
       <div>
-        <p className="text-xs font-medium text-text-secondary mb-2">
-          {tipo === 'CARDIO' ? 'Prescrição — blocos × dur./dist. · RPE (1-10)' : 'Prescrição — séries × reps · carga'}
-        </p>
+        <div className="flex items-center mb-2 gap-2">
+          <p className="text-xs font-medium text-text-secondary flex-1">
+            {tipo === 'CARDIO' ? 'Prescrição — blocos × dur./dist. · RPE (1-10)' : 'Prescrição — séries × reps · carga'}
+          </p>
+          {tipo !== 'CARDIO' && (
+            <div className="flex items-center gap-1 text-xs text-text-muted">
+              {tipo === 'FORCA' && (
+                <>
+                  <span>carga:</span>
+                  <input
+                    className="w-14 text-center border border-border rounded px-1 py-0.5 bg-transparent text-xs text-text-secondary focus:outline-none focus:border-accent"
+                    placeholder="kg"
+                    value={unidadeCarga}
+                    onChange={(e) => setUnidadeCarga(e.target.value)}
+                  />
+                </>
+              )}
+              <span>reps:</span>
+              <input
+                className="w-14 text-center border border-border rounded px-1 py-0.5 bg-transparent text-xs text-text-secondary focus:outline-none focus:border-accent"
+                placeholder="reps"
+                value={unidadeReps}
+                onChange={(e) => setUnidadeReps(e.target.value)}
+              />
+            </div>
+          )}
+        </div>
         <SeriesPrescritasEditor value={seriesPrescritas} onChange={setSeriesPrescritas} tipoExercicio={tipo} />
       </div>
       <div>

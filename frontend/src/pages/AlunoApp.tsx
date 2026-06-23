@@ -1285,7 +1285,7 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
                     onChange={(e) => upd(i, 'carga', tipo === 'CARDIO' ? e.target.value.replace(/[^\d.]/g, '') : sanitizeCarga(e.target.value))}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">
-                    {tipo === 'CARDIO' ? 'RPE' : 'kg'}
+                    {tipo === 'CARDIO' ? 'RPE' : (ex.unidade_carga ?? 'kg')}
                   </span>
                 </div>
               )}
@@ -1298,7 +1298,7 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
                   onChange={(e) => upd(i, 'reps', e.target.value.replace(/[^\d.]/g, ''))}
                 />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">
-                  {tipo === 'CARDIO' ? '' : 'reps'}
+                  {tipo === 'CARDIO' ? '' : (ex.unidade_reps ?? 'reps')}
                 </span>
               </div>
               {rows.length > 1 && (
@@ -1526,7 +1526,7 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
                     <Trophy size={12} />
                     {' '}
                     {evo.data?.pr?.carga != null
-                      ? tipoEvo === 'PESO_CORPORAL' ? `${evo.data.pr.carga} reps` : tipoEvo === 'CARDIO' ? String(evo.data.pr.carga) : `${evo.data.pr.carga} kg`
+                      ? tipoEvo === 'PESO_CORPORAL' ? `${evo.data.pr.carga} reps` : tipoEvo === 'CARDIO' ? String(evo.data.pr.carga) : `${evo.data.pr.carga} ${exSel?.unidade_carga ?? 'kg'}`
                       : '—'}
                   </Badge>
                 </div>
@@ -1547,8 +1547,8 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
                     <Tooltip
                       contentStyle={chartTip}
                       formatter={(v: number) => [
-                        tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? String(v) : `${v} kg`,
-                        tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : 'Carga',
+                        tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? String(v) : `${v} ${exSel?.unidade_carga ?? 'kg'}`,
+                        tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : (exSel?.unidade_carga ?? 'kg'),
                       ]}
                     />
                     <Area type="monotone" dataKey="carga" stroke="var(--color-energy)" strokeWidth={2.5}
@@ -1599,7 +1599,7 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
                   ? `${p.carga} reps`
                   : tipoPr === 'CARDIO'
                     ? String(p.carga)
-                    : `${p.carga} kg`
+                    : `${p.carga} ${exPr?.unidade_carga ?? 'kg'}`
                 return (
                   <Badge key={p.exercicio} tone="warning">{p.exercicio}: <b className="ml-1">{valorPr}</b><span className="ml-1 text-xs opacity-70">{new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span></Badge>
                 )
