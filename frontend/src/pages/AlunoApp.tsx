@@ -45,7 +45,15 @@ function formatDiaCompleto(iso: string) {
 }
 
 function Centered({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen flex items-center justify-center p-6 text-center text-text-secondary">{children}</div>
+  return (
+    <div
+      className="min-h-screen flex flex-col items-center justify-center gap-6 p-6 text-center text-text-secondary"
+      style={{ background: '#010714' }}
+    >
+      <img src="/novo-logo-slogan-vertical.png" alt="CoachPilot" style={{ width: 140, height: 'auto' }} />
+      {children}
+    </div>
+  )
 }
 
 function useAlunoToken() {
