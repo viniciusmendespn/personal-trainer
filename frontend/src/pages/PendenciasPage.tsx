@@ -14,7 +14,9 @@ const TIPO_ICON: Record<string, React.ReactNode> = {
   PENDENCIA: <Clock size={16} className="text-warning" />,
   MIDIA_PENDENTE: <Image size={16} className="text-info" />,
   MIDIA: <Camera size={16} className="text-info" />,
+  EXECUCAO: <Camera size={16} className="text-info" />,
   DUVIDA: <HelpCircle size={16} className="text-info" />,
+  OUTRO: <MessageCircle size={16} className="text-text-muted" />,
   PERGUNTA_DIRETA: <Pin size={16} className="text-energy" />,
   MSG_ALUNO_DIRETO: <MessageCircle size={16} className="text-energy" />,
   COBRANCA_VENCER: <DollarSign size={16} className="text-warning" />,
@@ -27,7 +29,9 @@ const TIPO_TONE: Record<string, 'danger' | 'warning' | 'info' | 'neutral'> = {
   PENDENCIA: 'warning',
   MIDIA_PENDENTE: 'info',
   MIDIA: 'info',
+  EXECUCAO: 'info',
   DUVIDA: 'info',
+  OUTRO: 'neutral',
   PERGUNTA_DIRETA: 'warning',
   MSG_ALUNO_DIRETO: 'neutral',
   COBRANCA_VENCER: 'warning',
@@ -39,7 +43,8 @@ const FILTROS: { label: string; tipo?: string }[] = [
   { label: 'Todas' },
   { label: 'Dor', tipo: 'DOR' },
   { label: 'Dúvida', tipo: 'DUVIDA' },
-  { label: 'Mídia', tipo: 'MIDIA_PENDENTE' },
+  { label: 'Execução', tipo: 'EXECUCAO' },
+  { label: 'Mídia pendente', tipo: 'MIDIA_PENDENTE' },
   { label: 'Treino', tipo: 'TREINO_FIM' },
   { label: 'Mensagem', tipo: 'MSG_ALUNO_DIRETO' },
 ]
@@ -68,7 +73,7 @@ function useQuickAction(item: Notificacao, markRead: ReturnType<typeof useMarkRe
       fn: doAndRead(() => openChat(item.aluno_id!)),
     }
   }
-  if (item.tipo === 'MIDIA') {
+  if (item.tipo === 'MIDIA' || item.tipo === 'EXECUCAO') {
     const dest = item.exercicio_id
       ? `/alunos/${item.aluno_id}/evolucao?highlight=${item.exercicio_id}`
       : `/alunos/${item.aluno_id}/evolucao`
@@ -78,7 +83,7 @@ function useQuickAction(item: Notificacao, markRead: ReturnType<typeof useMarkRe
       fn: doAndRead(() => navigate(dest)),
     }
   }
-  if (item.tipo === 'DOR' || item.tipo === 'DUVIDA') {
+  if (item.tipo === 'DOR' || item.tipo === 'DUVIDA' || item.tipo === 'OUTRO') {
     const dest = item.exercicio_id
       ? `/alunos/${item.aluno_id}/evolucao?highlight=${item.exercicio_id}`
       : `/alunos/${item.aluno_id}/evolucao`
@@ -135,6 +140,11 @@ function NotifCard({ item, alunos, markRead, onVincular }: {
             <p className="text-sm font-medium flex items-center gap-2 flex-wrap">
               {item.titulo}
               <Badge tone={TIPO_TONE[item.tipo] ?? 'neutral'}>{item.tipo}</Badge>
+              {item.tem_midia && (
+                <span className="inline-flex items-center gap-0.5 text-[11px] text-info" title="Tem mídia anexada">
+                  <Camera size={12} />
+                </span>
+              )}
               <Badge tone={item.lida ? 'neutral' : 'success'}>{item.lida ? 'Lida' : 'Não lida'}</Badge>
             </p>
             <p className="text-xs text-text-secondary">{item.mensagem}</p>

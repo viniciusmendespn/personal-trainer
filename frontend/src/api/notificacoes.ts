@@ -11,6 +11,7 @@ export interface Notificacao {
   data_hora: string
   midia_id?: string
   s3_key?: string
+  tem_midia?: boolean
   relato_sk?: string
   relato_tipo?: 'dor' | 'duvida'
   exercicio_id?: string

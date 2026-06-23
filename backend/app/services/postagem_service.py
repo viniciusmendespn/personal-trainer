@@ -49,28 +49,32 @@ def criar_postagem(
                 personal_id, "DOR", "Relato de dor",
                 f"O aluno relatou dor em {ex_nome}: {descricao}",
                 aluno_id=aluno_id,
-                ref_extra={"relato_sk": sk, "relato_tipo": "dor", "exercicio_id": exercicio_id},
+                ref_extra={"relato_sk": sk, "relato_tipo": "dor", "exercicio_id": exercicio_id,
+                          "tem_midia": bool(midias)},
             )
         elif tipo == "DUVIDA" and personal_id:
             notif_service.criar(
                 personal_id, "DUVIDA", "Dúvida do aluno",
                 f"O aluno teve uma dúvida em {ex_nome}: {descricao}",
                 aluno_id=aluno_id,
-                ref_extra={"relato_sk": sk, "relato_tipo": "duvida", "exercicio_id": exercicio_id},
+                ref_extra={"relato_sk": sk, "relato_tipo": "duvida", "exercicio_id": exercicio_id,
+                          "tem_midia": bool(midias)},
             )
         elif tipo == "EXECUCAO" and personal_id:
             notif_service.criar(
-                personal_id, "MIDIA", "Nova mídia de execução",
-                f"O aluno enviou uma mídia em {ex_nome} para você analisar.",
+                personal_id, "EXECUCAO", "Execução registrada",
+                f"O aluno registrou a execução de {ex_nome}" + (" com mídia anexada." if midias else "."),
                 aluno_id=aluno_id,
-                ref_extra={"exercicio_id": exercicio_id, "exercicio_nome": exercicio_nome},
+                ref_extra={"exercicio_id": exercicio_id, "exercicio_nome": exercicio_nome,
+                          "tem_midia": bool(midias)},
             )
         elif tipo == "OUTRO" and personal_id:
             notif_service.criar(
-                personal_id, "DUVIDA", "Observação do aluno",
+                personal_id, "OUTRO", "Observação do aluno",
                 f"O aluno postou uma observação em {ex_nome}.",
                 aluno_id=aluno_id,
-                ref_extra={"relato_sk": sk, "relato_tipo": "outro", "exercicio_id": exercicio_id},
+                ref_extra={"relato_sk": sk, "relato_tipo": "outro", "exercicio_id": exercicio_id,
+                          "tem_midia": bool(midias)},
             )
     else:
         # Personal posta → notifica o aluno
