@@ -25,6 +25,7 @@ export function AlunosPage() {
   })
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'ATIVO' | 'INATIVO' | 'TODOS'>('ATIVO')
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
   const [email, setEmail] = useState('')
@@ -73,9 +74,10 @@ export function AlunosPage() {
   const filtered = useMemo(() => {
     if (!alunos) return alunos
     const q = query.trim().toLowerCase()
-    const base = q ? alunos.filter((a) => a.nome.toLowerCase().includes(q) || a.telefone.includes(q)) : alunos
-    return [...base].sort((a, b) => Number(!!a.bloqueado) - Number(!!b.bloqueado))
-  }, [alunos, query])
+    let base = statusFilter !== 'TODOS' ? alunos.filter((a) => a.status === statusFilter) : alunos
+    if (q) base = base.filter((a) => a.nome.toLowerCase().includes(q) || a.telefone.includes(q))
+    return [...base].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+  }, [alunos, query, statusFilter])
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -101,14 +103,28 @@ export function AlunosPage() {
       </div>
 
       {!!alunos?.length && (
-        <div className="relative mb-4">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-          <Input
-            placeholder="Buscar por nome ou telefone…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex gap-2 mb-4 flex-wrap">
+          <div className="relative flex-1 min-w-48">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <Input
+              placeholder="Buscar por nome ou telefone…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <div className="flex gap-1 shrink-0">
+            {(['ATIVO', 'INATIVO', 'TODOS'] as const).map((s) => (
+              <Button
+                key={s}
+                variant={statusFilter === s ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusFilter(s)}
+              >
+                {s === 'ATIVO' ? 'Ativos' : s === 'INATIVO' ? 'Inativos' : 'Todos'}
+              </Button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -175,7 +191,11 @@ export function AlunosPage() {
           action={<Button onClick={() => setOpen(true)}>Cadastrar aluno</Button>}
         />
       ) : !filtered?.length ? (
-        <p className="text-text-muted text-sm">Nenhum aluno encontrado para "{query}".</p>
+        <p className="text-text-muted text-sm">
+          {query
+            ? `Nenhum aluno encontrado para "${query}".`
+            : `Nenhum aluno ${statusFilter === 'ATIVO' ? 'ativo' : 'inativo'} cadastrado.`}
+        </p>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
