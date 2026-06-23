@@ -389,14 +389,18 @@ Resources:
         Runtime: cloudfront-js-2.0
       FunctionCode: |
         function handler(event) {
-          var uri = event.request.uri;
+          var request = event.request;
+          var uri = request.uri;
           if (uri === '/' || uri === '') {
             return { statusCode: 302, headers: { location: { value: '/aluno' } } };
           }
           if (uri.indexOf('.') === -1) {
-            event.request.uri = '/aluno.html';
+            if (uri !== '/aluno' && uri.indexOf('/aluno/') !== 0) {
+              return { statusCode: 301, headers: { location: { value: 'https://coachpilot.com.br' + uri }, 'cache-control': { value: 'no-store' } } };
+            }
+            request.uri = '/aluno.html';
           }
-          return event.request;
+          return request;
         }
 
   # ── S3 + CloudFront (frontend SPA — criar quando a conta estiver pronta) ─────
