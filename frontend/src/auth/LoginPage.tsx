@@ -58,7 +58,7 @@ export function LoginPage() {
         <form onSubmit={handle} className="space-y-4">
           <div className="text-center mb-2">
             <div className="flex items-center justify-center mb-1">
-              <img src="/novo-logo-slogan-removebg-preview.png" height={48} alt="CoachPilot" style={{ objectFit: 'contain' }} />
+              <img src="/novo-logo-slogan-removebg-preview.png" alt="CoachPilot" style={{ height: 52, width: 'auto' }} />
             </div>
             <p className="text-sm text-text-secondary">Acesse sua conta</p>
           </div>

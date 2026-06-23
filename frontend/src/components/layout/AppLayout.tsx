@@ -59,7 +59,7 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
     <div className="flex flex-col h-full w-full">
       <div className="shrink-0">
         <div className="px-2 mb-3">
-          <img src="/novo-logo-slogan-removebg-preview.png" height={28} alt="CoachPilot" style={{ objectFit: 'contain' }} />
+          <img src="/novo-logo-slogan-removebg-preview.png" alt="CoachPilot" style={{ height: 22, width: 'auto', maxWidth: '100%' }} />
         </div>
 
         {/* User menu trigger */}
