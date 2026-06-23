@@ -107,18 +107,22 @@ export function SeriesPrescritasEditor({
   )
 }
 
-/** Resumo compacto para exibição: "2×10 · 30 + 1×6 · 40" */
-export function SeriesPrescritasCompact({ items, tipoExercicio }: { items: SeriePrescrita[]; tipoExercicio?: TipoExercicio }) {
+/** Resumo compacto para exibição: "2×10 · 132 (88%) + 1×6 · 140 (93%)" */
+export function SeriesPrescritasCompact({ items, tipoExercicio, rm_kg }: { items: SeriePrescrita[]; tipoExercicio?: TipoExercicio; rm_kg?: number }) {
   if (!items.length) return null
   const ocultarCarga = tipoExercicio === 'PESO_CORPORAL'
   return (
     <span className="text-xs text-text-muted">
-      {items.map((s, i) => (
-        <span key={i}>
-          {i > 0 && <span className="mx-1 opacity-50">+</span>}
-          <span>{s.series}×{s.reps}{(!ocultarCarga && s.carga) ? ` · ${s.carga}` : ''}</span>
-        </span>
-      ))}
+      {items.map((s, i) => {
+        const cargaNum = s.carga ? parseFloat(String(s.carga).replace(',', '.')) : NaN
+        const pct = rm_kg && rm_kg > 0 && !isNaN(cargaNum) ? Math.round(cargaNum / rm_kg * 100) : null
+        return (
+          <span key={i}>
+            {i > 0 && <span className="mx-1 opacity-50">+</span>}
+            <span>{s.series}×{s.reps}{(!ocultarCarga && s.carga) ? ` · ${s.carga}${pct != null ? ` (${pct}%)` : ''}` : ''}</span>
+          </span>
+        )
+      })}
     </span>
   )
 }
