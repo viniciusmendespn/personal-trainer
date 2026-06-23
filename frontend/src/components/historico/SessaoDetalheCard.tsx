@@ -79,7 +79,7 @@ function execLabel(tipo: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL', s: { carga?: stri
   if (tipo === 'PESO_CORPORAL') {
     return s.reps != null ? `${s.reps} ${unidadeReps}` : '—'
   }
-  return `${s.carga ? `${s.carga} ${unidadeCarga}` : '—'}${s.reps ? ` × ${s.reps} ${unidadeReps}` : ''}`
+  return `${s.reps != null ? `${s.reps} ${unidadeReps}` : '—'}${s.carga ? ` · ${s.carga} ${unidadeCarga}` : ''}`
 }
 
 function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
