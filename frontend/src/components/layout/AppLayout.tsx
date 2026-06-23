@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Brain, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronDown, HelpCircle, CreditCard } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Brain, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronUp, HelpCircle, CreditCard } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
