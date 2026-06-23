@@ -289,6 +289,26 @@ Resources:
             Name: !Sub "${ProjectName}-scheduler-${Stage}"
             Enabled: true
 
+  # ── Agenda Notif Scheduler (EventBridge 5 min — lembretes de sessão) ────────
+  AgendaNotifFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.agenda_scheduler.handler
+      CodeUri: ./
+      Description: "Envia lembretes de sessão 15 min antes do evento (a cada 5 min)"
+      Timeout: 60
+      MemorySize: 256
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MainTable
+      Events:
+        Every5Min:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
+            Name: !Sub "${ProjectName}-agenda-notif-${Stage}"
+            Enabled: true
+
   # ── DynamoDB (single-table — ESPEC §2) ───────────────────────────────────────
   # GSI1 = "registros por exercício no tempo" (ESPEC §2.3/§4.1).
   # Projection ALL por ora; refinar p/ INCLUDE quando os atributos congelarem.

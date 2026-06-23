@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 NOTIF_TTL_S = 30 * 24 * 3600   # notificação lida vira histórico e expira em 30 dias
 
 _URL_MAP_PERSONAL: dict[str, str] = {
-    "MSG_ALUNO": "/notificacoes",
+    "MSG_ALUNO":     "/notificacoes",
+    "LEMBRETE_AULA": "/agenda",
 }
 
 

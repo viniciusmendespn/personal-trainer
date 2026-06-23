@@ -19,6 +19,7 @@ _URL_MAP: dict[str, str] = {
     "NOVO_POST_FEED":  "/aluno",
     "COBRANCA_VENCER": "/aluno",
     "COBRANCA_VENCIDA": "/aluno",
+    "LEMBRETE_AULA":   "/aluno",
 }
 
 

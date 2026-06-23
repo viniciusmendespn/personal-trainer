@@ -7,7 +7,7 @@ from app.models.agendamento import Agendamento, AgendamentoCreate, AgendamentoUp
 from app.models.enums import AgendamentoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz
+from app.services import agenda_notif_service, authz
 from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/agenda", tags=["agenda"])
@@ -42,6 +42,7 @@ def create_agendamento(
         keys.sk_agenda(ag.data_hora_inicio, ag.agendamento_id),
         ag.model_dump(),
     )
+    agenda_notif_service.registrar(ag.model_dump())
     return ag
 
 
@@ -50,11 +51,14 @@ def update_agendamento(
     ts_id: str, body: AgendamentoUpdate, personal_id: str = Depends(get_current_personal_id)
 ):
     """`ts_id` = '{data_hora_inicio}#{agendamento_id}' (do SK)."""
+    old_data_hora, old_ag_id = ts_id.split("#", 1)
+    agenda_notif_service.cancelar({"data_hora_inicio": old_data_hora, "agendamento_id": old_ag_id})
     updated = repo.update_item_if_exists(
         keys.pk_personal(personal_id), f"AGENDA#{ts_id}", body.model_dump(exclude_none=True)
     )
     if updated is None:
         raise HTTPException(404, "Agendamento não encontrado")
+    agenda_notif_service.registrar(repo.clean(updated))
     return Agendamento(**repo.clean(updated))
 
 
@@ -67,11 +71,15 @@ def set_status(
     )
     if updated is None:
         raise HTTPException(404, "Agendamento não encontrado")
+    if status == AgendamentoStatus.CANCELADO:
+        agenda_notif_service.cancelar(repo.clean(updated))
     return Agendamento(**repo.clean(updated))
 
 
 @router.delete("/{ts_id}", status_code=204)
 def delete_agendamento(ts_id: str, personal_id: str = Depends(get_current_personal_id)):
+    old_data_hora, old_ag_id = ts_id.split("#", 1)
+    agenda_notif_service.cancelar({"data_hora_inicio": old_data_hora, "agendamento_id": old_ag_id})
     ok = repo.delete_item_if_exists(keys.pk_personal(personal_id), f"AGENDA#{ts_id}")
     if not ok:
         raise HTTPException(404, "Agendamento não encontrado")

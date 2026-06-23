@@ -81,6 +81,14 @@ def sk_agenda(data_hora_inicio: str, agendamento_id: str) -> str:
     return f"AGENDA#{data_hora_inicio}#{agendamento_id}"
 
 
+# ── Lembretes de agenda (scheduler a cada 5 min, partição SCHED#) ────────────
+AGENDA_NOTIF_PREFIX = "AGENDA_NOTIF#"
+
+
+def sk_agenda_notif(notif_iso: str, agendamento_id: str) -> str:
+    return f"AGENDA_NOTIF#{notif_iso}#{agendamento_id}"
+
+
 # ── Templates de treino reutilizáveis (partição PT#) ─────────────────────────
 TEMPLATE_PREFIX = "TEMPLATE#"
 
