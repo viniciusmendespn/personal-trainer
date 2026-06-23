@@ -17,12 +17,6 @@ function fmtDur(secs: number) {
   return `${s}s`
 }
 
-/** total de segundos → "MM:SS" */
-function fmtDuracaoMMSS(segundos: number): string {
-  const m = Math.floor(segundos / 60)
-  const s = segundos % 60
-  return `${m}:${String(s).padStart(2, '0')}`
-}
 
 interface Relato {
   tipo: 'DOR' | 'DUVIDA'
@@ -77,8 +71,8 @@ function prescritoLabel(ex: ExecEx): string | null {
 
 function execLabel(tipo: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL', s: { carga?: string; reps?: number }): string {
   if (tipo === 'CARDIO') {
-    const dur = s.reps != null ? fmtDuracaoMMSS(s.reps) : '—'
-    return s.carga ? `${dur} · RPE ${s.carga}` : dur
+    const val = s.reps != null ? String(s.reps) : '—'
+    return s.carga ? `${val} · RPE ${s.carga}` : val
   }
   if (tipo === 'PESO_CORPORAL') {
     return s.reps != null ? `${s.reps} reps` : '—'

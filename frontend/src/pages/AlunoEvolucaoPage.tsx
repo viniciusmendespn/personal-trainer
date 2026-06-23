@@ -95,13 +95,7 @@ export function AlunoEvolucaoPage() {
   const tipoEvo = (evo?.tipo ?? exSel?.tipo_exercicio ?? 'FORCA') as string
   const prescrita = exSel?.carga_prescrita ? Number(String(exSel.carga_prescrita).replace(',', '.')) : NaN
 
-  const formatDuracaoEvo = (segundos: number) => {
-    const m = Math.floor(segundos / 60)
-    const s = segundos % 60
-    return `${m}:${String(s).padStart(2, '0')}`
-  }
-
-  const chartData = (evo?.serie ?? [])
+const chartData = (evo?.serie ?? [])
     .filter((p) => {
       if (tipoEvo === 'PESO_CORPORAL') return p.reps_max != null
       if (tipoEvo === 'CARDIO') return (p.duracao_total_s ?? 0) > 0
@@ -189,19 +183,19 @@ export function AlunoEvolucaoPage() {
                 <Spinner />
               ) : !chartData.length ? (
                 <p className="text-text-muted text-sm">
-                  {tipoEvo === 'PESO_CORPORAL' ? 'Sem registros de reps ainda.' : tipoEvo === 'CARDIO' ? 'Sem registros de duração ainda.' : 'Sem registros com carga numérica ainda.'}
+                  {tipoEvo === 'PESO_CORPORAL' ? 'Sem registros de reps ainda.' : tipoEvo === 'CARDIO' ? 'Sem registros ainda.' : 'Sem registros com carga numérica ainda.'}
                 </p>
               ) : (
                 <Card variant="elevated">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-sm text-text-secondary">
-                      {tipoEvo === 'PESO_CORPORAL' ? 'Máx. reps por sessão' : tipoEvo === 'CARDIO' ? 'Duração por sessão' : 'Carga máxima por sessão'}
+                      {tipoEvo === 'PESO_CORPORAL' ? 'Máx. reps por sessão' : tipoEvo === 'CARDIO' ? 'Métrica por sessão' : 'Carga máxima por sessão'}
                     </p>
                     <Badge tone="warning">
                       <Trophy size={12} />
                       {' PR '}
                       {evo?.pr?.carga != null
-                        ? tipoEvo === 'PESO_CORPORAL' ? `${evo.pr.carga} reps` : tipoEvo === 'CARDIO' ? formatDuracaoEvo(evo.pr.carga) : `${evo.pr.carga} kg`
+                        ? tipoEvo === 'PESO_CORPORAL' ? `${evo.pr.carga} reps` : tipoEvo === 'CARDIO' ? String(evo.pr.carga) : `${evo.pr.carga} kg`
                         : '—'}
                     </Badge>
                   </div>
@@ -218,13 +212,12 @@ export function AlunoEvolucaoPage() {
                       <YAxis
                         tick={axisTick}
                         stroke="var(--color-border-strong)"
-                        tickFormatter={tipoEvo === 'CARDIO' ? (v) => formatDuracaoEvo(v) : undefined}
                       />
                       <Tooltip
                         contentStyle={chartTip}
                         formatter={(v: number) => [
-                          tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? formatDuracaoEvo(v) : `${v} kg`,
-                          tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Duração' : 'Carga',
+                          tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? String(v) : `${v} kg`,
+                          tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : 'Carga',
                         ]}
                       />
                       {tipoEvo === 'FORCA' && !isNaN(prescrita) && (
@@ -233,7 +226,7 @@ export function AlunoEvolucaoPage() {
                       )}
                       <Area type="monotone" dataKey="valor" stroke="var(--color-accent)" strokeWidth={2.5}
                         fill="url(#cargaGradient)" dot={{ r: 3, fill: 'var(--color-accent)' }}
-                        name={tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Duração' : 'Carga (kg)'} />
+                        name={tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : 'Carga (kg)'} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </Card>
@@ -296,7 +289,7 @@ export function AlunoEvolucaoPage() {
                     const valorPr = tipoPr === 'PESO_CORPORAL'
                       ? `${p.carga} reps`
                       : tipoPr === 'CARDIO'
-                        ? formatDuracaoEvo(p.carga)
+                        ? String(p.carga)
                         : `${p.carga} kg`
                     return (
                       <Badge key={p.exercicio} tone="warning">

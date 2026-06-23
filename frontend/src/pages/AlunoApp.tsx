@@ -1008,23 +1008,9 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
 
 const sanitizeCarga = (v: string) => v.replace(/[^\d.,]/g, '')
 
-/** MM:SS ou SSS → total de segundos (inteiro) */
-function parseDuracao(v: string): number {
-  const partes = v.split(':')
-  if (partes.length === 2) return (Number(partes[0]) || 0) * 60 + (Number(partes[1]) || 0)
-  return Number(v.replace(/[^\d]/g, '')) || 0
-}
-
-/** total de segundos → "MM:SS" */
-function formatDuracaoMMSS(segundos: number): string {
-  const m = Math.floor(segundos / 60)
-  const s = segundos % 60
-  return `${m}:${String(s).padStart(2, '0')}`
-}
-
 function formatPr(val: number, tipo?: string): string {
   if (tipo === 'PESO_CORPORAL') return `${val} reps`
-  if (tipo === 'CARDIO') return formatDuracaoMMSS(val)
+  if (tipo === 'CARDIO') return String(val)
   return `${val} kg`
 }
 
@@ -1188,7 +1174,7 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
       }
       const series = rows.map((r) => ({
         carga: tipo === 'PESO_CORPORAL' ? undefined : (r.carga || undefined),
-        reps: tipo === 'CARDIO' ? parseDuracao(r.reps) : Number(r.reps),
+        reps: Number(r.reps),
       }))
       return alunoApi.registrar(series, ex.exercicio_id, variante?.nome)
     },
@@ -1276,7 +1262,7 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
         <p className="text-xs text-text-secondary mt-1">
           {ex.registrado!.map((s) => {
             if (tipo === 'PESO_CORPORAL') return `${s.reps ?? '-'} reps`
-            if (tipo === 'CARDIO') return `${formatDuracaoMMSS(s.reps ?? 0)}${s.carga ? ` · ${s.carga}` : ''}`
+            if (tipo === 'CARDIO') return `${s.reps ?? '-'}${s.carga ? ` · ${s.carga}` : ''}`
             return `${s.carga ?? '-'}×${s.reps ?? '-'}`
           }).join('   ')}
         </p>
@@ -1306,16 +1292,13 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
               <div className="relative flex-1">
                 <Input
                   className={tipo === 'CARDIO' ? 'pr-12' : 'pr-10'}
-                  inputMode={tipo === 'CARDIO' ? 'text' : 'numeric'}
-                  placeholder={r.repsHint || (tipo === 'CARDIO' ? 'MM:SS' : '0')}
+                  inputMode="decimal"
+                  placeholder={r.repsHint || '0'}
                   value={r.reps}
-                  onChange={(e) => upd(i, 'reps', tipo === 'CARDIO'
-                    ? e.target.value.replace(/[^\d:]/g, '')
-                    : e.target.value.replace(/[^\d]/g, '')
-                  )}
+                  onChange={(e) => upd(i, 'reps', e.target.value.replace(/[^\d.]/g, ''))}
                 />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">
-                  {tipo === 'CARDIO' ? 'dur.' : 'reps'}
+                  {tipo === 'CARDIO' ? '' : 'reps'}
                 </span>
               </div>
               {rows.length > 1 && (
@@ -1531,19 +1514,19 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
             />
             {!chartData.length ? (
               <p className="text-text-muted text-sm">
-                {tipoEvo === 'PESO_CORPORAL' ? 'Sem registros de reps ainda.' : tipoEvo === 'CARDIO' ? 'Sem registros de duração ainda.' : 'Sem registros com carga ainda.'}
+                {tipoEvo === 'PESO_CORPORAL' ? 'Sem registros de reps ainda.' : tipoEvo === 'CARDIO' ? 'Sem registros ainda.' : 'Sem registros com carga ainda.'}
               </p>
             ) : (
               <Card variant="elevated">
                 <div className="flex justify-between mb-2">
                   <span className="text-sm text-text-secondary">
-                    {tipoEvo === 'PESO_CORPORAL' ? 'Máx. reps por sessão' : tipoEvo === 'CARDIO' ? 'Duração por sessão' : 'Carga por sessão'}
+                    {tipoEvo === 'PESO_CORPORAL' ? 'Máx. reps por sessão' : tipoEvo === 'CARDIO' ? 'Métrica por sessão' : 'Carga por sessão'}
                   </span>
                   <Badge tone="warning">
                     <Trophy size={12} />
                     {' '}
                     {evo.data?.pr?.carga != null
-                      ? tipoEvo === 'PESO_CORPORAL' ? `${evo.data.pr.carga} reps` : tipoEvo === 'CARDIO' ? formatDuracaoMMSS(evo.data.pr.carga) : `${evo.data.pr.carga} kg`
+                      ? tipoEvo === 'PESO_CORPORAL' ? `${evo.data.pr.carga} reps` : tipoEvo === 'CARDIO' ? String(evo.data.pr.carga) : `${evo.data.pr.carga} kg`
                       : '—'}
                   </Badge>
                 </div>
@@ -1560,13 +1543,12 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
                     <YAxis
                       tick={axisTick}
                       stroke="var(--color-border-strong)"
-                      tickFormatter={tipoEvo === 'CARDIO' ? (v) => formatDuracaoMMSS(v) : undefined}
                     />
                     <Tooltip
                       contentStyle={chartTip}
                       formatter={(v: number) => [
-                        tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? formatDuracaoMMSS(v) : `${v} kg`,
-                        tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Duração' : 'Carga',
+                        tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? String(v) : `${v} kg`,
+                        tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : 'Carga',
                       ]}
                     />
                     <Area type="monotone" dataKey="carga" stroke="var(--color-energy)" strokeWidth={2.5}
@@ -1616,7 +1598,7 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
                 const valorPr = tipoPr === 'PESO_CORPORAL'
                   ? `${p.carga} reps`
                   : tipoPr === 'CARDIO'
-                    ? formatDuracaoMMSS(p.carga)
+                    ? String(p.carga)
                     : `${p.carga} kg`
                 return (
                   <Badge key={p.exercicio} tone="warning">{p.exercicio}: <b className="ml-1">{valorPr}</b><span className="ml-1 text-xs opacity-70">{new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span></Badge>
