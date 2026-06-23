@@ -918,6 +918,7 @@ function ExercicioForm({
           value={seriesPrescritas}
           onChange={setSeriesPrescritas}
           tipoExercicio={tipo}
+          rm_kg={rmKg ? parseFloat(rmKg) : undefined}
         />
       </div>
       <div>
