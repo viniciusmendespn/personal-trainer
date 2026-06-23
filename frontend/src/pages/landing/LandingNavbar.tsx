@@ -40,7 +40,7 @@ export default function LandingNavbar() {
     >
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 46, width: 'auto', display: 'block' }} />
+          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 100, width: 'auto', display: 'block' }} />
         </button>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: 32 }} className="hidden lg:flex">
