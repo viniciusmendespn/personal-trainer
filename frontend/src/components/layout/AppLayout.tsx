@@ -11,6 +11,7 @@ import { ChatContextProvider } from '../../context/ChatContext'
 import { TrialBanner } from '../billing/TrialBanner'
 import { RenewalBanner } from '../billing/RenewalBanner'
 import { usePushPersonal } from '../../hooks/usePushPersonal'
+import { useSplash, SplashScreen } from '../ui/SplashScreen'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Visão geral', icon: LayoutDashboard },
@@ -176,15 +177,16 @@ function ImpersonationBanner() {
 export function AppLayout() {
   const unread = useUnreadCount().data?.count ?? 0
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [canInstall, setCanInstall] = useState(false)
   const [showIosModal, setShowIosModal] = useState(false)
+  const [showAndroidModal, setShowAndroidModal] = useState(false)
+  const splashVisible = useSplash()
   const installPromptRef = useRef<Event & { prompt: () => Promise<void> } | null>(null)
   const location = useLocation()
   const { requestAndSubscribe } = usePushPersonal()
 
   const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-  const showInstallBtn = canInstall || (isIos && !isStandalone)
+  const showInstallBtn = !isStandalone
 
   useEffect(() => {
     setDrawerOpen(false)
@@ -199,7 +201,6 @@ export function AppLayout() {
     const handler = (e: Event) => {
       e.preventDefault()
       installPromptRef.current = e as Event & { prompt: () => Promise<void> }
-      setCanInstall(true)
     }
     window.addEventListener('beforeinstallprompt', handler)
     return () => window.removeEventListener('beforeinstallprompt', handler)
@@ -207,8 +208,11 @@ export function AppLayout() {
 
   async function handleInstall() {
     if (isIos) { setShowIosModal(true); return }
-    await installPromptRef.current?.prompt()
-    setCanInstall(false)
+    if (installPromptRef.current) {
+      await installPromptRef.current.prompt()
+      return
+    }
+    setShowAndroidModal(true)
   }
 
   const pageTitle =
@@ -322,6 +326,41 @@ export function AppLayout() {
         </div>
       </div>
     )}
+
+    {showAndroidModal && (
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="w-full max-w-sm rounded-2xl bg-surface-elevated border border-border p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display font-bold text-text">Instalar no Android</h3>
+            <button onClick={() => setShowAndroidModal(false)} className="p-1 text-text-secondary hover:text-text">
+              <X size={18} />
+            </button>
+          </div>
+          <ol className="space-y-3 text-sm text-text-secondary">
+            <li className="flex gap-3">
+              <span className="font-bold text-accent shrink-0">1.</span>
+              Toque no menu <strong className="text-text">⋮</strong> do Chrome
+            </li>
+            <li className="flex gap-3">
+              <span className="font-bold text-accent shrink-0">2.</span>
+              Selecione <strong className="text-text">"Adicionar à tela inicial"</strong> ou <strong className="text-text">"Instalar app"</strong>
+            </li>
+            <li className="flex gap-3">
+              <span className="font-bold text-accent shrink-0">3.</span>
+              Confirme tocando em <strong className="text-text">Adicionar</strong>
+            </li>
+          </ol>
+          <button
+            onClick={() => setShowAndroidModal(false)}
+            className="w-full py-2 rounded-lg bg-accent/20 text-accent-hover text-sm font-medium hover:bg-accent/30 transition-colors"
+          >
+            Entendi
+          </button>
+        </div>
+      </div>
+    )}
+
+    {splashVisible && <SplashScreen />}
     </ChatContextProvider>
   )
 }

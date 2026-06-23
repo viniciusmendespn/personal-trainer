@@ -13,6 +13,7 @@ import { FeedGlobalTab } from '../components/feed/FeedGlobalTab'
 import { PontosWidget } from '../components/gamificacao/PontosWidget'
 import { RankingList } from '../components/gamificacao/RankingList'
 import { useAlunoChat, useSendAlunoChat, useSendDiretoAlunoChat } from '../hooks/useAlunoChat'
+import { useSplash, SplashScreen } from '../components/ui/SplashScreen'
 import { useAlunoTimeline } from '../hooks/useAlunoTimeline'
 import { ChatThread } from '../components/chat/ChatThread'
 import { ChatInputBar } from '../components/chat/ChatInputBar'
@@ -292,9 +293,13 @@ export function AlunoApp() {
   const [chatOpen, setChatOpen] = useState(false)
   const [showRanking, setShowRanking] = useState(false)
   const installPromptRef = useRef<Event & { prompt: () => Promise<void> } | null>(null)
-  const [canInstall, setCanInstall] = useState(false)
   const [showPerfilModal, setShowPerfilModal] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
+  const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+  const [showIosModal, setShowIosModal] = useState(false)
+  const [showAndroidModal, setShowAndroidModal] = useState(false)
+  const splashVisible = useSplash()
   const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false, staleTime: 0, refetchOnWindowFocus: true, refetchInterval: 30_000 })
 
   useEffect(() => {
@@ -315,7 +320,6 @@ export function AlunoApp() {
     const handler = (e: Event) => {
       e.preventDefault()
       installPromptRef.current = e as Event & { prompt: () => Promise<void> }
-      setCanInstall(true)
     }
     window.addEventListener('beforeinstallprompt', handler)
     return () => window.removeEventListener('beforeinstallprompt', handler)
@@ -368,17 +372,22 @@ export function AlunoApp() {
         </button>
         <h1 className="font-display text-lg font-bold text-text truncate min-w-0 flex-1">Olá, {me.data?.nome ?? 'aluno'}</h1>
         <div className="flex items-center gap-1 shrink-0">
-          {canInstall && (
+          {!isStandalone && (
             <button
               onClick={async () => {
-                await installPromptRef.current?.prompt()
-                setCanInstall(false)
+                if (isIos) { setShowIosModal(true); return }
+                if (installPromptRef.current) {
+                  await installPromptRef.current.prompt()
+                  return
+                }
+                setShowAndroidModal(true)
               }}
-              className="p-1 text-text-muted hover:text-energy transition-colors"
+              className="relative p-1 text-text-muted hover:text-energy transition-colors"
               aria-label="Instalar app"
               title="Instalar app no celular"
             >
               <Download size={18} />
+              <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-energy animate-pulse" />
             </button>
           )}
           <button
@@ -471,6 +480,46 @@ export function AlunoApp() {
         )}
       </nav>
     </div>
+
+    {showIosModal && (
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="w-full max-w-sm rounded-2xl bg-surface-elevated border border-border p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display font-bold text-text">Instalar no iPhone</h3>
+            <button onClick={() => setShowIosModal(false)} className="p-1 text-text-secondary hover:text-text">
+              <X size={18} />
+            </button>
+          </div>
+          <ol className="space-y-3 text-sm text-text-secondary">
+            <li className="flex gap-3"><span className="font-bold text-accent shrink-0">1.</span>Toque no ícone de compartilhar <strong className="text-text">□↑</strong> na barra do Safari</li>
+            <li className="flex gap-3"><span className="font-bold text-accent shrink-0">2.</span>Role e selecione <strong className="text-text">"Adicionar à Tela de Início"</strong></li>
+            <li className="flex gap-3"><span className="font-bold text-accent shrink-0">3.</span>Toque em <strong className="text-text">Adicionar</strong></li>
+          </ol>
+          <button onClick={() => setShowIosModal(false)} className="w-full py-2 rounded-lg bg-accent/20 text-accent-hover text-sm font-medium hover:bg-accent/30 transition-colors">Entendi</button>
+        </div>
+      </div>
+    )}
+
+    {showAndroidModal && (
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="w-full max-w-sm rounded-2xl bg-surface-elevated border border-border p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display font-bold text-text">Instalar no Android</h3>
+            <button onClick={() => setShowAndroidModal(false)} className="p-1 text-text-secondary hover:text-text">
+              <X size={18} />
+            </button>
+          </div>
+          <ol className="space-y-3 text-sm text-text-secondary">
+            <li className="flex gap-3"><span className="font-bold text-accent shrink-0">1.</span>Toque no menu <strong className="text-text">⋮</strong> do Chrome</li>
+            <li className="flex gap-3"><span className="font-bold text-accent shrink-0">2.</span>Selecione <strong className="text-text">"Adicionar à tela inicial"</strong> ou <strong className="text-text">"Instalar app"</strong></li>
+            <li className="flex gap-3"><span className="font-bold text-accent shrink-0">3.</span>Confirme tocando em <strong className="text-text">Adicionar</strong></li>
+          </ol>
+          <button onClick={() => setShowAndroidModal(false)} className="w-full py-2 rounded-lg bg-accent/20 text-accent-hover text-sm font-medium hover:bg-accent/30 transition-colors">Entendi</button>
+        </div>
+      </div>
+    )}
+
+    {splashVisible && <SplashScreen />}
     </AlunoErrorBoundary>
   )
 }
