@@ -807,7 +807,7 @@ function ExercicioForm({
   const [seriesPrescritas, setSeriesPrescritas] = useState<SeriePrescrita[]>(() =>
     initSeriesPrescritas(initial?.series_prescritas, initial?.series, initial?.reps_prescritas, initial?.carga_prescrita)
   )
-  const [unidadeCarga, setUnidadeCarga] = useState(initial?.unidade_carga ?? '')
+  const [unidadeCarga] = useState(initial?.unidade_carga ?? '')
   const [unidadeReps, setUnidadeReps] = useState(initial?.unidade_reps ?? '')
   const [vid, setVid] = useState(initial?.video_url ?? '')
   const [obs, setObs] = useState(initial?.observacoes ?? '')
@@ -916,9 +916,7 @@ function ExercicioForm({
           value={seriesPrescritas}
           onChange={setSeriesPrescritas}
           tipoExercicio={tipo}
-          unidadeCarga={unidadeCarga}
           unidadeReps={unidadeReps}
-          onUnidadeCargaChange={setUnidadeCarga}
           onUnidadeRepsChange={setUnidadeReps}
         />
       </div>

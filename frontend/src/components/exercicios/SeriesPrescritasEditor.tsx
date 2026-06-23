@@ -7,9 +7,7 @@ interface Props {
   value: SeriePrescrita[]
   onChange: (v: SeriePrescrita[]) => void
   tipoExercicio?: TipoExercicio
-  unidadeCarga?: string
   unidadeReps?: string
-  onUnidadeCargaChange?: (v: string) => void
   onUnidadeRepsChange?: (v: string) => void
 }
 
@@ -19,20 +17,20 @@ function getLabels(tipo?: TipoExercicio) {
   return { series: 'Séries', reps: 'Reps', carga: 'Carga' }
 }
 
-function getUnits(tipo?: TipoExercicio, uCarga?: string, uReps?: string) {
-  if (tipo === 'CARDIO') return { carga: uCarga || 'RPE', reps: uReps || 'min' }
-  if (tipo === 'PESO_CORPORAL') return { carga: null, reps: uReps || 'reps' }
-  return { carga: uCarga || 'kg', reps: uReps || 'reps' }
+function getUnits(tipo?: TipoExercicio, uReps?: string) {
+  if (tipo === 'CARDIO') return { carga: 'RPE', reps: uReps || 'min' }
+  if (tipo === 'PESO_CORPORAL') return { carga: null, reps: 'reps' }
+  return { carga: 'kg', reps: 'reps' }
 }
 
 export function SeriesPrescritasEditor({
   value, onChange, tipoExercicio,
-  unidadeCarga, unidadeReps,
-  onUnidadeCargaChange, onUnidadeRepsChange,
+  unidadeReps, onUnidadeRepsChange,
 }: Props) {
   const safeValue = Array.isArray(value) ? value : []
   const labels = getLabels(tipoExercicio)
-  const units = getUnits(tipoExercicio, unidadeCarga, unidadeReps)
+  const units = getUnits(tipoExercicio, unidadeReps)
+  const isCardio = tipoExercicio === 'CARDIO'
 
   function update(i: number, field: keyof SeriePrescrita, v: string) {
     onChange(safeValue.map((r, j) => j === i ? { ...r, [field]: field === 'series' ? Number(v) || 1 : v } : r))
@@ -58,8 +56,9 @@ export function SeriesPrescritasEditor({
           />
           <span className="text-text-muted text-xs shrink-0">×</span>
           <UnitInput
-            unit={units.reps || undefined}
-            onUnitChange={onUnidadeRepsChange}
+            unit={units.reps}
+            unitOptions={isCardio ? ['min', 'km'] : undefined}
+            onUnitChange={isCardio ? onUnidadeRepsChange : undefined}
             placeholder={labels.reps}
             value={row.reps}
             onChange={(e) => update(i, 'reps', e.target.value)}
@@ -70,7 +69,6 @@ export function SeriesPrescritasEditor({
               <span className="text-text-muted text-xs shrink-0">·</span>
               <UnitInput
                 unit={units.carga ?? undefined}
-                onUnitChange={onUnidadeCargaChange}
                 placeholder={labels.carga}
                 value={row.carga ?? ''}
                 onChange={(e) => update(i, 'carga', e.target.value)}
