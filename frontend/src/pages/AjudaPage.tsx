@@ -67,6 +67,26 @@ const FAQ_PORTAL: FaqItem[] = [
     q: 'O aluno precisa instalar algum aplicativo?',
     a: 'Não. O app do aluno é um PWA — abre direto no navegador do celular pelo link enviado. Opcionalmente, o aluno pode "instalar" na tela inicial, mas não é obrigatório e não passa pela loja de apps.',
   },
+  {
+    q: 'Como funciona o campo % 1RM na prescrição?',
+    a: 'Ao cadastrar um exercício de Força, preencha "1RM (kg)" com o máximo do aluno e "% 1RM" com o percentual desejado. A carga prescrita é calculada automaticamente (ex: 1RM = 100kg, % 1RM = 75 → carga = 75kg). O aluno verá a carga calculada e o percentual entre parênteses.',
+  },
+  {
+    q: 'O que são os tipos de exercício (Força, Cardio, Peso Corporal)?',
+    a: 'Força: carga em kg/lb + repetições. Cardio: carga = RPE (esforço 0–10), repetições em minutos ou km (o aluno alterna com um toque). Peso Corporal: sem carga externa, só repetições. O tipo define os campos de prescrição e como o volume é calculado.',
+  },
+  {
+    q: 'O que é o IRM e onde vejo?',
+    a: 'IRM (Intensidade Relativa Média) é o percentual médio do 1RM utilizado pelo aluno em uma sessão. Aparece como gráfico na aba Evolução → Carga do aluno, quando o exercício tem 1RM cadastrado. Serve para monitorar se o aluno está treinando na intensidade prescrita.',
+  },
+  {
+    q: 'O portal do personal pode ser instalado como app?',
+    a: 'Sim. O portal também é um PWA. Clique no ícone de instalação (exibido no canto superior do portal ou na barra de endereço do navegador) para adicionar o portal na tela inicial do celular ou como app no desktop.',
+  },
+  {
+    q: 'Como usar um código promocional?',
+    a: 'Na tela de bloqueio (quando atinge o limite de 3 alunos no plano grátis) ou no modal de renovação, clique em "Tenho um código promocional", cole o código e confirme. Um código válido concede 1 mês grátis do Gestão Pro. Cada código só pode ser usado uma vez.',
+  },
 ]
 
 function FaqSection({ items }: { items: FaqItem[] }) {

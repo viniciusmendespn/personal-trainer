@@ -60,9 +60,9 @@ O ícone de **chat** (balão de mensagem) fica flutuando na tela — toque para 
 
 **Treino de hoje:**
 Mostra os exercícios do seu treino atual com:
-- Nome do exercício
-- Séries × Repetições prescritas
-- Carga prescrita (em kg)
+- Nome do exercício e tipo (Força, Cardio ou Peso Corporal)
+- Séries × Repetições prescritas (com a unidade do exercício, ex: reps, min, km)
+- Carga prescrita — para exercícios de Força, pode aparecer como "80kg (75% 1RM)" quando seu personal cadastrou o % 1RM
 - Intervalo de descanso (em segundos)
 - Link de vídeo de referência — se seu personal não cadastrou um vídeo específico, o app busca automaticamente o exercício no YouTube para você ter uma referência
 
@@ -80,10 +80,21 @@ Quando você tem mais de um treino cadastrado (ex.: Treino A, Treino B), eles ap
 
 #### Como registrar séries durante o treino
 1. Com a sessão ativa, toque no exercício atual
-2. Para cada série, preencha:
-   - **Carga** (kg) — quanto você levantou
+2. Para cada série, preencha os campos de acordo com o **tipo do exercício**:
+
+   **Força (halteres, barras, máquinas):**
+   - **Carga** (ex: kg ou lb) — quanto você levantou
    - **Repetições** — quantas repetições fez
    - **RPE** (opcional) — índice de esforço percebido, de 0 a 10
+
+   **Cardio (esteira, bicicleta, corrida):**
+   - **RPE** — esforço percebido de 0 a 10 (campo de carga no cardio)
+   - **Duração/Distância** — em **minutos** ou **km**. Toque na unidade para alternar entre as duas
+
+   **Peso Corporal (flexões, abdominais, barras):**
+   - **Repetições** — quantas repetições fez
+   - **RPE** (opcional)
+
 3. Toque em **"Registrar"** para confirmar a série
 4. Repita para cada série do exercício
 5. Toque em **"Próximo Exercício"** para avançar
@@ -126,6 +137,7 @@ Mostra cinco sub-abas:
 - Selecione o exercício que quer ver pelo campo de busca
 - O gráfico mostra os últimos registros
 - Se você fez o mesmo exercício (mesmo nome) em treinos diferentes, a evolução é unificada automaticamente em um único gráfico — não fica dividida por treino
+- Para exercícios de **Força com 1RM cadastrado**, aparece também o gráfico de **IRM (Intensidade Relativa Média)**: o percentual médio do seu 1RM que você utilizou em cada sessão. Ajuda a ver se você está treinando na intensidade correta
 
 **Volume** — gráfico de barras empilhadas mostrando o volume de treino semanal (séries × reps × carga), dividido por **grupo muscular** (cada cor representa um grupo). Ajuda a ver se o treino está balanceado entre os grupos ao longo das semanas.
 
@@ -421,6 +433,15 @@ R: Só se seu personal tiver cadastrado um substituto para aquele exercício. Qu
 
 **P: Errei e quero descartar o treino que comecei. Dá para fazer isso?**
 R: Sim. Toque em "Cancelar treino" durante a sessão ativa e confirme. A sessão é descartada e nada é salvo.
+
+**P: O que significa "75kg (75% 1RM)" na prescrição?**
+R: Significa que seu personal prescreveu 75% do seu 1RM (peso máximo em 1 repetição), e que 75% do 1RM cadastrado equivale a 75kg. É só uma referência — você registra a carga real que levantou.
+
+**P: Como registro um exercício de cardio (corrida, bicicleta)?**
+R: Exercícios de cardio usam RPE (esforço percebido, 0–10) como carga. Para a duração, você pode registrar em minutos ou em km — toque na unidade para alternar entre as duas.
+
+**P: O que é o gráfico de IRM na aba Evolução?**
+R: IRM (Intensidade Relativa Média) mostra o percentual médio do seu 1RM que você utilizou em uma sessão. Aparece somente em exercícios de Força onde seu personal registrou o seu 1RM. Serve para acompanhar se você está treinando na intensidade correta ao longo do tempo.
 
 ---
 

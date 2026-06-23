@@ -118,14 +118,36 @@ No topo da página **Alunos**, use os botões **"Ativos"**, **"Inativos"** ou **
 2. Clique em **"+ Exercício"**
 3. Preencha:
    - Nome do exercício
+   - Tipo: **Força**, **Cardio** ou **Peso Corporal**
+   - Grupo muscular (opcional)
    - Número de séries
-   - Número de repetições
-   - Carga prescrita (kg)
+   - Repetições prescritas e sua unidade (ex: reps, min, km)
+   - Carga prescrita e sua unidade (ex: kg, lb)
+   - **1RM (kg)** — peso máximo que o aluno consegue levantar em 1 repetição (opcional, necessário para % 1RM e IRM)
+   - **% 1RM** — percentual do 1RM a ser usado como carga. Ao preencher este campo (e ter o 1RM cadastrado), a carga prescrita é calculada automaticamente
    - Intervalo entre séries (segundos)
    - Link de vídeo de referência (opcional)
 4. Arraste para reordenar os exercícios
 
 Ao digitar o nome do exercício, o campo sugere automaticamente (autocomplete) tanto os exercícios da biblioteca quanto os exercícios que **esse mesmo aluno já usou antes** em outros treinos. Se você escolher um nome já usado pelo aluno, o link de vídeo e o grupo muscular são preenchidos automaticamente com base no último uso. Exercícios com o mesmo nome em treinos diferentes têm a evolução de carga e os recordes (PRs) **unificados automaticamente** na aba Evolução/Recordes do aluno — não é preciso recriar o exercício do zero para manter o histórico.
+
+#### Tipos de exercício
+
+**Força** — exercícios com carga (halteres, barras, máquinas). Carga em kg ou lb, repetições em reps. Suporta 1RM, % 1RM e cálculo de IRM.
+
+**Cardio** — exercícios aeróbicos (esteira, bicicleta, corrida). Carga = RPE (esforço percebido de 0–10). Repetições em **minutos** ou **km** — o aluno pode alternar entre as duas unidades com um toque durante o registro.
+
+**Peso Corporal** — exercícios sem carga externa (flexões, abdominais, barras). Repetições em reps.
+
+#### Unidades personalizáveis
+Você pode definir manualmente o sufixo de carga e de repetições de qualquer exercício (ex: carga em `%1RM`, reps em `m`, `passos`, `cal`). As unidades definidas aparecem nos campos de prescrição, no registro do aluno e nos gráficos de evolução.
+
+#### % 1RM e cálculo automático de carga
+Ao cadastrar um exercício de **Força**:
+1. Preencha o campo **"1RM (kg)"** com o peso máximo do aluno em 1 repetição naquele exercício
+2. Preencha o campo **"% 1RM"** com o percentual desejado (ex: 75)
+3. A carga prescrita em kg é calculada automaticamente: `1RM × (% 1RM / 100)`
+4. O aluno vê a carga calculada e o percentual entre parênteses (ex: "75kg (75% 1RM)")
 
 #### Exercícios substitutos
 Você pode cadastrar **substitutos** para um exercício — alternativas que o aluno pode escolher executar no lugar do original durante a sessão (ex.: por falta de equipamento ou preferência).
@@ -302,6 +324,18 @@ Na página do aluno, acesse a aba **"Frequência"** para ver:
 - Melhor streak de todos os tempos
 - Gráfico de barras das últimas 16 semanas
 - Galeria de badges conquistados
+
+---
+
+### 11b. EVOLUÇÃO DE CARGA E IRM
+
+Na página do aluno, acesse a aba **"Evolução → Carga"** para ver gráficos de progresso por exercício.
+
+**Gráfico de Carga:** evolução do peso levantado (ou unidade definida) ao longo do tempo. Selecione o exercício pelo campo de busca.
+
+**Gráfico de IRM (Intensidade Relativa Média):** visível quando o exercício tem 1RM cadastrado. Mostra, sessão a sessão, o percentual médio do 1RM utilizado nas séries (calculado como média ponderada pelas repetições de cada série). É uma forma de acompanhar se o aluno está treinando na intensidade prescrita.
+
+O IRM aparece como **gráfico secundário** (linha pontilhada ou cor secundária) sobreposto ao gráfico de carga.
 
 ---
 
@@ -499,6 +533,18 @@ Acesse **Plano** no menu lateral.
 
 **Histórico de pagamentos:** Na página **Plano**, a seção "Histórico de pagamentos" lista todos os pagamentos do Gestão Pro confirmados via Pix (ou concedidos manualmente pelo suporte), com data, dias concedidos e validade resultante.
 
+#### Código promocional
+
+Se você tiver um código promocional (por exemplo, gerado por um parceiro ou divulgador do CoachPilot), pode usá-lo para ganhar 1 mês grátis do Gestão Pro.
+
+**Como resgatar:**
+- Na **tela de bloqueio** (quando o limite de 3 alunos foi atingido no plano grátis), toque em **"Tenho um código promocional"**
+- Ou no **modal de renovação** (ao clicar em "Renovar"), toque em **"Tenho um código promocional"**
+- Cole o código no campo exibido e confirme
+- Se o código for válido e ainda não tiver sido usado, o Gestão Pro é ativado por 1 mês
+
+Cada código só pode ser resgatado **uma única vez**.
+
 #### Benefício FinPilot
 A cada mês pago no **Gestão Pro**, você recebe automaticamente um código para **1 mês grátis no FinPilot** — um gerenciador financeiro pessoal (não relacionado à gestão de alunos) com planilha digital e um assistente de IA em português. O código fica disponível na seção "Histórico de pagamentos" da página **Plano**. Quando o Gestão Pro está ativo, um banner no topo do portal mostra **"1 mês grátis no FinPilot"** com o botão **"Ver código"**, que leva direto à página Plano. Use o botão **"Conhecer o FinPilot"** no card para acessar o site do FinPilot e ativar o código.
 
@@ -550,6 +596,21 @@ R: É um benefício exclusivo para assinantes do Gestão Pro — um gerenciador 
 
 **P: Para que serve o exercício substituto?**
 R: Permite que o aluno troque um exercício prescrito por uma alternativa equivalente durante a sessão (por exemplo, por falta de equipamento). Você cadastra os substitutos na Biblioteca ou diretamente no treino do aluno, e ele escolhe qual executar na hora do treino.
+
+**P: Como funciona o campo % 1RM?**
+R: Ao cadastrar um exercício de Força, preencha o "1RM (kg)" com o máximo do aluno e o "% 1RM" com o percentual desejado (ex: 75). O sistema calcula automaticamente a carga prescrita. O aluno verá a carga calculada e o percentual ao lado.
+
+**P: O que é o IRM?**
+R: IRM (Intensidade Relativa Média) é o percentual médio do 1RM que o aluno utilizou em uma sessão, calculado série a série. É exibido como gráfico na aba Evolução → Carga quando o exercício tem 1RM cadastrado. Serve para monitorar se o aluno está treinando na intensidade prescrita.
+
+**P: Como funciona o tipo Cardio?**
+R: Exercícios do tipo Cardio usam RPE (esforço percebido, 0–10) como campo de carga, e as repetições são registradas em minutos ou quilômetros. O aluno pode alternar entre min e km com um toque durante o registro da série.
+
+**P: Posso instalar o portal como app no celular ou computador?**
+R: Sim. O portal do personal também é um PWA — você pode instalar na tela inicial do celular ou como app no desktop. Clique no ícone de instalação (geralmente no canto superior da tela ou na barra de endereço do navegador) e confirme.
+
+**P: O que é um código promocional e onde inserir?**
+R: É um código que concede 1 mês grátis do Gestão Pro. Você pode inserir na tela de bloqueio (quando atinge o limite de 3 alunos) ou no modal de renovação, clicando em "Tenho um código promocional".
 
 ---
 
