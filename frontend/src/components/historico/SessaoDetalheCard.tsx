@@ -106,7 +106,7 @@ function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
             <div key={i} className="flex items-center gap-3 pl-2 text-xs">
               <span className="text-text-muted w-12 shrink-0">Sér {i + 1}</span>
               <span className="text-text">
-                {s.carga ?? '—'}{s.reps ? ` × ${s.reps} reps` : ''}
+                {s.carga ? `${s.carga} kg` : '—'}{s.reps ? ` × ${s.reps} reps` : ''}
               </span>
               {s.rpe != null && (
                 <span className="text-text-muted">RPE {s.rpe}</span>
