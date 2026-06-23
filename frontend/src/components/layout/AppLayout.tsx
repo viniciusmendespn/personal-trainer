@@ -12,6 +12,7 @@ import { TrialBanner } from '../billing/TrialBanner'
 import { RenewalBanner } from '../billing/RenewalBanner'
 import { usePushPersonal } from '../../hooks/usePushPersonal'
 import { useSplash, SplashScreen } from '../ui/SplashScreen'
+import { getInstallPrompt } from '../../lib/installPrompt'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Visão geral', icon: LayoutDashboard },
@@ -180,7 +181,6 @@ export function AppLayout() {
   const [showIosModal, setShowIosModal] = useState(false)
   const [showAndroidModal, setShowAndroidModal] = useState(false)
   const splashVisible = useSplash()
-  const installPromptRef = useRef<Event & { prompt: () => Promise<void> } | null>(null)
   const location = useLocation()
   const { requestAndSubscribe } = usePushPersonal()
 
@@ -196,22 +196,10 @@ export function AppLayout() {
     requestAndSubscribe()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (isStandalone) return
-    const handler = (e: Event) => {
-      e.preventDefault()
-      installPromptRef.current = e as Event & { prompt: () => Promise<void> }
-    }
-    window.addEventListener('beforeinstallprompt', handler)
-    return () => window.removeEventListener('beforeinstallprompt', handler)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   async function handleInstall() {
     if (isIos) { setShowIosModal(true); return }
-    if (installPromptRef.current) {
-      await installPromptRef.current.prompt()
-      return
-    }
+    const prompt = getInstallPrompt()
+    if (prompt) { await prompt.prompt(); return }
     setShowAndroidModal(true)
   }
 
