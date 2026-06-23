@@ -100,7 +100,7 @@ Conditions:
 Globals:
   Function:
     Timeout: 29          # alinhado ao limite do HTTP API
-    MemorySize: 256      # CRUD I/O-bound (ESPEC §5 — função do agente pode subir depois)
+    MemorySize: 1024     # reduz cold start ~5s→1.8s; duration free tier cobre até ~520 personais
     Runtime: python3.12
     Architectures: [arm64]
     Tags:
