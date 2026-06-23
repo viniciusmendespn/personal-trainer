@@ -349,15 +349,32 @@ Resources:
       Name: !Sub "${ProjectName}-spa-router-${Stage}"
       AutoPublish: true
       FunctionConfig:
-        Comment: "Rotas /aluno* → aluno.html; demais rotas SPA → index.html"
+        Comment: "Redireciona /aluno* para app.coachpilot.com.br; demais rotas SPA → index.html"
         Runtime: cloudfront-js-2.0
       FunctionCode: |
         function handler(event) {
-          var uri = event.request.uri;
-          if (uri.indexOf('.') === -1) {
-            event.request.uri = '/index.html';
+          var request = event.request;
+          var uri = request.uri;
+          if (uri === '/aluno' || uri.indexOf('/aluno/') === 0 || uri.indexOf('/aluno?') === 0) {
+            var parts = [];
+            var qs = request.querystring;
+            for (var k in qs) {
+              if (Object.prototype.hasOwnProperty.call(qs, k)) {
+                var mv = qs[k].multiValue;
+                if (mv) {
+                  for (var i = 0; i < mv.length; i++) parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(mv[i].value));
+                } else {
+                  parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(qs[k].value));
+                }
+              }
+            }
+            var loc = 'https://app.coachpilot.com.br' + uri + (parts.length ? '?' + parts.join('&') : '');
+            return { statusCode: 301, headers: { location: { value: loc }, 'cache-control': { value: 'no-store' } } };
           }
-          return event.request;
+          if (uri.indexOf('.') === -1) {
+            request.uri = '/index.html';
+          }
+          return request;
         }
 
   # ── CloudFront Function para o app do aluno (app.coachpilot.com.br) ──────────
