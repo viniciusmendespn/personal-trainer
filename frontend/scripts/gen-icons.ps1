@@ -52,18 +52,13 @@ function Resize-ImageLetterbox {
   Write-Host "  -> $([System.IO.Path]::GetFileName($dstPath)) ($w x $h, letterbox)"
 }
 
-$icon   = "$pub\novo-logo-removebg-preview.png"
-$ogSrc  = "$pub\og-image.png"  # already generated — no-op; keep og-image as-is
+$icon = "$pub\novo-icon.png"  # ícone com fundo e cantos arredondados — resize direto
 
-Write-Host "Gerando icones a partir de novo-logo-removebg-preview.png (fundo #0a0e1a)..."
-# favicon pequeno: padding leve para respirar
-Resize-IconOnBg $icon "$pub\coach-icon.png"        64  64  "#0a0e1a" 0.08
-# PWA icons: padding para conforto visual
-Resize-IconOnBg $icon "$pub\icon-192.png"          192 192 "#0a0e1a" 0.08
-Resize-IconOnBg $icon "$pub\icon-512.png"          512 512 "#0a0e1a" 0.08
-# Maskable: 10% safe-zone padding (spec recomenda icone dentro dos 80% centrais)
-Resize-IconOnBg $icon "$pub\icon-512-maskable.png" 512 512 "#0a0e1a" 0.10
-# Apple touch: padding leve
-Resize-IconOnBg $icon "$pub\apple-touch-icon.png"  180 180 "#0a0e1a" 0.08
+Write-Host "Gerando icones a partir de novo-icon.png..."
+Resize-Image $icon "$pub\coach-icon.png"        64  64
+Resize-Image $icon "$pub\icon-192.png"          192 192
+Resize-Image $icon "$pub\icon-512.png"          512 512
+Resize-Image $icon "$pub\icon-512-maskable.png" 512 512
+Resize-Image $icon "$pub\apple-touch-icon.png"  180 180
 
 Write-Host "Concluido!"
