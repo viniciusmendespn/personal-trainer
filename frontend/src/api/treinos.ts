@@ -114,6 +114,7 @@ export interface FeedItem {
 export interface ExecExercicio {
   exercicio_id: string
   exercicio_nome: string
+  tipo_exercicio?: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL'
   series_exec: Array<{ carga?: string; reps?: number; rpe?: number }>
   series_prescritas?: Array<{ series: number; reps: string; carga?: string }>
   series?: number

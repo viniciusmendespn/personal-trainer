@@ -17,6 +17,13 @@ function fmtDur(secs: number) {
   return `${s}s`
 }
 
+/** total de segundos → "MM:SS" */
+function fmtDuracaoMMSS(segundos: number): string {
+  const m = Math.floor(segundos / 60)
+  const s = segundos % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
 interface Relato {
   tipo: 'DOR' | 'DUVIDA'
   descricao: string
@@ -29,6 +36,7 @@ interface Relato {
 interface ExecEx {
   exercicio_id: string
   exercicio_nome: string
+  tipo_exercicio?: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL'
   series_exec: Array<{ carga?: string; reps?: number; rpe?: number }>
   series_prescritas?: Array<{ series: number; reps: string; carga?: string }>
   series?: number
@@ -47,6 +55,7 @@ interface ExercicioDetalheProps {
 function totalVolume(exs: ExecEx[]) {
   let v = 0
   for (const ex of exs) {
+    if (ex.tipo_exercicio && ex.tipo_exercicio !== 'FORCA') continue
     for (const s of ex.series_exec) {
       const cg = parseFloat(String(s.carga ?? '').replace(',', '.'))
       if (!isNaN(cg) && s.reps) v += cg * s.reps
@@ -66,7 +75,19 @@ function prescritoLabel(ex: ExecEx): string | null {
   return null
 }
 
+function execLabel(tipo: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL', s: { carga?: string; reps?: number }): string {
+  if (tipo === 'CARDIO') {
+    const dur = s.reps != null ? fmtDuracaoMMSS(s.reps) : '—'
+    return s.carga ? `${dur} · RPE ${s.carga}` : dur
+  }
+  if (tipo === 'PESO_CORPORAL') {
+    return s.reps != null ? `${s.reps} reps` : '—'
+  }
+  return `${s.carga ? `${s.carga} kg` : '—'}${s.reps ? ` × ${s.reps} reps` : ''}`
+}
+
 function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
+  const tipo = ex.tipo_exercicio ?? 'FORCA'
   const prescrito = prescritoLabel(ex)
   const [correcaoOpen, setCorrecaoOpen] = useState(false)
   const midiaItems: MediaTimelineItem[] = (ex.midia ?? []).map((m) => ({
@@ -111,7 +132,7 @@ function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
             <div key={i} className="flex items-center gap-3 pl-2 text-xs">
               <span className="text-text-muted w-12 shrink-0">Sér {i + 1}</span>
               <span className="text-text">
-                {s.carga ? `${s.carga} kg` : '—'}{s.reps ? ` × ${s.reps} reps` : ''}
+                {execLabel(tipo, s)}
               </span>
               {s.rpe != null && (
                 <span className="text-text-muted">RPE {s.rpe}</span>

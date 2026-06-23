@@ -147,6 +147,7 @@ def finish(aluno_id: str) -> dict:
             "exercicio_id": r.get("exercicio_id"),
             "exercicio_nome": r.get("exercicio_nome"),
             "series_exec": r.get("series_exec", []),
+            "tipo_exercicio": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("tipo_exercicio"),
             "series_prescritas": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("series_prescritas"),
             "series": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("series"),
             "reps_prescritas": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("reps_prescritas"),
