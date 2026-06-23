@@ -215,6 +215,7 @@ def treino_de_hoje(aluno_id: str) -> dict:
     # Inclui exercícios do dia E exercícios sem dia fixo (diários, dia_semana=None)
     ids_hoje = {e["treino_id"] for e in exs if e.get("dia_semana") in (None, hoje)}
     treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
+    treinos.sort(key=lambda t: t.get("ordem", 0))
     matches = [t for t in treinos
                if t["treino_id"] in ids_hoje and treino_vigente(t, hoje_str)]
     # Conta exercícios de cada treino para hoje
@@ -233,6 +234,7 @@ def listar_treinos(aluno_id: str) -> dict:
     from datetime import date
     hoje_str = date.today().isoformat()
     treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
+    treinos.sort(key=lambda t: t.get("ordem", 0))
     exs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")
     counts: dict[str, int] = {}
     for e in exs:

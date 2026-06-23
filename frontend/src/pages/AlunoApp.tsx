@@ -816,9 +816,12 @@ function Hoje() {
       {!lista.length ? (
         <EmptyState icon={<Dumbbell />} title="Nenhum treino cadastrado ainda" />
       ) : (
-        lista.map((t) => (
+        lista.map((t, idx) => (
           <Card key={t.id} variant="elevated" className="flex items-center justify-between">
-            <span className="font-medium">{t.nome}</span>
+            <span className="font-medium">
+              <span className="text-text-muted">{idx + 1}. </span>
+              {t.nome}
+            </span>
             <Button variant="energy" onClick={() => setPreviewId(t.id)}>Ver treino</Button>
           </Card>
         ))
