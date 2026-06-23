@@ -1,4 +1,4 @@
-# deploy.ps1 — Deploy do Personal Trainer (backend + frontend)
+﻿# deploy.ps1 — Deploy do Personal Trainer (backend + frontend)
 # Uso: .\deploy.ps1 [backend|frontend|all]
 # REGRA (CLAUDE.md): commitar antes de deployar — o SAM builda do disco, não do git.
 
@@ -65,7 +65,7 @@ function Deploy-Frontend {
     # Gera aluno.html a partir de index.html com manifest e meta tags do app do aluno
     $html = Get-Content -Path dist/index.html -Raw -Encoding UTF8
     $html = $html -replace 'href="/manifest\.webmanifest"', 'href="/manifest-aluno.webmanifest"'
-    $html = $html -replace '(theme-color" content=")#0f172a(")', '${1}#16a34a${2}'
+    $html = $html -replace '(theme-color" content=")#000613(")', '${1}#16a34a${2}'
     $html = $html -replace '(apple-mobile-web-app-title" content=")CoachPilot(")', '${1}Treinos${2}'
     [System.IO.File]::WriteAllText("$PWD\dist\aluno.html", $html, [System.Text.UTF8Encoding]::new($false))
     Write-Host "aluno.html gerado." -ForegroundColor Cyan
