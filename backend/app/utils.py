@@ -24,3 +24,18 @@ def treino_vigente(t: dict, hoje_str: str) -> bool:
     if t.get("data_fim") and hoje_str > t["data_fim"]:
         return False
     return True
+
+
+def init_series_prescritas(
+    series_prescritas: list[dict] | None,
+    series: int | None,
+    reps_prescritas: str | None,
+    carga_prescrita: str | None,
+) -> list[dict]:
+    """Normaliza prescrição flat (legado) pra lista estruturada — espelha
+    initSeriesPrescritas do frontend (SeriesPrescritasEditor.tsx)."""
+    if series_prescritas:
+        return series_prescritas
+    if series:
+        return [{"series": series, "reps": reps_prescritas or "", "carga": carga_prescrita}]
+    return [{"series": 1, "reps": "", "carga": None}]

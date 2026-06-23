@@ -771,7 +771,7 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
       {open && (
         <div className="mt-3 pl-2 sm:pl-6 space-y-1">
           {(exs ?? []).sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)).map((ex) => (
-            <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} biblioteca={biblioteca} exsDoTreino={exs ?? []} />
+            <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} biblioteca={biblioteca} />
           ))}
           <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={() => setAddingEx(true)}>
             <span className="flex items-center gap-1"><Plus size={14} /> Exercício</span>
@@ -780,18 +780,17 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
       )}
 
       <Modal open={addingEx} onClose={() => setAddingEx(false)} title="Novo exercício" size="lg">
-        <ExercicioForm biblioteca={biblioteca} exerciciosDoTreino={exs ?? []} submitLabel="Adicionar exercício" submitting={createEx.isPending} onSubmit={addEx} />
+        <ExercicioForm biblioteca={biblioteca} submitLabel="Adicionar exercício" submitting={createEx.isPending} onSubmit={addEx} />
       </Modal>
     </Card>
   )
 }
 
 function ExercicioForm({
-  initial, biblioteca, exerciciosDoTreino, onSubmit, submitting, submitLabel,
+  initial, biblioteca, onSubmit, submitting, submitLabel,
 }: {
   initial?: Partial<Exercicio>
   biblioteca?: { exlib_id: string; nome: string; grupo?: string; video_url?: string; links_uteis?: string[]; substitutos?: ExercicioSubstituto[] }[]
-  exerciciosDoTreino?: Exercicio[]
   onSubmit: (body: ExercicioCreate) => Promise<void>
   submitting?: boolean
   submitLabel: string
@@ -872,7 +871,7 @@ function ExercicioForm({
       <SubstitutosTreinoEditor
         exercicioNome={nome}
         biblioteca={biblioteca ?? []}
-        exerciciosDoTreino={exerciciosDoTreino}
+        seriesPrescritasOriginal={seriesPrescritas}
         substitutos={substitutos}
         onChangeSubstitutos={setSubstitutos}
         excluidos={substitutosExcluidos}
@@ -886,11 +885,10 @@ function ExercicioForm({
 }
 
 function ExercicioRow({
-  alunoId, treinoId, ex, biblioteca, exsDoTreino,
+  alunoId, treinoId, ex, biblioteca,
 }: {
   alunoId: string; treinoId: string; ex: Exercicio
   biblioteca?: { exlib_id: string; nome: string; grupo?: string; video_url?: string; substitutos?: ExercicioSubstituto[] }[]
-  exsDoTreino?: Exercicio[]
 }) {
   const [edit, setEdit] = useState(false)
   const [mediaOpen, setMediaOpen] = useState(false)
@@ -938,10 +936,7 @@ function ExercicioRow({
       </div>
 
       <Modal open={edit} onClose={() => setEdit(false)} title="Editar exercício" size="lg">
-        <ExercicioForm
-          initial={ex} biblioteca={biblioteca} submitLabel="Salvar" submitting={upd.isPending} onSubmit={save}
-          exerciciosDoTreino={(exsDoTreino ?? []).filter((e) => e.exercicio_id !== ex.exercicio_id)}
-        />
+        <ExercicioForm initial={ex} biblioteca={biblioteca} submitLabel="Salvar" submitting={upd.isPending} onSubmit={save} />
       </Modal>
 
       <ExercicioMediaModal

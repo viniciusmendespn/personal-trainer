@@ -144,6 +144,7 @@ export interface ExercicioSubstituto {
   nome: string
   video_url?: string
   observacao?: string
+  series_prescritas?: SeriePrescrita[]
 }
 
 export interface ExLib {

@@ -11,11 +11,12 @@ class SeriePrescrita(BaseModel):
 
 class ExercicioSubstituto(BaseModel):
     """Opção de troca para um exercício — cópia (nome/vídeo/observação) feita no momento em
-    que o personal escolhe, não referência viva. Pode ter vindo da biblioteca, de outro
-    exercício do mesmo treino, ou ser 100% customizada — uma vez salva, é só esse snapshot."""
+    que o personal escolhe, não referência viva. Pode ter vindo da biblioteca ou ser 100%
+    customizada — uma vez salva, é só esse snapshot."""
     nome: str
     video_url: Optional[str] = None
     observacao: Optional[str] = None
+    series_prescritas: Optional[list[SeriePrescrita]] = None
 
 
 class ExercicioCreate(BaseModel):

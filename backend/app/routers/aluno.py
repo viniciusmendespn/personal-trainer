@@ -13,7 +13,7 @@ from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.models.postagem import MidiaRef, PostagemCreate, PostagemTipo
 from app.services import agent_service, alerta_service, anotif_service, badge_service, conhecimento_service, correcao_service, feed_global_service, financeiro_service, media_service, meta_service, notif_service, pontos_service, postagem_service, sessao_service
-from app.utils import new_id, now_iso
+from app.utils import init_series_prescritas, new_id, now_iso
 
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
 
@@ -197,11 +197,19 @@ def _enrich_sessao_recursos(sessao: dict, personal_id: str, lib_by_nome: dict[st
         ex["recursos"] = [posts_by_sk[sk] for sk in effective if sk in posts_by_sk]
 
 
+def _with_series_fallback(sub: dict, fallback: list[dict]) -> dict:
+    if sub.get("series_prescritas"):
+        return sub
+    return {**sub, "series_prescritas": fallback}
+
+
 def _enrich_exercicios_substitutos(exs: list[dict], personal_id: str, lib_by_nome: dict[str, dict] | None = None) -> None:
     """Adiciona campo `substitutos_efetivos` em cada exercício.
     Fórmula: (substitutos da biblioteca - substitutos_excluidos) + substitutos (adições diretas),
     dedupe por nome (lowercase) dando prioridade ao item do treino. Sem I/O extra — os
     substitutos já são valores embutidos (snapshot), não referências a resolver.
+    Substitutos sem prescrição própria herdam a prescrição do próprio exercício (fallback),
+    pra o aluno sempre ver um bloco de séries concreto.
     """
     if not exs:
         return
@@ -215,7 +223,10 @@ def _enrich_exercicios_substitutos(exs: list[dict], personal_id: str, lib_by_nom
         treino_nomes = {(s.get("nome") or "").strip().lower() for s in treino_subs}
         herdados = [s for s in lib_subs if (s.get("nome") or "").strip().lower() not in excluded
                     and (s.get("nome") or "").strip().lower() not in treino_nomes]
-        ex["substitutos_efetivos"] = herdados + treino_subs
+        fallback = init_series_prescritas(
+            ex.get("series_prescritas"), ex.get("series"), ex.get("reps_prescritas"), ex.get("carga_prescrita")
+        )
+        ex["substitutos_efetivos"] = [_with_series_fallback(s, fallback) for s in (herdados + treino_subs)]
 
 
 @router.get("/sessao/exercicios")

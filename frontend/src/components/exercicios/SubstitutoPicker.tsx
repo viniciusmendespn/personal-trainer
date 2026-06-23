@@ -11,15 +11,14 @@ interface ExercicioOpcao {
 
 interface Props {
   biblioteca: ExercicioOpcao[]
-  exerciciosDoTreino?: ExercicioOpcao[]
   exercicioAtual: string
   jaAdicionados: string[] // nomes (lowercase) já presentes na lista efetiva
   onAdd: (item: ExercicioSubstituto) => void
 }
 
-export function SubstitutoPicker({ biblioteca, exerciciosDoTreino, exercicioAtual, jaAdicionados, onAdd }: Props) {
+export function SubstitutoPicker({ biblioteca, exercicioAtual, jaAdicionados, onAdd }: Props) {
   const [open, setOpen] = useState(false)
-  const [tab, setTab] = useState<'biblioteca' | 'treino' | 'custom'>('biblioteca')
+  const [tab, setTab] = useState<'biblioteca' | 'custom'>('biblioteca')
   const [search, setSearch] = useState('')
   const [cNome, setCNome] = useState('')
   const [cVideo, setCVideo] = useState('')
@@ -66,7 +65,6 @@ export function SubstitutoPicker({ biblioteca, exerciciosDoTreino, exercicioAtua
 
   const tabs = [
     { key: 'biblioteca', label: 'Da biblioteca' },
-    ...(exerciciosDoTreino?.length ? [{ key: 'treino', label: 'Deste treino' }] : []),
     { key: 'custom', label: 'Personalizado' },
   ]
 
@@ -89,7 +87,7 @@ export function SubstitutoPicker({ biblioteca, exerciciosDoTreino, exercicioAtua
             autoFocus
           />
           <div className="max-h-40 overflow-y-auto space-y-1">
-            {filtra(tab === 'biblioteca' ? biblioteca : exerciciosDoTreino ?? []).map((o) => (
+            {filtra(biblioteca).map((o) => (
               <button
                 key={o.nome}
                 type="button"
@@ -100,7 +98,7 @@ export function SubstitutoPicker({ biblioteca, exerciciosDoTreino, exercicioAtua
                 {o.nome}
               </button>
             ))}
-            {filtra(tab === 'biblioteca' ? biblioteca : exerciciosDoTreino ?? []).length === 0 && (
+            {filtra(biblioteca).length === 0 && (
               <p className="text-xs text-text-muted px-2 py-1.5">Nenhum exercício encontrado.</p>
             )}
           </div>

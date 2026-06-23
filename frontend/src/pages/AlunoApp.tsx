@@ -1033,6 +1033,7 @@ function SubstitutosModal({ substitutos, onClose }: { substitutos: ExercicioSubs
         {substitutos.map((s) => (
           <div key={s.nome} className="space-y-1">
             <p className="text-sm font-medium">{s.nome}</p>
+            {s.series_prescritas?.length ? <SeriesPrescritasCompact items={s.series_prescritas} /> : null}
             {s.video_url && (
               <a href={s.video_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-accent-hover hover:underline">
                 <Video size={12} /> Ver vídeo de execução
