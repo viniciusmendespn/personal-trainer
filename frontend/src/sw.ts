@@ -15,7 +15,7 @@ self.addEventListener('push', (event) => {
   const options: NotificationOptions = {
     body: data.body ?? '',
     icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    badge: '/badge-icon.png',
     tag: (data.tag as string | undefined) ?? 'coachpilot',
     data: { url: data.url ?? '/' },
   }
@@ -24,18 +24,19 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url: string = (event.notification.data as { url?: string })?.url ?? '/aluno'
+  const rawUrl: string = (event.notification.data as { url?: string })?.url ?? '/aluno'
+  const absoluteUrl = rawUrl.startsWith('http') ? rawUrl : self.location.origin + rawUrl
   event.waitUntil(
     clients
       .matchAll({ type: 'window', includeUncontrolled: true })
-      .then((windowClients) => {
+      .then(async (windowClients) => {
         for (const client of windowClients) {
-          if (client.url.includes(self.location.origin) && 'focus' in client) {
-            client.navigate(url)
+          if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+            await client.navigate(absoluteUrl)
             return client.focus()
           }
         }
-        return clients.openWindow(url)
+        return clients.openWindow(absoluteUrl)
       })
   )
 })
