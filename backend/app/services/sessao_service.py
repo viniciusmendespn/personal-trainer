@@ -445,7 +445,7 @@ def evolucao_exercicio(aluno_id: str, exercicio_id: str, limit: int = 100) -> di
         else:  # FORCA
             cargas, volume = [], 0.0
             soma_int, reps_total_irm = 0.0, 0
-            rm_kg = info.get("rm_kg")
+            rm_kg = float(info.get("rm_kg")) if info.get("rm_kg") else None
             for s in series_exec:
                 cg = _num(s.get("carga"))
                 reps = s.get("reps") or 0
