@@ -49,7 +49,7 @@ export function SeriesPrescritasEditor({
       {safeValue.map((row, i) => (
         <div key={i} className="flex items-center gap-2">
           <Input
-            className="w-16 text-center"
+            className="w-10 text-center"
             placeholder={labels.series}
             inputMode="numeric"
             value={row.series}
