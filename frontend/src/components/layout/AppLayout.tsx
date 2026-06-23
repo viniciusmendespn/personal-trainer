@@ -10,6 +10,7 @@ import { ChatWidget } from '../chat/ChatWidget'
 import { ChatContextProvider } from '../../context/ChatContext'
 import { TrialBanner } from '../billing/TrialBanner'
 import { RenewalBanner } from '../billing/RenewalBanner'
+import { usePushPersonal } from '../../hooks/usePushPersonal'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Visão geral', icon: LayoutDashboard },
@@ -158,10 +159,15 @@ export function AppLayout() {
   const unread = useUnreadCount().data?.count ?? 0
   const [drawerOpen, setDrawerOpen] = useState(false)
   const location = useLocation()
+  const { requestAndSubscribe } = usePushPersonal()
 
   useEffect(() => {
     setDrawerOpen(false)
   }, [location.pathname])
+
+  useEffect(() => {
+    requestAndSubscribe()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const pageTitle =
     NAV_ITEMS.find((i) => location.pathname.startsWith(i.to))?.label ??

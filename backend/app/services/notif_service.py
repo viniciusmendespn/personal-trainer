@@ -1,12 +1,19 @@
 """Sistema de notificações do portal (ESPEC §2.2) — feed do personal na partição PT#.
 Informa situações: relato de dor, treino vencendo/vencido, etc. Bell + lista no portal."""
+import logging
 import time
 
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.utils import epoch_ms, new_id, now_iso
 
+logger = logging.getLogger(__name__)
+
 NOTIF_TTL_S = 30 * 24 * 3600   # notificação lida vira histórico e expira em 30 dias
+
+_URL_MAP_PERSONAL: dict[str, str] = {
+    "MSG_ALUNO": "/notificacoes",
+}
 
 
 def criar(personal_id: str, tipo: str, titulo: str, mensagem: str,
@@ -20,7 +27,17 @@ def criar(personal_id: str, tipo: str, titulo: str, mensagem: str,
     }
     repo.put_item(keys.pk_personal(personal_id), keys.sk_notif(epoch_ms(), nid), item)
     repo.increment_counter(keys.pk_personal(personal_id), keys.SK_STATS_NOTIF, "nao_lidas", 1)
+    _disparar_push_personal(personal_id, titulo, mensagem, tipo)
     return nid
+
+
+def _disparar_push_personal(personal_id: str, titulo: str, mensagem: str, tipo: str) -> None:
+    try:
+        from app.services import push_service   # import tardio — evita ciclo
+        url = _URL_MAP_PERSONAL.get(tipo, "/dashboard")
+        push_service.send_push_personal(personal_id, titulo, mensagem, url=url, tag=tipo)
+    except Exception as exc:
+        logger.warning("[notif] push falhou para personal %s: %s", personal_id, exc)
 
 
 def listar(personal_id: str, limit: int = 50, cursor: str | None = None,

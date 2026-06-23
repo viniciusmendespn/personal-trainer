@@ -61,8 +61,20 @@ function Deploy-Frontend {
     npm run build
     if ($LASTEXITCODE -ne 0) { Write-Host "Build falhou." -ForegroundColor Red; Set-Location ..; exit 1 }
 
-    # index.html sem cache; assets com hash = cache de 1 ano (ARCHITECTURE §10.2)
+    # Gera aluno.html a partir de index.html com manifest e meta tags do app do aluno
+    $html = Get-Content -Path dist/index.html -Raw -Encoding UTF8
+    $html = $html -replace 'href="/manifest\.webmanifest"', 'href="/manifest-aluno.webmanifest"'
+    $html = $html -replace '(theme-color" content=")#0f172a(")', '${1}#16a34a${2}'
+    $html = $html -replace '(apple-mobile-web-app-title" content=")CoachPilot(")', '${1}Treinos${2}'
+    $html | Out-File -FilePath dist/aluno.html -Encoding utf8NoBOM
+    Write-Host "aluno.html gerado." -ForegroundColor Cyan
+
+    # index.html e aluno.html sem cache (ARCHITECTURE §10.2)
     aws s3 cp dist/index.html "s3://$Bucket/index.html" `
+        --cache-control "no-cache, no-store, must-revalidate" `
+        --content-type "text/html; charset=utf-8" `
+        --region $Region --profile $Profile
+    aws s3 cp dist/aluno.html "s3://$Bucket/aluno.html" `
         --cache-control "no-cache, no-store, must-revalidate" `
         --content-type "text/html; charset=utf-8" `
         --region $Region --profile $Profile
@@ -84,7 +96,7 @@ function Deploy-Frontend {
     # Demais arquivos públicos sem hash (ícones, logos, imagens, robots.txt etc.):
     # cache curto, senão troca de logo/favicon fica presa em cache por 1 ano (browser + CDN)
     aws s3 sync dist/ "s3://$Bucket/" --delete `
-        --exclude "index.html" --exclude "*.webmanifest" `
+        --exclude "index.html" --exclude "aluno.html" --exclude "*.webmanifest" `
         --exclude "sw.js" --exclude "workbox-*.js" --exclude "registerSW.js" `
         --exclude "assets/*" `
         --cache-control "public, max-age=3600" `

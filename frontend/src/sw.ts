@@ -16,7 +16,8 @@ self.addEventListener('push', (event) => {
     body: data.body ?? '',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    data: { url: data.url ?? '/aluno' },
+    tag: (data.tag as string | undefined) ?? 'coachpilot',
+    data: { url: data.url ?? '/' },
   }
   event.waitUntil(self.registration.showNotification(title, options))
 })

@@ -336,6 +336,25 @@ Resources:
             AllowedHeaders: ["*"]
             MaxAge: 3600
 
+  # ── CloudFront Function: roteia rotas SPA ao HTML correto antes do S3 ────────
+  SpaRouterFunction:
+    Type: AWS::CloudFront::Function
+    Condition: CreateFrontendInfra
+    Properties:
+      Name: !Sub "${ProjectName}-spa-router-${Stage}"
+      AutoPublish: true
+      FunctionConfig:
+        Comment: "Rotas /aluno* → aluno.html; demais rotas SPA → index.html"
+        Runtime: cloudfront-js-2.0
+      FunctionCode: |
+        function handler(event) {
+          var uri = event.request.uri;
+          if (uri.indexOf('.') === -1) {
+            event.request.uri = uri.indexOf('/aluno') === 0 ? '/aluno.html' : '/index.html';
+          }
+          return event.request;
+        }
+
   # ── S3 + CloudFront (frontend SPA — criar quando a conta estiver pronta) ─────
   FrontendBucket:
     Type: AWS::S3::Bucket
@@ -482,6 +501,9 @@ Resources:
           ViewerProtocolPolicy: redirect-to-https
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6   # CachingOptimized
           AllowedMethods: [GET, HEAD]
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt SpaRouterFunction.FunctionMetadata.FunctionARN
         CacheBehaviors:
           - PathPattern: /v1/*
             TargetOriginId: ApiOrigin

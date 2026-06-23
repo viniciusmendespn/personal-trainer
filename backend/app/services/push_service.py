@@ -47,10 +47,7 @@ def get_public_key() -> str:
     return _PUBLIC_KEY
 
 
-def send_push(aluno_id: str, title: str, body: str, url: str = "/aluno") -> None:
-    if not _PRIVATE_KEY:
-        return
-    subs = get_subscriptions(aluno_id)
+def _send_to_subs(subs: list[dict], pk_fn, data: dict) -> None:
     for s in subs:
         try:
             webpush(
@@ -58,14 +55,50 @@ def send_push(aluno_id: str, title: str, body: str, url: str = "/aluno") -> None
                     "endpoint": s["endpoint"],
                     "keys": {"p256dh": s["p256dh"], "auth": s["auth"]},
                 },
-                data=json.dumps({"title": title, "body": body, "url": url}),
+                data=json.dumps(data),
                 vapid_private_key=_PRIVATE_KEY,
                 vapid_claims={"sub": _SUBJECT},
             )
         except WebPushException as exc:
             if exc.response is not None and exc.response.status_code == 410:
-                repo.delete_item(keys.pk_aluno(aluno_id), keys.sk_push(_sub_id(s["endpoint"])))
+                repo.delete_item(pk_fn(s), keys.sk_push(_sub_id(s["endpoint"])))
             else:
-                logger.warning("[push] envio falhou para aluno %s: %s", aluno_id, exc)
+                logger.warning("[push] envio falhou: %s", exc)
         except Exception as exc:
-            logger.warning("[push] erro inesperado para aluno %s: %s", aluno_id, exc)
+            logger.warning("[push] erro inesperado: %s", exc)
+
+
+def send_push(aluno_id: str, title: str, body: str, url: str = "/aluno",
+              tag: str = "coachpilot") -> None:
+    if not _PRIVATE_KEY:
+        return
+    subs = get_subscriptions(aluno_id)
+    _send_to_subs(subs, lambda s: keys.pk_aluno(aluno_id),
+                  {"title": title, "body": body, "url": url, "tag": tag})
+
+
+# ── Push para o personal (partição PT#{personal_id}) ─────────────────────────
+
+def save_subscription_personal(personal_id: str, endpoint: str, p256dh: str, auth: str) -> None:
+    sid = _sub_id(endpoint)
+    repo.put_item(keys.pk_personal(personal_id), keys.sk_push(sid), {
+        "endpoint": endpoint, "p256dh": p256dh, "auth": auth,
+        "created_at": now_iso(), "ttl": int(time.time()) + _SUB_TTL,
+    })
+
+
+def delete_subscription_personal(personal_id: str, endpoint: str) -> None:
+    repo.delete_item(keys.pk_personal(personal_id), keys.sk_push(_sub_id(endpoint)))
+
+
+def get_subscriptions_personal(personal_id: str) -> list[dict]:
+    return repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.PUSH_PREFIX)
+
+
+def send_push_personal(personal_id: str, title: str, body: str, url: str = "/dashboard",
+                       tag: str = "coachpilot") -> None:
+    if not _PRIVATE_KEY:
+        return
+    subs = get_subscriptions_personal(personal_id)
+    _send_to_subs(subs, lambda s: keys.pk_personal(personal_id),
+                  {"title": title, "body": body, "url": url, "tag": tag})

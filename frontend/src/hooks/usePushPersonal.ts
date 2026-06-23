@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { pushApi } from '../api/push'
+import { pushPersonalApi } from '../api/push'
 
-const LS_KEY = 'pt_push_subscribed'
+const LS_KEY = 'pt_push_personal_subscribed'
 
-export function usePushNotification() {
+export function usePushPersonal() {
   const [isSubscribed, setIsSubscribed] = useState(false)
 
   useEffect(() => {
@@ -26,17 +26,17 @@ export function usePushNotification() {
       const permission = await Notification.requestPermission()
       if (permission !== 'granted') return
 
-      const vapidKey = await pushApi.getVapidKey()
+      const vapidKey = await pushPersonalApi.getVapidKey()
       const reg = await navigator.serviceWorker.ready
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: vapidKey,   // base64url string, aceito nativamente
+        applicationServerKey: vapidKey,
       })
-      await pushApi.subscribe(sub.toJSON() as PushSubscriptionJSON)
+      await pushPersonalApi.subscribe(sub.toJSON() as PushSubscriptionJSON)
       localStorage.setItem(LS_KEY, '1')
       setIsSubscribed(true)
     } catch (e) {
-      console.error('[push:aluno] falha ao inscrever:', e)
+      console.error('[push:personal] falha ao inscrever:', e)
     }
   }
 
@@ -46,13 +46,13 @@ export function usePushNotification() {
       const reg = await navigator.serviceWorker.ready
       const sub = await reg.pushManager.getSubscription()
       if (sub) {
-        await pushApi.unsubscribe(sub.endpoint)
+        await pushPersonalApi.unsubscribe(sub.endpoint)
         await sub.unsubscribe()
       }
       localStorage.removeItem(LS_KEY)
       setIsSubscribed(false)
-    } catch {
-      // best-effort
+    } catch (e) {
+      console.error('[push:personal] falha ao desinscrever:', e)
     }
   }
 
