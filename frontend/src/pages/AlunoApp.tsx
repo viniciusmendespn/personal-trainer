@@ -793,7 +793,7 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
                       <p className="font-medium text-sm">{ex.nome}</p>
                       <p className="text-xs text-text-secondary mt-0.5">
                         {ex.series_prescritas?.length
-                          ? <SeriesPrescritasCompact items={ex.series_prescritas} unidadeCarga={ex.unidade_carga} />
+                          ? <SeriesPrescritasCompact items={ex.series_prescritas} />
                           : <>{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</>
                         }
                       </p>
@@ -1260,7 +1260,7 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
             </span>
             <span className="block mt-0.5">
               {seriesAtivas?.length
-                ? <SeriesPrescritasCompact items={seriesAtivas} tipoExercicio={ex.tipo_exercicio} unidadeCarga={ex.unidade_carga} />
+                ? <SeriesPrescritasCompact items={seriesAtivas} tipoExercicio={ex.tipo_exercicio} />
                 : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
               }
             </span>

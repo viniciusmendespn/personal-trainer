@@ -808,7 +808,7 @@ function ExercicioForm({
     initSeriesPrescritas(initial?.series_prescritas, initial?.series, initial?.reps_prescritas, initial?.carga_prescrita)
   )
   const [unidadeCarga] = useState(initial?.unidade_carga ?? '')
-  const [unidadeReps, setUnidadeReps] = useState(initial?.unidade_reps ?? '')
+  const [unidadeReps] = useState(initial?.unidade_reps ?? '')
   const [vid, setVid] = useState(initial?.video_url ?? '')
   const [obs, setObs] = useState(initial?.observacoes ?? '')
   const [rmKg, setRmKg] = useState<string>(initial?.rm_kg != null ? String(initial.rm_kg) : '')
@@ -918,8 +918,6 @@ function ExercicioForm({
           value={seriesPrescritas}
           onChange={setSeriesPrescritas}
           tipoExercicio={tipo}
-          unidadeReps={unidadeReps}
-          onUnidadeRepsChange={setUnidadeReps}
         />
       </div>
       <div>
@@ -1001,7 +999,7 @@ function ExercicioRow({
           {ex.nome}
           <span className="ml-2">
             {ex.series_prescritas?.length
-              ? <SeriesPrescritasCompact items={ex.series_prescritas} tipoExercicio={ex.tipo_exercicio} unidadeCarga={ex.unidade_carga} />
+              ? <SeriesPrescritasCompact items={ex.series_prescritas} tipoExercicio={ex.tipo_exercicio} />
               : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
             }
           </span>

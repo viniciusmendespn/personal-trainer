@@ -1,14 +1,11 @@
 import { X, Plus } from 'lucide-react'
 import { Input } from '../ui'
-import { UnitInput } from '../ui/UnitInput'
 import type { SeriePrescrita, TipoExercicio } from '../../types'
 
 interface Props {
   value: SeriePrescrita[]
   onChange: (v: SeriePrescrita[]) => void
   tipoExercicio?: TipoExercicio
-  unidadeReps?: string
-  onUnidadeRepsChange?: (v: string) => void
 }
 
 function getLabels(tipo?: TipoExercicio) {
@@ -17,20 +14,11 @@ function getLabels(tipo?: TipoExercicio) {
   return { series: 'Séries', reps: 'Reps', carga: 'Carga' }
 }
 
-function getUnits(tipo?: TipoExercicio, uReps?: string) {
-  if (tipo === 'CARDIO') return { carga: 'RPE', reps: uReps || 'min' }
-  if (tipo === 'PESO_CORPORAL') return { carga: null, reps: 'reps' }
-  return { carga: 'kg', reps: 'reps' }
-}
-
 export function SeriesPrescritasEditor({
   value, onChange, tipoExercicio,
-  unidadeReps, onUnidadeRepsChange,
 }: Props) {
   const safeValue = Array.isArray(value) ? value : []
   const labels = getLabels(tipoExercicio)
-  const units = getUnits(tipoExercicio, unidadeReps)
-  const isCardio = tipoExercicio === 'CARDIO'
 
   function update(i: number, field: keyof SeriePrescrita, v: string) {
     onChange(safeValue.map((r, j) => j === i ? { ...r, [field]: field === 'series' ? Number(v) || 1 : v } : r))
@@ -55,10 +43,8 @@ export function SeriesPrescritasEditor({
             onFocus={(e) => e.target.select()}
           />
           <span className="text-text-muted text-xs shrink-0">×</span>
-          <UnitInput
-            unit={units.reps}
-            unitOptions={isCardio ? ['min', 'km'] : undefined}
-            onUnitChange={isCardio ? onUnidadeRepsChange : undefined}
+          <Input
+            className="flex-1"
             placeholder={labels.reps}
             value={row.reps}
             onChange={(e) => update(i, 'reps', e.target.value)}
@@ -67,8 +53,8 @@ export function SeriesPrescritasEditor({
           {labels.carga !== null && (
             <>
               <span className="text-text-muted text-xs shrink-0">·</span>
-              <UnitInput
-                unit={units.carga ?? undefined}
+              <Input
+                className="flex-1"
                 placeholder={labels.carga}
                 value={row.carga ?? ''}
                 onChange={(e) => update(i, 'carga', e.target.value)}
@@ -94,7 +80,7 @@ export function SeriesPrescritasEditor({
   )
 }
 
-/** Resumo compacto para exibição: "2×10 · 30kg + 1×6 · 40kg" */
+/** Resumo compacto para exibição: "2×10 · 30 + 1×6 · 40" */
 export function SeriesPrescritasCompact({ items, tipoExercicio }: { items: SeriePrescrita[]; tipoExercicio?: TipoExercicio }) {
   if (!items.length) return null
   const ocultarCarga = tipoExercicio === 'PESO_CORPORAL'
