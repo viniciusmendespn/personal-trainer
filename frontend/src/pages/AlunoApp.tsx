@@ -1042,9 +1042,9 @@ function SubstitutoOpcao({
       <p className={`text-sm font-medium ${selecionado && interativo ? 'text-accent' : ''}`}>
         {nome}{selecionado && interativo ? ' ✓' : ''}
       </p>
-      {series_prescritas?.length ? <SeriesPrescritasCompact items={series_prescritas} /> : null}
+      {series_prescritas?.length ? <div><SeriesPrescritasCompact items={series_prescritas} /></div> : null}
       {video_url && (
-        <a href={video_url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1 text-xs text-accent-hover hover:underline">
+        <a href={video_url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 text-xs text-accent-hover hover:underline">
           <Video size={12} /> Ver vídeo de execução
         </a>
       )}
