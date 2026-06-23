@@ -57,60 +57,6 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
 
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="shrink-0">
-
-        {/* User menu trigger */}
-        <div ref={menuRef} className="relative mb-2">
-          <button
-            onClick={() => setMenuOpen(v => !v)}
-            className="w-full px-2 flex items-center gap-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
-          >
-            <Avatar name={displayName} imageUrl={profile.data?.foto_url} size="sm" />
-            <div className="min-w-0 flex-1 text-left">
-              <p className="font-display text-sm font-bold text-text truncate">{displayName}</p>
-              {profile.data?.descricao && (
-                <p className="text-xs text-text-muted truncate">{profile.data.descricao}</p>
-              )}
-            </div>
-            <ChevronDown
-              size={14}
-              className={`shrink-0 text-text-muted transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`}
-            />
-          </button>
-
-          {/* Floating popover */}
-          {menuOpen && (
-            <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-border bg-surface-elevated shadow-xl overflow-hidden">
-              <NavLink
-                to="/perfil"
-                onClick={closeMenu}
-                className={({ isActive }) =>
-                  `flex items-center gap-2 px-3 py-2 text-sm transition-colors ${isActive ? 'text-accent-hover bg-accent/10' : 'text-text-secondary hover:bg-white/5 hover:text-text'}`
-                }
-              >
-                <UserCircle size={15} /> Meu Perfil
-              </NavLink>
-              <NavLink
-                to="/config"
-                onClick={closeMenu}
-                className={({ isActive }) =>
-                  `flex items-center gap-2 px-3 py-2 text-sm transition-colors ${isActive ? 'text-accent-hover bg-accent/10' : 'text-text-secondary hover:bg-white/5 hover:text-text'}`
-                }
-              >
-                <Settings size={15} /> Configurações
-              </NavLink>
-              <div className="border-t border-border/40 my-0.5" />
-              <button
-                onClick={() => { signOut(); closeMenu() }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-              >
-                <LogOut size={15} /> Sair
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
       <nav className="flex flex-col gap-1 flex-1 overflow-y-auto min-h-0">
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
           <NavLink key={to} to={to} onClick={onNavigate} className={({ isActive }) => link(isActive)}>
@@ -128,6 +74,57 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
           </NavLink>
         )}
       </nav>
+
+      {/* User menu — rodapé */}
+      <div ref={menuRef} className="relative mt-2 pt-2 border-t border-border/40 shrink-0">
+        <button
+          onClick={() => setMenuOpen(v => !v)}
+          className="w-full px-2 flex items-center gap-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
+        >
+          <Avatar name={displayName} imageUrl={profile.data?.foto_url} size="sm" />
+          <div className="min-w-0 flex-1 text-left">
+            <p className="font-display text-sm font-bold text-text truncate">{displayName}</p>
+            {profile.data?.descricao && (
+              <p className="text-xs text-text-muted truncate">{profile.data.descricao}</p>
+            )}
+          </div>
+          <ChevronDown
+            size={14}
+            className={`shrink-0 text-text-muted transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
+
+        {/* Popover abre para cima */}
+        {menuOpen && (
+          <div className="absolute left-0 right-0 bottom-full z-50 mb-1 rounded-lg border border-border bg-surface-elevated shadow-xl overflow-hidden">
+            <NavLink
+              to="/perfil"
+              onClick={closeMenu}
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-3 py-2 text-sm transition-colors ${isActive ? 'text-accent-hover bg-accent/10' : 'text-text-secondary hover:bg-white/5 hover:text-text'}`
+              }
+            >
+              <UserCircle size={15} /> Meu Perfil
+            </NavLink>
+            <NavLink
+              to="/config"
+              onClick={closeMenu}
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-3 py-2 text-sm transition-colors ${isActive ? 'text-accent-hover bg-accent/10' : 'text-text-secondary hover:bg-white/5 hover:text-text'}`
+              }
+            >
+              <Settings size={15} /> Configurações
+            </NavLink>
+            <div className="border-t border-border/40 my-0.5" />
+            <button
+              onClick={() => { signOut(); closeMenu() }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+            >
+              <LogOut size={15} /> Sair
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
