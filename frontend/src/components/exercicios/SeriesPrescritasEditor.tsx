@@ -29,6 +29,7 @@ export function SeriesPrescritasEditor({ value, onChange }: Props) {
             inputMode="numeric"
             value={row.series}
             onChange={(e) => update(i, 'series', e.target.value)}
+            onFocus={(e) => e.target.select()}
           />
           <span className="text-text-muted text-xs shrink-0">×</span>
           <Input

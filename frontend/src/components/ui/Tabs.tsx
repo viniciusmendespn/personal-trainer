@@ -20,6 +20,7 @@ export function Tabs({
         return (
           <button
             key={tab.key}
+            type="button"
             role="tab"
             aria-selected={isActive}
             onClick={() => onChange(tab.key)}
