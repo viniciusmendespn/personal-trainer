@@ -9,6 +9,8 @@ interface Props {
   tipoExercicio?: TipoExercicio
   unidadeCarga?: string
   unidadeReps?: string
+  onUnidadeCargaChange?: (v: string) => void
+  onUnidadeRepsChange?: (v: string) => void
 }
 
 function getLabels(tipo?: TipoExercicio) {
@@ -19,13 +21,15 @@ function getLabels(tipo?: TipoExercicio) {
 
 function getUnits(tipo?: TipoExercicio, uCarga?: string, uReps?: string) {
   if (tipo === 'CARDIO') return { carga: 'RPE', reps: '' }
-  if (tipo === 'PESO_CORPORAL') return { carga: null, reps: uReps ?? 'reps' }
-  return { carga: uCarga ?? 'kg', reps: uReps ?? 'reps' }
+  if (tipo === 'PESO_CORPORAL') return { carga: null, reps: uReps || 'reps' }
+  return { carga: uCarga || 'kg', reps: uReps || 'reps' }
 }
 
-const numericOnly = (v: string) => v.replace(/[^\d.]/g, '')
-
-export function SeriesPrescritasEditor({ value, onChange, tipoExercicio, unidadeCarga, unidadeReps }: Props) {
+export function SeriesPrescritasEditor({
+  value, onChange, tipoExercicio,
+  unidadeCarga, unidadeReps,
+  onUnidadeCargaChange, onUnidadeRepsChange,
+}: Props) {
   const safeValue = Array.isArray(value) ? value : []
   const labels = getLabels(tipoExercicio)
   const units = getUnits(tipoExercicio, unidadeCarga, unidadeReps)
@@ -55,9 +59,10 @@ export function SeriesPrescritasEditor({ value, onChange, tipoExercicio, unidade
           <span className="text-text-muted text-xs shrink-0">×</span>
           <UnitInput
             unit={units.reps || undefined}
+            onUnitChange={onUnidadeRepsChange}
             placeholder={labels.reps}
             value={row.reps}
-            onChange={(e) => update(i, 'reps', numericOnly(e.target.value))}
+            onChange={(e) => update(i, 'reps', e.target.value)}
             onFocus={(e) => e.target.select()}
           />
           {labels.carga !== null && (
@@ -65,9 +70,10 @@ export function SeriesPrescritasEditor({ value, onChange, tipoExercicio, unidade
               <span className="text-text-muted text-xs shrink-0">·</span>
               <UnitInput
                 unit={units.carga ?? undefined}
+                onUnitChange={onUnidadeCargaChange}
                 placeholder={labels.carga}
                 value={row.carga ?? ''}
-                onChange={(e) => update(i, 'carga', numericOnly(e.target.value))}
+                onChange={(e) => update(i, 'carga', e.target.value)}
                 onFocus={(e) => e.target.select()}
               />
             </>
