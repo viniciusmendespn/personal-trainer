@@ -4,8 +4,9 @@ import { useBiblioteca, useCreateExLib, useUpdateExLib, useDeleteExLib } from '.
 import { Button, Card, Input, Textarea, Spinner, EmptyState, Modal, useConfirm } from '../components/ui'
 import { ImportarExerciciosModal } from '../components/ImportarExerciciosModal'
 import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
+import { SubstitutosBibliotecaEditor } from '../components/exercicios/SubstitutosBibliotecaEditor'
 import type { ExLibCreate } from '../api/biblioteca'
-import type { ExLib } from '../types'
+import type { ExercicioSubstituto, ExLib } from '../types'
 
 export function BibliotecaPage() {
   const { data: exs, isLoading } = useBiblioteca()
@@ -43,7 +44,7 @@ export function BibliotecaPage() {
       <p className="text-sm text-text-secondary mb-4">Catálogo reutilizável com vídeo e recomendações (o agente usa nas respostas).</p>
 
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Novo exercício" size="lg">
-        <ExLibForm grupos={grupos} submitLabel="Adicionar" submitting={create.isPending} onSubmit={addExLib} />
+        <ExLibForm grupos={grupos} biblioteca={exs ?? []} submitLabel="Adicionar" submitting={create.isPending} onSubmit={addExLib} />
       </Modal>
 
       <ImportarExerciciosModal open={showImport} onClose={() => setShowImport(false)} />
@@ -59,7 +60,7 @@ export function BibliotecaPage() {
             <Input placeholder="Buscar por nome ou grupo…" value={query} onChange={(e) => setQuery(e.target.value)} className="pl-9" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {filtered?.map((ex) => <ExLibRow key={ex.exlib_id} ex={ex} grupos={grupos} />)}
+            {filtered?.map((ex) => <ExLibRow key={ex.exlib_id} ex={ex} grupos={grupos} biblioteca={exs ?? []} />)}
           </div>
         </>
       )}
@@ -68,10 +69,11 @@ export function BibliotecaPage() {
 }
 
 function ExLibForm({
-  initial, grupos, onSubmit, submitting, submitLabel,
+  initial, grupos, biblioteca, onSubmit, submitting, submitLabel,
 }: {
   initial?: Partial<ExLib>
   grupos: string[]
+  biblioteca: ExLib[]
   onSubmit: (body: ExLibCreate) => Promise<void>
   submitting?: boolean
   submitLabel: string
@@ -83,6 +85,7 @@ function ExLibForm({
   const [descricao, setDescricao] = useState(initial?.descricao ?? '')
   const [rec, setRec] = useState(initial?.recomendacoes ?? '')
   const [linksUteis, setLinksUteis] = useState<string[]>(initial?.links_uteis ?? [])
+  const [substitutos, setSubstitutos] = useState<ExercicioSubstituto[]>(initial?.substitutos ?? [])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -90,7 +93,7 @@ function ExLibForm({
     await onSubmit({
       nome, grupo: grupo || undefined, video_url: video || undefined,
       descricao: descricao || undefined, recomendacoes: rec || undefined,
-      links_uteis: linksUteis,
+      links_uteis: linksUteis, substitutos,
     })
   }
 
@@ -105,6 +108,7 @@ function ExLibForm({
       <Textarea label="Descrição" rows={2} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
       <Textarea label="Recomendações (técnica, cuidados, dicas…)" rows={3} value={rec} onChange={(e) => setRec(e.target.value)} />
       <LinksUteisIncluirSelector value={linksUteis} onChange={setLinksUteis} />
+      <SubstitutosBibliotecaEditor exercicioNome={nome} biblioteca={biblioteca} value={substitutos} onChange={setSubstitutos} />
       <Button type="submit" className="w-full" disabled={submitting || !nome}>
         {submitting ? 'Salvando…' : submitLabel}
       </Button>
@@ -112,7 +116,7 @@ function ExLibForm({
   )
 }
 
-function ExLibRow({ ex, grupos }: { ex: ExLib; grupos: string[] }) {
+function ExLibRow({ ex, grupos, biblioteca }: { ex: ExLib; grupos: string[]; biblioteca: ExLib[] }) {
   const [edit, setEdit] = useState(false)
   const upd = useUpdateExLib()
   const del = useDeleteExLib()
@@ -149,7 +153,7 @@ function ExLibRow({ ex, grupos }: { ex: ExLib; grupos: string[] }) {
       </span>
 
       <Modal open={edit} onClose={() => setEdit(false)} title="Editar exercício" size="lg">
-        <ExLibForm initial={ex} grupos={grupos} submitLabel="Salvar" submitting={upd.isPending} onSubmit={save} />
+        <ExLibForm initial={ex} grupos={grupos} biblioteca={biblioteca} submitLabel="Salvar" submitting={upd.isPending} onSubmit={save} />
       </Modal>
     </Card>
   )

@@ -1,5 +1,5 @@
 import { alunoClient } from './alunoClient'
-import type { Exercicio, Treino } from '../types'
+import type { Exercicio, ExercicioSubstituto, Treino } from '../types'
 import type { Evolucao, Resumo } from './evolucao'
 import type { FeedItem, MidiaExercicio, Relato } from './treinos'
 
@@ -69,6 +69,7 @@ export interface ExSessao {
   observacoes?: string
   registrado?: SerieInput[] | null
   recursos?: PostGlobal[]
+  substitutos_efetivos?: ExercicioSubstituto[]
 }
 
 export interface SessaoExercicios {

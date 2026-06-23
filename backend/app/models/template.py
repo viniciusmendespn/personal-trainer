@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from app.models.exercicio import SeriePrescrita
+from app.models.exercicio import ExercicioSubstituto, SeriePrescrita
 
 
 class ExercicioTemplate(BaseModel):
@@ -17,6 +17,8 @@ class ExercicioTemplate(BaseModel):
     video_url: Optional[str] = None
     observacoes: Optional[str] = None
     links_uteis_excluidos: list[str] = []
+    substitutos: list[ExercicioSubstituto] = []
+    substitutos_excluidos: list[str] = []
 
 
 class TreinoTemplateCreate(BaseModel):

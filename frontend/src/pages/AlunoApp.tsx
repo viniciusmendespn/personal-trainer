@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info, Repeat } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -23,7 +23,7 @@ import { renderMarkdownLite } from '../components/chat/markdownLite'
 import { AlunoPerfilModal } from '../components/aluno/AlunoPerfilModal'
 import { alunoFinanceiroApi } from '../api/financeiro'
 import { PixModal } from '../components/financeiro/PixModal'
-import type { Cobranca } from '../types'
+import type { Cobranca, ExercicioSubstituto } from '../types'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -682,6 +682,7 @@ function Hoje() {
   const sessao = useQuery({ queryKey: ['aluno-sessao'], queryFn: alunoApi.sessao, retry: false })
   const hoje = useQuery({ queryKey: ['aluno-hoje'], queryFn: alunoApi.hoje, retry: false })
   const [previewId, setPreviewId] = useState<string | null>(null)
+  const [substitutosPreview, setSubstitutosPreview] = useState<ExercicioSubstituto[] | null>(null)
   const previewExs = useQuery({
     queryKey: ['aluno-treino-preview', previewId],
     queryFn: () => alunoApi.exercicios(previewId!),
@@ -718,6 +719,9 @@ function Hoje() {
           <h2 className="font-display font-semibold flex-1">{nomeTreino}</h2>
         </div>
 
+        {substitutosPreview && (
+          <SubstitutosModal substitutos={substitutosPreview} onClose={() => setSubstitutosPreview(null)} />
+        )}
         {previewExs.isLoading ? (
           <div className="flex justify-center py-6"><Spinner /></div>
         ) : (
@@ -740,17 +744,28 @@ function Hoje() {
                       )}
                     </div>
                   </div>
-                  {ex.video_url && (
-                    <a
-                      href={ex.video_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 text-text-muted hover:text-energy transition-colors"
-                      title="Ver vídeo"
-                    >
-                      <Video size={16} />
-                    </a>
-                  )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {(ex.substitutos_efetivos?.length ?? 0) > 0 && (
+                      <button
+                        onClick={() => setSubstitutosPreview(ex.substitutos_efetivos!)}
+                        className="text-text-muted hover:text-energy transition-colors"
+                        title="Ver alternativas"
+                      >
+                        <Repeat size={16} />
+                      </button>
+                    )}
+                    {ex.video_url && (
+                      <a
+                        href={ex.video_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-text-muted hover:text-energy transition-colors"
+                        title="Ver vídeo"
+                      >
+                        <Video size={16} />
+                      </a>
+                    )}
+                  </div>
                 </div>
               </Card>
             ))}
@@ -1011,13 +1026,35 @@ function RecursosModal({ recursos, onClose }: { recursos: PostGlobal[]; onClose:
   )
 }
 
+function SubstitutosModal({ substitutos, onClose }: { substitutos: ExercicioSubstituto[]; onClose: () => void }) {
+  return (
+    <Modal open onClose={onClose} title="Alternativas para este exercício" size="lg">
+      <div className="space-y-3">
+        {substitutos.map((s) => (
+          <div key={s.nome} className="space-y-1">
+            <p className="text-sm font-medium">{s.nome}</p>
+            {s.video_url && (
+              <a href={s.video_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-accent-hover hover:underline">
+                <Video size={12} /> Ver vídeo de execução
+              </a>
+            )}
+            {s.observacao && <p className="text-xs text-text-secondary whitespace-pre-wrap">{s.observacao}</p>}
+          </div>
+        ))}
+      </div>
+    </Modal>
+  )
+}
+
 function ExercicioCard({ ex }: { ex: ExSessao }) {
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
   const [recursosOpen, setRecursosOpen] = useState(false)
+  const [substitutosOpen, setSubstitutosOpen] = useState(false)
   const [pr, setPr] = useState<number | null>(null)
   const feito = !!ex.registrado?.length
   const temRecursos = (ex.recursos?.length ?? 0) > 0
+  const temSubstitutos = (ex.substitutos_efetivos?.length ?? 0) > 0
 
   const initRows = () => {
     if (ex.registrado?.length) {
@@ -1058,6 +1095,9 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
       {recursosOpen && temRecursos && (
         <RecursosModal recursos={ex.recursos!} onClose={() => setRecursosOpen(false)} />
       )}
+      {substitutosOpen && temSubstitutos && (
+        <SubstitutosModal substitutos={ex.substitutos_efetivos!} onClose={() => setSubstitutosOpen(false)} />
+      )}
       <div className="flex items-center gap-1">
         <button className="flex-1 flex items-center justify-between text-left min-w-0"
           onClick={() => { if (!open) { setRows(initRows()); setPr(null) } setOpen((o) => !o) }}>
@@ -1072,6 +1112,15 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
           </span>
           {feito ? <Check size={16} className="text-success shrink-0" /> : <ChevronRight size={16} className="text-text-muted shrink-0" />}
         </button>
+        {temSubstitutos && (
+          <button
+            onClick={() => setSubstitutosOpen(true)}
+            aria-label="Ver alternativas"
+            className="shrink-0 text-accent hover:text-accent-hover transition-colors p-1"
+          >
+            <Repeat size={15} />
+          </button>
+        )}
         {temRecursos && (
           <button
             onClick={() => setRecursosOpen(true)}

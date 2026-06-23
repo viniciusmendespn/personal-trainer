@@ -140,6 +140,12 @@ export interface Avaliacao {
   created_at: string
 }
 
+export interface ExercicioSubstituto {
+  nome: string
+  video_url?: string
+  observacao?: string
+}
+
 export interface ExLib {
   exlib_id: string
   nome: string
@@ -148,6 +154,7 @@ export interface ExLib {
   descricao?: string
   recomendacoes?: string
   links_uteis?: string[]
+  substitutos?: ExercicioSubstituto[]
 }
 
 export interface ArquivoConhecimento {
@@ -181,6 +188,9 @@ export interface Exercicio {
   observacoes?: string
   links_uteis?: string[]
   links_uteis_excluidos?: string[]
+  substitutos?: ExercicioSubstituto[]
+  substitutos_excluidos?: string[]
+  substitutos_efetivos?: ExercicioSubstituto[]
   custom?: Custom
 }
 
@@ -197,6 +207,8 @@ export interface ExercicioCreate {
   observacoes?: string
   links_uteis?: string[]
   links_uteis_excluidos?: string[]
+  substitutos?: ExercicioSubstituto[]
+  substitutos_excluidos?: string[]
   custom?: Custom
 }
 

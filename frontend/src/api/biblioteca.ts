@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { ExLib } from '../types'
+import type { ExercicioSubstituto, ExLib } from '../types'
 
 export interface ExLibCreate {
   nome: string
@@ -8,6 +8,7 @@ export interface ExLibCreate {
   descricao?: string
   recomendacoes?: string
   links_uteis?: string[]
+  substitutos?: ExercicioSubstituto[]
 }
 
 export interface ImportarResult {

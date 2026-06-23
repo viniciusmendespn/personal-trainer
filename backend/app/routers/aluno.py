@@ -141,7 +141,9 @@ def hoje(ctx: dict = Depends(get_current_aluno)):
 def exercicios(treino_id: str, ctx: dict = Depends(get_current_aluno)):
     items = repo.query_pk(keys.pk_aluno(ctx["aluno_id"]), sk_prefix=keys.sk_exercicio_prefix(treino_id))
     items.sort(key=lambda e: e.get("ordem", 0))
-    return repo.clean_all(items)
+    cleaned = repo.clean_all(items)
+    _enrich_exercicios_substitutos(cleaned, ctx["personal_id"])
+    return cleaned
 
 
 @router.get("/sessao")
@@ -149,17 +151,23 @@ def get_sessao(ctx: dict = Depends(get_current_aluno)):
     return repo.clean(sessao_service.get_active(ctx["aluno_id"]))
 
 
-def _enrich_sessao_recursos(sessao: dict, personal_id: str) -> None:
+def _lib_by_nome(personal_id: str) -> dict[str, dict]:
+    """Biblioteca do personal indexada por nome (lowercase) — usada pra casar exercícios
+    prescritos com seus defaults da biblioteca (links úteis, substitutos)."""
+    lib = repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.EXLIB_PREFIX)
+    return {item["nome"].strip().lower(): item for item in lib if item.get("nome")}
+
+
+def _enrich_sessao_recursos(sessao: dict, personal_id: str, lib_by_nome: dict[str, dict] | None = None) -> None:
     """Adiciona campo `recursos` em cada exercício.
     Fórmula: (biblioteca_ao_vivo - links_uteis_excluidos) | links_uteis (adições diretas).
     """
     exs = sessao.get("exercicios") or []
     if not exs:
         return
-    lib = repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.EXLIB_PREFIX)
+    lib_by_nome = lib_by_nome if lib_by_nome is not None else _lib_by_nome(personal_id)
     nome_to_links: dict[str, list[str]] = {
-        item["nome"].strip().lower(): item.get("links_uteis") or []
-        for item in lib if item.get("links_uteis")
+        nome: item.get("links_uteis") or [] for nome, item in lib_by_nome.items() if item.get("links_uteis")
     }
     all_sks: set[str] = set()
     for ex in exs:
@@ -189,12 +197,35 @@ def _enrich_sessao_recursos(sessao: dict, personal_id: str) -> None:
         ex["recursos"] = [posts_by_sk[sk] for sk in effective if sk in posts_by_sk]
 
 
+def _enrich_exercicios_substitutos(exs: list[dict], personal_id: str, lib_by_nome: dict[str, dict] | None = None) -> None:
+    """Adiciona campo `substitutos_efetivos` em cada exercício.
+    Fórmula: (substitutos da biblioteca - substitutos_excluidos) + substitutos (adições diretas),
+    dedupe por nome (lowercase) dando prioridade ao item do treino. Sem I/O extra — os
+    substitutos já são valores embutidos (snapshot), não referências a resolver.
+    """
+    if not exs:
+        return
+    lib_by_nome = lib_by_nome if lib_by_nome is not None else _lib_by_nome(personal_id)
+    for ex in exs:
+        nome_lower = (ex.get("nome") or "").strip().lower()
+        lib_item = lib_by_nome.get(nome_lower)
+        lib_subs = (lib_item or {}).get("substitutos") or []
+        excluded = {n.strip().lower() for n in (ex.get("substitutos_excluidos") or [])}
+        treino_subs = ex.get("substitutos") or []
+        treino_nomes = {(s.get("nome") or "").strip().lower() for s in treino_subs}
+        herdados = [s for s in lib_subs if (s.get("nome") or "").strip().lower() not in excluded
+                    and (s.get("nome") or "").strip().lower() not in treino_nomes]
+        ex["substitutos_efetivos"] = herdados + treino_subs
+
+
 @router.get("/sessao/exercicios")
 def sessao_exercicios(ctx: dict = Depends(get_current_aluno)):
     """Sessão ativa com todos os exercícios + o que já foi registrado (ver treino todo)."""
     result = sessao_service.sessao_exercicios(ctx["aluno_id"])
     if result:
-        _enrich_sessao_recursos(result, ctx["personal_id"])
+        lib_by_nome = _lib_by_nome(ctx["personal_id"])
+        _enrich_sessao_recursos(result, ctx["personal_id"], lib_by_nome)
+        _enrich_exercicios_substitutos(result.get("exercicios") or [], ctx["personal_id"], lib_by_nome)
     return result
 
 
