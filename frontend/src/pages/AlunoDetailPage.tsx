@@ -6,6 +6,7 @@ import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { useToggleAgenteHabilitado } from '../hooks/usePersonalChat'
 import { usePlanoStatus } from '../hooks/usePlano'
 import { alunosApi } from '../api/alunos'
+import { wapiApi } from '../api/wapi'
 import { anamneseApi } from '../api/anamnese'
 import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
@@ -88,6 +89,8 @@ export function AlunoDetailPage() {
     queryFn: () => alunosApi.gerarLink(alunoId),
     enabled: !!alunoId,
   })
+  const { data: wapiStatus } = useQuery({ queryKey: ['wapi-status'], queryFn: wapiApi.status, retry: false })
+  const whatsConectado = wapiStatus?.connected === true
   const enviarLink = useMutation({
     mutationFn: () => alunosApi.enviarLink(alunoId),
     onSuccess: () => show('Link enviado pelo WhatsApp.', 'success'),
@@ -249,7 +252,7 @@ export function AlunoDetailPage() {
               className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-surface border border-border text-text-secondary"
             />
             <Button variant="ghost" size="sm" iconOnly aria-label="Copiar link" onClick={copyLink}><Copy size={15} /></Button>
-            <Button variant="ghost" size="sm" iconOnly aria-label="Enviar pelo WhatsApp" onClick={() => enviarLink.mutate()} disabled={enviarLink.isPending}><Send size={15} /></Button>
+            <Button variant="ghost" size="sm" iconOnly aria-label="Enviar pelo WhatsApp" onClick={() => enviarLink.mutate()} disabled={!whatsConectado || enviarLink.isPending} title={!whatsConectado ? 'WhatsApp não conectado' : 'Enviar pelo WhatsApp'}><Send size={15} /></Button>
           </div>
         </Card>
       )}
