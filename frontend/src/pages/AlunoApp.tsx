@@ -415,7 +415,7 @@ export function AlunoApp() {
             <div className="space-y-3 pt-2">
               <PontosWidget onVerRanking={() => setShowRanking(true)} />
               <StreakBanner />
-              <Hoje />
+              <Hoje onVerFeed={(exId) => handleNotifNavigate('evolucao', exId)} />
             </div>
           )}
         </main>
@@ -685,7 +685,7 @@ function ConhecimentoTab() {
   )
 }
 
-function Hoje() {
+function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
   const qc = useQueryClient()
   const sessao = useQuery({ queryKey: ['aluno-sessao'], queryFn: alunoApi.sessao, retry: false })
   const hoje = useQuery({ queryKey: ['aluno-hoje'], queryFn: alunoApi.hoje, retry: false })
@@ -705,7 +705,7 @@ function Hoje() {
   })
 
   if (sessao.isLoading) return <Spinner />
-  if (sessao.data?.sessao_id) return <SessaoTreino sessao={sessao.data} />
+  if (sessao.data?.sessao_id) return <SessaoTreino sessao={sessao.data} onVerFeed={onVerFeed} />
 
   const agendados = hoje.data?.hoje ?? []
   const lista = agendados.length ? agendados : (hoje.data?.treinos ?? []).map((t) => ({ id: t.treino_id, nome: t.nome }))
@@ -905,7 +905,7 @@ function formatElapsed(secs: number) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
-function SessaoTreino({ sessao }: { sessao: SessaoAtiva }) {
+function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (exId: string) => void }) {
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [elapsed, setElapsed] = useState(0)
@@ -961,7 +961,7 @@ function SessaoTreino({ sessao }: { sessao: SessaoAtiva }) {
         />
       </div>
       <p className="text-xs text-text-muted">Toque em um exercício para registrar — você pode começar por onde quiser e editar depois.</p>
-      {exs.map((ex) => <ExercicioCard key={ex.exercicio_id} ex={ex} />)}
+      {exs.map((ex) => <ExercicioCard key={ex.exercicio_id} ex={ex} onVerFeed={onVerFeed} />)}
       <Button
         variant="energy"
         className="w-full"
@@ -1115,7 +1115,7 @@ function SubstitutosModal({
   )
 }
 
-function ExercicioCard({ ex }: { ex: ExSessao }) {
+function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: string) => void }) {
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
   const [recursosOpen, setRecursosOpen] = useState(false)
@@ -1222,6 +1222,13 @@ function ExercicioCard({ ex }: { ex: ExSessao }) {
             <Info size={15} />
           </button>
         )}
+        <button
+          onClick={() => onVerFeed(ex.exercicio_id)}
+          aria-label="Ver feed do exercício"
+          className="shrink-0 text-accent hover:text-accent-hover transition-colors p-1"
+        >
+          <MessageCircle size={15} />
+        </button>
       </div>
 
       {(videoAtivo || obsAtiva) && (
