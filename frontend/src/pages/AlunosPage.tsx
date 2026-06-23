@@ -117,7 +117,7 @@ export function AlunosPage() {
             {(['ATIVO', 'INATIVO', 'TODOS'] as const).map((s) => (
               <Button
                 key={s}
-                variant={statusFilter === s ? 'default' : 'outline'}
+                variant={statusFilter === s ? 'primary' : 'outline'}
                 size="sm"
                 onClick={() => setStatusFilter(s)}
               >
