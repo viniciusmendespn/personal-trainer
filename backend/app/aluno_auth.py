@@ -26,7 +26,8 @@ def verify_token(token: str) -> dict:
 
 
 def magic_link(aluno_id: str, personal_id: str) -> str:
-    return f"{settings.frontend_url}/aluno?token={issue_token(aluno_id, personal_id)}"
+    base = settings.aluno_frontend_url or settings.frontend_url
+    return f"{base}/aluno?token={issue_token(aluno_id, personal_id)}"
 
 
 def issue_cadastro_token(personal_id: str, days: int = 30) -> str:

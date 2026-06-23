@@ -10,7 +10,8 @@ $Region     = "us-east-1"
 $StackName  = "personal-trainer-prod"
 # Preencher após o 1º deploy com DeployFrontendInfra=true (ler dos Outputs do stack):
 $Bucket     = "personal-trainer-frontend-prod-421219980792"
-$CfId       = "E3JZ6U88Q0GYGF"   # CloudFrontDistributionId
+$CfId       = "E3JZ6U88Q0GYGF"   # CloudFrontDistributionId (portal — coachpilot.com.br)
+$AlunoCfId  = ""                  # Preencher após 1º deploy: output AlunoCloudFrontDistributionId
 
 function Get-EnvLocal {
     param([string]$Key)
@@ -42,7 +43,7 @@ function Deploy-Backend {
     if ($LASTEXITCODE -ne 0) { Write-Host "Build falhou." -ForegroundColor Red; Set-Location ..; exit 1 }
 
     if ($ExtraOverrides) {
-        sam deploy --profile $Profile --parameter-overrides "Stage=prod DeployFrontendInfra=true FrontendUrl=https://coachpilot.com.br$ExtraOverrides"
+        sam deploy --profile $Profile --parameter-overrides "Stage=prod DeployFrontendInfra=true FrontendUrl=https://coachpilot.com.br AlunoFrontendUrl=https://app.coachpilot.com.br$ExtraOverrides"
     } else {
         sam deploy --profile $Profile
     }
@@ -107,6 +108,13 @@ function Deploy-Frontend {
     aws cloudfront create-invalidation --distribution-id $CfId `
         --paths "/*" `
         --region $Region --profile $Profile | Out-Null
+    if ($AlunoCfId) {
+        aws cloudfront create-invalidation --distribution-id $AlunoCfId `
+            --paths "/*" `
+            --region $Region --profile $Profile | Out-Null
+    } else {
+        Write-Host "AlunoCfId vazio — preencher deploy.ps1 com AlunoCloudFrontDistributionId do stack." -ForegroundColor Yellow
+    }
     Set-Location ..
     Write-Host "Frontend deployed!" -ForegroundColor Green
 }

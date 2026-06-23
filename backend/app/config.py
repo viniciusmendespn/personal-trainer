@@ -9,7 +9,8 @@ class Settings(BaseSettings):
     wapi_base_url: str = "https://api.w-api.app"
     webhook_secret: str = ""
     webhook_base_url: str = ""            # base pública da API (p/ auto-configurar o webhook na W-API)
-    frontend_url: str = ""                # URL do frontend (p/ magic-link do app do aluno)
+    frontend_url: str = ""                # URL do portal (coachpilot.com.br — cadastro, etc.)
+    aluno_frontend_url: str = ""          # URL do app do aluno (app.coachpilot.com.br — magic-link)
     media_bucket_name: str = ""
     openai_api_key: str = ""              # key SEPARADA deste app (custo isolado)
     openai_model: str = "gpt-5.4-nano"

@@ -28,7 +28,11 @@ Parameters:
   FrontendUrl:
     Type: String
     Default: ""
-    Description: "URL do frontend (domínio customizado coachpilot.com.br) — p/ o magic-link do app do aluno."
+    Description: "URL do portal (coachpilot.com.br) — p/ links de cadastro e uso geral."
+  AlunoFrontendUrl:
+    Type: String
+    Default: "https://app.coachpilot.com.br"
+    Description: "URL do subdomínio do app do aluno — p/ magic-link enviado pelo WhatsApp."
   OpenAiApiKey:
     Type: String
     Default: ""
@@ -117,6 +121,7 @@ Globals:
         WEBHOOK_SECRET: !Ref WebhookSecret
         WEBHOOK_BASE_URL: !Ref WebhookBaseUrl
         FRONTEND_URL: !Ref FrontendUrl
+        ALUNO_FRONTEND_URL: !Ref AlunoFrontendUrl
         MEDIA_BUCKET_NAME: !Sub "${ProjectName}-media-${Stage}-${AWS::AccountId}"
         OPENAI_API_KEY: !Ref OpenAiApiKey
         OPENAI_MODEL: !Ref OpenAiModel
@@ -350,7 +355,29 @@ Resources:
         function handler(event) {
           var uri = event.request.uri;
           if (uri.indexOf('.') === -1) {
-            event.request.uri = uri.indexOf('/aluno') === 0 ? '/aluno.html' : '/index.html';
+            event.request.uri = '/index.html';
+          }
+          return event.request;
+        }
+
+  # ── CloudFront Function para o app do aluno (app.coachpilot.com.br) ──────────
+  AlunoSpaRouterFunction:
+    Type: AWS::CloudFront::Function
+    Condition: CreateFrontendInfra
+    Properties:
+      Name: !Sub "${ProjectName}-aluno-router-${Stage}"
+      AutoPublish: true
+      FunctionConfig:
+        Comment: "Redireciona / → /aluno; demais rotas SPA → aluno.html"
+        Runtime: cloudfront-js-2.0
+      FunctionCode: |
+        function handler(event) {
+          var uri = event.request.uri;
+          if (uri === '/' || uri === '') {
+            return { statusCode: 302, headers: { location: { value: '/aluno' } } };
+          }
+          if (uri.indexOf('.') === -1) {
+            event.request.uri = '/aluno.html';
           }
           return event.request;
         }
@@ -384,7 +411,9 @@ Resources:
             Resource: !Sub "${FrontendBucket.Arn}/*"
             Condition:
               StringEquals:
-                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
+                AWS:SourceArn:
+                  - !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
+                  - !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${AlunoCloudFrontDistribution}"
 
   CloudFrontOAC:
     Type: AWS::CloudFront::OriginAccessControl
@@ -471,6 +500,30 @@ Resources:
         HostedZoneId: Z2FDTNDATAQYW2
         EvaluateTargetHealth: false
 
+  AppAliasRecordA:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateFrontendInfra
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub "app.${DomainName}"
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt AlunoCloudFrontDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+        EvaluateTargetHealth: false
+
+  AppAliasRecordAAAA:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateFrontendInfra
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub "app.${DomainName}"
+      Type: AAAA
+      AliasTarget:
+        DNSName: !GetAtt AlunoCloudFrontDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+        EvaluateTargetHealth: false
+
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     Condition: CreateFrontendInfra
@@ -514,6 +567,55 @@ Resources:
         CustomErrorResponses:
           - { ErrorCode: 403, ResponseCode: 200, ResponsePagePath: /index.html }
           - { ErrorCode: 404, ResponseCode: 200, ResponsePagePath: /index.html }
+        Tags:
+          - { Key: Project, Value: personal-trainer }
+          - { Key: ManagedBy, Value: SAM }
+
+  AlunoCloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Condition: CreateFrontendInfra
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: aluno.html
+        Aliases:
+          - !Sub "app.${DomainName}"
+        ViewerCertificate:
+          AcmCertificateArn: !Ref SiteCertificate
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            OriginAccessControlId: !Ref CloudFrontOAC
+            S3OriginConfig: {}
+          - Id: ApiOrigin
+            DomainName: !Sub "${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com"
+            OriginPath: !Sub "/${Stage}"
+            CustomOriginConfig:
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6   # CachingOptimized
+          AllowedMethods: [GET, HEAD]
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt AlunoSpaRouterFunction.FunctionMetadata.FunctionARN
+        CacheBehaviors:
+          - PathPattern: /v1/*
+            TargetOriginId: ApiOrigin
+            ViewerProtocolPolicy: https-only
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad  # CachingDisabled
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac  # AllViewerExceptHostHeader
+        CustomErrorResponses:
+          - { ErrorCode: 403, ResponseCode: 200, ResponsePagePath: /aluno.html }
+          - { ErrorCode: 404, ResponseCode: 200, ResponsePagePath: /aluno.html }
+        Tags:
+          - { Key: Project, Value: personal-trainer }
+          - { Key: ManagedBy, Value: SAM }
 
 Outputs:
   ApiUrl:
@@ -548,3 +650,9 @@ Outputs:
   CustomDomainUrl:
     Condition: CreateFrontendInfra
     Value: !Sub "https://${DomainName}"
+  AlunoCloudFrontUrl:
+    Condition: CreateFrontendInfra
+    Value: !Sub "https://app.${DomainName}"
+  AlunoCloudFrontDistributionId:
+    Condition: CreateFrontendInfra
+    Value: !Ref AlunoCloudFrontDistribution
