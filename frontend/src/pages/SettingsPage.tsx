@@ -10,7 +10,7 @@ import { PhoneInput } from '../components/PhoneInput'
 import { AnamneseEditor } from '../components/anamnese/AnamneseEditor'
 import { usePlanoStatus } from '../hooks/usePlano'
 
-const SUPPORT_URL = `https://wa.me/5513988088204?text=${encodeURIComponent('Olá! Gostaria de configurar o WhatsApp no meu CoachPilot.')}`
+const SUPPORT_URL = `https://wa.me/5513991830305?text=${encodeURIComponent('Olá! Gostaria de configurar o WhatsApp no meu CoachPilot.')}`
 
 type TabId = 'whatsapp' | 'anamnese' | 'pagamentos'
 
@@ -132,7 +132,7 @@ function WhatsAppTab() {
             <MessageCircle className="w-5 h-5" />
             Solicitar pelo WhatsApp
           </a>
-          <p className="text-xs text-text-secondary">Suporte: +55 (13) 98808-8204</p>
+          <p className="text-xs text-text-secondary">Suporte: +55 (13) 99183-0305</p>
         </Card>
       )}
 
