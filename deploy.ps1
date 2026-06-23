@@ -66,7 +66,7 @@ function Deploy-Frontend {
     $html = $html -replace 'href="/manifest\.webmanifest"', 'href="/manifest-aluno.webmanifest"'
     $html = $html -replace '(theme-color" content=")#0f172a(")', '${1}#16a34a${2}'
     $html = $html -replace '(apple-mobile-web-app-title" content=")CoachPilot(")', '${1}Treinos${2}'
-    $html | Out-File -FilePath dist/aluno.html -Encoding utf8NoBOM
+    [System.IO.File]::WriteAllText("$PWD\dist\aluno.html", $html, [System.Text.UTF8Encoding]::new($false))
     Write-Host "aluno.html gerado." -ForegroundColor Cyan
 
     # index.html e aluno.html sem cache (ARCHITECTURE §10.2)
