@@ -811,6 +811,7 @@ function ExercicioForm({
   const [unidadeReps, setUnidadeReps] = useState(initial?.unidade_reps ?? '')
   const [vid, setVid] = useState(initial?.video_url ?? '')
   const [obs, setObs] = useState(initial?.observacoes ?? '')
+  const [rmKg, setRmKg] = useState<string>(initial?.rm_kg != null ? String(initial.rm_kg) : '')
   const [linksUteis, setLinksUteis] = useState<string[]>(initial?.links_uteis ?? [])
   const [linksUteisExcluidos, setLinksUteisExcluidos] = useState<string[]>(initial?.links_uteis_excluidos ?? [])
   const [substitutos, setSubstitutos] = useState<ExercicioSubstituto[]>(initial?.substitutos ?? [])
@@ -859,6 +860,7 @@ function ExercicioForm({
       series_prescritas: validas.length ? validas : undefined,
       video_url: vid || undefined,
       observacoes: obs || undefined,
+      rm_kg: rmKg ? parseFloat(rmKg) : undefined,
       links_uteis: linksUteis.length ? linksUteis : undefined,
       links_uteis_excluidos: linksUteisExcluidos.length ? linksUteisExcluidos : undefined,
       substitutos: substitutos.length ? substitutos : undefined,
@@ -928,6 +930,22 @@ function ExercicioForm({
             label="Observações (visíveis ao aluno na sessão)" rows={2}
             value={obs} onChange={(e) => setObs(e.target.value)}
           />
+          {tipo === 'FORCA' && (
+            <div>
+              <Input
+                label="1RM (kg)"
+                type="number"
+                min={1}
+                step={0.5}
+                value={rmKg}
+                onChange={(e) => setRmKg(e.target.value)}
+                placeholder="ex.: 100"
+              />
+              <p className="text-xs text-text-muted mt-1">
+                Carga máxima estimada para 1 repetição. Usada para calcular a Intensidade Relativa Média (IRM) na evolução.
+              </p>
+            </div>
+          )}
         </div>
       </div>
       <LinksUteisSelector exercicioNome={nome} biblioteca={biblioteca ?? []} value={linksUteisExcluidos} onChange={setLinksUteisExcluidos} />
@@ -983,7 +1001,7 @@ function ExercicioRow({
           {ex.nome}
           <span className="ml-2">
             {ex.series_prescritas?.length
-              ? <SeriesPrescritasCompact items={ex.series_prescritas} tipoExercicio={ex.tipo_exercicio} />
+              ? <SeriesPrescritasCompact items={ex.series_prescritas} tipoExercicio={ex.tipo_exercicio} unidadeCarga={ex.unidade_carga} />
               : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
             }
           </span>

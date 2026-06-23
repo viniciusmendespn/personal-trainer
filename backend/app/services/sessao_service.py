@@ -409,8 +409,9 @@ def _ex_info(aluno_id: str, exercicio_id: str) -> dict:
                 "nome": i.get("nome"),
                 "tipo_exercicio": i.get("tipo_exercicio") or "FORCA",
                 "grupo": i.get("grupo"),
+                "rm_kg": i.get("rm_kg"),
             }
-    return {"nome": None, "tipo_exercicio": "FORCA", "grupo": None}
+    return {"nome": None, "tipo_exercicio": "FORCA", "grupo": None, "rm_kg": None}
 
 
 def evolucao_exercicio(aluno_id: str, exercicio_id: str, limit: int = 100) -> dict:
@@ -443,16 +444,24 @@ def evolucao_exercicio(aluno_id: str, exercicio_id: str, limit: int = 100) -> di
                 pr = {"carga": duracao_total, "data": c.get("data_hora")}
         else:  # FORCA
             cargas, volume = [], 0.0
+            soma_int, reps_total_irm = 0.0, 0
+            rm_kg = info.get("rm_kg")
             for s in series_exec:
                 cg = _num(s.get("carga"))
+                reps = s.get("reps") or 0
                 if cg is not None:
                     cargas.append(cg)
-                    volume += cg * (s.get("reps") or 0)
+                    volume += cg * reps
+                    if rm_kg and rm_kg > 0 and reps:
+                        soma_int += (cg / rm_kg * 100) * reps
+                        reps_total_irm += reps
             carga_max = max(cargas) if cargas else None
+            irm = round(soma_int / reps_total_irm, 2) if reps_total_irm > 0 else None
             ponto.update({
                 "carga_max": carga_max,
                 "volume": round(volume, 1) if volume else None,
                 "reps": "/".join(str(s["reps"]) for s in series_exec if s.get("reps")),
+                "irm": irm,
             })
             if carga_max is not None and (pr is None or carga_max > pr["carga"]):
                 pr = {"carga": carga_max, "data": c.get("data_hora")}

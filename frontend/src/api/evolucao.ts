@@ -9,6 +9,7 @@ export interface PontoEvolucao {
   reps_max?: number | null
   total_reps?: number | null
   duracao_total_s?: number | null
+  irm?: number | null
 }
 
 export interface Evolucao {

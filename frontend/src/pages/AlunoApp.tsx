@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info, Repeat } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info, Repeat, Zap } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -793,7 +793,7 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
                       <p className="font-medium text-sm">{ex.nome}</p>
                       <p className="text-xs text-text-secondary mt-0.5">
                         {ex.series_prescritas?.length
-                          ? <SeriesPrescritasCompact items={ex.series_prescritas} />
+                          ? <SeriesPrescritasCompact items={ex.series_prescritas} unidadeCarga={ex.unidade_carga} />
                           : <>{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</>
                         }
                       </p>
@@ -1260,7 +1260,7 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
             </span>
             <span className="block mt-0.5">
               {seriesAtivas?.length
-                ? <SeriesPrescritasCompact items={seriesAtivas} tipoExercicio={ex.tipo_exercicio} />
+                ? <SeriesPrescritasCompact items={seriesAtivas} tipoExercicio={ex.tipo_exercicio} unidadeCarga={ex.unidade_carga} />
                 : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
               }
             </span>
@@ -1512,6 +1512,15 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
       carga: tipoEvo === 'PESO_CORPORAL' ? p.reps_max : tipoEvo === 'CARDIO' ? p.duracao_total_s : p.carga_max,
     }))
 
+  const pontosIrm = tipoEvo === 'FORCA'
+    ? (evo.data?.serie ?? [])
+        .filter((p) => p.irm != null)
+        .map((p) => ({
+          data: new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+          irm: p.irm as number,
+        }))
+    : []
+
   const semanas = useMemo(
     () => (resumo.data?.semanas ?? []).map((w) => ({ semana: w.semana.replace(/^\d+-/, ''), volume: w.volume })),
     [resumo.data]
@@ -1566,45 +1575,87 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
                 {tipoEvo === 'PESO_CORPORAL' ? 'Sem registros de reps ainda.' : tipoEvo === 'CARDIO' ? 'Sem registros ainda.' : 'Sem registros com carga ainda.'}
               </p>
             ) : (
-              <Card variant="elevated">
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm text-text-secondary">
-                    {tipoEvo === 'PESO_CORPORAL' ? 'Máx. reps por sessão' : tipoEvo === 'CARDIO' ? 'Métrica por sessão' : 'Carga por sessão'}
-                  </span>
-                  <Badge tone="warning">
-                    <Trophy size={12} />
-                    {' '}
-                    {evo.data?.pr?.carga != null
-                      ? tipoEvo === 'PESO_CORPORAL' ? `${evo.data.pr.carga} reps` : tipoEvo === 'CARDIO' ? String(evo.data.pr.carga) : `${evo.data.pr.carga} ${exSel?.unidade_carga ?? 'kg'}`
-                      : '—'}
-                  </Badge>
-                </div>
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-                    <defs>
-                      <linearGradient id="alunoCargaGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--color-energy)" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="var(--color-energy)" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                    <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
-                    <YAxis
-                      tick={axisTick}
-                      stroke="var(--color-border-strong)"
-                    />
-                    <Tooltip
-                      contentStyle={chartTip}
-                      formatter={(v: number) => [
-                        tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? String(v) : `${v} ${exSel?.unidade_carga ?? 'kg'}`,
-                        tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : (exSel?.unidade_carga ?? 'kg'),
-                      ]}
-                    />
-                    <Area type="monotone" dataKey="carga" stroke="var(--color-energy)" strokeWidth={2.5}
-                      fill="url(#alunoCargaGradient)" dot={{ r: 3, fill: 'var(--color-energy)' }} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </Card>
+              <>
+                <Card variant="elevated">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm text-text-secondary">
+                      {tipoEvo === 'PESO_CORPORAL' ? 'Máx. reps por sessão' : tipoEvo === 'CARDIO' ? 'Métrica por sessão' : 'Carga por sessão'}
+                    </span>
+                    <Badge tone="warning">
+                      <Trophy size={12} />
+                      {' '}
+                      {evo.data?.pr?.carga != null
+                        ? tipoEvo === 'PESO_CORPORAL' ? `${evo.data.pr.carga} reps` : tipoEvo === 'CARDIO' ? String(evo.data.pr.carga) : `${evo.data.pr.carga} ${exSel?.unidade_carga ?? 'kg'}`
+                        : '—'}
+                    </Badge>
+                  </div>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                      <defs>
+                        <linearGradient id="alunoCargaGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--color-energy)" stopOpacity={0.4} />
+                          <stop offset="100%" stopColor="var(--color-energy)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                      <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
+                      <YAxis
+                        tick={axisTick}
+                        stroke="var(--color-border-strong)"
+                      />
+                      <Tooltip
+                        contentStyle={chartTip}
+                        formatter={(v: number) => [
+                          tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? String(v) : `${v} ${exSel?.unidade_carga ?? 'kg'}`,
+                          tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : (exSel?.unidade_carga ?? 'kg'),
+                        ]}
+                      />
+                      <Area type="monotone" dataKey="carga" stroke="var(--color-energy)" strokeWidth={2.5}
+                        fill="url(#alunoCargaGradient)" dot={{ r: 3, fill: 'var(--color-energy)' }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </Card>
+                {pontosIrm.length > 0 && (
+                  <Card variant="elevated" className="mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-text-secondary flex items-center gap-1.5">
+                        <Zap size={14} className="text-energy" /> IRM — Intensidade Relativa Média
+                      </span>
+                      <Badge tone="neutral">
+                        último: {pontosIrm.at(-1)?.irm.toFixed(1)}%
+                      </Badge>
+                    </div>
+                    <ResponsiveContainer width="100%" height={140}>
+                      <AreaChart data={pontosIrm} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                        <defs>
+                          <linearGradient id="alunoIrmGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.4} />
+                            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                        <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
+                        <YAxis
+                          domain={['auto', 'auto']}
+                          tick={axisTick}
+                          stroke="var(--color-border-strong)"
+                          tickFormatter={(v: number) => `${v}%`}
+                          width={42}
+                        />
+                        <Tooltip
+                          contentStyle={chartTip}
+                          formatter={(v: number) => [`${v.toFixed(1)}%`, 'IRM']}
+                        />
+                        <Area type="monotone" dataKey="irm" stroke="var(--color-accent)" strokeWidth={2.5}
+                          fill="url(#alunoIrmGradient)" dot={{ r: 3, fill: 'var(--color-accent)' }} name="IRM (%)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                    <p className="text-xs text-text-muted mt-2">
+                      Intensidade média ponderada pelas repetições em relação ao 1RM.
+                    </p>
+                  </Card>
+                )}
+              </>
             )}
           </>
         )

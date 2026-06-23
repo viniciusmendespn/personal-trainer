@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Trophy, TrendingUp, Activity, BarChart3, CalendarCheck, FileDown, Search, MessageSquareDot, MessageCircle } from 'lucide-react'
+import { ArrowLeft, Trophy, TrendingUp, Activity, BarChart3, CalendarCheck, FileDown, Search, MessageSquareDot, MessageCircle, Zap } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, ReferenceLine,
@@ -106,6 +106,15 @@ const chartData = (evo?.serie ?? [])
       valor: tipoEvo === 'PESO_CORPORAL' ? p.reps_max : tipoEvo === 'CARDIO' ? p.duracao_total_s : p.carga_max,
     }))
 
+  const pontosIrm = tipoEvo === 'FORCA'
+    ? (evo?.serie ?? [])
+        .filter((p) => p.irm != null)
+        .map((p) => ({
+          data: new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+          irm: p.irm as number,
+        }))
+    : []
+
   const semanas = useMemo(
     () => (resumo?.semanas ?? []).map((w) => ({ semana: w.semana.replace(/^\d+-/, ''), volume: w.volume })),
     [resumo]
@@ -186,50 +195,92 @@ const chartData = (evo?.serie ?? [])
                   {tipoEvo === 'PESO_CORPORAL' ? 'Sem registros de reps ainda.' : tipoEvo === 'CARDIO' ? 'Sem registros ainda.' : 'Sem registros com carga numérica ainda.'}
                 </p>
               ) : (
-                <Card variant="elevated">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm text-text-secondary">
-                      {tipoEvo === 'PESO_CORPORAL' ? 'Máx. reps por sessão' : tipoEvo === 'CARDIO' ? 'Métrica por sessão' : 'Carga máxima por sessão'}
-                    </p>
-                    <Badge tone="warning">
-                      <Trophy size={12} />
-                      {' PR '}
-                      {evo?.pr?.carga != null
-                        ? tipoEvo === 'PESO_CORPORAL' ? `${evo.pr.carga} reps` : tipoEvo === 'CARDIO' ? String(evo.pr.carga) : `${evo.pr.carga} ${exSel?.unidade_carga ?? 'kg'}`
-                        : '—'}
-                    </Badge>
-                  </div>
-                  <ResponsiveContainer width="100%" height={240}>
-                    <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-                      <defs>
-                        <linearGradient id="cargaGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.4} />
-                          <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                      <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
-                      <YAxis
-                        tick={axisTick}
-                        stroke="var(--color-border-strong)"
-                      />
-                      <Tooltip
-                        contentStyle={chartTip}
-                        formatter={(v: number) => [
-                          tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? String(v) : `${v} ${exSel?.unidade_carga ?? 'kg'}`,
-                          tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : (exSel?.unidade_carga ?? 'kg'),
-                        ]}
-                      />
-                      {tipoEvo === 'FORCA' && !isNaN(prescrita) && (
-                        <ReferenceLine y={prescrita} stroke="var(--color-text-muted)" strokeDasharray="4 4"
-                          label={{ value: `prescrita ${prescrita}`, fill: 'var(--color-text-muted)', fontSize: 11, position: 'insideTopRight' }} />
-                      )}
-                      <Area type="monotone" dataKey="valor" stroke="var(--color-accent)" strokeWidth={2.5}
-                        fill="url(#cargaGradient)" dot={{ r: 3, fill: 'var(--color-accent)' }}
-                        name={tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : 'Carga (kg)'} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </Card>
+                <>
+                  <Card variant="elevated">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm text-text-secondary">
+                        {tipoEvo === 'PESO_CORPORAL' ? 'Máx. reps por sessão' : tipoEvo === 'CARDIO' ? 'Métrica por sessão' : 'Carga máxima por sessão'}
+                      </p>
+                      <Badge tone="warning">
+                        <Trophy size={12} />
+                        {' PR '}
+                        {evo?.pr?.carga != null
+                          ? tipoEvo === 'PESO_CORPORAL' ? `${evo.pr.carga} reps` : tipoEvo === 'CARDIO' ? String(evo.pr.carga) : `${evo.pr.carga} ${exSel?.unidade_carga ?? 'kg'}`
+                          : '—'}
+                      </Badge>
+                    </div>
+                    <ResponsiveContainer width="100%" height={240}>
+                      <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                        <defs>
+                          <linearGradient id="cargaGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.4} />
+                            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                        <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
+                        <YAxis
+                          tick={axisTick}
+                          stroke="var(--color-border-strong)"
+                        />
+                        <Tooltip
+                          contentStyle={chartTip}
+                          formatter={(v: number) => [
+                            tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? String(v) : `${v} ${exSel?.unidade_carga ?? 'kg'}`,
+                            tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : (exSel?.unidade_carga ?? 'kg'),
+                          ]}
+                        />
+                        {tipoEvo === 'FORCA' && !isNaN(prescrita) && (
+                          <ReferenceLine y={prescrita} stroke="var(--color-text-muted)" strokeDasharray="4 4"
+                            label={{ value: `prescrita ${prescrita}`, fill: 'var(--color-text-muted)', fontSize: 11, position: 'insideTopRight' }} />
+                        )}
+                        <Area type="monotone" dataKey="valor" stroke="var(--color-accent)" strokeWidth={2.5}
+                          fill="url(#cargaGradient)" dot={{ r: 3, fill: 'var(--color-accent)' }}
+                          name={tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : 'Carga (kg)'} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </Card>
+                  {pontosIrm.length > 0 && (
+                    <Card variant="elevated" className="mt-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm text-text-secondary flex items-center gap-1.5">
+                          <Zap size={14} className="text-energy" /> IRM — Intensidade Relativa Média
+                        </p>
+                        <Badge tone="neutral">
+                          último: {pontosIrm.at(-1)?.irm.toFixed(1)}%
+                        </Badge>
+                      </div>
+                      <ResponsiveContainer width="100%" height={140}>
+                        <AreaChart data={pontosIrm} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                          <defs>
+                            <linearGradient id="irmGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="var(--color-energy)" stopOpacity={0.4} />
+                              <stop offset="100%" stopColor="var(--color-energy)" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                          <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
+                          <YAxis
+                            domain={['auto', 'auto']}
+                            tick={axisTick}
+                            stroke="var(--color-border-strong)"
+                            tickFormatter={(v: number) => `${v}%`}
+                            width={42}
+                          />
+                          <Tooltip
+                            contentStyle={chartTip}
+                            formatter={(v: number) => [`${v.toFixed(1)}%`, 'IRM']}
+                          />
+                          <Area type="monotone" dataKey="irm" stroke="var(--color-energy)" strokeWidth={2.5}
+                            fill="url(#irmGradient)" dot={{ r: 3, fill: 'var(--color-energy)' }} name="IRM (%)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                      <p className="text-xs text-text-muted mt-2">
+                        Média ponderada pelas repetições de intensidade relativa ao 1RM cadastrado ({exSel?.rm_kg} kg).
+                      </p>
+                    </Card>
+                  )}
+                </>
               )}
             </>
           )}

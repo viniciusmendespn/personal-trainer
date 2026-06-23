@@ -192,6 +192,7 @@ export interface Exercicio {
   intervalo_s?: number
   video_url?: string
   observacoes?: string
+  rm_kg?: number
   links_uteis?: string[]
   links_uteis_excluidos?: string[]
   substitutos?: ExercicioSubstituto[]
@@ -214,6 +215,7 @@ export interface ExercicioCreate {
   intervalo_s?: number
   video_url?: string
   observacoes?: string
+  rm_kg?: number
   links_uteis?: string[]
   links_uteis_excluidos?: string[]
   substitutos?: ExercicioSubstituto[]
