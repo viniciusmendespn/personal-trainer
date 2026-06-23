@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Brain, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronUp, HelpCircle, CreditCard } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Brain, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronUp, HelpCircle, CreditCard, Download, Smartphone } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
@@ -28,7 +28,13 @@ const NAV_ITEMS = [
 
 const TITLE_MAP: Record<string, string> = { '/config': 'Configurações', '/perfil': 'Meu Perfil', '/ajuda': 'Ajuda' }
 
-function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: () => void }) {
+function SidebarContent({ unread, onNavigate, showInstallBtn, isIos, onInstall }: {
+  unread: number
+  onNavigate?: () => void
+  showInstallBtn?: boolean
+  isIos?: boolean
+  onInstall?: () => void
+}) {
   const { user, signOut, isAdmin } = useAuth()
   const profile = useQuery({ queryKey: ['personal-profile'], queryFn: personalApi.getProfile, staleTime: 300_000 })
   const [menuOpen, setMenuOpen] = useState(false)
@@ -75,6 +81,18 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
           </NavLink>
         )}
       </nav>
+
+      {/* Instalar app */}
+      {showInstallBtn && (
+        <button
+          onClick={onInstall}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-accent-hover hover:bg-accent/10 transition-colors w-full"
+        >
+          {isIos ? <Smartphone size={16} /> : <Download size={16} />}
+          <span>Instalar app</span>
+          <span className="ml-auto w-2 h-2 rounded-full bg-accent animate-pulse shrink-0" />
+        </button>
+      )}
 
       {/* User menu — rodapé */}
       <div ref={menuRef} className="relative mt-2 pt-2 border-t border-border/40 shrink-0">
@@ -158,8 +176,15 @@ function ImpersonationBanner() {
 export function AppLayout() {
   const unread = useUnreadCount().data?.count ?? 0
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [canInstall, setCanInstall] = useState(false)
+  const [showIosModal, setShowIosModal] = useState(false)
+  const installPromptRef = useRef<Event & { prompt: () => Promise<void> } | null>(null)
   const location = useLocation()
   const { requestAndSubscribe } = usePushPersonal()
+
+  const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+  const showInstallBtn = canInstall || (isIos && !isStandalone)
 
   useEffect(() => {
     setDrawerOpen(false)
@@ -168,6 +193,23 @@ export function AppLayout() {
   useEffect(() => {
     requestAndSubscribe()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isStandalone) return
+    const handler = (e: Event) => {
+      e.preventDefault()
+      installPromptRef.current = e as Event & { prompt: () => Promise<void> }
+      setCanInstall(true)
+    }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleInstall() {
+    if (isIos) { setShowIosModal(true); return }
+    await installPromptRef.current?.prompt()
+    setCanInstall(false)
+  }
 
   const pageTitle =
     NAV_ITEMS.find((i) => location.pathname.startsWith(i.to))?.label ??
@@ -183,7 +225,7 @@ export function AppLayout() {
       <div className="flex flex-1 min-h-0">
       {/* Desktop sidebar (lg+) */}
       <aside className="hidden lg:flex w-56 shrink-0 border-r border-border bg-surface/60 backdrop-blur-xl p-4">
-        <SidebarContent unread={unread} />
+        <SidebarContent unread={unread} showInstallBtn={showInstallBtn} isIos={isIos} onInstall={handleInstall} />
       </aside>
 
       {/* Mobile drawer (<lg) */}
@@ -198,7 +240,7 @@ export function AppLayout() {
             >
               <X size={18} />
             </button>
-            <SidebarContent unread={unread} onNavigate={() => setDrawerOpen(false)} />
+            <SidebarContent unread={unread} onNavigate={() => setDrawerOpen(false)} showInstallBtn={showInstallBtn} isIos={isIos} onInstall={handleInstall} />
           </aside>
         </div>
       )}
@@ -222,6 +264,17 @@ export function AppLayout() {
               </span>
             )}
           </NavLink>
+          {showInstallBtn && (
+            <button
+              onClick={handleInstall}
+              aria-label="Instalar app"
+              title="Instalar app no celular"
+              className="relative p-1.5 rounded-lg text-accent-hover hover:bg-accent/10 transition-colors"
+            >
+              <Download size={20} />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-accent animate-pulse" />
+            </button>
+          )}
           <NavLink to="/ajuda" aria-label="Ajuda" className="p-1.5 rounded-lg text-text-secondary hover:bg-white/5 hover:text-text">
             <HelpCircle size={20} />
           </NavLink>
@@ -235,6 +288,40 @@ export function AppLayout() {
       <ChatWidget />
       </div>
     </div>
+
+    {/* Modal de instruções para iOS */}
+    {showIosModal && (
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="w-full max-w-sm rounded-2xl bg-surface-elevated border border-border p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display font-bold text-text">Instalar no iPhone</h3>
+            <button onClick={() => setShowIosModal(false)} className="p-1 text-text-secondary hover:text-text">
+              <X size={18} />
+            </button>
+          </div>
+          <ol className="space-y-3 text-sm text-text-secondary">
+            <li className="flex gap-3">
+              <span className="font-bold text-accent shrink-0">1.</span>
+              Toque no ícone de compartilhar <strong className="text-text">□↑</strong> na barra do Safari
+            </li>
+            <li className="flex gap-3">
+              <span className="font-bold text-accent shrink-0">2.</span>
+              Role e selecione <strong className="text-text">"Adicionar à Tela de Início"</strong>
+            </li>
+            <li className="flex gap-3">
+              <span className="font-bold text-accent shrink-0">3.</span>
+              Toque em <strong className="text-text">Adicionar</strong>
+            </li>
+          </ol>
+          <button
+            onClick={() => setShowIosModal(false)}
+            className="w-full py-2 rounded-lg bg-accent/20 text-accent-hover text-sm font-medium hover:bg-accent/30 transition-colors"
+          >
+            Entendi
+          </button>
+        </div>
+      </div>
+    )}
     </ChatContextProvider>
   )
 }
