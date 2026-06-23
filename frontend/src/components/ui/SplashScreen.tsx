@@ -13,19 +13,24 @@ export function useSplash() {
   return visible
 }
 
-export function SplashScreen() {
+export function SplashScreen({ src = '/icon-512.png', rounded = true }: { src?: string; rounded?: boolean }) {
   return (
     <div className="fixed inset-0 z-[200] bg-[#000613] flex items-center justify-center">
       <style>{`
         @keyframes cp-splash {
           0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(20,255,180,0)); }
-          50% { transform: scale(1.14); filter: drop-shadow(0 0 24px rgba(20,255,180,0.35)); }
+          50% { transform: scale(1.1); filter: drop-shadow(0 0 24px rgba(20,255,180,0.35)); }
         }
       `}</style>
       <img
-        src="/icon-512.png"
+        src={src}
         alt="CoachPilot"
-        style={{ width: 112, height: 112, borderRadius: '22%', animation: 'cp-splash 1s ease-in-out infinite' }}
+        style={{
+          width: rounded ? 112 : 220,
+          height: 'auto',
+          borderRadius: rounded ? '22%' : 0,
+          animation: 'cp-splash 1s ease-in-out infinite',
+        }}
       />
     </div>
   )
