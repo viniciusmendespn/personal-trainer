@@ -883,9 +883,9 @@ function ExercicioForm({
         <p className="text-xs font-medium text-text-secondary mb-2">Tipo de exercício</p>
         <div className="flex gap-2">
           {([
-            { value: 'FORCA', label: '💪 Força' },
-            { value: 'CARDIO', label: '🏃 Cardio' },
-            { value: 'PESO_CORPORAL', label: '🧘 Peso Corporal' },
+            { value: 'FORCA', label: 'Força' },
+            { value: 'CARDIO', label: 'Cardio' },
+            { value: 'PESO_CORPORAL', label: 'Peso Corporal' },
           ] as { value: TipoExercicio; label: string }[]).map((opt) => (
             <button
               key={opt.value}
