@@ -1294,12 +1294,12 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
                   <Input
                     className={tipo === 'CARDIO' ? 'pr-12' : 'pr-7'}
                     inputMode={tipo === 'CARDIO' ? 'text' : 'decimal'}
-                    placeholder={r.cargaHint || (tipo === 'CARDIO' ? 'pace' : '0')}
+                    placeholder={r.cargaHint || (tipo === 'CARDIO' ? '7' : '0')}
                     value={r.carga}
-                    onChange={(e) => upd(i, 'carga', tipo === 'CARDIO' ? e.target.value : sanitizeCarga(e.target.value))}
+                    onChange={(e) => upd(i, 'carga', tipo === 'CARDIO' ? e.target.value.replace(/[^\d.]/g, '') : sanitizeCarga(e.target.value))}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">
-                    {tipo === 'CARDIO' ? 'pace' : 'kg'}
+                    {tipo === 'CARDIO' ? 'RPE' : 'kg'}
                   </span>
                 </div>
               )}

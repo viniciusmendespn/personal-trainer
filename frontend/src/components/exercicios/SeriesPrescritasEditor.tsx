@@ -9,7 +9,7 @@ interface Props {
 }
 
 function getLabels(tipo?: TipoExercicio) {
-  if (tipo === 'CARDIO') return { series: 'Blocos', reps: 'Dur./Dist.', carga: 'Pace/Intens.' }
+  if (tipo === 'CARDIO') return { series: 'Blocos', reps: 'Dur./Dist.', carga: 'RPE (1-10)' }
   if (tipo === 'PESO_CORPORAL') return { series: 'Séries', reps: 'Reps', carga: null }
   return { series: 'Séries', reps: 'Reps', carga: 'Carga' }
 }

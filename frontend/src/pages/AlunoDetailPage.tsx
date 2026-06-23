@@ -904,7 +904,7 @@ function ExercicioForm({
       </div>
       <div>
         <p className="text-xs font-medium text-text-secondary mb-2">
-          {tipo === 'CARDIO' ? 'Prescrição — blocos × dur./dist. · pace/intens.' : 'Prescrição — séries × reps · carga'}
+          {tipo === 'CARDIO' ? 'Prescrição — blocos × dur./dist. · RPE (1-10)' : 'Prescrição — séries × reps · carga'}
         </p>
         <SeriesPrescritasEditor value={seriesPrescritas} onChange={setSeriesPrescritas} tipoExercicio={tipo} />
       </div>
