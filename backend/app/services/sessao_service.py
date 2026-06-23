@@ -210,6 +210,9 @@ def cancelar(aluno_id: str) -> None:
     if not s:
         raise HTTPException(404, "Sem sessão ativa")
     repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE)
+    personal_id = s.get("personal_id")
+    if personal_id:
+        repo.delete_item(keys.pk_personal(personal_id), keys.sk_atividade(aluno_id))
 
 
 def record(aluno_id: str, series: list, exercicio_id: str | None = None,

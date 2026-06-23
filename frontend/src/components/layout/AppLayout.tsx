@@ -88,7 +88,7 @@ function SidebarContent({ unread, onNavigate }: { unread: number; onNavigate?: (
               <p className="text-xs text-text-muted truncate">{profile.data.descricao}</p>
             )}
           </div>
-          <ChevronDown
+          <ChevronUp
             size={14}
             className={`shrink-0 text-text-muted transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`}
           />
