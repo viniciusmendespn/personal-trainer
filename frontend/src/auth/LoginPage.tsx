@@ -5,6 +5,7 @@ import { resendSignUpCode } from 'aws-amplify/auth'
 import { useAuth } from './AuthProvider'
 import { cognitoErrorPtBr } from './cognitoErrors'
 import { Button, Input, ErrorText, Card } from '../components/ui'
+import { AuthBackground } from './AuthBackground'
 
 export function LoginPage() {
   const { user, signIn } = useAuth()
@@ -53,7 +54,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <AuthBackground>
       <Card variant="glass" className="w-full max-w-sm p-6 shadow-[var(--shadow-card)]">
         <form onSubmit={handle} className="space-y-4">
           <div className="text-center mb-2">
@@ -112,6 +113,6 @@ export function LoginPage() {
           </p>
         </form>
       </Card>
-    </div>
+    </AuthBackground>
   )
 }

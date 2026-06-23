@@ -9,7 +9,7 @@ import { PasswordChecklist } from './PasswordChecklist'
 import { useResendCooldown } from './useResendCooldown'
 import { SpamNotice } from './SpamNotice'
 import { Button, Input, ErrorText, Card, useToast } from '../components/ui'
-import { AppLogo } from '../components/AppLogo'
+import { AuthBackground } from './AuthBackground'
 
 type Step = 'email' | 'password' | 'confirm'
 const STEP_LABELS = ['E-mail', 'Senha', 'Confirmação']
@@ -151,11 +151,10 @@ export function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <AuthBackground>
       <Card variant="glass" className="w-full max-w-sm p-6 shadow-[var(--shadow-card)]">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <AppLogo size={32} />
-          <span className="font-display text-xl font-bold text-text">CoachPilot</span>
+        <div className="flex items-center justify-center mb-4">
+          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 70, width: 'auto' }} />
         </div>
         <AuthStepIndicator labels={STEP_LABELS} currentIndex={STEP_INDEX[step]} />
 
@@ -259,6 +258,6 @@ export function SignUpPage() {
           </form>
         )}
       </Card>
-    </div>
+    </AuthBackground>
   )
 }

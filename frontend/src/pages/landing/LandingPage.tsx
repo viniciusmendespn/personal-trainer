@@ -14,7 +14,7 @@ import LandingFooter from './LandingFooter'
 function WhatsAppFloat() {
   return (
     <a
-      href="https://wa.me/5513988088204?text=Olá!+Gostaria+de+saber+mais+sobre+o+Personal+Trainer"
+      href="https://wa.me/5513988088204?text=Olá!+Gostaria+de+saber+mais+sobre+o+CoachPilot"
       target="_blank"
       rel="noopener noreferrer"
       title="Fale conosco no WhatsApp"

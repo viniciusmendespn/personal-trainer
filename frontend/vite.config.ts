@@ -16,6 +16,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['coach-icon.png', 'apple-touch-icon.png'],
       manifest: {
+        id: '/dashboard',
         name: 'CoachPilot — Portal',
         short_name: 'CoachPilot',
         description: 'Portal de gestão para personal trainers',

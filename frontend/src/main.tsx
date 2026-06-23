@@ -20,6 +20,7 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary'
 
   const titleMeta = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]')
   if (titleMeta) titleMeta.content = 'Treinos'
+  document.title = 'Meus Treinos — CoachPilot'
 })()
 
 createRoot(document.getElementById('root')!).render(

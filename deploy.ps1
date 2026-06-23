@@ -77,15 +77,23 @@ function Deploy-Frontend {
         --exclude "*" --include "sw.js" --include "workbox-*.js" --include "registerSW.js" `
         --cache-control "no-cache, no-store, must-revalidate" `
         --region $Region --profile $Profile
-    # Demais assets (hashed): cache de 1 ano
+    # Bundle com hash no nome (dist/assets/*): cache de 1 ano, nome muda a cada build
+    aws s3 sync dist/assets/ "s3://$Bucket/assets/" --delete `
+        --cache-control "public, max-age=31536000, immutable" `
+        --region $Region --profile $Profile
+    # Demais arquivos públicos sem hash (ícones, logos, imagens, robots.txt etc.):
+    # cache curto, senão troca de logo/favicon fica presa em cache por 1 ano (browser + CDN)
     aws s3 sync dist/ "s3://$Bucket/" --delete `
         --exclude "index.html" --exclude "*.webmanifest" `
         --exclude "sw.js" --exclude "workbox-*.js" --exclude "registerSW.js" `
-        --cache-control "public, max-age=31536000, immutable" `
+        --exclude "assets/*" `
+        --cache-control "public, max-age=3600" `
         --region $Region --profile $Profile
 
+    # "/*" garante que troca de ícones/logos (cache curto, mas já pode ter sido cacheado
+    # como imutável em deploys antigos) e qualquer outro arquivo fiquem frescos na CDN.
     aws cloudfront create-invalidation --distribution-id $CfId `
-        --paths "/index.html" "/manifest.webmanifest" "/manifest-aluno.webmanifest" "/sw.js" "/workbox-*.js" "/registerSW.js" `
+        --paths "/*" `
         --region $Region --profile $Profile | Out-Null
     Set-Location ..
     Write-Host "Frontend deployed!" -ForegroundColor Green
