@@ -92,13 +92,24 @@ export function AlunoEvolucaoPage() {
     enabled: !!exId && aba === 'feed',
   })
   const exSel = exercicios?.find((e) => e.exercicio_id === exId)
+  const tipoEvo = (evo?.tipo ?? exSel?.tipo_exercicio ?? 'FORCA') as string
   const prescrita = exSel?.carga_prescrita ? Number(String(exSel.carga_prescrita).replace(',', '.')) : NaN
 
+  const formatDuracaoEvo = (segundos: number) => {
+    const m = Math.floor(segundos / 60)
+    const s = segundos % 60
+    return `${m}:${String(s).padStart(2, '0')}`
+  }
+
   const chartData = (evo?.serie ?? [])
-    .filter((p) => p.carga_max != null)
+    .filter((p) => {
+      if (tipoEvo === 'PESO_CORPORAL') return p.reps_max != null
+      if (tipoEvo === 'CARDIO') return (p.duracao_total_s ?? 0) > 0
+      return p.carga_max != null
+    })
     .map((p) => ({
       data: new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-      carga: p.carga_max,
+      valor: tipoEvo === 'PESO_CORPORAL' ? p.reps_max : tipoEvo === 'CARDIO' ? p.duracao_total_s : p.carga_max,
     }))
 
   const semanas = useMemo(
@@ -164,7 +175,7 @@ export function AlunoEvolucaoPage() {
             ))}
           </div>
 
-          {/* Aba Carga */}
+          {/* Aba Carga / Evolução por exercício */}
           {aba === 'carga' && (
             <>
               <SearchableSelect
@@ -177,12 +188,22 @@ export function AlunoEvolucaoPage() {
               {isLoading ? (
                 <Spinner />
               ) : !chartData.length ? (
-                <p className="text-text-muted text-sm">Sem registros com carga numérica ainda.</p>
+                <p className="text-text-muted text-sm">
+                  {tipoEvo === 'PESO_CORPORAL' ? 'Sem registros de reps ainda.' : tipoEvo === 'CARDIO' ? 'Sem registros de duração ainda.' : 'Sem registros com carga numérica ainda.'}
+                </p>
               ) : (
                 <Card variant="elevated">
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm text-text-secondary">Carga máxima por sessão</p>
-                    <Badge tone="warning"><Trophy size={12} /> PR {evo?.pr?.carga ?? '—'} kg</Badge>
+                    <p className="text-sm text-text-secondary">
+                      {tipoEvo === 'PESO_CORPORAL' ? 'Máx. reps por sessão' : tipoEvo === 'CARDIO' ? 'Duração por sessão' : 'Carga máxima por sessão'}
+                    </p>
+                    <Badge tone="warning">
+                      <Trophy size={12} />
+                      {' PR '}
+                      {evo?.pr?.carga != null
+                        ? tipoEvo === 'PESO_CORPORAL' ? `${evo.pr.carga} reps` : tipoEvo === 'CARDIO' ? formatDuracaoEvo(evo.pr.carga) : `${evo.pr.carga} kg`
+                        : '—'}
+                    </Badge>
                   </div>
                   <ResponsiveContainer width="100%" height={240}>
                     <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
@@ -194,14 +215,25 @@ export function AlunoEvolucaoPage() {
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                       <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
-                      <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
-                      <Tooltip contentStyle={chartTip} />
-                      {!isNaN(prescrita) && (
+                      <YAxis
+                        tick={axisTick}
+                        stroke="var(--color-border-strong)"
+                        tickFormatter={tipoEvo === 'CARDIO' ? (v) => formatDuracaoEvo(v) : undefined}
+                      />
+                      <Tooltip
+                        contentStyle={chartTip}
+                        formatter={(v: number) => [
+                          tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? formatDuracaoEvo(v) : `${v} kg`,
+                          tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Duração' : 'Carga',
+                        ]}
+                      />
+                      {tipoEvo === 'FORCA' && !isNaN(prescrita) && (
                         <ReferenceLine y={prescrita} stroke="var(--color-text-muted)" strokeDasharray="4 4"
                           label={{ value: `prescrita ${prescrita}`, fill: 'var(--color-text-muted)', fontSize: 11, position: 'insideTopRight' }} />
                       )}
-                      <Area type="monotone" dataKey="carga" stroke="var(--color-accent)" strokeWidth={2.5}
-                        fill="url(#cargaGradient)" dot={{ r: 3, fill: 'var(--color-accent)' }} name="Carga (kg)" />
+                      <Area type="monotone" dataKey="valor" stroke="var(--color-accent)" strokeWidth={2.5}
+                        fill="url(#cargaGradient)" dot={{ r: 3, fill: 'var(--color-accent)' }}
+                        name={tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Duração' : 'Carga (kg)'} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </Card>
@@ -258,9 +290,21 @@ export function AlunoEvolucaoPage() {
                   <Input placeholder="Buscar exercício…" value={prQuery} onChange={(e) => setPrQuery(e.target.value)} className="pl-8" />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {prsFiltrados.slice(0, prLimit).map((p) => (
-                    <Badge key={p.exercicio} tone="warning">{p.exercicio}: <b className="ml-1">{p.carga} kg</b><span className="ml-1 text-xs opacity-70">{new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span></Badge>
-                  ))}
+                  {prsFiltrados.slice(0, prLimit).map((p) => {
+                    const exPr = exercicios?.find((e) => e.nome === p.exercicio)
+                    const tipoPr = exPr?.tipo_exercicio ?? 'FORCA'
+                    const valorPr = tipoPr === 'PESO_CORPORAL'
+                      ? `${p.carga} reps`
+                      : tipoPr === 'CARDIO'
+                        ? formatDuracaoEvo(p.carga)
+                        : `${p.carga} kg`
+                    return (
+                      <Badge key={p.exercicio} tone="warning">
+                        {p.exercicio}: <b className="ml-1">{valorPr}</b>
+                        <span className="ml-1 text-xs opacity-70">{new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                      </Badge>
+                    )
+                  })}
                 </div>
                 {prsFiltrados.length > prLimit && (
                   <Button variant="ghost" size="sm" className="mt-2" onClick={() => setPrLimit((n) => n + 12)}>

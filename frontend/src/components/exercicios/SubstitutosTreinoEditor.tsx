@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { BookOpen, ChevronDown, ChevronRight, Pencil, Repeat, X as XIcon } from 'lucide-react'
 import { SubstitutoPicker } from './SubstitutoPicker'
 import { SeriesPrescritasEditor, SeriesPrescritasCompact } from './SeriesPrescritasEditor'
-import type { ExercicioSubstituto, ExLib, SeriePrescrita } from '../../types'
+import type { ExercicioSubstituto, ExLib, SeriePrescrita, TipoExercicio } from '../../types'
 import { videoUrlComFallback } from '../../utils/video'
 
 interface Props {
@@ -13,11 +13,12 @@ interface Props {
   onChangeSubstitutos: (v: ExercicioSubstituto[]) => void
   excluidos: string[]
   onChangeExcluidos: (v: string[]) => void
+  tipoExercicio?: TipoExercicio
 }
 
 export function SubstitutosTreinoEditor({
   exercicioNome, biblioteca, seriesPrescritasOriginal,
-  substitutos, onChangeSubstitutos, excluidos, onChangeExcluidos,
+  substitutos, onChangeSubstitutos, excluidos, onChangeExcluidos, tipoExercicio,
 }: Props) {
   const [expandido, setExpandido] = useState<string | null>(null)
   const libEntry = biblioteca.find((b) => b.nome.trim().toLowerCase() === exercicioNome.trim().toLowerCase())
@@ -81,7 +82,7 @@ export function SubstitutosTreinoEditor({
                       {s.nome}
                       <a href={videoUrlComFallback(s.nome, s.video_url)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-accent-hover ml-2 hover:underline">vídeo</a>
                     </span>
-                    {seriesAtual.length > 0 && <SeriesPrescritasCompact items={seriesAtual} />}
+                    {seriesAtual.length > 0 && <SeriesPrescritasCompact items={seriesAtual} tipoExercicio={tipoExercicio} />}
                   </button>
                   {aberto ? <ChevronDown size={14} className="shrink-0 text-text-muted" /> : <ChevronRight size={14} className="shrink-0 text-text-muted" />}
                   <button type="button" onClick={() => remove(s)} className="shrink-0 hover:text-danger">
@@ -90,7 +91,7 @@ export function SubstitutosTreinoEditor({
                 </div>
                 {aberto && (
                   <div className="px-2 pb-2">
-                    <SeriesPrescritasEditor value={seriesAtual} onChange={(v) => updateSeries(s, v)} />
+                    <SeriesPrescritasEditor value={seriesAtual} onChange={(v) => updateSeries(s, v)} tipoExercicio={tipoExercicio} />
                   </div>
                 )}
               </div>

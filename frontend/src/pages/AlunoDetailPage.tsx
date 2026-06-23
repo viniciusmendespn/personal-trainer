@@ -24,7 +24,7 @@ import { LinksUteisSelector } from '../components/exercicios/LinksUteisSelector'
 import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
-import type { Treino, Exercicio, ExercicioCreate, ExercicioSubstituto, SeriePrescrita, AlunoExistenteConflict, Aluno } from '../types'
+import type { Treino, Exercicio, ExercicioCreate, ExercicioSubstituto, SeriePrescrita, TipoExercicio, AlunoExistenteConflict, Aluno } from '../types'
 import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
 import { MetasTab } from '../components/aluno/MetasTab'
 import { FinanceiroTab } from '../components/financeiro/FinanceiroTab'
@@ -803,6 +803,7 @@ function ExercicioForm({
   const grupoListId = useId()
   const [nome, setNome] = useState(initial?.nome ?? '')
   const [grupo, setGrupo] = useState(initial?.grupo ?? '')
+  const [tipo, setTipo] = useState<TipoExercicio>(initial?.tipo_exercicio ?? 'FORCA')
   const [seriesPrescritas, setSeriesPrescritas] = useState<SeriePrescrita[]>(() =>
     initSeriesPrescritas(initial?.series_prescritas, initial?.series, initial?.reps_prescritas, initial?.carga_prescrita)
   )
@@ -840,6 +841,7 @@ function ExercicioForm({
     const grp = usado?.grupo || lib?.grupo
     if (video) setVid(video)
     if (grp) setGrupo(grp)
+    if (usado?.tipo_exercicio) setTipo(usado.tipo_exercicio)
   }
 
   async function submit(e: React.FormEvent) {
@@ -849,6 +851,7 @@ function ExercicioForm({
     await onSubmit({
       nome,
       grupo: grupo || undefined,
+      tipo_exercicio: tipo,
       series_prescritas: validas.length ? validas : undefined,
       video_url: vid || undefined,
       observacoes: obs || undefined,
@@ -877,8 +880,33 @@ function ExercicioForm({
         <datalist id={grupoListId}>{grupos.map((g) => <option key={g} value={g} />)}</datalist>
       </div>
       <div>
-        <p className="text-xs font-medium text-text-secondary mb-2">Prescrição — séries × reps · carga</p>
-        <SeriesPrescritasEditor value={seriesPrescritas} onChange={setSeriesPrescritas} />
+        <p className="text-xs font-medium text-text-secondary mb-2">Tipo de exercício</p>
+        <div className="flex gap-2">
+          {([
+            { value: 'FORCA', label: '💪 Força' },
+            { value: 'CARDIO', label: '🏃 Cardio' },
+            { value: 'PESO_CORPORAL', label: '🧘 Peso Corporal' },
+          ] as { value: TipoExercicio; label: string }[]).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setTipo(opt.value)}
+              className={`flex-1 text-xs py-1.5 px-2 rounded-lg border transition-colors ${
+                tipo === opt.value
+                  ? 'border-accent bg-accent/10 text-accent-hover font-medium'
+                  : 'border-border text-text-muted hover:border-border-strong'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <p className="text-xs font-medium text-text-secondary mb-2">
+          {tipo === 'CARDIO' ? 'Prescrição — blocos × dur./dist. · pace/intens.' : 'Prescrição — séries × reps · carga'}
+        </p>
+        <SeriesPrescritasEditor value={seriesPrescritas} onChange={setSeriesPrescritas} tipoExercicio={tipo} />
       </div>
       <div>
         <p className="text-xs font-medium text-text-secondary mb-2">Vídeo e observações</p>
@@ -900,6 +928,7 @@ function ExercicioForm({
         onChangeSubstitutos={setSubstitutos}
         excluidos={substitutosExcluidos}
         onChangeExcluidos={setSubstitutosExcluidos}
+        tipoExercicio={tipo}
       />
       <Button type="submit" className="w-full" disabled={submitting || !nome}>
         {submitting ? 'Salvando…' : submitLabel}
@@ -942,7 +971,7 @@ function ExercicioRow({
           {ex.nome}
           <span className="ml-2">
             {ex.series_prescritas?.length
-              ? <SeriesPrescritasCompact items={ex.series_prescritas} />
+              ? <SeriesPrescritasCompact items={ex.series_prescritas} tipoExercicio={ex.tipo_exercicio} />
               : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
             }
           </span>

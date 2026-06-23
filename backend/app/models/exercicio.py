@@ -2,6 +2,8 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
+from app.models.enums import TipoExercicio
+
 
 class SeriePrescrita(BaseModel):
     series: int
@@ -23,6 +25,7 @@ class ExercicioCreate(BaseModel):
     nome: str                                  # ex.: "Supino reto"
     grupo: Optional[str] = None                # ex.: "Peito", "Pernas" — herdado da biblioteca ou livre
     ordem: int = 0
+    tipo_exercicio: TipoExercicio = TipoExercicio.FORCA
     series: Optional[int] = None               # legado — leitura de itens antigos
     reps_prescritas: Optional[str] = None      # legado — leitura de itens antigos
     carga_prescrita: Optional[str] = None      # legado — leitura de itens antigos

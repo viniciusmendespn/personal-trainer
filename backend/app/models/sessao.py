@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from app.models.enums import SessaoStatus
+from app.models.enums import SessaoStatus, TipoExercicio
 
 
 class ExercicioAtual(BaseModel):
@@ -10,6 +10,7 @@ class ExercicioAtual(BaseModel):
     para o agente ler tudo em 1 GetItem (ESPEC §3)."""
     exercicio_id: str
     nome: str
+    tipo_exercicio: Optional[TipoExercicio] = None
     series: Optional[int] = None
     reps_prescritas: Optional[str] = None
     carga_prescrita: Optional[str] = None

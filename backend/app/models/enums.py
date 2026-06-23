@@ -82,3 +82,9 @@ class Recorrencia(str, Enum):
 class FormaPagamento(str, Enum):
     MANUAL = "MANUAL"
     PIX_MP = "PIX_MP"
+
+
+class TipoExercicio(str, Enum):
+    FORCA = "FORCA"
+    CARDIO = "CARDIO"
+    PESO_CORPORAL = "PESO_CORPORAL"

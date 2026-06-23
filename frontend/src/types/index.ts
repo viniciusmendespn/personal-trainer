@@ -167,6 +167,8 @@ export interface ArquivoConhecimento {
   uploaded_at: string
 }
 
+export type TipoExercicio = 'FORCA' | 'CARDIO' | 'PESO_CORPORAL'
+
 export interface SeriePrescrita {
   series: number
   reps: string
@@ -180,6 +182,7 @@ export interface Exercicio {
   nome: string
   grupo?: string
   ordem: number
+  tipo_exercicio?: TipoExercicio
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
@@ -199,6 +202,7 @@ export interface ExercicioCreate {
   nome: string
   grupo?: string
   ordem?: number
+  tipo_exercicio?: TipoExercicio
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string

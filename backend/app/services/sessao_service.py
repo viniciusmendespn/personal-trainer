@@ -37,6 +37,7 @@ def _snapshot(ex: dict) -> dict:
         "exercicio_id": ex["exercicio_id"],
         "nome": ex.get("nome"),
         "grupo": ex.get("grupo"),
+        "tipo_exercicio": ex.get("tipo_exercicio"),
         "series": ex.get("series"),
         "reps_prescritas": ex.get("reps_prescritas"),
         "carga_prescrita": ex.get("carga_prescrita"),
@@ -245,6 +246,7 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
     updated = repo.append_series(pk, keys.sk_registro(s["sessao_id"], ex_id), series, on_insert)
 
     # Agregação na escrita (ESPEC §3.1): volume desta gravação + recorde de carga.
+    ex_tipo = next((e.get("tipo_exercicio") for e in snaps if e.get("exercicio_id") == ex_id), ex.get("tipo_exercicio")) or "FORCA"
     cargas, volume = [], 0.0
     for it in series:
         cg = _num(it.get("carga"))
@@ -257,12 +259,7 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
         repo.add_and_set(pk, keys.sk_stats_week(wk), add={"volume": volume}, set_={"semana": wk})
         repo.add_and_set(pk, keys.sk_stats_week_grupo(wk, ex_grupo), add={"volume": volume}, set_={"semana": wk, "grupo": ex_grupo})
         repo.add_and_set(pk, keys.sk_stats_grupo(ex_grupo), add={"volume": volume}, set_={"grupo": ex_grupo})
-    pr_novo = None
-    if cargas:
-        carga_max = max(cargas)
-        if repo.update_if_greater(pk, keys.sk_stats_pr(chave), "carga", carga_max,
-                                  extra={"exercicio_nome": ex_nome, "data": now_iso()}):
-            pr_novo = carga_max
+    pr_novo = _calcular_pr(pk, chave, series, ex_tipo, ex_nome)
     return updated, pr_novo
 
 
@@ -293,6 +290,7 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
         raise HTTPException(400, "Exercício não identificado")
     ex_nome = next((e.get("nome") for e in snaps if e.get("exercicio_id") == ex_id), ex_atual.get("nome"))
     ex_grupo = next((e.get("grupo") for e in snaps if e.get("exercicio_id") == ex_id), ex_atual.get("grupo")) or "Sem grupo"
+    ex_tipo = next((e.get("tipo_exercicio") for e in snaps if e.get("exercicio_id") == ex_id), ex_atual.get("tipo_exercicio")) or "FORCA"
     chave = chave_exercicio(ex_nome)
     pk = keys.pk_aluno(aluno_id)
     sk = keys.sk_registro(s["sessao_id"], ex_id)
@@ -315,10 +313,7 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
         repo.add_and_set(pk, keys.sk_stats_grupo(ex_grupo), add={"volume": delta}, set_={"grupo": ex_grupo})
     pr_novo = None
     if not substituto_nome:
-        cargas = [c for c in (_num(it.get("carga")) for it in series) if c is not None]
-        if cargas and repo.update_if_greater(pk, keys.sk_stats_pr(chave), "carga", max(cargas),
-                                             extra={"exercicio_nome": ex_nome, "data": now_iso()}):
-            pr_novo = max(cargas)
+        pr_novo = _calcular_pr(pk, chave, series, ex_tipo, ex_nome)
     return updated, pr_novo
 
 
@@ -357,6 +352,34 @@ def _num(v) -> float | None:
         return None
 
 
+def _calcular_pr(pk: str, chave: str, series: list, tipo: str, ex_nome: str) -> float | None:
+    """Calcula e grava o PR de acordo com o tipo de exercício. Retorna o valor do PR se for novo."""
+    if tipo == "PESO_CORPORAL":
+        reps_vals = [it.get("reps") for it in series if it.get("reps")]
+        if not reps_vals:
+            return None
+        pr_val = float(max(reps_vals))
+        if repo.update_if_greater(pk, keys.sk_stats_pr(chave), "carga", pr_val,
+                                   extra={"exercicio_nome": ex_nome, "data": now_iso()}):
+            return pr_val
+    elif tipo == "CARDIO":
+        duracao = sum(it.get("reps") or 0 for it in series)
+        if not duracao:
+            return None
+        if repo.update_if_greater(pk, keys.sk_stats_pr(chave), "carga", float(duracao),
+                                   extra={"exercicio_nome": ex_nome, "data": now_iso()}):
+            return float(duracao)
+    else:  # FORCA (default)
+        cargas = [c for c in (_num(it.get("carga")) for it in series) if c is not None]
+        if not cargas:
+            return None
+        carga_max = max(cargas)
+        if repo.update_if_greater(pk, keys.sk_stats_pr(chave), "carga", carga_max,
+                                   extra={"exercicio_nome": ex_nome, "data": now_iso()}):
+            return carga_max
+    return None
+
+
 def chave_exercicio(nome: str | None) -> str:
     """Chave canônica do nome do exercício (sem acento/caixa/espaços extras) — usada para
     agrupar métricas (evolução/PR) de exercícios homônimos cadastrados em treinos diferentes,
@@ -374,34 +397,65 @@ def nome_por_exercicio_id(aluno_id: str, exercicio_id: str) -> str | None:
     return next((i.get("nome") for i in items if i.get("exercicio_id") == exercicio_id), None)
 
 
+def _ex_info(aluno_id: str, exercicio_id: str) -> dict:
+    """Retorna {nome, tipo_exercicio, grupo} para um exercicio_id do aluno."""
+    items = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")
+    for i in items:
+        if i.get("exercicio_id") == exercicio_id:
+            return {
+                "nome": i.get("nome"),
+                "tipo_exercicio": i.get("tipo_exercicio") or "FORCA",
+                "grupo": i.get("grupo"),
+            }
+    return {"nome": None, "tipo_exercicio": "FORCA", "grupo": None}
+
+
 def evolucao_exercicio(aluno_id: str, exercicio_id: str, limit: int = 100) -> dict:
-    """Série temporal (carga máx + tonelagem por sessão) + PR de um exercício, via GSI1
-    (query targeted, não scan — ESPEC §4.1). Carga não-numérica é ignorada nos cálculos.
-    Agrupa por nome (chave_exercicio): exercícios homônimos cadastrados em treinos diferentes
-    compartilham a mesma evolução."""
-    chave = chave_exercicio(nome_por_exercicio_id(aluno_id, exercicio_id))
+    """Série temporal + PR de um exercício, adaptando métricas por tipo (FORCA/CARDIO/PESO_CORPORAL).
+    Agrupa por nome canônico: exercícios homônimos em treinos diferentes compartilham a mesma evolução."""
+    info = _ex_info(aluno_id, exercicio_id)
+    tipo = info.get("tipo_exercicio") or "FORCA"
+    nome = info.get("nome") or nome_por_exercicio_id(aluno_id, exercicio_id)
+    chave = chave_exercicio(nome)
     items = repo.query_gsi1_last(keys.gsi1_registro(aluno_id, chave), limit)
     items.sort(key=lambda i: i.get("GSI1SK", ""))  # ascendente por tempo
     serie: list[dict] = []
     pr: dict | None = None
     for it in items:
         c = repo.clean(it)
-        cargas, volume = [], 0.0
-        for s in c.get("series_exec") or []:
-            cg = _num(s.get("carga"))
-            if cg is not None:
-                cargas.append(cg)
-                volume += cg * (s.get("reps") or 0)
-        carga_max = max(cargas) if cargas else None
-        serie.append({
-            "data": c.get("data_hora"),
-            "carga_max": carga_max,
-            "volume": round(volume, 1) if volume else None,
-            "reps": "/".join(str(s["reps"]) for s in (c.get("series_exec") or []) if s.get("reps")),
-        })
-        if carga_max is not None and (pr is None or carga_max > pr["carga"]):
-            pr = {"carga": carga_max, "data": c.get("data_hora")}
-    return {"serie": serie, "pr": pr, "total_sessoes": len(serie)}
+        series_exec = c.get("series_exec") or []
+        ponto: dict = {"data": c.get("data_hora")}
+
+        if tipo == "PESO_CORPORAL":
+            reps_vals = [s.get("reps") for s in series_exec if s.get("reps")]
+            reps_max = max(reps_vals) if reps_vals else None
+            total_reps = sum(s.get("reps") or 0 for s in series_exec)
+            ponto.update({"reps_max": reps_max, "total_reps": total_reps, "carga_max": None, "volume": None})
+            if reps_max is not None and (pr is None or reps_max > pr["carga"]):
+                pr = {"carga": reps_max, "data": c.get("data_hora")}
+        elif tipo == "CARDIO":
+            duracao_total = sum(s.get("reps") or 0 for s in series_exec)
+            ponto.update({"duracao_total_s": duracao_total, "carga_max": None, "volume": None})
+            if duracao_total and (pr is None or duracao_total > pr["carga"]):
+                pr = {"carga": duracao_total, "data": c.get("data_hora")}
+        else:  # FORCA
+            cargas, volume = [], 0.0
+            for s in series_exec:
+                cg = _num(s.get("carga"))
+                if cg is not None:
+                    cargas.append(cg)
+                    volume += cg * (s.get("reps") or 0)
+            carga_max = max(cargas) if cargas else None
+            ponto.update({
+                "carga_max": carga_max,
+                "volume": round(volume, 1) if volume else None,
+                "reps": "/".join(str(s["reps"]) for s in series_exec if s.get("reps")),
+            })
+            if carga_max is not None and (pr is None or carga_max > pr["carga"]):
+                pr = {"carga": carga_max, "data": c.get("data_hora")}
+
+        serie.append(ponto)
+    return {"tipo": tipo, "serie": serie, "pr": pr, "total_sessoes": len(serie)}
 
 
 def ultimo_e_proximo(aluno_id: str) -> dict:

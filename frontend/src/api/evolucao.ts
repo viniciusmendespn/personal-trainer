@@ -3,12 +3,16 @@ import type { Exercicio } from '../types'
 
 export interface PontoEvolucao {
   data: string
-  carga_max: number | null
-  volume: number | null
-  reps: string
+  carga_max?: number | null
+  volume?: number | null
+  reps?: string
+  reps_max?: number | null
+  total_reps?: number | null
+  duracao_total_s?: number | null
 }
 
 export interface Evolucao {
+  tipo?: string
   serie: PontoEvolucao[]
   pr: { carga: number; data: string } | null
   total_sessoes: number

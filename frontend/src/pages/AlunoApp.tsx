@@ -1008,6 +1008,26 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
 
 const sanitizeCarga = (v: string) => v.replace(/[^\d.,]/g, '')
 
+/** MM:SS ou SSS → total de segundos (inteiro) */
+function parseDuracao(v: string): number {
+  const partes = v.split(':')
+  if (partes.length === 2) return (Number(partes[0]) || 0) * 60 + (Number(partes[1]) || 0)
+  return Number(v.replace(/[^\d]/g, '')) || 0
+}
+
+/** total de segundos → "MM:SS" */
+function formatDuracaoMMSS(segundos: number): string {
+  const m = Math.floor(segundos / 60)
+  const s = segundos % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
+function formatPr(val: number, tipo?: string): string {
+  if (tipo === 'PESO_CORPORAL') return `${val} reps`
+  if (tipo === 'CARDIO') return formatDuracaoMMSS(val)
+  return `${val} kg`
+}
+
 function RecursosModal({ recursos, onClose }: { recursos: PostGlobal[]; onClose: () => void }) {
   return (
     <Modal open onClose={onClose} title="Recursos educacionais" size="lg">
@@ -1155,12 +1175,21 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
     setPr(null)
   }
 
+  const tipo = ex.tipo_exercicio ?? 'FORCA'
+
   const save = useMutation({
     mutationFn: () => {
-      if (rows.some((r) => !r.carga || !r.reps)) {
-        throw new Error('Preencha a carga e as repetições de todas as séries.')
+      if (tipo === 'PESO_CORPORAL') {
+        if (rows.some((r) => !r.reps)) throw new Error('Preencha as repetições de todas as séries.')
+      } else if (tipo === 'CARDIO') {
+        if (rows.some((r) => !r.reps)) throw new Error('Preencha a duração de todos os blocos.')
+      } else {
+        if (rows.some((r) => !r.reps)) throw new Error('Preencha as repetições de todas as séries.')
       }
-      const series = rows.map((r) => ({ carga: r.carga, reps: Number(r.reps) }))
+      const series = rows.map((r) => ({
+        carga: tipo === 'PESO_CORPORAL' ? undefined : (r.carga || undefined),
+        reps: tipo === 'CARDIO' ? parseDuracao(r.reps) : Number(r.reps),
+      }))
       return alunoApi.registrar(series, ex.exercicio_id, variante?.nome)
     },
     onError: (e: Error) => show(e.message, 'error'),
@@ -1196,7 +1225,7 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
             </span>
             <span className="block mt-0.5">
               {seriesAtivas?.length
-                ? <SeriesPrescritasCompact items={seriesAtivas} />
+                ? <SeriesPrescritasCompact items={seriesAtivas} tipoExercicio={ex.tipo_exercicio} />
                 : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
               }
             </span>
@@ -1244,33 +1273,50 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
       )}
 
       {feito && !open && (
-        <p className="text-xs text-text-secondary mt-1">{ex.registrado!.map((s) => `${s.carga ?? '-'}×${s.reps ?? '-'}`).join('   ')}</p>
+        <p className="text-xs text-text-secondary mt-1">
+          {ex.registrado!.map((s) => {
+            if (tipo === 'PESO_CORPORAL') return `${s.reps ?? '-'} reps`
+            if (tipo === 'CARDIO') return `${formatDuracaoMMSS(s.reps ?? 0)}${s.carga ? ` · ${s.carga}` : ''}`
+            return `${s.carga ?? '-'}×${s.reps ?? '-'}`
+          }).join('   ')}
+        </p>
       )}
 
       {open && (
         <div className="mt-3 space-y-2">
           {rows.map((r, i) => (
             <div key={i} className="flex gap-2 items-center">
-              <span className="text-xs text-text-muted w-12">Sér {i + 1}</span>
+              <span className="text-xs text-text-muted w-12">
+                {tipo === 'CARDIO' ? `Bloco ${i + 1}` : `Sér ${i + 1}`}
+              </span>
+              {tipo !== 'PESO_CORPORAL' && (
+                <div className="relative flex-1">
+                  <Input
+                    className={tipo === 'CARDIO' ? 'pr-12' : 'pr-7'}
+                    inputMode={tipo === 'CARDIO' ? 'text' : 'decimal'}
+                    placeholder={r.cargaHint || (tipo === 'CARDIO' ? 'pace' : '0')}
+                    value={r.carga}
+                    onChange={(e) => upd(i, 'carga', tipo === 'CARDIO' ? e.target.value : sanitizeCarga(e.target.value))}
+                  />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">
+                    {tipo === 'CARDIO' ? 'pace' : 'kg'}
+                  </span>
+                </div>
+              )}
               <div className="relative flex-1">
                 <Input
-                  className="pr-7"
-                  inputMode="decimal"
-                  placeholder={r.cargaHint || '0'}
-                  value={r.carga}
-                  onChange={(e) => upd(i, 'carga', sanitizeCarga(e.target.value))}
-                />
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">kg</span>
-              </div>
-              <div className="relative flex-1">
-                <Input
-                  className="pr-10"
-                  inputMode="numeric"
-                  placeholder={r.repsHint || '0'}
+                  className={tipo === 'CARDIO' ? 'pr-12' : 'pr-10'}
+                  inputMode={tipo === 'CARDIO' ? 'text' : 'numeric'}
+                  placeholder={r.repsHint || (tipo === 'CARDIO' ? 'MM:SS' : '0')}
                   value={r.reps}
-                  onChange={(e) => upd(i, 'reps', e.target.value.replace(/[^\d]/g, ''))}
+                  onChange={(e) => upd(i, 'reps', tipo === 'CARDIO'
+                    ? e.target.value.replace(/[^\d:]/g, '')
+                    : e.target.value.replace(/[^\d]/g, '')
+                  )}
                 />
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">reps</span>
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">
+                  {tipo === 'CARDIO' ? 'dur.' : 'reps'}
+                </span>
               </div>
               {rows.length > 1 && (
                 <button type="button" onClick={() => removeRow(i)} aria-label="Remover série" className="text-text-muted hover:text-danger">
@@ -1279,10 +1325,15 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
               )}
             </div>
           ))}
-          <button onClick={() => setRows([...rows, { carga: '', reps: '', repsHint: '', cargaHint: '' }])} className="text-xs text-accent-hover">+ série</button>
+          <button
+            onClick={() => setRows([...rows, { carga: '', reps: '', repsHint: '', cargaHint: '' }])}
+            className="text-xs text-accent-hover"
+          >
+            {tipo === 'CARDIO' ? '+ bloco' : '+ série'}
+          </button>
           {pr != null && (
             <Badge tone="warning" className="text-xs">
-              <Trophy size={12} /> Novo recorde: {pr} kg!
+              <Trophy size={12} /> Novo recorde: {formatPr(pr, tipo)}!
             </Badge>
           )}
           <Button variant="energy" className="w-full" onClick={() => save.mutate()} disabled={save.isPending}>
