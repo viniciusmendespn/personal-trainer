@@ -20,7 +20,7 @@ function getLabels(tipo?: TipoExercicio) {
 }
 
 function getUnits(tipo?: TipoExercicio, uCarga?: string, uReps?: string) {
-  if (tipo === 'CARDIO') return { carga: 'RPE', reps: '' }
+  if (tipo === 'CARDIO') return { carga: uCarga || 'RPE', reps: uReps || 'min' }
   if (tipo === 'PESO_CORPORAL') return { carga: null, reps: uReps || 'reps' }
   return { carga: uCarga || 'kg', reps: uReps || 'reps' }
 }
