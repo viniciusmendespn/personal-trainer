@@ -27,6 +27,7 @@ import type { Treino, Exercicio, ExercicioCreate, ExercicioSubstituto, SeriePres
 import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
 import { MetasTab } from '../components/aluno/MetasTab'
 import { FinanceiroTab } from '../components/financeiro/FinanceiroTab'
+import { videoUrlComFallback } from '../utils/video'
 
 export function AlunoDetailPage() {
   const { alunoId = '' } = useParams()
@@ -921,7 +922,7 @@ function ExercicioRow({
               : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
             }
           </span>
-          {ex.video_url && <a href={ex.video_url} target="_blank" rel="noreferrer" className="text-accent-hover ml-2 text-xs hover:underline">vídeo</a>}
+          <a href={videoUrlComFallback(ex.nome, ex.video_url)} target="_blank" rel="noreferrer" className="text-accent-hover ml-2 text-xs hover:underline">vídeo</a>
           {ex.observacoes && (
             <span title={ex.observacoes} className="inline-block ml-2 align-text-bottom">
               <StickyNote size={12} className="text-warning" />

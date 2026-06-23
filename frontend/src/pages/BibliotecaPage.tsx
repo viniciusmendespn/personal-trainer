@@ -7,6 +7,7 @@ import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIn
 import { SubstitutosBibliotecaEditor } from '../components/exercicios/SubstitutosBibliotecaEditor'
 import type { ExLibCreate } from '../api/biblioteca'
 import type { ExercicioSubstituto, ExLib } from '../types'
+import { videoUrlComFallback } from '../utils/video'
 
 export function BibliotecaPage() {
   const { data: exs, isLoading } = useBiblioteca()
@@ -140,11 +141,9 @@ function ExLibRow({ ex, grupos, biblioteca }: { ex: ExLib; grupos: string[]; bib
     <Card variant="elevated" className="flex items-start justify-between">
       <div className="min-w-0">
         <p className="font-medium truncate">{ex.nome} {ex.grupo && <span className="text-xs text-text-muted">· {ex.grupo}</span>}</p>
-        {ex.video_url && (
-          <a href={ex.video_url} target="_blank" rel="noreferrer" className="text-xs text-accent-hover inline-flex items-center gap-1 hover:underline">
-            <Video size={12} /> vídeo
-          </a>
-        )}
+        <a href={videoUrlComFallback(ex.nome, ex.video_url)} target="_blank" rel="noreferrer" className="text-xs text-accent-hover inline-flex items-center gap-1 hover:underline">
+          <Video size={12} /> vídeo
+        </a>
         {ex.recomendacoes && <p className="text-xs text-text-secondary mt-1 whitespace-pre-wrap">{ex.recomendacoes}</p>}
       </div>
       <span className="flex gap-2 shrink-0">

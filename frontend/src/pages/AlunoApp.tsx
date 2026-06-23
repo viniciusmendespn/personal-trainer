@@ -24,6 +24,7 @@ import { AlunoPerfilModal } from '../components/aluno/AlunoPerfilModal'
 import { alunoFinanceiroApi } from '../api/financeiro'
 import { PixModal } from '../components/financeiro/PixModal'
 import type { Cobranca, ExercicioSubstituto, SeriePrescrita } from '../types'
+import { videoUrlComFallback } from '../utils/video'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -762,17 +763,15 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
                         <Repeat size={16} />
                       </button>
                     )}
-                    {ex.video_url && (
-                      <a
-                        href={ex.video_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-text-muted hover:text-energy transition-colors"
-                        title="Ver vídeo"
-                      >
-                        <Video size={16} />
-                      </a>
-                    )}
+                    <a
+                      href={videoUrlComFallback(ex.nome, ex.video_url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-text-muted hover:text-energy transition-colors"
+                      title="Ver vídeo"
+                    >
+                      <Video size={16} />
+                    </a>
                   </div>
                 </div>
               </Card>
@@ -1054,11 +1053,9 @@ function SubstitutoOpcao({
         {nome}{selecionado && interativo ? ' ✓' : ''}
       </p>
       {series_prescritas?.length ? <div><SeriesPrescritasCompact items={series_prescritas} /></div> : null}
-      {video_url && (
-        <a href={video_url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 text-xs text-accent-hover hover:underline">
-          <Video size={12} /> Ver vídeo de execução
-        </a>
-      )}
+      <a href={videoUrlComFallback(nome, video_url)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 text-xs text-accent-hover hover:underline">
+        <Video size={12} /> Ver vídeo de execução
+      </a>
       {observacao && <p className="text-xs text-text-secondary whitespace-pre-wrap">{observacao}</p>}
     </div>
   )
@@ -1128,7 +1125,7 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
   const temRecursos = (ex.recursos?.length ?? 0) > 0
   const temSubstitutos = (ex.substitutos_efetivos?.length ?? 0) > 0
   const nomeAtivo = variante?.nome ?? ex.nome
-  const videoAtivo = variante?.video_url ?? ex.video_url
+  const videoAtivo = videoUrlComFallback(nomeAtivo, variante?.video_url ?? ex.video_url)
   const obsAtiva = variante?.observacao ?? ex.observacoes
   const seriesAtivas = variante?.series_prescritas?.length ? variante.series_prescritas : ex.series_prescritas
 
@@ -1193,9 +1190,11 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
         <button className="flex-1 flex items-center justify-between text-left min-w-0"
           onClick={() => { if (!open) { setRows(buildRows(variante)); setPr(null) } setOpen((o) => !o) }}>
           <span className="min-w-0">
-            <span className="font-medium">{nomeAtivo}</span>
-            {variante && <span className="ml-1.5 text-[10px] text-accent align-middle">substituto</span>}
-            <span className="ml-2">
+            <span className="font-medium block truncate">
+              {nomeAtivo}
+              {variante && <span className="ml-1.5 text-[10px] text-accent align-middle">substituto</span>}
+            </span>
+            <span className="block mt-0.5">
               {seriesAtivas?.length
                 ? <SeriesPrescritasCompact items={seriesAtivas} />
                 : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>

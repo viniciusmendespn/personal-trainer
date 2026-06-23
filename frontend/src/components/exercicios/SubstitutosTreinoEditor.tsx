@@ -3,6 +3,7 @@ import { BookOpen, ChevronDown, ChevronRight, Pencil, Repeat, X as XIcon } from 
 import { SubstitutoPicker } from './SubstitutoPicker'
 import { SeriesPrescritasEditor, SeriesPrescritasCompact } from './SeriesPrescritasEditor'
 import type { ExercicioSubstituto, ExLib, SeriePrescrita } from '../../types'
+import { videoUrlComFallback } from '../../utils/video'
 
 interface Props {
   exercicioNome: string
@@ -78,7 +79,7 @@ export function SubstitutosTreinoEditor({
                   >
                     <span className="text-xs truncate block" title={s.observacao}>
                       {s.nome}
-                      {s.video_url && <a href={s.video_url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-accent-hover ml-2 hover:underline">vídeo</a>}
+                      <a href={videoUrlComFallback(s.nome, s.video_url)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-accent-hover ml-2 hover:underline">vídeo</a>
                     </span>
                     {seriesAtual.length > 0 && <SeriesPrescritasCompact items={seriesAtual} />}
                   </button>
