@@ -47,7 +47,10 @@ export function useCreateExercicio(alunoId: string, treinoId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: ExercicioCreate) => treinosApi.createExercicio(alunoId, treinoId, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['exercicios', alunoId, treinoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['exercicios', alunoId, treinoId] })
+      qc.invalidateQueries({ queryKey: ['exercicios-aluno', alunoId] })
+    },
   })
 }
 
@@ -56,7 +59,10 @@ export function useUpdateExercicio(alunoId: string, treinoId: string) {
   return useMutation({
     mutationFn: ({ exercicioId, body }: { exercicioId: string; body: ExercicioCreate }) =>
       treinosApi.updateExercicio(alunoId, treinoId, exercicioId, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['exercicios', alunoId, treinoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['exercicios', alunoId, treinoId] })
+      qc.invalidateQueries({ queryKey: ['exercicios-aluno', alunoId] })
+    },
   })
 }
 
@@ -64,7 +70,10 @@ export function useDeleteExercicio(alunoId: string, treinoId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (exercicioId: string) => treinosApi.removeExercicio(alunoId, treinoId, exercicioId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['exercicios', alunoId, treinoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['exercicios', alunoId, treinoId] })
+      qc.invalidateQueries({ queryKey: ['exercicios-aluno', alunoId] })
+    },
   })
 }
 
