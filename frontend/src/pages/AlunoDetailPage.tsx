@@ -934,7 +934,7 @@ function ExercicioForm({
             </div>
           )}
         </div>
-        <SeriesPrescritasEditor value={seriesPrescritas} onChange={setSeriesPrescritas} tipoExercicio={tipo} />
+        <SeriesPrescritasEditor value={seriesPrescritas} onChange={setSeriesPrescritas} tipoExercicio={tipo} unidadeCarga={unidadeCarga} unidadeReps={unidadeReps} />
       </div>
       <div>
         <p className="text-xs font-medium text-text-secondary mb-2">Vídeo e observações</p>

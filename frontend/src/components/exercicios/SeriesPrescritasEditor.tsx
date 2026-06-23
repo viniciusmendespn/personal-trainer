@@ -1,11 +1,14 @@
 import { X, Plus } from 'lucide-react'
 import { Input } from '../ui'
+import { UnitInput } from '../ui/UnitInput'
 import type { SeriePrescrita, TipoExercicio } from '../../types'
 
 interface Props {
   value: SeriePrescrita[]
   onChange: (v: SeriePrescrita[]) => void
   tipoExercicio?: TipoExercicio
+  unidadeCarga?: string
+  unidadeReps?: string
 }
 
 function getLabels(tipo?: TipoExercicio) {
@@ -14,9 +17,18 @@ function getLabels(tipo?: TipoExercicio) {
   return { series: 'Séries', reps: 'Reps', carga: 'Carga' }
 }
 
-export function SeriesPrescritasEditor({ value, onChange, tipoExercicio }: Props) {
+function getUnits(tipo?: TipoExercicio, uCarga?: string, uReps?: string) {
+  if (tipo === 'CARDIO') return { carga: 'RPE', reps: '' }
+  if (tipo === 'PESO_CORPORAL') return { carga: null, reps: uReps ?? 'reps' }
+  return { carga: uCarga ?? 'kg', reps: uReps ?? 'reps' }
+}
+
+const numericOnly = (v: string) => v.replace(/[^\d.]/g, '')
+
+export function SeriesPrescritasEditor({ value, onChange, tipoExercicio, unidadeCarga, unidadeReps }: Props) {
   const safeValue = Array.isArray(value) ? value : []
   const labels = getLabels(tipoExercicio)
+  const units = getUnits(tipoExercicio, unidadeCarga, unidadeReps)
 
   function update(i: number, field: keyof SeriePrescrita, v: string) {
     onChange(safeValue.map((r, j) => j === i ? { ...r, [field]: field === 'series' ? Number(v) || 1 : v } : r))
@@ -41,20 +53,22 @@ export function SeriesPrescritasEditor({ value, onChange, tipoExercicio }: Props
             onFocus={(e) => e.target.select()}
           />
           <span className="text-text-muted text-xs shrink-0">×</span>
-          <Input
-            className="w-24"
+          <UnitInput
+            unit={units.reps || undefined}
             placeholder={labels.reps}
             value={row.reps}
-            onChange={(e) => update(i, 'reps', e.target.value)}
+            onChange={(e) => update(i, 'reps', numericOnly(e.target.value))}
+            onFocus={(e) => e.target.select()}
           />
           {labels.carga !== null && (
             <>
               <span className="text-text-muted text-xs shrink-0">·</span>
-              <Input
-                className="w-24"
+              <UnitInput
+                unit={units.carga ?? undefined}
                 placeholder={labels.carga}
                 value={row.carga ?? ''}
-                onChange={(e) => update(i, 'carga', e.target.value)}
+                onChange={(e) => update(i, 'carga', numericOnly(e.target.value))}
+                onFocus={(e) => e.target.select()}
               />
             </>
           )}
