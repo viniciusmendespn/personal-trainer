@@ -45,6 +45,8 @@ def _snapshot(ex: dict) -> dict:
         "observacoes": ex.get("observacoes"),
         "links_uteis": ex.get("links_uteis") or [],
         "links_uteis_excluidos": ex.get("links_uteis_excluidos") or [],
+        "substitutos": ex.get("substitutos") or [],
+        "substitutos_excluidos": ex.get("substitutos_excluidos") or [],
     }
 
 

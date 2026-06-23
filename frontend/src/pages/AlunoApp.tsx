@@ -1051,7 +1051,7 @@ function SubstitutoOpcao({
       {observacao && <p className="text-xs text-text-secondary whitespace-pre-wrap">{observacao}</p>}
     </div>
   )
-  if (!interativo) return conteudo
+  if (!interativo) return <div className="pb-3 border-b border-border last:border-0 last:pb-0">{conteudo}</div>
   return (
     <button
       type="button"
