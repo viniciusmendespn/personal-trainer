@@ -7,6 +7,7 @@ class CobrancaConfigIn(BaseModel):
     valor: float = Field(gt=0)
     recorrencia: str = Field(pattern="^(MENSAL|ANUAL)$")
     dia_vencimento: int = Field(ge=1, le=28)
+    mes_vencimento: Optional[int] = Field(default=None, ge=1, le=12)
     ativo: bool = True
     dias_antecedencia: int = Field(default=15, ge=1, le=60)
 
@@ -17,6 +18,7 @@ class CobrancaConfigOut(BaseModel):
     valor: float
     recorrencia: str
     dia_vencimento: int
+    mes_vencimento: Optional[int] = None
     ativo: bool
     dias_antecedencia: int
     criado_em: str

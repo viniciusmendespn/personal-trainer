@@ -34,6 +34,7 @@ def set_config(personal_id: str, aluno_id: str, body: dict) -> dict:
         "valor": body["valor"],
         "recorrencia": body["recorrencia"],
         "dia_vencimento": body["dia_vencimento"],
+        "mes_vencimento": body.get("mes_vencimento"),
         "ativo": body.get("ativo", True),
         "dias_antecedencia": body.get("dias_antecedencia", 15),
         "criado_em": criado_em,
@@ -46,13 +47,14 @@ def set_config(personal_id: str, aluno_id: str, body: dict) -> dict:
     })
     if cfg["ativo"]:
         hoje = date.today()
-        vencimento = _proxima_data_vencimento(cfg["dia_vencimento"], cfg["recorrencia"], hoje)
+        mes = cfg.get("mes_vencimento")
+        vencimento = _proxima_data_vencimento(cfg["dia_vencimento"], cfg["recorrencia"], hoje, mes)
         # Cria cobrança imediatamente se não existir para este período
         _criar_cobranca_pendente(aluno_id, personal_id, cfg["valor"],
                                   cfg["recorrencia"], vencimento, cfg["dias_antecedencia"])
         # Agenda próxima geração após este período
         _agendar_proxima_geracao(aluno_id, personal_id, cfg["dia_vencimento"],
-                                  cfg["recorrencia"], cfg["dias_antecedencia"], vencimento)
+                                  cfg["recorrencia"], cfg["dias_antecedencia"], vencimento, mes)
     return cfg
 
 
@@ -158,7 +160,8 @@ def _gerar_cobranca_agendada(aluno_id: str, personal_id: str, vencimento_str: st
     dias_antecedencia = int(cfg.get("dias_antecedencia", 15))
     _criar_cobranca_pendente(aluno_id, personal_id, valor, recorrencia, vencimento, dias_antecedencia)
     dia_vencimento = int(cfg["dia_vencimento"])
-    _agendar_proxima_geracao(aluno_id, personal_id, dia_vencimento, recorrencia, dias_antecedencia, vencimento)
+    mes_vencimento = cfg.get("mes_vencimento")
+    _agendar_proxima_geracao(aluno_id, personal_id, dia_vencimento, recorrencia, dias_antecedencia, vencimento, mes_vencimento)
 
 
 def _marcar_vencida(aluno_id: str, cobranca_id: str, vencimento_str: str, personal_id: str) -> None:
@@ -240,8 +243,9 @@ def _agendar_vencer(aluno_id: str, cobranca_id: str, personal_id: str, venciment
 
 def _agendar_proxima_geracao(aluno_id: str, personal_id: str, dia: int,
                               recorrencia: str, dias_antecedencia: int,
-                              ultimo_vencimento: date) -> None:
-    proximo_vencimento = _proximo_periodo(dia, recorrencia, ultimo_vencimento)
+                              ultimo_vencimento: date,
+                              mes: Optional[int] = None) -> None:
+    proximo_vencimento = _proximo_periodo(dia, recorrencia, ultimo_vencimento, mes)
     data_criacao = proximo_vencimento - timedelta(days=dias_antecedencia)
     if data_criacao <= date.today():
         data_criacao = date.today()
@@ -260,14 +264,14 @@ def _fim_do_mes(year: int, month: int) -> date:
     return date(year, month, monthrange(year, month)[1])
 
 
-def _proxima_data_vencimento(dia: int, recorrencia: str, a_partir: date) -> date:
+def _proxima_data_vencimento(dia: int, recorrencia: str, a_partir: date,
+                              mes: Optional[int] = None) -> date:
     """Retorna a próxima data de vencimento >= a_partir."""
     if recorrencia == "MENSAL":
         ultimo_dia = monthrange(a_partir.year, a_partir.month)[1]
         candidata = a_partir.replace(day=min(dia, ultimo_dia))
         if candidata >= a_partir:
             return candidata
-        # Próximo mês
         if a_partir.month == 12:
             proximo = date(a_partir.year + 1, 1, 1)
         else:
@@ -275,16 +279,22 @@ def _proxima_data_vencimento(dia: int, recorrencia: str, a_partir: date) -> date
         ultimo_dia = monthrange(proximo.year, proximo.month)[1]
         return proximo.replace(day=min(dia, ultimo_dia))
     else:  # ANUAL
+        m = mes or a_partir.month
+        ultimo_dia = monthrange(a_partir.year, m)[1]
         try:
-            candidata = a_partir.replace(day=dia)
+            candidata = date(a_partir.year, m, min(dia, ultimo_dia))
         except ValueError:
-            candidata = _fim_do_mes(a_partir.year, a_partir.month)
+            candidata = _fim_do_mes(a_partir.year, m)
         if candidata >= a_partir:
             return candidata
-        return candidata.replace(year=candidata.year + 1)
+        try:
+            return date(a_partir.year + 1, m, min(dia, monthrange(a_partir.year + 1, m)[1]))
+        except ValueError:
+            return _fim_do_mes(a_partir.year + 1, m)
 
 
-def _proximo_periodo(dia: int, recorrencia: str, ultimo_vencimento: date) -> date:
+def _proximo_periodo(dia: int, recorrencia: str, ultimo_vencimento: date,
+                     mes: Optional[int] = None) -> date:
     """Retorna o próximo vencimento APÓS ultimo_vencimento."""
     if recorrencia == "MENSAL":
         if ultimo_vencimento.month == 12:
@@ -294,7 +304,9 @@ def _proximo_periodo(dia: int, recorrencia: str, ultimo_vencimento: date) -> dat
         ultimo_dia = monthrange(proximo.year, proximo.month)[1]
         return proximo.replace(day=min(dia, ultimo_dia))
     else:  # ANUAL
+        m = mes or ultimo_vencimento.month
+        proximo_ano = ultimo_vencimento.year + 1
         try:
-            return ultimo_vencimento.replace(year=ultimo_vencimento.year + 1)
+            return date(proximo_ano, m, min(dia, monthrange(proximo_ano, m)[1]))
         except ValueError:
-            return _fim_do_mes(ultimo_vencimento.year + 1, ultimo_vencimento.month)
+            return _fim_do_mes(proximo_ano, m)

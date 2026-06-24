@@ -319,6 +319,7 @@ export interface CobrancaConfig {
   valor: number
   recorrencia: Recorrencia
   dia_vencimento: number
+  mes_vencimento?: number
   ativo: boolean
   dias_antecedencia: number
   criado_em: string
@@ -329,6 +330,7 @@ export interface CobrancaConfigIn {
   valor: number
   recorrencia: Recorrencia
   dia_vencimento: number
+  mes_vencimento?: number
   ativo?: boolean
   dias_antecedencia?: number
 }

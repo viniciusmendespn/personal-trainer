@@ -12,6 +12,7 @@ export function CobrancaConfigModal({ current, onConfirm, onClose }: Props) {
   const [valor, setValor] = useState(current?.valor?.toString() ?? '')
   const [recorrencia, setRecorrencia] = useState<Recorrencia>(current?.recorrencia ?? 'MENSAL')
   const [diaVencimento, setDiaVencimento] = useState(current?.dia_vencimento?.toString() ?? '10')
+  const [mesVencimento, setMesVencimento] = useState(current?.mes_vencimento?.toString() ?? '1')
   const [diasAntecedencia, setDiasAntecedencia] = useState(current?.dias_antecedencia?.toString() ?? '15')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -24,9 +25,10 @@ export function CobrancaConfigModal({ current, onConfirm, onClose }: Props) {
     if (!dia || dia < 1 || dia > 28) { setError('Dia de vencimento deve ser entre 1 e 28.'); return }
     const antec = parseInt(diasAntecedencia)
     if (!antec || antec < 1 || antec > 60) { setError('Antecedência deve ser entre 1 e 60 dias.'); return }
+    const mes = recorrencia === 'ANUAL' ? parseInt(mesVencimento) : undefined
     setLoading(true); setError('')
     try {
-      await onConfirm({ valor: v, recorrencia, dia_vencimento: dia, dias_antecedencia: antec, ativo: true })
+      await onConfirm({ valor: v, recorrencia, dia_vencimento: dia, mes_vencimento: mes, dias_antecedencia: antec, ativo: true })
       onClose()
     } catch {
       setError('Não foi possível salvar a configuração.')
@@ -59,6 +61,26 @@ export function CobrancaConfigModal({ current, onConfirm, onClose }: Props) {
           <option value="MENSAL">Mensal</option>
           <option value="ANUAL">Anual</option>
         </Select>
+        {recorrencia === 'ANUAL' && (
+          <Select
+            label="Mês do vencimento"
+            value={mesVencimento}
+            onChange={(e) => setMesVencimento(e.target.value)}
+          >
+            <option value="1">Janeiro</option>
+            <option value="2">Fevereiro</option>
+            <option value="3">Março</option>
+            <option value="4">Abril</option>
+            <option value="5">Maio</option>
+            <option value="6">Junho</option>
+            <option value="7">Julho</option>
+            <option value="8">Agosto</option>
+            <option value="9">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </Select>
+        )}
         <Input
           label="Dia do vencimento (1–28)"
           type="number"

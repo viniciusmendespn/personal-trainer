@@ -108,7 +108,10 @@ export function FinanceiroTab({ alunoId }: { alunoId: string }) {
                   <span className="text-xs font-normal text-text-muted ml-1">/ {(config as any).recorrencia === 'MENSAL' ? 'mês' : 'ano'}</span>
                 </p>
                 <p className="text-xs text-text-secondary">
-                  Vence dia {(config as any).dia_vencimento} · antecedência {(config as any).dias_antecedencia} dias
+                  {(config as any).recorrencia === 'ANUAL' && (config as any).mes_vencimento
+                    ? `Vence dia ${(config as any).dia_vencimento} de ${['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][(config as any).mes_vencimento - 1]}`
+                    : `Vence dia ${(config as any).dia_vencimento}`
+                  } · antecedência {(config as any).dias_antecedencia} dias
                 </p>
                 {!configAtivo && <p className="text-xs text-warning">Faturamento desativado</p>}
               </div>
