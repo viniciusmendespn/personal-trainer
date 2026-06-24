@@ -70,10 +70,13 @@ h1, h2, h3, .font-display { font-family: var(--font-display); }
 ::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
 
-/* No tema claro, overlays brancos (hover:bg-white/5) viram escuros sutis */
+/* No tema claro, overlays brancos viram escuros sutis */
 [data-theme="light"] [class*="hover:bg-white"]:hover {
   background-color: rgb(0 0 0 / 0.05) !important;
 }
+[data-theme="light"] .bg-white\/5  { background-color: rgb(0 0 0 / 0.05) !important; }
+[data-theme="light"] .bg-white\/10 { background-color: rgb(0 0 0 / 0.08) !important; }
+[data-theme="light"] .bg-white\/15 { background-color: rgb(0 0 0 / 0.1)  !important; }
 
 @keyframes toast-in {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }

@@ -11,13 +11,14 @@ const FEATURES = [
 
 export function FinPilotBenefitCard() {
   return (
-    <div style={{
+    <div data-theme="dark" style={{
       background: 'linear-gradient(160deg, #071a10 0%, #030d07 60%, #020617 100%)',
       border: '1px solid rgba(74, 222, 128, 0.18)',
       borderRadius: 16,
       padding: '24px',
       position: 'relative',
       overflow: 'hidden',
+      boxShadow: '0 8px 32px -8px rgb(0 0 0 / 0.35)',
     }}>
       {/* glow decorativo */}
       <div style={{
