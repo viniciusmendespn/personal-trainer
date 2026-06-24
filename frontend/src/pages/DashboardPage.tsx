@@ -270,7 +270,7 @@ export function DashboardPage() {
       ) : (
         <>
           {/* ── Row 1: KPIs principais ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* Card composto: Alunos / Ativos */}
             <Link to="/alunos" className="block">
               <Card variant="elevated" className="flex items-start gap-3 cursor-pointer hover:opacity-80 active:scale-[0.98] transition-all h-full">
@@ -311,16 +311,14 @@ export function DashboardPage() {
               </div>
             </Card>
 
-            {/* Notificações — col-span-2 no mobile para evitar espaço em branco ao lado */}
-            <div className="col-span-2 sm:col-span-1">
-              <StatCard
-                icon={<Bell />}
-                label="Notificações"
-                value={data.notificacoes_nao_lidas ?? 0}
-                tone="danger"
-                to="/notificacoes"
-              />
-            </div>
+            {/* Notificações */}
+            <StatCard
+              icon={<Bell />}
+              label="Notificações"
+              value={data.notificacoes_nao_lidas ?? 0}
+              tone="danger"
+              to="/notificacoes"
+            />
           </div>
 
           {/* ── Row 2: Métricas + atalhos ── */}
@@ -331,8 +329,8 @@ export function DashboardPage() {
                 <Target />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-text-secondary flex items-center gap-1">
-                  Aderência 7d
+                <p className="text-xs text-text-secondary flex items-center gap-1 flex-wrap">
+                  <span className="whitespace-nowrap">Ader. 7d</span>
                   {aderenciaAtual != null && aderenciaPrev != null && (
                     <DeltaChip curr={aderenciaAtual} prev={aderenciaPrev} unit="%" />
                   )}
