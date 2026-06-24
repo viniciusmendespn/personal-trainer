@@ -63,17 +63,18 @@ function Deploy-Frontend {
     if ($LASTEXITCODE -ne 0) { Write-Host "Build falhou." -ForegroundColor Red; Set-Location ..; exit 1 }
 
     # Gera aluno.html a partir de index.html com manifest e meta tags do app do aluno
-    $distDir = [System.IO.Path]::GetFullPath("dist")
-    $html = Get-Content -Path "$distDir\index.html" -Raw -Encoding UTF8
+    # Usa "$PWD\dist" (interpolação PowerShell) em vez de GetFullPath — o .NET não
+    # segue Set-Location e resolveria relativo ao CWD do processo, não da função.
+    $alunoPath = "$PWD\dist\aluno.html"
+    $html = Get-Content -Path dist\index.html -Raw -Encoding UTF8
     $html = $html -replace 'href="/manifest\.webmanifest"', 'href="/manifest-aluno.webmanifest"'
     $html = $html -replace '(theme-color" content=")#000613(")', '${1}#16a34a${2}'
     $html = $html -replace '(apple-mobile-web-app-title" content=")CoachPilot(")', '${1}Treinos${2}'
-    $alunoPath = "$distDir\aluno.html"
     [System.IO.File]::WriteAllText($alunoPath, $html, [System.Text.UTF8Encoding]::new($false))
     $alunoSize = (Get-Item $alunoPath).Length
-    $indexSize = (Get-Item "$distDir\index.html").Length
-    if ($alunoSize -le $indexSize) { Write-Host "AVISO: aluno.html nao parece ter sido modificado (mesmo tamanho que index.html)" -ForegroundColor Yellow }
-    Write-Host "aluno.html gerado ($alunoSize bytes)." -ForegroundColor Cyan
+    $indexSize = (Get-Item dist\index.html).Length
+    if ($alunoSize -le $indexSize) { Write-Host "AVISO: aluno.html igual ao index.html — substituicao nao aplicada!" -ForegroundColor Yellow }
+    Write-Host "aluno.html gerado ($alunoSize bytes vs index $indexSize bytes)." -ForegroundColor Cyan
 
     # index.html e aluno.html sem cache (ARCHITECTURE §10.2)
     aws s3 cp dist/index.html "s3://$Bucket/index.html" `
