@@ -51,13 +51,23 @@ O frontend usa **um único bucket S3** (`personal-trainer-frontend-prod-42121998
 | App do aluno | `E2IHNZ34C3PI8V` | `app.coachpilot.com.br` |
 
 O build (`npm run build`) gera um único `dist/` que serve as duas apps (o React Router diferencia
-pelo hostname/rota). Por isso **todo deploy de frontend deve**:
-1. `aws s3 sync dist/ s3://personal-trainer-frontend-prod-421219980792/ --delete --profile pessoal-hotmail --region us-east-1`
-2. Invalidar **as duas** distribuições:
-   ```powershell
-   aws cloudfront create-invalidation --distribution-id E3JZ6U88Q0GYGF --paths "/*" --profile pessoal-hotmail
-   aws cloudfront create-invalidation --distribution-id E2IHNZ34C3PI8V --paths "/*" --profile pessoal-hotmail
-   ```
+pelo hostname/rota). O CloudFront do **portal** usa `index.html`; o CloudFront do **aluno** usa
+`aluno.html` (default root object + custom error pages 403/404). O build gera só `index.html` —
+por isso **todo deploy de frontend deve**:
+
+```powershell
+cd frontend
+npm run build
+# ⚠️ OBRIGATÓRIO: copiar index.html para aluno.html antes do sync
+Copy-Item dist\index.html dist\aluno.html
+# Sync (--delete remove arquivos obsoletos; aluno.html já está no dist agora)
+aws s3 sync dist/ s3://personal-trainer-frontend-prod-421219980792/ --delete --profile pessoal-hotmail --region us-east-1
+# Invalidar AS DUAS distribuições
+aws cloudfront create-invalidation --distribution-id E3JZ6U88Q0GYGF --paths "/*" --profile pessoal-hotmail
+aws cloudfront create-invalidation --distribution-id E2IHNZ34C3PI8V --paths "/*" --profile pessoal-hotmail
+```
+
+Se esquecer o `Copy-Item`, o `--delete` apaga o `aluno.html` do S3 e o app do aluno fica com 403.
 Nunca invalidar só uma das distribuições — a outra ficaria com cache stale.
 
 > Replicar o `deploy.ps1` do gerenciador-financeiro com `$Profile = "pessoal-hotmail"` e os nomes acima.
