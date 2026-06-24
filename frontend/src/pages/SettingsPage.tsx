@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { QrCode, Phone, CheckCircle, AlertCircle, MessageCircle, WifiOff, RefreshCw, Copy, Smartphone, Banknote, Trash2, Info } from 'lucide-react'
+import { QrCode, Phone, CheckCircle, AlertCircle, MessageCircle, WifiOff, RefreshCw, Copy, Smartphone, Banknote, Trash2, Info, Sun, Moon, Monitor } from 'lucide-react'
 import { wapiApi } from '../api/wapi'
 import { financeiroApi } from '../api/financeiro'
 import { Button, Card, ErrorText, Tabs, Modal } from '../components/ui'
@@ -9,15 +9,17 @@ import { useToast } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { AnamneseEditor } from '../components/anamnese/AnamneseEditor'
 import { usePlanoStatus } from '../hooks/usePlano'
+import { useTheme, type ThemeChoice } from '../context/ThemeContext'
 
 const SUPPORT_URL = `https://wa.me/5513991830305?text=${encodeURIComponent('Olá! Gostaria de configurar o WhatsApp no meu CoachPilot.')}`
 
-type TabId = 'whatsapp' | 'anamnese' | 'pagamentos'
+type TabId = 'whatsapp' | 'anamnese' | 'pagamentos' | 'aparencia'
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'whatsapp', label: 'WhatsApp' },
   { id: 'anamnese', label: 'Anamnese' },
   { id: 'pagamentos', label: 'Pagamentos' },
+  { id: 'aparencia', label: 'Aparência' },
 ]
 
 type Method = 'qr' | 'pairing'
@@ -350,6 +352,39 @@ function WhatsAppTab() {
   )
 }
 
+const THEME_OPTIONS: { id: ThemeChoice; label: string; desc: string; icon: typeof Sun }[] = [
+  { id: 'system', label: 'Automático', desc: 'Segue o sistema operacional', icon: Monitor },
+  { id: 'light', label: 'Claro', desc: 'Interface clara', icon: Sun },
+  { id: 'dark', label: 'Escuro', desc: 'Interface escura', icon: Moon },
+]
+
+function AparenciaTab() {
+  const { theme, setTheme } = useTheme()
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-text-secondary">Escolha o tema visual do aplicativo.</p>
+      <div className="grid grid-cols-3 gap-3">
+        {THEME_OPTIONS.map(({ id, label, desc, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setTheme(id)}
+            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+              theme === id
+                ? 'border-accent bg-accent/10 text-accent-hover'
+                : 'border-border bg-surface-elevated text-text-secondary hover:border-border-strong hover:text-text'
+            }`}
+          >
+            <Icon size={22} />
+            <span className="text-sm font-medium">{label}</span>
+            <span className="text-xs text-text-muted text-center leading-tight">{desc}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function AnamneseTab() {
   return (
     <div className="space-y-4">
@@ -538,6 +573,7 @@ export function SettingsPage() {
       {activeTab === 'whatsapp' && <WhatsAppTab />}
       {activeTab === 'anamnese' && <AnamneseTab />}
       {activeTab === 'pagamentos' && <PagamentosTab />}
+      {activeTab === 'aparencia' && <AparenciaTab />}
     </div>
   )
 }
