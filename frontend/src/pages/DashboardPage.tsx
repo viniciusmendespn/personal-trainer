@@ -329,10 +329,10 @@ export function DashboardPage() {
                 <Target />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-text-secondary flex items-center gap-1 flex-wrap">
-                  <span className="whitespace-nowrap">Ader. 7d</span>
+                <p className="text-xs text-text-secondary flex items-center gap-1">
+                  <span className="truncate">Aderência 7d</span>
                   {aderenciaAtual != null && aderenciaPrev != null && (
-                    <DeltaChip curr={aderenciaAtual} prev={aderenciaPrev} unit="%" />
+                    <span className="shrink-0"><DeltaChip curr={aderenciaAtual} prev={aderenciaPrev} unit="%" /></span>
                   )}
                 </p>
                 <p className="font-display text-2xl font-bold text-text mt-0.5">
