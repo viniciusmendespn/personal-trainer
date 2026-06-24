@@ -66,8 +66,15 @@ function useAlunoToken() {
     if (t) {
       localStorage.setItem(ALUNO_TOKEN_KEY, t)
       setToken(t)
-      u.searchParams.delete('token')
-      window.history.replaceState({}, '', u.pathname)
+      // No iOS, localStorage é isolado entre Safari e web clips (atalhos da tela inicial).
+      // Só limpa o token da URL quando já está no modo standalone (PWA instalado),
+      // pois ao instalar via Safari o iOS captura a URL atual como start URL do atalho —
+      // mantendo o token na URL, cada abertura do atalho re-autentica via URL.
+      const isStandalone = (navigator as Navigator & { standalone?: boolean }).standalone === true
+      if (isStandalone) {
+        u.searchParams.delete('token')
+        window.history.replaceState({}, '', u.pathname)
+      }
     }
   }, [])
   return token
