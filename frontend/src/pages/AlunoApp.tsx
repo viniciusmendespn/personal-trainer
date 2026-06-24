@@ -202,7 +202,9 @@ function NotifDrawer({ onClose, onNavigate, onOpenChat, onFinanceiro }: {
             {permState === 'denied' ? (
               <p className="text-xs text-text-secondary">
                 <strong className="text-text">Notificações bloqueadas.</strong>{' '}
-                Vá em <strong className="text-text">Ajustes → Treinos → Notificações</strong> para habilitar.
+                {/iphone|ipad|ipod/i.test(navigator.userAgent)
+                  ? <>Vá em <strong className="text-text">Ajustes → Treinos → Notificações</strong> para habilitar.</>
+                  : <>Clique no ícone de cadeado na barra de endereço do navegador e permita notificações.</>}
               </p>
             ) : (
               <div className="flex items-center gap-3">
