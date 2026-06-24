@@ -361,7 +361,7 @@ export function AlunoApp() {
     <AlunoErrorBoundary onCrash={() => setDisabled(true)}>
     <div
       className="min-h-screen max-w-md mx-auto flex flex-col"
-      style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
+      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
     >
       <header className="px-4 pt-4 pb-2 shrink-0 flex items-center gap-2">
         <button
