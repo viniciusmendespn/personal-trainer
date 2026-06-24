@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { personalApi, type PersonalProfile } from '../api/personal'
-import { AvatarUpload, Button, Card, Input, RichTextContent, RichTextEditor, SocialLinks, Spinner, useToast } from '../components/ui'
+import { AvatarUpload, Button, Card, Input, SocialLinks, Spinner, Textarea, useToast } from '../components/ui'
 
 export function PersonalProfilePage() {
   const qc = useQueryClient()
@@ -128,22 +128,25 @@ export function PersonalProfilePage() {
               onChange={(e) => setDescricao(e.target.value)}
               placeholder="Ex.: Personal trainer especializado em emagrecimento"
             />
-            <RichTextEditor
+            <Textarea
               label="Sobre mim"
+              rows={4}
               value={biografia}
-              onChange={setBiografia}
+              onChange={(e) => setBiografia(e.target.value)}
               placeholder="Conte um pouco sobre você..."
             />
-            <RichTextEditor
+            <Textarea
               label="Experiência profissional"
+              rows={4}
               value={experiencia}
-              onChange={setExperiencia}
+              onChange={(e) => setExperiencia(e.target.value)}
               placeholder="Sua trajetória, clientes atendidos, especializações..."
             />
-            <RichTextEditor
+            <Textarea
               label="Formação"
+              rows={3}
               value={formacao}
-              onChange={setFormacao}
+              onChange={(e) => setFormacao(e.target.value)}
               placeholder="Graduações, certificações, cursos..."
             />
             <div className="pt-2">
@@ -171,19 +174,19 @@ export function PersonalProfilePage() {
           {profile.biografia && (
             <Card variant="elevated">
               <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Sobre mim</p>
-              <RichTextContent html={profile.biografia} />
+              <p className="text-sm text-text whitespace-pre-wrap">{profile.biografia}</p>
             </Card>
           )}
           {profile.experiencia_profissional && (
             <Card variant="elevated">
               <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Experiência profissional</p>
-              <RichTextContent html={profile.experiencia_profissional} />
+              <p className="text-sm text-text whitespace-pre-wrap">{profile.experiencia_profissional}</p>
             </Card>
           )}
           {profile.formacao && (
             <Card variant="elevated">
               <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Formação</p>
-              <RichTextContent html={profile.formacao} />
+              <p className="text-sm text-text whitespace-pre-wrap">{profile.formacao}</p>
             </Card>
           )}
         </div>

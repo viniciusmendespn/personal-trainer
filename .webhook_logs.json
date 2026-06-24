@@ -1,0 +1,19 @@
+﻿{
+    "events": [
+        {
+            "logStreamName": "2026/06/22/[$LATEST]8beb0a3da71540d988607fd559eee164",
+            "timestamp": 1782171410316,
+            "message": "[WARNING]\t2026-06-22T23:36:50.316Z\t16a6e80b-cba1-4405-9e80-ff1d856332fb\t[webhook] inst�ncia desconhecida: AA9Q7Y-8DJJBY-H17LP9\n",
+            "ingestionTime": 1782171419323,
+            "eventId": "39743750521563086057219530555853066474754295034239385601"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]38ace13b864042a0af164319c138bd68",
+            "timestamp": 1782178936822,
+            "message": "[WARNING]\t2026-06-23T01:42:16.822Z\teb38b4e8-437e-42f7-9e8b-109ad6f7c175\t[webhook] inst�ncia desconhecida: AA9Q7Y-8DJJBY-H17LP9\n",
+            "ingestionTime": 1782178945692,
+            "eventId": "39743918368255627269145798162107306985886735178959290369"
+        }
+    ],
+    "searchedLogStreams": []
+}

@@ -16,7 +16,7 @@ const PERIODOS: { key: Periodo; label: string }[] = [
 
 const MEDAL_STYLE: Record<number, { ring: string; text: string; bg: string }> = {
   1: { ring: 'ring-yellow-400/40', text: 'text-yellow-400', bg: 'bg-yellow-400/10' },
-  2: { ring: 'ring-slate-400/40', text: 'text-slate-400', bg: 'bg-slate-400/10' },
+  2: { ring: 'ring-slate-300/40', text: 'text-slate-300', bg: 'bg-slate-300/10' },
   3: { ring: 'ring-amber-600/40', text: 'text-amber-600', bg: 'bg-amber-600/10' },
 }
 

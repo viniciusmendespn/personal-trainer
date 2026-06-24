@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Sun, Moon, Monitor } from 'lucide-react'
 import { alunoApi } from '../../api/alunoApp'
 import { AvatarUpload, Button, Input, Modal, Textarea, useToast } from '../ui'
-import { useTheme, type ThemeChoice } from '../../context/ThemeContext'
 
 interface Props {
   isOpen: boolean
@@ -17,7 +15,6 @@ export function AlunoPerfilModal({ isOpen, onClose, nome: nomeProp, descricao: d
   const qc = useQueryClient()
   const { show } = useToast()
 
-  const { theme, setTheme } = useTheme()
   const [nome, setNome] = useState(nomeProp ?? '')
   const [descricao, setDescricao] = useState(descricaoProp ?? '')
 
@@ -79,31 +76,6 @@ export function AlunoPerfilModal({ isOpen, onClose, nome: nomeProp, descricao: d
             placeholder="Uma frase sobre você (opcional)"
             rows={2}
           />
-        </div>
-
-        <div className="w-full">
-          <p className="text-xs text-text-muted mb-2">Tema</p>
-          <div className="flex gap-2">
-            {([
-              { id: 'system' as ThemeChoice, icon: Monitor, label: 'Auto' },
-              { id: 'light'  as ThemeChoice, icon: Sun,     label: 'Claro' },
-              { id: 'dark'   as ThemeChoice, icon: Moon,    label: 'Escuro' },
-            ]).map(({ id, icon: Icon, label }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTheme(id)}
-                className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg border text-xs transition-all ${
-                  theme === id
-                    ? 'border-energy bg-energy/10 text-energy'
-                    : 'border-border text-text-muted hover:border-border-strong hover:text-text'
-                }`}
-              >
-                <Icon size={15} />
-                {label}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="flex gap-2 w-full pt-1">

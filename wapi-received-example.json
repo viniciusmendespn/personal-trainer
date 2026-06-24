@@ -1,0 +1,210 @@
+//TEXTO:
+//2026/06/19 12:04:24 [AA9Q7Y-8DJJBY-H17LP9] [Webhook Payload] webhookReceived:
+{
+  "event": "webhookReceived",
+  "instanceId": "AA9Q7Y-8DJJBY-H17LP9",
+  "connectedPhone": "5513991830305",
+  "connectedLid": "56995004588156@lid",
+  "isGroup": false,
+  "messageId": "3EB05BC80FC609B0338924",
+  "fromMe": false,
+  "chat": {
+    "id": "11042528751619@lid",
+    "profilePicture": "https://pps.whatsapp.net/v/t61.24694-24/118755939_1270543060006929_468789069384135914_n.jpg?ccb=11-4\u0026oh=01_Q5Aa4wFO-oxQkXyL0E61yjTAxavmMAcqPeIzB2QffKjv52V8wg\u0026oe=6A425196\u0026_nc_sid=5e03e0\u0026_nc_cat=105"
+  },
+  "sender": {
+    "id": "5513988088204",
+    "senderLid": "11042528751619@lid",
+    "profilePicture": "https://pps.whatsapp.net/v/t61.24694-24/118755939_1270543060006929_468789069384135914_n.jpg?ccb=11-4\u0026oh=01_Q5Aa4wFO-oxQkXyL0E61yjTAxavmMAcqPeIzB2QffKjv52V8wg\u0026oe=6A425196\u0026_nc_sid=5e03e0\u0026_nc_cat=105",
+    "pushName": "Vinicius Mendes",
+    "verifiedBizName": ""
+  },
+  "moment": 1781870661,
+  "fromApi": false,
+  "msgContent": {
+    "conversation": "oi tudo bem?",
+    "messageContextInfo": {
+      "deviceListMetadata": {
+        "receiverAccountType": "E2EE",
+        "recipientKeyHash": "wOKoHmA+7kDOzA==",
+        "recipientTimestamp": "1781869378",
+        "senderAccountType": "E2EE",
+        "senderKeyHash": "Fbqmj41FzKCayg==",
+        "senderTimestamp": "1781456157"
+      },
+      "deviceListMetadataVersion": 2,
+      "messageSecret": "xz7PblYx/Issv56ONLIeITRyIQwMg3SaVkPB/aMfR6U="
+    }
+  }
+}
+
+//IMAGEM E TEXTO:
+//2026/06/20 03:55:23 [AA9Q7Y-8DJJBY-H17LP9] [Webhook Payload] webhookReceived:
+{
+  "event": "webhookReceived",
+  "instanceId": "AA9Q7Y-8DJJBY-H17LP9",
+  "connectedPhone": "5513991830305",
+  "connectedLid": "56995004588156@lid",
+  "isGroup": false,
+  "messageId": "3EB0F32FDF162A88434EBF",
+  "fromMe": false,
+  "chat": {
+    "id": "11042528751619@lid",
+    "profilePicture": "https://pps.whatsapp.net/v/t61.24694-24/118755939_1270543060006929_468789069384135914_n.jpg?ccb=11-4\u0026oh=01_Q5Aa4wEJ0H17yaKKSdRKLgr90Irm7S_sr3QM8gVW1jY8IYfkcw\u0026oe=6A433296\u0026_nc_sid=5e03e0\u0026_nc_cat=105"
+  },
+  "sender": {
+    "id": "5513988088204",
+    "senderLid": "11042528751619@lid",
+    "profilePicture": "https://pps.whatsapp.net/v/t61.24694-24/118755939_1270543060006929_468789069384135914_n.jpg?ccb=11-4\u0026oh=01_Q5Aa4wEJ0H17yaKKSdRKLgr90Irm7S_sr3QM8gVW1jY8IYfkcw\u0026oe=6A433296\u0026_nc_sid=5e03e0\u0026_nc_cat=105",
+    "pushName": "Vinicius Mendes",
+    "verifiedBizName": ""
+  },
+  "moment": 1781927723,
+  "fromApi": false,
+  "msgContent": {
+    "imageMessage": {
+      "JPEGThumbnail": "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",
+      "URL": "https://mmg.whatsapp.net/v/t62.7118-24/616379752_27320118241005283_5672089439526658907_n.enc?ccb=11-4\u0026oh=01_Q5Aa4wHUlxez1Gm327ZiE7z6QAVTkspCuR9IcCzMK1dG9xFqKg\u0026oe=6A5D7CE9\u0026_nc_sid=5e03e0\u0026mms3=true",
+      "caption": "teste mensagem junto da imagem",
+      "directPath": "/v/t62.7118-24/616379752_27320118241005283_5672089439526658907_n.enc?ccb=11-4\u0026oh=01_Q5Aa4wHUlxez1Gm327ZiE7z6QAVTkspCuR9IcCzMK1dG9xFqKg\u0026oe=6A5D7CE9\u0026_nc_sid=5e03e0",
+      "fileEncSHA256": "Vzk7fge4mBgd1VHwPeUPO6R0mNQQn76LwUOqUN/EFl8=",
+      "fileLength": "65480",
+      "fileSHA256": "KHkmrz4abmqxh4bANPQuAiOb6ah7DUQ4dWX8JxQusxA=",
+      "height": 345,
+      "mediaKey": "m6+y6+tqnAluYbKej7EgnxLUrgW0V6a14Z49K6qWFy0=",
+      "mediaKeyTimestamp": "1781927628",
+      "mimetype": "image/jpeg",
+      "viewOnce": false,
+      "width": 1040
+    },
+    "messageContextInfo": {
+      "deviceListMetadata": {
+        "receiverAccountType": "E2EE",
+        "recipientKeyHash": "wOKoHmA+7kDOzA==",
+        "recipientTimestamp": "1781869378",
+        "senderAccountType": "E2EE",
+        "senderKeyHash": "Fbqmj41FzKCayg==",
+        "senderTimestamp": "1781456157"
+      },
+      "deviceListMetadataVersion": 2,
+      "messageSecret": "VKAQ3BBg6Cx8P89D356mhfoBmS1HwKQsEgHypOYh+PA="
+    }
+  }
+}
+
+//VIDEO:
+//2026/06/20 03:57:44 [AA9Q7Y-8DJJBY-H17LP9] [Webhook Payload] webhookReceived:
+{
+  "event": "webhookReceived",
+  "instanceId": "AA9Q7Y-8DJJBY-H17LP9",
+  "connectedPhone": "5513991830305",
+  "connectedLid": "56995004588156@lid",
+  "isGroup": false,
+  "messageId": "ACB2D1627CE35784BE0E080957B1890A",
+  "fromMe": false,
+  "chat": {
+    "id": "11042528751619@lid",
+    "profilePicture": "https://pps.whatsapp.net/v/t61.24694-24/118755939_1270543060006929_468789069384135914_n.jpg?ccb=11-4\u0026oh=01_Q5Aa4wEJ0H17yaKKSdRKLgr90Irm7S_sr3QM8gVW1jY8IYfkcw\u0026oe=6A433296\u0026_nc_sid=5e03e0\u0026_nc_cat=105"
+  },
+  "sender": {
+    "id": "5513988088204",
+    "senderLid": "11042528751619@lid",
+    "profilePicture": "https://pps.whatsapp.net/v/t61.24694-24/118755939_1270543060006929_468789069384135914_n.jpg?ccb=11-4\u0026oh=01_Q5Aa4wEJ0H17yaKKSdRKLgr90Irm7S_sr3QM8gVW1jY8IYfkcw\u0026oe=6A433296\u0026_nc_sid=5e03e0\u0026_nc_cat=105",
+    "pushName": "Vinicius Mendes",
+    "verifiedBizName": ""
+  },
+  "moment": 1781927864,
+  "fromApi": false,
+  "msgContent": {
+    "messageContextInfo": {
+      "deviceListMetadata": {
+        "recipientKeyHash": "wOKoHmA+7kDOzA==",
+        "recipientTimestamp": "1781869378",
+        "senderKeyHash": "Fbqmj41FzKCayg==",
+        "senderTimestamp": "1781456157"
+      },
+      "deviceListMetadataVersion": 2,
+      "messageSecret": "9LU0LoVlJ3fes3i7el8G5W2k1Qp1tyXwYhF194XwApU="
+    },
+    "videoMessage": {
+      "JPEGThumbnail": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABsSFBcUERsXFhceHBsgKEIrKCUlKFE6PTBCYFVlZF9VXVtqeJmBanGQc1tdhbWGkJ6jq62rZ4C8ybqmx5moq6T/2wBDARweHigjKE4rK06kbl1upKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKT/wgARCABIAEgDASIAAhEBAxEB/8QAGgAAAQUBAAAAAAAAAAAAAAAAAAECAwQFBv/EABcBAQEBAQAAAAAAAAAAAAAAAAABAgP/2gAMAwEAAhADEAAAANdXIKo8YiMHtaweRC4U8EkwLn6+ZWcynU0s1a2wUTLchup2zz1i5Hi16ehCtmmj4rjyOxXlW6vWryAdBHhEbEmGp0JzxbsgCgCIAiAAEf/EAB0RAAMAAQUBAAAAAAAAAAAAAAABERACEiAhQWH/2gAIAQIBAT8A5LTBptnhPp0N1lxSENpCZhMf/8QAGhEAAwADAQAAAAAAAAAAAAAAAAERECAhMf/aAAgBAwEBPwDWiQ/cRkYk80pThzf/xAAuEAABBAEDAwIFAwUAAAAAAAABAAIDEQQFEiEVMWETUxQiUXGRBkGBEDRDY6H/2gAIAQEAAT8AAFVRVDygQrCsIkIkI0jSCe5rK3OqzQQBPYrapZoonBr5GtJ/Yr4iE8+q2l8VjHgSs/KkyoWOLXSAI5UFWXillZeZCQ5mQXNP/FmZMzsDFeZCHOPJQ1CVoA9YjypNSlLfkySD9lqpkmdikn5iyyU1zNgYGg/XlSw7ZmvYNrbHFrK3HPPPytA4W9ruAxtBNjypYN+xpYR3WoDbp+IPuni2cKOGIaUZCwFwHdama+GP+tHdYAvkqTBZFCyb1CSSOCs41mvr6BNBdK1pJopu1uA8WB4WbE04WPYsAKdrWjvSflk4BiZe3ytVrZjE9/TTZXOc1tULWXktOPDEO4cLWpHbmOI70FCS6UXQTtPDraZD+Fm4MskUccLhTe9p2hzScuLb/ZP/AE/kkU2RtLWYntkx8cNtzWVwho+UG3X8KaCfHfG2VlCxytRa6XMIawmgOyOJKGghrj/C5+qrygPP9M3TDlTiZspY4Cl0yev7xyk0eWQjflFwB/cLpsjMkzRzAWKohejP7jfwnapm3xKAuq53vLq2d7y6tne8urZ3vFdVzveK6tm+6uq5vurqmb7qDtMe6trb+yvS7rY38Jx0xpILG8eE5+mt/wAbfr2Rl04NB9NtHwvV07bu9NtfZCbTiCRG3jwmzae48RN/CbNgOcAIm8+F//4AAwD/2Q==",
+      "URL": "https://mmg.whatsapp.net/v/t62.7161-24/641560495_965229916323261_7619946108992192629_n.enc?ccb=11-4\u0026oh=01_Q5Aa4wEAtJMsiC53G5kE4jgD7tLnCy3oYJgkkHI8IONRo3QtTA\u0026oe=6A5D7C8E\u0026_nc_sid=5e03e0\u0026mms3=true",
+      "caption": "Texto junto do vídeo",
+      "contextInfo": {
+        "mediaDomainInfo": {
+          "e2EeMediaKey": "rP8ME+vFfIls23T9iQY/hHlyTitMigpJj6QFlZ0LmDw=",
+          "mediaKeyDomain": "MEDIA_KEY_DOMAIN_E2EE"
+        },
+        "pairedMediaType": "NOT_PAIRED_MEDIA"
+      },
+      "directPath": "/v/t62.7161-24/641560495_965229916323261_7619946108992192629_n.enc?ccb=11-4\u0026oh=01_Q5Aa4wEAtJMsiC53G5kE4jgD7tLnCy3oYJgkkHI8IONRo3QtTA\u0026oe=6A5D7C8E\u0026_nc_sid=5e03e0",
+      "externalShareFullVideoDurationInSeconds": 0,
+      "fileEncSHA256": "SP3f14BPZTT770GGiKAzHS7tVcmZBpZYVHqpMZ6aIr8=",
+      "fileLength": "2101335",
+      "fileSHA256": "rWDwfBjJhlNR2ZK9J3AsX6JXbu7tLnS4WikQFeJMdrw=",
+      "height": 720,
+      "mediaKey": "rP8ME+vFfIls23T9iQY/hHlyTitMigpJj6QFlZ0LmDw=",
+      "mediaKeyTimestamp": "1781726719",
+      "mimetype": "video/mp4",
+      "seconds": 5,
+      "streamingSidecar": "7fpKTsXjB2AYVqh9moWmER3LNim2Ilj3sCxxWIZKHtI5K71u0O4ExB9qf0+h0ktghUVwC6CNSwpbYkf7rgV2bQmCTi8kRuReHNAJjArlMRjcfXx92QjxxIR1vKpKw2vHVlgFFpSFlQvEGi7Skf9jOmFzC/BBBtIlTdDUeWzjVL3PORsBme0y+beNoCi0jGuaxwmJOh1XGfHHsvUbQdb3CVqiOBZeECfcNUXS25j4SwhxUHCRmB9Xy/R8eMz1aTZ/TypwRQG5DncAMeEKqnr/rdX2/3SkoMdIw0tC0BqxQuVk9yt8RMPb6BY/oUGJsxtsLAehyxQ11nrCiETIcnsXAA8iOuYxDg9uomMa4BWHvEUtmVGNJ7qGBlHq+XPPlZtvIFMkZd6tnjUrJAHGjI+OnBz8x+KxhS9A9IlBDAqm2L6F8D18eGAt13UX",
+      "width": 1280
+    }
+  }
+}
+
+//AUDIO:
+//2026/06/20 03:58:50 [AA9Q7Y-8DJJBY-H17LP9] [Webhook Payload] webhookReceived:
+{
+  "event": "webhookReceived",
+  "instanceId": "AA9Q7Y-8DJJBY-H17LP9",
+  "connectedPhone": "5513991830305",
+  "connectedLid": "56995004588156@lid",
+  "isGroup": false,
+  "messageId": "AC1B17A213726C98B8F170417FAAC529",
+  "fromMe": false,
+  "chat": {
+    "id": "11042528751619@lid",
+    "profilePicture": "https://pps.whatsapp.net/v/t61.24694-24/118755939_1270543060006929_468789069384135914_n.jpg?ccb=11-4\u0026oh=01_Q5Aa4wEJ0H17yaKKSdRKLgr90Irm7S_sr3QM8gVW1jY8IYfkcw\u0026oe=6A433296\u0026_nc_sid=5e03e0\u0026_nc_cat=105"
+  },
+  "sender": {
+    "id": "5513988088204",
+    "senderLid": "11042528751619@lid",
+    "profilePicture": "https://pps.whatsapp.net/v/t61.24694-24/118755939_1270543060006929_468789069384135914_n.jpg?ccb=11-4\u0026oh=01_Q5Aa4wEJ0H17yaKKSdRKLgr90Irm7S_sr3QM8gVW1jY8IYfkcw\u0026oe=6A433296\u0026_nc_sid=5e03e0\u0026_nc_cat=105",
+    "pushName": "Vinicius Mendes",
+    "verifiedBizName": ""
+  },
+  "moment": 1781927930,
+  "fromApi": false,
+  "msgContent": {
+    "audioMessage": {
+      "PTT": true,
+      "URL": "https://mmg.whatsapp.net/v/t62.7117-24/597051360_1912416412757620_633860569094093280_n.enc?ccb=11-4\u0026oh=01_Q5Aa4wF0MXkO9iciOu29E8J73kNVJduxoKtrmoLfpPJvUDXLzQ\u0026oe=6A5D737F\u0026_nc_sid=5e03e0\u0026mms3=true",
+      "contextInfo": {
+        "mediaDomainInfo": {
+          "e2EeMediaKey": "aNu4RcUPhu6BcD/3D9l8He0I1fu7ZzdjmZiO5yjR/qs=",
+          "mediaKeyDomain": "MEDIA_KEY_DOMAIN_E2EE"
+        }
+      },
+      "directPath": "/v/t62.7117-24/597051360_1912416412757620_633860569094093280_n.enc?ccb=11-4\u0026oh=01_Q5Aa4wF0MXkO9iciOu29E8J73kNVJduxoKtrmoLfpPJvUDXLzQ\u0026oe=6A5D737F\u0026_nc_sid=5e03e0",
+      "fileEncSHA256": "pk7ZZF+vK5Pr5absw8epT8037cdN1prLzG0UyGm/xdY=",
+      "fileLength": "4879",
+      "fileSHA256": "6DUwoj/Rct30XFINirRmHR24fy6qjdURXXvSuL89xIo=",
+      "mediaKey": "aNu4RcUPhu6BcD/3D9l8He0I1fu7ZzdjmZiO5yjR/qs=",
+      "mediaKeyTimestamp": "1781927928",
+      "mimetype": "audio/ogg; codecs=opus",
+      "seconds": 2,
+      "waveform": "AAAAAAAAAAAAAAAAAAAAAx4XB0BGOlNfYl1cXFpaW1dZWlZUU1BMSUlMT09JOBIeLjczMz48NzEeDQAAAAAAAA=="
+    },
+    "messageContextInfo": {
+      "deviceListMetadata": {
+        "recipientKeyHash": "wOKoHmA+7kDOzA==",
+        "recipientTimestamp": "1781869378",
+        "senderKeyHash": "Fbqmj41FzKCayg==",
+        "senderTimestamp": "1781456157"
+      },
+      "deviceListMetadataVersion": 2,
+      "messageSecret": "MdFnWZTz4TvpzsOkOjxBl0pWVp30JpNo03sa+7FtP7w="
+    }
+  }
+}

@@ -15,7 +15,7 @@ const PERIODOS: { key: Periodo; label: string }[] = [
 
 const POSICAO_STYLE: Record<number, string> = {
   1: 'text-yellow-400',
-  2: 'text-slate-400',
+  2: 'text-slate-300',
   3: 'text-amber-600',
 }
 

@@ -8,7 +8,7 @@ import { Button, Input, ErrorText, Card } from '../components/ui'
 import { AuthBackground } from './AuthBackground'
 
 export function LoginPage() {
-  const { user, signIn, isAdmin } = useAuth()
+  const { user, signIn } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -18,11 +18,8 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
 
-  const homeRoute = (adminEmail: string) =>
-    adminEmail === 'admin@coachpilot.com.br' ? '/admin' : '/dashboard'
-
   if (user) {
-    navigate(isAdmin ? '/admin' : '/dashboard', { replace: true })
+    navigate('/alunos', { replace: true })
     return null
   }
 
@@ -33,7 +30,7 @@ export function LoginPage() {
     setLoading(true)
     try {
       await signIn(email, password)
-      navigate(homeRoute(email), { replace: true })
+      navigate('/alunos', { replace: true })
     } catch (err) {
       if ((err as { name?: string })?.name === 'UserNotConfirmedException') {
         setUnconfirmed(true)

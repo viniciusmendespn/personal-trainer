@@ -1,0 +1,383 @@
+﻿{
+    "events": [
+        {
+            "logStreamName": "2026/06/22/[$LATEST]2a9372e0999b47d1a0d50def55e67a6c",
+            "timestamp": 1782130214746,
+            "message": "[INFO]\t2026-06-22T12:10:14.746Z\t0f66a4d3-bab9-4029-952d-9515d67398c6\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782130218802,
+            "eventId": "39742831829653207825036709992889881790062469533498736644"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]7ec94846ce15417e9b044bc63df9d181",
+            "timestamp": 1782137726710,
+            "message": "[INFO]\t2026-06-22T14:15:26.710Z\tdccf0cf8-5ceb-4278-baa0-4287baf53ab5\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782137734502,
+            "eventId": "39742999352048312359930655862033902448646939566420590596"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]97d1304af4a445e29daeaec017e9493b",
+            "timestamp": 1782137803970,
+            "message": "[INFO]\t2026-06-22T14:16:43.970Z\t82cfbb1c-eb06-49c8-a9e4-192878623bdc\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782137811816,
+            "eventId": "39743001075003886398406599870550541392111381750067036161"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]3a918bf459844fb5af4d45b8e53e8844",
+            "timestamp": 1782148820162,
+            "message": "[INFO]\t2026-06-22T17:20:20.162Z\t780ad433-cde2-4a82-81f0-e62bf3c552a1\t[wapi] GET /v1/contacts/profile-picture -> 401\n",
+            "ingestionTime": 1782148827770,
+            "eventId": "39743246744294736489869019988669000554364970881092288516"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]47a075de4ccd40e5b2b7fe36b7c11b68",
+            "timestamp": 1782149015347,
+            "message": "[INFO]\t2026-06-22T17:23:35.347Z\teb44b573-d2ae-4015-bc9e-a51a3ea35e61\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782149019217,
+            "eventId": "39743251097065688065068698100763355917060563546197327888"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]edeb6e34bd9348739053eb5e1723ecd5",
+            "timestamp": 1782149447239,
+            "message": "[INFO]\t2026-06-22T17:30:47.239Z\t53f13497-1158-4a89-a40d-a7d960268f31\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782149455424,
+            "eventId": "39743260728579133348856588472249559436307902687625805828"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]0283e5f8afc84ca4bb97c141a10634f3",
+            "timestamp": 1782150005333,
+            "message": "[INFO]\t2026-06-22T17:40:05.332Z\t37c68e91-3550-4f53-8f17-6161b08bb6fa\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782150011638,
+            "eventId": "39743273174491224177606180696906310014517536586767597569"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]3cdaf86ee7804ae8b9f5cb9188ce3df5",
+            "timestamp": 1782150565070,
+            "message": "[INFO]\t2026-06-22T17:49:25.069Z\tb5fe73bc-e545-4487-8524-fca6c5355ed7\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782150565253,
+            "eventId": "39743285657043439367541586739964226574702786217926131714"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]08570b3c97924693b405005cb31bc616",
+            "timestamp": 1782150887643,
+            "message": "[INFO]\t2026-06-22T17:54:47.643Z\t39151248-06d5-475b-9b44-fa2c0a528d9a\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782150895317,
+            "eventId": "39743292850661720293160285773588261773519495431936475140"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]f7ec598fae43431c8d0dd5eaf624f257",
+            "timestamp": 1782151039352,
+            "message": "[INFO]\t2026-06-22T17:57:19.351Z\t4dd2557f-84bb-47c2-9faf-b70b32fc79ef\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782151042460,
+            "eventId": "39743296233885473617042592130715560519994112219048247312"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]fc9243ab37824576928cfca5b6640338",
+            "timestamp": 1782152920884,
+            "message": "[INFO]\t2026-06-22T18:28:40.884Z\t7e436787-bb86-4477-9ec4-c65489b24c75\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782152924697,
+            "eventId": "39743338193451188498763015146183698258113465428659732490"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]fc9243ab37824576928cfca5b6640338",
+            "timestamp": 1782153022539,
+            "message": "[INFO]\t2026-06-22T18:30:22.539Z\tf2888905-e074-4dbd-b9a9-77726a8edfcb\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782153026971,
+            "eventId": "39743340460433441655393510722638492265555203012598366212"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]79a5fba89ee34980aeaa742df3e78dfc",
+            "timestamp": 1782153106471,
+            "message": "[INFO]\t2026-06-22T18:31:46.471Z\te3944ae8-25f6-4159-8fd8-019d571e0e86\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782153114100,
+            "eventId": "39743342332179587658465772343347112064351132642198355972"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]79a5fba89ee34980aeaa742df3e78dfc",
+            "timestamp": 1782153113300,
+            "message": "[INFO]\t2026-06-22T18:31:53.300Z\t48811593-5f4f-42a6-b3fd-bf4a6450e306\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782153114100,
+            "eventId": "39743342484471376619231397776894532148266793366538616858"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]776f8f8520344000992407a57f670581",
+            "timestamp": 1782153251395,
+            "message": "[INFO]\t2026-06-22T18:34:11.395Z\tb3c624c6-b104-4fbb-9f6a-c3eda4689373\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782153256881,
+            "eventId": "39743345564092784810317800679880799052450854935312859143"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]752aced3797349ddb5e9971464ea70f1",
+            "timestamp": 1782153543395,
+            "message": "[INFO]\t2026-06-22T18:39:03.395Z\tb6a3d9b1-9001-4bb1-83df-b28a1aaaaf6b\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782153549712,
+            "eventId": "39743352075910382781259758362321969473001857434446856196"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]29ecc9c162d34fcd8ec3882ffcbf038d",
+            "timestamp": 1782159259098,
+            "message": "[INFO]\t2026-06-22T20:14:19.098Z\t23e01beb-ce4d-402c-baee-da93279b768e\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782159266496,
+            "eventId": "39743479540346616258338047218618898414536243447721754627"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]b48e986ae0e84b25922bd3ad817d53dc",
+            "timestamp": 1782159321009,
+            "message": "[INFO]\t2026-06-22T20:15:21.009Z\t7a52409a-1c49-4074-93c3-baeda8da52cd\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782159324459,
+            "eventId": "39743480921008052244567456604309632301692830833137352717"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]edc178d821154cea84215a7f276bbf9a",
+            "timestamp": 1782160061581,
+            "message": "[INFO]\t2026-06-22T20:27:41.581Z\t169b2ce1-1625-4638-9ee4-9c12c531481d\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782160069672,
+            "eventId": "39743497436315525410788098678607181795092625063078461444"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]388d442dff3d419099cf03e7941e265a",
+            "timestamp": 1782160970373,
+            "message": "[INFO]\t2026-06-22T20:42:50.373Z\t20cfa46f-6d4e-41f0-a290-489c846c4acc\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782160978393,
+            "eventId": "39743517703054355873830165819712097220844064524455903233"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]dc964190181d4f62b6400697c4a3c50b",
+            "timestamp": 1782160979792,
+            "message": "[INFO]\t2026-06-22T20:42:59.792Z\t9af40ce7-38e5-4784-85ab-4bff2b36682f\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782160987520,
+            "eventId": "39743517913105074898790105200870773481333729468798599172"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]4d8ca797949946298c93fc715b13d1ca",
+            "timestamp": 1782166581818,
+            "message": "[INFO]\t2026-06-22T22:16:21.818Z\t9709a2bb-4383-47c4-8c55-156450f13773\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782166589410,
+            "eventId": "39743642842459496442502747057913999640224047904023707661"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]ffc2606421a94b5888f9cf66841b7d30",
+            "timestamp": 1782171283533,
+            "message": "[INFO]\t2026-06-22T23:34:43.532Z\t25a777b1-5b9b-4328-b584-06984138c4ce\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782171291621,
+            "eventId": "39743747694207707551911536648147491262557745002337665025"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]6b844342a8aa43baac2c62e3af89aa37",
+            "timestamp": 1782171323045,
+            "message": "[INFO]\t2026-06-22T23:35:23.045Z\t8ce5f8cf-cbe2-4e9a-8111-89a604f41b50\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782171331253,
+            "eventId": "39743748575354751836253518264419429369409522535835762689"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]6b844342a8aa43baac2c62e3af89aa37",
+            "timestamp": 1782171327051,
+            "message": "[INFO]\t2026-06-22T23:35:27.051Z\t14bad269-022b-4a03-bb94-cddb729aa42d\t[wapi] GET /v1/instance/qr-code -> 200\n",
+            "ingestionTime": 1782171331253,
+            "eventId": "39743748664691537101567194569411516769638858728793309189"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]ffc2606421a94b5888f9cf66841b7d30",
+            "timestamp": 1782171327157,
+            "message": "[INFO]\t2026-06-22T23:35:27.157Z\teb48378f-b967-48c4-ad78-b46cbac29f5b\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782171335496,
+            "eventId": "39743748667055416092611440627543355129797716486418530314"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]8beb0a3da71540d988607fd559eee164",
+            "timestamp": 1782171331638,
+            "message": "[INFO]\t2026-06-22T23:35:31.638Z\tb9adccaa-c0e5-427f-9ad9-73d4fcdc50cf\t[wapi] GET /v1/instance/qr-code -> 200\n",
+            "ingestionTime": 1782171335781,
+            "eventId": "39743748766985055327227162925109635535971259745150631940"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]8beb0a3da71540d988607fd559eee164",
+            "timestamp": 1782171332814,
+            "message": "[INFO]\t2026-06-22T23:35:32.814Z\t93dc73c3-fc30-4985-bde1-fb41e8f5f76e\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782171335781,
+            "eventId": "39743748793210731680699175739555640224605732876183601160"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]8beb0a3da71540d988607fd559eee164",
+            "timestamp": 1782171343407,
+            "message": "[INFO]\t2026-06-22T23:35:43.407Z\t9a9b2ff5-e6ec-4b47-9103-33f1c35ac45f\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782171352308,
+            "eventId": "39743749029442525568734066697823391803157244610046263297"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]ffc2606421a94b5888f9cf66841b7d30",
+            "timestamp": 1782171348984,
+            "message": "[INFO]\t2026-06-22T23:35:48.984Z\tbbc96129-4452-4fbe-8b96-eaa2a9e2c5cb\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782171357865,
+            "eventId": "39743749153813781540939351964885944751001613981702029313"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]8beb0a3da71540d988607fd559eee164",
+            "timestamp": 1782171352319,
+            "message": "[INFO]\t2026-06-22T23:35:52.319Z\tb12a24ed-bb27-4837-b7f9-441ca84297a4\t[wapi] GET /v1/instance/pairing-code -> 200\n",
+            "ingestionTime": 1782171361338,
+            "eventId": "39743749228186766778038980146106267057791282907126235136"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]8beb0a3da71540d988607fd559eee164",
+            "timestamp": 1782171354607,
+            "message": "[INFO]\t2026-06-22T23:35:54.607Z\t629ea7ee-e9f8-4c5e-a3ab-e6dfc70ae79e\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782171361338,
+            "eventId": "39743749279210871792277045893939990465610734032809426948"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]8beb0a3da71540d988607fd559eee164",
+            "timestamp": 1782171400472,
+            "message": "[INFO]\t2026-06-22T23:36:40.472Z\te8760bfe-f896-49e3-be45-39687069f1f1\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782171409028,
+            "eventId": "39743750302034550322884076338129354682646740785034100743"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]8beb0a3da71540d988607fd559eee164",
+            "timestamp": 1782171401618,
+            "message": "[INFO]\t2026-06-22T23:36:41.618Z\tb98f7a59-a64b-4393-8d91-23f0fb9fedba\t[wapi] GET /v1/instance/device -> 200\n",
+            "ingestionTime": 1782171409028,
+            "eventId": "39743750327591204320400170458329287823101763070887657483"
+        },
+        {
+            "logStreamName": "2026/06/22/[$LATEST]46a4e5138b61469d9fa67115c01bbb9e",
+            "timestamp": 1782172239557,
+            "message": "[INFO]\t2026-06-22T23:50:39.556Z\tcfd5d46e-9902-4a44-ae26-c985346898f7\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782172248575,
+            "eventId": "39743769014255335231951996068577522566387996517641879552"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]8987964640074f378a4dd4ea03936849",
+            "timestamp": 1782179775829,
+            "message": "[INFO]\t2026-06-23T01:56:15.829Z\tadc35129-2f39-4b40-9b0c-0fc25eb58f29\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782179783890,
+            "eventId": "39743937078736954052728329285885146948012496662133538817"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]8987964640074f378a4dd4ea03936849",
+            "timestamp": 1782180113575,
+            "message": "[INFO]\t2026-06-23T02:01:53.575Z\tdf5dde28-66f3-4b29-917c-c74f10336e1f\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782180122334,
+            "eventId": "39743944610724441875652173256161648261824471962458259460"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]527ea5ee389649609b5af50d0d59748c",
+            "timestamp": 1782180140166,
+            "message": "[INFO]\t2026-06-23T02:02:20.166Z\t8006b18d-d37f-4405-8aaa-44c0619c4924\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782180148076,
+            "eventId": "39743945203723557449779973243857775865230721287769686017"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]8987964640074f378a4dd4ea03936849",
+            "timestamp": 1782180182690,
+            "message": "[INFO]\t2026-06-23T02:03:02.690Z\tbccdacec-0b0e-49ae-ab94-73e7a743742d\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782180190981,
+            "eventId": "39743946152040446272096191766391711174588526249167224836"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]8f8fdac9f4f447baa0f879fd712e3e60",
+            "timestamp": 1782180188902,
+            "message": "[INFO]\t2026-06-23T02:03:08.902Z\t3611913a-4676-41f0-8ea1-6c6068ef2165\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782180196779,
+            "eventId": "39743946290572675445368422728621218523891136971941150721"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]8f8fdac9f4f447baa0f879fd712e3e60",
+            "timestamp": 1782180314464,
+            "message": "[INFO]\t2026-06-23T02:05:14.464Z\t008f1a12-7026-4cd3-ac43-698f2ce670af\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782180317683,
+            "eventId": "39743949090698844063270525772293009676728694244262608909"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]1b671f50722d4192a711573663dd1e22",
+            "timestamp": 1782180336936,
+            "message": "[INFO]\t2026-06-23T02:05:36.936Z\tea5d169a-76cd-4146-a73e-11c26dffa49f\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782180345170,
+            "eventId": "39743949591841190164650689042113278633700425566398906369"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]7182c1d2088940f58f04e988d738dcff",
+            "timestamp": 1782181195427,
+            "message": "[INFO]\t2026-06-23T02:19:55.427Z\t24217e03-7090-4cfc-97a0-e3aa0f940c7b\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782181204454,
+            "eventId": "39743968736830236396403881481063942985948086871647911936"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]de8ba7a6d5994c97a872304ca33df5d4",
+            "timestamp": 1782181269151,
+            "message": "[INFO]\t2026-06-23T02:21:09.151Z\t82c158f3-9cc8-4fd7-94e2-40f1c545bb52\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782181276948,
+            "eventId": "39743970380930375412875542055283052826007221698964226049"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]de8ba7a6d5994c97a872304ca33df5d4",
+            "timestamp": 1782181289944,
+            "message": "[INFO]\t2026-06-23T02:21:29.944Z\t1f1213e2-7d51-41cc-8e18-60daec903a0d\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782181293543,
+            "eventId": "39743970844629770325922789057297890690535209315623698445"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]1400af2ed9c143b3882fa4852cbf51fe",
+            "timestamp": 1782185177467,
+            "message": "[INFO]\t2026-06-23T03:26:17.467Z\tc999a36c-7495-4d91-8966-6b4567bfb200\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782185177533,
+            "eventId": "39744057539289646753286460805113843804356791159967711234"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]7543c0d17805408d99fe87212fe4e433",
+            "timestamp": 1782215091294,
+            "message": "[INFO]\t2026-06-23T11:44:51.294Z\t16dac10f-9e30-482c-8780-423ecf01a7be\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782215098964,
+            "eventId": "39744724639923486679001355073894832525703674454493233159"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]1e0630320fc44212bb1f7e2feeaca1d4",
+            "timestamp": 1782216819111,
+            "message": "[INFO]\t2026-06-23T12:13:39.111Z\t65bd2de4-0bc8-4cba-8b1f-c903ba8279e3\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782216824611,
+            "eventId": "39744763171530153368587041698894018966128724783374270474"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]21a6eb5840d64d12b8e4a53f079b478e",
+            "timestamp": 1782217647451,
+            "message": "[INFO]\t2026-06-23T12:27:27.451Z\t83deee02-a517-4061-bfcf-68fb2659263a\t[wapi] GET /v1/contacts/profile-picture -> 401\n",
+            "ingestionTime": 1782217654985,
+            "eventId": "39744781644129431119443415762451405185127385038963081223"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]df73c5d44fa047f5a849f5a09bd80fb2",
+            "timestamp": 1782219055309,
+            "message": "[INFO]\t2026-06-23T12:50:55.309Z\t30bd91ca-f736-43d2-962c-3196ab210ba8\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782219060868,
+            "eventId": "39744813040411964832369452258253325975248667311438561296"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]df73c5d44fa047f5a849f5a09bd80fb2",
+            "timestamp": 1782219414347,
+            "message": "[INFO]\t2026-06-23T12:56:54.347Z\tfeba8d62-b09e-468b-be6d-2074206f6ead\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782219423201,
+            "eventId": "39744821047226919422407324186987847924753543094610296833"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]9f6a9a9c81484ad4a6a0b2c3a4ff2d47",
+            "timestamp": 1782220564447,
+            "message": "[INFO]\t2026-06-23T13:16:04.447Z\t80ee3269-f39d-4ba1-b44a-c5c4c80f998b\t[wapi] POST /v1/message/send-text -> 200\n",
+            "ingestionTime": 1782220572532,
+            "eventId": "39744846695313972252477000656673401099924451419114962945"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]9f6a9a9c81484ad4a6a0b2c3a4ff2d47",
+            "timestamp": 1782220571670,
+            "message": "[INFO]\t2026-06-23T13:16:11.670Z\t272aa76b-1be4-49b5-a028-bd5eaeeca76c\t[wapi] GET /v1/instance/status-instance -> 200\n",
+            "ingestionTime": 1782220572532,
+            "eventId": "39744846856392254821463691607985894183263566576811507717"
+        },
+        {
+            "logStreamName": "2026/06/23/[$LATEST]7fb7f1bd3d704a43af0a2b1c62ea11e2",
+            "timestamp": 1782220573201,
+            "message": "[INFO]\t2026-06-23T13:16:13.201Z\ta2dc3626-6374-4d07-93d6-7af2672e84fa\t[wapi] GET /v1/instance/device -> 200\n",
+            "ingestionTime": 1782220580585,
+            "eventId": "39744846890534695720414075647412698053345306659743399937"
+        }
+    ],
+    "searchedLogStreams": []
+}
