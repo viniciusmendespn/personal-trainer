@@ -364,7 +364,8 @@ def _num(v) -> float | None:
 
 def _calcular_pr(pk: str, chave: str, series: list, tipo: str, ex_nome: str) -> float | None:
     """Calcula e grava o PR de acordo com o tipo de exercício. Retorna o valor do PR se for novo.
-    Para carga negativa (contrapeso/graviton), o PR é o valor mais negativo — usa update_if_less."""
+    Para carga negativa (contrapeso/graviton), max() ainda é o PR correto: -10 > -30, ou seja
+    menos contrapeso (menos negativo) = mais difícil = melhor desempenho."""
     if tipo == "PESO_CORPORAL":
         reps_vals = [it.get("reps") for it in series if it.get("reps")]
         if not reps_vals:
@@ -380,21 +381,14 @@ def _calcular_pr(pk: str, chave: str, series: list, tipo: str, ex_nome: str) -> 
         if repo.update_if_greater(pk, keys.sk_stats_pr(chave), "carga", float(duracao),
                                    extra={"exercicio_nome": ex_nome, "data": now_iso()}):
             return float(duracao)
-    else:  # FORCA (default)
+    else:  # FORCA (default) — max() funciona para positivo e negativo
         cargas = [c for c in (_num(it.get("carga")) for it in series) if c is not None]
         if not cargas:
             return None
-        negativo = all(c < 0 for c in cargas)
-        if negativo:
-            carga_pr = min(cargas)
-            if repo.update_if_less(pk, keys.sk_stats_pr(chave), "carga", carga_pr,
-                                    extra={"exercicio_nome": ex_nome, "data": now_iso()}):
-                return carga_pr
-        else:
-            carga_pr = max(cargas)
-            if repo.update_if_greater(pk, keys.sk_stats_pr(chave), "carga", carga_pr,
-                                       extra={"exercicio_nome": ex_nome, "data": now_iso()}):
-                return carga_pr
+        carga_pr = max(cargas)
+        if repo.update_if_greater(pk, keys.sk_stats_pr(chave), "carga", carga_pr,
+                                   extra={"exercicio_nome": ex_nome, "data": now_iso()}):
+            return carga_pr
     return None
 
 
@@ -470,9 +464,7 @@ def evolucao_exercicio(aluno_id: str, exercicio_id: str, limit: int = 100) -> di
                     if rm_kg and rm_kg > 0 and reps and cg > 0:
                         soma_int += (cg / rm_kg * 100) * reps
                         reps_total_irm += reps
-            negativo = bool(cargas) and all(c < 0 for c in cargas)
-            # Para carga negativa (contrapeso) o valor "mais desafiador" é o mais negativo (min)
-            carga_max = (min(cargas) if negativo else max(cargas)) if cargas else None
+            carga_max = max(cargas) if cargas else None  # max funciona para pos e neg (-10 > -30)
             irm = round(soma_int / reps_total_irm, 2) if reps_total_irm > 0 else None
             ponto.update({
                 "carga_max": carga_max,
@@ -480,10 +472,8 @@ def evolucao_exercicio(aluno_id: str, exercicio_id: str, limit: int = 100) -> di
                 "reps": "/".join(str(s["reps"]) for s in series_exec if s.get("reps")),
                 "irm": irm,
             })
-            if carga_max is not None:
-                melhor = (pr is None or (negativo and carga_max < pr["carga"]) or (not negativo and carga_max > pr["carga"]))
-                if melhor:
-                    pr = {"carga": carga_max, "data": c.get("data_hora")}
+            if carga_max is not None and (pr is None or carga_max > pr["carga"]):
+                pr = {"carga": carga_max, "data": c.get("data_hora")}
 
         serie.append(ponto)
     return {"tipo": tipo, "serie": serie, "pr": pr, "total_sessoes": len(serie)}
