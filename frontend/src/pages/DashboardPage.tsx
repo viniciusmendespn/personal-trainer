@@ -168,7 +168,7 @@ export function DashboardPage() {
     <div className="max-w-4xl mx-auto space-y-4">
       <h2 className="font-display text-xl font-semibold">Visão geral</h2>
 
-      {status.data && !status.data.connected && (
+      {status.data?.configured && !status.data.connected && (
         <Card variant="elevated" className="border-warning/30 bg-warning/10">
           <div className="flex items-center gap-2 text-warning text-sm">
             <MessageCircle size={18} />

@@ -52,12 +52,13 @@ function WhatsAppTab() {
     retry: false,
     refetchInterval: (query) => {
       if (query.state.status === 'error') return false
+      if (!query.state.data?.configured) return false
       if (query.state.data?.connected) return false
       return 5000
     },
   })
 
-  const noInstance = status.isError && (status.error as any)?.response?.status === 404
+  const noInstance = status.isSuccess && !status.data?.configured
   const connected = status.data?.connected === true
 
   const deviceInfo = useQuery({
@@ -92,7 +93,7 @@ function WhatsAppTab() {
   })
 
   useEffect(() => {
-    if (method === 'qr' && !connected && status.isSuccess) {
+    if (method === 'qr' && !connected && status.isSuccess && status.data?.configured) {
       const t = setTimeout(() => qrQuery.refetch(), 1500)
       return () => clearTimeout(t)
     }

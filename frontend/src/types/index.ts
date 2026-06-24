@@ -238,6 +238,7 @@ export interface CustomFieldsConfig {
 }
 
 export interface WapiStatus {
+  configured: boolean
   status: 'CONNECTED' | 'DISCONNECTED'
   connected: boolean
   phone?: string

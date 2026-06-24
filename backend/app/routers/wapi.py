@@ -64,8 +64,10 @@ def save_config(
 
 @router.get("/status")
 def get_status(personal_id: str = Depends(get_current_personal_id)):
-    cfg = _load_config(personal_id)
-    client = WAPIClient(cfg["instance_id"], cfg["token"])
+    item = repo.get_item(keys.pk_personal(personal_id), keys.SK_WAPI_CONFIG)
+    if not item:
+        return {"configured": False, "status": InstanceStatus.DISCONNECTED.value, "connected": False}
+    client = WAPIClient(item["instance_id"], item["token"])
     try:
         data = client.get_status()
         connected = bool(data.get("connected"))
@@ -73,10 +75,10 @@ def get_status(personal_id: str = Depends(get_current_personal_id)):
         repo.update_item_if_exists(
             keys.pk_personal(personal_id), keys.SK_WAPI_CONFIG, {"status": status.value}
         )
-        return {"status": status.value, "connected": connected,
+        return {"configured": True, "status": status.value, "connected": connected,
                 "phone": data.get("phone") or data.get("number")}
     except Exception:
-        return {"status": InstanceStatus.DISCONNECTED.value, "connected": False}
+        return {"configured": True, "status": InstanceStatus.DISCONNECTED.value, "connected": False}
 
 
 @router.get("/qr")
