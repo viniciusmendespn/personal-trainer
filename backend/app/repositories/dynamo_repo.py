@@ -291,6 +291,30 @@ def update_if_greater(pk: str, sk: str, field: str, value, extra: dict | None = 
         raise
 
 
+def update_if_less(pk: str, sk: str, field: str, value, extra: dict | None = None) -> bool:
+    """Grava o item só se `value` for menor que o atual (ou não existir) — PR de carga negativa (contrapeso).
+    Retorna True se foi um novo recorde."""
+    names = {f"#{field}": field}
+    values = {":v": _san(value)}
+    sets = [f"#{field} = :v"]
+    for i, (k, v) in enumerate((extra or {}).items()):
+        names[f"#e{i}"] = k
+        values[f":e{i}"] = _san(v)
+        sets.append(f"#e{i} = :e{i}")
+    try:
+        _get_table().update_item(
+            Key={"PK": pk, "SK": sk},
+            UpdateExpression="SET " + ", ".join(sets),
+            ConditionExpression=f"attribute_not_exists(#{field}) OR #{field} > :v",
+            ExpressionAttributeNames=names, ExpressionAttributeValues=values,
+        )
+        return True
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            return False
+        raise
+
+
 def list_append_item(pk: str, sk: str, field: str, item: dict) -> bool:
     """Appends one dict to a list field. Returns False if the parent item does not exist."""
     try:

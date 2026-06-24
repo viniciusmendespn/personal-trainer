@@ -33,7 +33,6 @@ interface ExecEx {
   tipo_exercicio?: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL'
   unidade_carga?: string
   unidade_reps?: string
-  carga_negativa?: boolean
   series_exec: Array<{ carga?: string; reps?: number; rpe?: number }>
   series_prescritas?: Array<{ series: number; reps: string; carga?: string }>
   series?: number
@@ -72,7 +71,7 @@ function prescritoLabel(ex: ExecEx): string | null {
   return null
 }
 
-function execLabel(tipo: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL', s: { carga?: string; reps?: number }, unidadeCarga = 'kg', unidadeReps = 'reps', cargaNegativa = false): string {
+function execLabel(tipo: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL', s: { carga?: string; reps?: number }, unidadeCarga = 'kg', unidadeReps = 'reps'): string {
   if (tipo === 'CARDIO') {
     const val = s.reps != null ? String(s.reps) : '—'
     return s.carga ? `${val} · RPE ${s.carga}` : val
@@ -80,8 +79,7 @@ function execLabel(tipo: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL', s: { carga?: stri
   if (tipo === 'PESO_CORPORAL') {
     return s.reps != null ? `${s.reps} ${unidadeReps}` : '—'
   }
-  const cargaDisplay = s.carga ? `${cargaNegativa ? '−' : ''}${s.carga} ${unidadeCarga}` : ''
-  return `${s.reps != null ? `${s.reps} ${unidadeReps}` : '—'}${cargaDisplay ? ` · ${cargaDisplay}` : ''}`
+  return `${s.reps != null ? `${s.reps} ${unidadeReps}` : '—'}${s.carga ? ` · ${s.carga} ${unidadeCarga}` : ''}`
 }
 
 function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
@@ -130,7 +128,7 @@ function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
             <div key={i} className="flex items-center gap-3 pl-2 text-xs">
               <span className="text-text-muted w-12 shrink-0">Sér {i + 1}</span>
               <span className="text-text">
-                {execLabel(tipo, s, ex.unidade_carga, ex.unidade_reps, ex.carga_negativa)}
+                {execLabel(tipo, s, ex.unidade_carga, ex.unidade_reps)}
               </span>
               {s.rpe != null && (
                 <span className="text-text-muted">RPE {s.rpe}</span>

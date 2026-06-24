@@ -1055,7 +1055,11 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
   )
 }
 
-const sanitizeCarga = (v: string) => v.replace(/[^\d.,]/g, '')
+const sanitizeCarga = (v: string) => {
+  const neg = v.startsWith('-')
+  const digits = v.replace(/[^\d.,]/g, '')
+  return neg ? '-' + digits : digits
+}
 
 function formatPr(val: number, tipo?: string): string {
   if (tipo === 'PESO_CORPORAL') return `${val} reps`
@@ -1314,16 +1318,12 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
         </div>
       )}
 
-      {ex.carga_negativa && (
-        <p className="text-xs text-info mt-1">Contrapeso — informe o peso retirado (ex: 10 kg)</p>
-      )}
-
       {feito && !open && (
         <p className="text-xs text-text-secondary mt-1">
           {ex.registrado!.map((s) => {
             if (tipo === 'PESO_CORPORAL') return `${s.reps ?? '-'} reps`
             if (tipo === 'CARDIO') return `${s.reps ?? '-'}${s.carga ? ` · RPE ${s.carga}` : ''}`
-            const cargaLabel = s.carga ? ` · ${ex.carga_negativa ? '−' : ''}${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
+            const cargaLabel = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
             return `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}${cargaLabel}`
           }).join('   ')}
         </p>
@@ -1338,7 +1338,7 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
               {ultimaExec.data[0].series_exec.map((s) => {
                 if (tipo === 'PESO_CORPORAL') return `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}`
                 if (tipo === 'CARDIO') return `${s.reps ?? '-'}${s.carga ? ` · RPE ${s.carga}` : ''}`
-                const cargaLabel = s.carga ? ` · ${ex.carga_negativa ? '−' : ''}${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
+                const cargaLabel = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
                 return `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}${cargaLabel}`
               }).join('   ')}
             </p>

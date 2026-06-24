@@ -68,7 +68,6 @@ export interface ExSessao {
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
-  carga_negativa?: boolean
   series_prescritas?: Array<{ series: number; reps: string; carga?: string }>
   video_url?: string
   observacoes?: string

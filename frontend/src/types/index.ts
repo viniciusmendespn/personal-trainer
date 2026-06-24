@@ -193,7 +193,6 @@ export interface Exercicio {
   video_url?: string
   observacoes?: string
   rm_kg?: number
-  carga_negativa?: boolean
   links_uteis?: string[]
   links_uteis_excluidos?: string[]
   substitutos?: ExercicioSubstituto[]
@@ -217,7 +216,6 @@ export interface ExercicioCreate {
   video_url?: string
   observacoes?: string
   rm_kg?: number
-  carga_negativa?: boolean
   links_uteis?: string[]
   links_uteis_excluidos?: string[]
   substitutos?: ExercicioSubstituto[]
