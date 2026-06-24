@@ -139,10 +139,23 @@ function NotifDrawer({ onClose, onNavigate, onOpenChat, onFinanceiro }: {
   const [permState, setPermState] = useState<NotificationPermission>(() =>
     pushSupported ? Notification.permission : 'denied'
   )
+  const [notifLoading, setNotifLoading] = useState(false)
+  const { show: showToast } = useToast()
 
   async function handleEnableNotif() {
-    await requestAndSubscribe()
-    if (pushSupported) setPermState(Notification.permission)
+    setNotifLoading(true)
+    try {
+      await requestAndSubscribe()
+      const perm = pushSupported ? Notification.permission : 'denied'
+      setPermState(perm)
+      if (perm === 'granted') {
+        showToast('Notificações ativadas com sucesso!', 'success')
+      } else if (perm === 'denied') {
+        showToast('Permissão negada. Verifique as configurações do iPhone.', 'error')
+      }
+    } finally {
+      setNotifLoading(false)
+    }
   }
 
   const notifs = useQuery({
@@ -200,9 +213,11 @@ function NotifDrawer({ onClose, onNavigate, onOpenChat, onFinanceiro }: {
                 </div>
                 <button
                   onClick={handleEnableNotif}
-                  className="shrink-0 text-xs font-semibold text-accent bg-accent/10 hover:bg-accent/20 active:scale-95 px-3 py-1.5 rounded-lg transition-all"
+                  disabled={notifLoading}
+                  className="shrink-0 text-xs font-semibold text-accent bg-accent/10 hover:bg-accent/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5"
                 >
-                  Ativar
+                  {notifLoading && <span className="inline-block w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin" />}
+                  {notifLoading ? 'Ativando…' : 'Ativar'}
                 </button>
               </div>
             )}
