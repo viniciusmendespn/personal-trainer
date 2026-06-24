@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 /** Fundo compartilhado das telas de auth (login/signup/forgot), no mesmo estilo do hero da landing. */
 export function AuthBackground({ children }: { children: ReactNode }) {
   return (
-    <div data-theme="dark" style={{
+    <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(160deg, #0f172a 0%, #0a0e1a 50%, #060a14 100%)',
       position: 'relative',
