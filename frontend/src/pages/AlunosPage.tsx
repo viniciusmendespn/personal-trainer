@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 import { Plus, ChevronRight, Search, Users, Bot, Settings, Copy, Clock } from 'lucide-react'
 import { useAlunosPaginated, useCreateAluno, useUpdateAluno } from '../hooks/useAlunos'
 import { usePlanoStatus } from '../hooks/usePlano'
-import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState, useToast } from '../components/ui'
+import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState, useToast, AutocompleteInput } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { anamneseApi } from '../api/anamnese'
 import { tempoRelativo } from '../utils/datetime'
@@ -70,6 +70,11 @@ export function AlunosPage() {
     setOpen(false)
     navigate(`/alunos/${alvo.aluno_id}`)
   }
+
+  const objetivoSuggestions = useMemo(
+    () => [...new Set((alunos ?? []).map((a) => a.objetivo).filter(Boolean) as string[])].sort(),
+    [alunos],
+  )
 
   const filtered = useMemo(() => {
     if (!alunos) return alunos
@@ -139,7 +144,7 @@ export function AlunosPage() {
             <Input label="Data de nascimento" type="date" value={dataNascimento} onChange={(e) => setDataNascimento(e.target.value)} />
           </div>
           <Input label="Endereço" value={endereco} onChange={(e) => setEndereco(e.target.value)} />
-          <Input label="Objetivo" value={objetivo} onChange={(e) => setObjetivo(e.target.value)} />
+          <AutocompleteInput label="Objetivo" value={objetivo} onChange={setObjetivo} suggestions={objetivoSuggestions} placeholder="Ex.: Perda de peso, ganho de massa…" />
           <ErrorText>{error}</ErrorText>
           {limitConflict && (
             <Card variant="elevated" className="border-accent/40 space-y-2">

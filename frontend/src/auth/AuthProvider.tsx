@@ -46,8 +46,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function load() {
     try {
       const u = await getCurrentUser()
-      // Valida que o token ainda é válido (ou pode ser renovado via refresh token).
-      // Se o refresh token expirou, fetchAuthSession lança exceção → setUser(null).
       const session = await fetchAuthSession()
       if (!session.tokens?.idToken) { setUser(null); return }
       const attrs = (await fetchUserAttributes().catch(() => ({}))) as Record<string, string>

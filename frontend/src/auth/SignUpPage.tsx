@@ -49,7 +49,7 @@ export function SignUpPage() {
   }, [alreadyRegistered, navigate])
 
   if (user) {
-    navigate('/alunos', { replace: true })
+    navigate('/dashboard', { replace: true })
     return null
   }
 
@@ -128,7 +128,7 @@ export function SignUpPage() {
       await confirmSignUp({ username: email, confirmationCode: code })
       await autoSignIn().catch(() => {})
       await refresh()
-      navigate('/alunos', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(cognitoErrorPtBr(err))
     } finally {
@@ -154,7 +154,7 @@ export function SignUpPage() {
     <AuthBackground>
       <Card variant="glass" className="w-full max-w-sm p-6 shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-center mb-4">
-          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 120, width: 'auto' }} />
+          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 90, width: 'auto' }} />
         </div>
         <AuthStepIndicator labels={STEP_LABELS} currentIndex={STEP_INDEX[step]} />
 
