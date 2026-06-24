@@ -78,7 +78,7 @@ function Deploy-Frontend {
     [System.IO.File]::WriteAllText($alunoPath, $html, [System.Text.UTF8Encoding]::new($false))
     $alunoSize = (Get-Item $alunoPath).Length
     $indexSize = (Get-Item dist\index.html).Length
-    if ($alunoSize -le $indexSize) { Write-Host "AVISO: aluno.html igual ao index.html — substituicao nao aplicada!" -ForegroundColor Yellow }
+    if ((Get-Content $alunoPath -Raw) -match 'rel="manifest"') { Write-Host "AVISO: manifest ainda presente no aluno.html — remocao nao aplicada!" -ForegroundColor Yellow }
     Write-Host "aluno.html gerado ($alunoSize bytes vs index $indexSize bytes)." -ForegroundColor Cyan
 
     # index.html e aluno.html sem cache (ARCHITECTURE §10.2)
