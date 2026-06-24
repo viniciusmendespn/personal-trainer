@@ -67,7 +67,12 @@ function Deploy-Frontend {
     # segue Set-Location e resolveria relativo ao CWD do processo, não da função.
     $alunoPath = "$PWD\dist\aluno.html"
     $html = Get-Content -Path dist\index.html -Raw -Encoding UTF8
-    $html = $html -replace 'href="/manifest\.webmanifest"', 'href="/manifest-aluno.webmanifest"'
+    # Remove o <link rel="manifest"> do aluno.html: iOS lê o manifest no parse do HTML
+    # (antes do JS rodar) e usa o start_url dele para o atalho, ignorando a URL atual.
+    # Sem manifest, iOS usa a URL atual (com ?token=) para o atalho da tela inicial.
+    # O ícone/nome/standalone continuam via meta tags apple-mobile-web-app-* no HTML.
+    # Android não precisa do manifest para funcionar (localStorage é compartilhado).
+    $html = $html -replace '<link rel="manifest" href="/manifest\.webmanifest">', ''
     $html = $html -replace '(theme-color" content=")#000613(")', '${1}#16a34a${2}'
     $html = $html -replace '(apple-mobile-web-app-title" content=")CoachPilot(")', '${1}Treinos${2}'
     [System.IO.File]::WriteAllText($alunoPath, $html, [System.Text.UTF8Encoding]::new($false))

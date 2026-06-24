@@ -310,17 +310,6 @@ export function AlunoApp() {
   const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false, staleTime: 0, refetchOnWindowFocus: true, refetchInterval: 30_000 })
 
   useEffect(() => {
-    // iOS 16.4+ lê o manifest e usa start_url (/aluno) como URL do atalho,
-    // ignorando a URL atual com ?token=. Como o iOS isola o localStorage entre
-    // Safari e web apps instalados, o token não transfere via storage.
-    // Fix: remover o href do manifest no iOS Safari (não standalone) faz o iOS
-    // capturar a URL atual (com token) como URL do atalho — o mecanismo pré-16.4.
-    if (isIos && !isStandalone) {
-      document.querySelector('link[rel="manifest"]')?.removeAttribute('href')
-    }
-  }, [])
-
-  useEffect(() => {
     const handler = () => setDisabled(true)
     window.addEventListener('pt:aluno:403', handler)
     return () => window.removeEventListener('pt:aluno:403', handler)
