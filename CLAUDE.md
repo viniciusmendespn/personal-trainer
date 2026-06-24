@@ -40,6 +40,26 @@ Detalhes completos em **`ARCHITECTURE.md` §12 — Separação de Custos**.
 | Tag de custo | `Project = personal-trainer` |
 
 ## Deploy
+
+### ⚠️ REGRA OBRIGATÓRIA — Duas distribuições CloudFront, um bucket S3
+O frontend usa **um único bucket S3** (`personal-trainer-frontend-prod-421219980792`) servido por
+**duas distribuições CloudFront separadas**:
+
+| Distribuição | ID | Domínio |
+|---|---|---|
+| Portal (personal) | `E3JZ6U88Q0GYGF` | portal do personal trainer |
+| App do aluno | `E2IHNZ34C3PI8V` | `app.coachpilot.com.br` |
+
+O build (`npm run build`) gera um único `dist/` que serve as duas apps (o React Router diferencia
+pelo hostname/rota). Por isso **todo deploy de frontend deve**:
+1. `aws s3 sync dist/ s3://personal-trainer-frontend-prod-421219980792/ --delete --profile pessoal-hotmail --region us-east-1`
+2. Invalidar **as duas** distribuições:
+   ```powershell
+   aws cloudfront create-invalidation --distribution-id E3JZ6U88Q0GYGF --paths "/*" --profile pessoal-hotmail
+   aws cloudfront create-invalidation --distribution-id E2IHNZ34C3PI8V --paths "/*" --profile pessoal-hotmail
+   ```
+Nunca invalidar só uma das distribuições — a outra ficaria com cache stale.
+
 > Replicar o `deploy.ps1` do gerenciador-financeiro com `$Profile = "pessoal-hotmail"` e os nomes acima.
 
 ### ⚠️ REGRA OBRIGATÓRIA — Commit antes do deploy
