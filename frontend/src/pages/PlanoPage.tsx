@@ -80,6 +80,57 @@ export function PlanoPage() {
         )}
       </Card>
 
+      {!isPro && (
+        <Card variant="elevated" className="p-6">
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <h3 className="font-display text-base font-bold text-text">Por que assinar o Gestão Pro?</h3>
+                <span style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>Promo Lançamento</span>
+              </div>
+              <p className="text-xs text-text-secondary">Alunos ilimitados e gestão completa.</p>
+            </div>
+          </div>
+
+          <div className="mb-5">
+            <div className="text-xs text-text-muted line-through mb-0.5">De R$69,90/mês</div>
+            <div className="flex items-baseline gap-1 mb-1">
+              <span style={{ color: '#0d9488', fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: '-1px' }}>R$39,90</span>
+              <span className="text-sm text-text-muted">/mês</span>
+            </div>
+            <p className="text-xs text-text-muted">Preço de lançamento · sem fidelidade · cancele quando quiser</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+            {[
+              'Alunos ilimitados',
+              'Treinos e templates ilimitados',
+              'Avaliações físicas com evolução',
+              'Relatórios de desempenho',
+              'Suporte prioritário',
+              'Sem fidelidade',
+            ].map((benefit) => (
+              <div key={benefit} className="flex items-center gap-2 text-sm">
+                <Check size={14} className="text-accent shrink-0" />
+                <span className="text-text-secondary">{benefit}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ background: 'rgba(74,222,128,0.07)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
+            <div className="flex items-start gap-2">
+              <img src="https://djkvxxf33pska.cloudfront.net/pwa-64x64.png" alt="FinPilot" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <p className="text-sm font-semibold text-text mb-0.5">Bônus FinPilot incluso</p>
+                <p className="text-xs text-text-muted leading-relaxed">A cada mês pago, você ganha 1 mês grátis no FinPilot — gerenciador financeiro pessoal com planilha inteligente e IA em português.</p>
+              </div>
+            </div>
+          </div>
+
+          <Button onClick={() => setPixOpen(true)}>Assinar Gestão Pro — R$39,90/mês</Button>
+        </Card>
+      )}
+
       <Card variant="flat" className="p-6">
         <h3 className="font-display text-sm font-bold text-text mb-1">Add-ons</h3>
         <p className="text-xs text-text-secondary mb-4">

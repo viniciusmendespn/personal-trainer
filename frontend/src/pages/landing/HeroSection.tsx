@@ -3,7 +3,7 @@ import { ArrowRight, Users, Smartphone, PlusCircle } from 'lucide-react'
 
 const STATS = [
   { icon: <Users size={16} />, label: 'Grátis para até 3 alunos' },
-  { icon: <Smartphone size={16} />, label: 'Gestão Pro por R$39,90/mês' },
+  { icon: <Smartphone size={16} />, label: 'Gestão Pro R$39,90/mês (de R$69,90)' },
   { icon: <PlusCircle size={16} />, label: 'Add-ons opcionais de IA e WhatsApp' },
 ]
 
@@ -45,7 +45,7 @@ export default function HeroSection() {
               borderRadius: 20, padding: '6px 14px', marginBottom: 24,
             }}>
               <span style={{ fontSize: 16 }}>✅</span>
-              <span style={{ color: '#14b8a6', fontSize: 13, fontWeight: 600 }}>Grátis para até 3 alunos · Gestão Pro R$39,90/mês</span>
+              <span style={{ color: '#14b8a6', fontSize: 13, fontWeight: 600 }}>Grátis para até 3 alunos · Gestão Pro R$39,90/mês ↓ de R$69,90</span>
             </div>
 
             <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 20, letterSpacing: '-1px' }}>

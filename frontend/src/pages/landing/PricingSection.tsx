@@ -67,7 +67,7 @@ export default function PricingSection() {
             </span>
           </h2>
           <p style={{ color: '#475569', fontSize: 16, maxWidth: 520, margin: '0 auto 8px' }}>
-            Comece grátis com até 3 alunos. Quando precisar de mais, desbloqueie alunos ilimitados por apenas R$39,90/mês.
+            Comece grátis com até 3 alunos. Quando precisar de mais, desbloqueie alunos ilimitados por apenas R$39,90/mês (de R$69,90).
           </p>
           <p style={{ color: '#64748b', fontSize: 14, maxWidth: 480, margin: '0 auto' }}>
             O CoachPilot separa gestão, WhatsApp e IA para você pagar apenas pelo que realmente usa.
@@ -164,9 +164,17 @@ export default function PricingSection() {
             }}>
               <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>Mais indicado</span>
             </div>
+            <div style={{
+              position: 'absolute', top: 16, left: 16,
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              borderRadius: 20, padding: '4px 12px',
+            }}>
+              <span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>Promo Lançamento</span>
+            </div>
 
             <div style={{ marginBottom: 24, position: 'relative' }}>
               <div style={{ color: '#14b8a6', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Gestão Pro</div>
+              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, textDecoration: 'line-through', marginBottom: 4 }}>De R$69,90/mês</div>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, marginBottom: 6 }}>
                 <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 18, marginBottom: 6 }}>R$</span>
                 <span style={{ color: '#fff', fontSize: 48, fontWeight: 800, lineHeight: 1, letterSpacing: '-2px' }}>39</span>
@@ -209,7 +217,7 @@ export default function PricingSection() {
               Assinar Gestão Pro
             </Link>
             <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 10 }}>
-              Cancele quando quiser.
+              Preço promocional de lançamento · sobe para R$69,90 em breve
             </p>
           </div>
         </div>
@@ -395,7 +403,14 @@ export default function PricingSection() {
                   <span style={{ color: r.free === 'Add-on' ? '#f59e0b' : r.free === 'R$0' ? '#14b8a6' : '#475569', fontSize: 13, fontWeight: r.free === 'R$0' ? 700 : 400 }}>{r.free}</span>
                 </div>
                 <div style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ color: r.pro === 'Add-on' ? '#f59e0b' : r.pro === 'R$39,90/mês' ? '#14b8a6' : '#475569', fontSize: 13, fontWeight: r.pro === 'R$39,90/mês' ? 700 : 400 }}>{r.pro}</span>
+                  {r.feature === 'Preço' ? (
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ color: 'rgba(20,184,166,0.4)', fontSize: 11, textDecoration: 'line-through', lineHeight: 1.3 }}>R$69,90/mês</div>
+                      <span style={{ color: '#14b8a6', fontSize: 13, fontWeight: 700 }}>R$39,90/mês</span>
+                    </div>
+                  ) : (
+                    <span style={{ color: r.pro === 'Add-on' ? '#f59e0b' : r.pro === 'R$39,90/mês' ? '#14b8a6' : '#475569', fontSize: 13, fontWeight: r.pro === 'R$39,90/mês' ? 700 : 400 }}>{r.pro}</span>
+                  )}
                 </div>
               </div>
             ))}

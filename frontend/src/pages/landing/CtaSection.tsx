@@ -32,7 +32,7 @@ export default function CtaSection() {
           borderRadius: 20, padding: '6px 16px', marginBottom: 24,
         }}>
           <span style={{ fontSize: 16 }}>💪</span>
-          <span style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>Grátis até 3 alunos · Gestão Pro R$39,90/mês</span>
+          <span style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>Grátis até 3 alunos · Gestão Pro R$39,90/mês ↓ de R$69,90</span>
         </div>
 
         <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(28px, 5vw, 50px)', fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 18, letterSpacing: '-1px' }}>
@@ -43,7 +43,7 @@ export default function CtaSection() {
         </h2>
 
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 18, lineHeight: 1.6, marginBottom: 36, maxWidth: 520, margin: '0 auto 36px' }}>
-          Cadastre até 3 alunos sem pagar nada. Quando quiser crescer, desbloqueie alunos ilimitados por R$39,90/mês.
+          Cadastre até 3 alunos sem pagar nada. Quando quiser crescer, desbloqueie alunos ilimitados por R$39,90/mês (de R$69,90) — preço de lançamento.
         </p>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 14 }}>
