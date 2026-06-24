@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote, Camera, Clock, RefreshCw, AlertCircle, History, Power, PowerOff, Bot, ClipboardList } from 'lucide-react'
-import { useAluno, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
+import { useAluno, useAlunos, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { useToggleAgenteHabilitado } from '../hooks/usePersonalChat'
 import { usePlanoStatus } from '../hooks/usePlano'
 import { alunosApi } from '../api/alunos'
@@ -12,7 +12,7 @@ import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
-import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar, AutocompleteInput } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
@@ -45,6 +45,12 @@ export function AlunoDetailPage() {
       qc.invalidateQueries({ queryKey: ['alunos'] })
     }).catch(() => {})
   }, [aluno?.aluno_id, !!aluno?.foto_url]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const { data: todosAlunos } = useAlunos()
+  const objetivoSuggestions = useMemo(
+    () => [...new Set((todosAlunos ?? []).map((a) => a.objetivo).filter(Boolean) as string[])].sort(),
+    [todosAlunos],
+  )
 
   const { data: treinos, isLoading } = useTreinos(alunoId)
   const createTreino = useCreateTreino(alunoId)
@@ -305,7 +311,7 @@ export function AlunoDetailPage() {
               <Input label="E-mail" type="email" value={eEmail} onChange={(e) => setEEmail(e.target.value)} />
               <Input label="Data de nascimento" type="date" value={eNascimento} onChange={(e) => setENascimento(e.target.value)} />
               <Input label="Endereço" value={eEndereco} onChange={(e) => setEEndereco(e.target.value)} />
-              <Input label="Objetivo" value={eObj} onChange={(e) => setEObj(e.target.value)} />
+              <AutocompleteInput label="Objetivo" value={eObj} onChange={setEObj} suggestions={objetivoSuggestions} placeholder="Ex.: Perda de peso, ganho de massa…" />
               <ErrorText>{editError}</ErrorText>
               {conflict && (
                 <Card variant="elevated" className="border-warning/40 space-y-2">
