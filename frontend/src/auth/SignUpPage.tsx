@@ -49,7 +49,7 @@ export function SignUpPage() {
   }, [alreadyRegistered, navigate])
 
   if (user) {
-    navigate('/alunos', { replace: true })
+    navigate('/dashboard', { replace: true })
     return null
   }
 
@@ -128,7 +128,7 @@ export function SignUpPage() {
       await confirmSignUp({ username: email, confirmationCode: code })
       await autoSignIn().catch(() => {})
       await refresh()
-      navigate('/alunos', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(cognitoErrorPtBr(err))
     } finally {
