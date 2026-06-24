@@ -1,9 +1,8 @@
 import { lazy, Suspense, type ReactNode } from 'react'
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Amplify } from 'aws-amplify'
 
-import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './auth/AuthProvider'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { ToastProvider, ConfirmProvider, Spinner } from './components/ui'
@@ -89,7 +88,6 @@ const router = createBrowserRouter([
             // mantendo sidebar e topbar intactos.
             errorElement: <PortalErrorPage />,
             children: [
-              { index: true, element: <Navigate to="dashboard" replace /> },
               { path: 'dashboard', element: lazyPage(<DashboardPage />) },
               { path: 'alunos', element: lazyPage(<AlunosPage />) },
               { path: 'agenda', element: lazyPage(<AgendaPage />) },
@@ -118,16 +116,14 @@ const router = createBrowserRouter([
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <ConfirmProvider>
-            <AuthProvider>
-              <RouterProvider router={router} />
-            </AuthProvider>
-          </ConfirmProvider>
-        </ToastProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <ConfirmProvider>
+          <AuthProvider>
+            <RouterProvider router={router} />
+          </AuthProvider>
+        </ConfirmProvider>
+      </ToastProvider>
+    </QueryClientProvider>
   )
 }

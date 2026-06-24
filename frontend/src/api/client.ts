@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { fetchAuthSession, signOut as amplifySignOut } from 'aws-amplify/auth'
+import { fetchAuthSession } from 'aws-amplify/auth'
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '',
@@ -51,10 +51,9 @@ api.interceptors.request.use(async (config) => {
 
 api.interceptors.response.use(
   (res) => res,
-  async (err) => {
+  (err) => {
     if (err.response?.status === 401) {
       _token = null
-      try { await amplifySignOut() } catch { /* ignora */ }
       window.location.href = '/login'
     }
     return Promise.reject(err)

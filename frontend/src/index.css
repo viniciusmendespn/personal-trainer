@@ -29,46 +29,8 @@
   --shadow-card: 0 4px 24px -8px rgb(0 0 0 / 0.5);
 }
 
-/* Tema escuro explícito — necessário para ilhas data-theme="dark" aninhadas em tema claro */
-[data-theme="dark"] {
-  --color-bg: #08070d;
-  --color-surface: #13121c;
-  --color-surface-elevated: #1c1a28;
-  --color-border: #2a2838;
-  --color-border-strong: #383550;
-  --color-text: #f1f0f7;
-  --color-text-secondary: #a8a4bd;
-  --color-text-muted: #6f6b85;
-  --color-accent-hover: #818cf8;
-  --color-accent-active: #4f46e5;
-  --color-energy: #a3e635;
-  --color-energy-hover: #bef264;
-  --shadow-glow-accent: 0 0 24px -8px rgb(99 102 241 / 0.45);
-  --shadow-glow-energy: 0 0 24px -8px rgb(163 230 53 / 0.4);
-  --shadow-card: 0 4px 24px -8px rgb(0 0 0 / 0.5);
-}
-
-/* Tema claro — sobrescreve as variáveis do @theme */
-[data-theme="light"] {
-  --color-bg: #f5f4fc;
-  --color-surface: #ffffff;
-  --color-surface-elevated: #eeedfb;
-  --color-border: #dddcef;
-  --color-border-strong: #c4c1e0;
-  --color-text: #1a1830;
-  --color-text-secondary: #4a4668;
-  --color-text-muted: #7e7a99;
-  --color-accent: #6366f1;
-  --color-accent-hover: #4f46e5;
-  --color-accent-active: #4338ca;
-  --color-energy: #65a30d;
-  --color-energy-hover: #84cc16;
-  --shadow-glow-accent: 0 0 24px -8px rgb(99 102 241 / 0.25);
-  --shadow-glow-energy: 0 0 24px -8px rgb(101 163 13 / 0.25);
-  --shadow-card: 0 4px 24px -8px rgb(0 0 0 / 0.1);
-}
-
 *, *::before, *::after { box-sizing: border-box; }
+html { color-scheme: dark; }
 body {
   margin: 0;
   background-color: var(--color-bg);
@@ -78,10 +40,6 @@ body {
   color: var(--color-text);
   font-family: var(--font-sans);
 }
-[data-theme="light"] body {
-  background-image: radial-gradient(circle at 15% -10%, rgb(99 102 241 / 0.07), transparent 55%),
-    radial-gradient(circle at 100% 0%, rgb(101 163 13 / 0.04), transparent 45%);
-}
 h1, h2, h3, .font-display { font-family: var(--font-display); }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -89,49 +47,7 @@ h1, h2, h3, .font-display { font-family: var(--font-display); }
 ::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
 
-/* No tema claro, overlays brancos viram escuros sutis */
-[data-theme="light"] [class*="hover:bg-white"]:hover {
-  background-color: rgb(0 0 0 / 0.05) !important;
-}
-[data-theme="light"] .bg-white\/5  { background-color: rgb(0 0 0 / 0.05) !important; }
-[data-theme="light"] .bg-white\/10 { background-color: rgb(0 0 0 / 0.08) !important; }
-[data-theme="light"] .bg-white\/15 { background-color: rgb(0 0 0 / 0.1)  !important; }
-
 @keyframes toast-in {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
-
-/* Rich text editor (Tiptap) */
-.ProseMirror-content {
-  min-height: 80px;
-}
-.ProseMirror-content:focus { outline: none; }
-.ProseMirror-content p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
-  color: var(--color-text-muted);
-  pointer-events: none;
-  float: left;
-  height: 0;
-}
-
-/* Reapply styles removed by Tailwind Preflight inside the editor */
-.ProseMirror p      { margin-bottom: 0.25rem; }
-.ProseMirror h2     { font-size: 0.9375rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem; }
-.ProseMirror ul     { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.25rem; }
-.ProseMirror ol     { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.25rem; }
-.ProseMirror li     { margin-bottom: 0.125rem; }
-.ProseMirror strong { font-weight: 600; }
-.ProseMirror em     { font-style: italic; }
-.ProseMirror u      { text-decoration: underline; }
-
-/* Rich text content display */
-.rich-content p      { margin-bottom: 0.25rem; }
-.rich-content h2     { font-size: 0.9375rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem; }
-.rich-content ul     { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.25rem; }
-.rich-content ol     { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.25rem; }
-.rich-content li     { margin-bottom: 0.125rem; }
-.rich-content strong { font-weight: 600; }
-.rich-content em     { font-style: italic; }
-.rich-content u      { text-decoration: underline; }
-.rich-content code   { font-family: monospace; font-size: 0.8125rem; background: var(--color-surface-elevated); border-radius: 3px; padding: 0 3px; }

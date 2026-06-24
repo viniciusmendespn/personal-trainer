@@ -17,25 +17,12 @@ export interface AtividadeAluno {
   atualizado_em: string
 }
 
-export interface ProximoEvento {
-  agendamento_id: string
-  aluno_id: string
-  data_hora_inicio: string
-  duracao_min: number
-  status: string
-  observacao?: string
-}
-
 export interface DashboardData {
   alunos: number
   alunos_ativos: number
   notificacoes_nao_lidas: number
   sessoes_por_dia?: SessaoDia[]
   atividade_recente?: AtividadeAluno[]
-  aderencia_7d?: { alunos_unicos: number; alunos_unicos_prev: number }
-  alunos_app?: number
-  dist_objetivos?: Record<string, number>
-  proximos_eventos?: ProximoEvento[]
 }
 
 export const dashboardApi = {

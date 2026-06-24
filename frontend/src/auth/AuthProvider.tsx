@@ -4,7 +4,6 @@ import {
   signOut as amplifySignOut,
   getCurrentUser,
   fetchUserAttributes,
-  fetchAuthSession,
 } from 'aws-amplify/auth'
 import { useQueryClient } from '@tanstack/react-query'
 import { setImpersonationToken, resetTokenCache } from '../api/client'
@@ -46,8 +45,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function load() {
     try {
       const u = await getCurrentUser()
-      const session = await fetchAuthSession({ forceRefresh: true })
-      if (!session.tokens?.idToken) { setUser(null); return }
       const attrs = (await fetchUserAttributes().catch(() => ({}))) as Record<string, string>
       setUser({ userId: u.userId, username: u.username, email: attrs.email, name: attrs.name })
       const saved = sessionStorage.getItem('pt:impersonation')
