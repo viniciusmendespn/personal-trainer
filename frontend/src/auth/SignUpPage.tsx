@@ -154,7 +154,7 @@ export function SignUpPage() {
     <AuthBackground>
       <Card variant="glass" className="w-full max-w-sm p-6 shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-center mb-4">
-          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 120, width: 'auto' }} />
+          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 90, width: 'auto' }} />
         </div>
         <AuthStepIndicator labels={STEP_LABELS} currentIndex={STEP_INDEX[step]} />
 

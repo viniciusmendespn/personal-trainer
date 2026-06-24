@@ -29,6 +29,25 @@
   --shadow-card: 0 4px 24px -8px rgb(0 0 0 / 0.5);
 }
 
+/* Tema escuro explícito — necessário para ilhas data-theme="dark" aninhadas em tema claro */
+[data-theme="dark"] {
+  --color-bg: #08070d;
+  --color-surface: #13121c;
+  --color-surface-elevated: #1c1a28;
+  --color-border: #2a2838;
+  --color-border-strong: #383550;
+  --color-text: #f1f0f7;
+  --color-text-secondary: #a8a4bd;
+  --color-text-muted: #6f6b85;
+  --color-accent-hover: #818cf8;
+  --color-accent-active: #4f46e5;
+  --color-energy: #a3e635;
+  --color-energy-hover: #bef264;
+  --shadow-glow-accent: 0 0 24px -8px rgb(99 102 241 / 0.45);
+  --shadow-glow-energy: 0 0 24px -8px rgb(163 230 53 / 0.4);
+  --shadow-card: 0 4px 24px -8px rgb(0 0 0 / 0.5);
+}
+
 /* Tema claro — sobrescreve as variáveis do @theme */
 [data-theme="light"] {
   --color-bg: #f5f4fc;
