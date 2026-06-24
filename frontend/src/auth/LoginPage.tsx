@@ -62,7 +62,7 @@ export function LoginPage() {
         <form onSubmit={handle} className="space-y-4">
           <div className="text-center mb-2">
             <div className="flex items-center justify-center mb-1">
-              <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 120, width: 'auto' }} />
+              <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 90, width: 'auto' }} />
             </div>
             <p className="text-sm text-text-secondary">Acesse sua conta</p>
           </div>
