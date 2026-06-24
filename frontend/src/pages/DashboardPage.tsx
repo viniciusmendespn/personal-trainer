@@ -12,6 +12,7 @@ import {
 import { useDashboard } from '../hooks/useDashboard'
 import { useAlunos } from '../hooks/useAlunos'
 import { useBiblioteca } from '../hooks/useDominio'
+import { useTemplates } from '../hooks/useTemplates'
 import { wapiApi } from '../api/wapi'
 import { Card, StatCard, SkeletonCard, EmptyState, Avatar, Badge } from '../components/ui'
 import { tempoRelativo } from '../utils/datetime'
@@ -79,6 +80,7 @@ export function DashboardPage() {
   const status = useQuery({ queryKey: ['wapi-status'], queryFn: wapiApi.status, retry: false })
   const { data: alunos } = useAlunos()
   const { data: biblioteca } = useBiblioteca()
+  const { data: templates } = useTemplates()
 
   const hoje = useMemo(() => ymd(new Date()), [])
   const semanaInicio = useMemo(() => ymd(startOfWeek(new Date())), [])
@@ -160,6 +162,7 @@ export function DashboardPage() {
   )
 
   const bibliotecaCount = biblioteca?.length ?? 0
+  const templatesCount = templates?.length ?? 0
 
   return (
     <div className="max-w-4xl mx-auto space-y-4">
@@ -299,6 +302,7 @@ export function DashboardPage() {
                 <Card variant="elevated" className="flex flex-col items-center justify-center gap-1.5 py-3 cursor-pointer hover:opacity-80 active:scale-[0.98] transition-all text-center h-full">
                   <LayoutTemplate size={18} className="text-energy" />
                   <p className="text-xs font-medium text-text-secondary leading-tight">Templates</p>
+                  {templatesCount > 0 && <p className="text-xs text-text-muted">{templatesCount} itens</p>}
                 </Card>
               </Link>
             </div>
