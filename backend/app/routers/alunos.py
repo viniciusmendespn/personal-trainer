@@ -93,6 +93,9 @@ def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_perso
     repo.put_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, data)
     repo.put_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(data))
     repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add={"total": 1, "ativos": 1})
+    if body.objetivo:
+        repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_OBJETIVOS,
+                         add={keys.normalize_objetivo(body.objetivo): 1})
     assinatura_service.invalidate_alunos_bloqueados(personal_id)
     return aluno
 
@@ -172,6 +175,16 @@ def update_aluno(aluno_id: str, body: AlunoUpdate, personal_id: str = Depends(ge
     if novo_status and novo_status != current.get("status"):
         delta = 1 if novo_status == AlunoStatus.ATIVO else -1
         repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add={"ativos": delta})
+    novo_obj = fields.get("objetivo")
+    old_obj = current.get("objetivo")
+    if "objetivo" in fields and novo_obj != old_obj:
+        pk_pt = keys.pk_personal(personal_id)
+        if old_obj:
+            repo.add_and_set(pk_pt, keys.SK_STATS_OBJETIVOS,
+                             add={keys.normalize_objetivo(old_obj): -1})
+        if novo_obj:
+            repo.add_and_set(pk_pt, keys.SK_STATS_OBJETIVOS,
+                             add={keys.normalize_objetivo(novo_obj): 1})
     return _add_foto_url(repo.clean(updated))
 
 
@@ -217,6 +230,9 @@ def delete_aluno(aluno_id: str, personal_id: str = Depends(get_current_personal_
     if current and current.get("status") == AlunoStatus.ATIVO:
         decremento["ativos"] = -1
     repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add=decremento)
+    if current and current.get("objetivo"):
+        repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_OBJETIVOS,
+                         add={keys.normalize_objetivo(current["objetivo"]): -1})
     # Limpa entradas DUE# para evitar notificações fantasma após deleção do aluno.
     # Dados completos (treinos/sessões/registros) permanecem em AL# — limpeza em lote futura.
     treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)

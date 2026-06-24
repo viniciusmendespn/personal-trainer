@@ -243,7 +243,7 @@ def sessao_exercicios(ctx: dict = Depends(get_current_aluno)):
 
 @router.post("/sessao/start", status_code=201)
 def start(body: StartBody, ctx: dict = Depends(get_current_aluno)):
-    return repo.clean(sessao_service.start_session(ctx["personal_id"], ctx["aluno_id"], body.treino_id))
+    return repo.clean(sessao_service.start_session(ctx["personal_id"], ctx["aluno_id"], body.treino_id, iniciado_pelo_aluno=True))
 
 
 @router.post("/sessao/advance")

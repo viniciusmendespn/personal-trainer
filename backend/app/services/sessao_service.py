@@ -76,7 +76,7 @@ def _touch_atividade(personal_id: str, aluno_id: str, *, status: str, treino_nom
     })
 
 
-def start_session(personal_id: str, aluno_id: str, treino_id: str) -> dict:
+def start_session(personal_id: str, aluno_id: str, treino_id: str, iniciado_pelo_aluno: bool = False) -> dict:
     treino = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id))
     if not treino:
         raise HTTPException(404, "Treino não encontrado")
@@ -104,6 +104,11 @@ def start_session(personal_id: str, aluno_id: str, treino_id: str) -> dict:
         personal_id, aluno_id, status=SessaoStatus.EM_ANDAMENTO.value, treino_nome=treino.get("nome"),
         exercicio_atual=snaps[0]["nome"] if snaps else None, ordem_atual=0, total_ex=len(snaps),
     )
+    if iniciado_pelo_aluno:
+        st_aluno = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_STATS_ALUNO) or {}
+        if not st_aluno.get("usou_app"):
+            repo.add_and_set(keys.pk_aluno(aluno_id), keys.SK_STATS_ALUNO, set_={"usou_app": True})
+            repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add={"alunos_app": 1})
     return item
 
 
@@ -193,6 +198,8 @@ def finish(aluno_id: str) -> dict:
         hoje = fim_iso[:10]
         repo.add_and_set(keys.pk_personal(personal_id), f"STATS#D#{hoje}",
                          add={"sessoes": 1}, set_={"data": hoje})
+        repo.add_to_set(keys.pk_personal(personal_id), f"STATS#D#{hoje}",
+                        "alunos_set", {aluno_id})
         # Gamificação: pontos por sessão finalizada (com multiplicador de streak)
         total_ex = len(s.get("exercicios", []))
         feitos_ex = len(snap.get("exercicios_exec", []))

@@ -1,5 +1,6 @@
 """Dashboard do personal — contadores a partir da partição PT# (bounded, sem scan)."""
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends
 
@@ -34,6 +35,41 @@ def dashboard(personal_id: str = Depends(get_current_personal_id)):
     por_dia = {s.get("data", ""): int(s.get("sessoes", 0)) for s in stats_dias}
     sessoes_por_dia = [{"data": d, "total": por_dia.get(d, 0)} for d in dias]
 
+    # Aderência (últimos 7d vs 7d anteriores) — union dos alunos_set por dia
+    dias_7d = {(hoje - timedelta(days=i)).isoformat() for i in range(7)}
+    dias_7d_ant = {(hoje - timedelta(days=i)).isoformat() for i in range(7, 14)}
+    alunos_semana: set[str] = set()
+    alunos_semana_ant: set[str] = set()
+    for s in stats_dias:
+        d = s.get("data", "")
+        ss = s.get("alunos_set") or set()
+        if d in dias_7d:
+            alunos_semana |= ss
+        elif d in dias_7d_ant:
+            alunos_semana_ant |= ss
+
+    # % alunos no app
+    alunos_app = int(stats_alunos.get("alunos_app", 0)) if stats_alunos else 0
+
+    # Distribuição por objetivo
+    dist_obj_item = repo.get_item(pk, keys.SK_STATS_OBJETIVOS)
+    _meta = {"PK", "SK", "GSI1PK", "GSI1SK"}
+    dist_objetivos: dict[str, int] = {}
+    if dist_obj_item:
+        for k, v in dist_obj_item.items():
+            if k not in _meta and isinstance(v, (int, float, Decimal)) and int(v) > 0:
+                dist_objetivos[k] = int(v)
+
+    # Próximos eventos (next 7 days, bounded range query na partição PT#)
+    agora_iso = datetime.now(timezone.utc).isoformat()
+    em7d_iso = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+    proximos_raw = repo.query_between(pk, f"AGENDA#{agora_iso}", f"AGENDA#{em7d_iso}￿")
+    _campos_evento = ("agendamento_id", "aluno_id", "data_hora_inicio", "duracao_min", "status", "observacao")
+    proximos_eventos = [
+        {c: a.get(c) for c in _campos_evento}
+        for a in repo.clean_all(proximos_raw[:20])
+    ]
+
     # Atividade recente (últimos 10 alunos que treinaram/estão treinando) — 1 query no GSI1
     # (item denormalizado na escrita por sessao_service._touch_atividade, sem fan-out por aluno).
     atividade_raw = repo.clean_all(repo.query_gsi1_last(keys.gsi1_atividade(personal_id), limit=10))
@@ -63,4 +99,11 @@ def dashboard(personal_id: str = Depends(get_current_personal_id)):
         "notificacoes_nao_lidas": nao_lidas,
         "sessoes_por_dia": sessoes_por_dia,
         "atividade_recente": atividade_recente,
+        "aderencia_7d": {
+            "alunos_unicos": len(alunos_semana),
+            "alunos_unicos_prev": len(alunos_semana_ant),
+        },
+        "alunos_app": alunos_app,
+        "dist_objetivos": dist_objetivos,
+        "proximos_eventos": proximos_eventos,
     }

@@ -257,6 +257,16 @@ def add_and_set(pk: str, sk: str, add: dict | None = None, set_: dict | None = N
     return resp.get("Attributes", {})
 
 
+def add_to_set(pk: str, sk: str, field: str, values: set[str]) -> None:
+    """ADD idempotente em StringSet DynamoDB (deduplicação por partição)."""
+    _get_table().update_item(
+        Key={"PK": pk, "SK": sk},
+        UpdateExpression="ADD #f :vals",
+        ExpressionAttributeNames={"#f": field},
+        ExpressionAttributeValues={":vals": values},
+    )
+
+
 def update_if_greater(pk: str, sk: str, field: str, value, extra: dict | None = None) -> bool:
     """Grava o item só se `value` superar o atual (ou não existir) — recordes/PR.
     Retorna True se foi um novo recorde."""

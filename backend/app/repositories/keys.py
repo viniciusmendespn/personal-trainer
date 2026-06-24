@@ -43,6 +43,14 @@ def sk_aluno_pointer(aluno_id: str) -> str:
 
 
 SK_STATS_ALUNOS = "STATS#ALUNOS"   # contador agregado: total/ativos (ARCHITECTURE §5.5 Nível A)
+SK_STATS_OBJETIVOS = "STATS#OBJETIVOS"   # mapa objetivo_key→count (PT# partition)
+
+
+def normalize_objetivo(raw: str) -> str:
+    """Normaliza string de objetivo para uso seguro como atributo DynamoDB (sem espaços/acentos)."""
+    import unicodedata
+    sem_acento = unicodedata.normalize("NFKD", raw).encode("ascii", "ignore").decode()
+    return "_".join(sem_acento.lower().split()) or "outros"
 
 
 def sk_atividade(aluno_id: str) -> str:
