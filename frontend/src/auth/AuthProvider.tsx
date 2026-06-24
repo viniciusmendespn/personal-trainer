@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function load() {
     try {
       const u = await getCurrentUser()
-      const session = await fetchAuthSession()
+      const session = await fetchAuthSession({ forceRefresh: true })
       if (!session.tokens?.idToken) { setUser(null); return }
       const attrs = (await fetchUserAttributes().catch(() => ({}))) as Record<string, string>
       setUser({ userId: u.userId, username: u.username, email: attrs.email, name: attrs.name })
