@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTheme } from '../../context/ThemeContext'
 
 export function useSplash() {
   const [visible, setVisible] = useState(() => !sessionStorage.getItem('splash-shown'))
@@ -13,9 +14,19 @@ export function useSplash() {
   return visible
 }
 
-export function SplashScreen({ src = '/icon-512.png', rounded = true }: { src?: string; rounded?: boolean }) {
+export function SplashScreen({ src = '/icon-512.png', srcLight, rounded = true }: { src?: string; srcLight?: string; rounded?: boolean }) {
+  const { theme } = useTheme()
+  const effectiveTheme = theme === 'system'
+    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : theme
+  const isLight = effectiveTheme === 'light'
+  const logoSrc = isLight && srcLight ? srcLight : src
+
   return (
-    <div className="fixed inset-0 z-[200] bg-[#000613] flex items-center justify-center">
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center"
+      style={{ backgroundColor: isLight ? '#f5f4fc' : '#000613' }}
+    >
       <style>{`
         @keyframes cp-splash {
           0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(20,255,180,0)); }
@@ -23,7 +34,7 @@ export function SplashScreen({ src = '/icon-512.png', rounded = true }: { src?: 
         }
       `}</style>
       <img
-        src={src}
+        src={logoSrc}
         alt="CoachPilot"
         style={{
           width: rounded ? 112 : 220,

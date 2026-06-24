@@ -377,7 +377,7 @@ export function AppLayout() {
       </div>
     )}
 
-    {splashVisible && <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" rounded={false} />}
+    {splashVisible && <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" srcLight="/novo-logo-slogan-vertical-brancosemfundo.png" rounded={false} />}
     </ChatContextProvider>
   )
 }
