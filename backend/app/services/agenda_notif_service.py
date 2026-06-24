@@ -1,5 +1,6 @@
 """Lembretes de agenda — grava itens SCHED# 15 min antes do evento e os dispara."""
 import logging
+import os
 from datetime import datetime, timedelta, timezone
 
 from app.repositories import dynamo_repo as repo
@@ -9,6 +10,7 @@ from app.services import anotif_service, notif_service
 logger = logging.getLogger(__name__)
 
 _ANTECIPACAO_MIN = 15
+_TZ_OFFSET = int(os.environ.get("TZ_OFFSET_HOURS", "-3"))
 
 
 def _notif_dt(data_hora_inicio: str) -> datetime:
@@ -48,7 +50,10 @@ def cancelar(agendamento: dict) -> None:
 
 def enviar_lembrete(item: dict) -> None:
     """Chamado pelo agenda_scheduler — envia push para personal e aluno."""
-    hora = item["data_hora_inicio"][11:16]
+    dt_local = datetime.fromisoformat(
+        item["data_hora_inicio"].replace("Z", "+00:00")
+    ) + timedelta(hours=_TZ_OFFSET)
+    hora = dt_local.strftime("%H:%M")
     anotif_service.criar(
         item["aluno_id"], "LEMBRETE_AULA",
         "Treino em 15 minutos!",
