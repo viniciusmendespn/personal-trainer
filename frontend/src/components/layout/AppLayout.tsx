@@ -309,23 +309,34 @@ export function AppLayout() {
               <X size={18} />
             </button>
           </div>
-          <ol className="space-y-3 text-sm text-text-secondary">
-            <li className="flex gap-3">
-              <span className="font-bold text-accent shrink-0">1.</span>
-              Toque no ícone de compartilhar <strong className="text-text">□↑</strong> na barra do Safari
+          <p className="text-xs bg-yellow-500/10 text-yellow-400 rounded-lg px-3 py-2">
+            Abra esta página no <strong>Safari</strong> (não Chrome) para instalar
+          </p>
+          <ol className="space-y-4">
+            <li className="flex gap-3 items-start">
+              <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+              <span className="text-sm text-text-secondary">Toque em <strong className="text-text">⋯</strong> (três pontos) na barra de endereço do Safari</span>
             </li>
-            <li className="flex gap-3">
-              <span className="font-bold text-accent shrink-0">2.</span>
-              Role e selecione <strong className="text-text">"Adicionar à Tela de Início"</strong>
+            <li className="flex gap-3 items-start">
+              <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+              <span className="text-sm text-text-secondary">Toque em <strong className="text-text">"Compartilhar"</strong></span>
             </li>
-            <li className="flex gap-3">
-              <span className="font-bold text-accent shrink-0">3.</span>
-              Toque em <strong className="text-text">Adicionar</strong>
+            <li className="flex gap-3 items-start">
+              <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+              <span className="text-sm text-text-secondary">Role a lista e toque em <strong className="text-text">"Ver Mais"</strong></span>
+            </li>
+            <li className="flex gap-3 items-start">
+              <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
+              <span className="text-sm text-text-secondary">Selecione <strong className="text-text">"Adicionar à Tela de Início"</strong></span>
+            </li>
+            <li className="flex gap-3 items-start">
+              <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">5</span>
+              <span className="text-sm text-text-secondary">Toque em <strong className="text-text">Adicionar</strong> para confirmar</span>
             </li>
           </ol>
           <button
             onClick={() => setShowIosModal(false)}
-            className="w-full py-2 rounded-lg bg-accent/20 text-accent-hover text-sm font-medium hover:bg-accent/30 transition-colors"
+            className="w-full py-2.5 rounded-lg bg-accent/20 text-accent-hover text-sm font-medium hover:bg-accent/30 transition-colors"
           >
             Entendi
           </button>
@@ -342,23 +353,23 @@ export function AppLayout() {
               <X size={18} />
             </button>
           </div>
-          <ol className="space-y-3 text-sm text-text-secondary">
-            <li className="flex gap-3">
-              <span className="font-bold text-accent shrink-0">1.</span>
-              Toque no menu <strong className="text-text">⋮</strong> do Chrome
+          <ol className="space-y-4">
+            <li className="flex gap-3 items-start">
+              <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+              <span className="text-sm text-text-secondary">No Chrome, toque em <strong className="text-text">⋮</strong> (três pontos) no canto superior direito</span>
             </li>
-            <li className="flex gap-3">
-              <span className="font-bold text-accent shrink-0">2.</span>
-              Selecione <strong className="text-text">"Adicionar à tela inicial"</strong> ou <strong className="text-text">"Instalar app"</strong>
+            <li className="flex gap-3 items-start">
+              <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+              <span className="text-sm text-text-secondary">Selecione <strong className="text-text">"Adicionar à tela inicial"</strong> ou <strong className="text-text">"Instalar app"</strong></span>
             </li>
-            <li className="flex gap-3">
-              <span className="font-bold text-accent shrink-0">3.</span>
-              Confirme tocando em <strong className="text-text">Adicionar</strong>
+            <li className="flex gap-3 items-start">
+              <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+              <span className="text-sm text-text-secondary">Toque em <strong className="text-text">Adicionar</strong> para confirmar</span>
             </li>
           </ol>
           <button
             onClick={() => setShowAndroidModal(false)}
-            className="w-full py-2 rounded-lg bg-accent/20 text-accent-hover text-sm font-medium hover:bg-accent/30 transition-colors"
+            className="w-full py-2.5 rounded-lg bg-accent/20 text-accent-hover text-sm font-medium hover:bg-accent/30 transition-colors"
           >
             Entendi
           </button>
