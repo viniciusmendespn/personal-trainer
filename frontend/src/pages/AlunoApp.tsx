@@ -1212,6 +1212,13 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
 
   const tipo = ex.tipo_exercicio ?? 'FORCA'
 
+  const ultimaExec = useQuery({
+    queryKey: ['aluno-hist-ex', ex.nome],
+    queryFn: () => alunoApi.historicoExercicio(ex.nome),
+    enabled: open,
+    staleTime: 10 * 60_000,
+  })
+
   const save = useMutation({
     mutationFn: () => {
       if (tipo === 'PESO_CORPORAL') {
@@ -1307,23 +1314,54 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
         </div>
       )}
 
+      {ex.carga_negativa && (
+        <p className="text-xs text-info mt-1">Contrapeso — informe o peso retirado (ex: 10 kg)</p>
+      )}
+
       {feito && !open && (
         <p className="text-xs text-text-secondary mt-1">
           {ex.registrado!.map((s) => {
             if (tipo === 'PESO_CORPORAL') return `${s.reps ?? '-'} reps`
-            if (tipo === 'CARDIO') return `${s.reps ?? '-'}${s.carga ? ` · ${s.carga}` : ''}`
-            return `${s.carga ?? '-'}×${s.reps ?? '-'}`
+            if (tipo === 'CARDIO') return `${s.reps ?? '-'}${s.carga ? ` · RPE ${s.carga}` : ''}`
+            const cargaLabel = s.carga ? ` · ${ex.carga_negativa ? '−' : ''}${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
+            return `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}${cargaLabel}`
           }).join('   ')}
         </p>
       )}
 
       {open && (
         <div className="mt-3 space-y-2">
+          {/* F1 — última execução histórica como referência */}
+          {ultimaExec.data?.[0] && (
+            <p className="text-xs text-text-muted">
+              Última vez ({new Date(ultimaExec.data[0].data_hora).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}){': '}
+              {ultimaExec.data[0].series_exec.map((s) => {
+                if (tipo === 'PESO_CORPORAL') return `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}`
+                if (tipo === 'CARDIO') return `${s.reps ?? '-'}${s.carga ? ` · RPE ${s.carga}` : ''}`
+                const cargaLabel = s.carga ? ` · ${ex.carga_negativa ? '−' : ''}${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
+                return `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}${cargaLabel}`
+              }).join('   ')}
+            </p>
+          )}
+
           {rows.map((r, i) => (
             <div key={i} className="flex gap-2 items-center">
               <span className="text-xs text-text-muted w-12">
                 {tipo === 'CARDIO' ? `Bloco ${i + 1}` : `Sér ${i + 1}`}
               </span>
+              {/* F3 — reps antes de carga */}
+              <div className="relative flex-1">
+                <Input
+                  className={tipo === 'CARDIO' ? 'pr-16' : 'pr-10'}
+                  inputMode="decimal"
+                  placeholder={r.repsHint || '0'}
+                  value={r.reps}
+                  onChange={(e) => upd(i, 'reps', e.target.value.replace(/[^\d.]/g, ''))}
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">
+                  {tipo === 'CARDIO' ? 'dur/dist' : (ex.unidade_reps ?? 'reps')}
+                </span>
+              </div>
               {tipo !== 'PESO_CORPORAL' && (
                 <div className="relative flex-1">
                   <Input
@@ -1338,18 +1376,6 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
                   </span>
                 </div>
               )}
-              <div className="relative flex-1">
-                <Input
-                  className={tipo === 'CARDIO' ? 'pr-12' : 'pr-10'}
-                  inputMode="decimal"
-                  placeholder={r.repsHint || '0'}
-                  value={r.reps}
-                  onChange={(e) => upd(i, 'reps', e.target.value.replace(/[^\d.]/g, ''))}
-                />
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">
-                  {tipo === 'CARDIO' ? '' : (ex.unidade_reps ?? 'reps')}
-                </span>
-              </div>
               {rows.length > 1 && (
                 <button type="button" onClick={() => removeRow(i)} aria-label="Remover série" className="text-text-muted hover:text-danger">
                   <X size={14} />

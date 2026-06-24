@@ -823,6 +823,7 @@ function ExercicioForm({
   const [rmKg, setRmKg] = useState<string>(initial?.rm_kg != null ? String(initial.rm_kg) : '')
   const [linksUteis, setLinksUteis] = useState<string[]>(initial?.links_uteis ?? [])
   const [linksUteisExcluidos, setLinksUteisExcluidos] = useState<string[]>(initial?.links_uteis_excluidos ?? [])
+  const [cargaNegativa, setCargaNegativa] = useState(initial?.carga_negativa ?? false)
   const [substitutos, setSubstitutos] = useState<ExercicioSubstituto[]>(initial?.substitutos ?? [])
   const [substitutosExcluidos, setSubstitutosExcluidos] = useState<string[]>(initial?.substitutos_excluidos ?? [])
 
@@ -870,6 +871,7 @@ function ExercicioForm({
       video_url: vid || undefined,
       observacoes: obs || undefined,
       rm_kg: rmKg ? parseFloat(rmKg) : undefined,
+      carga_negativa: cargaNegativa || undefined,
       links_uteis: linksUteis.length ? linksUteis : undefined,
       links_uteis_excluidos: linksUteisExcluidos.length ? linksUteisExcluidos : undefined,
       substitutos: substitutos.length ? substitutos : undefined,
@@ -939,19 +941,33 @@ function ExercicioForm({
             value={obs} onChange={(e) => setObs(e.target.value)}
           />
           {tipo === 'FORCA' && (
-            <div>
-              <Input
-                label="1RM (kg)"
-                type="number"
-                min={1}
-                step={0.5}
-                value={rmKg}
-                onChange={(e) => setRmKg(e.target.value)}
-                placeholder="ex.: 100"
-              />
-              <p className="text-xs text-text-muted mt-1">
-                Carga máxima estimada para 1 repetição. Usada para calcular a Intensidade Relativa Média (IRM) na evolução.
-              </p>
+            <div className="space-y-3">
+              <div>
+                <Input
+                  label="1RM (kg)"
+                  type="number"
+                  min={1}
+                  step={0.5}
+                  value={rmKg}
+                  onChange={(e) => setRmKg(e.target.value)}
+                  placeholder="ex.: 100"
+                />
+                <p className="text-xs text-text-muted mt-1">
+                  Carga máxima estimada para 1 repetição. Usada para calcular a Intensidade Relativa Média (IRM) na evolução.
+                </p>
+              </div>
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 accent-accent"
+                  checked={cargaNegativa}
+                  onChange={(e) => setCargaNegativa(e.target.checked)}
+                />
+                <div>
+                  <p className="text-xs font-medium text-text-secondary">Carga negativa (contrapeso, ex: Graviton)</p>
+                  <p className="text-xs text-text-muted">O aluno informa quanto peso retira do seu corporal. Menos peso = mais difícil.</p>
+                </div>
+              </label>
             </div>
           )}
         </div>

@@ -295,6 +295,13 @@ def evolucao(exercicio_id: str, ctx: dict = Depends(get_current_aluno)):
     return sessao_service.evolucao_exercicio(ctx["aluno_id"], exercicio_id)
 
 
+@router.get("/exercicios/historico")
+def historico_exercicio_aluno(exercicio_nome: str, limit: int = 1, ctx: dict = Depends(get_current_aluno)):
+    """Último(s) registro(s) de um exercício — 1 GSI read. Nome passado pelo cliente (já presente no ExSessao)."""
+    chave = sessao_service.chave_exercicio(exercicio_nome)
+    return repo.clean_all(repo.query_gsi1_last(keys.gsi1_registro(ctx["aluno_id"], chave), limit))
+
+
 @router.get("/exercicios/{exercicio_id}/midia")
 def midia_exercicio_aluno(exercicio_id: str, ctx: dict = Depends(get_current_aluno)):
     """Vídeos/fotos (execução do aluno + correção do personal) anexados nesse exercício."""

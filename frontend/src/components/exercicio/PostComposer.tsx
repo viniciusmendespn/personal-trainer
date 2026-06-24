@@ -179,7 +179,8 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
               <button
                 key={t}
                 onClick={() => setTipoPersonal(t)}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs font-medium transition-all ${
+                disabled={loading}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs font-medium transition-all disabled:opacity-40 disabled:pointer-events-none ${
                   active ? c.color : 'border-border text-text-muted hover:border-border-strong'
                 }`}
               >
@@ -197,7 +198,8 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
               <button
                 key={t}
                 onClick={() => setTipoAluno(t)}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs font-medium transition-all ${
+                disabled={loading}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs font-medium transition-all disabled:opacity-40 disabled:pointer-events-none ${
                   active ? c.color : 'border-border text-text-muted hover:border-border-strong'
                 }`}
               >
@@ -208,11 +210,19 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
         </div>
       )}
 
+      {loading && stage && (
+        <p className="text-xs text-text-muted flex items-center gap-1.5 py-0.5">
+          <span className="inline-block h-3 w-3 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+          {stage === 'comprimindo' ? 'Comprimindo mídia…' : 'Enviando…'}
+        </p>
+      )}
+
       <Textarea
         rows={2}
         placeholder={cfg.placeholder}
         value={descricao}
         onChange={(e) => setDescricao(e.target.value)}
+        disabled={loading}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submit()
         }}
@@ -241,9 +251,9 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
 
       <div className="flex items-center gap-2">
         {showFileButton && (
-          <label className="inline-flex items-center gap-1 text-xs text-text-secondary cursor-pointer hover:text-text transition-colors">
+          <label className={`inline-flex items-center gap-1 text-xs transition-colors ${loading ? 'text-text-muted pointer-events-none opacity-40' : 'text-text-secondary cursor-pointer hover:text-text'}`}>
             <Paperclip size={13} /> Foto/vídeo
-            <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={onFileChange} />
+            <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={onFileChange} disabled={loading} />
           </label>
         )}
         <div className="flex-1" />

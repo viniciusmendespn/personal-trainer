@@ -15,14 +15,14 @@ function fmtDt(iso: string) {
 function MediaGrid({ midias }: { midias: MidiaItem[] }) {
   if (!midias.length) return null
   return (
-    <div className="flex flex-wrap gap-1.5 pt-1">
+    <div className="flex flex-col gap-1.5 pt-1">
       {midias.map((m, i) =>
         m.url ? (
           m.tipo.startsWith('video') || m.tipo.includes('video') ? (
-            <video key={i} src={m.url} controls className="rounded-lg max-h-32 max-w-[150px] border border-border" />
+            <video key={i} src={m.url} controls preload="none" className="rounded-lg w-full max-h-56 border border-border" />
           ) : (
             <a key={i} href={m.url} target="_blank" rel="noreferrer">
-              <img src={m.url} alt="mídia" className="rounded-lg max-h-32 max-w-[150px] border border-border object-cover" />
+              <img src={m.url} alt="mídia" className="rounded-lg w-full max-h-56 border border-border object-cover" />
             </a>
           )
         ) : null,
@@ -46,12 +46,13 @@ interface BubbleProps {
 function Bubble({ ator, texto, midias = [], dataHora, isViewer, personalNome, personalFotoUrl, alunoNome, alunoFotoUrl }: BubbleProps) {
   const nome = ator === 'PERSONAL' ? (personalNome ?? 'Personal') : (alunoNome ?? 'Aluno')
   const fotoUrl = ator === 'PERSONAL' ? personalFotoUrl : alunoFotoUrl
+  const hasMedia = midias.length > 0
   return (
     <div className={`flex gap-2 ${isViewer ? 'flex-row-reverse' : 'flex-row'}`}>
       <div className="shrink-0 mt-0.5">
         <Avatar name={nome} imageUrl={fotoUrl} size="sm" />
       </div>
-      <div className={`max-w-[85%] rounded-xl px-3 py-2 space-y-0.5 ${
+      <div className={`${hasMedia ? 'flex-1 min-w-0' : 'max-w-[85%]'} rounded-xl px-3 py-2 space-y-0.5 ${
         isViewer
           ? 'bg-accent/20 border border-accent/30 rounded-tr-sm'
           : 'bg-white/5 border border-border rounded-tl-sm'
@@ -197,7 +198,7 @@ export function ThreadRelato({
         />
         <div className="flex items-center gap-2">
           {uploadMidia && (
-            <label className="inline-flex items-center gap-1 text-xs text-text-secondary cursor-pointer hover:text-text transition-colors">
+            <label className={`inline-flex items-center gap-1 text-xs transition-colors ${sending || isPending ? 'text-text-muted pointer-events-none opacity-40' : 'text-text-secondary cursor-pointer hover:text-text'}`}>
               <Paperclip size={12} /> Foto/vídeo
               <input
                 ref={fileInputRef}

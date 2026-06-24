@@ -68,6 +68,7 @@ export interface ExSessao {
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
+  carga_negativa?: boolean
   series_prescritas?: Array<{ series: number; reps: string; carga?: string }>
   video_url?: string
   observacoes?: string
@@ -138,6 +139,8 @@ export const alunoApi = {
     alunoClient.post<{ pr_novo?: number }>('/v1/aluno/registros', { series, exercicio_id, substituto_nome }).then((r) => r.data),
   resumo: () => alunoClient.get<Resumo>('/v1/aluno/resumo').then((r) => r.data),
   listExercicios: () => alunoClient.get<Exercicio[]>('/v1/aluno/exercicios').then((r) => r.data),
+  historicoExercicio: (exercicioNome: string) =>
+    alunoClient.get<Array<{ data_hora: string; series_exec: SerieInput[] }>>('/v1/aluno/exercicios/historico', { params: { exercicio_nome: exercicioNome, limit: 1 } }).then((r) => r.data),
   evolucao: (id: string) => alunoClient.get<Evolucao>(`/v1/aluno/exercicios/${id}/evolucao`).then((r) => r.data),
   listMidia: (exercicioId: string) =>
     alunoClient.get<MidiaExercicio[]>(`/v1/aluno/exercicios/${exercicioId}/midia`).then((r) => r.data),

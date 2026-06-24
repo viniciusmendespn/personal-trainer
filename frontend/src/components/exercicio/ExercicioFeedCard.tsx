@@ -32,14 +32,14 @@ function ItemAvatar({ ator, ctx }: { ator?: 'ALUNO' | 'PERSONAL'; ctx: AvatarCtx
 function MediaGrid({ midias }: { midias: NonNullable<FeedItem['midias']> }) {
   if (!midias.length) return null
   return (
-    <div className="flex flex-wrap gap-2 pt-1">
+    <div className="flex flex-col gap-2 pt-1">
       {midias.map((m, i) =>
         m.url ? (
           m.tipo.startsWith('video') || m.tipo.includes('video') ? (
-            <video key={i} src={m.url} controls preload="none" className="rounded-lg max-h-40 max-w-[180px] border border-border" />
+            <video key={i} src={m.url} controls preload="none" className="rounded-lg w-full max-h-56 border border-border" />
           ) : (
             <a key={i} href={m.url} target="_blank" rel="noreferrer">
-              <img src={m.url} alt="mídia" loading="lazy" className="rounded-lg max-h-40 max-w-[180px] border border-border object-cover" />
+              <img src={m.url} alt="mídia" loading="lazy" className="rounded-lg w-full max-h-56 border border-border object-cover" />
             </a>
           )
         ) : null,
@@ -62,12 +62,13 @@ function ReadOnlyBubble({
   ctx: AvatarCtx
 }) {
   if (!texto && !midias?.length) return null
+  const hasMedia = (midias?.length ?? 0) > 0
   return (
     <div className="flex gap-2 mt-2">
       <div className="shrink-0 mt-0.5">
         <ItemAvatar ator={ator} ctx={ctx} />
       </div>
-      <div className="max-w-[85%] rounded-xl rounded-tl-sm px-3 py-2 bg-white/5 border border-border space-y-0.5">
+      <div className={`${hasMedia ? 'flex-1 min-w-0' : 'max-w-[85%]'} rounded-xl rounded-tl-sm px-3 py-2 bg-white/5 border border-border space-y-0.5`}>
         {texto && <p className="text-xs text-text leading-snug whitespace-pre-wrap">{texto}</p>}
         <MediaGrid midias={midias ?? []} />
         <p className="text-[10px] text-text-muted">{fmtDt(dataHora)}</p>
