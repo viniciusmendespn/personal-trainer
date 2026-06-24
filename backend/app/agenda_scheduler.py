@@ -12,8 +12,8 @@ logger.setLevel(logging.INFO)
 
 def handler(event, context):
     now = datetime.now(timezone.utc)
-    start_dt = now - timedelta(minutes=2)
-    end_dt = now + timedelta(minutes=6)
+    start_dt = now - timedelta(minutes=7)
+    end_dt = now
     start_iso = start_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
     end_iso = end_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
