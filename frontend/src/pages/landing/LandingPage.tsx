@@ -48,7 +48,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      navigate('/alunos', { replace: true })
+      navigate('/dashboard', { replace: true })
     }
   }, [user, isLoading, navigate])
 
