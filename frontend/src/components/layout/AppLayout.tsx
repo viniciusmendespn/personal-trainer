@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Brain, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronUp, HelpCircle, CreditCard, Download, Smartphone } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, LayoutTemplate, Bell, BookOpen, Brain, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronUp, HelpCircle, CreditCard, Download, Smartphone, Sun, Moon, Monitor } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
+import { useTheme, type ThemeChoice } from '../../context/ThemeContext'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
 import { personalApi } from '../../api/personal'
 import { Avatar } from '../ui'
@@ -41,6 +42,16 @@ function SidebarContent({ unread, onNavigate, showInstallBtn, isIos, onInstall }
   const profile = useQuery({ queryKey: ['personal-profile'], queryFn: personalApi.getProfile, staleTime: 300_000 })
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const { theme, setTheme } = useTheme()
+
+  const THEME_CYCLE: ThemeChoice[] = ['dark', 'light', 'system']
+  const ThemeIcon = theme === 'light' ? Sun : theme === 'system' ? Monitor : Moon
+  const themeLabel = theme === 'light' ? 'Claro' : theme === 'system' ? 'Automático' : 'Escuro'
+
+  function cycleTheme() {
+    const next = THEME_CYCLE[(THEME_CYCLE.indexOf(theme) + 1) % THEME_CYCLE.length]
+    setTheme(next)
+  }
 
   const link = (active: boolean) =>
     `flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
@@ -136,6 +147,13 @@ function SidebarContent({ unread, onNavigate, showInstallBtn, isIos, onInstall }
             >
               <Settings size={15} /> Configurações
             </NavLink>
+            <button
+              onClick={cycleTheme}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-white/5 hover:text-text transition-colors"
+            >
+              <ThemeIcon size={15} />
+              <span>Tema: {themeLabel}</span>
+            </button>
             <div className="border-t border-border/40 my-0.5" />
             <button
               onClick={() => { signOut(); closeMenu() }}
