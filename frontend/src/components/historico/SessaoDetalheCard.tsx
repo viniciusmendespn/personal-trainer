@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Clock, Wrench } from 'lucide-react'
 import { treinosApi } from '../../api/treinos'
 import { alunoApi } from '../../api/alunoApp'
+import { alunosApi } from '../../api/alunos'
+import { personalApi } from '../../api/personal'
 import { MediaTimeline, type MediaTimelineItem } from '../media/MediaTimeline'
 import { ExercicioFeedCard } from '../exercicio/ExercicioFeedCard'
 import { PostComposer } from '../exercicio/PostComposer'
@@ -86,6 +88,8 @@ function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
   const tipo = ex.tipo_exercicio ?? 'FORCA'
   const prescrito = prescritoLabel(ex)
   const [correcaoOpen, setCorrecaoOpen] = useState(false)
+  const { data: aluno } = useQuery({ queryKey: ['aluno', alunoId], queryFn: () => alunosApi.get(alunoId!), enabled: !!alunoId })
+  const { data: myProfile } = useQuery({ queryKey: ['personal-profile'], queryFn: personalApi.getProfile, enabled: !!alunoId })
   const midiaItems: MediaTimelineItem[] = (ex.midia ?? []).map((m) => ({
     midia_id: m.midia_id,
     tipo: m.tipo,
@@ -143,7 +147,13 @@ function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
       )}
 
       {relatos.length > 0 && (
-        <ExercicioFeedCard items={relatos} />
+        <ExercicioFeedCard
+          items={relatos}
+          alunoNome={aluno?.nome}
+          alunoFotoUrl={aluno?.foto_url}
+          personalNome={myProfile?.nome}
+          personalFotoUrl={myProfile?.foto_url}
+        />
       )}
 
       {alunoId && (

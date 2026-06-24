@@ -14,7 +14,7 @@ import { useAlunos } from '../hooks/useAlunos'
 import { useBiblioteca } from '../hooks/useDominio'
 import { useTemplates } from '../hooks/useTemplates'
 import { wapiApi } from '../api/wapi'
-import { Card, StatCard, SkeletonCard, EmptyState, Avatar, Badge } from '../components/ui'
+import { Card, StatCard, Skeleton, SkeletonLine, EmptyState, Avatar, Badge } from '../components/ui'
 import { tempoRelativo } from '../utils/datetime'
 
 const chartTip = {
@@ -181,8 +181,80 @@ export function DashboardPage() {
       )}
 
       {isLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+        <div className="space-y-4">
+          {/* Row 1: KPIs */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[0, 1].map((i) => (
+              <Card key={i} variant="elevated" className="flex items-start gap-3 h-full">
+                <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
+                <div className="flex gap-4 flex-1">
+                  <div className="space-y-1.5 flex-1">
+                    <SkeletonLine width="w-10" />
+                    <Skeleton className="h-8 w-10 rounded-md" />
+                  </div>
+                  <div className="w-px self-stretch bg-border" />
+                  <div className="space-y-1.5 flex-1">
+                    <SkeletonLine width="w-12" />
+                    <Skeleton className="h-8 w-10 rounded-md" />
+                  </div>
+                </div>
+              </Card>
+            ))}
+            <Card variant="elevated" className="flex items-start gap-3">
+              <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
+              <div className="space-y-1.5 flex-1">
+                <SkeletonLine width="w-20" />
+                <Skeleton className="h-8 w-12 rounded-md" />
+              </div>
+            </Card>
+          </div>
+          {/* Row 2: Métricas */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[0, 1].map((i) => (
+              <Card key={i} variant="elevated" className="flex items-start gap-3">
+                <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
+                <div className="space-y-1.5 flex-1">
+                  <SkeletonLine width="w-20" />
+                  <Skeleton className="h-8 w-14 rounded-md" />
+                  <SkeletonLine width="w-24" />
+                </div>
+              </Card>
+            ))}
+            <div className="grid grid-cols-2 gap-3 col-span-2 sm:col-span-1">
+              {[0, 1].map((i) => (
+                <Card key={i} variant="elevated" className="flex flex-col items-center justify-center gap-2 py-3">
+                  <Skeleton className="w-5 h-5 rounded" />
+                  <SkeletonLine width="w-14" />
+                </Card>
+              ))}
+            </div>
+          </div>
+          {/* Row 3: Gráficos */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {[0, 1].map((i) => (
+              <Card key={i} variant="elevated">
+                <SkeletonLine width="w-40" className="mb-3" />
+                <Skeleton className="w-full h-40 rounded-lg" />
+              </Card>
+            ))}
+          </div>
+          {/* Row 4: Eventos + Atividade */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {[0, 1].map((i) => (
+              <Card key={i} variant="elevated" className="space-y-3">
+                <SkeletonLine width="w-36" />
+                {[0, 1, 2].map((j) => (
+                  <div key={j} className="flex items-center gap-3">
+                    <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                      <SkeletonLine width="w-32" />
+                      <SkeletonLine width="w-20" />
+                    </div>
+                  </div>
+                ))}
+              </Card>
+            ))}
+          </div>
         </div>
       ) : !data?.alunos ? (
         <EmptyState
@@ -239,14 +311,16 @@ export function DashboardPage() {
               </div>
             </Card>
 
-            {/* Notificações */}
-            <StatCard
-              icon={<Bell />}
-              label="Notificações"
-              value={data.notificacoes_nao_lidas ?? 0}
-              tone="danger"
-              to="/notificacoes"
-            />
+            {/* Notificações — col-span-2 no mobile para evitar espaço em branco ao lado */}
+            <div className="col-span-2 sm:col-span-1">
+              <StatCard
+                icon={<Bell />}
+                label="Notificações"
+                value={data.notificacoes_nao_lidas ?? 0}
+                tone="danger"
+                to="/notificacoes"
+              />
+            </div>
           </div>
 
           {/* ── Row 2: Métricas + atalhos ── */}

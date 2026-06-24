@@ -13,7 +13,7 @@ import { FeedGlobalTab } from '../components/feed/FeedGlobalTab'
 import { PontosWidget } from '../components/gamificacao/PontosWidget'
 import { RankingList } from '../components/gamificacao/RankingList'
 import { useAlunoChat, useSendAlunoChat, useSendDiretoAlunoChat } from '../hooks/useAlunoChat'
-import { useSplash, SplashScreen } from '../components/ui/SplashScreen'
+import { SplashScreen } from '../components/ui/SplashScreen'
 import { useAlunoTimeline } from '../hooks/useAlunoTimeline'
 import { ChatThread } from '../components/chat/ChatThread'
 import { ChatInputBar } from '../components/chat/ChatInputBar'
@@ -358,7 +358,6 @@ export function AlunoApp() {
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
   const [showIosModal, setShowIosModal] = useState(false)
   const [showAndroidModal, setShowAndroidModal] = useState(false)
-  const splashVisible = useSplash()
   const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false, staleTime: 0, refetchOnWindowFocus: true, refetchInterval: 30_000 })
 
   useEffect(() => {
@@ -407,7 +406,7 @@ export function AlunoApp() {
       </Centered>
     )
   }
-  if (!sessionConfirmed) return <Centered><Spinner /></Centered>
+  if (!sessionConfirmed) return <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" srcLight="/novo-logo-slogan-vertical-brancosemfundo.png" rounded={false} />
 
   return (
     <AlunoErrorBoundary onCrash={() => setDisabled(true)}>
@@ -607,7 +606,6 @@ export function AlunoApp() {
       </div>
     )}
 
-    {splashVisible && <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" srcLight="/novo-logo-slogan-vertical-brancosemfundo.png" rounded={false} />}
     </AlunoErrorBoundary>
   )
 }

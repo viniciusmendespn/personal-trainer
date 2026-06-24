@@ -12,7 +12,7 @@ import { ChatContextProvider } from '../../context/ChatContext'
 import { TrialBanner } from '../billing/TrialBanner'
 import { RenewalBanner } from '../billing/RenewalBanner'
 import { usePushPersonal } from '../../hooks/usePushPersonal'
-import { useSplash, SplashScreen } from '../ui/SplashScreen'
+// SplashScreen removido — carregamento unificado via Suspense em App.tsx
 import { getInstallPrompt } from '../../lib/installPrompt'
 
 const NAV_ITEMS = [
@@ -198,7 +198,6 @@ export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [showIosModal, setShowIosModal] = useState(false)
   const [showAndroidModal, setShowAndroidModal] = useState(false)
-  const splashVisible = useSplash()
   const location = useLocation()
   const { requestAndSubscribe } = usePushPersonal()
 
@@ -377,7 +376,6 @@ export function AppLayout() {
       </div>
     )}
 
-    {splashVisible && <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" srcLight="/novo-logo-slogan-vertical-brancosemfundo.png" rounded={false} />}
     </ChatContextProvider>
   )
 }

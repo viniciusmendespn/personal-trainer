@@ -14,6 +14,7 @@ import { PostComposer } from '../components/exercicio/PostComposer'
 import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
 import { renderNodeToPdf } from '../utils/exportPdf'
 import { treinosApi } from '../api/treinos'
+import { personalApi } from '../api/personal'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -42,6 +43,7 @@ export function AlunoEvolucaoPage() {
   const [searchParams] = useSearchParams()
   const highlightExId = searchParams.get('highlight') ?? undefined
   const { data: aluno } = useAluno(alunoId)
+  const { data: myProfile } = useQuery({ queryKey: ['personal-profile'], queryFn: personalApi.getProfile })
   const { data: exercicios } = useExerciciosAluno(alunoId)
   const { data: resumo } = useResumo(alunoId)
   const [exId, setExId] = useState(highlightExId ?? '')
@@ -387,6 +389,10 @@ const chartData = (evo?.serie ?? [])
                 items={feed ?? []}
                 emptyText="Nenhuma postagem ainda."
                 viewerAtor="PERSONAL"
+                alunoNome={aluno?.nome}
+                alunoFotoUrl={aluno?.foto_url}
+                personalNome={myProfile?.nome}
+                personalFotoUrl={myProfile?.foto_url}
                 uploadMidia={async (file) => {
                   const { upload_url, s3_key } = await treinosApi.uploadUrlMidia(alunoId, file.name, file.type)
                   await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })

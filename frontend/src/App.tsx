@@ -6,7 +6,8 @@ import { Amplify } from 'aws-amplify'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './auth/AuthProvider'
 import { ProtectedRoute } from './auth/ProtectedRoute'
-import { ToastProvider, ConfirmProvider, Spinner } from './components/ui'
+import { ToastProvider, ConfirmProvider } from './components/ui'
+import { SplashScreen } from './components/ui/SplashScreen'
 import { LoginPage } from './auth/LoginPage'
 import { SignUpPage } from './auth/SignUpPage'
 import { ForgotPasswordPage } from './auth/ForgotPasswordPage'
@@ -40,11 +41,7 @@ const DivulgadoresPage = lazy(() => import('./pages/landing/DivulgadoresPage').t
 const PlanoPage = lazy(() => import('./pages/PlanoPage').then((m) => ({ default: m.PlanoPage })))
 
 function PageFallback() {
-  return (
-    <div className="flex justify-center items-center min-h-[50vh]">
-      <Spinner />
-    </div>
-  )
+  return <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" srcLight="/novo-logo-slogan-vertical-brancosemfundo.png" rounded={false} />
 }
 
 function lazyPage(element: ReactNode) {
