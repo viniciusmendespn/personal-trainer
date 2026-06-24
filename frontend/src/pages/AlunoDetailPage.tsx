@@ -1159,7 +1159,7 @@ function ExercicioMediaModal({
         <div>
           <label className={`inline-flex items-center gap-1.5 text-sm cursor-pointer px-3 py-2 rounded-lg border border-border hover:bg-surface-elevated transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
             <Camera size={14} />
-            {uploading ? 'Enviando…' : 'Anexar (foto ou vídeo)'}
+            {uploading ? 'Enviando…' : 'Anexar correção (foto ou vídeo)'}
             <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" disabled={uploading} onChange={handleUpload} />
           </label>
           <p className="text-xs text-text-muted mt-1">Visible ao aluno na aba Evolução.</p>

@@ -168,15 +168,7 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
   }
 
   return (
-    <div className="relative rounded-lg border border-border bg-surface p-3 space-y-3">
-      {loading && (
-        <div className="absolute inset-0 z-10 rounded-lg bg-surface/80 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2">
-          <span className="inline-block h-5 w-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-          <span className="text-xs text-text-muted">
-            {stage === 'comprimindo' ? 'Comprimindo mídia…' : 'Enviando…'}
-          </span>
-        </div>
-      )}
+    <div className="rounded-lg border border-border bg-surface p-3 space-y-3">
       {/* Seletor de tipo */}
       {isPersonal ? (
         <div className="flex gap-1.5 flex-wrap">
@@ -216,6 +208,13 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
             )
           })}
         </div>
+      )}
+
+      {loading && stage && (
+        <p className="text-xs text-text-muted flex items-center gap-1.5 py-0.5">
+          <span className="inline-block h-3 w-3 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+          {stage === 'comprimindo' ? 'Comprimindo mídia…' : 'Enviando…'}
+        </p>
       )}
 
       <Textarea
@@ -270,7 +269,7 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
           onClick={submit}
           disabled={loading || (!descricao.trim() && !files.length)}
         >
-          <Send size={13} /> Enviar
+          <Send size={13} /> {stage === 'comprimindo' ? 'Comprimindo…' : loading ? 'Enviando…' : 'Enviar'}
         </Button>
       </div>
     </div>
