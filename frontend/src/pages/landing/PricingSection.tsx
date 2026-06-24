@@ -143,7 +143,7 @@ export default function PricingSection() {
           <div style={{
             background: 'linear-gradient(160deg, #0f172a 0%, #060a14 100%)',
             borderRadius: 20,
-            padding: 32,
+            padding: '48px 32px 32px',
             border: '1.5px solid rgba(20,184,166,0.3)',
             boxShadow: '0 20px 60px rgba(20,184,166,0.15)',
             position: 'relative',
@@ -164,16 +164,11 @@ export default function PricingSection() {
             }}>
               <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>Mais indicado</span>
             </div>
-            <div style={{
-              position: 'absolute', top: 16, left: 16,
-              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-              borderRadius: 20, padding: '4px 12px',
-            }}>
-              <span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>Promo Lançamento</span>
-            </div>
-
-            <div style={{ marginBottom: 24, position: 'relative' }}>
-              <div style={{ color: '#14b8a6', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Gestão Pro</div>
+            <div style={{ marginBottom: 24, position: 'relative', paddingTop: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <div style={{ color: '#14b8a6', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Gestão Pro</div>
+                <span style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase' as const, letterSpacing: 0.5, whiteSpace: 'nowrap' as const }}>Promo</span>
+              </div>
               <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, textDecoration: 'line-through', marginBottom: 4 }}>De R$69,90/mês</div>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, marginBottom: 6 }}>
                 <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 18, marginBottom: 6 }}>R$</span>

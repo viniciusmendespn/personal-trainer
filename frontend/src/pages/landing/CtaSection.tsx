@@ -32,7 +32,7 @@ export default function CtaSection() {
           borderRadius: 20, padding: '6px 16px', marginBottom: 24,
         }}>
           <span style={{ fontSize: 16 }}>💪</span>
-          <span style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>Grátis até 3 alunos · Gestão Pro R$39,90/mês ↓ de R$69,90</span>
+          <span style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>Grátis até 3 alunos · Gestão Pro R$39,90/mês</span>
         </div>
 
         <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(28px, 5vw, 50px)', fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 18, letterSpacing: '-1px' }}>
