@@ -271,6 +271,11 @@ export interface AgendamentoCreate {
 export interface ExercicioTemplate {
   nome: string
   ordem?: number
+  tipo_exercicio?: TipoExercicio
+  grupo?: string
+  rm_kg?: number
+  unidade_carga?: string
+  unidade_reps?: string
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
@@ -278,6 +283,10 @@ export interface ExercicioTemplate {
   intervalo_s?: number
   video_url?: string
   observacoes?: string
+  links_uteis?: string[]
+  links_uteis_excluidos?: string[]
+  substitutos?: ExercicioSubstituto[]
+  substitutos_excluidos?: string[]
 }
 
 export interface TreinoTemplate {

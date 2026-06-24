@@ -2,13 +2,19 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+from app.models.enums import TipoExercicio
 from app.models.exercicio import ExercicioSubstituto, SeriePrescrita
 
 
 class ExercicioTemplate(BaseModel):
     nome: str
+    grupo: Optional[str] = None
     ordem: int = 0
     dia_semana: Optional[int] = None
+    tipo_exercicio: Optional[TipoExercicio] = TipoExercicio.FORCA
+    rm_kg: Optional[float] = None
+    unidade_carga: Optional[str] = None
+    unidade_reps: Optional[str] = None
     series: Optional[int] = None
     reps_prescritas: Optional[str] = None
     carga_prescrita: Optional[str] = None
@@ -16,6 +22,7 @@ class ExercicioTemplate(BaseModel):
     intervalo_s: Optional[int] = None
     video_url: Optional[str] = None
     observacoes: Optional[str] = None
+    links_uteis: list[str] = []
     links_uteis_excluidos: list[str] = []
     substitutos: list[ExercicioSubstituto] = []
     substitutos_excluidos: list[str] = []

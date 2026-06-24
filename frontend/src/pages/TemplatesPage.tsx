@@ -1,10 +1,12 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useId } from 'react'
 import { Trash2, Users, LayoutTemplate, Dumbbell, Pencil, Plus, X, Search } from 'lucide-react'
 import { useAlunos } from '../hooks/useAlunos'
 import { useTemplates, useCreateTemplate, useDeleteTemplate, useUpdateTemplate, useAplicarTemplate } from '../hooks/useTemplates'
+import { useBiblioteca } from '../hooks/useDominio'
 import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm } from '../components/ui'
 import { SeriesPrescritasEditor, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
-import type { ExercicioTemplate, TreinoTemplate, SeriePrescrita } from '../types'
+import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
+import type { ExercicioTemplate, TreinoTemplate, SeriePrescrita, TipoExercicio } from '../types'
 
 
 export function TemplatesPage() {
@@ -144,10 +146,18 @@ function AplicarForm({ template, onDone }: { template: TreinoTemplate; onDone: (
   )
 }
 
+const TIPO_OPTIONS: { value: TipoExercicio; label: string }[] = [
+  { value: 'FORCA', label: 'Força' },
+  { value: 'CARDIO', label: 'Cardio' },
+  { value: 'PESO_CORPORAL', label: 'Peso Corporal' },
+]
+
 function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () => void }) {
   const create = useCreateTemplate()
   const upd = useUpdateTemplate()
   const { show } = useToast()
+  const { data: biblioteca } = useBiblioteca()
+  const baseId = useId()
   const [nome, setNome] = useState(template?.nome ?? '')
   const [foco, setFoco] = useState(template?.foco ?? '')
   const [exercicios, setExercicios] = useState<ExercicioTemplate[]>(() =>
@@ -158,6 +168,11 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
   )
   const saving = create.isPending || upd.isPending
 
+  const gruposUnicos = useMemo(
+    () => Array.from(new Set((biblioteca ?? []).map((b) => b.grupo).filter(Boolean))) as string[],
+    [biblioteca]
+  )
+
   function updateEx(i: number, fields: Partial<ExercicioTemplate>) {
     setExercicios((exs) => exs.map((e, j) => (j === i ? { ...e, ...fields } : e)))
   }
@@ -165,7 +180,10 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
     setExercicios((exs) => exs.filter((_, j) => j !== i))
   }
   function addEx() {
-    setExercicios((exs) => [...exs, { nome: '', ordem: exs.length, series_prescritas: [{ series: 1, reps: '' }] }])
+    setExercicios((exs) => [
+      ...exs,
+      { nome: '', ordem: exs.length, tipo_exercicio: 'FORCA', series_prescritas: [{ series: 1, reps: '' }] },
+    ])
   }
 
   async function save(e: React.FormEvent) {
@@ -190,38 +208,130 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
       </div>
 
       <div className="space-y-3">
-        {exercicios.map((ex, i) => (
-          <Card key={i} variant="flat" className="relative">
-            <Button
-              type="button" variant="ghost" size="sm" iconOnly aria-label="Remover exercício"
-              onClick={() => removeEx(i)} className="absolute top-3 right-3 hover:text-danger"
-            >
-              <X size={15} />
-            </Button>
-            <div className="space-y-3 pr-8">
-              <div>
-                <p className="text-xs font-medium text-text-secondary mb-2">Identificação</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Input label="Exercício" className="col-span-2" value={ex.nome} onChange={(e) => updateEx(i, { nome: e.target.value })} />
+        {exercicios.map((ex, i) => {
+          const tipo = ex.tipo_exercicio ?? 'FORCA'
+          const nomeListId = `${baseId}-ex-${i}-nome`
+          const grupoListId = `${baseId}-ex-${i}-grupo`
+          return (
+            <Card key={i} variant="flat" className="relative">
+              <Button
+                type="button" variant="ghost" size="sm" iconOnly aria-label="Remover exercício"
+                onClick={() => removeEx(i)} className="absolute top-3 right-3 hover:text-danger"
+              >
+                <X size={15} />
+              </Button>
+              <div className="space-y-3 pr-8">
+
+                {/* Identificação */}
+                <div>
+                  <p className="text-xs font-medium text-text-secondary mb-2">Identificação</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      label="Exercício"
+                      className="col-span-2"
+                      list={nomeListId}
+                      value={ex.nome}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        const lib = biblioteca?.find((b) => b.nome.toLowerCase() === v.toLowerCase())
+                        updateEx(i, {
+                          nome: v,
+                          ...(lib?.grupo && !ex.grupo ? { grupo: lib.grupo } : {}),
+                        })
+                      }}
+                    />
+                    <Input
+                      label="Grupo muscular"
+                      list={grupoListId}
+                      value={ex.grupo ?? ''}
+                      onChange={(e) => updateEx(i, { grupo: e.target.value || undefined })}
+                    />
+                  </div>
+                  <datalist id={nomeListId}>
+                    {biblioteca?.map((b) => <option key={b.exlib_id} value={b.nome} />)}
+                  </datalist>
+                  <datalist id={grupoListId}>
+                    {gruposUnicos.map((g) => <option key={g} value={g} />)}
+                  </datalist>
                 </div>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-text-secondary mb-2">Prescrição — séries × reps · carga</p>
-                <SeriesPrescritasEditor
-                  value={ex.series_prescritas ?? []}
-                  onChange={(v: SeriePrescrita[]) => updateEx(i, { series_prescritas: v })}
+
+                {/* Tipo de exercício */}
+                <div>
+                  <p className="text-xs font-medium text-text-secondary mb-2">Tipo de exercício</p>
+                  <div className="flex gap-2">
+                    {TIPO_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => updateEx(i, { tipo_exercicio: opt.value })}
+                        className={`flex-1 text-xs py-1.5 px-2 rounded-lg border transition-colors ${
+                          tipo === opt.value
+                            ? 'border-accent bg-accent/10 text-accent-hover font-medium'
+                            : 'border-border text-text-muted hover:border-border-strong'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Prescrição */}
+                <div>
+                  <p className="text-xs font-medium text-text-secondary mb-2">
+                    {tipo === 'CARDIO'
+                      ? 'Prescrição — blocos × dur./dist. · RPE (1-10)'
+                      : 'Prescrição — séries × reps · carga'}
+                  </p>
+                  <SeriesPrescritasEditor
+                    value={ex.series_prescritas ?? []}
+                    onChange={(v: SeriePrescrita[]) => updateEx(i, { series_prescritas: v })}
+                    tipoExercicio={tipo}
+                    rm_kg={ex.rm_kg}
+                  />
+                </div>
+
+                {/* Vídeo, observações e 1RM */}
+                <div>
+                  <p className="text-xs font-medium text-text-secondary mb-2">Vídeo e observações</p>
+                  <div className="space-y-3">
+                    <Input label="Vídeo (URL)" value={ex.video_url ?? ''} onChange={(e) => updateEx(i, { video_url: e.target.value || undefined })} />
+                    <Textarea label="Observações" rows={2} value={ex.observacoes ?? ''} onChange={(e) => updateEx(i, { observacoes: e.target.value || undefined })} />
+                    {tipo === 'FORCA' && (
+                      <div>
+                        <Input
+                          label="1RM (kg)"
+                          type="number"
+                          min={1}
+                          step={0.5}
+                          placeholder="ex.: 100"
+                          value={ex.rm_kg != null ? String(ex.rm_kg) : ''}
+                          onChange={(e) => updateEx(i, { rm_kg: e.target.value ? parseFloat(e.target.value) : undefined })}
+                        />
+                        <p className="text-xs text-text-muted mt-1">
+                          Carga máxima estimada para 1 repetição. Usada para calcular a Intensidade Relativa Média (IRM) na evolução.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Substitutos */}
+                <SubstitutosTreinoEditor
+                  exercicioNome={ex.nome}
+                  biblioteca={biblioteca ?? []}
+                  seriesPrescritasOriginal={ex.series_prescritas ?? []}
+                  substitutos={ex.substitutos ?? []}
+                  onChangeSubstitutos={(v) => updateEx(i, { substitutos: v })}
+                  excluidos={ex.substitutos_excluidos ?? []}
+                  onChangeExcluidos={(v) => updateEx(i, { substitutos_excluidos: v })}
+                  tipoExercicio={tipo}
                 />
+
               </div>
-              <div>
-                <p className="text-xs font-medium text-text-secondary mb-2">Vídeo e observações</p>
-                <div className="space-y-3">
-                  <Input label="Vídeo (URL)" value={ex.video_url ?? ''} onChange={(e) => updateEx(i, { video_url: e.target.value || undefined })} />
-                  <Textarea label="Observações" rows={2} value={ex.observacoes ?? ''} onChange={(e) => updateEx(i, { observacoes: e.target.value || undefined })} />
-                </div>
-              </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          )
+        })}
       </div>
 
       <Button type="button" variant="ghost" size="sm" onClick={addEx}>
