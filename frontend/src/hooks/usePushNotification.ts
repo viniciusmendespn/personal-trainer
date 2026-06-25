@@ -65,7 +65,8 @@ export function usePushNotification() {
 
       let reg: ServiceWorkerRegistration
       try {
-        reg = await timeout(8_000, 'sw-ready', navigator.serviceWorker.ready)
+        // 45s: no primeiro uso o SW precisa instalar e precachear ~2.7MB — pode demorar em Android
+        reg = await timeout(45_000, 'sw-ready', navigator.serviceWorker.ready)
       } catch (e) {
         await report('sw-ready', e)
         throw e
