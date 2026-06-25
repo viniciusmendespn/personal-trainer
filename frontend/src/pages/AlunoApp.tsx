@@ -1420,14 +1420,22 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
       )}
 
       {feito && !open && (
-        <p className="text-xs text-text-secondary mt-1">
-          {ex.registrado!.map((s) => {
-            if (tipo === 'PESO_CORPORAL') return `${s.reps ?? '-'} reps`
-            if (tipo === 'CARDIO') return `${s.reps ?? '-'}${s.carga ? ` · RPE ${s.carga}` : ''}`
-            const cargaLabel = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
-            return `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}${cargaLabel}`
-          }).join('   ')}
-        </p>
+        <div className="flex flex-wrap gap-1.5 mt-1">
+          {ex.registrado!.map((s, i) => {
+            let label: string
+            if (tipo === 'PESO_CORPORAL') label = `${s.reps ?? '-'} reps`
+            else if (tipo === 'CARDIO') label = `${s.reps ?? '-'}${s.carga ? ` · RPE ${s.carga}` : ''}`
+            else {
+              const cargaLabel = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
+              label = `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}${cargaLabel}`
+            }
+            return (
+              <span key={i} className="text-xs text-text-secondary bg-white/5 rounded-md px-2 py-0.5">
+                {label}
+              </span>
+            )
+          })}
+        </div>
       )}
 
       {open && (
@@ -1441,7 +1449,7 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
                 if (tipo === 'CARDIO') return `${s.reps ?? '-'}${s.carga ? ` · RPE ${s.carga}` : ''}`
                 const cargaLabel = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
                 return `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}${cargaLabel}`
-              }).join('   ')}
+              }).join('  |  ')}
             </p>
           )}
 
