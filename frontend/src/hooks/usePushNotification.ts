@@ -41,14 +41,21 @@ export function usePushNotification() {
 
       const vapidKey = await pushApi.getVapidKey()
 
-      // Se o SW já controla a página, pular o navigator.serviceWorker.ready (fast-path).
-      // Caso contrário esperar normalmente (primeira instalação do PWA).
+      const hasController = !!navigator.serviceWorker.controller
+      await pushApi.reportError(
+        `sw-state: controller=${hasController}`,
+        `ua=${navigator.userAgent.slice(0, 80)}`
+      ).catch(() => {})
+
       let reg: ServiceWorkerRegistration
-      if (navigator.serviceWorker.controller) {
+      if (hasController) {
         reg = (await navigator.serviceWorker.getRegistration()) as ServiceWorkerRegistration
       } else {
+        // Primeira instalação — SW ainda precacheia ~2.7MB. Aguardar sem timeout.
         reg = await navigator.serviceWorker.ready
       }
+
+      await pushApi.reportError('sw-ready-ok', `active=${!!reg?.active}`).catch(() => {})
 
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
