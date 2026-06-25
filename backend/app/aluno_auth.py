@@ -25,11 +25,10 @@ _SESSION_TTL = 2592000 # 30 dias
 
 def issue_code(aluno_id: str, personal_id: str) -> str:
     code = str(uuid.uuid4())
-    repo.put_item({
-        "PK": f"CODE#{code}", "SK": "META",
-        "aluno_id": aluno_id, "personal_id": personal_id,
-        "ttl": int(time.time()) + _CODE_TTL,
-    })
+    repo.put_item(
+        f"CODE#{code}", "META",
+        {"aluno_id": aluno_id, "personal_id": personal_id, "ttl": int(time.time()) + _CODE_TTL},
+    )
     return code
 
 
@@ -39,11 +38,10 @@ def redeem_code(code: str) -> dict | None:
         return None
     repo.delete_item(f"CODE#{code}", "META")
     session_id = str(uuid.uuid4())
-    repo.put_item({
-        "PK": f"SESSION#{session_id}", "SK": "META",
-        "aluno_id": item["aluno_id"], "personal_id": item["personal_id"],
-        "ttl": int(time.time()) + _SESSION_TTL,
-    })
+    repo.put_item(
+        f"SESSION#{session_id}", "META",
+        {"aluno_id": item["aluno_id"], "personal_id": item["personal_id"], "ttl": int(time.time()) + _SESSION_TTL},
+    )
     return {
         "session_id": session_id,
         "aluno_id": item["aluno_id"],
