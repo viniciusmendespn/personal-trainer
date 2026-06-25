@@ -15,7 +15,7 @@ from app.config import settings
 from app.repositories import dynamo_repo as repo
 
 _ALGO = "HS256"
-_CODE_TTL = 900        # 15 minutos
+_CODE_TTL = 172800     # 48 horas — tempo para o aluno abrir o link
 _SESSION_TTL = 2592000 # 30 dias
 
 

@@ -70,8 +70,7 @@ function useAlunoSession() {
       const code = u.searchParams.get('code')
 
       if (code) {
-        u.searchParams.delete('code')
-        window.history.replaceState({}, '', u.pathname)
+        window.history.replaceState({}, '', '/')
         try {
           await alunoClient.post('/v1/aluno/auth/redeem', { code })
         } catch {
