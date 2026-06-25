@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info, Repeat, Zap } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, BellRing, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info, Repeat, Zap } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -308,9 +308,10 @@ class AlunoErrorBoundary extends React.Component<
 
 export function AlunoApp() {
   const { session, loading: sessionLoading } = useAlunoSession()
+  const qc = useQueryClient()
   const [disabled, setDisabled] = useState(false)
   const [profileConfirmed, setProfileConfirmed] = useState(false)
-  const { requestAndSubscribe } = usePushNotification()
+  const { requestAndSubscribe, permission, isSubscribed } = usePushNotification()
   const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'feed' | 'personal'>('hoje')
   const [highlightExId, setHighlightExId] = useState<string | undefined>(undefined)
   const [chatOpen, setChatOpen] = useState(false)
@@ -320,6 +321,9 @@ export function AlunoApp() {
   const [helpOpen, setHelpOpen] = useState(false)
   const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+  // Botão para ativar notificações: iOS (exige gesto + app instalado) e Android como fallback
+  const podeAtivarNotif =
+    'Notification' in window && permission === 'default' && !isSubscribed && (!isIos || isStandalone)
   const [showIosModal, setShowIosModal] = useState(false)
   const [showAndroidModal, setShowAndroidModal] = useState(false)
   const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!session, retry: false, staleTime: 0, refetchOnWindowFocus: true, refetchInterval: 30_000 })
@@ -335,11 +339,36 @@ export function AlunoApp() {
   }, [me.isSuccess])
 
   useEffect(() => {
-    // Roda sempre que permission != denied — lida com rotação de chave VAPID silenciosamente
-    if (profileConfirmed && 'Notification' in window && Notification.permission !== 'denied') {
+    // No iOS, requestPermission() só funciona via gesto do usuário (botão BellRing no header);
+    // aqui rodamos só fora do iOS. Em aberturas futuras com permissão já concedida, o useEffect
+    // de mount do próprio hook re-inscreve (rotação de chave VAPID) sem precisar de gesto.
+    if (profileConfirmed && !isIos && 'Notification' in window && Notification.permission !== 'denied') {
       requestAndSubscribe().catch(() => {})
     }
   }, [profileConfirmed]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Atualização automática das notificações (contador + lista): no iOS standalone não há
+  // pull-to-refresh e os timers do React Query congelam em segundo plano.
+  useEffect(() => {
+    const refreshNotif = () => {
+      qc.invalidateQueries({ queryKey: ['aluno-notif-count'] })
+      qc.invalidateQueries({ queryKey: ['aluno-notifs'] })
+    }
+    // Push chegou com o app aberto → o SW avisa via postMessage
+    const onSwMessage = (e: MessageEvent) => {
+      if ((e.data as { type?: string })?.type === 'push-received') refreshNotif()
+    }
+    // App voltou ao primeiro plano (reaberto)
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refreshNotif()
+    }
+    navigator.serviceWorker?.addEventListener('message', onSwMessage)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', onSwMessage)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [qc])
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -430,6 +459,17 @@ export function AlunoApp() {
           >
             <HelpCircle size={20} />
           </button>
+          {podeAtivarNotif && (
+            <button
+              onClick={() => { requestAndSubscribe().catch(() => {}) }}
+              className="relative p-1 text-text-muted hover:text-energy transition-colors"
+              aria-label="Ativar notificações"
+              title="Ativar notificações"
+            >
+              <BellRing size={20} />
+              <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-energy animate-pulse" />
+            </button>
+          )}
           <NotifBell onNavigate={handleNotifNavigate} onOpenChat={() => setChatOpen(true)} onFinanceiro={() => setTab('personal')} />
         </div>
       </header>

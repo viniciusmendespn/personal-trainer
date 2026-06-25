@@ -31,8 +31,13 @@ async function doSubscribe(vapidKey: string, reg: ServiceWorkerRegistration): Pr
   localStorage.setItem(LS_KEY, '1')
 }
 
+function currentPermission(): NotificationPermission {
+  return 'Notification' in window ? Notification.permission : 'denied'
+}
+
 export function usePushNotification() {
   const [isSubscribed, setIsSubscribed] = useState(false)
+  const [permission, setPermission] = useState<NotificationPermission>(currentPermission)
 
   // Quando SW ficar pronto (pode demorar no primeiro uso), tenta inscrever automaticamente
   // se o usuário já tinha concedido permissão numa tentativa anterior.
@@ -76,6 +81,7 @@ export function usePushNotification() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
     try {
       const permission = await Notification.requestPermission()
+      setPermission(permission)
       if (permission !== 'granted') return
 
       // Salvar que o usuário concedeu permissão — o useEffect re-tenta a inscrição
@@ -106,8 +112,9 @@ export function usePushNotification() {
       localStorage.removeItem(LS_KEY)
       localStorage.removeItem(LS_PERM_KEY)
       setIsSubscribed(false)
+      setPermission(currentPermission())
     } catch { /* best-effort */ }
   }
 
-  return { isSubscribed, requestAndSubscribe, unsubscribe }
+  return { isSubscribed, permission, requestAndSubscribe, unsubscribe }
 }

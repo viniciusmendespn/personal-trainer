@@ -24,7 +24,16 @@ self.addEventListener('push', (event) => {
     tag: (data.tag as string | undefined) ?? 'coachpilot',
     data: { url: data.url ?? '/' },
   }
-  event.waitUntil(self.registration.showNotification(title, options))
+  event.waitUntil(
+    Promise.all([
+      self.registration.showNotification(title, options),
+      // Avisa as janelas abertas para atualizarem o contador/lista de notificações na hora
+      // (no iOS standalone os timers do React Query ficam congelados em segundo plano).
+      self.clients
+        .matchAll({ type: 'window', includeUncontrolled: true })
+        .then((cs) => cs.forEach((c) => c.postMessage({ type: 'push-received' }))),
+    ])
+  )
 })
 
 self.addEventListener('notificationclick', (event) => {
