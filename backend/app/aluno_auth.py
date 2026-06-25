@@ -11,8 +11,8 @@ import uuid
 
 from jose import jwt
 
-from app import repo
 from app.config import settings
+from app.repositories import dynamo_repo as repo
 
 _ALGO = "HS256"
 _CODE_TTL = 900        # 15 minutos
