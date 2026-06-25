@@ -22,6 +22,11 @@ class UnsubscribeBody(BaseModel):
     endpoint: str
 
 
+class ErrorBody(BaseModel):
+    message: str
+    detail: str | None = None
+
+
 # ── Aluno ─────────────────────────────────────────────────────────────────────
 
 @router.get("/v1/aluno/push/vapid-key")
@@ -35,6 +40,11 @@ def vapid_key_aluno(ctx=Depends(get_current_aluno)):
 def subscribe_aluno(body: SubscribeBody, ctx=Depends(get_current_aluno)):
     logger.info("[push] subscribe aluno=%s endpoint=%.60s", ctx["aluno_id"], body.endpoint)
     push_service.save_subscription(ctx["aluno_id"], body.endpoint, body.p256dh, body.auth)
+
+
+@router.post("/v1/aluno/push/error", status_code=204)
+def push_error_aluno(body: ErrorBody, ctx=Depends(get_current_aluno)):
+    logger.error("[push] erro browser aluno=%s msg=%s detail=%s", ctx["aluno_id"], body.message, body.detail)
 
 
 @router.delete("/v1/aluno/push/subscribe", status_code=204)

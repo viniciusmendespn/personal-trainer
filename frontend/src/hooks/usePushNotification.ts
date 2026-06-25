@@ -44,6 +44,12 @@ export function usePushNotification() {
 
       const reg = await navigator.serviceWorker.ready
 
+      // Sempre remove subscription existente para evitar conflito de chave VAPID
+      const existing = await reg.pushManager.getSubscription()
+      if (existing) {
+        try { await existing.unsubscribe() } catch { /* ignora */ }
+      }
+
       let sub: PushSubscription
       try {
         sub = await reg.pushManager.subscribe({
@@ -51,17 +57,10 @@ export function usePushNotification() {
           applicationServerKey: vapidKey,
         })
       } catch (e) {
-        // Após rotação de chave VAPID: subscription existente com outra key → unsubscribe + retry
-        if (e instanceof DOMException && e.name === 'InvalidStateError') {
-          const existing = await reg.pushManager.getSubscription()
-          if (existing) await existing.unsubscribe()
-          sub = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: vapidKey,
-          })
-        } else {
-          throw e
-        }
+        const msg = e instanceof Error ? e.message : String(e)
+        const name = e instanceof DOMException ? e.name : 'unknown'
+        await pushApi.reportError(`pushManager.subscribe falhou: ${name}`, msg)
+        throw e
       }
 
       await pushApi.subscribe(sub.toJSON() as PushSubscriptionJSON)

@@ -18,6 +18,10 @@ export const pushApi = {
   async unsubscribe(endpoint: string): Promise<void> {
     await alunoClient.delete('/v1/aluno/push/subscribe', { data: { endpoint } })
   },
+
+  async reportError(message: string, detail?: string): Promise<void> {
+    await alunoClient.post('/v1/aluno/push/error', { message, detail }).catch(() => {})
+  },
 }
 
 export const pushPersonalApi = {
