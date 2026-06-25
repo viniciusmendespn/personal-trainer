@@ -50,24 +50,23 @@ O frontend usa **um único bucket S3** (`personal-trainer-frontend-prod-42121998
 | Portal (personal) | `E3JZ6U88Q0GYGF` | portal do personal trainer |
 | App do aluno | `E2IHNZ34C3PI8V` | `app.coachpilot.com.br` |
 
-O build (`npm run build`) gera um único `dist/` que serve as duas apps (o React Router diferencia
-pelo hostname/rota). O CloudFront do **portal** usa `index.html`; o CloudFront do **aluno** usa
-`aluno.html` (default root object + custom error pages 403/404). O build gera só `index.html` —
-por isso **todo deploy de frontend deve**:
+O build (`npm run build`) gera **dois HTML separados** via Rollup multi-entry: `dist/index.html`
+(portal) e `dist/aluno.html` (app do aluno). O CloudFront do **portal** usa `index.html`; o
+CloudFront do **aluno** usa `aluno.html` (default root object + custom error pages 403/404).
+**NÃO copiar index.html para aluno.html** — o build já gera o aluno.html correto com seu próprio
+manifest (`/aluno.webmanifest`) e bundle JS separado. O deploy de frontend é:
 
 ```powershell
 cd frontend
 npm run build
-# ⚠️ OBRIGATÓRIO: copiar index.html para aluno.html antes do sync
-Copy-Item dist\index.html dist\aluno.html
-# Sync (--delete remove arquivos obsoletos; aluno.html já está no dist agora)
+# ⚠️ NÃO executar Copy-Item — dist/aluno.html já é gerado pelo build multi-entry
+# Sync (--delete remove arquivos obsoletos)
 aws s3 sync dist/ s3://personal-trainer-frontend-prod-421219980792/ --delete --profile pessoal-hotmail --region us-east-1
 # Invalidar AS DUAS distribuições
 aws cloudfront create-invalidation --distribution-id E3JZ6U88Q0GYGF --paths "/*" --profile pessoal-hotmail
 aws cloudfront create-invalidation --distribution-id E2IHNZ34C3PI8V --paths "/*" --profile pessoal-hotmail
 ```
 
-Se esquecer o `Copy-Item`, o `--delete` apaga o `aluno.html` do S3 e o app do aluno fica com 403.
 Nunca invalidar só uma das distribuições — a outra ficaria com cache stale.
 
 > Replicar o `deploy.ps1` do gerenciador-financeiro com `$Profile = "pessoal-hotmail"` e os nomes acima.
