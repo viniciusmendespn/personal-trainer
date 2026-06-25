@@ -1,15 +1,12 @@
-import { createHandlerBoundToURL } from 'workbox-precaching'
-import { registerRoute, NavigationRoute } from 'workbox-routing'
+import { precacheAndRoute } from 'workbox-precaching'
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis
 
-// Redireciona navegação para aluno.html quando no domínio app.*
-if (self.location.hostname.startsWith('app.')) {
-  registerRoute(new NavigationRoute(createHandlerBoundToURL('/aluno.html')))
-}
-
-// Manifesto injetado pelo Vite — configurado para vazio em vite.config.ts
-// (precache de ~82 entradas travava o install em redes móveis lentas).
+// Precache vazio (globPatterns: [] em vite.config) — no-op. A referência a self.__WB_MANIFEST
+// é exigida pelo injectManifest do vite-plugin-pwa. A navegação SPA é resolvida pelo CloudFront
+// (default root object + custom error pages 403/404), não pelo SW — por isso não há NavigationRoute
+// aqui: createHandlerBoundToURL exige a URL no precache e, com precache vazio, lançava
+// WorkboxError('non-precached-url') no topo do script, abortando a instalação do SW.
 precacheAndRoute(self.__WB_MANIFEST)
 
 self.addEventListener('install', () => self.skipWaiting())

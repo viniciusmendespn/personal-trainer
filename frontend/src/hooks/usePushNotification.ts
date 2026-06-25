@@ -11,10 +11,21 @@ async function report(step: string, err: unknown): Promise<void> {
   await pushApi.reportError(`${step}: ${msg}`, detail).catch(() => {})
 }
 
+// iOS Safari exige applicationServerKey como BufferSource (Uint8Array); a string base64url
+// pura falha. Converter sempre garante Android + iOS.
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const raw = atob(base64)
+  const out = new Uint8Array(raw.length)
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i)
+  return out
+}
+
 async function doSubscribe(vapidKey: string, reg: ServiceWorkerRegistration): Promise<void> {
   const sub = await reg.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: vapidKey,
+    applicationServerKey: urlBase64ToUint8Array(vapidKey),
   })
   await pushApi.subscribe(sub.toJSON() as PushSubscriptionJSON)
   localStorage.setItem(LS_KEY, '1')
@@ -67,20 +78,17 @@ export function usePushNotification() {
       const permission = await Notification.requestPermission()
       if (permission !== 'granted') return
 
-      // Salvar que o usuário concedeu permissão — o useEffect finaliza a inscrição
-      // mesmo que o SW ainda esteja instalando quando o botão foi pressionado.
+      // Salvar que o usuário concedeu permissão — o useEffect re-tenta a inscrição
+      // (ex.: rotação de chave VAPID) mesmo em cargas futuras.
       localStorage.setItem(LS_PERM_KEY, '1')
 
       const vapidKey = await pushApi.getVapidKey()
 
-      if (navigator.serviceWorker.controller) {
-        // SW já controla a página — inscrever agora
-        const reg = (await navigator.serviceWorker.getRegistration()) as ServiceWorkerRegistration
-        await doSubscribe(vapidKey, reg)
-        localStorage.setItem(LS_KEY, '1')
-        setIsSubscribed(true)
-      }
-      // Se controller=null, o useEffect cuida quando SW ficar pronto
+      // O SW agora instala em ms (precache vazio), então ready resolve rápido. Inscrever
+      // direto pela registration de ready elimina a corrida com serviceWorker.controller.
+      const reg = await navigator.serviceWorker.ready
+      await doSubscribe(vapidKey, reg)
+      setIsSubscribed(true)
     } catch (e) {
       await report('requestAndSubscribe', e)
     }
