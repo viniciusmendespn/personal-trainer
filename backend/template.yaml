@@ -405,22 +405,14 @@ Resources:
       Name: !Sub "${ProjectName}-aluno-router-${Stage}"
       AutoPublish: true
       FunctionConfig:
-        Comment: "Redireciona / → /aluno; demais rotas SPA → aluno.html"
+        Comment: "SPA do aluno: assets pass-through, todo o resto serve aluno.html"
         Runtime: cloudfront-js-2.0
       FunctionCode: |
         function handler(event) {
-          var request = event.request;
-          var uri = request.uri;
-          if (uri === '/' || uri === '') {
-            return { statusCode: 302, headers: { location: { value: '/aluno' } } };
-          }
-          if (uri.indexOf('.') === -1) {
-            if (uri !== '/aluno' && uri.indexOf('/aluno/') !== 0) {
-              return { statusCode: 301, headers: { location: { value: 'https://coachpilot.com.br' + uri }, 'cache-control': { value: 'no-store' } } };
-            }
-            request.uri = '/aluno.html';
-          }
-          return request;
+          var uri = event.request.uri;
+          if (uri.lastIndexOf('.') > uri.lastIndexOf('/')) return event.request;
+          event.request.uri = '/aluno.html';
+          return event.request;
         }
 
   # ── S3 + CloudFront (frontend SPA — criar quando a conta estiver pronta) ─────

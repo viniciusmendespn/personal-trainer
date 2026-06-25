@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from 'react'
-import { createBrowserRouter, RouterProvider, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Amplify } from 'aws-amplify'
 
@@ -48,17 +48,6 @@ function lazyPage(element: ReactNode) {
   return <Suspense fallback={<PageFallback />}>{element}</Suspense>
 }
 
-function AlunoHostRedirect() {
-  const location = useLocation()
-  if (
-    window.location.hostname === 'app.coachpilot.com.br' &&
-    !location.pathname.startsWith('/aluno')
-  ) {
-    return <Navigate to="/aluno" replace />
-  }
-  return <Outlet />
-}
-
 Amplify.configure({
   Auth: {
     Cognito: {
@@ -76,14 +65,11 @@ const queryClient = new QueryClient({
 
 const router = createBrowserRouter([
   {
-    element: <AlunoHostRedirect />,
+    errorElement: <ErrorPage />,
     children: [
-      {
-        errorElement: <ErrorPage />,
-        children: [
-          { path: '/', element: <LandingPage /> },
-          { path: '/aluno', element: lazyPage(<AlunoApp />) },     // app do aluno (JWT do magic-link)
-          { path: '/cadastro', element: lazyPage(<CadastroPage />) },  // auto-cadastro via link de anamnese
+      { path: '/', element: <LandingPage /> },
+      { path: '/aluno', element: lazyPage(<AlunoApp />) },     // dev only — prod served by aluno.html bundle
+      { path: '/cadastro', element: lazyPage(<CadastroPage />) },  // auto-cadastro via link de anamnese
           { path: '/login', element: <LoginPage /> },
           { path: '/signup', element: <SignUpPage /> },
           { path: '/forgot-password', element: <ForgotPasswordPage /> },
@@ -121,9 +107,7 @@ const router = createBrowserRouter([
               },
             ],
           },
-          { path: '*', element: <ErrorPage /> },
-        ],
-      },
+      { path: '*', element: <ErrorPage /> },
     ],
   },
 ])

@@ -1,11 +1,12 @@
-"""App do aluno (ESPEC §1.5) — escopo limitado à própria partição, via JWT do magic-link.
-Sem Cognito (rota /v1/aluno/* com Authorizer NONE; o token é validado na Lambda)."""
+"""App do aluno (ESPEC §1.5) — escopo limitado à própria partição, via sessão DynamoDB +
+cookie HttpOnly. Rota /v1/aluno/* com Authorizer NONE; o cookie é validado na Lambda."""
 from datetime import date
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, model_validator
 
+from app import aluno_auth
 from app.dependencies import get_current_aluno
 from app.models.enums import Ator, CanalOrigem, Classificacao
 from app.models.registro import SerieExec
@@ -16,6 +17,50 @@ from app.services import agent_service, alerta_service, anotif_service, badge_se
 from app.utils import init_series_prescritas, new_id, now_iso
 
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
+
+_COOKIE_NAME = "__Host-cp_aluno_session"
+# __Host- prefix: Secure + Path=/ obrigatórios; Domain proibido (não passar domain= aqui)
+_COOKIE_OPTS: dict = dict(httponly=True, secure=True, samesite="lax", path="/", max_age=2592000)
+_ALUNO_ORIGIN = "app.coachpilot.com.br"
+
+
+class RedeemBody(BaseModel):
+    code: str
+
+
+def _require_aluno_origin(request: Request) -> None:
+    origin = request.headers.get("origin") or request.headers.get("referer", "")
+    if _ALUNO_ORIGIN not in origin:
+        raise HTTPException(403, "Origem não permitida")
+
+
+@router.post("/auth/redeem", status_code=204)
+def auth_redeem(body: RedeemBody, request: Request, response: Response):
+    _require_aluno_origin(request)
+    result = aluno_auth.redeem_code(body.code)
+    if not result:
+        raise HTTPException(400, "Código inválido ou expirado")
+    response.set_cookie(_COOKIE_NAME, result["session_id"], **_COOKIE_OPTS)
+
+
+@router.get("/auth/me")
+def auth_me(request: Request):
+    session_id = request.cookies.get(_COOKIE_NAME)
+    if not session_id:
+        raise HTTPException(401, "Sem sessão")
+    sess = aluno_auth.get_session(session_id)
+    if not sess:
+        raise HTTPException(401, "Sessão expirada")
+    aluno = repo.get_item(keys.pk_aluno(sess["aluno_id"]), keys.SK_PROFILE)
+    return {**sess, "nome": aluno.get("nome") if aluno else None}
+
+
+@router.post("/auth/logout", status_code=204)
+def auth_logout(request: Request, response: Response):
+    session_id = request.cookies.get(_COOKIE_NAME)
+    if session_id:
+        aluno_auth.delete_session(session_id)
+    response.delete_cookie(_COOKIE_NAME, path="/", secure=True)
 
 
 class AlunoProprioPerfil(BaseModel):

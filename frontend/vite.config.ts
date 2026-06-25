@@ -1,3 +1,4 @@
+import { resolve } from 'path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -44,6 +45,14 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      input: {
+        main:  resolve(__dirname, 'index.html'),
+        aluno: resolve(__dirname, 'aluno.html'),
+      },
+    },
+  },
   server: {
     port: 5174,
     proxy: {

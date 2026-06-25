@@ -8,7 +8,7 @@ import { alunoApi, type ExSessao, type SessaoAtiva, type SessaoHistorico, type P
 import { usePushNotification } from '../hooks/usePushNotification'
 import { SeriesPrescritasCompact } from '../components/exercicios/SeriesPrescritasEditor'
 import { AlunoSessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
-import { ALUNO_TOKEN_KEY } from '../api/alunoClient'
+import { alunoClient } from '../api/alunoClient'
 import { FeedGlobalTab } from '../components/feed/FeedGlobalTab'
 import { PontosWidget } from '../components/gamificacao/PontosWidget'
 import { RankingList } from '../components/gamificacao/RankingList'
@@ -58,26 +58,41 @@ function Centered({ children }: { children: React.ReactNode }) {
   )
 }
 
-function useAlunoToken() {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem(ALUNO_TOKEN_KEY))
+type AlunoSession = { aluno_id: string; personal_id: string; nome?: string } | null
+
+function useAlunoSession() {
+  const [session, setSession] = useState<AlunoSession>(null)
+  const [loading, setLoading] = useState(true)
+
   useEffect(() => {
-    const u = new URL(window.location.href)
-    const t = u.searchParams.get('token')
-    if (t) {
-      localStorage.setItem(ALUNO_TOKEN_KEY, t)
-      setToken(t)
-      // No iOS, localStorage é isolado entre Safari e web clips (atalhos da tela inicial).
-      // Só limpa o token da URL quando já está no modo standalone (PWA instalado),
-      // pois ao instalar via Safari o iOS captura a URL atual como start URL do atalho —
-      // mantendo o token na URL, cada abertura do atalho re-autentica via URL.
-      const isStandalone = (navigator as Navigator & { standalone?: boolean }).standalone === true
-      if (isStandalone) {
-        u.searchParams.delete('token')
+    async function init() {
+      const u = new URL(window.location.href)
+      const code = u.searchParams.get('code')
+
+      if (code) {
+        u.searchParams.delete('code')
         window.history.replaceState({}, '', u.pathname)
+        try {
+          await alunoClient.post('/v1/aluno/auth/redeem', { code })
+        } catch {
+          // code inválido ou expirado; tenta usar sessão existente
+        }
+      }
+
+      try {
+        const { data } = await alunoClient.get<AlunoSession>('/v1/aluno/auth/me')
+        setSession(data)
+      } catch {
+        setSession(null)
+      } finally {
+        setLoading(false)
       }
     }
+
+    init()
   }, [])
-  return token
+
+  return { session, loading }
 }
 
 function NotifBell({ onNavigate, onOpenChat, onFinanceiro }: {
@@ -343,9 +358,9 @@ class AlunoErrorBoundary extends React.Component<
 }
 
 export function AlunoApp() {
-  const token = useAlunoToken()
+  const { session, loading: sessionLoading } = useAlunoSession()
   const [disabled, setDisabled] = useState(false)
-  const [sessionConfirmed, setSessionConfirmed] = useState(false)
+  const [profileConfirmed, setProfileConfirmed] = useState(false)
   const { isSubscribed, requestAndSubscribe } = usePushNotification()
   const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'feed' | 'personal'>('hoje')
   const [highlightExId, setHighlightExId] = useState<string | undefined>(undefined)
@@ -358,7 +373,7 @@ export function AlunoApp() {
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
   const [showIosModal, setShowIosModal] = useState(false)
   const [showAndroidModal, setShowAndroidModal] = useState(false)
-  const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!token, retry: false, staleTime: 0, refetchOnWindowFocus: true, refetchInterval: 30_000 })
+  const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, enabled: !!session, retry: false, staleTime: 0, refetchOnWindowFocus: true, refetchInterval: 30_000 })
 
   useEffect(() => {
     const handler = () => setDisabled(true)
@@ -367,12 +382,12 @@ export function AlunoApp() {
   }, [])
 
   useEffect(() => {
-    if (me.isSuccess) setSessionConfirmed(true)
+    if (me.isSuccess) setProfileConfirmed(true)
   }, [me.isSuccess])
 
   useEffect(() => {
-    if (sessionConfirmed && !isSubscribed) requestAndSubscribe()
-  }, [sessionConfirmed]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (profileConfirmed && !isSubscribed) requestAndSubscribe()
+  }, [profileConfirmed]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -388,7 +403,15 @@ export function AlunoApp() {
     if (exId) setHighlightExId(exId)
   }
 
-  if (!token) return <Centered>Abra o aplicativo pelo link enviado no seu WhatsApp.</Centered>
+  if (sessionLoading) return <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" srcLight="/novo-logo-slogan-vertical-brancosemfundo.png" rounded={false} />
+  if (!session) return (
+    <Centered>
+      <div className="space-y-2">
+        <p className="font-semibold text-text">Acesso expirado</p>
+        <p className="text-sm">Seu acesso expirou. Peça um novo link ao seu personal.</p>
+      </div>
+    </Centered>
+  )
   if (disabled || me.isError) {
     const is403 = disabled || (me.error as { response?: { status?: number } })?.response?.status === 403
     return (
@@ -400,13 +423,13 @@ export function AlunoApp() {
               <p className="text-sm">Seu acesso foi desativado pelo seu personal. Entre em contato para reativar.</p>
             </>
           ) : (
-            'Seu link expirou. Peça um novo ao seu personal no WhatsApp.'
+            'Erro ao carregar seu perfil. Tente novamente mais tarde.'
           )}
         </div>
       </Centered>
     )
   }
-  if (!sessionConfirmed) return <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" srcLight="/novo-logo-slogan-vertical-brancosemfundo.png" rounded={false} />
+  if (!profileConfirmed) return <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" srcLight="/novo-logo-slogan-vertical-brancosemfundo.png" rounded={false} />
 
   return (
     <AlunoErrorBoundary onCrash={() => setDisabled(true)}>
@@ -455,7 +478,7 @@ export function AlunoApp() {
           >
             <HelpCircle size={20} />
           </button>
-          {token && <NotifBell onNavigate={handleNotifNavigate} onOpenChat={() => setChatOpen(true)} onFinanceiro={() => setTab('personal')} />}
+          <NotifBell onNavigate={handleNotifNavigate} onOpenChat={() => setChatOpen(true)} onFinanceiro={() => setTab('personal')} />
         </div>
       </header>
       {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}

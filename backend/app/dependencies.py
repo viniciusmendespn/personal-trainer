@@ -3,7 +3,7 @@ import json
 import time
 import urllib.request
 
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, Header, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwk, jwt
 
@@ -70,22 +70,23 @@ def get_current_personal_id(
     return personal_id
 
 
-def get_current_aluno(creds: HTTPAuthorizationCredentials = Depends(security)) -> dict:
-    """App do aluno: valida o JWT escopado (HS256) e devolve {aluno_id, personal_id}.
-    Checa o status do aluno a cada request (sem cache) pra desativação ter efeito imediato."""
+def get_current_aluno(request: Request) -> dict:
+    """App do aluno: lê cookie __Host-cp_aluno_session, valida sessão DynamoDB e
+    checa status do aluno a cada request para desativação ter efeito imediato."""
     from app import aluno_auth
     from app.models.enums import AlunoStatus
     from app.repositories import dynamo_repo as repo
     from app.repositories import keys
-    try:
-        payload = aluno_auth.verify_token(creds.credentials)
-    except Exception:
-        raise HTTPException(status_code=401, detail="Token de aluno inválido")
-    aluno_id = payload["aluno_id"]
-    aluno = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
+    session_id = request.cookies.get("__Host-cp_aluno_session")
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Sem sessão de aluno")
+    sess = aluno_auth.get_session(session_id)
+    if not sess:
+        raise HTTPException(status_code=401, detail="Sessão expirada")
+    aluno = repo.get_item(keys.pk_aluno(sess["aluno_id"]), keys.SK_PROFILE)
     if not aluno or aluno.get("status") != AlunoStatus.ATIVO:
         raise HTTPException(status_code=403, detail="Acesso desativado")
-    return {"aluno_id": aluno_id, "personal_id": payload["personal_id"]}
+    return sess
 
 
 def verify_wapi_webhook(secret: str) -> None:

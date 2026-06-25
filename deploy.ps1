@@ -62,24 +62,15 @@ function Deploy-Frontend {
     npm run build
     if ($LASTEXITCODE -ne 0) { Write-Host "Build falhou." -ForegroundColor Red; Set-Location ..; exit 1 }
 
-    # Gera aluno.html a partir de index.html com manifest e meta tags do app do aluno
-    # Usa "$PWD\dist" (interpolação PowerShell) em vez de GetFullPath — o .NET não
-    # segue Set-Location e resolveria relativo ao CWD do processo, não da função.
+    # Vite multi-entry gera dist/aluno.html diretamente com bundle separado.
+    # Só precisa trocar o manifest injetado pelo VitePWA (portal) pelo do aluno.
     $alunoPath = "$PWD\dist\aluno.html"
-    $html = Get-Content -Path dist\index.html -Raw -Encoding UTF8
-    # Remove o <link rel="manifest"> do aluno.html: iOS lê o manifest no parse do HTML
-    # (antes do JS rodar) e usa o start_url dele para o atalho, ignorando a URL atual.
-    # Sem manifest, iOS usa a URL atual (com ?token=) para o atalho da tela inicial.
-    # O ícone/nome/standalone continuam via meta tags apple-mobile-web-app-* no HTML.
-    # Android não precisa do manifest para funcionar (localStorage é compartilhado).
-    $html = $html -replace '<link rel="manifest" href="/manifest\.webmanifest">', ''
-    $html = $html -replace '(theme-color" content=")#000613(")', '${1}#16a34a${2}'
-    $html = $html -replace '(apple-mobile-web-app-title" content=")CoachPilot(")', '${1}Treinos${2}'
+    if (-not (Test-Path $alunoPath)) { Write-Host "ERRO: dist/aluno.html nao encontrado — verifique vite.config.ts multi-entry." -ForegroundColor Red; Set-Location ..; exit 1 }
+    $html = Get-Content -Path $alunoPath -Raw -Encoding UTF8
+    $html = $html -replace '<link rel="manifest" href="[^"]*">', '<link rel="manifest" href="/aluno.webmanifest">'
     [System.IO.File]::WriteAllText($alunoPath, $html, [System.Text.UTF8Encoding]::new($false))
-    $alunoSize = (Get-Item $alunoPath).Length
-    $indexSize = (Get-Item dist\index.html).Length
-    if ((Get-Content $alunoPath -Raw) -match 'rel="manifest"') { Write-Host "AVISO: manifest ainda presente no aluno.html — remocao nao aplicada!" -ForegroundColor Yellow }
-    Write-Host "aluno.html gerado ($alunoSize bytes vs index $indexSize bytes)." -ForegroundColor Cyan
+    if ((Get-Content $alunoPath -Raw) -notmatch 'href="/aluno\.webmanifest"') { Write-Host "AVISO: troca de manifest no aluno.html nao aplicada — conferir VitePWA." -ForegroundColor Yellow }
+    Write-Host "aluno.html: manifest -> /aluno.webmanifest" -ForegroundColor Cyan
 
     # index.html e aluno.html sem cache (ARCHITECTURE §10.2)
     aws s3 cp dist/index.html "s3://$Bucket/index.html" `
@@ -90,9 +81,14 @@ function Deploy-Frontend {
         --cache-control "no-cache, no-store, must-revalidate" `
         --content-type "text/html; charset=utf-8" `
         --region $Region --profile $Profile
-    # Manifestos PWA: sem cache (browsers precisam verificar atualizações do manifesto)
+    # Manifestos PWA (portal + aluno): sem cache
     aws s3 sync dist/ "s3://$Bucket/" --delete `
         --exclude "*" --include "*.webmanifest" `
+        --cache-control "no-cache, no-store, must-revalidate" `
+        --content-type "application/manifest+json" `
+        --region $Region --profile $Profile
+    # aluno.webmanifest vem de public/ e está em dist/ após build; garante que está no S3
+    aws s3 cp dist/aluno.webmanifest "s3://$Bucket/aluno.webmanifest" `
         --cache-control "no-cache, no-store, must-revalidate" `
         --content-type "application/manifest+json" `
         --region $Region --profile $Profile
