@@ -19,7 +19,7 @@ import { ChatThread } from '../components/chat/ChatThread'
 import { ChatInputBar } from '../components/chat/ChatInputBar'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
 import { PostComposer } from '../components/exercicio/PostComposer'
-import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSelect, SocialLinks, useToast, useConfirm, Modal } from '../components/ui'
+import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSelect, SocialLinks, useToast, useConfirm, Modal, RichTextContent } from '../components/ui'
 import { renderMarkdownLite } from '../components/chat/markdownLite'
 import { AlunoPerfilModal } from '../components/aluno/AlunoPerfilModal'
 import { alunoFinanceiroApi } from '../api/financeiro'
@@ -696,19 +696,19 @@ function SobrePersonalTab() {
       {profile?.biografia && (
         <Card>
           <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Sobre mim</p>
-          <p className="text-sm text-text whitespace-pre-wrap">{profile.biografia}</p>
+          <RichTextContent html={profile.biografia} />
         </Card>
       )}
       {profile?.experiencia_profissional && (
         <Card>
           <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Experiência profissional</p>
-          <p className="text-sm text-text whitespace-pre-wrap">{profile.experiencia_profissional}</p>
+          <RichTextContent html={profile.experiencia_profissional} />
         </Card>
       )}
       {profile?.formacao && (
         <Card>
           <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Formação</p>
-          <p className="text-sm text-text whitespace-pre-wrap">{profile.formacao}</p>
+          <RichTextContent html={profile.formacao} />
         </Card>
       )}
       {!profile?.biografia && !profile?.experiencia_profissional && !profile?.formacao && !isLoading && (

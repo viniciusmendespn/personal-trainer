@@ -54,7 +54,7 @@ export default function ComparisonSection() {
               <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>CoachPilot</span>
             </div>
             <div style={{ padding: '16px 24px', background: '#f8fefd', borderBottom: '2px solid rgba(20,184,166,0.15)', textAlign: 'center' }}>
-              <span style={{ color: '#475569', fontSize: 13, fontWeight: 600 }}>Planilha/Manual</span>
+              <span style={{ color: '#475569', fontSize: 13, fontWeight: 600 }}>Concorrentes</span>
             </div>
           </div>
 
