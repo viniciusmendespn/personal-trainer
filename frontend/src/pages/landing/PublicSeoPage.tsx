@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react'
 import LandingFooter from './LandingFooter'
-import { AppLogo } from '../../components/AppLogo'
 
 type PageKey =
   | 'software-personal-trainer'
@@ -329,11 +328,8 @@ export function PublicSeoPage({ pageKey }: { pageKey: PageKey }) {
     <div style={{ minHeight: '100vh', background: '#fff', color: '#0f172a' }}>
       <header style={{ background: '#060a14', borderBottom: '1px solid rgba(20,184,166,0.14)' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-            <AppLogo size={34} />
-            <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, color: '#fff', fontSize: 18 }}>
-              Coach<span style={{ color: '#14b8a6' }}>Pilot</span>
-            </span>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 52, width: 'auto' }} />
           </Link>
           <Link to="/" style={{ color: 'rgba(255,255,255,0.74)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600 }}>
             <ArrowLeft size={15} /> Voltar

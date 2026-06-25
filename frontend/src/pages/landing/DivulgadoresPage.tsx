@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, ArrowLeft, Check, ChevronDown, ChevronUp, Users, Share2, DollarSign, TrendingUp } from 'lucide-react'
 import LandingFooter from './LandingFooter'
-import { AppLogo } from '../../components/AppLogo'
 
 const WA_DIVULGADOR = 'https://wa.me/5513991830305?text=Oi%2C%20quero%20ser%20divulgador%20do%20CoachPilot'
 const WA_EMBAIXADOR = 'https://wa.me/5513991830305?text=Oi%2C%20quero%20conversar%20sobre%20ser%20Embaixador%20CoachPilot'
@@ -118,11 +117,8 @@ export function DivulgadoresPage() {
       {/* Header mínimo */}
       <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: 'rgba(10,14,26,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.06)', height: 60 }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-            <AppLogo size={30} />
-            <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 17, color: '#fff', letterSpacing: '-0.3px' }}>
-              Coach<span style={{ color: '#14b8a6' }}>Pilot</span>
-            </span>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 48, width: 'auto' }} />
           </Link>
           <Link
             to="/"

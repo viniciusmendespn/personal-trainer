@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { AppLogo } from '../../components/AppLogo'
 
 
 const NAV_LINKS = [
@@ -41,11 +40,8 @@ export default function LandingFooter() {
       <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 40, marginBottom: 40 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <AppLogo size={36} />
-              <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 17, color: '#fff' }}>
-                Coach<span style={{ color: '#14b8a6' }}>Pilot</span>
-              </span>
+            <div style={{ marginBottom: 14 }}>
+              <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 56, width: 'auto' }} />
             </div>
             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, lineHeight: 1.7, maxWidth: 260 }}>
               Gestão profissional de alunos, treinos e evolução para personal trainers que querem escalar o negócio.
