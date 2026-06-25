@@ -3,13 +3,13 @@ import { registerRoute, NavigationRoute } from 'workbox-routing'
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis
 
-precacheAndRoute(self.__WB_MANIFEST)
-
-// No domínio do aluno, todas as navegações devem cair em aluno.html,
-// não em index.html (que é o padrão do cleanURLs do Workbox).
+// Registrado ANTES do precacheAndRoute para ter prioridade sobre o cleanURLs
+// que mapearia / → /index.html (bundle do portal) em vez de /aluno.html.
 if (self.location.hostname.startsWith('app.')) {
   registerRoute(new NavigationRoute(createHandlerBoundToURL('/aluno.html')))
 }
+
+precacheAndRoute(self.__WB_MANIFEST)
 
 self.addEventListener('install', () => self.skipWaiting())
 self.addEventListener('activate', (event) => {
