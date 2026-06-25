@@ -148,8 +148,10 @@ function NotifDrawer({ onClose, onNavigate, onOpenChat, onFinanceiro }: {
   onFinanceiro: () => void
 }) {
   const qc = useQueryClient()
-  const { isSubscribed, requestAndSubscribe } = usePushNotification()
+  const { isSubscribed, requestPermissionAndSubscribe } = usePushNotification()
   const pushSupported = 'Notification' in window && 'PushManager' in window
+  const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
   const [permState, setPermState] = useState<NotificationPermission>(() =>
     pushSupported ? Notification.permission : 'denied'
   )
@@ -159,14 +161,16 @@ function NotifDrawer({ onClose, onNavigate, onOpenChat, onFinanceiro }: {
   async function handleEnableNotif() {
     setNotifLoading(true)
     try {
-      await requestAndSubscribe()
-      const perm = pushSupported ? Notification.permission : 'denied'
-      setPermState(perm)
-      if (perm === 'granted') {
-        showToast('Notificações ativadas com sucesso!', 'success')
-      } else if (perm === 'denied') {
-        showToast('Permissão negada. Verifique as configurações do iPhone.', 'error')
-      }
+      await requestPermissionAndSubscribe()
+      showToast('Notificações ativadas!', 'success')
+    } catch (err) {
+      setPermState(pushSupported ? Notification.permission : 'denied')
+      const msg = err instanceof Error
+        ? err.message.includes('timeout') ? 'Tempo esgotado. Verifique sua conexão.'
+          : err.message.includes('permission-denied') ? 'Permissão negada. Ative nas configurações do dispositivo.'
+          : 'Falha ao ativar notificações. Tente novamente.'
+        : 'Falha ao ativar notificações.'
+      showToast(msg, 'error')
     } finally {
       setNotifLoading(false)
     }
@@ -211,12 +215,22 @@ function NotifDrawer({ onClose, onNavigate, onOpenChat, onFinanceiro }: {
           <h2 className="font-semibold text-sm">Notificações</h2>
           <button onClick={onClose} className="text-text-muted hover:text-text"><X size={18} /></button>
         </div>
-        {pushSupported && !isSubscribed && (
+        {/* iOS Safari sem PWA instalado: orientar instalação */}
+        {isIos && !isStandalone && !isSubscribed && (
+          <div className="px-4 py-3 border-b border-border">
+            <p className="text-xs text-text-secondary">
+              <strong className="text-text">Adicione à tela inicial</strong> para receber notificações.
+              Toque em <strong className="text-text">Compartilhar → Adicionar à Tela de Início</strong>.
+            </p>
+          </div>
+        )}
+        {/* Android ou iOS standalone (PWA instalado): banner de ativação */}
+        {pushSupported && !isSubscribed && (!isIos || isStandalone) && (
           <div className="px-4 py-3 border-b border-border">
             {permState === 'denied' ? (
               <p className="text-xs text-text-secondary">
                 <strong className="text-text">Notificações bloqueadas.</strong>{' '}
-                {/iphone|ipad|ipod/i.test(navigator.userAgent)
+                {isIos
                   ? <>Vá em <strong className="text-text">Ajustes → Treinos → Notificações</strong> para habilitar.</>
                   : <>Clique no ícone de cadeado na barra de endereço do navegador e permita notificações.</>}
               </p>
@@ -360,7 +374,7 @@ export function AlunoApp() {
   const { session, loading: sessionLoading } = useAlunoSession()
   const [disabled, setDisabled] = useState(false)
   const [profileConfirmed, setProfileConfirmed] = useState(false)
-  const { isSubscribed, requestAndSubscribe } = usePushNotification()
+  const { isSubscribed, ensureSubscribedIfGranted } = usePushNotification()
   const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'feed' | 'personal'>('hoje')
   const [highlightExId, setHighlightExId] = useState<string | undefined>(undefined)
   const [chatOpen, setChatOpen] = useState(false)
@@ -385,7 +399,7 @@ export function AlunoApp() {
   }, [me.isSuccess])
 
   useEffect(() => {
-    if (profileConfirmed && !isSubscribed) requestAndSubscribe()
+    if (profileConfirmed && !isSubscribed) ensureSubscribedIfGranted().catch(() => {})
   }, [profileConfirmed]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {

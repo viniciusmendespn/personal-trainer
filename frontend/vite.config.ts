@@ -16,22 +16,7 @@ export default defineConfig({
       filename: 'sw.ts',
       registerType: 'autoUpdate',
       includeAssets: ['coach-icon.png', 'apple-touch-icon.png'],
-      manifest: {
-        id: '/dashboard',
-        name: 'CoachPilot — Portal',
-        short_name: 'CoachPilot',
-        description: 'Portal de gestão para personal trainers',
-        theme_color: '#000613',
-        background_color: '#000613',
-        display: 'standalone',
-        start_url: '/dashboard',
-        scope: '/',
-        icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: '/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-        ],
-      },
+      manifest: false,
       workbox: {
         skipWaiting: true,
         clientsClaim: true,

@@ -44,6 +44,8 @@ def get_subscriptions(aluno_id: str) -> list[dict]:
 
 
 def get_public_key() -> str:
+    if not _PUBLIC_KEY:
+        logger.error("[push] VAPID_PUBLIC_KEY não configurada — frontend receberá chave vazia")
     return _PUBLIC_KEY
 
 
@@ -71,6 +73,7 @@ def _send_to_subs(subs: list[dict], pk_fn, data: dict) -> None:
 def send_push(aluno_id: str, title: str, body: str, url: str = "/aluno",
               tag: str = "coachpilot") -> None:
     if not _PRIVATE_KEY:
+        logger.error("[push] VAPID_PRIVATE_KEY não configurada — push ignorado para aluno %s", aluno_id)
         return
     subs = get_subscriptions(aluno_id)
     _send_to_subs(subs, lambda s: keys.pk_aluno(aluno_id),
@@ -98,6 +101,7 @@ def get_subscriptions_personal(personal_id: str) -> list[dict]:
 def send_push_personal(personal_id: str, title: str, body: str, url: str = "/dashboard",
                        tag: str = "coachpilot") -> None:
     if not _PRIVATE_KEY:
+        logger.error("[push] VAPID_PRIVATE_KEY não configurada — push ignorado para personal %s", personal_id)
         return
     subs = get_subscriptions_personal(personal_id)
     _send_to_subs(subs, lambda s: keys.pk_personal(personal_id),
