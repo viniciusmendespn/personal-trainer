@@ -20,7 +20,7 @@ router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
 
 _COOKIE_NAME = "__Host-cp_aluno_session"
 # __Host- prefix: Secure + Path=/ obrigatórios; Domain proibido (não passar domain= aqui)
-_COOKIE_OPTS: dict = dict(httponly=True, secure=True, samesite="lax", path="/", max_age=2592000)
+_COOKIE_OPTS: dict = dict(httponly=True, secure=True, samesite="lax", path="/", max_age=15552000)
 _ALUNO_ORIGIN = "app.coachpilot.com.br"
 
 

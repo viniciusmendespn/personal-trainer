@@ -16,7 +16,7 @@ from app.repositories import dynamo_repo as repo
 
 _ALGO = "HS256"
 _CODE_TTL = 172800     # 48 horas — tempo para o aluno abrir o link
-_SESSION_TTL = 2592000 # 30 dias
+_SESSION_TTL = 15552000 # 180 dias (6 meses)
 
 
 # ---------------------------------------------------------------------------
@@ -63,7 +63,7 @@ def delete_session(session_id: str) -> None:
 def magic_link(aluno_id: str, personal_id: str) -> str:
     base = settings.aluno_frontend_url or settings.frontend_url
     code = issue_code(aluno_id, personal_id)
-    return f"{base}/auth/redeem?code={code}"
+    return f"{base}/?code={code}"
 
 
 # ---------------------------------------------------------------------------
