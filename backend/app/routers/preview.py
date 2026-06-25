@@ -17,7 +17,7 @@ from app.repositories import keys
 
 router = APIRouter(tags=["preview"])
 
-_OG_IMAGE = "https://app.coachpilot.com.br/icon-512.png"  # ícone do app (quadrado, leve) — og-image.jpg é grande/poluída demais p/ o card
+_OG_IMAGE = "https://app.coachpilot.com.br/icon-192.png"  # ícone pequeno → thumbnail no canto no WhatsApp (summary card)
 
 
 @router.get("/token/{token}", response_class=HTMLResponse, include_in_schema=False)
@@ -55,6 +55,6 @@ def _html(app_url: str, og_url: str, titulo: str, descricao: str) -> str:
 <meta property="og:image" content="{_OG_IMAGE}">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:site_name" content="CoachPilot">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <meta http-equiv="refresh" content="0;url={app_url}">
 </head><body><script>window.location.replace("{app_url}");</script></body></html>"""
