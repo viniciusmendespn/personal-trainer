@@ -60,8 +60,8 @@ export function usePushNotification() {
         throw e
       }
 
-      // Converte para Uint8Array — obrigatório em iOS/Safari
-      const applicationServerKey = urlBase64ToUint8Array(vapidKeyRaw)
+      // Converte para Uint8Array — obrigatório em iOS/Safari; cast para satisfazer TS
+      const applicationServerKey = urlBase64ToUint8Array(vapidKeyRaw).buffer as ArrayBuffer
 
       let reg: ServiceWorkerRegistration
       try {
