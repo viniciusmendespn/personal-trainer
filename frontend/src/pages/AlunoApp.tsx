@@ -309,7 +309,7 @@ export function AlunoApp() {
   const { session, loading: sessionLoading } = useAlunoSession()
   const [disabled, setDisabled] = useState(false)
   const [profileConfirmed, setProfileConfirmed] = useState(false)
-  const { isSubscribed, requestAndSubscribe } = usePushNotification()
+  const { requestAndSubscribe } = usePushNotification()
   const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'feed' | 'personal'>('hoje')
   const [highlightExId, setHighlightExId] = useState<string | undefined>(undefined)
   const [chatOpen, setChatOpen] = useState(false)
@@ -334,7 +334,10 @@ export function AlunoApp() {
   }, [me.isSuccess])
 
   useEffect(() => {
-    if (profileConfirmed && !isSubscribed) requestAndSubscribe().catch(() => {})
+    // Roda sempre que permission != denied — lida com rotação de chave VAPID silenciosamente
+    if (profileConfirmed && 'Notification' in window && Notification.permission !== 'denied') {
+      requestAndSubscribe().catch(() => {})
+    }
   }, [profileConfirmed]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
