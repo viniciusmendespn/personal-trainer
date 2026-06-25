@@ -1,14 +1,15 @@
-import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching'
+import { createHandlerBoundToURL } from 'workbox-precaching'
 import { registerRoute, NavigationRoute } from 'workbox-routing'
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis
 
-// Registrado ANTES do precacheAndRoute para ter prioridade sobre o cleanURLs
-// que mapearia / → /index.html (bundle do portal) em vez de /aluno.html.
+// Redireciona navegação para aluno.html quando no domínio app.*
 if (self.location.hostname.startsWith('app.')) {
   registerRoute(new NavigationRoute(createHandlerBoundToURL('/aluno.html')))
 }
 
+// Manifesto injetado pelo Vite — configurado para vazio em vite.config.ts
+// (precache de ~82 entradas travava o install em redes móveis lentas).
 precacheAndRoute(self.__WB_MANIFEST)
 
 self.addEventListener('install', () => self.skipWaiting())

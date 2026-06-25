@@ -15,7 +15,6 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
-      includeAssets: ['coach-icon.png', 'apple-touch-icon.png'],
       manifest: false,
       workbox: {
         skipWaiting: true,
@@ -23,10 +22,10 @@ export default defineConfig({
         navigateFallback: null,
         runtimeCaching: [{ urlPattern: /\/v1\//, handler: 'NetworkOnly' }],
       },
-      // ffmpeg-core.wasm (~32MB) é buscado sob demanda só quando o usuário envia um vídeo
-      // grande — não faz sentido pré-cachear no install do service worker.
+      // Manifesto vazio: sem precache. Assets servidos pelo CloudFront.
+      // Precaching ~82 entradas travava o install do SW em redes móveis lentas.
       injectManifest: {
-        globIgnores: ['ffmpeg/**'],
+        globPatterns: [],
       },
     }),
   ],
