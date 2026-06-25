@@ -3,6 +3,21 @@ import { pushApi } from '../api/push'
 
 const LS_KEY = 'pt_push_subscribed'
 
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = atob(base64)
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)))
+}
+
+async function report(step: string, err: unknown): Promise<void> {
+  const msg = err instanceof Error ? err.message : String(err)
+  const name = err instanceof DOMException ? err.name : (err instanceof Error ? err.constructor.name : 'unknown')
+  const detail = `ua=${navigator.userAgent.slice(0, 120)} perm=${Notification.permission}`
+  console.error(`[push:aluno] ${step}:`, name, msg)
+  await pushApi.reportError(`${step}: ${name}: ${msg}`, detail)
+}
+
 export function usePushNotification() {
   const [isSubscribed, setIsSubscribed] = useState(false)
 
@@ -33,40 +48,61 @@ export function usePushNotification() {
       const permission = await Notification.requestPermission()
       if (permission !== 'granted') return
 
-      // Timeout apenas na chamada de rede (cold start de Lambda)
-      const vapidKey = await Promise.race<string>([
-        pushApi.getVapidKey(),
-        new Promise<string>((_, rej) =>
-          setTimeout(() => rej(new Error('push:timeout')), 15_000)
-        ),
-      ])
-      if (!vapidKey) throw new Error('push:vapid-key-empty')
-
       const timeout = <T>(ms: number, label: string, p: Promise<T>): Promise<T> =>
         Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error(`push:timeout:${label}:${ms}ms`)), ms))])
 
-      const reg = await timeout(8_000, 'sw-ready', navigator.serviceWorker.ready)
-
-      // Sempre remove subscription existente para evitar conflito de chave VAPID
-      const existing = await timeout(5_000, 'getSubscription', reg.pushManager.getSubscription())
-      if (existing) {
-        try { await timeout(5_000, 'unsubscribe', existing.unsubscribe()) } catch { /* ignora */ }
-      }
-
-      let sub: PushSubscription
+      let vapidKeyRaw: string
       try {
-        sub = await timeout(15_000, 'subscribe', reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: vapidKey,
-        }))
+        vapidKeyRaw = await timeout(15_000, 'vapid-key', pushApi.getVapidKey())
+        if (!vapidKeyRaw) throw new Error('push:vapid-key-empty')
       } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e)
-        const name = e instanceof DOMException ? e.name : 'unknown'
-        await pushApi.reportError(`pushManager.subscribe falhou: ${name}`, msg)
+        await report('vapid-key', e)
         throw e
       }
 
-      await pushApi.subscribe(sub.toJSON() as PushSubscriptionJSON)
+      // Converte para Uint8Array — obrigatório em iOS/Safari
+      const applicationServerKey = urlBase64ToUint8Array(vapidKeyRaw)
+
+      let reg: ServiceWorkerRegistration
+      try {
+        reg = await timeout(8_000, 'sw-ready', navigator.serviceWorker.ready)
+      } catch (e) {
+        await report('sw-ready', e)
+        throw e
+      }
+
+      // Remove subscription existente para evitar conflito de chave VAPID
+      try {
+        const existing = await timeout(5_000, 'getSubscription', reg.pushManager.getSubscription())
+        if (existing) {
+          await timeout(5_000, 'unsubscribe', existing.unsubscribe()).catch(() => {})
+        }
+      } catch { /* ignora — prossegue para subscribe */ }
+
+      let sub: PushSubscription
+      try {
+        sub = await timeout(20_000, 'subscribe', reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey,
+        }))
+      } catch (e) {
+        await report('pushManager.subscribe', e)
+        throw e
+      }
+
+      const subJson = sub.toJSON() as PushSubscriptionJSON
+      if (!subJson.keys?.p256dh || !subJson.keys?.auth) {
+        await report('subscribe-keys', new Error(`keys ausentes: p256dh=${subJson.keys?.p256dh} auth=${subJson.keys?.auth}`))
+        throw new Error('push:subscription-keys-missing')
+      }
+
+      try {
+        await pushApi.subscribe(subJson)
+      } catch (e) {
+        await report('pushApi.subscribe', e)
+        throw e
+      }
+
       localStorage.setItem(LS_KEY, '1')
       setIsSubscribed(true)
     } catch (e) {
