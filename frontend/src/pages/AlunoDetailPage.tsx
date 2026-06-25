@@ -101,6 +101,24 @@ export function AlunoDetailPage() {
     mutationFn: () => alunosApi.enviarLink(alunoId),
     onSuccess: () => show('Link enviado pelo WhatsApp.', 'success'),
   })
+  const novoToken = useMutation({
+    mutationFn: () => alunosApi.novoToken(alunoId),
+    onSuccess: (data) => {
+      qc.setQueryData(['aluno-link', alunoId], { link: data.link })
+      show('Novo link gerado. O link anterior não funciona mais.', 'success')
+    },
+    onError: () => show('Erro ao gerar novo link.', 'error'),
+  })
+  async function handleNovoToken() {
+    const ok = await confirm({
+      title: 'Gerar novo link',
+      message: 'Ao gerar um novo link, o link anterior deixará de funcionar imediatamente. O aluno precisará usar o novo link para acessar o app.',
+      confirmLabel: 'Gerar novo link',
+      tone: 'danger',
+    })
+    if (!ok) return
+    novoToken.mutate()
+  }
   function copyLink() {
     if (!linkData?.link) return
     navigator.clipboard?.writeText(linkData.link)
@@ -250,7 +268,7 @@ export function AlunoDetailPage() {
       {linkData && (
         <Card variant="elevated" className="mb-4">
           <p className="text-xs text-text-secondary mb-2">Link do app do aluno</p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-2">
             <input
               readOnly
               value={linkData.link}
@@ -260,6 +278,10 @@ export function AlunoDetailPage() {
             <Button variant="ghost" size="sm" iconOnly aria-label="Copiar link" onClick={copyLink}><Copy size={15} /></Button>
             <Button variant="ghost" size="sm" iconOnly aria-label="Enviar pelo WhatsApp" onClick={() => enviarLink.mutate()} disabled={!whatsConectado || enviarLink.isPending} title={!whatsConectado ? 'WhatsApp não conectado' : 'Enviar pelo WhatsApp'}><Send size={15} /></Button>
           </div>
+          <Button variant="outline" size="sm" onClick={handleNovoToken} disabled={novoToken.isPending} className="text-xs text-text-secondary gap-1">
+            <RefreshCw size={13} />
+            Gerar novo link
+          </Button>
         </Card>
       )}
 

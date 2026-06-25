@@ -20,6 +20,8 @@ export const alunosApi = {
     api.post<{ link: string; enviado: boolean }>(`/v1/alunos/${id}/enviar-link`).then((r) => r.data),
   gerarLink: (id: string) =>
     api.get<{ link: string }>(`/v1/alunos/${id}/link`).then((r) => r.data),
+  novoToken: (id: string) =>
+    api.post<{ link: string }>(`/v1/alunos/${id}/novo-token`).then((r) => r.data),
   avatarUploadUrl: (id: string, filename: string, contentType: string) =>
     api.post<{ upload_url: string; s3_key: string }>(`/v1/alunos/${id}/avatar/upload-url`, {
       filename, content_type: contentType,

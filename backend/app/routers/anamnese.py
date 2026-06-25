@@ -131,5 +131,9 @@ def cadastrar_aluno(body: CadastroBody, token: str):
         # Marca no pointer do aluno que tem anamnese
         repo.update_item_if_exists(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id),
                                    {"tem_anamnese": True})
-    magic_link = aluno_auth.magic_link(aluno_id, personal_id)
-    return {"magic_link": magic_link, "aluno_id": aluno_id}
+    existing_profile = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
+    token = (existing_profile or {}).get("acesso_token")
+    if not token:
+        token = aluno_auth.issue_token(aluno_id, personal_id)
+        repo.update_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, {"acesso_token": token})
+    return {"magic_link": aluno_auth.token_link(token), "aluno_id": aluno_id}

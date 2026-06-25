@@ -25,7 +25,8 @@ _ALUNO_ORIGIN = "app.coachpilot.com.br"
 
 
 class RedeemBody(BaseModel):
-    code: str
+    code: str | None = None
+    token: str | None = None
 
 
 def _require_aluno_origin(request: Request) -> None:
@@ -37,9 +38,13 @@ def _require_aluno_origin(request: Request) -> None:
 @router.post("/auth/redeem", status_code=204)
 def auth_redeem(body: RedeemBody, request: Request, response: Response):
     _require_aluno_origin(request)
-    result = aluno_auth.redeem_code(body.code)
+    result = None
+    if body.token:
+        result = aluno_auth.redeem_token(body.token)
+    elif body.code:
+        result = aluno_auth.redeem_code(body.code)
     if not result:
-        raise HTTPException(400, "Código inválido ou expirado")
+        raise HTTPException(400, "Link inválido ou revogado")
     response.set_cookie(_COOKIE_NAME, result["session_id"], **_COOKIE_OPTS)
 
 

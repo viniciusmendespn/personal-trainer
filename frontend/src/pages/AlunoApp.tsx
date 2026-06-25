@@ -68,13 +68,14 @@ function useAlunoSession() {
     async function init() {
       const u = new URL(window.location.href)
       const code = u.searchParams.get('code')
+      const token = u.searchParams.get('token')
 
-      if (code) {
+      if (code || token) {
         window.history.replaceState({}, '', '/')
         try {
-          await alunoClient.post('/v1/aluno/auth/redeem', { code })
+          await alunoClient.post('/v1/aluno/auth/redeem', token ? { token } : { code })
         } catch {
-          // code inválido ou expirado; tenta usar sessão existente
+          // link inválido ou revogado; tenta usar sessão existente
         }
       }
 

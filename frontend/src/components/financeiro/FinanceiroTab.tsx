@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Plus, Settings, DollarSign } from 'lucide-react'
+import { Plus, Settings, DollarSign, QrCode } from 'lucide-react'
 import { financeiroApi } from '../../api/financeiro'
 import type { Cobranca, CobrancaStatus } from '../../types'
 import { Button, Card, EmptyState, Spinner, Tabs, useToast, useConfirm } from '../ui'
@@ -26,6 +27,13 @@ export function FinanceiroTab({ alunoId }: { alunoId: string }) {
   const [openConfig, setOpenConfig] = useState(false)
   const [openNova, setOpenNova] = useState(false)
   const [pagando, setPagando] = useState<Cobranca | null>(null)
+
+  const { data: mpStatus } = useQuery({
+    queryKey: ['mp-config'],
+    queryFn: () => financeiroApi.getMpConfig(),
+    staleTime: 5 * 60 * 1000,
+  })
+  const mpNaoConfigurado = mpStatus !== undefined && !mpStatus.configurado
 
   const { data: config, isLoading: loadingConfig } = useQuery({
     queryKey: ['cobranca-config', alunoId],
@@ -124,6 +132,27 @@ export function FinanceiroTab({ alunoId }: { alunoId: string }) {
           </Button>
         </div>
       </Card>
+
+      {/* Banner Mercado Pago */}
+      {mpNaoConfigurado && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex gap-3 items-start">
+          <div className="mt-0.5 rounded-lg bg-amber-100 p-2 shrink-0">
+            <QrCode size={18} className="text-amber-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-900">Ative o PIX automático via Mercado Pago</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Gere QR Code PIX na hora e registre pagamentos automaticamente — sem precisar confirmar manualmente.
+            </p>
+          </div>
+          <Link
+            to="/config?tab=pagamentos"
+            className="shrink-0 self-center text-xs font-semibold text-amber-700 border border-amber-300 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition-colors whitespace-nowrap"
+          >
+            Configurar agora
+          </Link>
+        </div>
+      )}
 
       {/* Ações */}
       <div className="flex justify-end">

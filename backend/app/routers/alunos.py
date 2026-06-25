@@ -190,19 +190,42 @@ def update_aluno(aluno_id: str, body: AlunoUpdate, personal_id: str = Depends(ge
 
 @router.get("/{aluno_id}/link")
 def gerar_link(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
-    """Gera o magic-link do app sem enviar nada — pra copiar e mandar manualmente."""
+    """Retorna o link permanente do app do aluno (cria token na primeira chamada)."""
     authz.authorize_aluno(personal_id, aluno_id)
-    return {"link": aluno_auth.magic_link(aluno_id, personal_id)}
+    item = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
+    if not item:
+        raise HTTPException(404, "Aluno não encontrado")
+    token = item.get("acesso_token")
+    if not token:
+        token = aluno_auth.issue_token(aluno_id, personal_id)
+        repo.update_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, {"acesso_token": token})
+    return {"link": aluno_auth.token_link(token)}
+
+
+@router.post("/{aluno_id}/novo-token")
+def novo_token(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
+    """Revoga o token anterior e gera novo link permanente. Sessões anteriores são invalidadas."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    item = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
+    if not item:
+        raise HTTPException(404, "Aluno não encontrado")
+    new_token = aluno_auth.revoke_and_reissue_token(aluno_id, personal_id, item.get("acesso_token"))
+    qc_key = ["aluno-link", aluno_id]  # noqa: F841 — documentação do cache key invalidado no front
+    return {"link": aluno_auth.token_link(new_token)}
 
 
 @router.post("/{aluno_id}/enviar-link")
 def enviar_link(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
-    """Gera o magic-link do app e envia no WhatsApp do aluno (e devolve p/ copiar)."""
+    """Envia o link permanente do app via WhatsApp (e devolve p/ copiar)."""
     authz.authorize_aluno(personal_id, aluno_id)
     aluno = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
     if not aluno:
         raise HTTPException(404, "Aluno não encontrado")
-    link = aluno_auth.magic_link(aluno_id, personal_id)
+    token = aluno.get("acesso_token")
+    if not token:
+        token = aluno_auth.issue_token(aluno_id, personal_id)
+        repo.update_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, {"acesso_token": token})
+    link = aluno_auth.token_link(token)
     enviado = False
     cfg = repo.get_item(keys.pk_personal(personal_id), keys.SK_WAPI_CONFIG)
     telefone = aluno.get("telefone")

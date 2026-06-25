@@ -38,5 +38,7 @@ class Aluno(AlunoCreate):
     foto_s3_key: Optional[str] = None
     foto_url: Optional[str] = None             # presigned GET, gerado na resposta
     agente_habilitado: bool = False
+    acesso_token: Optional[str] = None
+    session_revoked_before: Optional[int] = None  # Unix timestamp da última revogação
     created_at: str
     updated_at: str

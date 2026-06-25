@@ -86,6 +86,11 @@ def get_current_aluno(request: Request) -> dict:
     aluno = repo.get_item(keys.pk_aluno(sess["aluno_id"]), keys.SK_PROFILE)
     if not aluno or aluno.get("status") != AlunoStatus.ATIVO:
         raise HTTPException(status_code=403, detail="Acesso desativado")
+    revoked_before = aluno.get("session_revoked_before")
+    session_created_at = sess.get("created_at")
+    if revoked_before is not None and session_created_at is not None:
+        if session_created_at < revoked_before:
+            raise HTTPException(status_code=401, detail="Sessão revogada")
     return sess
 
 
