@@ -75,7 +75,9 @@ def redeem_token(token: str) -> dict | None:
 
 def token_link(token: str) -> str:
     base = settings.aluno_frontend_url or settings.frontend_url
-    return f"{base}/?token={token}"
+    # /token/<uuid> serve HTML com OG tags personalizadas (preview WhatsApp) e
+    # redireciona o usuário real p/ /?token=<uuid>, onde o redeem/cookie acontece.
+    return f"{base}/token/{token}"
 
 
 # ---------------------------------------------------------------------------
