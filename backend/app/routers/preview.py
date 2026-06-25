@@ -17,7 +17,7 @@ from app.repositories import keys
 
 router = APIRouter(tags=["preview"])
 
-_OG_IMAGE = "https://coachpilot.com.br/og-image.jpg"  # mesma imagem pública usada no portal
+_OG_IMAGE = "https://app.coachpilot.com.br/icon-512.png"  # ícone do app (quadrado, leve) — og-image.jpg é grande/poluída demais p/ o card
 
 
 @router.get("/token/{token}", response_class=HTMLResponse, include_in_schema=False)
