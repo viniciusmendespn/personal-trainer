@@ -148,33 +148,6 @@ function NotifDrawer({ onClose, onNavigate, onOpenChat, onFinanceiro }: {
   onFinanceiro: () => void
 }) {
   const qc = useQueryClient()
-  const { isSubscribed, requestAndSubscribe } = usePushNotification()
-  const pushSupported = 'Notification' in window && 'PushManager' in window
-  const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-  const [permState, setPermState] = useState<NotificationPermission>(() =>
-    pushSupported ? Notification.permission : 'denied'
-  )
-  const [notifLoading, setNotifLoading] = useState(false)
-  const { show: showToast } = useToast()
-
-  async function handleEnableNotif() {
-    setNotifLoading(true)
-    try {
-      await requestAndSubscribe()
-      const perm = pushSupported ? Notification.permission : 'denied'
-      setPermState(perm)
-      if (perm === 'granted') showToast('Notificações ativadas!', 'success')
-    } catch (err) {
-      setPermState(pushSupported ? Notification.permission : 'denied')
-      const msg = err instanceof Error && err.message.includes('timeout')
-        ? 'Tempo esgotado. Verifique sua conexão e tente novamente.'
-        : 'Falha ao ativar notificações. Tente novamente.'
-      showToast(msg, 'error')
-    } finally {
-      setNotifLoading(false)
-    }
-  }
 
   const notifs = useQuery({
     queryKey: ['aluno-notifs'],
@@ -215,44 +188,6 @@ function NotifDrawer({ onClose, onNavigate, onOpenChat, onFinanceiro }: {
           <h2 className="font-semibold text-sm">Notificações</h2>
           <button onClick={onClose} className="text-text-muted hover:text-text"><X size={18} /></button>
         </div>
-        {/* iOS Safari sem PWA instalado: orientar instalação */}
-        {isIos && !isStandalone && !isSubscribed && (
-          <div className="px-4 py-3 border-b border-border">
-            <p className="text-xs text-text-secondary">
-              <strong className="text-text">Adicione à tela inicial</strong> para receber notificações.
-              Toque em <strong className="text-text">Compartilhar → Adicionar à Tela de Início</strong>.
-            </p>
-          </div>
-        )}
-        {/* Android ou iOS standalone (PWA instalado): banner de ativação */}
-        {pushSupported && !isSubscribed && (!isIos || isStandalone) && (
-          <div className="px-4 py-3 border-b border-border">
-            {permState === 'denied' ? (
-              <p className="text-xs text-text-secondary">
-                <strong className="text-text">Notificações bloqueadas.</strong>{' '}
-                {isIos
-                  ? <>Vá em <strong className="text-text">Ajustes → Treinos → Notificações</strong> para habilitar.</>
-                  : <>Clique no ícone de cadeado na barra de endereço do navegador e permita notificações.</>}
-              </p>
-            ) : (
-              <div className="flex items-center gap-3">
-                <Bell size={16} className="text-accent shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-text">Receba avisos em tempo real</p>
-                  <p className="text-[11px] text-text-muted">Treinos, mensagens e lembretes</p>
-                </div>
-                <button
-                  onClick={handleEnableNotif}
-                  disabled={notifLoading}
-                  className="shrink-0 text-xs font-semibold text-accent bg-accent/10 hover:bg-accent/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5"
-                >
-                  {notifLoading && <span className="inline-block w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin" />}
-                  {notifLoading ? 'Ativando…' : 'Ativar'}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
         <div className="overflow-y-auto flex-1 divide-y divide-border">
           {notifs.isLoading && <div className="flex justify-center py-6"><Spinner /></div>}
           {!notifs.isLoading && !items.length && (

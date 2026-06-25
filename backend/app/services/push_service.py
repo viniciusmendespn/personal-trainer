@@ -62,10 +62,12 @@ def _send_to_subs(subs: list[dict], pk_fn, data: dict) -> None:
                 vapid_claims={"sub": _SUBJECT},
             )
         except WebPushException as exc:
-            if exc.response is not None and exc.response.status_code == 410:
+            status = exc.response.status_code if exc.response is not None else None
+            if status in (401, 403, 404, 410):
+                # 410=expirado, 401/403=chave VAPID incompatível, 404=endpoint inexistente
                 repo.delete_item(pk_fn(s), keys.sk_push(_sub_id(s["endpoint"])))
             else:
-                logger.warning("[push] envio falhou: %s", exc)
+                logger.warning("[push] envio falhou status=%s: %s", status, exc)
         except Exception as exc:
             logger.warning("[push] erro inesperado: %s", exc)
 
