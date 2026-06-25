@@ -1,0 +1,21 @@
+/* TEAM */
+Product: CoachPilot
+Contact: WhatsApp +55 13 99183-0305
+Market: Brasil
+Language: pt-BR
+
+/* SITE */
+Site: https://coachpilot.com.br/
+Category: Software de gestao para personal trainers
+Public pages:
+- https://coachpilot.com.br/
+- https://coachpilot.com.br/software-para-personal-trainer
+- https://coachpilot.com.br/app-para-personal-trainer
+- https://coachpilot.com.br/gestao-de-alunos-personal-trainer
+- https://coachpilot.com.br/precos
+- https://coachpilot.com.br/faq
+- https://coachpilot.com.br/sobre
+
+/* NOTES */
+CoachPilot e uma plataforma SaaS brasileira para personal trainers gerenciarem alunos, treinos, avaliacoes fisicas, agenda e evolucao.
+WhatsApp e Assistente IA sao add-ons opcionais, nao recursos obrigatorios de todos os planos.

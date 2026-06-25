@@ -12,6 +12,7 @@ import { LoginPage } from './auth/LoginPage'
 import { SignUpPage } from './auth/SignUpPage'
 import { ForgotPasswordPage } from './auth/ForgotPasswordPage'
 import LandingPage from './pages/landing/LandingPage'
+import { PublicSeoPage } from './pages/landing/PublicSeoPage'
 import { AppLayout } from './components/layout/AppLayout'
 import { ErrorPage } from './pages/ErrorPage'
 import { PortalErrorPage } from './pages/PortalErrorPage'
@@ -68,6 +69,17 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { path: '/', element: <LandingPage /> },
+      { path: '/software-para-personal-trainer', element: <PublicSeoPage pageKey="software-personal-trainer" /> },
+      { path: '/app-para-personal-trainer', element: <PublicSeoPage pageKey="app-personal-trainer" /> },
+      { path: '/gestao-de-alunos-personal-trainer', element: <PublicSeoPage pageKey="gestao-alunos" /> },
+      { path: '/app-de-treino-para-alunos', element: <PublicSeoPage pageKey="app-treino-alunos" /> },
+      { path: '/avaliacao-fisica-digital', element: <PublicSeoPage pageKey="avaliacao-fisica" /> },
+      { path: '/agenda-para-personal-trainer', element: <PublicSeoPage pageKey="agenda-personal" /> },
+      { path: '/whatsapp-para-personal-trainer', element: <PublicSeoPage pageKey="whatsapp-personal" /> },
+      { path: '/coachpilot-vs-planilhas', element: <PublicSeoPage pageKey="coachpilot-vs-planilhas" /> },
+      { path: '/precos', element: <PublicSeoPage pageKey="precos" /> },
+      { path: '/faq', element: <PublicSeoPage pageKey="faq" /> },
+      { path: '/sobre', element: <PublicSeoPage pageKey="sobre" /> },
       { path: '/aluno', element: lazyPage(<AlunoApp />) },     // dev only — prod served by aluno.html bundle
       { path: '/cadastro', element: lazyPage(<CadastroPage />) },  // auto-cadastro via link de anamnese
           { path: '/login', element: <LoginPage /> },

@@ -9,6 +9,15 @@ const NAV_LINKS = [
   { label: 'Comparativo', href: '#compare' },
 ]
 
+const RESOURCE_LINKS = [
+  { label: 'Software para personal', to: '/software-para-personal-trainer' },
+  { label: 'App para personal', to: '/app-para-personal-trainer' },
+  { label: 'Gestão de alunos', to: '/gestao-de-alunos-personal-trainer' },
+  { label: 'Preços', to: '/precos' },
+  { label: 'FAQ', to: '/faq' },
+  { label: 'Sobre', to: '/sobre' },
+]
+
 function scrollTo(href: string) {
   const el = document.querySelector(href)
   if (el) window.scrollTo({ top: (el as HTMLElement).getBoundingClientRect().top + window.scrollY - 72, behavior: 'smooth' })
@@ -87,6 +96,25 @@ export default function LandingFooter() {
               >
                 Fazer login
               </Link>
+            </div>
+          </div>
+
+          <div>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 16 }}>
+              Recursos
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {RESOURCE_LINKS.map(l => (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
+                >
+                  {l.label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
