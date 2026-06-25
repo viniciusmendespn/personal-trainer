@@ -148,7 +148,7 @@ function NotifDrawer({ onClose, onNavigate, onOpenChat, onFinanceiro }: {
   onFinanceiro: () => void
 }) {
   const qc = useQueryClient()
-  const { isSubscribed, requestPermissionAndSubscribe } = usePushNotification()
+  const { isSubscribed, requestAndSubscribe } = usePushNotification()
   const pushSupported = 'Notification' in window && 'PushManager' in window
   const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
@@ -161,15 +161,15 @@ function NotifDrawer({ onClose, onNavigate, onOpenChat, onFinanceiro }: {
   async function handleEnableNotif() {
     setNotifLoading(true)
     try {
-      await requestPermissionAndSubscribe()
-      showToast('Notificações ativadas!', 'success')
+      await requestAndSubscribe()
+      const perm = pushSupported ? Notification.permission : 'denied'
+      setPermState(perm)
+      if (perm === 'granted') showToast('Notificações ativadas!', 'success')
     } catch (err) {
       setPermState(pushSupported ? Notification.permission : 'denied')
-      const msg = err instanceof Error
-        ? err.message.includes('timeout') ? 'Tempo esgotado. Verifique sua conexão.'
-          : err.message.includes('permission-denied') ? 'Permissão negada. Ative nas configurações do dispositivo.'
-          : 'Falha ao ativar notificações. Tente novamente.'
-        : 'Falha ao ativar notificações.'
+      const msg = err instanceof Error && err.message.includes('timeout')
+        ? 'Tempo esgotado. Verifique sua conexão e tente novamente.'
+        : 'Falha ao ativar notificações. Tente novamente.'
       showToast(msg, 'error')
     } finally {
       setNotifLoading(false)
@@ -374,7 +374,7 @@ export function AlunoApp() {
   const { session, loading: sessionLoading } = useAlunoSession()
   const [disabled, setDisabled] = useState(false)
   const [profileConfirmed, setProfileConfirmed] = useState(false)
-  const { isSubscribed, ensureSubscribedIfGranted } = usePushNotification()
+  const { isSubscribed, requestAndSubscribe } = usePushNotification()
   const [tab, setTab] = useState<'hoje' | 'evolucao' | 'historico' | 'feed' | 'personal'>('hoje')
   const [highlightExId, setHighlightExId] = useState<string | undefined>(undefined)
   const [chatOpen, setChatOpen] = useState(false)
@@ -399,7 +399,7 @@ export function AlunoApp() {
   }, [me.isSuccess])
 
   useEffect(() => {
-    if (profileConfirmed && !isSubscribed) ensureSubscribedIfGranted().catch(() => {})
+    if (profileConfirmed && !isSubscribed) requestAndSubscribe().catch(() => {})
   }, [profileConfirmed]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
