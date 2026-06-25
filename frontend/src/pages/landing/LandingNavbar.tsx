@@ -7,6 +7,7 @@ const NAV_LINKS = [
   { label: 'Como funciona', href: '#how' },
   { label: 'Planos', href: '#pricing' },
   { label: 'Comparativo', href: '#compare' },
+  { label: 'FAQ', href: '#faq' },
 ]
 
 export default function LandingNavbar() {

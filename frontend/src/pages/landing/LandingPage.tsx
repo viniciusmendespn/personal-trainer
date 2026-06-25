@@ -8,6 +8,7 @@ import HowItWorksSection from './HowItWorksSection'
 import ComparisonSection from './ComparisonSection'
 import PricingSection from './PricingSection'
 import TestimonialsSection from './TestimonialsSection'
+import FaqSection from './FaqSection'
 import CtaSection from './CtaSection'
 import LandingFooter from './LandingFooter'
 
@@ -101,6 +102,7 @@ export default function LandingPage() {
         <ComparisonSection />
         <PricingSection />
         <TestimonialsSection />
+        <FaqSection />
         <CtaSection />
       </main>
       <LandingFooter />

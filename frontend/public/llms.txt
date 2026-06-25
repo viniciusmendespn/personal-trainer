@@ -1,0 +1,47 @@
+# CoachPilot — Software de Gestão para Personal Trainers
+
+## O que é
+CoachPilot é uma plataforma SaaS brasileira desenvolvida para personal trainers
+gerenciarem alunos, treinos personalizados, avaliações físicas, agenda e
+comunicação via WhatsApp, com gamificação para engajar e reter alunos.
+
+## Público-alvo
+Personal trainers autônomos e estúdios de personal training no Brasil.
+
+## Preço
+- Gratuito: até 3 alunos, todas as funcionalidades essenciais
+- Gestão Pro: R$39,90/mês (preço de lançamento), alunos ilimitados
+- Add-on WhatsApp: +R$29,90/mês
+- Add-on Assistente IA: +R$4,90/aluno/mês
+
+## Principais funcionalidades
+- Gestão de alunos (cadastro, histórico, evolução)
+- Treinos personalizados com templates reutilizáveis
+- Avaliações físicas com gráficos automáticos de evolução
+- Agenda de sessões com lembretes automáticos
+- App do aluno (PWA — sem instalação de app nativo)
+- Ranking e gamificação para engajamento
+- Integração com WhatsApp (add-on)
+- Assistente de IA (add-on)
+- Relatórios e métricas de desempenho
+- Notificações automáticas
+
+## Diferenciais
+- Plano gratuito real (sem cartão de crédito, até 3 alunos)
+- Sem fidelidade — cancele quando quiser
+- App do aluno via link no WhatsApp (PWA, sem instalar nada)
+- Gamificação nativa com ranking semanal e mensal
+- Preço em reais, suporte em português, feito para o mercado brasileiro
+
+## URL principal
+https://coachpilot.com.br
+
+## Contato
+WhatsApp: +55 13 99183-0305
+
+## Linguagem
+Português Brasileiro (pt-BR)
+
+## Categoria
+Software de gestão para fitness / personal training / academia
+Alternativa brasileira a: TrueCoach, PT Distinction, Mindbody, Trainerize

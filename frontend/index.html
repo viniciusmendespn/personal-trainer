@@ -21,6 +21,8 @@
 
     <!-- SEO -->
     <meta name="description" content="CoachPilot — Plataforma completa para personal trainers. Gerencie alunos, treinos, avaliações físicas e agenda em um só lugar. Experimente grátis." />
+    <meta name="keywords" content="software personal trainer, gestão de alunos personal trainer, app personal trainer, plataforma personal trainer, sistema personal trainer brasil, app treino aluno, avaliação física digital, agenda personal trainer" />
+    <meta name="author" content="CoachPilot" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://coachpilot.com.br/" />
 
@@ -55,24 +57,141 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "CoachPilot",
-      "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
-      "description": "Plataforma completa para personal trainers gerenciarem alunos, treinos, avaliações físicas e agenda.",
-      "url": "https://coachpilot.com.br",
-      "inLanguage": "pt-BR",
-      "offers": {
-        "@type": "Offer",
-        "priceCurrency": "BRL",
-        "price": "0",
-        "description": "Plano gratuito disponível"
-      },
-      "provider": {
-        "@type": "Organization",
-        "name": "CoachPilot",
-        "url": "https://coachpilot.com.br"
-      }
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://coachpilot.com.br/#app",
+          "name": "CoachPilot",
+          "alternateName": "Coach Pilot",
+          "applicationCategory": "BusinessApplication",
+          "applicationSubCategory": "Fitness Management Software",
+          "operatingSystem": "Web, iOS, Android",
+          "description": "Plataforma SaaS brasileira para personal trainers gerenciarem alunos, treinos personalizados, avaliações físicas, agenda e comunicação via WhatsApp, com gamificação para engajar alunos.",
+          "url": "https://coachpilot.com.br",
+          "inLanguage": "pt-BR",
+          "featureList": [
+            "Gestão de alunos",
+            "Treinos personalizados com templates reutilizáveis",
+            "Avaliações físicas com gráficos de evolução",
+            "Agenda de sessões",
+            "App do aluno via PWA (sem instalação)",
+            "Ranking e gamificação",
+            "Integração com WhatsApp",
+            "Relatórios e métricas de desempenho",
+            "Notificações automáticas",
+            "Assistente de IA"
+          ],
+          "screenshot": "https://coachpilot.com.br/og-image.jpg",
+          "offers": [
+            {
+              "@type": "Offer",
+              "name": "Plano Gratuito",
+              "price": "0",
+              "priceCurrency": "BRL",
+              "description": "Gratuito para até 3 alunos com todas as funcionalidades essenciais"
+            },
+            {
+              "@type": "Offer",
+              "name": "Gestão Pro",
+              "price": "39.90",
+              "priceCurrency": "BRL",
+              "description": "Alunos ilimitados, todas as funcionalidades, relatórios avançados"
+            }
+          ],
+          "provider": {
+            "@id": "https://coachpilot.com.br/#organization"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://coachpilot.com.br/#organization",
+          "name": "CoachPilot",
+          "url": "https://coachpilot.com.br",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://coachpilot.com.br/icon-512.png",
+            "width": 512,
+            "height": 512
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+55-13-99183-0305",
+            "contactType": "customer support",
+            "availableLanguage": "Portuguese",
+            "contactOption": "TollFree"
+          },
+          "areaServed": "BR",
+          "foundingLocation": {
+            "@type": "Place",
+            "addressCountry": "BR"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://coachpilot.com.br/#website",
+          "url": "https://coachpilot.com.br",
+          "name": "CoachPilot",
+          "description": "Software de gestão para personal trainers no Brasil",
+          "inLanguage": "pt-BR",
+          "publisher": {
+            "@id": "https://coachpilot.com.br/#organization"
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://coachpilot.com.br/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "O CoachPilot é gratuito?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sim. O plano gratuito permite gerenciar até 3 alunos com todas as funcionalidades essenciais: cadastro de treinos, avaliações físicas, agenda, app do aluno e dashboard. Para alunos ilimitados, o Gestão Pro custa R$39,90/mês."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Preciso instalar algum aplicativo?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Não. O CoachPilot é uma plataforma web (PWA). Você gerencia tudo pelo navegador, e seu aluno acessa os treinos direto pelo celular via link enviado no WhatsApp, sem instalar nada da loja de aplicativos."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Funciona para personal trainer online?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sim. O CoachPilot foi desenvolvido para personal trainers presenciais e online. Você cria os treinos no portal e o aluno acessa de qualquer lugar pelo app, seja na academia ou em casa."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Como o aluno acessa os treinos?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "O aluno recebe um link exclusivo pelo WhatsApp e abre o app do aluno diretamente no navegador do celular, sem cadastro nem senha. Pode salvar o app na tela inicial como qualquer aplicativo nativo."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "O CoachPilot tem integração com WhatsApp?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sim, como add-on opcional por R$29,90/mês. Conecte seu número de WhatsApp para enviar lembretes de treino, agendar sessões e ativar o assistente de IA que responde dúvidas dos alunos automaticamente."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Há fidelidade ou multa para cancelar?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Não. O CoachPilot não tem contrato de fidelidade. Você pode cancelar a assinatura quando quiser, sem multa, direto pelas configurações do portal."
+              }
+            }
+          ]
+        }
+      ]
     }
     </script>
   </head>
