@@ -42,20 +42,23 @@ export function usePushNotification() {
       ])
       if (!vapidKey) throw new Error('push:vapid-key-empty')
 
-      const reg = await navigator.serviceWorker.ready
+      const timeout = <T>(ms: number, label: string, p: Promise<T>): Promise<T> =>
+        Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error(`push:timeout:${label}:${ms}ms`)), ms))])
+
+      const reg = await timeout(8_000, 'sw-ready', navigator.serviceWorker.ready)
 
       // Sempre remove subscription existente para evitar conflito de chave VAPID
-      const existing = await reg.pushManager.getSubscription()
+      const existing = await timeout(5_000, 'getSubscription', reg.pushManager.getSubscription())
       if (existing) {
-        try { await existing.unsubscribe() } catch { /* ignora */ }
+        try { await timeout(5_000, 'unsubscribe', existing.unsubscribe()) } catch { /* ignora */ }
       }
 
       let sub: PushSubscription
       try {
-        sub = await reg.pushManager.subscribe({
+        sub = await timeout(15_000, 'subscribe', reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: vapidKey,
-        })
+        }))
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
         const name = e instanceof DOMException ? e.name : 'unknown'
