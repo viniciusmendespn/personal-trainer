@@ -16,6 +16,7 @@ from app.repositories import keys
 from app.utils import now_iso
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 _PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")   # base64url raw scalar (32 bytes)
 _PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "")
@@ -78,6 +79,7 @@ def send_push(aluno_id: str, title: str, body: str, url: str = "/aluno",
         logger.error("[push] VAPID_PRIVATE_KEY não configurada — push ignorado para aluno %s", aluno_id)
         return
     subs = get_subscriptions(aluno_id)
+    logger.info("[push] send aluno=%s subs=%d title=%s", aluno_id, len(subs), title)
     _send_to_subs(subs, lambda s: keys.pk_aluno(aluno_id),
                   {"title": title, "body": body, "url": url, "tag": tag})
 

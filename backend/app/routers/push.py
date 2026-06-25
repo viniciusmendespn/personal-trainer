@@ -9,6 +9,7 @@ from app.services import push_service
 
 router = APIRouter(tags=["push"])
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class SubscribeBody(BaseModel):
@@ -24,8 +25,10 @@ class UnsubscribeBody(BaseModel):
 # ── Aluno ─────────────────────────────────────────────────────────────────────
 
 @router.get("/v1/aluno/push/vapid-key")
-def vapid_key_aluno(_ctx=Depends(get_current_aluno)):
-    return {"public_key": push_service.get_public_key()}
+def vapid_key_aluno(ctx=Depends(get_current_aluno)):
+    key = push_service.get_public_key()
+    logger.info("[push] vapid-key aluno=%s key_prefix=%.20s", ctx["aluno_id"], key)
+    return {"public_key": key}
 
 
 @router.post("/v1/aluno/push/subscribe", status_code=204)
