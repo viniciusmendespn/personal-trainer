@@ -9,7 +9,7 @@ export interface AtividadeAluno {
   aluno_id: string
   aluno_nome: string
   foto_url: string | null
-  status: 'EM_ANDAMENTO' | 'FINALIZADA'
+  status: 'EM_ANDAMENTO' | 'FINALIZADA' | 'ABANDONADA'
   treino_nome: string | null
   exercicio_atual: string | null
   ordem_atual: number | null

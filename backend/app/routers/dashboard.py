@@ -5,9 +5,11 @@ from decimal import Decimal
 from fastapi import APIRouter, Depends
 
 from app.dependencies import get_current_personal_id
+from app.models.enums import SessaoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import media_service, notif_service
+from app.services.sessao_service import SESSION_TTL_S
 
 router = APIRouter(prefix="/v1", tags=["dashboard"])
 
@@ -77,18 +79,37 @@ def dashboard(personal_id: str = Depends(get_current_personal_id)):
         aid: repo.get_item(keys.pk_aluno(aid), keys.SK_PROFILE)
         for aid in {a["aluno_id"] for a in atividade_raw}
     }
+
+    # Status efetivo: ATIVIDADE# não tem TTL, então uma sessão abandonada fica presa em
+    # EM_ANDAMENTO mesmo após o SESSION#ACTIVE expirar. Deriva ABANDONADA quando a última
+    # atividade é mais antiga que o tempo de vida da sessão (6h) — sem GetItem/scan extra.
+    agora = datetime.now(timezone.utc)
+
+    def _status_efetivo(a: dict) -> str | None:
+        st = a.get("status")
+        if st == SessaoStatus.EM_ANDAMENTO.value:
+            try:
+                dt = datetime.fromisoformat((a.get("atualizado_em") or "").replace("Z", "+00:00"))
+                if (agora - dt).total_seconds() > SESSION_TTL_S:
+                    return SessaoStatus.ABANDONADA.value
+            except (ValueError, AttributeError):
+                pass
+        return st
+
     atividade_recente = []
     for a in atividade_raw:
         perfil = perfis.get(a["aluno_id"]) or {}
         foto_s3_key = perfil.get("foto_s3_key")
+        status_ef = _status_efetivo(a)
+        em_andamento = status_ef == SessaoStatus.EM_ANDAMENTO.value
         atividade_recente.append({
             "aluno_id": a["aluno_id"],
             "aluno_nome": perfil.get("nome", "?"),
             "foto_url": media_service.gerar_presigned_view_url(foto_s3_key) if foto_s3_key else None,
-            "status": a.get("status"),
+            "status": status_ef,
             "treino_nome": a.get("treino_nome"),
-            "exercicio_atual": a.get("exercicio_atual"),
-            "ordem_atual": a.get("ordem_atual"),
+            "exercicio_atual": a.get("exercicio_atual") if em_andamento else None,
+            "ordem_atual": a.get("ordem_atual") if em_andamento else None,
             "total_ex": a.get("total_ex"),
             "atualizado_em": a.get("atualizado_em"),
         })

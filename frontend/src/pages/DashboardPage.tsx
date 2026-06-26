@@ -513,8 +513,8 @@ export function DashboardPage() {
                           >
                             {a.aluno_nome}
                           </Link>
-                          <Badge tone={a.status === 'EM_ANDAMENTO' ? 'success' : 'neutral'}>
-                            {a.status === 'EM_ANDAMENTO' ? 'Treinando agora' : 'Concluído'}
+                          <Badge tone={a.status === 'EM_ANDAMENTO' ? 'success' : a.status === 'ABANDONADA' ? 'warning' : 'neutral'}>
+                            {a.status === 'EM_ANDAMENTO' ? 'Treinando agora' : a.status === 'ABANDONADA' ? 'Não finalizado' : 'Concluído'}
                           </Badge>
                         </div>
                         <p className="text-xs text-text-muted truncate">
