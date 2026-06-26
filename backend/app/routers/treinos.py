@@ -10,6 +10,7 @@ from app.models.treino import Treino, TreinoCreate
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import authz
+from app.services.sessao_service import chave_exercicio, list_exercicios_aluno
 from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/alunos/{aluno_id}/treinos", tags=["treinos"])
@@ -138,8 +139,17 @@ def list_exercicios(aluno_id: str, treino_id: str, personal_id: str = Depends(ge
 def create_exercicio(aluno_id: str, treino_id: str, body: ExercicioCreate,
                      personal_id: str = Depends(get_current_personal_id)):
     _guard(personal_id, aluno_id)
+    chave_nova = chave_exercicio(body.nome)
+    existentes = list_exercicios_aluno(aluno_id)
+    primario = next(
+        (e for e in existentes if chave_exercicio(e.get("nome") or "") == chave_nova),
+        None,
+    )
     exercicio_id = new_id()
-    ex = Exercicio(exercicio_id=exercicio_id, treino_id=treino_id, aluno_id=aluno_id, **body.model_dump())
+    dados = body.model_dump()
+    if primario:
+        dados["canonical_exercicio_id"] = primario["exercicio_id"]
+    ex = Exercicio(exercicio_id=exercicio_id, treino_id=treino_id, aluno_id=aluno_id, **dados)
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_exercicio(treino_id, exercicio_id), ex.model_dump())
     _touch_aluno_pointer(personal_id, aluno_id)
     return ex

@@ -3,6 +3,7 @@ Aparecem no feed do exercício para personal e aluno."""
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import anotif_service, media_service
+from app.services.sessao_service import chave_exercicio
 from app.utils import epoch_ms, new_id, now_iso
 
 
@@ -40,52 +41,87 @@ def _enrich_comentarios(comentarios: list[dict]) -> list[dict]:
     return result
 
 
+def _exercicio_ids_canonicos(pk: str, exercicio_id: str) -> list[str]:
+    """Retorna todos os exercicio_ids que compartilham o mesmo nome canônico do exercício dado.
+    Permite agregar feed de exercícios homônimos criados em treinos diferentes."""
+    all_exs = repo.query_pk(pk, sk_prefix="EX#")
+    nome_target = next((i.get("nome") for i in all_exs if i.get("exercicio_id") == exercicio_id), None)
+    chave_target = chave_exercicio(nome_target) if nome_target else None
+    if not chave_target:
+        return [exercicio_id]
+    return [
+        i.get("exercicio_id") for i in all_exs
+        if chave_exercicio(i.get("nome") or "") == chave_target and i.get("exercicio_id")
+    ]
+
+
 def feed_exercicio(aluno_id: str, exercicio_id: str) -> list[dict]:
-    """Retorna feed unificado: DOR + DUVIDA + CORRECAO + MIDIA + POST, por data_hora desc."""
+    """Retorna feed unificado: DOR + DUVIDA + CORRECAO + MIDIA + POST, por data_hora desc.
+    Agrega itens de todos os exercício-irmãos (mesmo nome canônico em treinos diferentes)."""
     pk = keys.pk_aluno(aluno_id)
-    dores = repo.query_pk(pk, sk_prefix=f"DOR#{exercicio_id}#")
-    duvidas = repo.query_pk(pk, sk_prefix=f"DUVIDA#{exercicio_id}#")
-    correcoes = repo.query_pk(pk, sk_prefix=f"CORRECAO#{exercicio_id}#")
-    midias = repo.query_pk(pk, sk_prefix=f"MIDIA#{exercicio_id}#")
-    posts = repo.query_pk(pk, sk_prefix=f"POST#{exercicio_id}#")
+    ids = _exercicio_ids_canonicos(pk, exercicio_id)
 
     feed: list[dict] = []
-    for i in dores:
-        c = repo.clean(i)
-        c["tipo"] = "DOR"
-        c["relato_sk"] = i["SK"]
-        if c.get("comentarios"):
-            c["comentarios"] = _enrich_comentarios(c["comentarios"])
-        feed.append(c)
-    for i in duvidas:
-        c = repo.clean(i)
-        c["tipo"] = "DUVIDA"
-        c["relato_sk"] = i["SK"]
-        if c.get("comentarios"):
-            c["comentarios"] = _enrich_comentarios(c["comentarios"])
-        feed.append(c)
-    for i in correcoes:
-        c = repo.clean(i)
-        c["tipo"] = "CORRECAO"
-        c["midias"] = _enrich_midias(c.get("midias") or [])
-        c["descricao"] = c.get("texto")
-        if c.get("comentarios"):
-            c["comentarios"] = _enrich_comentarios(c["comentarios"])
-        feed.append(c)
-    for i in midias:
-        # Itens MIDIA legacy viram EXECUCAO no feed (sem thread de comentários)
-        c = repo.clean(i)
-        midia_tipo_original = c.get("tipo", "foto_exercicio")
-        c["midias"] = _enrich_midias([{"s3_key": c["s3_key"], "tipo": midia_tipo_original}])
-        c["tipo"] = "EXECUCAO"
-        feed.append(c)
-    for i in posts:
-        c = repo.clean(i)
-        c["midias"] = _enrich_midias(c.get("midias") or [])
-        c["relato_sk"] = i["SK"]
-        if c.get("comentarios"):
-            c["comentarios"] = _enrich_comentarios(c["comentarios"])
-        feed.append(c)
+    seen_sks: set[str] = set()
+
+    for eid in ids:
+        dores = repo.query_pk(pk, sk_prefix=f"DOR#{eid}#")
+        duvidas = repo.query_pk(pk, sk_prefix=f"DUVIDA#{eid}#")
+        correcoes = repo.query_pk(pk, sk_prefix=f"CORRECAO#{eid}#")
+        midias = repo.query_pk(pk, sk_prefix=f"MIDIA#{eid}#")
+        posts = repo.query_pk(pk, sk_prefix=f"POST#{eid}#")
+
+        for i in dores:
+            if i.get("SK") in seen_sks:
+                continue
+            seen_sks.add(i["SK"])
+            c = repo.clean(i)
+            c["tipo"] = "DOR"
+            c["relato_sk"] = i["SK"]
+            if c.get("comentarios"):
+                c["comentarios"] = _enrich_comentarios(c["comentarios"])
+            feed.append(c)
+        for i in duvidas:
+            if i.get("SK") in seen_sks:
+                continue
+            seen_sks.add(i["SK"])
+            c = repo.clean(i)
+            c["tipo"] = "DUVIDA"
+            c["relato_sk"] = i["SK"]
+            if c.get("comentarios"):
+                c["comentarios"] = _enrich_comentarios(c["comentarios"])
+            feed.append(c)
+        for i in correcoes:
+            if i.get("SK") in seen_sks:
+                continue
+            seen_sks.add(i["SK"])
+            c = repo.clean(i)
+            c["tipo"] = "CORRECAO"
+            c["midias"] = _enrich_midias(c.get("midias") or [])
+            c["descricao"] = c.get("texto")
+            if c.get("comentarios"):
+                c["comentarios"] = _enrich_comentarios(c["comentarios"])
+            feed.append(c)
+        for i in midias:
+            if i.get("SK") in seen_sks:
+                continue
+            seen_sks.add(i["SK"])
+            # Itens MIDIA legacy viram EXECUCAO no feed (sem thread de comentários)
+            c = repo.clean(i)
+            midia_tipo_original = c.get("tipo", "foto_exercicio")
+            c["midias"] = _enrich_midias([{"s3_key": c["s3_key"], "tipo": midia_tipo_original}])
+            c["tipo"] = "EXECUCAO"
+            feed.append(c)
+        for i in posts:
+            if i.get("SK") in seen_sks:
+                continue
+            seen_sks.add(i["SK"])
+            c = repo.clean(i)
+            c["midias"] = _enrich_midias(c.get("midias") or [])
+            c["relato_sk"] = i["SK"]
+            if c.get("comentarios"):
+                c["comentarios"] = _enrich_comentarios(c["comentarios"])
+            feed.append(c)
 
     feed.sort(key=lambda r: r.get("data_hora", ""), reverse=True)
     return feed

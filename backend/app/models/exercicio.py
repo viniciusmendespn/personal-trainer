@@ -47,3 +47,4 @@ class Exercicio(ExercicioCreate):
     exercicio_id: str
     treino_id: str
     aluno_id: str
+    canonical_exercicio_id: Optional[str] = None

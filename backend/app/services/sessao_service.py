@@ -517,10 +517,19 @@ def list_sessoes(aluno_id: str, limit: int = 10, cursor: str | None = None) -> t
 
 
 def list_exercicios_aluno(aluno_id: str) -> list[dict]:
-    """Lista plana de todos os exercícios do aluno (todos os treinos) — p/ seletor de evolução."""
+    """Lista plana de todos os exercícios do aluno (todos os treinos) — p/ seletor de evolução.
+    Deduplica por nome canônico: exercícios homônimos em treinos diferentes aparecem uma só vez."""
     items = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")
     items.sort(key=lambda e: e.get("ordem", 0))
-    return repo.clean_all(items)
+    seen: set[str] = set()
+    deduped: list[dict] = []
+    for item in items:
+        chave = chave_exercicio(item.get("nome") or "")
+        if not chave or chave not in seen:
+            if chave:
+                seen.add(chave)
+            deduped.append(item)
+    return repo.clean_all(deduped)
 
 
 def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
