@@ -169,7 +169,7 @@ def _reagendar_aviso(personal_id: str, assinatura_atual: dict, nova_valida_ate: 
 def aplicar_pagamento(
     personal_id: str, dias: int = 30, *,
     payment_id: str | None = None, valor: float | None = None,
-    origem: Literal["PIX", "ADMIN"] = "PIX",
+    origem: Literal["PIX", "ADMIN", "PROMO", "INDICACAO"] = "PIX",
 ) -> dict:
     """Estende a validade de forma cumulativa: se ainda ativa, soma a partir do
     vencimento atual; se expirada/trial, soma a partir de hoje. Registra também o

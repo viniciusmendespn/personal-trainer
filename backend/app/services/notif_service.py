@@ -14,6 +14,8 @@ NOTIF_TTL_S = 30 * 24 * 3600   # notificação lida vira histórico e expira em 
 _URL_MAP_PERSONAL: dict[str, str] = {
     "MSG_ALUNO":     "/notificacoes",
     "LEMBRETE_AULA": "/agenda",
+    "ASSINATURA_PAGA":      "/plano",
+    "INDICACAO_RECOMPENSA": "/plano",
 }
 
 

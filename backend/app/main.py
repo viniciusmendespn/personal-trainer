@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
 from app.config import settings
-from app.routers import (admin, agenda, aluno, alunos, anamnese, avaliacoes, biblioteca, conhecimento, config, dashboard,
+from app.routers import (admin, agenda, aluno, alunos, anamnese, avaliacoes, biblioteca, conhecimento, config, cupom, dashboard,
                          feed_global, financeiro, metas, notificacoes, personal, personal_chat, plano, preview, push, sessoes, templates, treinos, wapi, webhook)
 
 app = FastAPI(
@@ -25,6 +25,7 @@ app.include_router(webhook.router)   # /v1/public/wapi/... (sem auth)
 app.include_router(webhook.mp_router)  # /v1/public/mp/... (MP webhook — cobrança de aluno, sem auth)
 app.include_router(webhook.assinatura_mp_router)  # /v1/public/assinatura/... (MP webhook — assinatura da plataforma, sem auth)
 app.include_router(plano.router)     # /v1/plano (assinatura/Trial/Gestão Pro do personal)
+app.include_router(cupom.router)     # /v1/cupom (indicação + resgate de promo codes)
 app.include_router(wapi.router)      # /v1/wapi/... (JWT do personal)
 app.include_router(config.router)    # /v1/config/...
 app.include_router(alunos.router)    # /v1/alunos

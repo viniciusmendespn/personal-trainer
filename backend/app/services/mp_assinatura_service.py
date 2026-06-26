@@ -179,4 +179,14 @@ def processar_webhook(body: dict) -> None:
         personal_id, "ASSINATURA_PAGA", "Assinatura renovada",
         f"Pagamento confirmado via Pix. Seu plano Gestão Pro foi renovado por mais {_PIX_DIAS_CONCEDIDOS} dias.",
     )
+
+    # Recompensa de indicação: se este personal veio de um código de indicação, o
+    # indicador ganha 30 dias agora (1º pagamento = conversão). Best-effort — nunca
+    # pode derrubar o webhook de assinatura.
+    try:
+        from app.services import cupom_service
+        cupom_service.processar_recompensa_indicador(personal_id)
+    except Exception as exc:
+        logger.warning("Falha ao processar recompensa de indicação para %s: %s", personal_id, exc)
+
     logger.info("MP assinatura webhook processado payment_id=%s personal_id=%s", payment_id, personal_id)

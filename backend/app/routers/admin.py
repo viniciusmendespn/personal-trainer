@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from app.config import settings
 from app.dependencies import _verify_token
-from app.services import assinatura_service
+from app.services import assinatura_service, cupom_service
 
 router = APIRouter(prefix="/v1/admin", tags=["admin"])
 _security = HTTPBearer()
@@ -81,3 +81,21 @@ def conceder_assinatura(personal_id: str, body: ConcederAssinaturaBody, _: str =
     Nunca apaga/altera dados do personal (alunos, templates, etc.) — só estende a
     validade da assinatura e liga flags de add-on."""
     return assinatura_service.conceder_admin(personal_id, dias=body.dias, addons=body.addons)
+
+
+class CriarCupomBody(BaseModel):
+    campanha: str
+    dias: int
+    plano: str | None = None
+    max_usos: int | None = None
+    expira_em: str | None = None   # ISO date/datetime; null = sem expiração
+
+
+@router.post("/cupom")
+def criar_cupom(body: CriarCupomBody, _: str = Depends(_require_admin)):
+    """Gera um cupom de campanha/bônus (ex.: Black Friday, parceiro). Não vinculado a
+    um indicador. Retorna o registro com o código gerado."""
+    return cupom_service.criar_cupom_campanha(
+        campanha=body.campanha, dias=body.dias, plano=body.plano,
+        max_usos=body.max_usos, expira_em=body.expira_em,
+    )

@@ -1,9 +1,19 @@
 import { useState } from 'react'
-import { Bot, Calendar, Check, Copy, CreditCard, ExternalLink, Gift, MessageCircle, Receipt, Users } from 'lucide-react'
-import { Badge, Button, Card } from '../components/ui'
+import { Bot, Calendar, Check, Copy, CreditCard, ExternalLink, Gift, MessageCircle, Receipt, Sparkles, Ticket, Users } from 'lucide-react'
+import { Badge, Button, Card, Input, useToast } from '../components/ui'
 import { PixPaymentModal } from '../components/billing/PixPaymentModal'
 import { FinPilotBenefitCard } from '../components/billing/FinPilotBenefitCard'
 import { usePagamentos, usePlanoStatus } from '../hooks/usePlano'
+import { useCupomIndicacao, useResgatarCupom } from '../hooks/useCupom'
+
+const CUPOM_ERROS: Record<string, string> = {
+  CUPOM_INVALIDO: 'Código inválido ou expirado.',
+  CUPOM_ESGOTADO: 'Este código atingiu o limite de usos.',
+  CUPOM_PROPRIO: 'Você não pode usar o seu próprio código.',
+  CUPOM_CAMPANHA_JA_USADA: 'Você já usou um código desta campanha.',
+}
+
+const ORIGEM_LABEL: Record<string, string> = { PIX: 'Pix', ADMIN: 'Admin', PROMO: 'Promo', INDICACAO: 'Indicação' }
 
 function formatDate(iso?: string | null) {
   if (!iso) return '—'
@@ -22,13 +32,32 @@ function formatValor(valor: number | null) {
 export function PlanoPage() {
   const { data, isLoading } = usePlanoStatus()
   const { data: pagamentos } = usePagamentos()
+  const { data: cupom } = useCupomIndicacao()
+  const resgatarCupom = useResgatarCupom()
+  const { show } = useToast()
   const [pixOpen, setPixOpen] = useState(false)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [promoInput, setPromoInput] = useState('')
 
   function copyCode(code: string) {
     navigator.clipboard.writeText(code).then(() => {
       setCopiedCode(code)
       setTimeout(() => setCopiedCode(null), 2000)
+    })
+  }
+
+  function handleResgatar() {
+    const codigo = promoInput.trim()
+    if (!codigo || resgatarCupom.isPending) return
+    resgatarCupom.mutate(codigo, {
+      onSuccess: (res) => {
+        setPromoInput('')
+        show(`Código aplicado! Você ganhou ${res.cupom.dias} dias de Gestão Pro.`, 'success')
+      },
+      onError: (err) => {
+        const code = (err as any)?.response?.data?.detail?.code
+        show(CUPOM_ERROS[code] ?? 'Não foi possível aplicar o código.', 'error')
+      },
     })
   }
 
@@ -78,6 +107,76 @@ export function PlanoPage() {
         ) : (
           <Button onClick={() => setPixOpen(true)}>Assinar Gestão Pro</Button>
         )}
+      </Card>
+
+      <Card variant="flat" className="p-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Ticket size={18} className="text-accent shrink-0" />
+          <h3 className="font-display text-sm font-bold text-text">Tenho um código promocional</h3>
+        </div>
+        <p className="text-xs text-text-secondary mb-4">
+          Recebeu um código de indicação ou de campanha? Aplique aqui para ganhar dias grátis de Gestão Pro.
+        </p>
+        <div className="flex items-start gap-2">
+          <div className="flex-1">
+            <Input
+              value={promoInput}
+              onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleResgatar() }}
+              placeholder="CP-XXXXXX"
+              className="font-mono"
+            />
+          </div>
+          <Button onClick={handleResgatar} disabled={!promoInput.trim() || resgatarCupom.isPending}>
+            {resgatarCupom.isPending ? 'Aplicando...' : 'Resgatar'}
+          </Button>
+        </div>
+      </Card>
+
+      <Card variant="elevated" className="p-6">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2">
+            <Sparkles size={20} className="text-accent shrink-0" />
+            <h3 className="font-display text-base font-bold text-text">Indique e Ganhe</h3>
+          </div>
+          <Gift size={24} className="text-accent shrink-0" />
+        </div>
+        <p className="text-sm text-text-secondary mb-4">
+          Compartilhe seu código com outros personais. Eles ganham 30 dias grátis no CoachPilot Pro
+          e, quando virarem assinantes, você também ganha 30 dias grátis.
+        </p>
+
+        <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-surface mb-4">
+          <span className="font-mono text-lg font-bold text-text tracking-wider">
+            {cupom?.codigo ?? '—'}
+          </span>
+          <button
+            onClick={() => cupom?.codigo && copyCode(cupom.codigo)}
+            disabled={!cupom?.codigo}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border hover:bg-surface-secondary transition-colors text-sm text-text-secondary disabled:opacity-50"
+          >
+            {copiedCode === cupom?.codigo ? (
+              <><Check size={14} className="text-success" /> Copiado</>
+            ) : (
+              <><Copy size={14} /> Copiar</>
+            )}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex items-center gap-2 text-sm">
+            <Users size={16} className="text-text-muted shrink-0" />
+            <span className="text-text-secondary">
+              <strong className="text-text">{cupom?.indicacoes_total ?? 0}</strong> indicações
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Gift size={16} className="text-text-muted shrink-0" />
+            <span className="text-text-secondary">
+              <strong className="text-text">{cupom?.meses_ganhos ?? 0}</strong> meses grátis ganhos
+            </span>
+          </div>
+        </div>
       </Card>
 
       {!isPro && (
@@ -197,8 +296,8 @@ export function PlanoPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-text-secondary">{formatValor(p.valor)}</span>
-                    <Badge tone={p.origem === 'PIX' ? 'success' : 'neutral'}>
-                      {p.origem === 'PIX' ? 'Pix' : 'Admin'}
+                    <Badge tone={p.origem === 'PIX' ? 'success' : p.origem === 'INDICACAO' || p.origem === 'PROMO' ? 'accent' : 'neutral'}>
+                      {ORIGEM_LABEL[p.origem] ?? p.origem}
                     </Badge>
                   </div>
                 </div>

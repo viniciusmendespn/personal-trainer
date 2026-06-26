@@ -379,3 +379,27 @@ PAGAMENTO_ASSINATURA_PREFIX = "PAGAMENTO_ASSINATURA#"   # histórico, partição
 
 def sk_pagamento_assinatura(ts: str, payment_id: str) -> str:
     return f"PAGAMENTO_ASSINATURA#{ts}#{payment_id}"
+
+
+# ── Cupons / promo codes (indicação + campanhas futuras) ─────────────────────
+# Lookup global O(1) por código (mesmo padrão de TOKEN#/WAPI#/PHONE# — sem GSI).
+# O registro carrega campanha/plano/dias/dono/limites; o código em si é opaco.
+def pk_cupom(codigo: str) -> str:
+    return f"CUPOM#{codigo}"
+
+
+SK_META = "META"
+SK_CUPOM_PROPRIO = "CUPOM#PROPRIO"   # PT#{personal_id}: código fixo de indicação + stats
+
+
+def sk_cupom_uso(campanha: str) -> str:
+    # PT#{personal_id}: guarda "1 cupom por campanha" (put_if_absent).
+    return f"CUPOM_USO#{campanha}"
+
+
+INDICACAO_PREFIX = "INDICACAO#"
+
+
+def sk_indicacao(indicado_id: str) -> str:
+    # PT#{owner_id}: ledger de quem usou o código do owner (idempotência da recompensa).
+    return f"INDICACAO#{indicado_id}"

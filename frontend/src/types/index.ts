@@ -51,13 +51,21 @@ export interface AssinaturaStatus {
 
 export interface PagamentoAssinatura {
   payment_id: string | null
-  origem: 'PIX' | 'ADMIN'
+  origem: 'PIX' | 'ADMIN' | 'PROMO' | 'INDICACAO'
   valor: number | null
   dias_concedidos: number
   plano: PlanoTipo
   valida_ate: string
   processado_em: string
   finpilot_code?: string | null
+}
+
+export interface CupomIndicacao {
+  codigo: string
+  indicacoes_total: number
+  indicacoes_convertidas: number
+  meses_ganhos: number
+  criado_em?: string
 }
 
 export interface PlanoCatalogoItem {
