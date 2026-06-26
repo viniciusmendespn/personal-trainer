@@ -1442,15 +1442,27 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
         <div className="mt-3 space-y-2">
           {/* F1 — última execução histórica como referência */}
           {ultimaExec.data?.[0] && (
-            <p className="text-xs text-text-muted">
-              Última vez ({new Date(ultimaExec.data[0].data_hora).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}){': '}
-              {ultimaExec.data[0].series_exec.map((s) => {
-                if (tipo === 'PESO_CORPORAL') return `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}`
-                if (tipo === 'CARDIO') return `${s.reps ?? '-'}${s.carga ? ` · RPE ${s.carga}` : ''}`
-                const cargaLabel = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
-                return `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}${cargaLabel}`
-              }).join('  |  ')}
-            </p>
+            <div>
+              <p className="text-xs text-text-muted mb-1">
+                Última vez ({new Date(ultimaExec.data[0].data_hora).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })})
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {ultimaExec.data[0].series_exec.map((s, i) => {
+                  let label: string
+                  if (tipo === 'PESO_CORPORAL') label = `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}`
+                  else if (tipo === 'CARDIO') label = `${s.reps ?? '-'}${s.carga ? ` · RPE ${s.carga}` : ''}`
+                  else {
+                    const cargaLabel = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
+                    label = `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}${cargaLabel}`
+                  }
+                  return (
+                    <span key={i} className="text-xs text-text-secondary bg-white/5 rounded-md px-2 py-0.5">
+                      {label}
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
           )}
 
           {rows.map((r, i) => (
