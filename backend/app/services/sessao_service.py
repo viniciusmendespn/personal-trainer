@@ -169,6 +169,11 @@ def finish(aluno_id: str) -> dict:
     repo.put_item(keys.pk_aluno(aluno_id), sk_hist, snap)
     # Ponteiro por sessao_id para busca direta no detalhe
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_sessao_idx(sessao_id), {"sk": sk_hist})
+    # Commita os registros da sessão concluída: remove o TTL para que sirvam de fonte
+    # permanente da evolução de carga (GSI1). Sessões abandonadas não passam por aqui
+    # e expiram naturalmente em 6h.
+    for r in regs:
+        repo.update_item(keys.pk_aluno(aluno_id), r["SK"], {"ttl": None})
     repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE)
     # Agregação na escrita: conta a sessão (aluno + semana) — ESPEC §3.1
     pk = keys.pk_aluno(aluno_id)
@@ -477,6 +482,48 @@ def evolucao_exercicio(aluno_id: str, exercicio_id: str, limit: int = 100) -> di
 
         serie.append(ponto)
     return {"tipo": tipo, "serie": serie, "pr": pr, "total_sessoes": len(serie)}
+
+
+def backfill_reg_from_history(aluno_id: str) -> dict:
+    """Reconstrói itens REG (fonte da evolução via GSI1) a partir do histórico de sessões
+    finalizadas, para alunos cujos REG expiraram pelo bug de TTL (6h). Cada SESSION#{ts}#{id}
+    guarda `exercicios_exec` denormalizado e permanente — recria o REG ausente sem TTL."""
+    pk = keys.pk_aluno(aluno_id)
+    sessoes = [
+        repo.clean(s) for s in repo.query_pk(pk, sk_prefix="SESSION#")
+        if s.get("status") == SessaoStatus.FINALIZADA.value and s.get("sessao_id")
+    ]
+    criados = 0
+    for s in sessoes:
+        sessao_id = s["sessao_id"]
+        data_hora = s.get("data_hora_fim") or s.get("data_hora_inicio") or now_iso()
+        try:
+            dt = datetime.fromisoformat(data_hora.replace("Z", "+00:00"))
+            ts_ms = str(int(dt.timestamp() * 1000))
+        except Exception:
+            ts_ms = epoch_ms()
+        for ex in s.get("exercicios_exec", []):
+            ex_id = ex.get("exercicio_id")
+            series_exec = ex.get("series_exec", [])
+            if not ex_id or not series_exec:
+                continue
+            sk_reg = keys.sk_registro(sessao_id, ex_id)
+            if repo.get_item(pk, sk_reg):   # ainda existe (TTL não expirou) — não duplica
+                continue
+            chave = chave_exercicio(ex.get("exercicio_nome"))
+            repo.put_item(pk, sk_reg, {
+                "sessao_id": sessao_id,
+                "exercicio_id": ex_id,
+                "exercicio_nome": ex.get("exercicio_nome"),
+                "aluno_id": aluno_id,
+                "data_hora": data_hora,
+                "series_exec": series_exec,
+                "GSI1PK": keys.gsi1_registro(aluno_id, chave),
+                "GSI1SK": keys.gsi1sk_registro(ts_ms),
+                # sem ttl — item permanente
+            })
+            criados += 1
+    return {"criados": criados, "sessoes_verificadas": len(sessoes)}
 
 
 def ultimo_e_proximo(aluno_id: str) -> dict:

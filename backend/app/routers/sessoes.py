@@ -187,6 +187,14 @@ def feed_exercicio(aluno_id: str, exercicio_id: str,
     return correcao_service.feed_exercicio(aluno_id, exercicio_id)
 
 
+@router.post("/sessoes/backfill-evolucao")
+def backfill_evolucao(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
+    """Reconstrói os REG de evolução a partir do histórico de sessões.
+    Corrige alunos afetados pelo bug de TTL (REG expirados em 6h)."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    return sessao_service.backfill_reg_from_history(aluno_id)
+
+
 @router.post("/exercicios/{exercicio_id}/postagem", status_code=201)
 def criar_postagem_personal(aluno_id: str, exercicio_id: str, body: PostagemPersonalCreate,
                             personal_id: str = Depends(get_current_personal_id)):
