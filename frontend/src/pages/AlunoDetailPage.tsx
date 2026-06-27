@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, StickyNote, Camera, Clock, RefreshCw, AlertCircle, History, Power, PowerOff, Bot, ClipboardList } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, Clock, RefreshCw, AlertCircle, History, Power, PowerOff, Bot, ClipboardList } from 'lucide-react'
 import { useAluno, useAlunos, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { useToggleAgenteHabilitado } from '../hooks/usePersonalChat'
 import { usePlanoStatus } from '../hooks/usePlano'
@@ -18,6 +18,7 @@ import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
 import { useExerciciosAluno } from '../hooks/useEvolucao'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
+import { useCreateRotinaFromAluno, useRotinas, useAplicarRotina } from '../hooks/useRotinas'
 import { useNotas, useCreateNota } from '../hooks/useNotas'
 import { treinosApi, type SessaoHistoricoPersonal } from '../api/treinos'
 import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
@@ -25,7 +26,7 @@ import { LinksUteisSelector } from '../components/exercicios/LinksUteisSelector'
 import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
-import type { Treino, Exercicio, ExercicioCreate, ExercicioSubstituto, SeriePrescrita, TipoExercicio, AlunoExistenteConflict, Aluno } from '../types'
+import type { Treino, Exercicio, ExercicioCreate, ExercicioSubstituto, SeriePrescrita, TipoExercicio, AlunoExistenteConflict, Aluno, Rotina, AplicarRotinaModo } from '../types'
 import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
 import { MetasTab } from '../components/aluno/MetasTab'
 import { FinanceiroTab } from '../components/financeiro/FinanceiroTab'
@@ -74,6 +75,23 @@ export function AlunoDetailPage() {
   const confirm = useConfirm()
   const [tab, setTab] = useState<'perfil' | 'treinos' | 'historico' | 'frequencia' | 'metas' | 'financeiro'>('treinos')
   const [showAddTreino, setShowAddTreino] = useState(false)
+  const [showAplicarRotina, setShowAplicarRotina] = useState(false)
+  const salvarRotina = useCreateRotinaFromAluno()
+
+  async function handleSalvarRotina() {
+    if (!treinos?.length) {
+      show('Adicione ao menos um treino antes de salvar a rotina.', 'error')
+      return
+    }
+    const ok = await confirm({
+      title: 'Salvar rotina',
+      message: `Salvar os ${treinos.length} treinos de ${aluno?.nome ?? 'este aluno'} como uma rotina reutilizável? Cada treino também vira um template.`,
+      confirmLabel: 'Salvar rotina',
+    })
+    if (!ok) return
+    const r = await salvarRotina.mutateAsync({ alunoId, salvarTemplates: true })
+    show(`Rotina salva (+${r.templates_criados} template${r.templates_criados === 1 ? '' : 's'}).`, 'success')
+  }
   const [nome, setNome] = useState('')
   const [foco, setFoco] = useState('')
   const [dtIni, setDtIni] = useState('')
@@ -395,11 +413,21 @@ export function AlunoDetailPage() {
 
       {tab === 'treinos' && (
         <>
-          <div className="flex justify-end mb-4">
+          <div className="flex flex-wrap justify-end gap-2 mb-4">
+            <Button variant="outline" onClick={() => setShowAplicarRotina(true)}>
+              <span className="flex items-center gap-1"><ListChecks size={16} /> Aplicar rotina</span>
+            </Button>
+            <Button variant="outline" onClick={handleSalvarRotina} disabled={salvarRotina.isPending}>
+              <span className="flex items-center gap-1"><ListChecks size={16} /> {salvarRotina.isPending ? 'Salvando…' : 'Salvar rotina'}</span>
+            </Button>
             <Button onClick={() => setShowAddTreino(true)}>
               <span className="flex items-center gap-1"><Plus size={16} /> Adicionar treino</span>
             </Button>
           </div>
+
+          <Modal open={showAplicarRotina} onClose={() => setShowAplicarRotina(false)} title="Aplicar rotina pronta">
+            <AplicarRotinaNoAluno alunoId={alunoId} temTreinos={!!treinos?.length} onDone={() => setShowAplicarRotina(false)} />
+          </Modal>
 
           <Modal open={showAddTreino} onClose={() => setShowAddTreino(false)} title="Novo treino" size="lg">
             <form onSubmit={addTreino} className="space-y-4">
@@ -1195,5 +1223,87 @@ function ExercicioMediaModal({
         )}
       </div>
     </Modal>
+  )
+}
+
+const ROTINA_MODO_OPTIONS: { value: AplicarRotinaModo; label: string; hint: string }[] = [
+  { value: 'adicionar', label: 'Adicionar ao lado', hint: 'Mantém os treinos atuais' },
+  { value: 'substituir', label: 'Substituir tudo', hint: 'Apaga os treinos atuais' },
+]
+
+function AplicarRotinaNoAluno({ alunoId, temTreinos, onDone }: { alunoId: string; temTreinos: boolean; onDone: () => void }) {
+  const { data: rotinas, isLoading } = useRotinas()
+  const aplicar = useAplicarRotina()
+  const confirm = useConfirm()
+  const { show } = useToast()
+  const [selecionada, setSelecionada] = useState<Rotina | null>(null)
+  const [modo, setModo] = useState<AplicarRotinaModo>(temTreinos ? 'adicionar' : 'adicionar')
+
+  async function submit() {
+    if (!selecionada) return
+    if (modo === 'substituir' && temTreinos) {
+      const ok = await confirm({
+        title: 'Substituir treinos',
+        message: 'Isso apaga TODOS os treinos atuais do aluno e cria os da rotina no lugar. Continuar?',
+        confirmLabel: 'Substituir', tone: 'danger',
+      })
+      if (!ok) return
+    }
+    await aplicar.mutateAsync({ id: selecionada.rotina_id, alunoIds: [alunoId], modo })
+    show(`Rotina "${selecionada.nome}" aplicada.`, 'success')
+    onDone()
+  }
+
+  if (isLoading) return <div className="flex justify-center py-4"><Spinner /></div>
+  if (!rotinas?.length) {
+    return <p className="text-sm text-text-muted">Nenhuma rotina criada ainda. Salve a rotina de um aluno ou monte uma na aba Rotinas.</p>
+  }
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="text-xs font-medium text-text-secondary mb-2">Escolha a rotina</p>
+        <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+          {rotinas.map((r) => (
+            <button
+              key={r.rotina_id}
+              type="button"
+              onClick={() => setSelecionada(r)}
+              className={`w-full flex items-center justify-between gap-2 text-left px-2.5 py-1.5 rounded-lg border transition-colors ${
+                selecionada?.rotina_id === r.rotina_id ? 'border-accent bg-accent/10' : 'border-border hover:border-border-strong'
+              }`}
+            >
+              <span className="text-sm truncate">{r.nome}</span>
+              <Badge tone="neutral"><Dumbbell size={10} /> {r.treinos.length} treino{r.treinos.length === 1 ? '' : 's'}</Badge>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {temTreinos && (
+        <div>
+          <p className="text-xs font-medium text-text-secondary mb-2">O aluno já tem treinos</p>
+          <div className="flex gap-2">
+            {ROTINA_MODO_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setModo(opt.value)}
+                className={`flex-1 text-left text-xs py-2 px-2.5 rounded-lg border transition-colors ${
+                  modo === opt.value ? 'border-accent bg-accent/10 text-accent-hover' : 'border-border text-text-muted hover:border-border-strong'
+                }`}
+              >
+                <span className="font-medium block">{opt.label}</span>
+                <span className="text-[11px] opacity-80">{opt.hint}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <Button className="w-full" onClick={submit} disabled={!selecionada || aplicar.isPending}>
+        {aplicar.isPending ? 'Aplicando…' : 'Aplicar rotina'}
+      </Button>
+    </div>
   )
 }

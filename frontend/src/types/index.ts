@@ -313,6 +313,30 @@ export interface TreinoTemplateCreate {
   exercicios?: ExercicioTemplate[]
 }
 
+export interface TreinoRotina {
+  nome: string
+  foco?: string
+  ordem?: number
+  exercicios: ExercicioTemplate[]
+}
+
+export interface Rotina {
+  rotina_id: string
+  personal_id: string
+  nome: string
+  descricao?: string
+  treinos: TreinoRotina[]
+  created_at: string
+}
+
+export interface RotinaCreate {
+  nome: string
+  descricao?: string
+  treinos: TreinoRotina[]
+}
+
+export type AplicarRotinaModo = 'adicionar' | 'substituir'
+
 export type CanalOrigem = 'WHATSAPP' | 'PORTAL'
 export type Ator = 'ALUNO' | 'PERSONAL'
 

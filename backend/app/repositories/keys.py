@@ -105,6 +105,14 @@ def sk_template(template_id: str) -> str:
     return f"TEMPLATE#{template_id}"
 
 
+# ── Rotinas de treino (split ABC/ABCDE — vários treinos, partição PT#) ────────
+ROTINA_PREFIX = "ROTINA#"
+
+
+def sk_rotina(rotina_id: str) -> str:
+    return f"ROTINA#{rotina_id}"
+
+
 # ── Agenda de vencimentos (scheduler diário) — 1 partição por dia de vencimento,
 # evita hot-partition global (1 só PK pra todo o sistema, ESPEC §2.1 risco identificado).
 DUE_PREFIX = "DUE#"

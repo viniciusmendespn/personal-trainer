@@ -12,7 +12,7 @@ from app.models.template import (
 from app.models.treino import Treino
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz
+from app.services import authz, biblioteca_service
 from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/templates", tags=["templates"])
@@ -30,6 +30,7 @@ def create_template(body: TreinoTemplateCreate, personal_id: str = Depends(get_c
         template_id=new_id(), personal_id=personal_id, created_at=now_iso(), **body.model_dump()
     )
     repo.put_item(keys.pk_personal(personal_id), keys.sk_template(tpl.template_id), tpl.model_dump())
+    biblioteca_service.upsert_from_exercicios(personal_id, [e.model_dump() for e in tpl.exercicios])
     return tpl
 
 
@@ -56,6 +57,7 @@ def create_template_from_treino(
         exercicios=exercicios,
     )
     repo.put_item(keys.pk_personal(personal_id), keys.sk_template(tpl.template_id), tpl.model_dump())
+    biblioteca_service.upsert_from_exercicios(personal_id, [e.model_dump() for e in exercicios])
     return tpl
 
 
@@ -76,6 +78,7 @@ def update_template(
     )
     if updated is None:
         raise HTTPException(404, "Template não encontrado")
+    biblioteca_service.upsert_from_exercicios(personal_id, [e.model_dump() for e in body.exercicios])
     return TreinoTemplate(**repo.clean(updated))
 
 

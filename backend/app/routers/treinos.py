@@ -9,7 +9,7 @@ from app.models.exercicio import Exercicio, ExercicioCreate
 from app.models.treino import Treino, TreinoCreate
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz
+from app.services import authz, biblioteca_service
 from app.services.sessao_service import chave_exercicio, list_exercicios_aluno
 from app.utils import new_id, now_iso
 
@@ -151,6 +151,7 @@ def create_exercicio(aluno_id: str, treino_id: str, body: ExercicioCreate,
         dados["canonical_exercicio_id"] = primario["exercicio_id"]
     ex = Exercicio(exercicio_id=exercicio_id, treino_id=treino_id, aluno_id=aluno_id, **dados)
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_exercicio(treino_id, exercicio_id), ex.model_dump())
+    biblioteca_service.upsert_from_exercicios(personal_id, [dados])
     _touch_aluno_pointer(personal_id, aluno_id)
     return ex
 

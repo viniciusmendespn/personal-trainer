@@ -24,6 +24,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ 
 const AlunosPage = lazy(() => import('./pages/AlunosPage').then((m) => ({ default: m.AlunosPage })))
 const AgendaPage = lazy(() => import('./pages/AgendaPage').then((m) => ({ default: m.AgendaPage })))
 const TemplatesPage = lazy(() => import('./pages/TemplatesPage').then((m) => ({ default: m.TemplatesPage })))
+const RotinasPage = lazy(() => import('./pages/RotinasPage').then((m) => ({ default: m.RotinasPage })))
 const AlunoDetailPage = lazy(() => import('./pages/AlunoDetailPage').then((m) => ({ default: m.AlunoDetailPage })))
 const AlunoEvolucaoPage = lazy(() => import('./pages/AlunoEvolucaoPage').then((m) => ({ default: m.AlunoEvolucaoPage })))
 const AvaliacoesPage = lazy(() => import('./pages/AvaliacoesPage').then((m) => ({ default: m.AvaliacoesPage })))
@@ -102,6 +103,7 @@ const router = createBrowserRouter([
                   { path: 'alunos', element: lazyPage(<AlunosPage />) },
                   { path: 'agenda', element: lazyPage(<AgendaPage />) },
                   { path: 'templates', element: lazyPage(<TemplatesPage />) },
+                  { path: 'rotinas', element: lazyPage(<RotinasPage />) },
                   { path: 'alunos/:alunoId', element: lazyPage(<AlunoDetailPage />) },
                   { path: 'alunos/:alunoId/evolucao', element: lazyPage(<AlunoEvolucaoPage />) },
                   { path: 'alunos/:alunoId/avaliacoes', element: lazyPage(<AvaliacoesPage />) },
