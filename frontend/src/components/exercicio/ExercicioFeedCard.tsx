@@ -1,6 +1,8 @@
 import { AlertTriangle, Camera, HelpCircle, MessageCircle, Wrench } from 'lucide-react'
 import { ThreadRelato } from '../notificacoes/ThreadRelato'
-import { Avatar } from '../ui'
+import { Avatar, RichTextContent } from '../ui'
+
+const isHtml = (s: string) => s.trimStart().startsWith('<')
 import type { FeedItem } from '../../api/treinos'
 
 type MidiaRef = { s3_key: string; tipo: string }
@@ -69,7 +71,10 @@ function ReadOnlyBubble({
         <ItemAvatar ator={ator} ctx={ctx} />
       </div>
       <div className={`${hasMedia ? 'flex-1 min-w-0' : 'max-w-[85%]'} rounded-xl rounded-tl-sm px-3 py-2 bg-white/5 border border-border space-y-0.5`}>
-        {texto && <p className="text-xs text-text leading-snug whitespace-pre-wrap">{texto}</p>}
+        {texto && (isHtml(texto)
+          ? <RichTextContent html={texto} className="text-xs" />
+          : <p className="text-xs text-text leading-snug whitespace-pre-wrap">{texto}</p>
+        )}
         <MediaGrid midias={midias ?? []} />
         <p className="text-[10px] text-text-muted">{fmtDt(dataHora)}</p>
       </div>
