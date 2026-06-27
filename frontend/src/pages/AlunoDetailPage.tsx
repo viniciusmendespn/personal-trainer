@@ -25,6 +25,7 @@ import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas }
 import { LinksUteisSelector } from '../components/exercicios/LinksUteisSelector'
 import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
+import { IntervaloInput } from '../components/exercicios/IntervaloInput'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import type { Treino, Exercicio, ExercicioCreate, ExercicioSubstituto, SeriePrescrita, TipoExercicio, AlunoExistenteConflict, Aluno, Rotina, AplicarRotinaModo } from '../types'
 import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
@@ -870,6 +871,7 @@ function ExercicioForm({
   const [unidadeReps] = useState(initial?.unidade_reps ?? '')
   const [vid, setVid] = useState(initial?.video_url ?? '')
   const [obs, setObs] = useState(initial?.observacoes ?? '')
+  const [intervaloS, setIntervaloS] = useState<number | undefined>(initial?.intervalo_s)
   const [rmKg, setRmKg] = useState<string>(initial?.rm_kg != null ? String(initial.rm_kg) : '')
   const [linksUteis, setLinksUteis] = useState<string[]>(initial?.links_uteis ?? [])
   const [linksUteisExcluidos, setLinksUteisExcluidos] = useState<string[]>(initial?.links_uteis_excluidos ?? [])
@@ -933,6 +935,7 @@ function ExercicioForm({
       unidade_carga: unidadeCarga || undefined,
       unidade_reps: unidadeReps || undefined,
       series_prescritas: validas.length ? validas : undefined,
+      intervalo_s: intervaloS,
       video_url: vid || undefined,
       observacoes: obs || undefined,
       rm_kg: rmKg ? parseFloat(rmKg) : undefined,
@@ -1003,6 +1006,7 @@ function ExercicioForm({
             label="Recomendações (visíveis ao aluno na sessão)" rows={2}
             value={obs} onChange={(e) => setObs(e.target.value)}
           />
+          <IntervaloInput value={intervaloS} onChange={setIntervaloS} />
           {tipo === 'FORCA' && (
             <div>
               <Input

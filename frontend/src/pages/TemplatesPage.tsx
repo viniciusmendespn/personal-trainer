@@ -6,6 +6,7 @@ import { useBiblioteca } from '../hooks/useDominio'
 import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm } from '../components/ui'
 import { SeriesPrescritasEditor, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
+import { IntervaloInput } from '../components/exercicios/IntervaloInput'
 import type { ExercicioTemplate, TreinoTemplate, SeriePrescrita, TipoExercicio } from '../types'
 
 
@@ -297,6 +298,7 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                   <div className="space-y-3">
                     <Input label="Vídeo (URL)" value={ex.video_url ?? ''} onChange={(e) => updateEx(i, { video_url: e.target.value || undefined })} />
                     <Textarea label="Recomendações (visíveis ao aluno na sessão)" rows={2} value={ex.observacoes ?? ''} onChange={(e) => updateEx(i, { observacoes: e.target.value || undefined })} />
+                    <IntervaloInput value={ex.intervalo_s} onChange={(s) => updateEx(i, { intervalo_s: s })} />
                   </div>
                 </div>
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, BellRing, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info, Repeat, Zap } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, BellRing, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info, Repeat, Zap, AlarmClock } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -22,6 +22,7 @@ import { PostComposer } from '../components/exercicio/PostComposer'
 import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSelect, SocialLinks, useToast, useConfirm, Modal, RichTextContent } from '../components/ui'
 import { renderMarkdownLite } from '../components/chat/markdownLite'
 import { AlunoPerfilModal } from '../components/aluno/AlunoPerfilModal'
+import { CronometroOverlay } from '../components/aluno/CronometroOverlay'
 import { alunoFinanceiroApi } from '../api/financeiro'
 import { PixModal } from '../components/financeiro/PixModal'
 import type { Cobranca, ExercicioSubstituto, SeriePrescrita } from '../types'
@@ -1058,6 +1059,8 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [elapsed, setElapsed] = useState(0)
+  const [crono, setCrono] = useState<{ open: boolean; seconds?: number; label?: string }>({ open: false })
+  const abrirCrono = (seconds?: number, label?: string) => setCrono({ open: true, seconds, label })
   const ses = useQuery({ queryKey: ['aluno-sessao-exs'], queryFn: alunoApi.sessaoExercicios, retry: false })
   const finish = useMutation({
     mutationFn: () => alunoApi.finish(),
@@ -1092,9 +1095,18 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="font-display font-semibold">{ses.data.treino_nome}</p>
-        <span className="flex items-center gap-1 text-sm font-mono text-energy">
-          <Timer size={14} />{formatElapsed(elapsed)}
-        </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => abrirCrono(undefined, undefined)}
+            aria-label="Abrir cronômetro"
+            className="flex items-center text-text-secondary hover:text-energy transition-colors"
+          >
+            <AlarmClock size={18} />
+          </button>
+          <span className="flex items-center gap-1 text-sm font-mono text-energy">
+            <Timer size={14} />{formatElapsed(elapsed)}
+          </span>
+        </div>
       </div>
       <div className="flex items-center justify-between text-xs text-text-muted">
         <span>{feitos}/{exs.length} exercícios feitos</span>
@@ -1110,7 +1122,7 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
         />
       </div>
       <p className="text-xs text-text-muted">Toque em um exercício para registrar — você pode começar por onde quiser e editar depois.</p>
-      {exs.map((ex) => <ExercicioCard key={ex.exercicio_id} ex={ex} onVerFeed={onVerFeed} />)}
+      {exs.map((ex) => <ExercicioCard key={ex.exercicio_id} ex={ex} onVerFeed={onVerFeed} onAbrirCronometro={abrirCrono} />)}
       <Button
         variant="energy"
         className="w-full"
@@ -1152,6 +1164,12 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
       >
         {cancel.isPending ? 'Cancelando…' : 'Cancelar treino'}
       </Button>
+      <CronometroOverlay
+        open={crono.open}
+        onClose={() => setCrono((c) => ({ ...c, open: false }))}
+        initialSeconds={crono.seconds}
+        label={crono.label}
+      />
     </div>
   )
 }
@@ -1272,7 +1290,7 @@ function SubstitutosModal({
   )
 }
 
-function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: string) => void }) {
+function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onVerFeed: (exId: string) => void; onAbrirCronometro: (seconds?: number, label?: string) => void }) {
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
   const [recursosOpen, setRecursosOpen] = useState(false)
@@ -1378,6 +1396,13 @@ function ExercicioCard({ ex, onVerFeed }: { ex: ExSessao; onVerFeed: (exId: stri
             </span>
           </span>
           {feito ? <Check size={16} className="text-success shrink-0" /> : <ChevronRight size={16} className="text-text-muted shrink-0" />}
+        </button>
+        <button
+          onClick={() => onAbrirCronometro(ex.intervalo_s, nomeAtivo)}
+          aria-label="Cronômetro de descanso"
+          className="shrink-0 text-accent hover:text-accent-hover transition-colors p-1"
+        >
+          <AlarmClock size={15} />
         </button>
         {temSubstitutos && (
           <button
