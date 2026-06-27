@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Play, Pause, RotateCcw } from 'lucide-react'
-import { playAlarm, unlockAudio } from '../../utils/beep'
+import { X, Play, Pause, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react'
+import { startAlarm, stopAlarm, tick, unlockAudio } from '../../utils/beep'
 
 type Modo = 'regressivo' | 'progressivo'
 
@@ -15,11 +15,78 @@ function fmt(ms: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
+/** Uma coluna de número ajustável por scroll do mouse, arraste vertical ou setas ▲/▼. */
+function WheelNumber({
+  value,
+  max,
+  onChange,
+  ariaLabel,
+}: {
+  value: number
+  max: number
+  onChange: (v: number) => void
+  ariaLabel: string
+}) {
+  const startY = useRef<number | null>(null)
+  const acc = useRef(0)
+  const STEP_PX = 28
+
+  const change = (delta: number) => onChange(Math.max(0, Math.min(max, value + delta)))
+
+  return (
+    <div
+      className="flex flex-col items-center select-none touch-none"
+      onWheel={(e) => change(e.deltaY < 0 ? 1 : -1)}
+      onTouchStart={(e) => {
+        startY.current = e.touches[0].clientY
+        acc.current = 0
+      }}
+      onTouchMove={(e) => {
+        if (startY.current == null) return
+        acc.current += startY.current - e.touches[0].clientY
+        startY.current = e.touches[0].clientY
+        while (acc.current >= STEP_PX) {
+          change(1)
+          acc.current -= STEP_PX
+        }
+        while (acc.current <= -STEP_PX) {
+          change(-1)
+          acc.current += STEP_PX
+        }
+      }}
+      onTouchEnd={() => {
+        startY.current = null
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => change(1)}
+        aria-label={`Aumentar ${ariaLabel}`}
+        className="p-1 text-text-muted hover:text-text"
+      >
+        <ChevronUp size={32} />
+      </button>
+      <span className="font-display tabular-nums leading-none text-[16vw] sm:text-[9rem] text-text">
+        {String(value).padStart(2, '0')}
+      </span>
+      <button
+        type="button"
+        onClick={() => change(-1)}
+        aria-label={`Diminuir ${ariaLabel}`}
+        className="p-1 text-text-muted hover:text-text"
+      >
+        <ChevronDown size={32} />
+      </button>
+    </div>
+  )
+}
+
 /**
  * Cronômetro em tela cheia para o app do aluno. Dois modos: regressivo (intervalo
  * de descanso, padrão) e progressivo (conta pra cima). Ao abrir vem carregado com
- * `initialSeconds` mas aguarda o aluno tocar em Iniciar. Ao zerar o regressivo,
- * dispara alerta visual + sonoro (Web Audio) + vibração.
+ * `initialSeconds` mas aguarda o aluno tocar em Iniciar. Nos últimos 5 s dá um tique
+ * por segundo e, ao zerar o regressivo, dispara alarme contínuo + flash sólido +
+ * vibração até o aluno dispensar.
  */
 export function CronometroOverlay({
   open,
@@ -37,12 +104,12 @@ export function CronometroOverlay({
   const [running, setRunning] = useState(false)
   const [displayMs, setDisplayMs] = useState(baseSeconds * 1000)
   const [done, setDone] = useState(false)
-  const [editing, setEditing] = useState(false)
-  const [editText, setEditText] = useState('')
+  const [flashOn, setFlashOn] = useState(false)
 
   // regressivo: instante-alvo do fim; progressivo: instante de início (ambos em epoch ms)
   const anchorRef = useRef(0)
   const wakeRef = useRef<WakeLockSentinel | null>(null)
+  const lastTickSecRef = useRef<number | null>(null)
 
   function releaseWakeLock() {
     try {
@@ -68,12 +135,18 @@ export function CronometroOverlay({
     setModo('regressivo')
     setRunning(false)
     setDone(false)
-    setEditing(false)
     setDisplayMs(baseSeconds * 1000)
+    lastTickSecRef.current = null
   }, [open, baseSeconds])
 
-  // Libera o wake lock ao desmontar.
-  useEffect(() => () => releaseWakeLock(), [])
+  // Limpeza ao desmontar: libera wake lock e silencia qualquer alarme.
+  useEffect(
+    () => () => {
+      releaseWakeLock()
+      stopAlarm()
+    },
+    []
+  )
 
   // Tick principal — recalcula a partir de Date.now() para não acumular drift.
   useEffect(() => {
@@ -87,11 +160,16 @@ export function CronometroOverlay({
           setRunning(false)
           setDone(true)
           releaseWakeLock()
-          playAlarm()
-          navigator.vibrate?.([200, 100, 200, 100, 300])
+          startAlarm()
+          navigator.vibrate?.([300, 150, 300, 150, 300, 150, 500])
           return
         }
         setDisplayMs(rem)
+        const wholeSec = Math.ceil(rem / 1000)
+        if (wholeSec <= 5 && wholeSec >= 1 && lastTickSecRef.current !== wholeSec) {
+          lastTickSecRef.current = wholeSec
+          tick()
+        }
       } else {
         setDisplayMs(now - anchorRef.current)
       }
@@ -99,16 +177,21 @@ export function CronometroOverlay({
     return () => clearInterval(id)
   }, [running, modo])
 
-  // O flash visual de "concluído" some sozinho após alguns segundos.
+  // Flash sólido enquanto "concluído" — alterna cores opacas (sem transparência).
   useEffect(() => {
-    if (!done) return
-    const id = setTimeout(() => setDone(false), 6000)
-    return () => clearTimeout(id)
+    if (!done) {
+      setFlashOn(false)
+      return
+    }
+    const id = setInterval(() => setFlashOn((f) => !f), 450)
+    return () => clearInterval(id)
   }, [done])
 
   function start() {
     unlockAudio()
+    stopAlarm()
     setDone(false)
+    lastTickSecRef.current = null
     const now = Date.now()
     anchorRef.current = modo === 'regressivo' ? now + displayMs : now - displayMs
     setRunning(true)
@@ -123,44 +206,44 @@ export function CronometroOverlay({
   function reset() {
     setRunning(false)
     setDone(false)
+    stopAlarm()
     releaseWakeLock()
+    lastTickSecRef.current = null
     setDisplayMs(modo === 'regressivo' ? baseSeconds * 1000 : 0)
   }
 
+  function dismissDone() {
+    stopAlarm()
+    setDone(false)
+    setDisplayMs(baseSeconds * 1000)
+  }
+
   function addSeconds(sec: number) {
+    stopAlarm()
     setDone(false)
     if (running) anchorRef.current += sec * 1000
     setDisplayMs((d) => Math.min(MAX_SECONDS * 1000, Math.max(0, d + sec * 1000)))
+  }
+
+  function setTime(mm: number, ss: number) {
+    const total = Math.max(0, Math.min(MAX_SECONDS, mm * 60 + ss))
+    setDisplayMs(total * 1000)
   }
 
   function trocarModo(m: Modo) {
     if (m === modo) return
     setRunning(false)
     setDone(false)
+    stopAlarm()
     releaseWakeLock()
+    lastTickSecRef.current = null
     setModo(m)
     setDisplayMs(m === 'regressivo' ? baseSeconds * 1000 : 0)
   }
 
-  function startEdit() {
-    if (running) return
-    setEditText(fmt(displayMs))
-    setEditing(true)
-  }
-
-  function commitEdit() {
-    const parts = editText.split(':')
-    let secs: number
-    if (parts.length === 2) secs = (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0)
-    else secs = parseInt(editText, 10) || 0
-    secs = Math.max(0, Math.min(secs, MAX_SECONDS))
-    setDisplayMs(secs * 1000)
-    setDone(false)
-    setEditing(false)
-  }
-
   function fechar() {
     pause()
+    stopAlarm()
     onClose()
   }
 
@@ -171,25 +254,40 @@ export function CronometroOverlay({
       modo === m ? 'bg-accent/15 text-accent-hover font-medium' : 'text-text-muted hover:text-text'
     }`
 
+  const totalSec = Math.round(displayMs / 1000)
+  const mm = Math.floor(totalSec / 60)
+  const ss = totalSec % 60
   const alerta = displayMs <= 5000 && modo === 'regressivo' && running
-  const numCor = done ? 'text-energy' : alerta ? 'text-warning' : 'text-text'
+  const idle = !running && !done
+
+  const bgClass = done ? (flashOn ? 'bg-danger' : 'bg-accent') : 'bg-bg'
 
   return createPortal(
-    <div className={`fixed inset-0 z-[60] flex flex-col bg-bg ${done ? 'animate-pulse' : ''}`}>
+    <div
+      className={`fixed inset-0 z-[60] flex flex-col transition-colors duration-100 ${bgClass}`}
+      onClick={done ? dismissDone : undefined}
+    >
       <div className="flex items-center justify-between p-4">
-        <div className="inline-flex rounded-lg border border-border overflow-hidden">
-          <button type="button" onClick={() => trocarModo('regressivo')} className={tabCls('regressivo')}>
-            Intervalo
-          </button>
-          <button type="button" onClick={() => trocarModo('progressivo')} className={tabCls('progressivo')}>
-            Cronômetro
-          </button>
-        </div>
+        {done ? (
+          <div />
+        ) : (
+          <div className="inline-flex rounded-lg border border-border overflow-hidden">
+            <button type="button" onClick={() => trocarModo('regressivo')} className={tabCls('regressivo')}>
+              Intervalo
+            </button>
+            <button type="button" onClick={() => trocarModo('progressivo')} className={tabCls('progressivo')}>
+              Cronômetro
+            </button>
+          </div>
+        )}
         <button
           type="button"
-          onClick={fechar}
+          onClick={(e) => {
+            e.stopPropagation()
+            fechar()
+          }}
           aria-label="Fechar cronômetro"
-          className="p-2 rounded-lg text-text-secondary hover:bg-white/5 hover:text-text"
+          className={`p-2 rounded-lg hover:bg-white/10 ${done ? 'text-white' : 'text-text-secondary hover:text-text'}`}
         >
           <X size={26} />
         </button>
@@ -197,40 +295,41 @@ export function CronometroOverlay({
 
       <div className="flex-1 flex flex-col items-center justify-center px-4 min-h-0">
         {label && (
-          <p className="text-text-secondary text-lg sm:text-2xl mb-2 text-center max-w-full truncate">{label}</p>
+          <p
+            className={`text-lg sm:text-2xl mb-2 text-center max-w-full truncate ${done ? 'text-white' : 'text-text-secondary'}`}
+          >
+            {label}
+          </p>
         )}
-        {editing ? (
-          <input
-            autoFocus
-            value={editText}
-            onChange={(e) => setEditText(e.target.value.replace(/[^\d:]/g, ''))}
-            onBlur={commitEdit}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commitEdit()
-            }}
-            inputMode="numeric"
-            placeholder="MM:SS"
-            className="w-full max-w-[7ch] bg-transparent text-center font-display tabular-nums leading-none text-[22vw] sm:text-[12rem] text-text border-b-2 border-accent focus:outline-none"
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={startEdit}
-            disabled={running}
-            className={`font-display tabular-nums leading-none text-[26vw] sm:text-[16rem] transition-colors disabled:cursor-default ${numCor}`}
+
+        {done ? (
+          <>
+            <span className="font-display tabular-nums leading-none text-[26vw] sm:text-[16rem] text-white">
+              00:00
+            </span>
+            <p className="mt-4 text-white font-display text-3xl sm:text-5xl font-bold">Intervalo concluído!</p>
+          </>
+        ) : running ? (
+          <span
+            className={`font-display tabular-nums leading-none text-[26vw] sm:text-[16rem] transition-colors ${
+              alerta ? 'text-warning' : 'text-text'
+            }`}
           >
             {fmt(displayMs)}
-          </button>
-        )}
-        {done && (
-          <p className="mt-4 text-energy font-display text-2xl sm:text-4xl font-semibold">Intervalo concluído!</p>
-        )}
-        {!running && !done && !editing && (
-          <p className="mt-3 text-text-muted text-sm">Toque no tempo para ajustar</p>
+          </span>
+        ) : (
+          <>
+            <div className="flex items-center justify-center gap-1 sm:gap-3" onClick={(e) => e.stopPropagation()}>
+              <WheelNumber value={mm} max={99} ariaLabel="minutos" onChange={(m) => setTime(m, ss)} />
+              <span className="font-display tabular-nums leading-none text-[12vw] sm:text-[7rem] text-text-muted">:</span>
+              <WheelNumber value={ss} max={59} ariaLabel="segundos" onChange={(s) => setTime(mm, s)} />
+            </div>
+            <p className="mt-3 text-text-muted text-sm">Role ou use as setas para ajustar</p>
+          </>
         )}
       </div>
 
-      {modo === 'regressivo' && (
+      {idle && modo === 'regressivo' && (
         <div className="flex items-center justify-center gap-2 px-4 pb-2">
           {[10, 30, 60].map((s) => (
             <button
@@ -246,24 +345,39 @@ export function CronometroOverlay({
       )}
 
       <div className="flex items-center justify-center gap-4 p-6 pb-10">
-        <button
-          type="button"
-          onClick={reset}
-          aria-label="Resetar"
-          className="p-4 rounded-full bg-white/5 text-text-secondary hover:bg-white/10 hover:text-text"
-        >
-          <RotateCcw size={28} />
-        </button>
-        <button
-          type="button"
-          onClick={running ? pause : start}
-          aria-label={running ? 'Pausar' : 'Iniciar'}
-          className="p-6 rounded-full bg-energy text-[#0c1404] shadow-[var(--shadow-glow-energy)] hover:bg-energy-hover transition-colors"
-        >
-          {running ? <Pause size={40} /> : <Play size={40} className="translate-x-0.5" />}
-        </button>
-        {/* espaçador para manter o botão de play centralizado */}
-        <div className="w-[60px]" aria-hidden="true" />
+        {done ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              dismissDone()
+            }}
+            className="px-12 py-4 rounded-full bg-white text-danger font-display text-xl font-bold shadow-lg"
+          >
+            Parar
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={reset}
+              aria-label="Resetar"
+              className="p-4 rounded-full bg-white/5 text-text-secondary hover:bg-white/10 hover:text-text"
+            >
+              <RotateCcw size={28} />
+            </button>
+            <button
+              type="button"
+              onClick={running ? pause : start}
+              aria-label={running ? 'Pausar' : 'Iniciar'}
+              className="p-6 rounded-full bg-energy text-[#0c1404] shadow-[var(--shadow-glow-energy)] hover:bg-energy-hover transition-colors"
+            >
+              {running ? <Pause size={40} /> : <Play size={40} className="translate-x-0.5" />}
+            </button>
+            {/* espaçador para manter o botão de play centralizado */}
+            <div className="w-[60px]" aria-hidden="true" />
+          </>
+        )}
       </div>
     </div>,
     document.body
