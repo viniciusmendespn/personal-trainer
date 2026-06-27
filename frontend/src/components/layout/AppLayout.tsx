@@ -15,19 +15,40 @@ import { usePushPersonal } from '../../hooks/usePushPersonal'
 // SplashScreen removido — carregamento unificado via Suspense em App.tsx
 import { getInstallPrompt } from '../../lib/installPrompt'
 
-const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Visão geral', icon: LayoutDashboard },
-  { to: '/alunos', label: 'Alunos', icon: Users },
-  { to: '/agenda', label: 'Agenda', icon: Calendar },
-  { to: '/templates', label: 'Templates', icon: LayoutTemplate },
-  { to: '/rotinas', label: 'Rotinas', icon: ListChecks },
-  { to: '/feed', label: 'Feed', icon: Newspaper },
-  { to: '/ranking', label: 'Ranking', icon: Trophy },
-  { to: '/notificacoes', label: 'Notificações', icon: Bell },
-  { to: '/plano', label: 'Plano', icon: CreditCard },
-  { to: '/biblioteca', label: 'Biblioteca', icon: BookOpen },
-  { to: '/conhecimento', label: 'Base de IA', icon: Brain },
-  { to: '/ajuda', label: 'Ajuda', icon: HelpCircle },
+const NAV_GROUPS = [
+  {
+    title: 'Principal',
+    items: [
+      { to: '/dashboard', label: 'Visão geral', icon: LayoutDashboard },
+      { to: '/notificacoes', label: 'Notificações', icon: Bell },
+      { to: '/feed', label: 'Feed', icon: Newspaper },
+    ],
+  },
+  {
+    title: 'Alunos',
+    items: [
+      { to: '/alunos', label: 'Alunos', icon: Users },
+      { to: '/agenda', label: 'Agenda', icon: Calendar },
+      { to: '/ranking', label: 'Ranking', icon: Trophy },
+    ],
+  },
+  {
+    title: 'Treinos',
+    items: [
+      { to: '/rotinas', label: 'Rotinas', icon: ListChecks },
+      { to: '/templates', label: 'Templates', icon: LayoutTemplate },
+      { to: '/biblioteca', label: 'Biblioteca', icon: BookOpen },
+      { to: '/conhecimento', label: 'Base de IA', icon: Brain },
+    ],
+  },
+  {
+    title: 'Conta',
+    // Admin entra ao final deste grupo condicionalmente (ver renderização)
+    items: [
+      { to: '/plano', label: 'Plano', icon: CreditCard },
+      { to: '/ajuda', label: 'Ajuda', icon: HelpCircle },
+    ],
+  },
 ]
 
 const TITLE_MAP: Record<string, string> = { '/config': 'Configurações', '/perfil': 'Meu Perfil', '/ajuda': 'Ajuda' }
@@ -79,21 +100,28 @@ function SidebarContent({ unread, onNavigate, showInstallBtn, isIos, onInstall }
   return (
     <div className="flex flex-col h-full w-full">
       <nav className="flex flex-col gap-1 flex-1 overflow-y-auto min-h-0">
-        {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-          <NavLink key={to} to={to} onClick={onNavigate} className={({ isActive }) => link(isActive)}>
-            <Icon size={16} /> {label}
-            {to === '/notificacoes' && unread > 0 && (
-              <span className="ml-auto text-[10px] bg-accent text-white rounded-full px-1.5 min-w-5 text-center leading-5">
-                {unread}
-              </span>
+        {NAV_GROUPS.map((group, gi) => (
+          <div key={group.title} className={gi === 0 ? '' : 'mt-3'}>
+            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+              {group.title}
+            </p>
+            {group.items.map(({ to, label, icon: Icon }) => (
+              <NavLink key={to} to={to} onClick={onNavigate} className={({ isActive }) => link(isActive)}>
+                <Icon size={16} /> {label}
+                {to === '/notificacoes' && unread > 0 && (
+                  <span className="ml-auto text-[10px] bg-accent text-white rounded-full px-1.5 min-w-5 text-center leading-5">
+                    {unread}
+                  </span>
+                )}
+              </NavLink>
+            ))}
+            {group.title === 'Conta' && isAdmin && (
+              <NavLink to="/admin" onClick={onNavigate} className={({ isActive }) => link(isActive)}>
+                <Shield size={16} /> Admin
+              </NavLink>
             )}
-          </NavLink>
+          </div>
         ))}
-        {isAdmin && (
-          <NavLink to="/admin" onClick={onNavigate} className={({ isActive }) => link(isActive)}>
-            <Shield size={16} /> Admin
-          </NavLink>
-        )}
       </nav>
 
       {/* Instalar app */}
@@ -222,7 +250,7 @@ export function AppLayout() {
   }
 
   const pageTitle =
-    NAV_ITEMS.find((i) => location.pathname.startsWith(i.to))?.label ??
+    NAV_GROUPS.flatMap((g) => g.items).find((i) => location.pathname.startsWith(i.to))?.label ??
     TITLE_MAP[location.pathname] ??
     'Personal'
 
