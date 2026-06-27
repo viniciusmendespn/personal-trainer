@@ -4,6 +4,12 @@ import type { TreinoTemplateCreate } from '../types'
 
 const KEY = ['templates']
 
+// Criar/atualizar templates também auto-cadastra exercícios na biblioteca (backend).
+function invalidateTemplatesEBiblioteca(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: KEY })
+  qc.invalidateQueries({ queryKey: ['biblioteca'] })
+}
+
 export function useTemplates() {
   return useQuery({ queryKey: KEY, queryFn: templatesApi.list })
 }
@@ -12,7 +18,7 @@ export function useCreateTemplate() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: TreinoTemplateCreate) => templatesApi.create(body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () => invalidateTemplatesEBiblioteca(qc),
   })
 }
 
@@ -21,7 +27,7 @@ export function useCreateTemplateFromTreino() {
   return useMutation({
     mutationFn: ({ alunoId, treinoId, nome }: { alunoId: string; treinoId: string; nome?: string }) =>
       templatesApi.createFromTreino(alunoId, treinoId, nome),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () => invalidateTemplatesEBiblioteca(qc),
   })
 }
 
@@ -29,7 +35,7 @@ export function useUpdateTemplate() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: TreinoTemplateCreate }) => templatesApi.update(id, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () => invalidateTemplatesEBiblioteca(qc),
   })
 }
 

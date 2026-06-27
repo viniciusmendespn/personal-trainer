@@ -6,6 +6,8 @@ o primeiro a cadastrar um nome vira o item canônico; cadastros seguintes do mes
 sobrescrevem (o exercício no treino é uma cópia; editar a cópia não muda a biblioteca).
 Para alterar o item canônico, edita-se a Biblioteca diretamente.
 """
+import urllib.parse
+
 from app.models.biblioteca import ExLib
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
@@ -30,11 +32,16 @@ def upsert_from_exercicios(personal_id: str, exercicios: list[dict]) -> int:
         chave = chave_exercicio(nome)
         if not chave or chave in chaves:
             continue
+        # Sem vídeo informado → padrão é uma busca no YouTube pelo nome do exercício,
+        # para o personal nunca cair num item sem link de referência na biblioteca.
+        video_url = ex.get("video_url")
+        if not video_url:
+            video_url = f"https://www.youtube.com/results?search_query={urllib.parse.quote_plus(nome)}"
         item = ExLib(
             exlib_id=new_id(),
             nome=nome,
             grupo=ex.get("grupo"),
-            video_url=ex.get("video_url"),
+            video_url=video_url,
             recomendacoes=ex.get("observacoes"),
             links_uteis=ex.get("links_uteis") or [],
             substitutos=ex.get("substitutos") or [],

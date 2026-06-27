@@ -50,6 +50,7 @@ export function useCreateExercicio(alunoId: string, treinoId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['exercicios', alunoId, treinoId] })
       qc.invalidateQueries({ queryKey: ['exercicios-aluno', alunoId] })
+      qc.invalidateQueries({ queryKey: ['biblioteca'] }) // auto-cadastro na biblioteca
     },
   })
 }
@@ -62,6 +63,7 @@ export function useUpdateExercicio(alunoId: string, treinoId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['exercicios', alunoId, treinoId] })
       qc.invalidateQueries({ queryKey: ['exercicios-aluno', alunoId] })
+      qc.invalidateQueries({ queryKey: ['biblioteca'] }) // renomear pode gerar item novo
     },
   })
 }
