@@ -5,7 +5,7 @@ import { startAlarm, stopAlarm, tick, unlockAudio } from '../../utils/beep'
 
 type Modo = 'regressivo' | 'progressivo'
 
-const DEFAULT_SECONDS = 60
+const DEFAULT_SECONDS = 90 // padrão (1:30) quando o personal não cadastrou intervalo
 const MAX_SECONDS = 99 * 60 + 59
 
 function fmt(ms: number): string {
