@@ -852,7 +852,7 @@ function ExercicioForm({
   initial, biblioteca, exerciciosAluno, onSubmit, submitting, submitLabel,
 }: {
   initial?: Partial<Exercicio>
-  biblioteca?: { exlib_id: string; nome: string; grupo?: string; video_url?: string; links_uteis?: string[]; substitutos?: ExercicioSubstituto[] }[]
+  biblioteca?: { exlib_id: string; nome: string; grupo?: string; video_url?: string; recomendacoes?: string; links_uteis?: string[]; substitutos?: ExercicioSubstituto[] }[]
   exerciciosAluno?: Exercicio[]
   onSubmit: (body: ExercicioCreate) => Promise<void>
   submitting?: boolean
@@ -893,6 +893,20 @@ function ExercicioForm({
     [biblioteca, exerciciosAlunoUnicos]
   )
 
+  const datalistNomes = useMemo(() => {
+    const seen = new Set<string>()
+    const result: { key: string; nome: string }[] = []
+    for (const e of exerciciosAlunoUnicos) {
+      const k = e.nome.toLowerCase()
+      if (!seen.has(k)) { seen.add(k); result.push({ key: e.exercicio_id, nome: e.nome }) }
+    }
+    for (const b of (biblioteca ?? [])) {
+      const k = b.nome.toLowerCase()
+      if (!seen.has(k)) { seen.add(k); result.push({ key: b.exlib_id, nome: b.nome }) }
+    }
+    return result.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+  }, [exerciciosAlunoUnicos, biblioteca])
+
   function onNome(v: string) {
     setNome(v)
     // Prioriza o uso anterior do próprio aluno (mais específico) sobre a biblioteca geral —
@@ -904,6 +918,8 @@ function ExercicioForm({
     if (video) setVid(video)
     if (grp) setGrupo(grp)
     if (usado?.tipo_exercicio) setTipo(usado.tipo_exercicio)
+    const rec = usado?.observacoes ?? lib?.recomendacoes
+    if (!obs && rec) setObs(rec)
   }
 
   async function submit(e: React.FormEvent) {
@@ -939,8 +955,7 @@ function ExercicioForm({
           <Input label="Grupo muscular" list={grupoListId} value={grupo} onChange={(e) => setGrupo(e.target.value)} />
         </div>
         <datalist id={listId}>
-          {exerciciosAlunoUnicos.map((e) => <option key={e.exercicio_id} value={e.nome} />)}
-          {biblioteca?.map((b) => <option key={b.exlib_id} value={b.nome} />)}
+          {datalistNomes.map((item) => <option key={item.key} value={item.nome} />)}
         </datalist>
         <datalist id={grupoListId}>{grupos.map((g) => <option key={g} value={g} />)}</datalist>
       </div>
@@ -985,7 +1000,7 @@ function ExercicioForm({
         <div className="space-y-3">
           <Input label="Vídeo (URL)" value={vid} onChange={(e) => setVid(e.target.value)} />
           <Textarea
-            label="Observações (visíveis ao aluno na sessão)" rows={2}
+            label="Recomendações (visíveis ao aluno na sessão)" rows={2}
             value={obs} onChange={(e) => setObs(e.target.value)}
           />
           {tipo === 'FORCA' && (
