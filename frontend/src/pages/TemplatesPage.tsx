@@ -203,8 +203,8 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
   return (
     <form onSubmit={save} className="space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Input label="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required autoFocus />
-        <Input label="Foco" value={foco} onChange={(e) => setFoco(e.target.value)} />
+        <Input label="Nome" placeholder="ex: Treino A" value={nome} onChange={(e) => setNome(e.target.value)} required autoFocus />
+        <Input label="Foco" placeholder="ex: Inferiores" value={foco} onChange={(e) => setFoco(e.target.value)} />
       </div>
 
       <div className="space-y-3">
