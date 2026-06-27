@@ -291,28 +291,12 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                   />
                 </div>
 
-                {/* Vídeo, observações e 1RM */}
+                {/* Vídeo e recomendações */}
                 <div>
                   <p className="text-xs font-medium text-text-secondary mb-2">Vídeo e observações</p>
                   <div className="space-y-3">
                     <Input label="Vídeo (URL)" value={ex.video_url ?? ''} onChange={(e) => updateEx(i, { video_url: e.target.value || undefined })} />
                     <Textarea label="Recomendações (visíveis ao aluno na sessão)" rows={2} value={ex.observacoes ?? ''} onChange={(e) => updateEx(i, { observacoes: e.target.value || undefined })} />
-                    {tipo === 'FORCA' && (
-                      <div>
-                        <Input
-                          label="1RM (kg)"
-                          type="number"
-                          min={1}
-                          step={0.5}
-                          placeholder="ex.: 100"
-                          value={ex.rm_kg != null ? String(ex.rm_kg) : ''}
-                          onChange={(e) => updateEx(i, { rm_kg: e.target.value ? parseFloat(e.target.value) : undefined })}
-                        />
-                        <p className="text-xs text-text-muted mt-1">
-                          Carga máxima estimada para 1 repetição. Usada para calcular a Intensidade Relativa Média (IRM) na evolução.
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
 
