@@ -33,6 +33,13 @@ function WheelNumber({
 
   const change = (delta: number) => onChange(Math.max(0, Math.min(max, value + delta)))
 
+  // Direção da última troca, para animar o número entrando de cima ou de baixo.
+  const prevRef = useRef(value)
+  let dir: 'up' | 'down' = 'up'
+  if (value > prevRef.current) dir = 'up'
+  else if (value < prevRef.current) dir = 'down'
+  prevRef.current = value
+
   return (
     <div
       className="flex flex-col items-center select-none touch-none"
@@ -64,10 +71,17 @@ function WheelNumber({
         aria-label={`Aumentar ${ariaLabel}`}
         className="p-1 text-text-muted hover:text-text"
       >
-        <ChevronUp size={32} />
+        <ChevronUp size={28} />
       </button>
-      <span className="font-display tabular-nums leading-none text-[16vw] sm:text-[9rem] text-text">
-        {String(value).padStart(2, '0')}
+      <span className="block overflow-hidden">
+        <span
+          key={value}
+          className={`block font-display tabular-nums leading-none text-[13vw] sm:text-[5.5rem] text-text ${
+            dir === 'up' ? 'animate-wheel-up' : 'animate-wheel-down'
+          }`}
+        >
+          {String(value).padStart(2, '0')}
+        </span>
       </span>
       <button
         type="button"
@@ -75,7 +89,7 @@ function WheelNumber({
         aria-label={`Diminuir ${ariaLabel}`}
         className="p-1 text-text-muted hover:text-text"
       >
-        <ChevronDown size={32} />
+        <ChevronDown size={28} />
       </button>
     </div>
   )
@@ -110,6 +124,7 @@ export function CronometroOverlay({
   const anchorRef = useRef(0)
   const wakeRef = useRef<WakeLockSentinel | null>(null)
   const lastTickSecRef = useRef<number | null>(null)
+  const runTotalMsRef = useRef(baseSeconds * 1000) // total da execução atual, p/ o anel de progresso
 
   function releaseWakeLock() {
     try {
@@ -161,7 +176,7 @@ export function CronometroOverlay({
           setDone(true)
           releaseWakeLock()
           startAlarm()
-          navigator.vibrate?.([300, 150, 300, 150, 300, 150, 500])
+          navigator.vibrate?.([200, 100, 200])
           return
         }
         setDisplayMs(rem)
@@ -187,11 +202,22 @@ export function CronometroOverlay({
     return () => clearInterval(id)
   }, [done])
 
+  // Re-adquire o wake lock ao voltar do background (iOS/Android liberam ao ocultar a aba).
+  useEffect(() => {
+    if (!running) return
+    const onVis = () => {
+      if (document.visibilityState === 'visible') void requestWakeLock()
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
+  }, [running])
+
   function start() {
     unlockAudio()
     stopAlarm()
     setDone(false)
     lastTickSecRef.current = null
+    runTotalMsRef.current = displayMs
     const now = Date.now()
     anchorRef.current = modo === 'regressivo' ? now + displayMs : now - displayMs
     setRunning(true)
@@ -221,7 +247,10 @@ export function CronometroOverlay({
   function addSeconds(sec: number) {
     stopAlarm()
     setDone(false)
-    if (running) anchorRef.current += sec * 1000
+    if (running) {
+      anchorRef.current += sec * 1000
+      runTotalMsRef.current += sec * 1000
+    }
     setDisplayMs((d) => Math.min(MAX_SECONDS * 1000, Math.max(0, d + sec * 1000)))
   }
 
@@ -260,11 +289,29 @@ export function CronometroOverlay({
   const alerta = displayMs <= 5000 && modo === 'regressivo' && running
   const idle = !running && !done
 
-  const bgClass = done ? (flashOn ? 'bg-danger' : 'bg-accent') : 'bg-bg'
+  // Alerta visual sóbrio: pulso entre dois tons neutros (sem strobe colorido).
+  const bgClass = done ? (flashOn ? 'bg-surface-elevated' : 'bg-bg') : 'bg-bg'
+
+  // Anel de progresso ao redor do número.
+  const RING_C = 2 * Math.PI * 45
+  let progress: number
+  if (modo === 'regressivo') {
+    progress = done ? 0 : running ? (runTotalMsRef.current > 0 ? displayMs / runTotalMsRef.current : 0) : 1
+  } else {
+    progress = ((displayMs / 1000) % 60) / 60 // varre a cada minuto
+  }
+  progress = Math.max(0, Math.min(1, progress))
+  const ringColor = alerta ? 'stroke-warning' : modo === 'regressivo' ? 'stroke-energy' : 'stroke-accent'
 
   return createPortal(
     <div
       className={`fixed inset-0 z-[60] flex flex-col transition-colors duration-100 ${bgClass}`}
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
+      }}
       onClick={done ? dismissDone : undefined}
     >
       <div className="flex items-center justify-between p-4">
@@ -287,7 +334,7 @@ export function CronometroOverlay({
             fechar()
           }}
           aria-label="Fechar cronômetro"
-          className={`p-2 rounded-lg hover:bg-white/10 ${done ? 'text-white' : 'text-text-secondary hover:text-text'}`}
+          className="p-2 rounded-lg text-text-secondary hover:bg-white/10 hover:text-text"
         >
           <X size={26} />
         </button>
@@ -295,38 +342,52 @@ export function CronometroOverlay({
 
       <div className="flex-1 flex flex-col items-center justify-center px-4 min-h-0">
         {label && (
-          <p
-            className={`text-lg sm:text-2xl mb-2 text-center max-w-full truncate ${done ? 'text-white' : 'text-text-secondary'}`}
-          >
-            {label}
-          </p>
+          <p className="text-lg sm:text-2xl mb-3 text-center max-w-full truncate text-text-secondary">{label}</p>
         )}
 
-        {done ? (
-          <>
-            <span className="font-display tabular-nums leading-none text-[26vw] sm:text-[16rem] text-white">
-              00:00
-            </span>
-            <p className="mt-4 text-white font-display text-3xl sm:text-5xl font-bold">Intervalo concluído!</p>
-          </>
-        ) : running ? (
-          <span
-            className={`font-display tabular-nums leading-none text-[26vw] sm:text-[16rem] transition-colors ${
-              alerta ? 'text-warning' : 'text-text'
-            }`}
+        <div className="relative flex items-center justify-center w-[82vw] h-[82vw] max-w-[26rem] max-h-[26rem]">
+          <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full -rotate-90">
+            <circle cx="50" cy="50" r="45" fill="none" strokeWidth="2.5" className="stroke-white/10" />
+            {!done && (
+              <circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                className={`transition-[stroke-dashoffset] duration-200 ease-linear ${ringColor}`}
+                style={{ strokeDasharray: RING_C, strokeDashoffset: RING_C * (1 - progress) }}
+              />
+            )}
+          </svg>
+
+          <div
+            className="relative flex flex-col items-center justify-center"
+            onClick={done ? undefined : (e) => e.stopPropagation()}
           >
-            {fmt(displayMs)}
-          </span>
-        ) : (
-          <>
-            <div className="flex items-center justify-center gap-1 sm:gap-3" onClick={(e) => e.stopPropagation()}>
-              <WheelNumber value={mm} max={99} ariaLabel="minutos" onChange={(m) => setTime(m, ss)} />
-              <span className="font-display tabular-nums leading-none text-[12vw] sm:text-[7rem] text-text-muted">:</span>
-              <WheelNumber value={ss} max={59} ariaLabel="segundos" onChange={(s) => setTime(mm, s)} />
-            </div>
-            <p className="mt-3 text-text-muted text-sm">Role ou use as setas para ajustar</p>
-          </>
-        )}
+            {done ? (
+              <span className="font-display tabular-nums leading-none text-[15vw] sm:text-[7rem] text-text">00:00</span>
+            ) : running ? (
+              <span
+                className={`font-display tabular-nums leading-none text-[15vw] sm:text-[7rem] transition-colors ${
+                  alerta ? 'text-warning' : 'text-text'
+                }`}
+              >
+                {fmt(displayMs)}
+              </span>
+            ) : (
+              <div className="flex items-center justify-center gap-1 sm:gap-2">
+                <WheelNumber value={mm} max={99} ariaLabel="minutos" onChange={(m) => setTime(m, ss)} />
+                <span className="font-display tabular-nums leading-none text-[9vw] sm:text-[4rem] text-text-muted">:</span>
+                <WheelNumber value={ss} max={59} ariaLabel="segundos" onChange={(s) => setTime(mm, s)} />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {done && <p className="mt-6 text-energy font-display text-3xl sm:text-5xl font-bold">Intervalo concluído!</p>}
+        {idle && <p className="mt-4 text-text-muted text-sm">Role ou use as setas para ajustar</p>}
       </div>
 
       {idle && modo === 'regressivo' && (
@@ -352,7 +413,7 @@ export function CronometroOverlay({
               e.stopPropagation()
               dismissDone()
             }}
-            className="px-12 py-4 rounded-full bg-white text-danger font-display text-xl font-bold shadow-lg"
+            className="px-12 py-4 rounded-full bg-energy text-[#0c1404] font-display text-xl font-bold shadow-[var(--shadow-glow-energy)]"
           >
             Parar
           </button>

@@ -4,10 +4,8 @@
 
 let ctx: AudioContext | null = null
 
-// Estado do alarme contínuo (sirene) — variáveis de módulo para garantir 1 só por vez.
-let alarmOsc: OscillatorNode | null = null
-let alarmGain: GainNode | null = null
-let sirenTimer: number | null = null
+// Estado do alarme — timers de módulo para garantir 1 só por vez.
+let alarmTimer: number | null = null
 let safetyTimer: number | null = null
 
 function getCtx(): AudioContext | null {
@@ -18,16 +16,31 @@ function getCtx(): AudioContext | null {
   return ctx
 }
 
-/** Libera o áudio. Chamar dentro de um gesto do usuário (ex.: no "Iniciar"). */
+/**
+ * Libera o áudio. Chamar dentro de um gesto do usuário (ex.: no "Iniciar").
+ * No iOS/Safari, além de `resume()`, é preciso tocar um som dentro do gesto para
+ * destravar a reprodução de sons agendados depois (setInterval/setTimeout).
+ */
 export function unlockAudio(): void {
   const c = getCtx()
-  if (c && c.state === 'suspended') void c.resume()
+  if (!c) return
+  if (c.state === 'suspended') void c.resume()
+  try {
+    const osc = c.createOscillator()
+    const gain = c.createGain()
+    gain.gain.value = 0.0001 // praticamente inaudível
+    osc.connect(gain).connect(c.destination)
+    osc.start()
+    osc.stop(c.currentTime + 0.03)
+  } catch {
+    /* noop */
+  }
 }
 
 function tone(c: AudioContext, start: number, freq: number, dur: number, peak = 0.4): void {
   const osc = c.createOscillator()
   const gain = c.createGain()
-  osc.type = 'square'
+  osc.type = 'sine'
   osc.frequency.value = freq
   gain.gain.setValueAtTime(0.0001, start)
   gain.gain.exponentialRampToValueAtTime(peak, start + 0.01)
@@ -42,56 +55,37 @@ export function tick(): void {
   const c = getCtx()
   if (!c) return
   if (c.state === 'suspended') void c.resume()
-  tone(c, c.currentTime, 1000, 0.07, 0.5)
+  tone(c, c.currentTime, 900, 0.06, 0.28)
 }
 
-/** Alarme alto e contínuo (sirene de dois tons) até `stopAlarm()`. */
+/**
+ * Alarme meio-termo: um bipe-duplo gentil (sine) que repete a cada ~0.9 s, por até
+ * ~10 s ou até `stopAlarm()`. Mais presente que 1 bipe, sem a sirene contínua agressiva.
+ */
 export function startAlarm(): void {
   const c = getCtx()
   if (!c) return
   if (c.state === 'suspended') void c.resume()
   stopAlarm() // nunca empilha dois alarmes
 
-  const osc = c.createOscillator()
-  const gain = c.createGain()
-  osc.type = 'square'
-  osc.frequency.setValueAtTime(880, c.currentTime)
-  gain.gain.setValueAtTime(0.55, c.currentTime)
-  osc.connect(gain).connect(c.destination)
-  osc.start()
-  alarmOsc = osc
-  alarmGain = gain
-
-  let high = false
-  sirenTimer = window.setInterval(() => {
-    if (!alarmOsc || !ctx) return
-    high = !high
-    alarmOsc.frequency.setValueAtTime(high ? 1175 : 740, ctx.currentTime)
-  }, 350)
-
-  // Segurança: para sozinho após 30 s caso nada o interrompa.
-  safetyTimer = window.setTimeout(() => stopAlarm(), 30000)
+  const burst = () => {
+    const t = c.currentTime
+    tone(c, t, 880, 0.13, 0.32)
+    tone(c, t + 0.18, 1175, 0.16, 0.32)
+  }
+  burst()
+  alarmTimer = window.setInterval(burst, 900)
+  safetyTimer = window.setTimeout(() => stopAlarm(), 10000)
 }
 
-/** Silencia o alarme contínuo. Idempotente. */
+/** Silencia o alarme. Idempotente. */
 export function stopAlarm(): void {
-  if (sirenTimer != null) {
-    clearInterval(sirenTimer)
-    sirenTimer = null
+  if (alarmTimer != null) {
+    clearInterval(alarmTimer)
+    alarmTimer = null
   }
   if (safetyTimer != null) {
     clearTimeout(safetyTimer)
     safetyTimer = null
   }
-  if (alarmOsc && alarmGain && ctx) {
-    try {
-      const now = ctx.currentTime
-      alarmGain.gain.setTargetAtTime(0.0001, now, 0.02) // fade rápido evita clique
-      alarmOsc.stop(now + 0.1)
-    } catch {
-      /* noop */
-    }
-  }
-  alarmOsc = null
-  alarmGain = null
 }
