@@ -296,7 +296,7 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                   <p className="text-xs font-medium text-text-secondary mb-2">Vídeo e observações</p>
                   <div className="space-y-3">
                     <Input label="Vídeo (URL)" value={ex.video_url ?? ''} onChange={(e) => updateEx(i, { video_url: e.target.value || undefined })} />
-                    <Textarea label="Observações" rows={2} value={ex.observacoes ?? ''} onChange={(e) => updateEx(i, { observacoes: e.target.value || undefined })} />
+                    <Textarea label="Recomendações (visíveis ao aluno na sessão)" rows={2} value={ex.observacoes ?? ''} onChange={(e) => updateEx(i, { observacoes: e.target.value || undefined })} />
                     {tipo === 'FORCA' && (
                       <div>
                         <Input
