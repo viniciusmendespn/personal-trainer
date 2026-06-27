@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { AlertTriangle, Camera, HelpCircle, MessageCircle, Paperclip, Send, Wrench, X } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, RichTextEditor, useToast } from '../ui'
+import { Button, Textarea, useToast } from '../ui'
 import { alunoApi } from '../../api/alunoApp'
 import { treinosApi } from '../../api/treinos'
 import { MediaValidationError, prepareMediaForUpload } from '../../utils/media'
@@ -126,7 +126,7 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
         await treinosApi.criarPostagemPersonal(alunoId, exercicioId, {
           tipo: tipoPersonal,
           exercicio_nome: exercicioNome,
-          descricao: descricao || undefined,
+          descricao: descricao.trim() || undefined,
           midias,
         })
         qc.invalidateQueries({ queryKey: ['feed-exercicio', alunoId, exercicioId] })
@@ -134,7 +134,7 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
         await alunoApi.criarPostagem(exercicioId, {
           tipo: tipoAluno,
           exercicio_nome: exercicioNome,
-          descricao: descricao || undefined,
+          descricao: descricao.trim() || undefined,
           midias,
         })
         qc.invalidateQueries({ queryKey: ['aluno-feed', exercicioId] })
@@ -218,13 +218,16 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
         </div>
       )}
 
-      <div className={loading ? 'pointer-events-none opacity-40' : ''}>
-        <RichTextEditor
-          value={descricao}
-          onChange={setDescricao}
-          placeholder={cfg.placeholder}
-        />
-      </div>
+      <Textarea
+        rows={2}
+        placeholder={cfg.placeholder}
+        value={descricao}
+        onChange={(e) => setDescricao(e.target.value)}
+        disabled={loading}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submit()
+        }}
+      />
 
       {/* Previews de arquivos */}
       {!!files.length && (

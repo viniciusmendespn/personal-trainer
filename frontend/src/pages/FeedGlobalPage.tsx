@@ -2,8 +2,7 @@ import { useRef, useState } from 'react'
 import { useMutation, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, Trash2, Heart, ChevronDown, Paperclip, X, Loader2 } from 'lucide-react'
 import { feedGlobalApi, type PostGlobalTipo } from '../api/feedGlobal'
-import { renderMarkdownLite } from '../components/chat/markdownLite'
-import { Button, Card, Badge, EmptyState, Spinner } from '../components/ui'
+import { Button, Card, Badge, EmptyState, Spinner, RichTextEditor, RichTextContent } from '../components/ui'
 
 const TIPOS: Array<{ value: PostGlobalTipo; label: string; tone: 'accent' | 'success' | 'info' | 'warning' | 'neutral' }> = [
   { value: 'DICA', label: 'Dica', tone: 'success' },
@@ -74,13 +73,10 @@ function Composer({ onDone }: { onDone: () => void }) {
         ))}
       </div>
 
-      <textarea
+      <RichTextEditor
         value={texto}
-        onChange={(e) => setTexto(e.target.value)}
-        onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') criar.mutate() }}
-        placeholder="Escreva sua mensagem para os alunos… (markdown suportado)"
-        rows={4}
-        className="w-full bg-surface rounded-xl px-3 py-2 text-sm resize-none border border-border focus:border-accent focus:outline-none"
+        onChange={setTexto}
+        placeholder="Escreva sua mensagem para os alunos…"
       />
 
       {files.length > 0 && (
@@ -139,7 +135,7 @@ function PostItem({ post, onDelete }: { post: ReturnType<typeof usePosts>['posts
           </button>
         </div>
       </div>
-      <div className="text-sm text-text-primary leading-relaxed">{renderMarkdownLite(post.texto)}</div>
+      <RichTextContent html={post.texto} />
       {(post.midias ?? []).length > 0 && (
         <div className="grid grid-cols-3 gap-1">
           {post.midias.map((m, i) =>

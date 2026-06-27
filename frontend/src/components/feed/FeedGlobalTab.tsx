@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { useMutation, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Heart, ChevronDown, Newspaper, Lightbulb, AlertCircle, MoreHorizontal, BookOpen } from 'lucide-react'
 import { alunoApi, type PostGlobal } from '../../api/alunoApp'
-import { renderMarkdownLite } from '../chat/markdownLite'
-import { Avatar, Badge, Spinner, EmptyState } from '../ui'
+import { Avatar, Badge, Spinner, EmptyState, RichTextContent } from '../ui'
 
 type Tone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'accent'
 const TIPO_META: Record<PostGlobal['tipo'], { label: string; icon: React.ReactNode; tone: Tone }> = {
@@ -48,9 +47,7 @@ function PostCard({ post, personalNome, personalFotoUrl }: { post: PostGlobal; p
         </Badge>
       </div>
 
-      <div className="text-sm text-text-primary leading-relaxed">
-        {renderMarkdownLite(post.texto)}
-      </div>
+      <RichTextContent html={post.texto} />
 
       {(post.midias ?? []).length > 0 && (
         <div className="grid grid-cols-2 gap-2">

@@ -1,8 +1,6 @@
 import { useRef, useState } from 'react'
 import { Send, Paperclip, X } from 'lucide-react'
-import { Avatar, Button, RichTextContent, Textarea } from '../ui'
-
-const isHtml = (s: string) => s.trimStart().startsWith('<')
+import { Avatar, Button, Textarea } from '../ui'
 import type { Comentario } from '../../api/treinos'
 
 type MidiaRef = { s3_key: string; tipo: string }
@@ -59,10 +57,7 @@ function Bubble({ ator, texto, midias = [], dataHora, isViewer, personalNome, pe
           ? 'bg-accent/20 border border-accent/30 rounded-tr-sm'
           : 'bg-white/5 border border-border rounded-tl-sm'
       }`}>
-        {texto && (isHtml(texto)
-          ? <RichTextContent html={texto} className="text-xs" />
-          : <p className="text-xs text-text leading-snug whitespace-pre-wrap">{texto}</p>
-        )}
+        {texto && <p className="text-xs text-text leading-snug whitespace-pre-wrap">{texto}</p>}
         <MediaGrid midias={midias} />
         <p className="text-[10px] text-text-muted">{fmtDt(dataHora)}</p>
       </div>
