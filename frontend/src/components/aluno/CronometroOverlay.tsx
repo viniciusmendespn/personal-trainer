@@ -211,7 +211,7 @@ export function CronometroOverlay({
 
   const isLight = document.documentElement.dataset.theme === 'light'
   const bgClass = done
-    ? (flashOn ? (isLight ? 'bg-accent/15' : 'bg-surface-elevated') : 'bg-bg')
+    ? (flashOn ? (isLight ? 'bg-border-strong' : 'bg-surface-elevated') : 'bg-bg')
     : 'bg-bg'
 
   // Anel de progresso ao redor do número.
