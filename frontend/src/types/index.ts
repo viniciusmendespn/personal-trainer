@@ -164,6 +164,8 @@ export interface ExLib {
   recomendacoes?: string
   links_uteis?: string[]
   substitutos?: ExercicioSubstituto[]
+  pacote_id?: string
+  ativo?: boolean
 }
 
 export interface ArquivoConhecimento {
@@ -305,6 +307,8 @@ export interface TreinoTemplate {
   foco?: string
   exercicios: ExercicioTemplate[]
   created_at: string
+  pacote_id?: string
+  ativo?: boolean
 }
 
 export interface TreinoTemplateCreate {
@@ -327,6 +331,8 @@ export interface Rotina {
   descricao?: string
   treinos: TreinoRotina[]
   created_at: string
+  pacote_id?: string
+  ativo?: boolean
 }
 
 export interface RotinaCreate {
@@ -417,4 +423,30 @@ export interface ChatMensagem {
   data_hora: string
   direto?: boolean
   midia?: ChatMidia
+}
+
+// ── Pacotes de treino (.cpkg) ──────────────────────────────────────────────────
+
+export interface PacoteInstalado {
+  pacote_id: string
+  nome: string
+  descricao?: string
+  autor?: string
+  versao?: string
+  licenciado: boolean
+  ativo: boolean
+  exlib_ids: string[]
+  template_ids: string[]
+  rotina_ids: string[]
+  importado_em: string
+  token?: string
+}
+
+export interface ImportarPacoteResponse {
+  pacote_id: string
+  nome: string
+  licenciado: boolean
+  exercicios_importados: number
+  templates_importados: number
+  rotinas_importadas: number
 }

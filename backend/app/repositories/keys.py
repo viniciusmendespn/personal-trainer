@@ -411,3 +411,18 @@ INDICACAO_PREFIX = "INDICACAO#"
 def sk_indicacao(indicado_id: str) -> str:
     # PT#{owner_id}: ledger de quem usou o código do owner (idempotência da recompensa).
     return f"INDICACAO#{indicado_id}"
+
+
+# ── Pacotes de treino (.cpkg) ────────────────────────────────────────────────
+# Lookup global O(1) por token (mesmo padrão de pk_cupom()).
+# Metadados de pacotes instalados ficam na partição PT#{personal_id}.
+PACOTE_PREFIX = "PACOTE#"
+
+
+def sk_pacote(pacote_id: str) -> str:
+    return f"PACOTE#{pacote_id}"
+
+
+def pk_token(token_uuid: str) -> str:
+    """Lookup global de token de pacote. token_uuid = UUID4 sem o prefixo 'tok_'."""
+    return f"PKTOKEN#{token_uuid}"

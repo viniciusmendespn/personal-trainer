@@ -97,6 +97,11 @@ Parameters:
     Default: ""
     NoEcho: true
     Description: "Segredo compartilhado com o FinPilot para geração de códigos promocionais (HMAC-SHA256). Gerado com openssl rand -hex 32."
+  PacoteSecret:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: "Segredo HMAC-SHA256 para assinar e validar arquivos .cpkg. Gerado com: openssl rand -hex 32."
 
 Conditions:
   CreateFrontendInfra: !Equals [!Ref DeployFrontendInfra, "true"]
@@ -136,6 +141,7 @@ Globals:
         VAPID_SUBJECT: !Ref VapidSubject
         ML_ACCESS_TOKEN: !Ref MlAccessToken
         PROMO_CODE_SECRET: !Ref PromoCodeSecret
+        PACOTE_SECRET: !Ref PacoteSecret
 
 Resources:
 

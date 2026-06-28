@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, LayoutTemplate, ListChecks, Bell, BookOpen, Brain, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronUp, HelpCircle, CreditCard, Download, Smartphone, Sun, Moon, Monitor } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, LayoutTemplate, ListChecks, Bell, BookOpen, Brain, Package, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronUp, HelpCircle, CreditCard, Download, Smartphone, Sun, Moon, Monitor } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
 import { useTheme, type ThemeChoice } from '../../context/ThemeContext'
@@ -38,6 +38,7 @@ const NAV_GROUPS = [
       { to: '/rotinas', label: 'Rotinas', icon: ListChecks },
       { to: '/templates', label: 'Templates', icon: LayoutTemplate },
       { to: '/biblioteca', label: 'Biblioteca', icon: BookOpen },
+      { to: '/pacotes', label: 'Pacotes', icon: Package },
       { to: '/conhecimento', label: 'Base de IA', icon: Brain },
     ],
   },

@@ -21,6 +21,8 @@ class RotinaCreate(BaseModel):
     nome: str                              # ex.: "Rotina ABC — Hipertrofia"
     descricao: Optional[str] = None
     treinos: list[TreinoRotina] = Field(default_factory=list)
+    pacote_id: Optional[str] = None   # preenchido quando criado via importação de pacote
+    ativo: bool = True                # False = oculto na montagem de treinos
 
 
 class Rotina(RotinaCreate):

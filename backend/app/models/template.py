@@ -32,6 +32,8 @@ class TreinoTemplateCreate(BaseModel):
     nome: str
     foco: Optional[str] = None
     exercicios: list[ExercicioTemplate] = Field(default_factory=list)
+    pacote_id: Optional[str] = None   # preenchido quando criado via importação de pacote
+    ativo: bool = True                # False = oculto na montagem de treinos
 
 
 class TreinoTemplateFromTreino(BaseModel):

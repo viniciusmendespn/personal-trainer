@@ -15,6 +15,8 @@ class ExLibCreate(BaseModel):
     recomendacoes: Optional[str] = None        # texto livre do personal (técnica, cuidados…)
     links_uteis: list[str] = []                # post_sks de posts RECURSO do feed vinculados
     substitutos: list[ExercicioSubstituto] = []  # conjunto padrão de substitutos deste exercício
+    pacote_id: Optional[str] = None            # preenchido quando criado via importação de pacote
+    ativo: bool = True                         # False = oculto na montagem de treinos
 
     @field_validator("video_url")
     @classmethod

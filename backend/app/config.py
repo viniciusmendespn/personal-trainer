@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     admin_email: str = "admin@coachpilot.com.br"  # email do superadmin (impersonação)
     ml_access_token: str = ""              # token MP da PLATAFORMA — cobra o personal (assinatura), nunca o aluno
     promo_code_secret: str = ""            # PROMO_CODE_SECRET — segredo compartilhado com o FinPilot para gerar códigos
+    pacote_secret: str = ""                # PACOTE_SECRET — assina/valida arquivos .cpkg (HMAC-SHA256)
 
     class Config:
         env_file = (".env", ".env.local")

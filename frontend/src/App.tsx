@@ -41,6 +41,7 @@ const CadastroPage = lazy(() => import('./pages/CadastroPage').then((m) => ({ de
 const AjudaPage = lazy(() => import('./pages/AjudaPage').then((m) => ({ default: m.AjudaPage })))
 const DivulgadoresPage = lazy(() => import('./pages/landing/DivulgadoresPage').then((m) => ({ default: m.DivulgadoresPage })))
 const PlanoPage = lazy(() => import('./pages/PlanoPage').then((m) => ({ default: m.PlanoPage })))
+const PacotesPage = lazy(() => import('./pages/PacotesPage').then((m) => ({ default: m.PacotesPage })))
 
 function PageFallback() {
   return <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" srcLight="/novo-logo-slogan-vertical-brancosemfundo.png" rounded={false} />
@@ -109,6 +110,7 @@ const router = createBrowserRouter([
                   { path: 'alunos/:alunoId/avaliacoes', element: lazyPage(<AvaliacoesPage />) },
                   { path: 'biblioteca', element: lazyPage(<BibliotecaPage />) },
                   { path: 'conhecimento', element: lazyPage(<ConhecimentoPage />) },
+                  { path: 'pacotes', element: lazyPage(<PacotesPage />) },
                   { path: 'feed', element: lazyPage(<FeedGlobalPage />) },
                   { path: 'ranking', element: lazyPage(<RankingPage />) },
                   { path: 'notificacoes', element: lazyPage(<PendenciasPage />) },
