@@ -12,6 +12,7 @@ function getCtx(): AudioContext | null {
   if (typeof window === 'undefined') return null
   const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
   if (!AC) return null
+  if (ctx?.state === 'closed') ctx = null
   if (!ctx) ctx = new AC()
   return ctx
 }
@@ -25,29 +26,22 @@ export function unlockAudio(): void {
   const c = getCtx()
   if (!c) return
   if (c.state === 'suspended') void c.resume()
-  try {
-    const osc = c.createOscillator()
-    const gain = c.createGain()
-    gain.gain.value = 0.0001 // praticamente inaudível
-    osc.connect(gain).connect(c.destination)
-    osc.start()
-    osc.stop(c.currentTime + 0.03)
-  } catch {
-    /* noop */
-  }
+  tone(c, c.currentTime + 0.05, 440, 0.05, 0.001)
 }
 
 function tone(c: AudioContext, start: number, freq: number, dur: number, peak = 0.4): void {
-  const osc = c.createOscillator()
-  const gain = c.createGain()
-  osc.type = 'sine'
-  osc.frequency.value = freq
-  gain.gain.setValueAtTime(0.0001, start)
-  gain.gain.exponentialRampToValueAtTime(peak, start + 0.01)
-  gain.gain.exponentialRampToValueAtTime(0.0001, start + dur)
-  osc.connect(gain).connect(c.destination)
-  osc.start(start)
-  osc.stop(start + dur)
+  try {
+    const osc = c.createOscillator()
+    const gain = c.createGain()
+    osc.type = 'sine'
+    osc.frequency.value = freq
+    gain.gain.setValueAtTime(0.0001, start)
+    gain.gain.exponentialRampToValueAtTime(peak, start + 0.01)
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur)
+    osc.connect(gain).connect(c.destination)
+    osc.start(start)
+    osc.stop(start + dur)
+  } catch { /* noop */ }
 }
 
 /** Bip curto e seco — usado a cada segundo nos últimos 5 s da contagem. */
@@ -55,7 +49,7 @@ export function tick(): void {
   const c = getCtx()
   if (!c) return
   if (c.state === 'suspended') void c.resume()
-  tone(c, c.currentTime, 900, 0.06, 0.28)
+  tone(c, c.currentTime + 0.05, 900, 0.06, 0.28)
 }
 
 /**
@@ -69,7 +63,7 @@ export function startAlarm(): void {
   stopAlarm() // nunca empilha dois alarmes
 
   const burst = () => {
-    const t = c.currentTime
+    const t = c.currentTime + 0.05
     tone(c, t, 880, 0.13, 0.32)
     tone(c, t + 0.18, 1175, 0.16, 0.32)
   }

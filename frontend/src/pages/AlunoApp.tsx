@@ -1097,7 +1097,7 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
         <p className="font-display font-semibold">{ses.data.treino_nome}</p>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => abrirCrono(undefined, undefined)}
+            onClick={() => abrirCrono(0)}
             aria-label="Abrir cronômetro"
             className="flex items-center text-text-secondary hover:text-energy transition-colors"
           >

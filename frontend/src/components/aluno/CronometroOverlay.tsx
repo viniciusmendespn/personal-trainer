@@ -34,7 +34,7 @@ export function CronometroOverlay({
   initialSeconds?: number
   label?: string
 }) {
-  const baseSeconds = initialSeconds && initialSeconds > 0 ? initialSeconds : DEFAULT_SECONDS
+  const baseSeconds = (initialSeconds !== undefined && initialSeconds >= 0) ? initialSeconds : DEFAULT_SECONDS
   const [modo, setModo] = useState<Modo>('regressivo')
   const [running, setRunning] = useState(false)
   const [displayMs, setDisplayMs] = useState(baseSeconds * 1000)
@@ -127,7 +127,10 @@ export function CronometroOverlay({
   useEffect(() => {
     if (!running) return
     const onVis = () => {
-      if (document.visibilityState === 'visible') void requestWakeLock()
+      if (document.visibilityState === 'visible') {
+        void requestWakeLock()
+        unlockAudio()
+      }
     }
     document.addEventListener('visibilitychange', onVis)
     return () => document.removeEventListener('visibilitychange', onVis)
