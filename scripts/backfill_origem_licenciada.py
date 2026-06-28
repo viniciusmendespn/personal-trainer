@@ -74,7 +74,7 @@ def main() -> None:
             ok = mark(pk, sk)
             if ok:
                 total += 1
-        print(f"  {pk} {meta['SK']} → {len(sks)} itens")
+        print(f"  {pk} {meta['SK']} -> {len(sks)} itens")
 
     verbo = "marcados" if args.apply else "seriam marcados (dry-run)"
     print(f"\n{total} itens {verbo}.")
