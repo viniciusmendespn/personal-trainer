@@ -895,19 +895,12 @@ function ExercicioForm({
     [biblioteca, exerciciosAlunoUnicos]
   )
 
-  const datalistNomes = useMemo(() => {
-    const seen = new Set<string>()
-    const result: { key: string; nome: string }[] = []
-    for (const e of exerciciosAlunoUnicos) {
-      const k = e.nome.toLowerCase()
-      if (!seen.has(k)) { seen.add(k); result.push({ key: e.exercicio_id, nome: e.nome }) }
-    }
-    for (const b of (biblioteca ?? [])) {
-      const k = b.nome.toLowerCase()
-      if (!seen.has(k)) { seen.add(k); result.push({ key: b.exlib_id, nome: b.nome }) }
-    }
-    return result.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
-  }, [exerciciosAlunoUnicos, biblioteca])
+  const datalistNomes = useMemo(
+    () => (biblioteca ?? [])
+      .map((b) => ({ key: b.exlib_id, nome: b.nome }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+    [biblioteca]
+  )
 
   function onNome(v: string) {
     setNome(v)

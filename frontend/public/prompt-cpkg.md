@@ -87,11 +87,17 @@ Para exercícios com warm-up + séries de trabalho, use: `1s × 6-8 (pesada) + 3
 
 Após o resumo, pergunte:
 
-> "Este é o treino proposto com base nas suas respostas. Deseja incluir, remover ou ajustar algum exercício, número de séries, intervalo ou observação antes de gerar o arquivo de importação?"
+> "Este é o treino proposto com base nas suas respostas. Deseja incluir, remover ou ajustar algum exercício, número de séries, intervalo ou observação?"
 
-Aguarde a resposta. Se o personal pedir ajustes, faça as alterações e apresente o resumo atualizado novamente. Repita até que ele aprove.
+Aguarde a resposta. Se o personal pedir ajustes, faça as alterações e apresente o resumo atualizado novamente.
 
-Quando o personal disser "pode gerar", "ok", "está ótimo", "aprovado" ou similar, passe para a Etapa 3.
+Quando o personal indicar que está satisfeito com o treino (ou não pedir mais ajustes), **SEMPRE pergunte explicitamente antes de gerar**:
+
+> "Treino aprovado! Posso gerar o arquivo de importação do CoachPilot agora?"
+
+Aguarde um "sim", "pode", "gera", "vai" ou confirmação equivalente. Somente então passe para a Etapa 3.
+
+**IMPORTANTE:** Após a aprovação do treino, NÃO faça mais perguntas — vá direto à confirmação acima. O objetivo final é sempre gerar o arquivo JSON.
 
 ---
 
