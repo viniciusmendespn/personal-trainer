@@ -117,6 +117,7 @@ def create_rotina_from_templates(
     rot = Rotina(
         rotina_id=new_id(), personal_id=personal_id, created_at=now_iso(),
         nome=body.nome, descricao=body.descricao, treinos=treinos_rotina,
+        template_ids=body.template_ids,
     )
     item_dict = rot.model_dump()
     item_dict["pacote_id"] = "manual"

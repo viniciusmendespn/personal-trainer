@@ -650,7 +650,21 @@ function CriarPacoteTab() {
                     type="checkbox"
                     checked={selecionado}
                     disabled={bloqueado}
-                    onChange={() => !bloqueado && setRotinasSel(toggleSet(rotinasSel, r.rotina_id))}
+                    onChange={() => {
+                      if (bloqueado) return
+                      const novaRotinasSel = toggleSet(rotinasSel, r.rotina_id)
+                      setRotinasSel(novaRotinasSel)
+                      if (novaRotinasSel.has(r.rotina_id) && r.template_ids?.length) {
+                        setTemplatesSel((prev) => {
+                          const next = new Set(prev)
+                          for (const tid of r.template_ids!) {
+                            const tpl = templates?.find((t) => t.template_id === tid)
+                            if (tpl && !isLicenciado(tpl.pacote_id)) next.add(tid)
+                          }
+                          return next
+                        })
+                      }
+                    }}
                     className="accent-accent"
                   />
                   <span className="text-sm flex-1">{r.nome}</span>

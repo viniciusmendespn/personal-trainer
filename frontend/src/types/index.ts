@@ -334,6 +334,7 @@ export interface Rotina {
   created_at: string
   pacote_id?: string
   ativo?: boolean
+  template_ids?: string[]
 }
 
 export interface RotinaCreate {
