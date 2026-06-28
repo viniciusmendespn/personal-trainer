@@ -34,7 +34,11 @@ export function CronometroOverlay({
   initialSeconds?: number
   label?: string
 }) {
-  const baseSeconds = (initialSeconds !== undefined && initialSeconds >= 0) ? initialSeconds : DEFAULT_SECONDS
+  const baseSeconds = initialSeconds === 0
+    ? 0
+    : (initialSeconds != null && initialSeconds > 0)
+      ? initialSeconds
+      : DEFAULT_SECONDS
   const [modo, setModo] = useState<Modo>('regressivo')
   const [running, setRunning] = useState(false)
   const [displayMs, setDisplayMs] = useState(baseSeconds * 1000)
@@ -205,8 +209,10 @@ export function CronometroOverlay({
   const alerta = displayMs <= 5000 && modo === 'regressivo' && running
   const idle = !running && !done
 
-  // Alerta visual sóbrio: pulso entre dois tons neutros (sem strobe colorido).
-  const bgClass = done ? (flashOn ? 'bg-surface-elevated' : 'bg-bg') : 'bg-bg'
+  const isLight = document.documentElement.dataset.theme === 'light'
+  const bgClass = done
+    ? (flashOn ? (isLight ? 'bg-accent/15' : 'bg-surface-elevated') : 'bg-bg')
+    : 'bg-bg'
 
   // Anel de progresso ao redor do número.
   const RING_C = 2 * Math.PI * 45

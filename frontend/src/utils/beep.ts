@@ -49,7 +49,7 @@ export function tick(): void {
   const c = getCtx()
   if (!c) return
   if (c.state === 'suspended') void c.resume()
-  tone(c, c.currentTime + 0.05, 900, 0.06, 0.28)
+  tone(c, c.currentTime + 0.05, 900, 0.06, 0.45)
 }
 
 /**
@@ -64,8 +64,8 @@ export function startAlarm(): void {
 
   const burst = () => {
     const t = c.currentTime + 0.05
-    tone(c, t, 880, 0.13, 0.32)
-    tone(c, t + 0.18, 1175, 0.16, 0.32)
+    tone(c, t, 880, 0.13, 0.5)
+    tone(c, t + 0.18, 1175, 0.16, 0.5)
   }
   burst()
   alarmTimer = window.setInterval(burst, 900)
