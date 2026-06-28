@@ -16,7 +16,7 @@ export interface PixStatus {
 export const planoApi = {
   getStatus: () => api.get<AssinaturaStatus>('/v1/plano').then((r) => r.data),
   getCatalogo: () => api.get<Record<string, PlanoCatalogoItem>>('/v1/plano/catalogo').then((r) => r.data),
-  criarPix: () => api.post<PixPayment>('/v1/plano/pix').then((r) => r.data),
+  criarPix: (periodo: 'mensal' | 'anual' = 'mensal') => api.post<PixPayment>('/v1/plano/pix', { periodo }).then((r) => r.data),
   getPixStatus: (paymentId: string) => api.get<PixStatus>(`/v1/plano/pix/${paymentId}`).then((r) => r.data),
   getPagamentos: () => api.get<PagamentoAssinatura[]>('/v1/plano/pagamentos').then((r) => r.data),
 }

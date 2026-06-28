@@ -3,7 +3,7 @@ import { Check, Copy } from 'lucide-react'
 import { Modal, Button, Spinner, useToast } from '../ui'
 import { useCriarPix, useInvalidatePlano, usePixStatus } from '../../hooks/usePlano'
 
-export function PixPaymentModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function PixPaymentModal({ open, onClose, periodo = 'mensal' }: { open: boolean; onClose: () => void; periodo?: 'mensal' | 'anual' }) {
   const criarPix = useCriarPix()
   const invalidatePlano = useInvalidatePlano()
   const { show } = useToast()
@@ -15,7 +15,7 @@ export function PixPaymentModal({ open, onClose }: { open: boolean; onClose: () 
 
   useEffect(() => {
     if (open && !criarPix.data && !criarPix.isPending) {
-      criarPix.mutate()
+      criarPix.mutate(periodo)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
@@ -44,8 +44,13 @@ export function PixPaymentModal({ open, onClose }: { open: boolean; onClose: () 
     setTimeout(() => setCopiado(false), 2000)
   }
 
+  const title = periodo === 'anual' ? 'Gestão Pro — Pix Anual · R$399,00' : 'Renovar Gestão Pro — Pix'
+
   return (
-    <Modal open={open} onClose={onClose} title="Renovar Gestão Pro — Pix">
+    <Modal open={open} onClose={onClose} title={title}>
+      {periodo === 'anual' && !aprovado && (
+        <p className="text-xs text-text-muted text-center mb-3">Válido por 12 meses · Você economiza R$79,80</p>
+      )}
       {criarPix.isPending && (
         <div className="flex flex-col items-center gap-3 py-8">
           <Spinner />
@@ -56,7 +61,7 @@ export function PixPaymentModal({ open, onClose }: { open: boolean; onClose: () 
       {criarPix.isError && (
         <div className="py-6 text-center">
           <p className="text-sm text-danger mb-3">Não foi possível gerar o Pix. Tente novamente.</p>
-          <Button variant="outline" onClick={() => criarPix.mutate()}>Tentar de novo</Button>
+          <Button variant="outline" onClick={() => criarPix.mutate(periodo)}>Tentar de novo</Button>
         </div>
       )}
 

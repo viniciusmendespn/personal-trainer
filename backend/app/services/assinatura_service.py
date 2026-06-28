@@ -25,7 +25,7 @@ TRIAL_ALUNOS_LIMIT = 3
 _SCHED_TTL_S = 120 * 24 * 3600   # mesmo padrão de financeiro_service
 
 DEFAULT_CATALOGO = {
-    PLANO_GESTAO_PRO: {"nome": "Gestão Pro", "preco": "39.90", "alunos_limit": None},
+    PLANO_GESTAO_PRO: {"nome": "Gestão Pro", "preco": "39.90", "preco_anual": "399.00", "alunos_limit": None},
 }
 
 

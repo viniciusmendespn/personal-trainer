@@ -28,6 +28,7 @@ _MP_BASE = "https://api.mercadopago.com"
 _LOCK_TTL_S = 60 * 24 * 3600    # 60 dias — idempotência webhook
 _ROUTING_TTL_S = 25 * 3600      # 25 horas — lookup payment_id -> personal_id
 _PIX_DIAS_CONCEDIDOS = 30
+_PIX_DIAS_ANUAL = 365
 
 
 def _mp_request(method: str, path: str, token: str,
@@ -49,18 +50,26 @@ def _mp_request(method: str, path: str, token: str,
 
 # ── Criar Pix ──────────────────────────────────────────────────────────────────
 
-def criar_pix(personal_id: str, payer_email: str | None = None) -> dict:
-    """Cria pagamento Pix da assinatura. Retorna {payment_id, qr_code, qr_code_base64, expires_at}."""
+def criar_pix(personal_id: str, payer_email: str | None = None, periodo: str = "mensal") -> dict:
+    """Cria pagamento Pix da assinatura. Retorna {payment_id, qr_code, qr_code_base64, expires_at}.
+    periodo: "mensal" (30 dias, R$39,90) ou "anual" (365 dias, R$399,00)."""
     token = settings.ml_access_token
     if not token:
         raise ValueError("ML_ACCESS_TOKEN não configurado na plataforma.")
 
     catalogo = assinatura_service.get_catalogo()
     plano = catalogo.get(assinatura_service.PLANO_GESTAO_PRO, assinatura_service.DEFAULT_CATALOGO[assinatura_service.PLANO_GESTAO_PRO])
-    preco = float(plano["preco"])
+
+    if periodo == "anual":
+        preco = float(plano.get("preco_anual", assinatura_service.DEFAULT_CATALOGO[assinatura_service.PLANO_GESTAO_PRO]["preco_anual"]))
+        external_reference = f"ASSINATURA_ANUAL|{personal_id}"
+        description = f"{plano.get('nome', 'Gestão Pro')} - 1 ano"
+    else:
+        preco = float(plano["preco"])
+        external_reference = f"ASSINATURA|{personal_id}"
+        description = f"{plano.get('nome', 'Gestão Pro')} - 1 mês"
 
     idempotency_key = f"assinatura-{personal_id}-{int(time.time())}"
-    external_reference = f"ASSINATURA|{personal_id}"
     expires_at = (datetime.now(timezone.utc) + timedelta(minutes=30)).strftime(
         "%Y-%m-%dT%H:%M:%S.000+00:00"
     )
@@ -73,7 +82,7 @@ def criar_pix(personal_id: str, payer_email: str | None = None) -> dict:
             "first_name": "Personal",
             "last_name": "CoachPilot",
         },
-        "description": f"{plano.get('nome', 'Gestão Pro')} - 1 mês",
+        "description": description,
         "external_reference": external_reference,
         "date_of_expiration": expires_at,
     }
@@ -158,9 +167,11 @@ def processar_webhook(body: dict) -> None:
 
     ext_ref = resp.get("external_reference", "")
     parts = ext_ref.split("|")
-    if len(parts) != 2 or parts[0] != "ASSINATURA" or parts[1] != personal_id:
+    if len(parts) != 2 or parts[0] not in ("ASSINATURA", "ASSINATURA_ANUAL") or parts[1] != personal_id:
         logger.warning("MP assinatura external_reference inválido: %s (routing personal=%s)", ext_ref, personal_id)
         return
+
+    dias = _PIX_DIAS_ANUAL if parts[0] == "ASSINATURA_ANUAL" else _PIX_DIAS_CONCEDIDOS
 
     # Grava lock ANTES de processar (evita race-condition em reinvocações)
     repo.put_item(lock_pk, "lock", {
@@ -170,14 +181,14 @@ def processar_webhook(body: dict) -> None:
     })
 
     assinatura_service.aplicar_pagamento(
-        personal_id, dias=_PIX_DIAS_CONCEDIDOS,
+        personal_id, dias=dias,
         payment_id=payment_id, valor=resp.get("transaction_amount"), origem="PIX",
     )
 
     from app.services import notif_service
     notif_service.criar(
         personal_id, "ASSINATURA_PAGA", "Assinatura renovada",
-        f"Pagamento confirmado via Pix. Seu plano Gestão Pro foi renovado por mais {_PIX_DIAS_CONCEDIDOS} dias.",
+        f"Pagamento confirmado via Pix. Seu plano Gestão Pro foi renovado por mais {dias} dias.",
     )
 
     # Recompensa de indicação: se este personal veio de um código de indicação, o

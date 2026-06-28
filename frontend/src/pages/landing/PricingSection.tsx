@@ -44,7 +44,7 @@ const COMPARE_ROWS: { feature: string; free: string; pro: string }[] = [
   { feature: 'Perfil público', free: 'Sim', pro: 'Sim' },
   { feature: 'Canal WhatsApp', free: 'Add-on', pro: 'Add-on' },
   { feature: 'Assistente IA', free: 'Add-on', pro: 'Add-on' },
-  { feature: 'Preço', free: 'R$0', pro: 'R$39,90/mês' },
+  { feature: 'Preço', free: 'R$0', pro: 'R$39,90/mês ou R$399/ano' },
 ]
 
 export default function PricingSection() {
@@ -177,6 +177,9 @@ export default function PricingSection() {
                   <span style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>,90</span>
                   <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>/mês</div>
                 </div>
+              </div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)', borderRadius: 20, padding: '4px 12px', marginBottom: 10 }}>
+                <span style={{ color: '#14b8a6', fontSize: 12, fontWeight: 700 }}>Ou R$399/ano · economize 2 mensalidades</span>
               </div>
               <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, lineHeight: 1.5 }}>Para personal trainers que querem gerenciar todos os alunos profissionalmente.</p>
             </div>
@@ -402,6 +405,7 @@ export default function PricingSection() {
                     <div style={{ textAlign: 'center' }}>
                       <div style={{ color: 'rgba(20,184,166,0.4)', fontSize: 11, textDecoration: 'line-through', lineHeight: 1.3 }}>R$69,90/mês</div>
                       <span style={{ color: '#14b8a6', fontSize: 13, fontWeight: 700 }}>R$39,90/mês</span>
+                      <div style={{ color: 'rgba(20,184,166,0.7)', fontSize: 11, marginTop: 2 }}>ou R$399/ano</div>
                     </div>
                   ) : (
                     <span style={{ color: r.pro === 'Add-on' ? '#f59e0b' : r.pro === 'R$39,90/mês' ? '#14b8a6' : '#475569', fontSize: 13, fontWeight: r.pro === 'R$39,90/mês' ? 700 : 400 }}>{r.pro}</span>

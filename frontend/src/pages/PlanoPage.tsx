@@ -36,8 +36,14 @@ export function PlanoPage() {
   const resgatarCupom = useResgatarCupom()
   const { show } = useToast()
   const [pixOpen, setPixOpen] = useState(false)
+  const [pixPeriodo, setPixPeriodo] = useState<'mensal' | 'anual'>('mensal')
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
   const [promoInput, setPromoInput] = useState('')
+
+  function abrirPix(periodo: 'mensal' | 'anual') {
+    setPixPeriodo(periodo)
+    setPixOpen(true)
+  }
 
   function copyCode(code: string) {
     navigator.clipboard.writeText(code).then(() => {
@@ -103,9 +109,15 @@ export function PlanoPage() {
         </div>
 
         {isPro ? (
-          <Button onClick={() => setPixOpen(true)}>Renovar mais um mês</Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => abrirPix('mensal')}>Renovar 1 mês — R$39,90</Button>
+            <Button onClick={() => abrirPix('anual')}>
+              Renovar 1 ano — R$399,00
+              <span className="ml-2 inline-flex items-center rounded-full bg-accent/20 px-2 py-0.5 text-xs font-semibold text-accent">Economize 2 meses</span>
+            </Button>
+          </div>
         ) : (
-          <Button onClick={() => setPixOpen(true)}>Assinar Gestão Pro</Button>
+          <Button onClick={() => abrirPix('mensal')}>Assinar Gestão Pro</Button>
         )}
       </Card>
 
@@ -226,7 +238,13 @@ export function PlanoPage() {
             </div>
           </div>
 
-          <Button onClick={() => setPixOpen(true)}>Assinar Gestão Pro — R$39,90/mês</Button>
+          <Button onClick={() => abrirPix('mensal')}>Assinar Gestão Pro — R$39,90/mês</Button>
+          <button
+            onClick={() => abrirPix('anual')}
+            className="mt-2 w-full text-sm text-accent hover:underline text-center"
+          >
+            Ou pagar R$399,00/ano e economizar 2 mensalidades
+          </button>
         </Card>
       )}
 
@@ -336,7 +354,7 @@ export function PlanoPage() {
         )}
       </Card>
 
-      <PixPaymentModal open={pixOpen} onClose={() => setPixOpen(false)} />
+      <PixPaymentModal open={pixOpen} onClose={() => setPixOpen(false)} periodo={pixPeriodo} />
     </div>
   )
 }
