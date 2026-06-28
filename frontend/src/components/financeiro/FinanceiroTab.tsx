@@ -135,7 +135,7 @@ export function FinanceiroTab({ alunoId }: { alunoId: string }) {
 
       {/* Banner Mercado Pago */}
       {mpNaoConfigurado && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex gap-3 items-start">
+        <div className="banner-pix-mp rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex gap-3 items-start">
           <div className="mt-0.5 rounded-lg bg-amber-100 p-2 shrink-0">
             <QrCode size={18} className="text-amber-600" />
           </div>

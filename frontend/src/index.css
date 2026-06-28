@@ -135,3 +135,21 @@ h1, h2, h3, .font-display { font-family: var(--font-display); }
 .rich-content em     { font-style: italic; }
 .rich-content u      { text-decoration: underline; }
 .rich-content code   { font-family: monospace; font-size: 0.8125rem; background: var(--color-surface-elevated); border-radius: 3px; padding: 0 3px; }
+
+/* Banner PIX (Mercado Pago) — tema escuro com amber translúcido e suave */
+[data-theme="dark"] .banner-pix-mp {
+  background-color: rgb(120 53 15 / 0.14);
+  border-color:     rgb(146 64 14 / 0.35);
+}
+[data-theme="dark"] .banner-pix-mp [class*="bg-amber-100"] {
+  background-color: rgb(120 53 15 / 0.28) !important;
+}
+[data-theme="dark"] .banner-pix-mp [class*="text-amber-600"] { color: #f59e0b !important; }
+[data-theme="dark"] .banner-pix-mp [class*="text-amber-900"] { color: #fde68a !important; }
+[data-theme="dark"] .banner-pix-mp [class*="text-amber-700"] { color: #fcd34d !important; }
+[data-theme="dark"] .banner-pix-mp [class*="border-amber-300"] {
+  border-color: rgb(180 83 9 / 0.4) !important;
+}
+[data-theme="dark"] .banner-pix-mp [class*="hover:bg-amber-100"]:hover {
+  background-color: rgb(120 53 15 / 0.22) !important;
+}
