@@ -572,7 +572,7 @@ def gerar_pacote(
         if not item:
             raise HTTPException(404, detail={"code": "TEMPLATE_NAO_ENCONTRADO", "detail": tid})
         _assert_nao_licenciado(item, "Template")
-        templates_data.append(item)
+        templates_data.append(repo.clean(item))
 
     # Busca rotinas selecionadas
     rotinas_data: list[dict] = []
@@ -581,7 +581,7 @@ def gerar_pacote(
         if not item:
             raise HTTPException(404, detail={"code": "ROTINA_NAO_ENCONTRADA", "detail": rid})
         _assert_nao_licenciado(item, "Rotina")
-        rotinas_data.append(item)
+        rotinas_data.append(repo.clean(item))
 
     # Coleta nomes únicos de exercícios a partir dos templates
     exercise_info: dict[str, dict] = {}  # nome_lower → {nome, grupo, tipo_exercicio}
@@ -596,7 +596,7 @@ def gerar_pacote(
                 }
 
     # Enriquece com dados do ExLib (descricao, recomendacoes, video_url, substitutos)
-    all_exlib = repo.query_pk(pk_pt, sk_prefix=keys.EXLIB_PREFIX)
+    all_exlib = repo.clean_all(repo.query_pk(pk_pt, sk_prefix=keys.EXLIB_PREFIX))
     exlib_by_name: dict[str, dict] = {
         (e.get("nome") or "").strip().lower(): e
         for e in all_exlib
