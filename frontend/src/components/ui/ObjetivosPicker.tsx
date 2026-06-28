@@ -50,7 +50,6 @@ export function ObjetivosPicker({ value, onChange, suggestions = [], label, disa
     if (!trimmed || value.some((v) => v.toLowerCase() === trimmed.toLowerCase())) return
     onChange([...value, trimmed])
     setInput('')
-    setOpen(false)
   }
 
   function remove(obj: string) {
@@ -95,6 +94,7 @@ export function ObjetivosPicker({ value, onChange, suggestions = [], label, disa
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onFocus={() => setOpen(true)}
+        onClick={() => setOpen(true)}
         onKeyDown={onKeyDown}
         placeholder={value.length === 0 ? 'Adicionar objetivo…' : 'Adicionar mais…'}
         disabled={disabled}
@@ -102,7 +102,7 @@ export function ObjetivosPicker({ value, onChange, suggestions = [], label, disa
         autoComplete="off"
       />
       {open && filtered.length > 0 && (
-        <ul className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-lg bg-surface-elevated border border-border shadow-lg">
+        <ul className="absolute z-50 w-full bottom-full mb-1 max-h-48 overflow-y-auto rounded-lg bg-surface-elevated border border-border shadow-lg">
           {filtered.map((s) => (
             <li
               key={s}
