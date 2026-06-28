@@ -30,7 +30,7 @@ interface AuthContextValue {
   impersonating: ImpersonatingState | null
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
-  refresh: () => Promise<void>
+  refresh: () => Promise<AuthUser | null>
   impersonate: (personalId: string, name: string, token: string) => void
   stopImpersonating: () => void
 }
@@ -43,21 +43,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [impersonating, setImpersonating] = useState<ImpersonatingState | null>(null)
   const queryClient = useQueryClient()
 
-  async function load() {
+  async function load(): Promise<AuthUser | null> {
     try {
       const u = await getCurrentUser()
       const session = await fetchAuthSession()
-      if (!session.tokens?.idToken) { setUser(null); return }
+      if (!session.tokens?.idToken) { setUser(null); return null }
       const attrs = (await fetchUserAttributes().catch(() => ({}))) as Record<string, string>
-      setUser({ userId: u.userId, username: u.username, email: attrs.email, name: attrs.name })
+      const authUser: AuthUser = { userId: u.userId, username: u.username, email: attrs.email, name: attrs.name }
+      setUser(authUser)
       const saved = sessionStorage.getItem('pt:impersonation')
       if (saved) {
         const { personalId, name, token } = JSON.parse(saved)
         setImpersonationToken(token)
         setImpersonating({ personalId, name })
       }
+      return authUser
     } catch {
       setUser(null)
+      return null
     }
   }
 
@@ -66,10 +69,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   async function signIn(email: string, password: string) {
+    // Limpa estado stale do Amplify (localStorage + sessionStorage) antes de nova autenticação.
+    // Sem isso, após expirar a sessão e recarregar a página, o sessionStorage do Amplify fica
+    // corrompido e load() falha silenciosamente → loop de redirecionamento para /login.
+    try { await amplifySignOut() } catch { /* ignora — pode não haver sessão ativa */ }
     resetTokenCache()
     queryClient.clear()
     const result = await amplifySignIn({ username: email, password })
-    if (result.isSignedIn) await load()
+    if (result.isSignedIn) {
+      const u = await load()
+      if (!u) throw new Error('Falha ao estabelecer sessão. Tente novamente.')
+    }
   }
 
   async function signOut() {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { resendSignUpCode } from 'aws-amplify/auth'
 import { useAuth } from './AuthProvider'
@@ -22,8 +22,7 @@ export function LoginPage() {
     adminEmail === 'admin@coachpilot.com.br' ? '/admin' : '/dashboard'
 
   if (user) {
-    navigate(isAdmin ? '/admin' : '/dashboard', { replace: true })
-    return null
+    return <Navigate to={isAdmin ? '/admin' : '/dashboard'} replace />
   }
 
   async function handle(e: React.FormEvent) {
