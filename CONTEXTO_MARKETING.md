@@ -18,6 +18,7 @@ IA via WhatsApp** que tira dúvidas e registra a execução dos treinos.
 **Idioma/mercado:** Português do Brasil, personal trainers e estúdios de treinamento no Brasil
 **Landing page (produção):** https://coachpilot.com.br (domínio próprio — Route53 + ACM +
 CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, não usar em divulgação)
+**App do aluno:** https://app.coachpilot.com.br (PWA separado, sem instalação de loja)
 **Status:** produto em produção, em fase de aquisição de primeiros clientes pagantes
 
 ---
@@ -57,7 +58,8 @@ CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, nã
 
 - **Tudo em um só lugar**: alunos, treinos, agenda, avaliações físicas e evolução, sem planilhas
   soltas.
-- **Economia de tempo**: templates de treino reutilizáveis aplicados a vários alunos com um clique.
+- **Economia de tempo**: templates de treino reutilizáveis, rotinas de split completo (ABC,
+  ABCDE…) e pacotes de treino prontos — aplicados a vários alunos com poucos cliques.
 - **Menos no-show**: agenda com lembretes automáticos por WhatsApp para o personal e o aluno.
 - **Evolução visual e automática**: avaliações físicas (medidas + fotos) geram gráficos de
   evolução a cada nova medição — ótimo argumento de retenção/venda para o personal mostrar ao aluno.
@@ -76,6 +78,8 @@ CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, nã
 - **Anamnese digital**: questionário de saúde/objetivos customizável, preenchido pelo aluno antes
   de começar.
 - **Relatórios em PDF**: exportação de relatório de evolução para entregar/mostrar ao aluno.
+- **Indique e ganhe**: programa de indicação — personal compartilha seu código, quem usar ganha
+  30 dias grátis e, quando virar assinante, o indicador também ganha 30 dias.
 - **Preço único e simples**: sem plano básico capado, sem letras miúdas.
 - **Ativação imediata**: acesso completo liberado assim que cadastra.
 
@@ -85,22 +89,33 @@ CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, nã
 
 | Funcionalidade | Descrição |
 |---|---|
-| Gestão de alunos | Cadastro, histórico e timeline de evolução de cada aluno, sem limite de quantidade |
-| Treinos e templates | Criação de treinos com séries/reps/carga prescrita/intervalo; templates reutilizáveis aplicáveis a múltiplos alunos |
+| Gestão de alunos | Cadastro, histórico e timeline de evolução de cada aluno, sem limite de quantidade. Inclui notas internas, endereço, email e data de nascimento |
+| Treinos e templates | Criação de treinos com séries/reps/carga prescrita/intervalo; templates reutilizáveis aplicáveis a múltiplos alunos com um clique |
+| Rotinas de treino | Split completo (ex.: rotina ABC ou ABCDE) criado juntando templates ou salvo a partir dos treinos de um aluno — aplicável a vários alunos de uma vez (modo adicionar ou substituir) |
+| Pacotes de treino (.cpkg) | Pacotes prontos com exercícios, templates e rotinas empacotados num arquivo .cpkg — importáveis com um clique, criados com ajuda de IA ou editados manualmente; suporte a pacotes licenciados com token de uso único |
 | Sessão ativa de treino | O aluno "inicia" o treino e o sistema acompanha exercício atual, registros e status em tempo real |
+| Exercícios substitutos | O personal cadastra alternativas para cada exercício; o aluno escolhe qual executar durante a sessão sem precisar consultar o personal |
+| Tipos de exercício | Força (kg/lb + repetições), Cardio (RPE + minutos ou km), Peso Corporal (só repetições). Unidades de carga e repetição totalmente personalizáveis |
+| % 1RM e IRM | Cadastro do 1RM do aluno, prescrição por percentual (carga calculada automaticamente) e gráfico de Intensidade Relativa Média por sessão |
 | Avaliações físicas | Medidas corporais + fotos comparativas + gráficos de evolução automáticos |
 | Agenda | Agendamento de sessões com lembretes automáticos via WhatsApp |
 | App do aluno (PWA) | Instalável no celular sem loja de apps; treino do dia, evolução, notificações push |
 | Ranking e gamificação | Ranking de frequência/desempenho + badges/conquistas (sessões e streaks) |
 | Assistente via WhatsApp (IA) | Agente conversacional que entende contexto (treino/exercício atual), desambigua perguntas, registra carga/reps/RPE, recebe fotos e vídeos, prioriza relatos de dor com alerta automático ao personal |
 | Feed / postagens | Feed de exercícios e posts com mídia (foto/vídeo) vinculados a treino/exercício |
+| Recursos educacionais | Materiais de apoio (texto, foto, vídeo) vinculados a exercícios — o aluno acessa tocando no ícone de livro durante o treino |
 | Notificações automáticas | Lembrete de treino, avaliação e renovação, via push/WhatsApp |
-| Anamnese digital | Questionário de saúde e objetivos customizável pelo personal, preenchido pelo aluno |
-| Perfil público do personal | Bio, formação, experiência profissional e redes sociais |
-| Relatórios em PDF | Exportação de relatório de evolução do aluno |
-| Dashboard | Visão geral do negócio: alunos ativos, frequência, sessões recentes |
-| Pendências | Mídias/registros recebidos sem contexto completo ficam pendentes até classificação (nada se perde) |
+| Anamnese digital | Questionário de saúde e objetivos customizável pelo personal, preenchido pelo aluno via link público (sem login) |
+| Perfil público do personal | Bio, formação, experiência profissional e redes sociais — visível para os alunos no app |
+| Relatórios em PDF | Exportação de relatório de evolução do aluno com gráficos e badges |
+| Dashboard | Visão geral do negócio: alunos ativos, frequência 7d, sessões hoje/semana, aderência, % no app, gráfico 14d, distribuição por objetivo, próximos eventos e aniversariantes do mês |
+| Notificações / Pendências | Central de alertas: dores, dúvidas, mídias, metas atingidas, treinos vencendo — tudo organizado com ação direta |
+| Financeiro dos alunos | Cobranças recorrentes (mensal/anual) ou avulsas, controle de pagamentos, integração Pix via Mercado Pago (o aluno paga diretamente pelo app) |
+| Biblioteca de materiais | Upload de PDFs, vídeos e arquivos para os alunos baixarem no app |
+| Base de IA | Arquivos de conhecimento (protocolos, FAQs) que o agente de IA usa para responder os alunos |
 | Multicanal | Tudo funciona tanto pelo portal web quanto pelo WhatsApp, mantendo o mesmo vínculo de contexto |
+| Indique e Ganhe | Código de indicação exclusivo: quem recebe ganha 30 dias grátis; quando vira assinante, quem indicou também ganha 30 dias |
+| Tema claro/escuro | Portal e app suportam modo claro, escuro e automático (segue o sistema) |
 
 ---
 
@@ -137,14 +152,18 @@ planilha/manual não tem.**
 
 ## 8. Preço
 
-- **Plano único — "Plano Profissional"**: **R$ 69,90/mês**
-- Tudo incluso, sem versão básica limitada: alunos ilimitados, treinos/templates ilimitados,
-  avaliações físicas com gráficos, agenda completa com lembretes, app do aluno (PWA), ranking/feed
-  de engajamento, notificações automáticas, suporte via WhatsApp.
+- **Plano Grátis (Trial)**: até 3 alunos, sem custo e sem prazo.
+- **Plano Gestão Pro — Promo Lançamento**: **R$ 39,90/mês** (de R$ 69,90/mês). Alunos
+  ilimitados, todas as funcionalidades inclusas.
+- **Add-ons contratados separadamente**: Canal WhatsApp (assistente IA) e instância W-API.
 - **Sem fidelidade** — cancela quando quiser.
-- **Ativação imediata** após cadastro (sem período de carência conhecido/divulgado).
-- CTA principal: "Começar Grátis Agora" / "Criar Conta Grátis" (cadastro sem cartão na entrada —
-  não há menção a trial pago ou cobrança futura na landing page atual).
+- **Ativação imediata** após cadastro.
+- **Pagamento via Pix** — confirmação automática, sem cartão de crédito.
+- **Código de indicação**: quem for indicado ganha 30 dias grátis; quando vira assinante, o
+  indicador também ganha 30 dias. Códigos promocionais de campanhas também disponíveis.
+- **Benefício FinPilot**: a cada mês pago no Gestão Pro, o personal ganha automaticamente 1 mês
+  grátis no FinPilot (gerenciador financeiro pessoal com IA).
+- CTA principal: "Começar Grátis Agora" / "Criar Conta Grátis".
 
 ---
 
@@ -243,10 +262,10 @@ gerenciando seus alunos como um profissional."*
 2. **Hero** — headline "Gerencie seus alunos e treinos de forma profissional", subheadline,
    CTA duplo (Começar Grátis Agora / Ver como funciona), prova social rápida (+500 alunos
    gerenciados, App do aluno incluso, IA integrada), mockup de dashboard ao lado.
-3. **Features** — grid de 9 funcionalidades (ver seção 5).
+3. **Features** — grid de funcionalidades.
 4. **How it works** — jornada em 4 passos.
 5. **Comparison** — tabela CoachPilot vs. Planilha/Manual.
-6. **Pricing** — card único de preço (R$69,90/mês).
+6. **Pricing** — card de preço (Grátis até 3 alunos / Gestão Pro R$39,90/mês).
 7. **Testimonials** — 2 depoimentos.
 8. **CTA final** — "Pronto para profissionalizar sua gestão de alunos?", botões Criar Conta
    Grátis / Já tenho conta.
@@ -258,24 +277,28 @@ gerenciando seus alunos como um profissional."*
 
 - **Dor → solução**: "Cansado de planilha de treino bagunçada? [funcionalidade] resolve isso."
 - **Antes/depois**: comparação visual entre gestão manual (planilha, papel, WhatsApp) e CoachPilot.
-- **Feature spotlight**: um post por funcionalidade da seção 5 (ex.: foco só em "ranking e
-  gamificação", mostrando como aumenta retenção de aluno).
-- **Prova social**: depoimentos da seção 9, estatística "+500 alunos gerenciados".
+- **Feature spotlight**: um post por funcionalidade (ex.: foco só em "ranking e gamificação",
+  mostrando como aumenta retenção de aluno; ou foco em "pacotes .cpkg", mostrando como montar
+  um treino completo com IA em minutos).
+- **Prova social**: depoimentos, estatística "+500 alunos gerenciados".
 - **Bastidor/demonstração**: gravação de tela mostrando o app do aluno recebendo o treino do dia.
-- **Objeção de preço**: "Um café por dia" / comparar R$69,90/mês com o custo de perder 1 aluno por
-  falta de organização.
+- **Objeção de preço**: "R$39,90/mês, menos de R$1,30 por dia" / comparar com o custo de perder
+  1 aluno por falta de organização.
 - **Posicionamento de autoridade**: perfil público do personal (bio + redes sociais) como forma de
   parecer mais profissional para captar novos alunos.
 - **Urgência/gatilho de ação**: "ativação imediata", "sem fidelidade, cancele quando quiser".
+- **Indique e ganhe**: "Indique um colega personal — ele ganha 30 dias grátis e você também".
+- **Pacotes de treino**: "Monte um pacote ABC completo com IA em minutos e aplique a todos os
+  seus alunos de uma vez".
 
 ---
 
 ## 14. O que NÃO afirmar (limites do que está confirmado no produto/código)
 
-- Não há trial pago explícito nem cobrança automática divulgada — não inventar prazo de teste
-  grátis específico (ex.: "7 dias grátis") sem confirmar com o time.
 - Não afirmar suporte a múltiplos personals/admin multi-tenant — modelo atual é 1 personal =
   1 conta isolada.
 - Não prometer integração com apps de terceiros (ex.: Apple Health, Strava) — não existe hoje.
 - Não citar números de clientes pagantes reais além do "+500 alunos gerenciados" já usado na
   landing page (não confirmar como "+500 personal trainers" — é alunos gerenciados, não personals).
+- Preço promo lançamento (R$39,90/mês) pode ser alterado — verificar landing page antes de
+  publicar conteúdo de preço.

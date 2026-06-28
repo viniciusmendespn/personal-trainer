@@ -175,6 +175,7 @@ O feed mostra as publicações de você e dos outros alunos do seu personal. É 
 - Relatos de dor ou lesão
 - Dúvidas e respostas sobre exercícios
 - Correções e feedbacks do personal
+- Recursos educacionais compartilhados pelo personal
 - Publicações gerais
 
 **Interagir:**
@@ -360,9 +361,8 @@ O ícone de sino no topo da tela mostra o número de notificações não lidas.
 Toque na notificação para ir direto para o conteúdo relacionado.
 
 **Para ativar notificações push (avisos mesmo com app fechado):**
-1. Acesse as configurações do seu navegador
-2. Permita notificações para o site do app
-3. Ou: quando o app perguntar "Deseja receber notificações?", toque em **Permitir**
+1. Quando o app perguntar "Deseja receber notificações?", toque em **Permitir**
+2. Ou: acesse as configurações do seu navegador e permita notificações para o site do app
 
 ---
 
@@ -442,6 +442,15 @@ R: Exercícios de cardio usam RPE (esforço percebido, 0–10) como carga. Para 
 
 **P: O que é o gráfico de IRM na aba Evolução?**
 R: IRM (Intensidade Relativa Média) mostra o percentual médio do seu 1RM que você utilizou em uma sessão. Aparece somente em exercícios de Força onde seu personal registrou o seu 1RM. Serve para acompanhar se você está treinando na intensidade correta ao longo do tempo.
+
+**P: O que é o gráfico de Volume na aba Evolução?**
+R: O gráfico de Volume mostra o quanto você treinou em cada semana, dividido por grupo muscular (ombro, peito, costas, etc.) — cada cor é um grupo. Serve para ver se o seu treino está equilibrado entre os grupos ao longo do tempo.
+
+**P: O exercício tem uma prescrição diferente para cada série. É normal?**
+R: Sim. Seu personal pode prescever séries com cargas diferentes (ex.: 1ª série 30kg, 2ª e 3ª 35kg). Cada bloco de série terá seus próprios campos de registro.
+
+**P: O que é o ícone de livro ao lado do exercício?**
+R: O ícone de livro indica que seu personal vinculou um material de apoio (vídeo, foto ou texto explicativo) àquele exercício. Toque para abrir o conteúdo antes ou durante a execução.
 
 ---
 
