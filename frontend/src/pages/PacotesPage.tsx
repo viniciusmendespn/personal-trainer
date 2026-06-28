@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
-import { Package, Upload, ChevronDown, ChevronRight, Trash2, ToggleLeft, ToggleRight, Bot, Download } from 'lucide-react'
-import { usePacotes, useImportarPacote, useImportarRascunho, useTogglePacote, useToggleItem, useRemoverPacote, useExportarPacote, useGerarPacote } from '../hooks/usePacotes'
+import { Package, Upload, ChevronDown, ChevronRight, Trash2, ToggleLeft, ToggleRight, Bot, Download, Lock, Unlock } from 'lucide-react'
+import { usePacotes, useImportarPacote, useImportarRascunho, useTogglePacote, useToggleItem, useRemoverPacote, useExportarPacote, useGerarPacote, useGerarPacoteLicenciado } from '../hooks/usePacotes'
 import { useTemplates } from '../hooks/useTemplates'
 import { useRotinas } from '../hooks/useRotinas'
 import { Button, Card, Spinner, EmptyState, Modal, Badge, Tabs, useToast, useConfirm } from '../components/ui'
@@ -431,6 +431,7 @@ function CriarPacoteTab() {
   const { data: templates, isLoading: loadingTmpl } = useTemplates(true)
   const { data: rotinas, isLoading: loadingRot } = useRotinas(true)
   const gerar = useGerarPacote()
+  const gerarLicenciado = useGerarPacoteLicenciado()
   const { show: toast } = useToast()
 
   const [nome, setNome] = useState('')
@@ -439,6 +440,8 @@ function CriarPacoteTab() {
   const [versao, setVersao] = useState('1.0')
   const [templatesSel, setTemplatesSel] = useState<Set<string>>(new Set())
   const [rotinasSel, setRotinasSel] = useState<Set<string>>(new Set())
+  const [licenciadoMode, setLicenciadoMode] = useState(false)
+  const [maxUsos, setMaxUsos] = useState(1)
 
   const licenciadoIds = new Set(
     (pacotes ?? []).filter((p) => p.licenciado).map((p) => p.pacote_id)
@@ -455,31 +458,42 @@ function CriarPacoteTab() {
     return next
   }
 
+  const baseBody = {
+    nome: nome.trim(),
+    descricao: descricao.trim(),
+    autor: autor.trim(),
+    versao: versao.trim() || '1.0',
+    template_ids: [...templatesSel],
+    rotina_ids: [...rotinasSel],
+  }
+
+  const errMsgs: Record<string, string> = {
+    PACOTE_LICENCIADO_NAO_PERMITIDO: 'Um dos itens selecionados pertence a um pacote licenciado.',
+    TEMPLATE_NAO_ENCONTRADO: 'Template não encontrado.',
+    ROTINA_NAO_ENCONTRADA: 'Rotina não encontrada.',
+    PACOTE_SECRET_NAO_CONFIGURADO: 'Configuração do servidor incompleta. Contate o suporte.',
+  }
+
   async function handleGerar() {
     if (!nome.trim()) return
     try {
-      const data = await gerar.mutateAsync({
-        nome: nome.trim(),
-        descricao: descricao.trim(),
-        autor: autor.trim(),
-        versao: versao.trim() || '1.0',
-        template_ids: [...templatesSel],
-        rotina_ids: [...rotinasSel],
-      })
-      downloadJson(data, `${nome.trim()}.json`)
-      toast('JSON gerado! Cole no ChatGPT para editar ou importe diretamente.', 'success')
+      if (licenciadoMode) {
+        const data = await gerarLicenciado.mutateAsync({ ...baseBody, max_usos: maxUsos })
+        downloadJson(data, `${nome.trim()}.cpkg`)
+        toast('Pacote licenciado gerado! Distribua o arquivo .cpkg para seus clientes.', 'success')
+      } else {
+        const data = await gerar.mutateAsync(baseBody)
+        downloadJson(data, `${nome.trim()}.json`)
+        toast('JSON gerado! Cole no ChatGPT para editar ou importe diretamente.', 'success')
+      }
     } catch (err: any) {
       const code = err?.response?.data?.code
-      const msgs: Record<string, string> = {
-        PACOTE_LICENCIADO_NAO_PERMITIDO: 'Um dos itens selecionados pertence a um pacote licenciado.',
-        TEMPLATE_NAO_ENCONTRADO: 'Template não encontrado.',
-        ROTINA_NAO_ENCONTRADA: 'Rotina não encontrada.',
-      }
       const detail = err?.response?.data?.detail
-      toast(msgs[code] ?? `Erro ao gerar pacote.${detail ? ` (${detail})` : ''}`, 'error')
+      toast(errMsgs[code] ?? `Erro ao gerar pacote.${detail ? ` (${detail})` : ''}`, 'error')
     }
   }
 
+  const isPending = gerar.isPending || gerarLicenciado.isPending
   const isLoading = loadingTmpl || loadingRot
 
   return (
@@ -523,6 +537,34 @@ function CriarPacoteTab() {
               className="w-full rounded-lg border border-border bg-surface-secondary px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
+        </div>
+
+        <div className="pt-1 border-t border-border">
+          <button
+            type="button"
+            onClick={() => setLicenciadoMode((v) => !v)}
+            className={`flex items-center gap-2 text-sm font-medium transition-colors ${licenciadoMode ? 'text-accent' : 'text-text-secondary hover:text-text'}`}
+          >
+            {licenciadoMode ? <Lock size={15} /> : <Unlock size={15} />}
+            {licenciadoMode ? 'Licenciado (token de uso único)' : 'Gerar como licenciado'}
+          </button>
+          {licenciadoMode && (
+            <div className="mt-3 space-y-2">
+              <div>
+                <label className="text-xs text-text-secondary mb-1 block">Usos disponíveis</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={maxUsos}
+                  onChange={(e) => setMaxUsos(Math.max(1, Number(e.target.value)))}
+                  className="w-28 rounded-lg border border-border bg-surface-secondary px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+                />
+              </div>
+              <p className="text-xs text-text-secondary">
+                O arquivo <span className="font-mono">.cpkg</span> gerado contém um token de uso único. Distribua-o para quem deve importar o pacote. Cada importação consome um uso.
+              </p>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -603,10 +645,12 @@ function CriarPacoteTab() {
       <div className="flex justify-end">
         <Button
           onClick={handleGerar}
-          disabled={!nome.trim() || (templatesSel.size === 0 && rotinasSel.size === 0) || gerar.isPending}
+          disabled={!nome.trim() || (templatesSel.size === 0 && rotinasSel.size === 0) || isPending}
         >
-          {gerar.isPending ? (
+          {isPending ? (
             <span className="flex items-center gap-2"><Spinner className="w-4 h-4" /> Gerando...</span>
+          ) : licenciadoMode ? (
+            <span className="flex items-center gap-2"><Lock size={16} /> Gerar Pacote Licenciado (.cpkg)</span>
           ) : (
             <span className="flex items-center gap-2"><Download size={16} /> Gerar JSON do Pacote</span>
           )}

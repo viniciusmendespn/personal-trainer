@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from app.dependencies import get_current_personal_id
 from app.models.pacote import (
     GerarPacoteBody,
+    GerarPacoteLicenciadoBody,
     ImportarPacoteRequest,
     ImportarPacoteResponse,
     ToggleItemBody,
@@ -43,6 +44,23 @@ def gerar_pacote(
         body.versao,
         body.template_ids,
         body.rotina_ids,
+    )
+
+
+@router.post("/gerar-licenciado", status_code=200)
+def gerar_pacote_licenciado(
+    body: GerarPacoteLicenciadoBody,
+    personal_id: str = Depends(get_current_personal_id),
+):
+    return pacote_service.gerar_pacote_licenciado(
+        personal_id,
+        body.nome,
+        body.descricao,
+        body.autor,
+        body.versao,
+        body.template_ids,
+        body.rotina_ids,
+        body.max_usos,
     )
 
 

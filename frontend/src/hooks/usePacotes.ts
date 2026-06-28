@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { pacotesApi } from '../api/pacotes'
-import type { GerarPacoteBody } from '../api/pacotes'
+import type { GerarPacoteBody, GerarPacoteLicenciadoBody } from '../api/pacotes'
 
 const KEY = ['pacotes']
 
@@ -84,5 +84,11 @@ export function useExportarPacote() {
 export function useGerarPacote() {
   return useMutation({
     mutationFn: (body: GerarPacoteBody) => pacotesApi.gerar(body),
+  })
+}
+
+export function useGerarPacoteLicenciado() {
+  return useMutation({
+    mutationFn: (body: GerarPacoteLicenciadoBody) => pacotesApi.gerarLicenciado(body),
   })
 }

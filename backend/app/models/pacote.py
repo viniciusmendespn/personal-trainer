@@ -113,3 +113,7 @@ class GerarPacoteBody(BaseModel):
     versao: str = "1.0"
     template_ids: list[str] = Field(default_factory=list)
     rotina_ids: list[str] = Field(default_factory=list)
+
+
+class GerarPacoteLicenciadoBody(GerarPacoteBody):
+    max_usos: int = 1

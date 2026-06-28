@@ -10,6 +10,10 @@ export interface GerarPacoteBody {
   rotina_ids: string[]
 }
 
+export interface GerarPacoteLicenciadoBody extends GerarPacoteBody {
+  max_usos: number
+}
+
 export const pacotesApi = {
   importar: (conteudo: string) =>
     api.post<ImportarPacoteResponse>('/v1/pacotes/importar', { conteudo }).then((r) => r.data),
@@ -34,6 +38,9 @@ export const pacotesApi = {
 
   gerar: (body: GerarPacoteBody) =>
     api.post<object>('/v1/pacotes/gerar', body).then((r) => r.data),
+
+  gerarLicenciado: (body: GerarPacoteLicenciadoBody) =>
+    api.post<object>('/v1/pacotes/gerar-licenciado', body).then((r) => r.data),
 }
 
 export function downloadJson(data: object, filename: string) {

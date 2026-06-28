@@ -631,3 +631,33 @@ def gerar_pacote(
         templates_out,
         rotinas_out,
     )
+
+
+def gerar_pacote_licenciado(
+    personal_id: str,
+    nome: str,
+    descricao: str,
+    autor: str,
+    versao: str,
+    template_ids: list[str],
+    rotina_ids: list[str],
+    max_usos: int,
+) -> dict:
+    """Gera pacote assinado com HMAC e token de uso único — pronto para distribuição."""
+    draft = gerar_pacote(personal_id, nome, descricao, autor, versao, template_ids, rotina_ids)
+
+    token_uuid = new_id()
+    token = f"tok_{token_uuid}"
+    draft["token"] = token
+    draft["assinatura"] = _calcular_assinatura(draft)
+
+    repo.put_item(keys.pk_token(token_uuid), keys.SK_META, {
+        "token": token,
+        "pacote_id": draft["pacote"]["id"],
+        "max_usos": max_usos,
+        "usos_count": 0,
+        "usado_por": [],
+        "criado_em": now_iso(),
+    })
+
+    return draft
