@@ -44,12 +44,20 @@ export function PixPaymentModal({ open, onClose, periodo = 'mensal' }: { open: b
     setTimeout(() => setCopiado(false), 2000)
   }
 
-  const title = periodo === 'anual' ? 'Gestão Pro — Pix Anual · R$399,00' : 'Renovar Gestão Pro — Pix'
-
   return (
-    <Modal open={open} onClose={onClose} title={title}>
-      {periodo === 'anual' && !aprovado && (
-        <p className="text-xs text-text-muted text-center mb-3">Válido por 12 meses · Você economiza R$79,80</p>
+    <Modal open={open} onClose={onClose} title="Gestão Pro — Pix">
+      {!aprovado && (
+        <div className="flex items-center justify-center mb-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-surface">
+            <span className="text-sm font-semibold text-text">
+              {periodo === 'anual' ? 'R$399,00' : 'R$39,90'}
+            </span>
+            <span className="text-text-muted text-xs">·</span>
+            <span className="text-xs text-text-muted">
+              {periodo === 'anual' ? '12 meses · economiza R$79,80' : '1 mês · sem fidelidade'}
+            </span>
+          </div>
+        </div>
       )}
       {criarPix.isPending && (
         <div className="flex flex-col items-center gap-3 py-8">

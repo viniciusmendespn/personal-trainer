@@ -29,6 +29,70 @@ function formatValor(valor: number | null) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
+function PeriodoSelector({
+  value,
+  onChange,
+}: {
+  value: 'mensal' | 'anual'
+  onChange: (v: 'mensal' | 'anual') => void
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => onChange('mensal')}
+        className={[
+          'w-full text-left flex items-start justify-between gap-3 px-4 py-3 rounded-xl border transition-all',
+          value === 'mensal'
+            ? 'border-accent bg-accent/10 ring-1 ring-accent/20'
+            : 'border-border bg-surface hover:border-accent/40',
+        ].join(' ')}
+      >
+        <div>
+          <p className="text-sm font-semibold text-text">Mensal</p>
+          <p className="text-xs text-text-muted mt-0.5">R$39,90 / mês · sem fidelidade</p>
+        </div>
+        <div className={[
+          'mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
+          value === 'mensal' ? 'border-accent' : 'border-border',
+        ].join(' ')}>
+          {value === 'mensal' && <div className="w-2 h-2 rounded-full bg-accent" />}
+        </div>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onChange('anual')}
+        className={[
+          'w-full text-left flex items-start justify-between gap-3 px-4 py-3 rounded-xl border transition-all',
+          value === 'anual'
+            ? 'border-accent bg-accent/10 ring-1 ring-accent/20'
+            : 'border-border bg-surface hover:border-accent/40',
+        ].join(' ')}
+      >
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+            <p className="text-sm font-semibold text-text">Anual</p>
+            <span className="text-[10px] font-bold uppercase tracking-wide bg-accent/20 text-accent px-2 py-0.5 rounded-full leading-none whitespace-nowrap">
+              Economize 2 meses
+            </span>
+          </div>
+          <p className="text-xs text-text-muted">
+            R$399,00 / ano{' '}
+            <span className="text-text font-medium">· R$33,25/mês</span>
+          </p>
+        </div>
+        <div className={[
+          'mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
+          value === 'anual' ? 'border-accent' : 'border-border',
+        ].join(' ')}>
+          {value === 'anual' && <div className="w-2 h-2 rounded-full bg-accent" />}
+        </div>
+      </button>
+    </div>
+  )
+}
+
 export function PlanoPage() {
   const { data, isLoading } = usePlanoStatus()
   const { data: pagamentos } = usePagamentos()
@@ -36,14 +100,9 @@ export function PlanoPage() {
   const resgatarCupom = useResgatarCupom()
   const { show } = useToast()
   const [pixOpen, setPixOpen] = useState(false)
-  const [pixPeriodo, setPixPeriodo] = useState<'mensal' | 'anual'>('mensal')
+  const [pixPeriodo, setPixPeriodo] = useState<'mensal' | 'anual'>('anual')
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
   const [promoInput, setPromoInput] = useState('')
-
-  function abrirPix(periodo: 'mensal' | 'anual') {
-    setPixPeriodo(periodo)
-    setPixOpen(true)
-  }
 
   function copyCode(code: string) {
     navigator.clipboard.writeText(code).then(() => {
@@ -109,16 +168,13 @@ export function PlanoPage() {
         </div>
 
         {isPro ? (
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => abrirPix('mensal')}>Renovar 1 mês — R$39,90</Button>
-            <Button onClick={() => abrirPix('anual')}>
-              Renovar 1 ano — R$399,00
-              <span className="ml-2 inline-flex items-center rounded-full bg-accent/20 px-2 py-0.5 text-xs font-semibold text-accent">Economize 2 meses</span>
+          <div className="flex flex-col gap-3">
+            <PeriodoSelector value={pixPeriodo} onChange={setPixPeriodo} />
+            <Button onClick={() => setPixOpen(true)}>
+              {pixPeriodo === 'anual' ? 'Renovar por 1 ano — R$399,00' : 'Renovar por 1 mês — R$39,90'}
             </Button>
           </div>
-        ) : (
-          <Button onClick={() => abrirPix('mensal')}>Assinar Gestão Pro</Button>
-        )}
+        ) : null}
       </Card>
 
       <Card variant="flat" className="p-6">
@@ -238,13 +294,12 @@ export function PlanoPage() {
             </div>
           </div>
 
-          <Button onClick={() => abrirPix('mensal')}>Assinar Gestão Pro — R$39,90/mês</Button>
-          <button
-            onClick={() => abrirPix('anual')}
-            className="mt-2 w-full text-sm text-accent hover:underline text-center"
-          >
-            Ou pagar R$399,00/ano e economizar 2 mensalidades
-          </button>
+          <div className="flex flex-col gap-3 mt-1">
+            <PeriodoSelector value={pixPeriodo} onChange={setPixPeriodo} />
+            <Button onClick={() => setPixOpen(true)}>
+              {pixPeriodo === 'anual' ? 'Assinar por 1 ano — R$399,00' : 'Assinar por 1 mês — R$39,90'}
+            </Button>
+          </div>
         </Card>
       )}
 
