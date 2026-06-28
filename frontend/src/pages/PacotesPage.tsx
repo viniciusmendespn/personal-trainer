@@ -1,12 +1,89 @@
 import { useRef, useState } from 'react'
-import { Package, Upload, ChevronDown, ChevronRight, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
-import { usePacotes, useImportarPacote, useTogglePacote, useToggleItem, useRemoverPacote } from '../hooks/usePacotes'
+import { Package, Upload, ChevronDown, ChevronRight, Trash2, ToggleLeft, ToggleRight, Bot, Download } from 'lucide-react'
+import { usePacotes, useImportarPacote, useImportarRascunho, useTogglePacote, useToggleItem, useRemoverPacote } from '../hooks/usePacotes'
 import { useTemplates } from '../hooks/useTemplates'
 import { useRotinas } from '../hooks/useRotinas'
 import { Button, Card, Spinner, EmptyState, Modal, Badge, Tabs, useToast, useConfirm } from '../components/ui'
 import type { ImportarPacoteResponse, PacoteInstalado } from '../types'
 
 // ── Tela de importação ────────────────────────────────────────────────────────
+
+function ImportarIASection() {
+  const [json, setJson] = useState('')
+  const [result, setResult] = useState<ImportarPacoteResponse | null>(null)
+  const importarRascunho = useImportarRascunho()
+  const { show: toast } = useToast()
+
+  async function handleImportarIA() {
+    if (!json.trim()) return
+    try {
+      const res = await importarRascunho.mutateAsync(json.trim())
+      setResult(res)
+      setJson('')
+    } catch (err: any) {
+      const code = err?.response?.data?.code
+      const msgs: Record<string, string> = {
+        ESTRUTURA_INVALIDA: 'O JSON gerado pela IA tem um erro de estrutura. Verifique se seguiu o prompt corretamente.',
+        ARQUIVO_INVALIDO: 'JSON inválido. Certifique-se de copiar apenas o bloco de código gerado pela IA.',
+        PACOTE_JA_IMPORTADO: 'Este pacote já foi importado na sua conta.',
+        PACOTE_SECRET_NAO_CONFIGURADO: 'Configuração do servidor incompleta. Contate o suporte.',
+      }
+      const detail = err?.response?.data?.detail
+      const suffix = detail ? ` (${detail})` : ''
+      toast((msgs[code] ?? 'Erro ao importar. Tente novamente.') + suffix, 'error')
+    }
+  }
+
+  return (
+    <>
+      <Card className="p-6">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex items-center gap-2">
+            <Bot size={18} className="text-accent shrink-0" />
+            <div>
+              <p className="font-medium text-sm">Gerar pacote com IA</p>
+              <p className="text-xs text-text-secondary mt-0.5">
+                Baixe o prompt, cole em qualquer IA, responda 4 perguntas e cole o JSON abaixo.
+              </p>
+            </div>
+          </div>
+          <a
+            href="/prompt-cpkg.md"
+            download="prompt-cpkg.md"
+            className="flex items-center gap-1.5 text-xs font-medium text-accent hover:underline shrink-0"
+          >
+            <Download size={14} />
+            Baixar prompt
+          </a>
+        </div>
+
+        <textarea
+          value={json}
+          onChange={(e) => setJson(e.target.value)}
+          placeholder='Cole aqui o JSON gerado pela IA (bloco { "version": "1", ... })'
+          className="w-full h-36 rounded-lg border border-border bg-surface-secondary px-3 py-2 text-xs font-mono resize-none focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-text-secondary/60"
+        />
+
+        <div className="mt-3 flex justify-end">
+          <Button
+            onClick={handleImportarIA}
+            disabled={!json.trim() || importarRascunho.isPending}
+          >
+            {importarRascunho.isPending ? (
+              <span className="flex items-center gap-2"><Spinner className="w-4 h-4" /> Importando...</span>
+            ) : (
+              <span className="flex items-center gap-2"><Bot size={16} /> Importar JSON da IA</span>
+            )}
+          </Button>
+        </div>
+      </Card>
+
+      {result && (
+        <SuccessModal result={result} onClose={() => setResult(null)} />
+      )}
+    </>
+  )
+}
 
 function ImportarTab() {
   const [file, setFile] = useState<File | null>(null)
@@ -106,6 +183,8 @@ function ImportarTab() {
           onClose={() => setResult(null)}
         />
       )}
+
+      <ImportarIASection />
     </>
   )
 }

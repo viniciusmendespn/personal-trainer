@@ -29,16 +29,20 @@ logger = logging.getLogger(__name__)
 
 # ── Assinatura HMAC ──────────────────────────────────────────────────────────
 
-def _verificar_assinatura(conteudo_dict: dict, assinatura: str) -> None:
-    if not settings.pacote_secret:
-        raise HTTPException(500, detail={"code": "PACOTE_SECRET_NAO_CONFIGURADO"})
-    payload = {k: v for k, v in conteudo_dict.items() if k != "assinatura"}
-    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    expected = hmac.new(
+def _calcular_assinatura(payload_sem_assinatura: dict) -> str:
+    canonical = json.dumps(payload_sem_assinatura, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hmac.new(
         settings.pacote_secret.encode("utf-8"),
         canonical.encode("utf-8"),
         hashlib.sha256,
     ).hexdigest()
+
+
+def _verificar_assinatura(conteudo_dict: dict, assinatura: str) -> None:
+    if not settings.pacote_secret:
+        raise HTTPException(500, detail={"code": "PACOTE_SECRET_NAO_CONFIGURADO"})
+    payload = {k: v for k, v in conteudo_dict.items() if k != "assinatura"}
+    expected = _calcular_assinatura(payload)
     if not hmac.compare_digest(expected, assinatura):
         raise HTTPException(400, detail={"code": "ASSINATURA_INVALIDA"})
 
@@ -252,7 +256,9 @@ def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteRespon
         "importado_em": now,
         "token": pacote_file.token or "",
     }
-    repo.put_item(pk_pt, keys.sk_pacote(pacote_id), pacote_meta)
+    ok = repo.put_item_if_absent(pk_pt, keys.sk_pacote(pacote_id), pacote_meta)
+    if not ok:
+        raise HTTPException(409, detail={"code": "PACOTE_JA_IMPORTADO"})
 
     return ImportarPacoteResponse(
         pacote_id=pacote_id,
@@ -262,6 +268,32 @@ def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteRespon
         templates_importados=len(template_puts),
         rotinas_importadas=len(rotina_puts),
     )
+
+
+# ── Importação de rascunho gerado por IA ─────────────────────────────────────
+
+def importar_rascunho(personal_id: str, conteudo_str: str) -> ImportarPacoteResponse:
+    """Aceita JSON sem assinatura (gerado por LLM), assina internamente e importa como pacote livre."""
+    try:
+        conteudo_dict = json.loads(conteudo_str)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(400, detail={"code": "ARQUIVO_INVALIDO", "detail": str(exc)})
+
+    # Remove campos de segurança — rascunho sempre vira pacote livre
+    conteudo_dict.pop("token", None)
+    conteudo_dict.pop("assinatura", None)
+
+    # Valida estrutura via Pydantic antes de assinar
+    try:
+        PacoteFile(**{**conteudo_dict, "assinatura": "placeholder"})
+    except Exception as exc:
+        raise HTTPException(400, detail={"code": "ESTRUTURA_INVALIDA", "detail": str(exc)})
+
+    if not settings.pacote_secret:
+        raise HTTPException(500, detail={"code": "PACOTE_SECRET_NAO_CONFIGURADO"})
+
+    conteudo_dict["assinatura"] = _calcular_assinatura(conteudo_dict)
+    return importar_pacote(personal_id, json.dumps(conteudo_dict))
 
 
 # ── Listagem e configuração ───────────────────────────────────────────────────

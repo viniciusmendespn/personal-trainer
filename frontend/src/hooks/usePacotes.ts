@@ -48,6 +48,19 @@ export function useToggleItem() {
   })
 }
 
+export function useImportarRascunho() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (conteudo: string) => pacotesApi.importarRascunho(conteudo),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY })
+      qc.invalidateQueries({ queryKey: ['biblioteca'] })
+      qc.invalidateQueries({ queryKey: ['templates'] })
+      qc.invalidateQueries({ queryKey: ['rotinas'] })
+    },
+  })
+}
+
 export function useRemoverPacote() {
   const qc = useQueryClient()
   return useMutation({

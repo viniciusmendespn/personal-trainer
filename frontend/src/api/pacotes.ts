@@ -16,4 +16,7 @@ export const pacotesApi = {
 
   remover: (pacoteId: string) =>
     api.delete(`/v1/pacotes/${pacoteId}`),
+
+  importarRascunho: (conteudo: string) =>
+    api.post<ImportarPacoteResponse>('/v1/pacotes/importar-rascunho', { conteudo }).then((r) => r.data),
 }

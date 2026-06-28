@@ -21,6 +21,14 @@ def importar_pacote(
     return pacote_service.importar_pacote(personal_id, body.conteudo)
 
 
+@router.post("/importar-rascunho", response_model=ImportarPacoteResponse, status_code=201)
+def importar_rascunho(
+    body: ImportarPacoteRequest,
+    personal_id: str = Depends(get_current_personal_id),
+):
+    return pacote_service.importar_rascunho(personal_id, body.conteudo)
+
+
 @router.get("")
 def listar_pacotes(personal_id: str = Depends(get_current_personal_id)):
     return pacote_service.listar_pacotes(personal_id)
