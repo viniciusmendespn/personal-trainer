@@ -51,7 +51,7 @@ export function AlunosPage() {
         data_nascimento: dataNascimento || undefined, objetivo: objetivo || undefined,
       })
       setNome(''); setTelefone(''); setEmail(''); setEndereco(''); setDataNascimento(''); setObjetivo(''); setOpen(false)
-      show('Aluno criado! Agora monte o treino com IA.', 'success')
+      show('Aluno criado! Monte o treino e deixe a IA cadastrar em segundos.', 'success')
       navigate(`/alunos/${novo.aluno_id}`)
     } catch (err: any) {
       const detail = err?.response?.data?.detail

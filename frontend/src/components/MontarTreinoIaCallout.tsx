@@ -18,13 +18,13 @@ export function MontarTreinoIaCallout({ compact = false }: { compact?: boolean }
         </h3>
       </div>
       <p className="text-sm text-text-secondary mt-2 max-w-xl">
-        Que tal deixar a IA montar o treino inteiro? Você descreve o objetivo, ela gera,
-        e o CoachPilot cadastra tudo — sem perder tempo lançando exercício por exercício.
+        Você é o profissional e sabe o que prescrever. Você monta o treino, a IA só escreve e
+        cadastra pra você — exercícios, séries e rotinas prontos em segundos, sem digitar um a um.
       </p>
       <div className="flex flex-wrap items-center gap-2 mt-4">
         <Link to="/pacotes">
           <Button>
-            <span className="flex items-center gap-2"><Bot size={16} /> Montar treino com IA</span>
+            <span className="flex items-center gap-2"><Bot size={16} /> Cadastrar treino com IA</span>
           </Button>
         </Link>
         <a href="/prompt-cpkg.md" download="prompt-cpkg.md">

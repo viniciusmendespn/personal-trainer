@@ -46,7 +46,7 @@ function ImportarIASection() {
             <div>
               <h3 className="font-display font-semibold text-lg">Ensine o ChatGPT a usar o CoachPilot por você</h3>
               <p className="text-sm text-text-secondary mt-0.5">
-                O jeito mais rápido de montar treinos: a IA cria, o CoachPilot cadastra exercícios, templates e rotinas.
+                Você prescreve, a IA cadastra: transforme o treino que você montou em exercícios, templates e rotinas em segundos.
               </p>
             </div>
           </div>
@@ -64,7 +64,7 @@ function ImportarIASection() {
         <ol className="mt-5 mb-4 space-y-2.5">
           {[
             'Baixe o prompt e cole em qualquer IA (ChatGPT, Claude, Gemini).',
-            'Responda as perguntas — a IA monta o treino completo pra você.',
+            'Descreva o treino que você quer prescrever — a IA organiza no formato do CoachPilot.',
             'Cole o JSON aqui embaixo: o CoachPilot cadastra tudo automaticamente.',
           ].map((txt, i) => (
             <li key={i} className="flex items-start gap-3 text-sm">
@@ -692,8 +692,8 @@ export function PacotesPage() {
         <h2 className="font-display text-xl font-semibold">Pacotes de treino</h2>
       </div>
       <p className="text-sm text-text-secondary mb-4">
-        Deixe a IA montar treinos completos pra você — o diferencial do CoachPilot. Ou importe
-        um arquivo .cpkg licenciado.
+        Você monta o treino, a IA escreve e cadastra pra você em segundos — o diferencial do
+        CoachPilot. Ou importe um arquivo .cpkg licenciado.
       </p>
 
       <Tabs

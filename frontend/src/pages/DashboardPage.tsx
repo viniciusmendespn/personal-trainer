@@ -260,7 +260,7 @@ export function DashboardPage() {
         <EmptyState
           icon={<Users />}
           title="Nenhum aluno cadastrado ainda"
-          description="Crie seu primeiro aluno — depois deixe a IA montar o treino inteiro pra você."
+          description="Crie seu primeiro aluno — depois monte o treino e deixe a IA cadastrar pra você em segundos."
           action={
             <Link to="/alunos" className="text-accent-hover text-sm font-medium hover:underline inline-flex items-center gap-1">
               Cadastrar aluno <ArrowRight size={14} />
