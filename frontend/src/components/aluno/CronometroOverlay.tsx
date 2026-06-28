@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Play, Pause, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react'
+import { X, Play, Pause, RotateCcw } from 'lucide-react'
 import { startAlarm, stopAlarm, tick, unlockAudio } from '../../utils/beep'
+import { DurationInput } from '../ui/DurationInput'
 
 type Modo = 'regressivo' | 'progressivo'
 
@@ -13,86 +14,6 @@ function fmt(ms: number): string {
   const m = Math.floor(total / 60)
   const s = total % 60
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-}
-
-/** Uma coluna de número ajustável por scroll do mouse, arraste vertical ou setas ▲/▼. */
-function WheelNumber({
-  value,
-  max,
-  onChange,
-  ariaLabel,
-}: {
-  value: number
-  max: number
-  onChange: (v: number) => void
-  ariaLabel: string
-}) {
-  const startY = useRef<number | null>(null)
-  const acc = useRef(0)
-  const STEP_PX = 28
-
-  const change = (delta: number) => onChange(Math.max(0, Math.min(max, value + delta)))
-
-  // Direção da última troca, para animar o número entrando de cima ou de baixo.
-  const prevRef = useRef(value)
-  let dir: 'up' | 'down' = 'up'
-  if (value > prevRef.current) dir = 'up'
-  else if (value < prevRef.current) dir = 'down'
-  prevRef.current = value
-
-  return (
-    <div
-      className="flex flex-col items-center select-none touch-none"
-      onWheel={(e) => change(e.deltaY < 0 ? 1 : -1)}
-      onTouchStart={(e) => {
-        startY.current = e.touches[0].clientY
-        acc.current = 0
-      }}
-      onTouchMove={(e) => {
-        if (startY.current == null) return
-        acc.current += startY.current - e.touches[0].clientY
-        startY.current = e.touches[0].clientY
-        while (acc.current >= STEP_PX) {
-          change(1)
-          acc.current -= STEP_PX
-        }
-        while (acc.current <= -STEP_PX) {
-          change(-1)
-          acc.current += STEP_PX
-        }
-      }}
-      onTouchEnd={() => {
-        startY.current = null
-      }}
-    >
-      <button
-        type="button"
-        onClick={() => change(1)}
-        aria-label={`Aumentar ${ariaLabel}`}
-        className="p-1 text-text-muted hover:text-text"
-      >
-        <ChevronUp size={28} />
-      </button>
-      <span className="block overflow-hidden">
-        <span
-          key={value}
-          className={`block font-display tabular-nums leading-none text-[13vw] sm:text-[5.5rem] text-text ${
-            dir === 'up' ? 'animate-wheel-up' : 'animate-wheel-down'
-          }`}
-        >
-          {String(value).padStart(2, '0')}
-        </span>
-      </span>
-      <button
-        type="button"
-        onClick={() => change(-1)}
-        aria-label={`Diminuir ${ariaLabel}`}
-        className="p-1 text-text-muted hover:text-text"
-      >
-        <ChevronDown size={28} />
-      </button>
-    </div>
-  )
 }
 
 /**
@@ -254,11 +175,6 @@ export function CronometroOverlay({
     setDisplayMs((d) => Math.min(MAX_SECONDS * 1000, Math.max(0, d + sec * 1000)))
   }
 
-  function setTime(mm: number, ss: number) {
-    const total = Math.max(0, Math.min(MAX_SECONDS, mm * 60 + ss))
-    setDisplayMs(total * 1000)
-  }
-
   function trocarModo(m: Modo) {
     if (m === modo) return
     setRunning(false)
@@ -283,9 +199,6 @@ export function CronometroOverlay({
       modo === m ? 'bg-accent/15 text-accent-hover font-medium' : 'text-text-muted hover:text-text'
     }`
 
-  const totalSec = Math.round(displayMs / 1000)
-  const mm = Math.floor(totalSec / 60)
-  const ss = totalSec % 60
   const alerta = displayMs <= 5000 && modo === 'regressivo' && running
   const idle = !running && !done
 
@@ -376,18 +289,24 @@ export function CronometroOverlay({
               >
                 {fmt(displayMs)}
               </span>
+            ) : modo === 'regressivo' ? (
+              <DurationInput
+                value={Math.round(displayMs / 1000)}
+                onChange={(s) => setDisplayMs((s ?? 0) * 1000)}
+                placeholder="0:00"
+                ariaLabel="Tempo do cronômetro"
+                inputClassName="w-[70vw] max-w-[20rem] bg-transparent text-center font-display tabular-nums leading-none text-[15vw] sm:text-[7rem] text-text caret-energy focus:outline-none"
+              />
             ) : (
-              <div className="flex items-center justify-center gap-1 sm:gap-2">
-                <WheelNumber value={mm} max={99} ariaLabel="minutos" onChange={(m) => setTime(m, ss)} />
-                <span className="font-display tabular-nums leading-none text-[9vw] sm:text-[4rem] text-text-muted">:</span>
-                <WheelNumber value={ss} max={59} ariaLabel="segundos" onChange={(s) => setTime(mm, s)} />
-              </div>
+              <span className="font-display tabular-nums leading-none text-[15vw] sm:text-[7rem] text-text">00:00</span>
             )}
           </div>
         </div>
 
         {done && <p className="mt-6 text-energy font-display text-3xl sm:text-5xl font-bold">Intervalo concluído!</p>}
-        {idle && <p className="mt-4 text-text-muted text-sm">Role ou use as setas para ajustar</p>}
+        {idle && modo === 'regressivo' && (
+          <p className="mt-4 text-text-muted text-sm">Toque no tempo para digitar (m:ss) ou use os botões</p>
+        )}
       </div>
 
       {idle && modo === 'regressivo' && (

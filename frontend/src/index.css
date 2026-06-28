@@ -135,9 +135,3 @@ h1, h2, h3, .font-display { font-family: var(--font-display); }
 .rich-content em     { font-style: italic; }
 .rich-content u      { text-decoration: underline; }
 .rich-content code   { font-family: monospace; font-size: 0.8125rem; background: var(--color-surface-elevated); border-radius: 3px; padding: 0 3px; }
-
-/* Cronômetro — animação odômetro dos números (roda ao trocar) */
-@keyframes wheel-up   { from { transform: translateY(55%);  opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes wheel-down { from { transform: translateY(-55%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-.animate-wheel-up   { animation: wheel-up   0.16s ease-out; }
-.animate-wheel-down { animation: wheel-down 0.16s ease-out; }
