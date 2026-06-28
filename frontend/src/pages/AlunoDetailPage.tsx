@@ -144,6 +144,13 @@ export function AlunoDetailPage() {
     navigator.clipboard?.writeText(linkData.link)
     show('Link copiado!', 'success')
   }
+  function handleEnviarLink() {
+    if (whatsConectado) { enviarLink.mutate(); return }
+    const tel = aluno?.telefone?.replace(/\D/g, '') ?? ''
+    const telComDDI = tel.startsWith('55') ? tel : `55${tel}`
+    const texto = encodeURIComponent(`Aqui está o link do seu app: ${linkData?.link ?? ''}`)
+    window.open(`https://wa.me/${telComDDI}?text=${texto}`, '_blank', 'noopener')
+  }
 
   function startEdit() {
     setENome(aluno?.nome ?? ''); setETel(aluno?.telefone ?? '')
@@ -296,7 +303,7 @@ export function AlunoDetailPage() {
               className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-surface border border-border text-text-secondary"
             />
             <Button variant="ghost" size="sm" iconOnly aria-label="Copiar link" onClick={copyLink}><Copy size={15} /></Button>
-            <Button variant="ghost" size="sm" iconOnly aria-label="Enviar pelo WhatsApp" onClick={() => enviarLink.mutate()} disabled={!whatsConectado || enviarLink.isPending} title={!whatsConectado ? 'WhatsApp não conectado' : 'Enviar pelo WhatsApp'}><Send size={15} /></Button>
+            <Button variant="ghost" size="sm" iconOnly aria-label="Enviar pelo WhatsApp" onClick={handleEnviarLink} disabled={enviarLink.isPending} title={whatsConectado ? 'Enviar pelo WhatsApp (automático)' : 'Abrir WhatsApp para enviar link'}><Send size={15} /></Button>
           </div>
           <Button variant="outline" size="sm" onClick={handleNovoToken} disabled={novoToken.isPending} className="text-xs text-text-secondary gap-1">
             <RefreshCw size={13} />
