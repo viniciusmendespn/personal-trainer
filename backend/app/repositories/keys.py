@@ -426,3 +426,12 @@ def sk_pacote(pacote_id: str) -> str:
 def pk_token(token_uuid: str) -> str:
     """Lookup global de token de pacote. token_uuid = UUID4 sem o prefixo 'tok_'."""
     return f"PKTOKEN#{token_uuid}"
+
+
+def pk_pacote_distrib(pacote_id: str) -> str:
+    """Conteúdo do pacote licenciado distribuído (global, legível entre personais no import).
+    O arquivo .cpkg licenciado carrega só pacote_id+token; o conteúdo real mora aqui."""
+    return f"PACOTEDISTRIB#{pacote_id}"
+
+
+SK_CONTENT = "CONTENT"

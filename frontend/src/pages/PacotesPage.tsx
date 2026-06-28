@@ -142,11 +142,12 @@ function ImportarArquivoTab() {
     } catch (err: any) {
       const code = err?.response?.data?.code
       const msgs: Record<string, string> = {
-        ASSINATURA_INVALIDA: 'Arquivo inválido ou corrompido (assinatura incorreta).',
+        ARQUIVO_INVALIDO: 'Arquivo inválido ou corrompido.',
         TOKEN_INVALIDO: 'Token de ativação inválido.',
         TOKEN_ESGOTADO: 'Este token já foi utilizado por outro personal.',
         TOKEN_JA_USADO: 'Você já importou este pacote.',
-        PACOTE_SECRET_NAO_CONFIGURADO: 'Configuração do servidor incompleta. Contate o suporte.',
+        PACOTE_INDISPONIVEL: 'Pacote indisponível ou revogado pelo autor.',
+        CONTEUDO_CORROMPIDO: 'Conteúdo do pacote corrompido. Contate o autor.',
       }
       toast(msgs[code] ?? 'Erro ao importar o pacote. Tente novamente.', 'error')
     }
@@ -471,6 +472,11 @@ function CriarPacoteTab() {
     return !!pacote_id && pacote_id !== 'manual' && licenciadoIds.has(pacote_id)
   }
 
+  // Bloqueia itens de origem licenciada (direta OU herdada via aplicar→salvar de aluno).
+  function isBloqueado(item: { pacote_id?: string; origem_licenciada?: boolean }) {
+    return !!item.origem_licenciada || isLicenciado(item.pacote_id)
+  }
+
   function toggleSet(set: Set<string>, id: string): Set<string> {
     const next = new Set(set)
     if (next.has(id)) next.delete(id)
@@ -602,7 +608,7 @@ function CriarPacoteTab() {
         ) : (
           <div className="space-y-1 max-h-52 overflow-y-auto">
             {templates.map((t) => {
-              const bloqueado = isLicenciado(t.pacote_id)
+              const bloqueado = isBloqueado(t)
               const selecionado = templatesSel.has(t.template_id)
               return (
                 <label
@@ -639,7 +645,7 @@ function CriarPacoteTab() {
         ) : (
           <div className="space-y-1 max-h-52 overflow-y-auto">
             {rotinas.map((r) => {
-              const bloqueado = isLicenciado(r.pacote_id)
+              const bloqueado = isBloqueado(r)
               const selecionado = rotinasSel.has(r.rotina_id)
               return (
                 <label
@@ -659,7 +665,7 @@ function CriarPacoteTab() {
                           const next = new Set(prev)
                           for (const tid of r.template_ids!) {
                             const tpl = templates?.find((t) => t.template_id === tid)
-                            if (tpl && !isLicenciado(tpl.pacote_id)) next.add(tid)
+                            if (tpl && !isBloqueado(tpl)) next.add(tid)
                           }
                           return next
                         })

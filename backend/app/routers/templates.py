@@ -55,6 +55,9 @@ def create_template_from_treino(
     exs.sort(key=lambda e: e.get("ordem", 0))
     treino_clean = repo.clean(treino)
     exercicios = [ExercicioTemplate(**repo.clean(e)) for e in exs]
+    # Proveniência: se o treino do aluno (ou qualquer exercício) veio de conteúdo licenciado,
+    # o template derivado nasce licenciado — fecha a lavagem aplicar→salvar→reempacotar.
+    taint = bool(treino_clean.get("origem_licenciada")) or any(e.origem_licenciada for e in exercicios)
     tpl = TreinoTemplate(
         template_id=new_id(),
         personal_id=personal_id,
@@ -62,6 +65,7 @@ def create_template_from_treino(
         nome=body.nome or treino_clean["nome"],
         foco=treino_clean.get("foco"),
         exercicios=exercicios,
+        origem_licenciada=taint,
     )
     item_dict = tpl.model_dump()
     item_dict["pacote_id"] = "manual"
@@ -115,12 +119,14 @@ def aplicar_template(
         dest_pk = keys.pk_aluno(aluno_id)
         treino = Treino(
             treino_id=treino_id, aluno_id=aluno_id, nome=tpl.nome, foco=tpl.foco,
-            created_at=now, updated_at=now,
+            created_at=now, updated_at=now, origem_licenciada=tpl.origem_licenciada,
         )
         puts = [{"PK": dest_pk, "SK": keys.sk_treino(treino_id), **treino.model_dump()}]
         for et in tpl.exercicios:
             exercicio_id = new_id()
-            ex = Exercicio(exercicio_id=exercicio_id, treino_id=treino_id, aluno_id=aluno_id, **et.model_dump())
+            et_data = et.model_dump()
+            et_data["origem_licenciada"] = et.origem_licenciada or tpl.origem_licenciada
+            ex = Exercicio(exercicio_id=exercicio_id, treino_id=treino_id, aluno_id=aluno_id, **et_data)
             puts.append({"PK": dest_pk, "SK": keys.sk_exercicio(treino_id, exercicio_id), **ex.model_dump()})
         repo.batch_write(puts=puts)
         aplicados.append({"aluno_id": aluno_id, "treino_id": treino_id})

@@ -65,6 +65,7 @@ def create_rotina_from_aluno(
     now = now_iso()
     pk_pt = keys.pk_personal(personal_id)
     puts_templates = []
+    rotina_taint = False   # proveniência: rotina fica licenciada se qualquer treino/exercício for
 
     for ordem, t in enumerate(treinos):
         tc = repo.clean(t)
@@ -73,6 +74,8 @@ def create_rotina_from_aluno(
         exercicios = [ExercicioTemplate(**repo.clean(e)) for e in exs]
         if not exercicios:
             continue
+        tc_taint = bool(tc.get("origem_licenciada")) or any(e.origem_licenciada for e in exercicios)
+        rotina_taint = rotina_taint or tc_taint
         treinos_rotina.append(TreinoRotina(
             nome=tc["nome"], foco=tc.get("foco"), ordem=ordem, exercicios=exercicios,
         ))
@@ -80,6 +83,7 @@ def create_rotina_from_aluno(
             tpl = TreinoTemplate(
                 template_id=new_id(), personal_id=personal_id, created_at=now,
                 nome=tc["nome"], foco=tc.get("foco"), exercicios=exercicios,
+                origem_licenciada=tc_taint,
             )
             puts_templates.append(
                 {"PK": pk_pt, "SK": keys.sk_template(tpl.template_id), **tpl.model_dump(), "pacote_id": "manual"}
@@ -94,6 +98,7 @@ def create_rotina_from_aluno(
         rotina_id=new_id(), personal_id=personal_id, created_at=now,
         nome=nome, treinos=treinos_rotina,
         template_ids=template_ids_criados,
+        origem_licenciada=rotina_taint,
     )
     puts = [{"PK": pk_pt, "SK": keys.sk_rotina(rot.rotina_id), **rot.model_dump(), "pacote_id": "manual"}, *puts_templates]
     repo.batch_write(puts=puts)
@@ -108,11 +113,13 @@ def create_rotina_from_templates(
     """Monta uma rotina do zero juntando vários Templates (copia os exercícios — snapshot)."""
     pk_pt = keys.pk_personal(personal_id)
     treinos_rotina: list[TreinoRotina] = []
+    rotina_taint = False
     for ordem, template_id in enumerate(body.template_ids):
         item = repo.get_item(pk_pt, keys.sk_template(template_id))
         if not item:
             raise HTTPException(404, f"Template {template_id} não encontrado")
         tpl = TreinoTemplate(**repo.clean(item))
+        rotina_taint = rotina_taint or tpl.origem_licenciada
         treinos_rotina.append(TreinoRotina(
             nome=tpl.nome, foco=tpl.foco, ordem=ordem, exercicios=tpl.exercicios,
         ))
@@ -120,6 +127,7 @@ def create_rotina_from_templates(
         rotina_id=new_id(), personal_id=personal_id, created_at=now_iso(),
         nome=body.nome, descricao=body.descricao, treinos=treinos_rotina,
         template_ids=body.template_ids,
+        origem_licenciada=rotina_taint,
     )
     item_dict = rot.model_dump()
     item_dict["pacote_id"] = "manual"
@@ -182,16 +190,20 @@ def aplicar_rotina(
         for tr in rot.treinos:
             now = now_iso()
             treino_id = new_id()
+            # Proveniência: propaga para os treinos/exercícios do aluno (rotina ou exercício licenciado)
+            tr_taint = rot.origem_licenciada or any(e.origem_licenciada for e in tr.exercicios)
             treino = Treino(
                 treino_id=treino_id, aluno_id=aluno_id, nome=tr.nome, foco=tr.foco,
-                ordem=tr.ordem, created_at=now, updated_at=now,
+                ordem=tr.ordem, created_at=now, updated_at=now, origem_licenciada=tr_taint,
             )
             puts.append({"PK": dest_pk, "SK": keys.sk_treino(treino_id), **treino.model_dump()})
             for et in tr.exercicios:
                 exercicio_id = new_id()
+                et_data = et.model_dump()
+                et_data["origem_licenciada"] = et.origem_licenciada or tr_taint
                 ex = Exercicio(
                     exercicio_id=exercicio_id, treino_id=treino_id, aluno_id=aluno_id,
-                    **et.model_dump(),
+                    **et_data,
                 )
                 puts.append(
                     {"PK": dest_pk, "SK": keys.sk_exercicio(treino_id, exercicio_id), **ex.model_dump()}

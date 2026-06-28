@@ -23,6 +23,7 @@ class RotinaCreate(BaseModel):
     treinos: list[TreinoRotina] = Field(default_factory=list)
     pacote_id: Optional[str] = None   # preenchido quando criado via importação de pacote
     ativo: bool = True                # False = oculto na montagem de treinos
+    origem_licenciada: bool = False   # proveniência: veio (direta ou indiretamente) de pacote licenciado — bloqueia export
     template_ids: list[str] = Field(default_factory=list)  # templates de origem (from-templates)
 
 

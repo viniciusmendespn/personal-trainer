@@ -26,6 +26,7 @@ class ExercicioTemplate(BaseModel):
     links_uteis_excluidos: list[str] = []
     substitutos: list[ExercicioSubstituto] = []
     substitutos_excluidos: list[str] = []
+    origem_licenciada: bool = False   # proveniência: exercício oriundo de pacote licenciado
 
 
 class TreinoTemplateCreate(BaseModel):
@@ -34,6 +35,7 @@ class TreinoTemplateCreate(BaseModel):
     exercicios: list[ExercicioTemplate] = Field(default_factory=list)
     pacote_id: Optional[str] = None   # preenchido quando criado via importação de pacote
     ativo: bool = True                # False = oculto na montagem de treinos
+    origem_licenciada: bool = False   # proveniência: veio (direta ou indiretamente) de pacote licenciado — bloqueia export
 
 
 class TreinoTemplateFromTreino(BaseModel):

@@ -12,6 +12,7 @@ class TreinoCreate(BaseModel):
     data_inicio: Optional[str] = None          # período do programa (YYYY-MM-DD)
     data_fim: Optional[str] = None             # ao vencer, notifica o personal (scheduler)
     custom: dict[str, Any] = Field(default_factory=dict)
+    origem_licenciada: bool = False            # proveniência: treino aplicado a partir de conteúdo licenciado
 
 
 class Treino(TreinoCreate):

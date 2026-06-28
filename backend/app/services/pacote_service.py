@@ -1,16 +1,14 @@
 """Serviço de importação e gerenciamento de pacotes de treino (.cpkg).
 
-Fluxo de importação (importar_pacote):
-  1. Desserializa e valida JSON do .cpkg
-  2. Verifica assinatura HMAC-SHA256 (obrigatória em ambos os tipos)
-  3. Se token presente (pacote licenciado): consome token atomicamente
-  4. Cria exercícios via put_item dedup-por-nome
-  5. Cria templates resolvendo ex_ref → exlib_id real
-  6. Cria rotinas (snapshot dos treinos buildados)
-  7. Grava PACOTE#{pacote_id} com metadados e listas de IDs
+Dois formatos de arquivo:
+  - LICENCIADO (Opção A): arquivo "fino" {fmt, pacote_id, token} — zero conteúdo. O conteúdo
+    real mora no servidor em PACOTEDISTRIB#{pacote_id}. Importar = validar token → servidor
+    busca conteúdo → instala com origem_licenciada=True. Nada copiável do arquivo + revogável.
+  - LIVRE (draft .json): JSON legível, editável pela IA. Sem assinatura, origem_licenciada=False.
+
+Instalação (comum aos dois): IDs determinísticos via det_id(pacote_id, ref) → reimportar
+sobrescreve (upsert), nunca duplica. Dedup de exercício por nome DENTRO do pacote.
 """
-import hashlib
-import hmac
 import json
 import logging
 import re
@@ -20,13 +18,23 @@ from typing import Optional
 from botocore.exceptions import ClientError
 from fastapi import HTTPException
 
-from app.config import settings
-from app.models.pacote import ImportarPacoteResponse, PacoteFile, PacoteInstalado
+from app.models.pacote import ImportarPacoteResponse, PacoteFile, PacoteRefFile
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.utils import new_id, now_iso
+from app.utils import det_id, new_id, now_iso
 
 logger = logging.getLogger(__name__)
+
+REF_FMT = "cpkg-ref-1"   # discriminador do arquivo licenciado "fino"
+
+
+def _chave_exercicio(nome: Optional[str]) -> str:
+    """Chave canônica do nome (sem acento/caixa/espaços extras) — dedup de exercício
+    dentro de um pacote. Espelha sessao_service.chave_exercicio (inline p/ evitar import)."""
+    if not nome:
+        return ""
+    sem_acento = unicodedata.normalize("NFKD", nome).encode("ascii", "ignore").decode()
+    return " ".join(sem_acento.lower().split())
 
 
 # ── Helpers de exportação ────────────────────────────────────────────────────
@@ -86,12 +94,14 @@ def _build_rotina_out(rot: dict, tmpl_nome_lower_to_ref: dict[str, str]) -> dict
     }
 
 
-def _draft_json(pacote_meta: dict, exercicios: list, templates: list, rotinas: list) -> dict:
-    from app.utils import new_id
+def _draft_json(pacote_meta: dict, exercicios: list, templates: list, rotinas: list,
+                pacote_id: Optional[str] = None) -> dict:
+    """Monta o JSON draft. `pacote_id` preserva a identidade (export→editar→reimport faz
+    upsert nos mesmos IDs); omitido → novo (draft genuinamente novo)."""
     return {
         "version": "1",
         "pacote": {
-            "id": new_id(),
+            "id": pacote_id or new_id(),
             "nome": pacote_meta.get("nome", ""),
             "descricao": pacote_meta.get("descricao", ""),
             "autor": pacote_meta.get("autor", ""),
@@ -101,26 +111,6 @@ def _draft_json(pacote_meta: dict, exercicios: list, templates: list, rotinas: l
         "templates": templates,
         "rotinas": rotinas,
     }
-
-
-# ── Assinatura HMAC ──────────────────────────────────────────────────────────
-
-def _calcular_assinatura(payload_sem_assinatura: dict) -> str:
-    canonical = json.dumps(payload_sem_assinatura, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    return hmac.new(
-        settings.pacote_secret.encode("utf-8"),
-        canonical.encode("utf-8"),
-        hashlib.sha256,
-    ).hexdigest()
-
-
-def _verificar_assinatura(conteudo_dict: dict, assinatura: str) -> None:
-    if not settings.pacote_secret:
-        raise HTTPException(500, detail={"code": "PACOTE_SECRET_NAO_CONFIGURADO"})
-    payload = {k: v for k, v in conteudo_dict.items() if k != "assinatura"}
-    expected = _calcular_assinatura(payload)
-    if not hmac.compare_digest(expected, assinatura):
-        raise HTTPException(400, detail={"code": "ASSINATURA_INVALIDA"})
 
 
 # ── Token de uso único ───────────────────────────────────────────────────────
@@ -169,66 +159,101 @@ def _consumir_token(token: str, personal_id: str) -> None:
 # ── Importação ────────────────────────────────────────────────────────────────
 
 def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteResponse:
-    # 1. Parse JSON
+    """Dispatcher por formato: arquivo fino licenciado (fmt) vs draft JSON livre."""
     try:
         conteudo_dict = json.loads(conteudo_str)
     except json.JSONDecodeError as exc:
         raise HTTPException(400, detail={"code": "ARQUIVO_INVALIDO", "detail": str(exc)})
 
-    # 2. Validar estrutura via Pydantic
+    if isinstance(conteudo_dict, dict) and conteudo_dict.get("fmt") == REF_FMT:
+        return _importar_licenciado(personal_id, conteudo_dict)
+    return _importar_livre(personal_id, conteudo_dict)
+
+
+def _importar_licenciado(personal_id: str, conteudo_dict: dict) -> ImportarPacoteResponse:
+    """Arquivo fino: valida token → busca conteúdo server-side → instala (origem_licenciada)."""
     try:
-        pacote_file = PacoteFile(**conteudo_dict)
+        ref = PacoteRefFile(**conteudo_dict)
     except Exception as exc:
         raise HTTPException(400, detail={"code": "ARQUIVO_INVALIDO", "detail": str(exc)})
 
-    # 3. Verificar assinatura (obrigatória em ambos os tipos)
-    _verificar_assinatura(conteudo_dict, pacote_file.assinatura)
+    distrib = repo.get_item(keys.pk_pacote_distrib(ref.pacote_id), keys.SK_CONTENT)
+    if not distrib or distrib.get("ativo") is False:
+        raise HTTPException(404, detail={"code": "PACOTE_INDISPONIVEL"})
 
-    # 4. Se licenciado: consumir token (atômico)
-    licenciado = pacote_file.token is not None
-    if licenciado:
-        _consumir_token(pacote_file.token, personal_id)
+    # token precisa existir e apontar para o mesmo pacote do arquivo
+    token_uuid = ref.token.removeprefix("tok_")
+    tok = repo.get_item(keys.pk_token(token_uuid), keys.SK_META)
+    if not tok or tok.get("pacote_id") != ref.pacote_id:
+        raise HTTPException(404, detail={"code": "TOKEN_INVALIDO"})
 
+    # Já possui o pacote → refresh (upsert) sem consumir token. Senão → consome (1ª aquisição).
     pk_pt = keys.pk_personal(personal_id)
-    pacote_id = pacote_file.pacote.id
+    ja_possui = repo.get_item(pk_pt, keys.sk_pacote(ref.pacote_id)) is not None
+    if not ja_possui:
+        _consumir_token(ref.token, personal_id)
+
+    conteudo = repo.clean(distrib).get("conteudo") or {}
+    try:
+        pacote_file = PacoteFile(**conteudo)
+    except Exception as exc:
+        raise HTTPException(500, detail={"code": "CONTEUDO_CORROMPIDO", "detail": str(exc)})
+
+    return _instalar(personal_id, pacote_file, ref.pacote_id,
+                     licenciado=True, origem_licenciada=True, token=ref.token)
+
+
+def _importar_livre(personal_id: str, conteudo_dict: dict) -> ImportarPacoteResponse:
+    """Draft JSON livre (IA): sem token/assinatura, origem_licenciada=False."""
+    if not isinstance(conteudo_dict, dict):
+        raise HTTPException(400, detail={"code": "ARQUIVO_INVALIDO"})
+    conteudo_dict.pop("token", None)
+    conteudo_dict.pop("assinatura", None)
+    try:
+        pacote_file = PacoteFile(**conteudo_dict)
+    except Exception as exc:
+        raise HTTPException(400, detail={"code": "ESTRUTURA_INVALIDA", "detail": str(exc)})
+
+    return _instalar(personal_id, pacote_file, pacote_file.pacote.id,
+                     licenciado=False, origem_licenciada=False, token=None)
+
+
+def _instalar(
+    personal_id: str,
+    pacote_file: PacoteFile,
+    pacote_id: str,
+    licenciado: bool,
+    origem_licenciada: bool,
+    token: Optional[str],
+) -> ImportarPacoteResponse:
+    """Instala o conteúdo com IDs determinísticos (det_id) e upsert — reimportar sobrescreve,
+    nunca duplica. Exercícios deduplicados por nome DENTRO do pacote."""
+    pk_pt = keys.pk_personal(personal_id)
     now = now_iso()
 
-    # 5. Exercícios — dedup por nome.lower()
-    existentes_raw = repo.query_pk(pk_pt, sk_prefix=keys.EXLIB_PREFIX)
-    nomes_existentes: dict[str, str] = {}   # nome_lower → exlib_id
-    for item in existentes_raw:
-        nome_lower = (item.get("nome") or "").strip().lower()
-        if nome_lower:
-            nomes_existentes[nome_lower] = item["SK"].removeprefix(keys.EXLIB_PREFIX)
-
-    ref_to_exlib: dict[str, str] = {}       # ref → exlib_id
-    ref_to_grupo: dict[str, str] = {}       # ref → grupo muscular
-    ref_to_tipo_exercicio: dict[str, str] = {}  # ref → tipo_exercicio
+    # 1. Exercícios — exlib_id = det_id(pacote_id, chave_nome) → dedup por nome no pacote
+    ref_to_exlib: dict[str, str] = {}
+    ref_to_grupo: dict[str, str] = {}
+    ref_to_tipo: dict[str, str] = {}
+    exlib_id_to_nome: dict[str, str] = {}
     exlib_puts: list[dict] = []
-    exlib_id_to_nome: dict[str, str] = {}   # para resolução nos templates
+    seen_exlib: set[str] = set()
 
     for ex_pkg in pacote_file.exercicios:
-        nome_lower = ex_pkg.nome.strip().lower()
-        if nome_lower in nomes_existentes:
-            exlib_id = nomes_existentes[nome_lower]
-            ref_to_exlib[ex_pkg.ref] = exlib_id
-            ref_to_grupo[ex_pkg.ref] = ex_pkg.grupo or ""
-            ref_to_tipo_exercicio[ex_pkg.ref] = ex_pkg.tipo_exercicio.value
-            # busca o nome canônico do existente para manter consistência nos templates
-            for raw in existentes_raw:
-                if raw["SK"] == keys.sk_exlib(exlib_id):
-                    exlib_id_to_nome[exlib_id] = raw.get("nome", ex_pkg.nome)
-                    break
-            else:
-                exlib_id_to_nome[exlib_id] = ex_pkg.nome
+        nome = ex_pkg.nome.strip()
+        exlib_id = det_id(pacote_id, _chave_exercicio(nome))
+        ref_to_exlib[ex_pkg.ref] = exlib_id
+        ref_to_grupo[ex_pkg.ref] = ex_pkg.grupo or ""
+        ref_to_tipo[ex_pkg.ref] = ex_pkg.tipo_exercicio.value
+        exlib_id_to_nome[exlib_id] = nome
+        if exlib_id in seen_exlib:
             continue
-
-        exlib_id = new_id()
-        item = {
+        seen_exlib.add(exlib_id)
+        exlib_puts.append({
             "PK": pk_pt,
             "SK": keys.sk_exlib(exlib_id),
             "exlib_id": exlib_id,
-            "nome": ex_pkg.nome.strip(),
+            "nome": nome,
             "grupo": ex_pkg.grupo,
             "tipo_exercicio": ex_pkg.tipo_exercicio.value,
             "video_url": ex_pkg.video_url,
@@ -238,40 +263,33 @@ def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteRespon
             "substitutos": [s.model_dump() for s in ex_pkg.substitutos],
             "pacote_id": pacote_id,
             "ativo": True,
-        }
-        exlib_puts.append(item)
-        ref_to_exlib[ex_pkg.ref] = exlib_id
-        ref_to_grupo[ex_pkg.ref] = ex_pkg.grupo or ""
-        ref_to_tipo_exercicio[ex_pkg.ref] = ex_pkg.tipo_exercicio.value
-        exlib_id_to_nome[exlib_id] = ex_pkg.nome.strip()
-        nomes_existentes[nome_lower] = exlib_id
+            "origem_licenciada": origem_licenciada,
+        })
 
     for i in range(0, len(exlib_puts), 25):
         repo.batch_write(puts=exlib_puts[i:i + 25])
 
-    # 6. Templates — resolve ex_ref → nome e dados de série
+    # 2. Templates — template_id = det_id(pacote_id, ref)
     ref_to_template: dict[str, str] = {}
     template_puts: list[dict] = []
 
     for tmpl_pkg in pacote_file.templates:
-        template_id = new_id()
+        template_id = det_id(pacote_id, tmpl_pkg.ref)
         exercicios: list[dict] = []
         for ex_ref_item in tmpl_pkg.exercicios:
             exlib_id = ref_to_exlib.get(ex_ref_item.ex_ref, "")
             nome_ex = exlib_id_to_nome.get(exlib_id, ex_ref_item.ex_ref)
-            grupo_ex = ref_to_grupo.get(ex_ref_item.ex_ref)
-            tipo_ex = ref_to_tipo_exercicio.get(ex_ref_item.ex_ref, "FORCA")
             exercicios.append({
                 "nome": nome_ex,
-                "grupo": grupo_ex,
+                "grupo": ref_to_grupo.get(ex_ref_item.ex_ref),
                 "ordem": ex_ref_item.ordem,
                 "series_prescritas": [s.model_dump() for s in (ex_ref_item.series_prescritas or [])],
                 "intervalo_s": ex_ref_item.intervalo_s,
                 "observacoes": ex_ref_item.observacoes,
-                "tipo_exercicio": tipo_ex,
+                "tipo_exercicio": ref_to_tipo.get(ex_ref_item.ex_ref, "FORCA"),
+                "origem_licenciada": origem_licenciada,
             })
-
-        item = {
+        template_puts.append({
             "PK": pk_pt,
             "SK": keys.sk_template(template_id),
             "template_id": template_id,
@@ -282,19 +300,19 @@ def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteRespon
             "pacote_id": pacote_id,
             "ativo": True,
             "created_at": now,
-        }
-        template_puts.append(item)
+            "origem_licenciada": origem_licenciada,
+        })
         ref_to_template[tmpl_pkg.ref] = template_id
 
     for i in range(0, len(template_puts), 25):
         repo.batch_write(puts=template_puts[i:i + 25])
 
-    # 7. Rotinas — snapshot dos treinos buildados
+    # 3. Rotinas — rotina_id = det_id(pacote_id, ref); snapshot dos treinos buildados
     rotina_puts: list[dict] = []
     rotina_ids: list[str] = []
 
     for rot_pkg in pacote_file.rotinas:
-        rotina_id = new_id()
+        rotina_id = det_id(pacote_id, rot_pkg.ref)
         treinos: list[dict] = []
         for ordem, tmpl_ref in enumerate(rot_pkg.treinos):
             template_id = ref_to_template.get(tmpl_ref)
@@ -308,8 +326,7 @@ def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteRespon
                     "ordem": ordem,
                     "exercicios": tmpl_item.get("exercicios", []),
                 })
-
-        item = {
+        rotina_puts.append({
             "PK": pk_pt,
             "SK": keys.sk_rotina(rotina_id),
             "rotina_id": rotina_id,
@@ -320,14 +337,14 @@ def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteRespon
             "pacote_id": pacote_id,
             "ativo": True,
             "created_at": now,
-        }
-        rotina_puts.append(item)
+            "origem_licenciada": origem_licenciada,
+        })
         rotina_ids.append(rotina_id)
 
     for i in range(0, len(rotina_puts), 25):
         repo.batch_write(puts=rotina_puts[i:i + 25])
 
-    # 8. Metadados do pacote
+    # 4. Metadados do pacote — upsert (sobrescreve no refresh)
     pacote_meta = {
         "pacote_id": pacote_id,
         "nome": pacote_file.pacote.nome,
@@ -335,16 +352,15 @@ def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteRespon
         "autor": pacote_file.pacote.autor,
         "versao": pacote_file.pacote.versao,
         "licenciado": licenciado,
+        "origem_licenciada": origem_licenciada,
         "ativo": True,
         "exlib_ids": [e["exlib_id"] for e in exlib_puts],
         "template_ids": [t["template_id"] for t in template_puts],
         "rotina_ids": rotina_ids,
         "importado_em": now,
-        "token": pacote_file.token or "",
+        "token": token or "",
     }
-    ok = repo.put_item_if_absent(pk_pt, keys.sk_pacote(pacote_id), pacote_meta)
-    if not ok:
-        raise HTTPException(409, detail={"code": "PACOTE_JA_IMPORTADO"})
+    repo.put_item(pk_pt, keys.sk_pacote(pacote_id), pacote_meta)
 
     return ImportarPacoteResponse(
         pacote_id=pacote_id,
@@ -359,27 +375,13 @@ def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteRespon
 # ── Importação de rascunho gerado por IA ─────────────────────────────────────
 
 def importar_rascunho(personal_id: str, conteudo_str: str) -> ImportarPacoteResponse:
-    """Aceita JSON sem assinatura (gerado por LLM), assina internamente e importa como pacote livre."""
+    """Aceita JSON de draft livre (gerado por LLM) e importa como pacote livre.
+    Colar aqui um arquivo licenciado (fino) falha na validação de estrutura — sem brecha."""
     try:
         conteudo_dict = json.loads(conteudo_str)
     except json.JSONDecodeError as exc:
         raise HTTPException(400, detail={"code": "ARQUIVO_INVALIDO", "detail": str(exc)})
-
-    # Remove campos de segurança — rascunho sempre vira pacote livre
-    conteudo_dict.pop("token", None)
-    conteudo_dict.pop("assinatura", None)
-
-    # Valida estrutura via Pydantic antes de assinar
-    try:
-        PacoteFile(**{**conteudo_dict, "assinatura": "placeholder"})
-    except Exception as exc:
-        raise HTTPException(400, detail={"code": "ESTRUTURA_INVALIDA", "detail": str(exc)})
-
-    if not settings.pacote_secret:
-        raise HTTPException(500, detail={"code": "PACOTE_SECRET_NAO_CONFIGURADO"})
-
-    conteudo_dict["assinatura"] = _calcular_assinatura(conteudo_dict)
-    return importar_pacote(personal_id, json.dumps(conteudo_dict))
+    return _importar_livre(personal_id, conteudo_dict)
 
 
 # ── Pacote Manual ─────────────────────────────────────────────────────────────
@@ -503,7 +505,7 @@ def exportar_pacote(personal_id: str, pacote_id: str) -> dict:
     meta = repo.get_item(pk_pt, keys.sk_pacote(pacote_id))
     if not meta:
         raise HTTPException(404, detail="Pacote não encontrado")
-    if meta.get("licenciado"):
+    if meta.get("licenciado") or meta.get("origem_licenciada"):
         raise HTTPException(400, detail={"code": "PACOTE_LICENCIADO_NAO_EXPORTAVEL"})
 
     # Exercícios
@@ -537,7 +539,8 @@ def exportar_pacote(personal_id: str, pacote_id: str) -> dict:
             continue
         rotinas_out.append(_build_rotina_out(item, tmpl_nome_lower_to_ref))
 
-    return _draft_json(meta, exercicios_out, templates_out, rotinas_out)
+    # Preserva o pacote_id → reimportar o editado faz upsert nos mesmos IDs (sem duplicar)
+    return _draft_json(meta, exercicios_out, templates_out, rotinas_out, pacote_id=pacote_id)
 
 
 # ── Geração de pacote personalizado ──────────────────────────────────────────
@@ -558,12 +561,11 @@ def gerar_pacote(
     pk_pt = keys.pk_personal(personal_id)
 
     def _assert_nao_licenciado(item: dict, kind: str) -> None:
-        pid = item.get("pacote_id")
-        if pid and pid not in (MANUAL_PACOTE_ID, None, ""):
-            pkg = repo.get_item(pk_pt, keys.sk_pacote(pid))
-            if pkg and pkg.get("licenciado"):
-                raise HTTPException(400, detail={"code": "PACOTE_LICENCIADO_NAO_PERMITIDO",
-                                                 "detail": f"{kind} '{item.get('nome')}' pertence a pacote licenciado"})
+        # Proveniência: a flag sobrevive a edição/aplicação/salvamento e nunca é limpa.
+        # Bloqueia qualquer item de origem licenciada (direta ou via aluno) na redistribuição.
+        if item.get("origem_licenciada"):
+            raise HTTPException(400, detail={"code": "PACOTE_LICENCIADO_NAO_PERMITIDO",
+                                             "detail": f"{kind} '{item.get('nome')}' tem origem licenciada e não pode ser redistribuído"})
 
     # Busca templates selecionados
     templates_data: list[dict] = []
@@ -607,6 +609,9 @@ def gerar_pacote(
     exercicios_out: list[dict] = []
     for nl, base in exercise_info.items():
         exlib = exlib_by_name.get(nl, {})
+        if exlib.get("origem_licenciada"):
+            raise HTTPException(400, detail={"code": "PACOTE_LICENCIADO_NAO_PERMITIDO",
+                                             "detail": f"Exercício '{base['nome']}' tem origem licenciada e não pode ser redistribuído"})
         merged = {**base, **{k: v for k, v in exlib.items() if k in ("grupo", "tipo_exercicio", "video_url", "descricao", "recomendacoes", "substitutos") and v}}
         ex_out = _build_exercicio_out(base["nome"], merged)
         nome_lower_to_ref[nl] = ex_out["ref"]
@@ -643,21 +648,29 @@ def gerar_pacote_licenciado(
     rotina_ids: list[str],
     max_usos: int,
 ) -> dict:
-    """Gera pacote assinado com HMAC e token de uso único — pronto para distribuição."""
+    """Gera pacote licenciado (Opção A): grava o conteúdo no servidor + token de uso único,
+    e retorna o arquivo FINO {fmt, pacote_id, token} — sem conteúdo copiável."""
     draft = gerar_pacote(personal_id, nome, descricao, autor, versao, template_ids, rotina_ids)
+    pacote_id = draft["pacote"]["id"]
+
+    # Conteúdo real fica no servidor (legível entre personais só na importação com token válido)
+    repo.put_item(keys.pk_pacote_distrib(pacote_id), keys.SK_CONTENT, {
+        "conteudo": draft,
+        "autor_personal_id": personal_id,
+        "criado_em": now_iso(),
+        "ativo": True,
+    })
 
     token_uuid = new_id()
     token = f"tok_{token_uuid}"
-    draft["token"] = token
-    draft["assinatura"] = _calcular_assinatura(draft)
-
     repo.put_item(keys.pk_token(token_uuid), keys.SK_META, {
         "token": token,
-        "pacote_id": draft["pacote"]["id"],
+        "pacote_id": pacote_id,
         "max_usos": max_usos,
         "usos_count": 0,
         "usado_por": [],
         "criado_em": now_iso(),
     })
 
-    return draft
+    # Arquivo fino — é isso que o personal baixa como .cpkg
+    return {"fmt": REF_FMT, "pacote_id": pacote_id, "token": token}

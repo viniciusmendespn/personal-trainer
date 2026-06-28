@@ -45,6 +45,7 @@ def upsert_from_exercicios(personal_id: str, exercicios: list[dict]) -> int:
             recomendacoes=ex.get("observacoes"),
             links_uteis=ex.get("links_uteis") or [],
             substitutos=ex.get("substitutos") or [],
+            origem_licenciada=bool(ex.get("origem_licenciada")),  # proveniência segue o exercício de origem
         )
         puts.append({"PK": pk, "SK": keys.sk_exlib(item.exlib_id), **item.model_dump(), "pacote_id": "manual"})
         chaves.add(chave)

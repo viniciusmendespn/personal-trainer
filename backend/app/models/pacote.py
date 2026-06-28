@@ -58,15 +58,23 @@ class RotinaPacote(BaseModel):
     treinos: list[str] = Field(default_factory=list)   # lista de tmpl refs em ordem
 
 
+class PacoteRefFile(BaseModel):
+    """Arquivo .cpkg LICENCIADO (Opção A): só referência, sem conteúdo.
+    O conteúdo real mora no servidor em PACOTEDISTRIB#{pacote_id}. Nada copiável aqui."""
+    fmt: str                               # discriminador — "cpkg-ref-1"
+    pacote_id: str
+    token: str
+
+
 class PacoteFile(BaseModel):
-    """Shape completo de um arquivo .cpkg deserializado."""
+    """Shape de um draft LIVRE (.json) — conteúdo legível, editável pela IA. Sem assinatura."""
     version: str = "1"
-    token: Optional[str] = None            # presente → licenciado; ausente → livre
+    token: Optional[str] = None            # ignorado no fluxo livre (drafts não carregam token)
     pacote: PacoteInfo
     exercicios: list[ExercicioPacote] = Field(default_factory=list)
     templates: list[TemplatePacote] = Field(default_factory=list)
     rotinas: list[RotinaPacote] = Field(default_factory=list)
-    assinatura: str                        # HMAC-SHA256 hex — obrigatório em ambos os tipos
+    assinatura: Optional[str] = None       # legado — não mais exigido/verificado
 
 
 # ── API request / response ───────────────────────────────────────────────────

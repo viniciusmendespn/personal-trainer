@@ -310,6 +310,7 @@ export interface TreinoTemplate {
   created_at: string
   pacote_id?: string
   ativo?: boolean
+  origem_licenciada?: boolean
 }
 
 export interface TreinoTemplateCreate {
@@ -335,6 +336,7 @@ export interface Rotina {
   pacote_id?: string
   ativo?: boolean
   template_ids?: string[]
+  origem_licenciada?: boolean
 }
 
 export interface RotinaCreate {
@@ -436,6 +438,7 @@ export interface PacoteInstalado {
   autor?: string
   versao?: string
   licenciado: boolean
+  origem_licenciada?: boolean
   is_manual?: boolean
   ativo: boolean
   exlib_ids: string[]

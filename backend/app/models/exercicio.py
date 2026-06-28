@@ -41,6 +41,7 @@ class ExercicioCreate(BaseModel):
     substitutos: list[ExercicioSubstituto] = []        # substitutos adicionados diretamente neste treino
     substitutos_excluidos: list[str] = []              # nomes (lowercase) dos substitutos da biblioteca ocultados para este aluno
     custom: dict[str, Any] = Field(default_factory=dict)
+    origem_licenciada: bool = False                    # proveniência: exercício aplicado a partir de conteúdo licenciado
 
 
 class Exercicio(ExercicioCreate):

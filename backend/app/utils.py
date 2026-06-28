@@ -1,9 +1,19 @@
 import uuid
 from datetime import datetime, timezone
 
+# Namespace fixo para IDs determinísticos de itens importados de pacote.
+# Mesmo (pacote_id, ref) → mesmo ID → reimport sobrescreve (upsert), nunca duplica.
+NAMESPACE_PACOTE = uuid.UUID("6f1d3c2a-9b47-5e88-a1f0-2c4e7d9b1a55")
+
 
 def new_id() -> str:
     return str(uuid.uuid4())
+
+
+def det_id(*parts: str) -> str:
+    """ID determinístico a partir de partes estáveis (ex.: pacote_id + ref).
+    Estável entre importações → permite upsert idempotente sem duplicar."""
+    return str(uuid.uuid5(NAMESPACE_PACOTE, ":".join(parts)))
 
 
 def now_iso() -> str:
