@@ -14,6 +14,7 @@ import {
 } from '../hooks/useTreinos'
 import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar, AutocompleteInput } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
+import { MontarTreinoIaCallout } from '../components/MontarTreinoIaCallout'
 import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
 import { useExerciciosAluno } from '../hooks/useEvolucao'
@@ -447,7 +448,7 @@ export function AlunoDetailPage() {
           {isLoading ? (
             <Spinner />
           ) : !treinos?.length ? (
-            <EmptyState icon={<Dumbbell />} title="Nenhum treino" description="Adicione o primeiro treino no formulário acima." />
+            <MontarTreinoIaCallout />
           ) : (
             <TreinosLista alunoId={alunoId} treinos={treinos} />
           )}

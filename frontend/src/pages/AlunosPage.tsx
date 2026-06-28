@@ -45,12 +45,14 @@ export function AlunosPage() {
     setConflict(null)
     setLimitConflict(null)
     try {
-      await create.mutateAsync({
+      const novo = await create.mutateAsync({
         nome, telefone,
         email: email || undefined, endereco: endereco || undefined,
         data_nascimento: dataNascimento || undefined, objetivo: objetivo || undefined,
       })
       setNome(''); setTelefone(''); setEmail(''); setEndereco(''); setDataNascimento(''); setObjetivo(''); setOpen(false)
+      show('Aluno criado! Agora monte o treino com IA.', 'success')
+      navigate(`/alunos/${novo.aluno_id}`)
     } catch (err: any) {
       const detail = err?.response?.data?.detail
       if (detail?.code === 'PHONE_ALREADY_REGISTERED') {

@@ -37,26 +37,44 @@ function ImportarIASection() {
 
   return (
     <>
-      <Card className="p-6">
-        <div className="flex items-start justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2">
-            <Bot size={18} className="text-accent shrink-0" />
+      <Card variant="elevated" className="p-6 border border-accent/30 bg-gradient-to-br from-accent/10 to-transparent">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="rounded-xl bg-accent/15 p-2 shrink-0">
+              <Bot size={24} className="text-accent-hover" />
+            </div>
             <div>
-              <p className="font-medium text-sm">Gerar pacote com IA</p>
-              <p className="text-xs text-text-secondary mt-0.5">
-                Baixe o prompt, cole em qualquer IA, responda 4 perguntas e cole o JSON abaixo.
+              <h3 className="font-display font-semibold text-lg">Ensine o ChatGPT a usar o CoachPilot por você</h3>
+              <p className="text-sm text-text-secondary mt-0.5">
+                O jeito mais rápido de montar treinos: a IA cria, o CoachPilot cadastra exercícios, templates e rotinas.
               </p>
             </div>
           </div>
           <a
             href="/prompt-cpkg.md"
             download="prompt-cpkg.md"
-            className="flex items-center gap-1.5 text-xs font-medium text-accent hover:underline shrink-0"
+            className="shrink-0"
           >
-            <Download size={14} />
-            Baixar prompt
+            <Button variant="energy" size="sm">
+              <span className="flex items-center gap-1.5"><Download size={15} /> Baixar prompt</span>
+            </Button>
           </a>
         </div>
+
+        <ol className="mt-5 mb-4 space-y-2.5">
+          {[
+            'Baixe o prompt e cole em qualquer IA (ChatGPT, Claude, Gemini).',
+            'Responda as perguntas — a IA monta o treino completo pra você.',
+            'Cole o JSON aqui embaixo: o CoachPilot cadastra tudo automaticamente.',
+          ].map((txt, i) => (
+            <li key={i} className="flex items-start gap-3 text-sm">
+              <span className="flex items-center justify-center shrink-0 w-6 h-6 rounded-full bg-accent/20 text-accent-hover text-xs font-semibold">
+                {i + 1}
+              </span>
+              <span className="text-text-secondary pt-0.5">{txt}</span>
+            </li>
+          ))}
+        </ol>
 
         <textarea
           value={json}
@@ -86,7 +104,7 @@ function ImportarIASection() {
   )
 }
 
-function ImportarTab() {
+function ImportarArquivoTab() {
   const [file, setFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [result, setResult] = useState<ImportarPacoteResponse | null>(null)
@@ -137,6 +155,10 @@ function ImportarTab() {
   return (
     <>
       <Card className="p-6">
+        <p className="text-sm text-text-secondary mb-4">
+          Recebeu um pacote licenciado (.cpkg)? Importe o arquivo aqui. Para criar treinos do zero,
+          use a aba <span className="text-text">Gerar com IA</span>.
+        </p>
         <div
           className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors ${
             isDragging ? 'border-accent bg-accent/10' : 'border-border hover:border-accent/60'
@@ -184,8 +206,6 @@ function ImportarTab() {
           onClose={() => setResult(null)}
         />
       )}
-
-      <ImportarIASection />
     </>
   )
 }
@@ -663,7 +683,7 @@ function CriarPacoteTab() {
 // ── Página principal ──────────────────────────────────────────────────────────
 
 export function PacotesPage() {
-  const [tab, setTab] = useState<'importar' | 'instalados' | 'criar'>('importar')
+  const [tab, setTab] = useState<'ia' | 'instalados' | 'criar' | 'arquivo'>('ia')
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -672,23 +692,26 @@ export function PacotesPage() {
         <h2 className="font-display text-xl font-semibold">Pacotes de treino</h2>
       </div>
       <p className="text-sm text-text-secondary mb-4">
-        Importe pacotes .cpkg com exercícios, templates e rotinas prontos para usar.
+        Deixe a IA montar treinos completos pra você — o diferencial do CoachPilot. Ou importe
+        um arquivo .cpkg licenciado.
       </p>
 
       <Tabs
         tabs={[
-          { key: 'importar', label: 'Importar' },
+          { key: 'ia', label: 'Gerar com IA' },
           { key: 'instalados', label: 'Instalados' },
           { key: 'criar', label: 'Criar' },
+          { key: 'arquivo', label: 'Importar arquivo (.cpkg)' },
         ]}
         active={tab}
         onChange={(k) => setTab(k as typeof tab)}
         className="mb-4"
       />
 
-      {tab === 'importar' && <ImportarTab />}
+      {tab === 'ia' && <ImportarIASection />}
       {tab === 'instalados' && <InstaladosTab />}
       {tab === 'criar' && <CriarPacoteTab />}
+      {tab === 'arquivo' && <ImportarArquivoTab />}
     </div>
   )
 }
