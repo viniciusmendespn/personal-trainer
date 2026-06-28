@@ -1,7 +1,7 @@
 """Templates de treino reutilizáveis — partição PT# (pertencem ao personal, não a
 um aluno específico). Aplicar um template em N alunos usa o mesmo padrão denormalizado
 de `treinos.copiar_treino`: 1 lote de batch_write por aluno."""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.dependencies import get_current_personal_id
 from app.models.exercicio import Exercicio
@@ -19,8 +19,13 @@ router = APIRouter(prefix="/v1/templates", tags=["templates"])
 
 
 @router.get("")
-def list_templates(personal_id: str = Depends(get_current_personal_id)):
+def list_templates(
+    include_inactive: bool = Query(False),
+    personal_id: str = Depends(get_current_personal_id),
+):
     items = repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.TEMPLATE_PREFIX)
+    if not include_inactive:
+        items = [i for i in items if i.get("ativo", True) is not False]
     return repo.clean_all(items)
 
 
@@ -29,7 +34,9 @@ def create_template(body: TreinoTemplateCreate, personal_id: str = Depends(get_c
     tpl = TreinoTemplate(
         template_id=new_id(), personal_id=personal_id, created_at=now_iso(), **body.model_dump()
     )
-    repo.put_item(keys.pk_personal(personal_id), keys.sk_template(tpl.template_id), tpl.model_dump())
+    item_dict = tpl.model_dump()
+    item_dict["pacote_id"] = "manual"
+    repo.put_item(keys.pk_personal(personal_id), keys.sk_template(tpl.template_id), item_dict)
     biblioteca_service.upsert_from_exercicios(personal_id, [e.model_dump() for e in tpl.exercicios])
     return tpl
 
@@ -56,7 +63,9 @@ def create_template_from_treino(
         foco=treino_clean.get("foco"),
         exercicios=exercicios,
     )
-    repo.put_item(keys.pk_personal(personal_id), keys.sk_template(tpl.template_id), tpl.model_dump())
+    item_dict = tpl.model_dump()
+    item_dict["pacote_id"] = "manual"
+    repo.put_item(keys.pk_personal(personal_id), keys.sk_template(tpl.template_id), item_dict)
     biblioteca_service.upsert_from_exercicios(personal_id, [e.model_dump() for e in exercicios])
     return tpl
 

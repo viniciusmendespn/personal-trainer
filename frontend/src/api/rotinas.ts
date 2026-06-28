@@ -2,7 +2,8 @@ import { api } from './client'
 import type { Rotina, RotinaCreate, AplicarRotinaModo } from '../types'
 
 export const rotinasApi = {
-  list: () => api.get<Rotina[]>('/v1/rotinas').then((r) => r.data),
+  list: (includeInactive = false) =>
+    api.get<Rotina[]>(`/v1/rotinas${includeInactive ? '?include_inactive=true' : ''}`).then((r) => r.data),
   create: (body: RotinaCreate) => api.post<Rotina>('/v1/rotinas', body).then((r) => r.data),
   fromAluno: (alunoId: string, nome?: string, salvarTemplates = true) =>
     api.post<{ rotina: Rotina; templates_criados: number }>('/v1/rotinas/from-aluno', {

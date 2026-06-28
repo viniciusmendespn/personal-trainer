@@ -219,11 +219,17 @@ function PacoteCard({ pacote }: { pacote: PacoteInstalado }) {
   const remover = useRemoverPacote()
   const confirm = useConfirm()
 
-  const { data: templates } = useTemplates()
-  const { data: rotinas } = useRotinas()
+  const isManual = pacote.pacote_id === 'manual'
 
-  const templatesDoP = (templates ?? []).filter((t) => t.pacote_id === pacote.pacote_id)
-  const rotinasDoP = (rotinas ?? []).filter((r) => r.pacote_id === pacote.pacote_id)
+  const { data: templates } = useTemplates(true)
+  const { data: rotinas } = useRotinas(true)
+
+  const templatesDoP = isManual
+    ? (templates ?? []).filter((t) => !t.pacote_id || t.pacote_id === 'manual')
+    : (templates ?? []).filter((t) => t.pacote_id === pacote.pacote_id)
+  const rotinasDoP = isManual
+    ? (rotinas ?? []).filter((r) => !r.pacote_id || r.pacote_id === 'manual')
+    : (rotinas ?? []).filter((r) => r.pacote_id === pacote.pacote_id)
 
   async function handleTogglePacote() {
     await togglePacote.mutateAsync({ pacoteId: pacote.pacote_id, ativo: !pacote.ativo })
@@ -262,7 +268,9 @@ function PacoteCard({ pacote }: { pacote: PacoteInstalado }) {
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-medium text-sm">{pacote.nome}</span>
-              {pacote.licenciado ? (
+              {isManual ? (
+                <Badge tone="neutral">Padrão</Badge>
+              ) : pacote.licenciado ? (
                 <Badge tone="accent">Licenciado</Badge>
               ) : (
                 <Badge tone="neutral">Livre</Badge>
@@ -287,16 +295,18 @@ function PacoteCard({ pacote }: { pacote: PacoteInstalado }) {
           >
             <ToggleIcon size={24} />
           </button>
-          <button
-            type="button"
-            onClick={handleRemover}
-            disabled={remover.isPending}
-            className="text-text-secondary hover:text-danger transition-colors"
-            aria-label="Remover pacote"
-            title="Remover pacote"
-          >
-            <Trash2 size={16} />
-          </button>
+          {!isManual && (
+            <button
+              type="button"
+              onClick={handleRemover}
+              disabled={remover.isPending}
+              className="text-text-secondary hover:text-danger transition-colors"
+              aria-label="Remover pacote"
+              title="Remover pacote"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
         </div>
       </div>
 

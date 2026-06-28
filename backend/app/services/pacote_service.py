@@ -306,15 +306,72 @@ def importar_rascunho(personal_id: str, conteudo_str: str) -> ImportarPacoteResp
     return importar_pacote(personal_id, json.dumps(conteudo_dict))
 
 
+# ── Pacote Manual ─────────────────────────────────────────────────────────────
+
+MANUAL_PACOTE_ID = "manual"
+
+
+def _get_or_build_pacote_manual(personal_id: str) -> dict:
+    pk_pt = keys.pk_personal(personal_id)
+    meta = repo.get_item(pk_pt, keys.sk_pacote(MANUAL_PACOTE_ID))
+    if not meta:
+        meta = {
+            "pacote_id": MANUAL_PACOTE_ID,
+            "nome": "Criações Manuais",
+            "descricao": "Exercícios, templates e rotinas criados manualmente.",
+            "autor": "",
+            "versao": "",
+            "licenciado": False,
+            "is_manual": True,
+            "ativo": True,
+            "importado_em": now_iso(),
+        }
+        repo.put_item(pk_pt, keys.sk_pacote(MANUAL_PACOTE_ID), meta)
+
+    def is_manual(i: dict) -> bool:
+        return i.get("pacote_id") in (MANUAL_PACOTE_ID, None, "")
+
+    exlib_count = sum(1 for i in repo.query_pk(pk_pt, sk_prefix=keys.EXLIB_PREFIX) if is_manual(i))
+    tmpl_count = sum(1 for i in repo.query_pk(pk_pt, sk_prefix=keys.TEMPLATE_PREFIX) if is_manual(i))
+    rot_count = sum(1 for i in repo.query_pk(pk_pt, sk_prefix=keys.ROTINA_PREFIX) if is_manual(i))
+
+    cleaned = repo.clean(meta)
+    cleaned["exlib_ids"] = ["_"] * exlib_count
+    cleaned["template_ids"] = ["_"] * tmpl_count
+    cleaned["rotina_ids"] = ["_"] * rot_count
+    return cleaned
+
+
+def _toggle_pacote_manual(pk_pt: str, ativo: bool) -> None:
+    def is_manual(i: dict) -> bool:
+        return i.get("pacote_id") in (MANUAL_PACOTE_ID, None, "")
+
+    for prefix in [keys.EXLIB_PREFIX, keys.TEMPLATE_PREFIX, keys.ROTINA_PREFIX]:
+        for item in repo.query_pk(pk_pt, sk_prefix=prefix):
+            if is_manual(item):
+                repo.update_item_if_exists(pk_pt, item["SK"], {"ativo": ativo})
+
+
 # ── Listagem e configuração ───────────────────────────────────────────────────
 
 def listar_pacotes(personal_id: str) -> list[dict]:
-    items = repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.PACOTE_PREFIX)
-    return repo.clean_all(items)
+    pacotes = repo.clean_all(repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.PACOTE_PREFIX))
+    pacotes = [p for p in pacotes if p.get("pacote_id") != MANUAL_PACOTE_ID]
+    manual = _get_or_build_pacote_manual(personal_id)
+    return [manual] + pacotes
 
 
 def toggle_pacote(personal_id: str, pacote_id: str, ativo: bool) -> None:
     pk_pt = keys.pk_personal(personal_id)
+
+    if pacote_id == MANUAL_PACOTE_ID:
+        _toggle_pacote_manual(pk_pt, ativo)
+        meta = repo.get_item(pk_pt, keys.sk_pacote(MANUAL_PACOTE_ID))
+        if not meta:
+            _get_or_build_pacote_manual(personal_id)
+        repo.update_item_if_exists(pk_pt, keys.sk_pacote(MANUAL_PACOTE_ID), {"ativo": ativo})
+        return
+
     pacote_item = repo.get_item(pk_pt, keys.sk_pacote(pacote_id))
     if not pacote_item:
         raise HTTPException(404, detail="Pacote não encontrado")
@@ -339,6 +396,9 @@ def toggle_item(personal_id: str, pacote_id: str, item_id: str, ativo: bool) -> 
 
 
 def remover_pacote(personal_id: str, pacote_id: str) -> None:
+    if pacote_id == MANUAL_PACOTE_ID:
+        raise HTTPException(400, detail={"code": "PACOTE_MANUAL_NAO_REMOVIVEL"})
+
     pk_pt = keys.pk_personal(personal_id)
     pacote_item = repo.get_item(pk_pt, keys.sk_pacote(pacote_id))
     if not pacote_item:

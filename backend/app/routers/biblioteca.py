@@ -13,6 +13,7 @@ router = APIRouter(prefix="/v1/biblioteca/exercicios", tags=["biblioteca"])
 @router.get("")
 def list_exlib(personal_id: str = Depends(get_current_personal_id)):
     items = repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.EXLIB_PREFIX)
+    items = [i for i in items if i.get("ativo", True) is not False]
     items.sort(key=lambda e: e.get("nome", ""))
     return repo.clean_all(items)
 
@@ -20,7 +21,9 @@ def list_exlib(personal_id: str = Depends(get_current_personal_id)):
 @router.post("", response_model=ExLib, status_code=201)
 def create_exlib(body: ExLibCreate, personal_id: str = Depends(get_current_personal_id)):
     ex = ExLib(exlib_id=new_id(), **body.model_dump())
-    repo.put_item(keys.pk_personal(personal_id), keys.sk_exlib(ex.exlib_id), ex.model_dump())
+    item_dict = ex.model_dump()
+    item_dict["pacote_id"] = "manual"
+    repo.put_item(keys.pk_personal(personal_id), keys.sk_exlib(ex.exlib_id), item_dict)
     return ex
 
 

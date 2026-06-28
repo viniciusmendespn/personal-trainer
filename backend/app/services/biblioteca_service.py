@@ -46,7 +46,7 @@ def upsert_from_exercicios(personal_id: str, exercicios: list[dict]) -> int:
             links_uteis=ex.get("links_uteis") or [],
             substitutos=ex.get("substitutos") or [],
         )
-        puts.append({"PK": pk, "SK": keys.sk_exlib(item.exlib_id), **item.model_dump()})
+        puts.append({"PK": pk, "SK": keys.sk_exlib(item.exlib_id), **item.model_dump(), "pacote_id": "manual"})
         chaves.add(chave)
 
     if puts:

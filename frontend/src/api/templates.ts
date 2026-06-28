@@ -2,7 +2,8 @@ import { api } from './client'
 import type { TreinoTemplate, TreinoTemplateCreate } from '../types'
 
 export const templatesApi = {
-  list: () => api.get<TreinoTemplate[]>('/v1/templates').then((r) => r.data),
+  list: (includeInactive = false) =>
+    api.get<TreinoTemplate[]>(`/v1/templates${includeInactive ? '?include_inactive=true' : ''}`).then((r) => r.data),
   create: (body: TreinoTemplateCreate) =>
     api.post<TreinoTemplate>('/v1/templates', body).then((r) => r.data),
   createFromTreino: (alunoId: string, treinoId: string, nome?: string) =>

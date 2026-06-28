@@ -10,8 +10,11 @@ function invalidateTemplatesEBiblioteca(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ['biblioteca'] })
 }
 
-export function useTemplates() {
-  return useQuery({ queryKey: KEY, queryFn: templatesApi.list })
+export function useTemplates(includeInactive = false) {
+  return useQuery({
+    queryKey: [...KEY, { includeInactive }],
+    queryFn: () => templatesApi.list(includeInactive),
+  })
 }
 
 export function useCreateTemplate() {

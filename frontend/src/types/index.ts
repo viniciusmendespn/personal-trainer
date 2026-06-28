@@ -434,6 +434,7 @@ export interface PacoteInstalado {
   autor?: string
   versao?: string
   licenciado: boolean
+  is_manual?: boolean
   ativo: boolean
   exlib_ids: string[]
   template_ids: string[]

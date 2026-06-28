@@ -2,7 +2,7 @@
 em N alunos cria vários treinos por aluno, no mesmo padrão denormalizado de
 `templates.aplicar_template` (1 lote de batch_write por aluno). Snapshot embutido: a rotina
 guarda cópia dos treinos+exercícios, independente dos Templates de origem."""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.dependencies import get_current_personal_id
 from app.models.exercicio import Exercicio
@@ -26,8 +26,13 @@ def _touch_aluno_pointer(personal_id: str, aluno_id: str) -> None:
 
 
 @router.get("")
-def list_rotinas(personal_id: str = Depends(get_current_personal_id)):
+def list_rotinas(
+    include_inactive: bool = Query(False),
+    personal_id: str = Depends(get_current_personal_id),
+):
     items = repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.ROTINA_PREFIX)
+    if not include_inactive:
+        items = [i for i in items if i.get("ativo", True) is not False]
     return repo.clean_all(items)
 
 
@@ -36,7 +41,9 @@ def create_rotina(body: RotinaCreate, personal_id: str = Depends(get_current_per
     rot = Rotina(
         rotina_id=new_id(), personal_id=personal_id, created_at=now_iso(), **body.model_dump()
     )
-    repo.put_item(keys.pk_personal(personal_id), keys.sk_rotina(rot.rotina_id), rot.model_dump())
+    item_dict = rot.model_dump()
+    item_dict["pacote_id"] = "manual"
+    repo.put_item(keys.pk_personal(personal_id), keys.sk_rotina(rot.rotina_id), item_dict)
     return rot
 
 
@@ -75,7 +82,7 @@ def create_rotina_from_aluno(
                 nome=tc["nome"], foco=tc.get("foco"), exercicios=exercicios,
             )
             puts_templates.append(
-                {"PK": pk_pt, "SK": keys.sk_template(tpl.template_id), **tpl.model_dump()}
+                {"PK": pk_pt, "SK": keys.sk_template(tpl.template_id), **tpl.model_dump(), "pacote_id": "manual"}
             )
 
     if not treinos_rotina:
@@ -86,7 +93,7 @@ def create_rotina_from_aluno(
         rotina_id=new_id(), personal_id=personal_id, created_at=now,
         nome=nome, treinos=treinos_rotina,
     )
-    puts = [{"PK": pk_pt, "SK": keys.sk_rotina(rot.rotina_id), **rot.model_dump()}, *puts_templates]
+    puts = [{"PK": pk_pt, "SK": keys.sk_rotina(rot.rotina_id), **rot.model_dump(), "pacote_id": "manual"}, *puts_templates]
     repo.batch_write(puts=puts)
     templates_criados = len(puts_templates)
     return {"rotina": rot.model_dump(), "templates_criados": templates_criados}
@@ -111,7 +118,9 @@ def create_rotina_from_templates(
         rotina_id=new_id(), personal_id=personal_id, created_at=now_iso(),
         nome=body.nome, descricao=body.descricao, treinos=treinos_rotina,
     )
-    repo.put_item(pk_pt, keys.sk_rotina(rot.rotina_id), rot.model_dump())
+    item_dict = rot.model_dump()
+    item_dict["pacote_id"] = "manual"
+    repo.put_item(pk_pt, keys.sk_rotina(rot.rotina_id), item_dict)
     return rot
 
 

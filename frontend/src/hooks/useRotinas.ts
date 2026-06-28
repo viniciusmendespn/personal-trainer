@@ -4,8 +4,11 @@ import type { RotinaCreate, AplicarRotinaModo } from '../types'
 
 const KEY = ['rotinas']
 
-export function useRotinas() {
-  return useQuery({ queryKey: KEY, queryFn: rotinasApi.list })
+export function useRotinas(includeInactive = false) {
+  return useQuery({
+    queryKey: [...KEY, { includeInactive }],
+    queryFn: () => rotinasApi.list(includeInactive),
+  })
 }
 
 export function useCreateRotina() {
