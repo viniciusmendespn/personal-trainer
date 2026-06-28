@@ -11,7 +11,7 @@ class AlunoCreate(BaseModel):
     email: Optional[str] = None
     endereco: Optional[str] = None
     data_nascimento: Optional[str] = None      # ISO date (YYYY-MM-DD)
-    objetivo: Optional[str] = None
+    objetivos: list[str] = Field(default_factory=list)
     observacoes: Optional[str] = None
     descricao: Optional[str] = None            # tagline curta exibida no perfil
     custom: dict[str, Any] = Field(default_factory=dict)
@@ -23,7 +23,7 @@ class AlunoUpdate(BaseModel):
     email: Optional[str] = None
     endereco: Optional[str] = None
     data_nascimento: Optional[str] = None
-    objetivo: Optional[str] = None
+    objetivos: Optional[list[str]] = None
     observacoes: Optional[str] = None
     descricao: Optional[str] = None
     status: Optional[AlunoStatus] = None

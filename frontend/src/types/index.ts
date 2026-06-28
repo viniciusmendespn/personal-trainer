@@ -16,7 +16,7 @@ export interface Aluno {
   email?: string
   endereco?: string
   data_nascimento?: string
-  objetivo?: string
+  objetivos?: string[]
   observacoes?: string
   descricao?: string
   foto_s3_key?: string
@@ -92,7 +92,7 @@ export interface AlunoCreate {
   email?: string
   endereco?: string
   data_nascimento?: string
-  objetivo?: string
+  objetivos?: string[]
   observacoes?: string
   descricao?: string
   custom?: Custom

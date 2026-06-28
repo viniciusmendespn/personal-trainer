@@ -63,7 +63,7 @@ class CadastroBody(BaseModel):
     telefone: str
     email: str | None = None
     data_nascimento: str | None = None
-    objetivo: str | None = None
+    objetivos: list[str] = []
     respostas: dict = {}
 
 
@@ -108,7 +108,7 @@ def cadastrar_aluno(body: CadastroBody, token: str):
             "aluno_id": aluno_id, "personal_id": personal_id,
             "nome": body.nome, "telefone": telefone,
             "email": body.email, "data_nascimento": body.data_nascimento,
-            "objetivo": body.objetivo,
+            "objetivos": body.objetivos,
             "status": "ATIVO", "agente_habilitado": False,
             "created_at": now, "updated_at": now, "custom": {},
         }
@@ -120,6 +120,9 @@ def cadastrar_aluno(body: CadastroBody, token: str):
         repo.put_item(phone_key, "PHONE", {"aluno_id": aluno_id, "nome": body.nome})
         repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS,
                          add={"total": 1, "ativos": 1}, set_={})
+        for obj in body.objetivos:
+            repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_OBJETIVOS,
+                             add={keys.normalize_objetivo(obj): 1})
     # Salva anamnese
     if body.respostas:
         anamnese_data = {

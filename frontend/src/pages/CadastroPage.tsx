@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { anamneseApi, type AnamneseTemplate } from '../api/anamnese'
-import { Button, Input, Spinner } from '../components/ui'
+import { Button, Input, Spinner, ObjetivosPicker } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 
 type Etapa = 'dados' | 'questionario' | 'sucesso'
@@ -39,7 +39,7 @@ function CadastroFlow({
   const [telefone, setTelefone] = useState('')
   const [email, setEmail] = useState('')
   const [nascimento, setNascimento] = useState('')
-  const [objetivo, setObjetivo] = useState('')
+  const [objetivos, setObjetivos] = useState<string[]>([])
   const [respostas, setRespostas] = useState<Record<string, unknown>>({})
   const [magicLink, setMagicLink] = useState('')
 
@@ -49,7 +49,7 @@ function CadastroFlow({
         nome, telefone,
         email: email || undefined,
         data_nascimento: nascimento || undefined,
-        objetivo: objetivo || undefined,
+        objetivos: objetivos.length ? objetivos : undefined,
         respostas: Object.keys(respostas).length ? respostas : undefined,
       }),
     onSuccess: (data) => {
@@ -112,7 +112,7 @@ function CadastroFlow({
               <Input label="Data de nascimento" type="date" value={nascimento} onChange={(e) => setNascimento(e.target.value)} />
             )}
             {template.solicitar_objetivo && (
-              <Input label="Objetivo" value={objetivo} onChange={(e) => setObjetivo(e.target.value)} placeholder="Ex.: Perder peso, ganhar massa…" />
+              <ObjetivosPicker label="Objetivos" value={objetivos} onChange={setObjetivos} />
             )}
             <Button type="submit" variant="energy" className="w-full" disabled={!nome || !telefone || cadastrar.isPending}>
               {temPerguntas ? 'Próximo' : (cadastrar.isPending ? <Loader2 size={16} className="animate-spin" /> : 'Confirmar cadastro')}

@@ -12,7 +12,7 @@ import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
-import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar, AutocompleteInput } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar, ObjetivosPicker } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { MontarTreinoIaCallout } from '../components/MontarTreinoIaCallout'
 import { MediaTimeline } from '../components/media/MediaTimeline'
@@ -51,7 +51,7 @@ export function AlunoDetailPage() {
 
   const { data: todosAlunos } = useAlunos()
   const objetivoSuggestions = useMemo(
-    () => [...new Set((todosAlunos ?? []).map((a) => a.objetivo).filter(Boolean) as string[])].sort(),
+    () => [...new Set((todosAlunos ?? []).flatMap((a) => a.objetivos ?? []))].sort(),
     [todosAlunos],
   )
 
@@ -104,7 +104,7 @@ export function AlunoDetailPage() {
   const [eEmail, setEEmail] = useState('')
   const [eEndereco, setEEndereco] = useState('')
   const [eNascimento, setENascimento] = useState('')
-  const [eObj, setEObj] = useState('')
+  const [eObjs, setEObjs] = useState<string[]>([])
   const [eDescricao, setEDescricao] = useState('')
   const [editError, setEditError] = useState('')
   const [conflict, setConflict] = useState<AlunoExistenteConflict | null>(null)
@@ -148,7 +148,7 @@ export function AlunoDetailPage() {
   function startEdit() {
     setENome(aluno?.nome ?? ''); setETel(aluno?.telefone ?? '')
     setEEmail(aluno?.email ?? ''); setEEndereco(aluno?.endereco ?? ''); setENascimento(aluno?.data_nascimento ?? '')
-    setEObj(aluno?.objetivo ?? ''); setEDescricao(aluno?.descricao ?? '')
+    setEObjs(aluno?.objetivos ?? []); setEDescricao(aluno?.descricao ?? '')
     setEditError(''); setConflict(null)
     setEditing(true)
   }
@@ -159,7 +159,7 @@ export function AlunoDetailPage() {
       await updateAluno.mutateAsync({
         nome: eNome, telefone: eTel,
         email: eEmail || undefined, endereco: eEndereco || undefined,
-        data_nascimento: eNascimento || undefined, objetivo: eObj || undefined,
+        data_nascimento: eNascimento || undefined, objetivos: eObjs,
         descricao: eDescricao || undefined,
       })
       setEditing(false)
@@ -353,7 +353,7 @@ export function AlunoDetailPage() {
               <Input label="E-mail" type="email" value={eEmail} onChange={(e) => setEEmail(e.target.value)} />
               <Input label="Data de nascimento" type="date" value={eNascimento} onChange={(e) => setENascimento(e.target.value)} />
               <Input label="Endereço" value={eEndereco} onChange={(e) => setEEndereco(e.target.value)} />
-              <AutocompleteInput label="Objetivo" value={eObj} onChange={setEObj} suggestions={objetivoSuggestions} placeholder="Ex.: Perda de peso, ganho de massa…" />
+              <ObjetivosPicker label="Objetivos" value={eObjs} onChange={setEObjs} suggestions={objetivoSuggestions} />
               <ErrorText>{editError}</ErrorText>
               {conflict && (
                 <Card variant="elevated" className="border-warning/40 space-y-2">
@@ -399,8 +399,18 @@ export function AlunoDetailPage() {
                 <p className="text-sm">{aluno?.endereco || '—'}</p>
               </div>
               <div>
-                <p className="text-xs text-text-muted">Objetivo</p>
-                <p className="text-sm">{aluno?.objetivo || '—'}</p>
+                <p className="text-xs text-text-muted">Objetivos</p>
+                {aluno?.objetivos?.length ? (
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {aluno.objetivos.map((obj) => (
+                      <span key={obj} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/15 text-accent-hover border border-accent/30">
+                        {obj}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm">—</p>
+                )}
               </div>
               <Button variant="outline" size="sm" onClick={startEdit}>
                 <span className="flex items-center gap-1"><Pencil size={14} /> Editar perfil</span>

@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 import { Plus, ChevronRight, Search, Users, Bot, Settings, Copy, Clock } from 'lucide-react'
 import { useAlunosPaginated, useCreateAluno, useUpdateAluno } from '../hooks/useAlunos'
 import { usePlanoStatus } from '../hooks/usePlano'
-import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState, useToast, AutocompleteInput } from '../components/ui'
+import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState, useToast, ObjetivosPicker } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { anamneseApi } from '../api/anamnese'
 import { tempoRelativo } from '../utils/datetime'
@@ -31,7 +31,7 @@ export function AlunosPage() {
   const [email, setEmail] = useState('')
   const [endereco, setEndereco] = useState('')
   const [dataNascimento, setDataNascimento] = useState('')
-  const [objetivo, setObjetivo] = useState('')
+  const [objetivos, setObjetivos] = useState<string[]>([])
   const [error, setError] = useState('')
   const [conflict, setConflict] = useState<AlunoExistenteConflict | null>(null)
   const [limitConflict, setLimitConflict] = useState<PlanoLimitConflict | null>(null)
@@ -48,9 +48,9 @@ export function AlunosPage() {
       const novo = await create.mutateAsync({
         nome, telefone,
         email: email || undefined, endereco: endereco || undefined,
-        data_nascimento: dataNascimento || undefined, objetivo: objetivo || undefined,
+        data_nascimento: dataNascimento || undefined, objetivos,
       })
-      setNome(''); setTelefone(''); setEmail(''); setEndereco(''); setDataNascimento(''); setObjetivo(''); setOpen(false)
+      setNome(''); setTelefone(''); setEmail(''); setEndereco(''); setDataNascimento(''); setObjetivos([]); setOpen(false)
       show('Aluno criado! Monte o treino e deixe a IA cadastrar em segundos.', 'success')
       navigate(`/alunos/${novo.aluno_id}`)
     } catch (err: any) {
@@ -74,7 +74,7 @@ export function AlunosPage() {
   }
 
   const objetivoSuggestions = useMemo(
-    () => [...new Set((alunos ?? []).map((a) => a.objetivo).filter(Boolean) as string[])].sort(),
+    () => [...new Set((alunos ?? []).flatMap((a) => a.objetivos ?? []))].sort(),
     [alunos],
   )
 
@@ -146,7 +146,7 @@ export function AlunosPage() {
             <Input label="Data de nascimento" type="date" value={dataNascimento} onChange={(e) => setDataNascimento(e.target.value)} />
           </div>
           <Input label="Endereço" value={endereco} onChange={(e) => setEndereco(e.target.value)} />
-          <AutocompleteInput label="Objetivo" value={objetivo} onChange={setObjetivo} suggestions={objetivoSuggestions} placeholder="Ex.: Perda de peso, ganho de massa…" />
+          <ObjetivosPicker label="Objetivos" value={objetivos} onChange={setObjetivos} suggestions={objetivoSuggestions} />
           <ErrorText>{error}</ErrorText>
           {limitConflict && (
             <Card variant="elevated" className="border-accent/40 space-y-2">

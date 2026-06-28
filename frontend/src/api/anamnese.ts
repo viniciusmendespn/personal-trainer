@@ -43,7 +43,7 @@ export const anamneseApi = {
     ).then((r) => r.data),
   cadastrar: (token: string, body: {
     nome: string; telefone: string; email?: string
-    data_nascimento?: string; objetivo?: string; respostas?: Record<string, unknown>
+    data_nascimento?: string; objetivos?: string[]; respostas?: Record<string, unknown>
   }) =>
     publicClient.post<{ magic_link: string; aluno_id: string }>(
       '/v1/public/anamnese', body, { params: { token } }

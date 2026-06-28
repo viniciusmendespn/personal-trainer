@@ -46,6 +46,19 @@ def _add_foto_url(item: dict) -> dict:
     return item
 
 
+def _coerce_objetivos(item: dict) -> list[str]:
+    """Backward compat: novos itens têm objetivos (list), antigos têm objetivo (str)."""
+    if "objetivos" in item:
+        return item.get("objetivos") or []
+    old = item.get("objetivo")
+    return [old] if old else []
+
+
+def _inject_objetivos(item: dict) -> dict:
+    item["objetivos"] = _coerce_objetivos(item)
+    return item
+
+
 def _phone_conflict(dono_id: str | None) -> HTTPException:
     """409 estruturado de telefone duplicado, enriquecido com os dados do aluno
     dono pra permitir ação de recuperação no front (ver/reativar) em vez de bloqueio cru."""
@@ -65,7 +78,7 @@ def _phone_conflict(dono_id: str | None) -> HTTPException:
 def list_alunos(limit: int = 50, cursor: str | None = None, personal_id: str = Depends(get_current_personal_id)):
     items, next_cursor = repo.query_pk_page(keys.pk_personal(personal_id), "ALUNO#", limit, cursor)
     bloqueados = assinatura_service.get_alunos_bloqueados(personal_id)
-    cleaned = [{**_add_foto_url(repo.clean(i)), "bloqueado": i.get("aluno_id", "") in bloqueados} for i in items]
+    cleaned = [{**_add_foto_url(_inject_objetivos(repo.clean(i))), "bloqueado": i.get("aluno_id", "") in bloqueados} for i in items]
     return {"items": cleaned, "next_cursor": next_cursor}
 
 
@@ -93,9 +106,9 @@ def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_perso
     repo.put_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, data)
     repo.put_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(data))
     repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add={"total": 1, "ativos": 1})
-    if body.objetivo:
+    for obj in body.objetivos:
         repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_OBJETIVOS,
-                         add={keys.normalize_objetivo(body.objetivo): 1})
+                         add={keys.normalize_objetivo(obj): 1})
     assinatura_service.invalidate_alunos_bloqueados(personal_id)
     return aluno
 
@@ -106,7 +119,7 @@ def get_aluno(aluno_id: str, personal_id: str = Depends(get_current_personal_id)
     item = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
     if not item:
         raise HTTPException(404, "Aluno não encontrado")
-    return _add_foto_url(repo.clean(item))
+    return _add_foto_url(_inject_objetivos(repo.clean(item)))
 
 
 @router.post("/{aluno_id}/avatar/upload-url")
@@ -175,17 +188,15 @@ def update_aluno(aluno_id: str, body: AlunoUpdate, personal_id: str = Depends(ge
     if novo_status and novo_status != current.get("status"):
         delta = 1 if novo_status == AlunoStatus.ATIVO else -1
         repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add={"ativos": delta})
-    novo_obj = fields.get("objetivo")
-    old_obj = current.get("objetivo")
-    if "objetivo" in fields and novo_obj != old_obj:
+    if "objetivos" in fields:
+        new_objs = set(fields.get("objetivos") or [])
+        old_objs = set(_coerce_objetivos(current))
         pk_pt = keys.pk_personal(personal_id)
-        if old_obj:
-            repo.add_and_set(pk_pt, keys.SK_STATS_OBJETIVOS,
-                             add={keys.normalize_objetivo(old_obj): -1})
-        if novo_obj:
-            repo.add_and_set(pk_pt, keys.SK_STATS_OBJETIVOS,
-                             add={keys.normalize_objetivo(novo_obj): 1})
-    return _add_foto_url(repo.clean(updated))
+        for obj in old_objs - new_objs:
+            repo.add_and_set(pk_pt, keys.SK_STATS_OBJETIVOS, add={keys.normalize_objetivo(obj): -1})
+        for obj in new_objs - old_objs:
+            repo.add_and_set(pk_pt, keys.SK_STATS_OBJETIVOS, add={keys.normalize_objetivo(obj): 1})
+    return _add_foto_url(_inject_objetivos(repo.clean(updated)))
 
 
 @router.get("/{aluno_id}/link")
@@ -253,9 +264,10 @@ def delete_aluno(aluno_id: str, personal_id: str = Depends(get_current_personal_
     if current and current.get("status") == AlunoStatus.ATIVO:
         decremento["ativos"] = -1
     repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add=decremento)
-    if current and current.get("objetivo"):
-        repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_OBJETIVOS,
-                         add={keys.normalize_objetivo(current["objetivo"]): -1})
+    if current:
+        for obj in _coerce_objetivos(current):
+            repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_OBJETIVOS,
+                             add={keys.normalize_objetivo(obj): -1})
     # Limpa entradas DUE# para evitar notificações fantasma após deleção do aluno.
     # Dados completos (treinos/sessões/registros) permanecem em AL# — limpeza em lote futura.
     treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
