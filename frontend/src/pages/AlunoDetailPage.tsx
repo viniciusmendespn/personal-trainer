@@ -810,13 +810,18 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
           {open ? <ChevronDown size={16} className="shrink-0" /> : <ChevronRight size={16} className="shrink-0" />}
           <span className="min-w-0 overflow-hidden">
             <span className="font-medium truncate block">{treino.nome}</span>
-            {(treino.foco || treino.data_inicio || treino.data_fim) && (
-              <span className="text-xs text-text-muted truncate block">
-                {treino.foco && treino.foco}
-                {treino.foco && (treino.data_inicio || treino.data_fim) && ' · '}
-                {(treino.data_inicio || treino.data_fim) && `${fmtDate(treino.data_inicio)}${treino.data_fim ? ` – ${fmtDate(treino.data_fim)}` : ''}`}
-              </span>
-            )}
+            {(() => {
+              const parts: string[] = []
+              if (treino.foco) parts.push(treino.foco)
+              const dateParts: string[] = []
+              if (treino.data_inicio) dateParts.push(`de ${fmtDate(treino.data_inicio)}`)
+              if (treino.data_fim) dateParts.push(`até ${fmtDate(treino.data_fim)}`)
+              if (dateParts.length) parts.push(dateParts.join(' '))
+              if (treino.total_execucoes) parts.push(`${treino.total_execucoes}× executado`)
+              return parts.length > 0
+                ? <span className="text-xs text-text-muted truncate block">{parts.join(' · ')}</span>
+                : null
+            })()}
           </span>
         </button>
         <div className="flex items-center gap-1 shrink-0">

@@ -108,6 +108,7 @@ export interface Treino {
   ativo: boolean
   data_inicio?: string
   data_fim?: string
+  total_execucoes?: number
   custom?: Custom
   created_at: string
   updated_at: string
