@@ -448,8 +448,8 @@ function InstaladosTab() {
 
 function CriarPacoteTab() {
   const { data: pacotes } = usePacotes()
-  const { data: templates, isLoading: loadingTmpl } = useTemplates(true)
-  const { data: rotinas, isLoading: loadingRot } = useRotinas(true)
+  const { data: templates, isLoading: loadingTmpl } = useTemplates(false)
+  const { data: rotinas, isLoading: loadingRot } = useRotinas(false)
   const gerar = useGerarPacote()
   const gerarLicenciado = useGerarPacoteLicenciado()
   const { show: toast } = useToast()

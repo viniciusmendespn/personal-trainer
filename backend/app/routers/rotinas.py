@@ -89,9 +89,11 @@ def create_rotina_from_aluno(
         raise HTTPException(400, "Nenhum treino do aluno tem exercícios para salvar.")
 
     nome = body.nome or f"Rotina de {_aluno_nome(personal_id, body.aluno_id) or 'aluno'}"
+    template_ids_criados = [p["template_id"] for p in puts_templates]
     rot = Rotina(
         rotina_id=new_id(), personal_id=personal_id, created_at=now,
         nome=nome, treinos=treinos_rotina,
+        template_ids=template_ids_criados,
     )
     puts = [{"PK": pk_pt, "SK": keys.sk_rotina(rot.rotina_id), **rot.model_dump(), "pacote_id": "manual"}, *puts_templates]
     repo.batch_write(puts=puts)
