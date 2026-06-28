@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { Trash2, Users, ListChecks, Dumbbell, Pencil, Plus, Search, ChevronUp, ChevronDown, X, Layers } from 'lucide-react'
 import { useAlunos } from '../hooks/useAlunos'
 import {
@@ -197,7 +198,12 @@ function TemplatePicker({ onAdd }: { onAdd: (tpl: TreinoTemplate) => void }) {
         <Input placeholder="Buscar template…" value={query} onChange={(e) => setQuery(e.target.value)} className="pl-8" />
       </div>
       {!templates?.length ? (
-        <p className="text-xs text-text-muted">Nenhum template criado ainda.</p>
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-xs text-text-muted">Nenhum template criado ainda.</p>
+          <Link to="/templates" className="text-xs font-medium text-accent hover:underline">
+            Criar primeiro template →
+          </Link>
+        </div>
       ) : (
         <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
           {filtrados.map((t) => (

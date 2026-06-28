@@ -13,6 +13,8 @@ import hashlib
 import hmac
 import json
 import logging
+import re
+import unicodedata
 from typing import Optional
 
 from botocore.exceptions import ClientError
@@ -25,6 +27,80 @@ from app.repositories import keys
 from app.utils import new_id, now_iso
 
 logger = logging.getLogger(__name__)
+
+
+# ── Helpers de exportação ────────────────────────────────────────────────────
+
+def _nome_para_ref(prefix: str, nome: str) -> str:
+    """Deriva um ref estável a partir do nome (normaliza acentos, espaços → _)."""
+    nfkd = unicodedata.normalize("NFKD", nome)
+    ascii_str = nfkd.encode("ASCII", "ignore").decode("ASCII")
+    slug = re.sub(r"[^a-z0-9]+", "_", ascii_str.lower()).strip("_")
+    return f"{prefix}{slug}"
+
+
+def _build_exercicio_out(nome: str, item: dict) -> dict:
+    return {
+        "ref": _nome_para_ref("ex_", nome),
+        "nome": nome,
+        "grupo": item.get("grupo"),
+        "tipo_exercicio": item.get("tipo_exercicio", "FORCA"),
+        "video_url": item.get("video_url"),
+        "descricao": item.get("descricao"),
+        "recomendacoes": item.get("recomendacoes"),
+        "substitutos": item.get("substitutos") or [],
+    }
+
+
+def _build_template_out(tmpl: dict, nome_lower_to_ref: dict[str, str]) -> dict:
+    exercicios_tmpl = []
+    for ex in tmpl.get("exercicios") or []:
+        ex_nome = (ex.get("nome") or "").strip()
+        ex_ref = nome_lower_to_ref.get(ex_nome.lower()) or _nome_para_ref("ex_", ex_nome)
+        exercicios_tmpl.append({
+            "ex_ref": ex_ref,
+            "ordem": ex.get("ordem", 0),
+            "series_prescritas": ex.get("series_prescritas"),
+            "intervalo_s": ex.get("intervalo_s"),
+            "observacoes": ex.get("observacoes"),
+        })
+    return {
+        "ref": _nome_para_ref("tmpl_", tmpl["nome"]),
+        "nome": tmpl["nome"],
+        "foco": tmpl.get("foco"),
+        "exercicios": exercicios_tmpl,
+    }
+
+
+def _build_rotina_out(rot: dict, tmpl_nome_lower_to_ref: dict[str, str]) -> dict:
+    treinos_refs = [
+        tmpl_nome_lower_to_ref[t["nome"].strip().lower()]
+        for t in (rot.get("treinos") or [])
+        if t.get("nome") and t["nome"].strip().lower() in tmpl_nome_lower_to_ref
+    ]
+    return {
+        "ref": _nome_para_ref("rot_", rot["nome"]),
+        "nome": rot["nome"],
+        "descricao": rot.get("descricao"),
+        "treinos": treinos_refs,
+    }
+
+
+def _draft_json(pacote_meta: dict, exercicios: list, templates: list, rotinas: list) -> dict:
+    from app.utils import new_id
+    return {
+        "version": "1",
+        "pacote": {
+            "id": new_id(),
+            "nome": pacote_meta.get("nome", ""),
+            "descricao": pacote_meta.get("descricao", ""),
+            "autor": pacote_meta.get("autor", ""),
+            "versao": pacote_meta.get("versao", "1"),
+        },
+        "exercicios": exercicios,
+        "templates": templates,
+        "rotinas": rotinas,
+    }
 
 
 # ── Assinatura HMAC ──────────────────────────────────────────────────────────
@@ -414,3 +490,144 @@ def remover_pacote(personal_id: str, pacote_id: str) -> None:
 
     for i in range(0, len(deletes), 25):
         repo.batch_write(deletes=deletes[i:i + 25])
+
+
+# ── Exportação ────────────────────────────────────────────────────────────────
+
+def exportar_pacote(personal_id: str, pacote_id: str) -> dict:
+    """Reconstrói o JSON draft de um pacote livre para re-edição (ex: via ChatGPT)."""
+    if pacote_id == MANUAL_PACOTE_ID:
+        raise HTTPException(400, detail={"code": "PACOTE_MANUAL_NAO_EXPORTAVEL"})
+
+    pk_pt = keys.pk_personal(personal_id)
+    meta = repo.get_item(pk_pt, keys.sk_pacote(pacote_id))
+    if not meta:
+        raise HTTPException(404, detail="Pacote não encontrado")
+    if meta.get("licenciado"):
+        raise HTTPException(400, detail={"code": "PACOTE_LICENCIADO_NAO_EXPORTAVEL"})
+
+    # Exercícios
+    nome_lower_to_ref: dict[str, str] = {}
+    exercicios_out: list[dict] = []
+    for exlib_id in (meta.get("exlib_ids") or []):
+        item = repo.get_item(pk_pt, keys.sk_exlib(exlib_id))
+        if not item:
+            continue
+        nome = (item.get("nome") or "").strip()
+        ex_out = _build_exercicio_out(nome, item)
+        nome_lower_to_ref[nome.lower()] = ex_out["ref"]
+        exercicios_out.append(ex_out)
+
+    # Templates
+    tmpl_nome_lower_to_ref: dict[str, str] = {}
+    templates_out: list[dict] = []
+    for template_id in (meta.get("template_ids") or []):
+        item = repo.get_item(pk_pt, keys.sk_template(template_id))
+        if not item:
+            continue
+        tmpl_out = _build_template_out(item, nome_lower_to_ref)
+        tmpl_nome_lower_to_ref[item["nome"].strip().lower()] = tmpl_out["ref"]
+        templates_out.append(tmpl_out)
+
+    # Rotinas
+    rotinas_out: list[dict] = []
+    for rotina_id in (meta.get("rotina_ids") or []):
+        item = repo.get_item(pk_pt, keys.sk_rotina(rotina_id))
+        if not item:
+            continue
+        rotinas_out.append(_build_rotina_out(item, tmpl_nome_lower_to_ref))
+
+    return _draft_json(meta, exercicios_out, templates_out, rotinas_out)
+
+
+# ── Geração de pacote personalizado ──────────────────────────────────────────
+
+def gerar_pacote(
+    personal_id: str,
+    nome: str,
+    descricao: str,
+    autor: str,
+    versao: str,
+    template_ids: list[str],
+    rotina_ids: list[str],
+) -> dict:
+    """Gera JSON draft de um novo pacote a partir de templates/rotinas selecionados.
+
+    Bloqueia qualquer item de pacote licenciado para evitar plágio.
+    """
+    pk_pt = keys.pk_personal(personal_id)
+
+    def _assert_nao_licenciado(item: dict, kind: str) -> None:
+        pid = item.get("pacote_id")
+        if pid and pid not in (MANUAL_PACOTE_ID, None, ""):
+            pkg = repo.get_item(pk_pt, keys.sk_pacote(pid))
+            if pkg and pkg.get("licenciado"):
+                raise HTTPException(400, detail={"code": "PACOTE_LICENCIADO_NAO_PERMITIDO",
+                                                 "detail": f"{kind} '{item.get('nome')}' pertence a pacote licenciado"})
+
+    # Busca templates selecionados
+    templates_data: list[dict] = []
+    for tid in template_ids:
+        item = repo.get_item(pk_pt, keys.sk_template(tid))
+        if not item:
+            raise HTTPException(404, detail={"code": "TEMPLATE_NAO_ENCONTRADO", "detail": tid})
+        _assert_nao_licenciado(item, "Template")
+        templates_data.append(item)
+
+    # Busca rotinas selecionadas
+    rotinas_data: list[dict] = []
+    for rid in rotina_ids:
+        item = repo.get_item(pk_pt, keys.sk_rotina(rid))
+        if not item:
+            raise HTTPException(404, detail={"code": "ROTINA_NAO_ENCONTRADA", "detail": rid})
+        _assert_nao_licenciado(item, "Rotina")
+        rotinas_data.append(item)
+
+    # Coleta nomes únicos de exercícios a partir dos templates
+    exercise_info: dict[str, dict] = {}  # nome_lower → {nome, grupo, tipo_exercicio}
+    for tmpl in templates_data:
+        for ex in tmpl.get("exercicios") or []:
+            nl = (ex.get("nome") or "").strip().lower()
+            if nl and nl not in exercise_info:
+                exercise_info[nl] = {
+                    "nome": ex["nome"].strip(),
+                    "grupo": ex.get("grupo"),
+                    "tipo_exercicio": ex.get("tipo_exercicio", "FORCA"),
+                }
+
+    # Enriquece com dados do ExLib (descricao, recomendacoes, video_url, substitutos)
+    all_exlib = repo.query_pk(pk_pt, sk_prefix=keys.EXLIB_PREFIX)
+    exlib_by_name: dict[str, dict] = {
+        (e.get("nome") or "").strip().lower(): e
+        for e in all_exlib
+        if (e.get("nome") or "").strip()
+    }
+
+    nome_lower_to_ref: dict[str, str] = {}
+    exercicios_out: list[dict] = []
+    for nl, base in exercise_info.items():
+        exlib = exlib_by_name.get(nl, {})
+        merged = {**base, **{k: v for k, v in exlib.items() if k in ("grupo", "tipo_exercicio", "video_url", "descricao", "recomendacoes", "substitutos") and v}}
+        ex_out = _build_exercicio_out(base["nome"], merged)
+        nome_lower_to_ref[nl] = ex_out["ref"]
+        exercicios_out.append(ex_out)
+
+    # Templates
+    tmpl_nome_lower_to_ref: dict[str, str] = {}
+    templates_out: list[dict] = []
+    for tmpl in templates_data:
+        tmpl_out = _build_template_out(tmpl, nome_lower_to_ref)
+        tmpl_nome_lower_to_ref[tmpl["nome"].strip().lower()] = tmpl_out["ref"]
+        templates_out.append(tmpl_out)
+
+    # Rotinas
+    rotinas_out: list[dict] = []
+    for rot in rotinas_data:
+        rotinas_out.append(_build_rotina_out(rot, tmpl_nome_lower_to_ref))
+
+    return _draft_json(
+        {"nome": nome, "descricao": descricao, "autor": autor, "versao": versao},
+        exercicios_out,
+        templates_out,
+        rotinas_out,
+    )

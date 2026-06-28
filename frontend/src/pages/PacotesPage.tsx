@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react'
 import { Package, Upload, ChevronDown, ChevronRight, Trash2, ToggleLeft, ToggleRight, Bot, Download } from 'lucide-react'
-import { usePacotes, useImportarPacote, useImportarRascunho, useTogglePacote, useToggleItem, useRemoverPacote } from '../hooks/usePacotes'
+import { usePacotes, useImportarPacote, useImportarRascunho, useTogglePacote, useToggleItem, useRemoverPacote, useExportarPacote, useGerarPacote } from '../hooks/usePacotes'
 import { useTemplates } from '../hooks/useTemplates'
 import { useRotinas } from '../hooks/useRotinas'
 import { Button, Card, Spinner, EmptyState, Modal, Badge, Tabs, useToast, useConfirm } from '../components/ui'
+import { downloadJson } from '../api/pacotes'
 import type { ImportarPacoteResponse, PacoteInstalado } from '../types'
 
 // ── Tela de importação ────────────────────────────────────────────────────────
@@ -217,9 +218,25 @@ function PacoteCard({ pacote }: { pacote: PacoteInstalado }) {
   const togglePacote = useTogglePacote()
   const toggleItem = useToggleItem()
   const remover = useRemoverPacote()
+  const exportar = useExportarPacote()
   const confirm = useConfirm()
+  const { show: toast } = useToast()
 
   const isManual = pacote.pacote_id === 'manual'
+
+  async function handleExportar() {
+    try {
+      const data = await exportar.mutateAsync(pacote.pacote_id)
+      downloadJson(data, `${pacote.nome}.json`)
+    } catch (err: any) {
+      const code = err?.response?.data?.code
+      const msgs: Record<string, string> = {
+        PACOTE_LICENCIADO_NAO_EXPORTAVEL: 'Pacotes licenciados não podem ser exportados.',
+        PACOTE_MANUAL_NAO_EXPORTAVEL: 'O pacote manual não pode ser exportado.',
+      }
+      toast(msgs[code] ?? 'Erro ao exportar pacote.', 'error')
+    }
+  }
 
   const { data: templates } = useTemplates(true)
   const { data: rotinas } = useRotinas(true)
@@ -285,6 +302,18 @@ function PacoteCard({ pacote }: { pacote: PacoteInstalado }) {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {!isManual && !pacote.licenciado && (
+            <button
+              type="button"
+              onClick={handleExportar}
+              disabled={exportar.isPending}
+              className="text-text-secondary hover:text-accent transition-colors"
+              aria-label="Baixar JSON do pacote"
+              title="Baixar JSON para editar no ChatGPT"
+            >
+              {exportar.isPending ? <Spinner className="w-4 h-4" /> : <Download size={16} />}
+            </button>
+          )}
           <button
             type="button"
             onClick={handleTogglePacote}
@@ -395,10 +424,202 @@ function InstaladosTab() {
   )
 }
 
+// ── Aba de criação de pacote personalizado ────────────────────────────────────
+
+function CriarPacoteTab() {
+  const { data: pacotes } = usePacotes()
+  const { data: templates, isLoading: loadingTmpl } = useTemplates(true)
+  const { data: rotinas, isLoading: loadingRot } = useRotinas(true)
+  const gerar = useGerarPacote()
+  const { show: toast } = useToast()
+
+  const [nome, setNome] = useState('')
+  const [descricao, setDescricao] = useState('')
+  const [autor, setAutor] = useState('')
+  const [versao, setVersao] = useState('1.0')
+  const [templatesSel, setTemplatesSel] = useState<Set<string>>(new Set())
+  const [rotinasSel, setRotinasSel] = useState<Set<string>>(new Set())
+
+  const licenciadoIds = new Set(
+    (pacotes ?? []).filter((p) => p.licenciado).map((p) => p.pacote_id)
+  )
+
+  function isLicenciado(pacote_id?: string) {
+    return !!pacote_id && pacote_id !== 'manual' && licenciadoIds.has(pacote_id)
+  }
+
+  function toggleSet(set: Set<string>, id: string): Set<string> {
+    const next = new Set(set)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    return next
+  }
+
+  async function handleGerar() {
+    if (!nome.trim()) return
+    try {
+      const data = await gerar.mutateAsync({
+        nome: nome.trim(),
+        descricao: descricao.trim(),
+        autor: autor.trim(),
+        versao: versao.trim() || '1.0',
+        template_ids: [...templatesSel],
+        rotina_ids: [...rotinasSel],
+      })
+      downloadJson(data, `${nome.trim()}.json`)
+      toast('JSON gerado! Cole no ChatGPT para editar ou importe diretamente.', 'success')
+    } catch (err: any) {
+      const code = err?.response?.data?.code
+      const msgs: Record<string, string> = {
+        PACOTE_LICENCIADO_NAO_PERMITIDO: 'Um dos itens selecionados pertence a um pacote licenciado.',
+        TEMPLATE_NAO_ENCONTRADO: 'Template não encontrado.',
+        ROTINA_NAO_ENCONTRADA: 'Rotina não encontrada.',
+      }
+      const detail = err?.response?.data?.detail
+      toast(msgs[code] ?? `Erro ao gerar pacote.${detail ? ` (${detail})` : ''}`, 'error')
+    }
+  }
+
+  const isLoading = loadingTmpl || loadingRot
+
+  return (
+    <div className="space-y-4">
+      <Card className="p-5 space-y-3">
+        <p className="text-sm font-medium">Metadados do pacote</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2">
+            <label className="text-xs text-text-secondary mb-1 block">Nome *</label>
+            <input
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Ex: Treino Funcional Iniciante"
+              className="w-full rounded-lg border border-border bg-surface-secondary px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+            />
+          </div>
+          <div className="col-span-2">
+            <label className="text-xs text-text-secondary mb-1 block">Descrição</label>
+            <input
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              placeholder="Breve descrição do pacote"
+              className="w-full rounded-lg border border-border bg-surface-secondary px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-text-secondary mb-1 block">Autor</label>
+            <input
+              value={autor}
+              onChange={(e) => setAutor(e.target.value)}
+              placeholder="Seu nome"
+              className="w-full rounded-lg border border-border bg-surface-secondary px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-text-secondary mb-1 block">Versão</label>
+            <input
+              value={versao}
+              onChange={(e) => setVersao(e.target.value)}
+              placeholder="1.0"
+              className="w-full rounded-lg border border-border bg-surface-secondary px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+            />
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-5">
+        <p className="text-sm font-medium mb-3">
+          Templates{' '}
+          {templatesSel.size > 0 && (
+            <span className="text-xs text-accent ml-1">({templatesSel.size} selecionado{templatesSel.size > 1 ? 's' : ''})</span>
+          )}
+        </p>
+        {isLoading ? (
+          <div className="flex justify-center py-4"><Spinner /></div>
+        ) : !templates || templates.length === 0 ? (
+          <p className="text-xs text-text-secondary">Nenhum template disponível.</p>
+        ) : (
+          <div className="space-y-1 max-h-52 overflow-y-auto">
+            {templates.map((t) => {
+              const bloqueado = isLicenciado(t.pacote_id)
+              const selecionado = templatesSel.has(t.template_id)
+              return (
+                <label
+                  key={t.template_id}
+                  className={`flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer ${bloqueado ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-secondary'}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selecionado}
+                    disabled={bloqueado}
+                    onChange={() => !bloqueado && setTemplatesSel(toggleSet(templatesSel, t.template_id))}
+                    className="accent-accent"
+                  />
+                  <span className="text-sm flex-1">{t.nome}</span>
+                  {bloqueado && <Badge tone="accent" className="text-xs">Licenciado</Badge>}
+                </label>
+              )
+            })}
+          </div>
+        )}
+      </Card>
+
+      <Card className="p-5">
+        <p className="text-sm font-medium mb-3">
+          Rotinas{' '}
+          {rotinasSel.size > 0 && (
+            <span className="text-xs text-accent ml-1">({rotinasSel.size} selecionada{rotinasSel.size > 1 ? 's' : ''})</span>
+          )}
+        </p>
+        {isLoading ? (
+          <div className="flex justify-center py-4"><Spinner /></div>
+        ) : !rotinas || rotinas.length === 0 ? (
+          <p className="text-xs text-text-secondary">Nenhuma rotina disponível.</p>
+        ) : (
+          <div className="space-y-1 max-h-52 overflow-y-auto">
+            {rotinas.map((r) => {
+              const bloqueado = isLicenciado(r.pacote_id)
+              const selecionado = rotinasSel.has(r.rotina_id)
+              return (
+                <label
+                  key={r.rotina_id}
+                  className={`flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer ${bloqueado ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-secondary'}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selecionado}
+                    disabled={bloqueado}
+                    onChange={() => !bloqueado && setRotinasSel(toggleSet(rotinasSel, r.rotina_id))}
+                    className="accent-accent"
+                  />
+                  <span className="text-sm flex-1">{r.nome}</span>
+                  {bloqueado && <Badge tone="accent" className="text-xs">Licenciado</Badge>}
+                </label>
+              )
+            })}
+          </div>
+        )}
+      </Card>
+
+      <div className="flex justify-end">
+        <Button
+          onClick={handleGerar}
+          disabled={!nome.trim() || (templatesSel.size === 0 && rotinasSel.size === 0) || gerar.isPending}
+        >
+          {gerar.isPending ? (
+            <span className="flex items-center gap-2"><Spinner className="w-4 h-4" /> Gerando...</span>
+          ) : (
+            <span className="flex items-center gap-2"><Download size={16} /> Gerar JSON do Pacote</span>
+          )}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 // ── Página principal ──────────────────────────────────────────────────────────
 
 export function PacotesPage() {
-  const [tab, setTab] = useState<'importar' | 'instalados'>('importar')
+  const [tab, setTab] = useState<'importar' | 'instalados' | 'criar'>('importar')
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -414,6 +635,7 @@ export function PacotesPage() {
         tabs={[
           { key: 'importar', label: 'Importar' },
           { key: 'instalados', label: 'Instalados' },
+          { key: 'criar', label: 'Criar' },
         ]}
         active={tab}
         onChange={(k) => setTab(k as typeof tab)}
@@ -422,6 +644,7 @@ export function PacotesPage() {
 
       {tab === 'importar' && <ImportarTab />}
       {tab === 'instalados' && <InstaladosTab />}
+      {tab === 'criar' && <CriarPacoteTab />}
     </div>
   )
 }

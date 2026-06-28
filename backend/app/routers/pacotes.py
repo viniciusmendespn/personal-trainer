@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 
 from app.dependencies import get_current_personal_id
 from app.models.pacote import (
+    GerarPacoteBody,
     ImportarPacoteRequest,
     ImportarPacoteResponse,
     ToggleItemBody,
@@ -29,9 +30,33 @@ def importar_rascunho(
     return pacote_service.importar_rascunho(personal_id, body.conteudo)
 
 
+@router.post("/gerar", status_code=200)
+def gerar_pacote(
+    body: GerarPacoteBody,
+    personal_id: str = Depends(get_current_personal_id),
+):
+    return pacote_service.gerar_pacote(
+        personal_id,
+        body.nome,
+        body.descricao,
+        body.autor,
+        body.versao,
+        body.template_ids,
+        body.rotina_ids,
+    )
+
+
 @router.get("")
 def listar_pacotes(personal_id: str = Depends(get_current_personal_id)):
     return pacote_service.listar_pacotes(personal_id)
+
+
+@router.get("/{pacote_id}/exportar")
+def exportar_pacote(
+    pacote_id: str,
+    personal_id: str = Depends(get_current_personal_id),
+):
+    return pacote_service.exportar_pacote(personal_id, pacote_id)
 
 
 @router.patch("/{pacote_id}")

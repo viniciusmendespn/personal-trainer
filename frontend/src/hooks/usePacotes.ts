@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { pacotesApi } from '../api/pacotes'
+import type { GerarPacoteBody } from '../api/pacotes'
 
 const KEY = ['pacotes']
 
@@ -71,5 +72,17 @@ export function useRemoverPacote() {
       qc.invalidateQueries({ queryKey: ['templates'] })
       qc.invalidateQueries({ queryKey: ['rotinas'] })
     },
+  })
+}
+
+export function useExportarPacote() {
+  return useMutation({
+    mutationFn: (pacoteId: string) => pacotesApi.exportar(pacoteId),
+  })
+}
+
+export function useGerarPacote() {
+  return useMutation({
+    mutationFn: (body: GerarPacoteBody) => pacotesApi.gerar(body),
   })
 }

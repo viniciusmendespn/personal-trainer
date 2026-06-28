@@ -104,3 +104,12 @@ class TogglePacoteBody(BaseModel):
 
 class ToggleItemBody(BaseModel):
     ativo: bool
+
+
+class GerarPacoteBody(BaseModel):
+    nome: str
+    descricao: str = ""
+    autor: str = ""
+    versao: str = "1.0"
+    template_ids: list[str] = Field(default_factory=list)
+    rotina_ids: list[str] = Field(default_factory=list)
