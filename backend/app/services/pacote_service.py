@@ -126,6 +126,8 @@ def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteRespon
             nomes_existentes[nome_lower] = item["SK"].removeprefix(keys.EXLIB_PREFIX)
 
     ref_to_exlib: dict[str, str] = {}       # ref → exlib_id
+    ref_to_grupo: dict[str, str] = {}       # ref → grupo muscular
+    ref_to_tipo_exercicio: dict[str, str] = {}  # ref → tipo_exercicio
     exlib_puts: list[dict] = []
     exlib_id_to_nome: dict[str, str] = {}   # para resolução nos templates
 
@@ -134,6 +136,8 @@ def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteRespon
         if nome_lower in nomes_existentes:
             exlib_id = nomes_existentes[nome_lower]
             ref_to_exlib[ex_pkg.ref] = exlib_id
+            ref_to_grupo[ex_pkg.ref] = ex_pkg.grupo or ""
+            ref_to_tipo_exercicio[ex_pkg.ref] = ex_pkg.tipo_exercicio.value
             # busca o nome canônico do existente para manter consistência nos templates
             for raw in existentes_raw:
                 if raw["SK"] == keys.sk_exlib(exlib_id):
@@ -150,6 +154,7 @@ def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteRespon
             "exlib_id": exlib_id,
             "nome": ex_pkg.nome.strip(),
             "grupo": ex_pkg.grupo,
+            "tipo_exercicio": ex_pkg.tipo_exercicio.value,
             "video_url": ex_pkg.video_url,
             "descricao": ex_pkg.descricao,
             "recomendacoes": ex_pkg.recomendacoes,
@@ -160,6 +165,8 @@ def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteRespon
         }
         exlib_puts.append(item)
         ref_to_exlib[ex_pkg.ref] = exlib_id
+        ref_to_grupo[ex_pkg.ref] = ex_pkg.grupo or ""
+        ref_to_tipo_exercicio[ex_pkg.ref] = ex_pkg.tipo_exercicio.value
         exlib_id_to_nome[exlib_id] = ex_pkg.nome.strip()
         nomes_existentes[nome_lower] = exlib_id
 
@@ -176,13 +183,16 @@ def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteRespon
         for ex_ref_item in tmpl_pkg.exercicios:
             exlib_id = ref_to_exlib.get(ex_ref_item.ex_ref, "")
             nome_ex = exlib_id_to_nome.get(exlib_id, ex_ref_item.ex_ref)
+            grupo_ex = ref_to_grupo.get(ex_ref_item.ex_ref)
+            tipo_ex = ref_to_tipo_exercicio.get(ex_ref_item.ex_ref, "FORCA")
             exercicios.append({
                 "nome": nome_ex,
+                "grupo": grupo_ex,
                 "ordem": ex_ref_item.ordem,
                 "series_prescritas": [s.model_dump() for s in (ex_ref_item.series_prescritas or [])],
                 "intervalo_s": ex_ref_item.intervalo_s,
                 "observacoes": ex_ref_item.observacoes,
-                "tipo_exercicio": "FORCA",
+                "tipo_exercicio": tipo_ex,
             })
 
         item = {
