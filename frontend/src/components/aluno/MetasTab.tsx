@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, Check, X, Trash2, Target } from 'lucide-react'
 import { metasApi, type Meta, type MetaCreate, type MetaStatus, type MetaTipo } from '../../api/metas'
-import { Button, Card, Input, Textarea, Modal, Spinner, EmptyState, useToast, useConfirm } from '../ui'
+import { evolucaoApi } from '../../api/evolucao'
+import { Button, Card, Input, Textarea, Modal, Spinner, EmptyState, SearchableSelect, useToast, useConfirm } from '../ui'
 
 const TIPO_LABEL: Record<MetaTipo, string> = {
   CARGA: 'Carga PR',
@@ -91,6 +92,7 @@ export function MetasTab({ alunoId }: { alunoId: string }) {
 
       <Modal open={openCreate} onClose={() => setOpenCreate(false)} title="Nova meta" size="lg">
         <MetaForm
+          alunoId={alunoId}
           submitting={createMeta.isPending}
           onSubmit={(body) => createMeta.mutate(body)}
           onCancel={() => setOpenCreate(false)}
@@ -211,8 +213,9 @@ function MetaCard({
 }
 
 function MetaForm({
-  submitting, onSubmit, onCancel,
+  alunoId, submitting, onSubmit, onCancel,
 }: {
+  alunoId: string
   submitting: boolean
   onSubmit: (body: MetaCreate) => void
   onCancel: () => void
@@ -226,14 +229,26 @@ function MetaForm({
   const [campoMedida, setCampoMedida] = useState('')
   const [dataLimite, setDataLimite] = useState('')
 
+  const { data: exercicios } = useQuery({
+    queryKey: ['exercicios-plano', alunoId],
+    queryFn: () => evolucaoApi.listExercicios(alunoId),
+    enabled: tipo === 'CARGA',
+  })
+
+  const exercicioOptions = (exercicios ?? []).map((ex) => ({
+    value: ex.exercicio_id,
+    label: ex.grupo ? `${ex.nome} (${ex.grupo})` : ex.nome,
+  }))
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!titulo || !valorAlvo) return
+    if (tipo === 'CARGA' && !exercicioId) return
     onSubmit({
       tipo, titulo, descricao: descricao || undefined,
       valor_alvo: Number(valorAlvo.replace(',', '.')),
       unidade: unidade || (tipo === 'CARGA' ? 'kg' : tipo === 'PESO' ? 'kg' : ''),
-      exercicio_id: tipo === 'CARGA' ? exercicioId || undefined : undefined,
+      exercicio_id: tipo === 'CARGA' ? exercicioId : undefined,
       campo_medida: tipo === 'MEDIDA' ? campoMedida || undefined : undefined,
       data_limite: dataLimite || undefined,
     })
@@ -248,7 +263,7 @@ function MetaForm({
             <button
               key={t}
               type="button"
-              onClick={() => setTipo(t)}
+              onClick={() => { setTipo(t); setExercicioId('') }}
               className={`px-3 py-1.5 text-xs font-medium rounded-full border transition ${
                 tipo === t ? 'bg-primary text-white border-primary' : 'border-border text-text-secondary hover:border-border-strong'
               }`}
@@ -265,14 +280,24 @@ function MetaForm({
         <Input label="Unidade" value={unidade} onChange={(e) => setUnidade(e.target.value)} placeholder={tipo === 'CARGA' ? 'kg' : tipo === 'PESO' ? 'kg' : 'cm'} />
       </div>
       {tipo === 'CARGA' && (
-        <Input label="ID do exercício (opcional)" value={exercicioId} onChange={(e) => setExercicioId(e.target.value)} placeholder="Deixe vazio para qualquer exercício" />
+        <div>
+          <p className="text-xs font-medium text-text-secondary mb-1.5">Exercício</p>
+          <SearchableSelect
+            options={exercicioOptions}
+            value={exercicioId}
+            onChange={setExercicioId}
+            placeholder={exercicios ? 'Buscar exercício…' : 'Carregando…'}
+          />
+        </div>
       )}
       {tipo === 'MEDIDA' && (
         <Input label="Campo de medida (ex.: cintura)" value={campoMedida} onChange={(e) => setCampoMedida(e.target.value)} />
       )}
       <Input label="Data limite (opcional)" type="date" value={dataLimite} onChange={(e) => setDataLimite(e.target.value)} />
       <div className="flex gap-2 pt-1">
-        <Button type="submit" disabled={submitting || !titulo || !valorAlvo}>{submitting ? 'Salvando…' : 'Criar meta'}</Button>
+        <Button type="submit" disabled={submitting || !titulo || !valorAlvo || (tipo === 'CARGA' && !exercicioId)}>
+          {submitting ? 'Salvando…' : 'Criar meta'}
+        </Button>
         <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>
       </div>
     </form>
