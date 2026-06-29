@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Share2, Flame, Trophy, Dumbbell, CalendarDays, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Share2, Flame, Trophy, Dumbbell, CalendarDays, Loader2, Download } from 'lucide-react'
 import { alunoApi } from '../../api/alunoApp'
-import { Card, Spinner, Modal, EmptyState, useToast } from '../ui'
+import { Card, Spinner, Modal, Button, EmptyState, useToast } from '../ui'
 import { AlunoSessaoDetalheCard } from './SessaoDetalheCard'
-import { StoryShareCard } from './StoryShareCard'
-import { shareOrDownloadStory } from '../../utils/shareStory'
+import { shareBlob, downloadBlob } from '../../utils/shareStory'
 
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 const DIAS_SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
@@ -34,7 +33,9 @@ export function CalendarioMes() {
   const [mes, setMes] = useState(hoje.getMonth() + 1) // 1-12
   const [diaSel, setDiaSel] = useState<string | null>(null)
   const [sharing, setSharing] = useState(false)
+  const [preview, setPreview] = useState<{ url: string; blob: Blob } | null>(null)
   const toast = useToast()
+  const fileName = `coachpilot-${ano}-${String(mes).padStart(2, '0')}.png`
 
   const { data, isLoading } = useQuery({
     queryKey: ['aluno-historico-mes', ano, mes],
@@ -54,20 +55,34 @@ export function CalendarioMes() {
     setMes(m)
   }
 
-  async function compartilhar() {
+  async function gerarPreview() {
     if (!data) return
     setSharing(true)
     try {
-      const res = await shareOrDownloadStory(
-        <StoryShareCard data={data} nome={me.data?.nome} />,
-        `coachpilot-${ano}-${String(mes).padStart(2, '0')}.jpg`,
-      )
-      if (res === 'downloaded') toast.show('Imagem salva! Poste nos seus stories 🎉', 'success')
+      const { buildStoryPng } = await import('../../utils/storyImage')
+      const blob = await buildStoryPng(data, me.data?.nome)
+      setPreview({ url: URL.createObjectURL(blob), blob })
     } catch (e) {
       console.warn('[story] falhou', e)
       toast.show('Não consegui gerar a imagem. Tenta de novo.', 'error')
     } finally {
       setSharing(false)
+    }
+  }
+
+  function fecharPreview() {
+    setPreview((p) => {
+      if (p) URL.revokeObjectURL(p.url)
+      return null
+    })
+  }
+
+  async function compartilharImagem() {
+    if (!preview) return
+    const res = await shareBlob(preview.blob, fileName)
+    if (res === 'unsupported') {
+      downloadBlob(preview.blob, fileName)
+      toast.show('Imagem salva! Poste nos seus stories 🎉', 'success')
     }
   }
 
@@ -152,7 +167,7 @@ export function CalendarioMes() {
 
           {/* Compartilhar */}
           <button
-            onClick={compartilhar}
+            onClick={gerarPreview}
             disabled={sharing || !data?.dias_treinados}
             className="w-full flex items-center justify-center gap-2 rounded-xl bg-energy hover:bg-energy-hover text-[#0c1404] font-semibold py-3 transition-colors disabled:opacity-40"
           >
@@ -175,6 +190,23 @@ export function CalendarioMes() {
             </Card>
           ))}
         </div>
+      </Modal>
+
+      {/* Preview da imagem gerada */}
+      <Modal open={!!preview} onClose={fecharPreview} title="Seu mês em imagem" size="md">
+        {preview && (
+          <div className="space-y-4">
+            <img src={preview.url} alt="Prévia do story" className="w-full rounded-xl border border-border" />
+            <div className="flex gap-2">
+              <Button variant="energy" className="flex-1" onClick={compartilharImagem}>
+                <span className="flex items-center justify-center gap-1.5"><Share2 size={16} /> Compartilhar</span>
+              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => downloadBlob(preview.blob, fileName)}>
+                <span className="flex items-center justify-center gap-1.5"><Download size={16} /> Baixar</span>
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   )
