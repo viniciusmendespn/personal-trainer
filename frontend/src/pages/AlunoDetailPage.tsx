@@ -1259,7 +1259,7 @@ function ExercicioMediaModal({
             {uploading ? 'Enviando…' : 'Anexar (foto ou vídeo)'}
             <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" disabled={uploading} onChange={handleUpload} />
           </label>
-          <p className="text-xs text-text-muted mt-1">Visible ao aluno na aba Evolução.</p>
+          <p className="text-xs text-text-muted mt-1">Visível ao aluno na aba Evolução.</p>
         </div>
         {isLoading ? (
           <div className="flex justify-center py-4"><Spinner /></div>
