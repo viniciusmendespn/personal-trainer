@@ -49,6 +49,18 @@ export function useCreateAluno() {
   })
 }
 
+export function useImportarAlunos() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (alunos: AlunoCreate[]) => alunosApi.importar(alunos),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY })
+      qc.invalidateQueries({ queryKey: KEY_PAGE })
+      qc.invalidateQueries({ queryKey: PLANO_KEY })
+    },
+  })
+}
+
 export function useUpdateAluno(id: string) {
   const qc = useQueryClient()
   return useMutation({

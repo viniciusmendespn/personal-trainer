@@ -42,3 +42,13 @@ class Aluno(AlunoCreate):
     session_revoked_before: Optional[int] = None  # Unix timestamp da última revogação
     created_at: str
     updated_at: str
+
+
+class ImportarAlunosBody(BaseModel):
+    alunos: list[AlunoCreate]
+
+
+class ImportarResult(BaseModel):
+    importados: int
+    pulados: int
+    erros: list[str]

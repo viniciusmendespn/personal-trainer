@@ -1,7 +1,13 @@
 import type { ExLibCreate } from '../api/biblioteca'
+import type { AlunoCreate } from '../types'
 
 export interface CsvParseResult {
   valid: ExLibCreate[]
+  errors: string[]
+}
+
+export interface AlunosCsvParseResult {
+  valid: AlunoCreate[]
   errors: string[]
 }
 
@@ -40,6 +46,51 @@ export function parseCsvBiblioteca(text: string): CsvParseResult {
       video_url: video_url.trim() || undefined,
       descricao: descricao.trim() || undefined,
       recomendacoes: recomendacoes.trim() || undefined,
+    })
+  }
+
+  return { valid, errors }
+}
+
+export function parseCsvAlunos(text: string): AlunosCsvParseResult {
+  const valid: AlunoCreate[] = []
+  const errors: string[] = []
+
+  if (!text.trim()) return { valid, errors }
+
+  const lines = text.split('\n')
+  let headerSkipped = false
+
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i].trim()
+    if (!raw) continue
+
+    const fields = parseCsvLine(raw)
+    const firstName = fields[0]?.trim().toLowerCase()
+
+    if (!headerSkipped && firstName === 'nome') {
+      headerSkipped = true
+      continue
+    }
+
+    const [nome = '', telefone = '', email = '', data_nascimento = '', objetivos = '', endereco = '', observacoes = ''] = fields
+    const nomeTrimmed = nome.trim()
+    // telefone é a chave única — mantém apenas dígitos (a IA pode trazer "(31) 99999-8888")
+    const telefoneDigits = telefone.replace(/\D/g, '')
+
+    if (!nomeTrimmed || !telefoneDigits) {
+      errors.push(`Linha ${i + 1}: nome ou telefone vazio`)
+      continue
+    }
+
+    valid.push({
+      nome: nomeTrimmed,
+      telefone: telefoneDigits,
+      email: email.trim() || undefined,
+      data_nascimento: data_nascimento.trim() || undefined,
+      objetivos: objetivos.split(';').map((o) => o.trim()).filter(Boolean),
+      endereco: endereco.trim() || undefined,
+      observacoes: observacoes.trim() || undefined,
     })
   }
 

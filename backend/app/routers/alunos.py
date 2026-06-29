@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app import aluno_auth
 from app.dependencies import get_current_personal_id
-from app.models.aluno import Aluno, AlunoCreate, AlunoUpdate
+from app.models.aluno import Aluno, AlunoCreate, AlunoUpdate, ImportarAlunosBody, ImportarResult
 from app.models.enums import AlunoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
@@ -82,6 +82,19 @@ def list_alunos(limit: int = 50, cursor: str | None = None, personal_id: str = D
     return {"items": cleaned, "next_cursor": next_cursor}
 
 
+def _persistir_aluno(personal_id: str, aluno: Aluno) -> None:
+    """Grava perfil + ponteiro + stats (total/ativos e objetivos) de um aluno já montado.
+    A reserva do telefone único é responsabilidade do chamador (o tratamento de conflito
+    difere entre criação avulsa — 409 — e importação em lote — pulado)."""
+    data = aluno.model_dump()
+    repo.put_item(keys.pk_aluno(aluno.aluno_id), keys.SK_PROFILE, data)
+    repo.put_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno.aluno_id), _pointer(data))
+    repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add={"total": 1, "ativos": 1})
+    for obj in aluno.objetivos:
+        repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_OBJETIVOS,
+                         add={keys.normalize_objetivo(obj): 1})
+
+
 @router.post("", response_model=Aluno, status_code=201)
 def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_personal_id)):
     assinatura_service.verificar_limite_alunos(personal_id)
@@ -93,7 +106,6 @@ def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_perso
         aluno.foto_s3_key = media_service.buscar_foto_perfil_whatsapp(personal_id, aluno_id, body.telefone)
         if aluno.foto_s3_key:
             aluno.foto_url = media_service.gerar_presigned_view_url(aluno.foto_s3_key)
-    data = aluno.model_dump()
     # telefone único por personal (ESPEC §2): reserva o ponteiro antes de criar
     if body.telefone:
         ok = repo.put_item_if_absent(
@@ -103,14 +115,62 @@ def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_perso
         if not ok:
             phone_item = repo.get_item(keys.pk_phone(personal_id, body.telefone), "PHONE")
             raise _phone_conflict(phone_item.get("aluno_id") if phone_item else None)
-    repo.put_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, data)
-    repo.put_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(data))
-    repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add={"total": 1, "ativos": 1})
-    for obj in body.objetivos:
-        repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_OBJETIVOS,
-                         add={keys.normalize_objetivo(obj): 1})
+    _persistir_aluno(personal_id, aluno)
     assinatura_service.invalidate_alunos_bloqueados(personal_id)
     return aluno
+
+
+@router.post("/importar", response_model=ImportarResult, status_code=200)
+def importar_alunos(body: ImportarAlunosBody, personal_id: str = Depends(get_current_personal_id)):
+    """Importação em massa de alunos (a partir de um CSV gerado por IA). Tolerante a falhas:
+    linhas inválidas/duplicadas viram erros/pulados em vez de abortar o lote. Telefone é a
+    chave única (obrigatório). Foto do WhatsApp NÃO é buscada aqui (sincronizar depois)."""
+    pk_pt = keys.pk_personal(personal_id)
+    ponteiros = repo.query_pk(pk_pt, sk_prefix="ALUNO#")
+    telefones_existentes = {p["telefone"] for p in ponteiros if p.get("telefone")}
+
+    status = assinatura_service.get_status(personal_id)
+    limit = status["alunos_limit"]
+    count = status["alunos_count"]
+
+    importados = 0
+    pulados = 0
+    erros: list[str] = []
+
+    for i, item in enumerate(body.alunos, start=1):
+        nome = item.nome.strip()
+        telefone = (item.telefone or "").strip()
+        if not nome or not telefone:
+            erros.append(f"Linha {i}: nome ou telefone vazio — ignorada")
+            continue
+        if telefone in telefones_existentes:
+            pulados += 1
+            continue
+        if limit is not None and count >= limit:
+            restantes = len(body.alunos) - (i - 1)
+            erros.append(f"Limite do plano atingido ({limit}) — {restantes} aluno(s) não importado(s)")
+            break
+
+        aluno_id = new_id()
+        now = now_iso()
+        dados = item.model_dump()
+        dados["telefone"] = telefone
+        dados["nome"] = nome
+        aluno = Aluno(aluno_id=aluno_id, personal_id=personal_id, status=AlunoStatus.ATIVO,
+                      created_at=now, updated_at=now, **dados)
+        if not repo.put_item_if_absent(
+            keys.pk_phone(personal_id, telefone), "PHONE", {"aluno_id": aluno_id, "nome": nome}
+        ):
+            pulados += 1
+            continue
+        _persistir_aluno(personal_id, aluno)
+        telefones_existentes.add(telefone)
+        count += 1
+        importados += 1
+
+    if importados:
+        assinatura_service.invalidate_alunos_bloqueados(personal_id)
+    return ImportarResult(importados=importados, pulados=pulados, erros=erros)
 
 
 @router.get("/{aluno_id}")
