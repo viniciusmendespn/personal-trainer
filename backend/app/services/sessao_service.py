@@ -422,13 +422,15 @@ def _normalizar_grupo(grupo: str | None) -> str:
 
 
 def _dedup_grupos(grupos: list[dict]) -> list[dict]:
-    """Soma volumes de itens com mesmo grupo (normalizado) — corrige dados históricos com casing divergente."""
+    """Soma volumes de itens com mesmo grupo (normalizado).
+    O nome de exibição é grp_key.capitalize() para garantir que bate com as chaves de semanas[].grupos."""
     agg: dict[str, dict] = {}
     for g in grupos:
         grp_raw = g.get("grupo") or "Sem grupo"
         grp_key = _normalizar_grupo(grp_raw)
+        display = grp_key.capitalize()
         if grp_key not in agg:
-            agg[grp_key] = {"grupo": grp_raw, "volume": 0.0}
+            agg[grp_key] = {"grupo": display, "volume": 0.0}
         agg[grp_key]["volume"] = agg[grp_key]["volume"] + g.get("volume", 0)
     return list(agg.values())
 
@@ -620,9 +622,9 @@ def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
     for wg in wk_grupos:
         sem, grp = wg.get("semana"), wg.get("grupo")
         if sem in semanas_validas and grp:
-            grp_key = _normalizar_grupo(grp)
+            display = _normalizar_grupo(grp).capitalize()
             cur = volume_por_semana_grupo.setdefault(sem, {})
-            cur[grp_key] = cur.get(grp_key, 0) + wg.get("volume", 0)
+            cur[display] = cur.get(display, 0) + wg.get("volume", 0)
     wk_atual = _isoweek()
     streak_atual = int(st.get("streak_atual", 0))
     total_sessoes = int(st.get("total_sessoes", 0))
