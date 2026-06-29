@@ -15,6 +15,7 @@ import {
 import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar, ObjetivosPicker } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { MontarTreinoIaCallout } from '../components/MontarTreinoIaCallout'
+import { AtualizarTreinoIAModal } from '../components/AtualizarTreinoIAModal'
 import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
 import { useExerciciosAluno } from '../hooks/useEvolucao'
@@ -78,6 +79,7 @@ export function AlunoDetailPage() {
   const [tab, setTab] = useState<'perfil' | 'treinos' | 'historico' | 'frequencia' | 'metas' | 'financeiro'>('treinos')
   const [showAddTreino, setShowAddTreino] = useState(false)
   const [showAplicarRotina, setShowAplicarRotina] = useState(false)
+  const [showAtualizarIA, setShowAtualizarIA] = useState(false)
   const salvarRotina = useCreateRotinaFromAluno()
 
   async function handleSalvarRotina() {
@@ -439,10 +441,20 @@ export function AlunoDetailPage() {
             <Button variant="outline" onClick={handleSalvarRotina} disabled={salvarRotina.isPending}>
               <span className="flex items-center gap-1"><ListChecks size={16} /> {salvarRotina.isPending ? 'Salvando…' : 'Salvar rotina'}</span>
             </Button>
+            <Button variant="outline" onClick={() => setShowAtualizarIA(true)}>
+              <span className="flex items-center gap-1"><Bot size={16} /> Atualizar com IA</span>
+            </Button>
             <Button onClick={() => setShowAddTreino(true)}>
               <span className="flex items-center gap-1"><Plus size={16} /> Adicionar treino</span>
             </Button>
           </div>
+
+          <AtualizarTreinoIAModal
+            open={showAtualizarIA}
+            onClose={() => setShowAtualizarIA(false)}
+            alunoId={alunoId}
+            alunoNome={aluno?.nome}
+          />
 
           <Modal open={showAplicarRotina} onClose={() => setShowAplicarRotina(false)} title="Aplicar rotina pronta">
             <AplicarRotinaNoAluno alunoId={alunoId} temTreinos={!!treinos?.length} onDone={() => setShowAplicarRotina(false)} />

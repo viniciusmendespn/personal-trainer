@@ -11,6 +11,13 @@ export const treinosApi = {
   remove: (alunoId: string, treinoId: string) =>
     api.delete(`/v1/alunos/${alunoId}/treinos/${treinoId}`),
 
+  exportarPrograma: (alunoId: string) =>
+    api.get<object>(`/v1/alunos/${alunoId}/treinos/exportar`).then((r) => r.data),
+  importarPrograma: (alunoId: string, conteudo: string) =>
+    api
+      .post<ImportarProgramaResponse>(`/v1/alunos/${alunoId}/treinos/importar`, { conteudo })
+      .then((r) => r.data),
+
   listExercicios: (alunoId: string, treinoId: string) =>
     api.get<Exercicio[]>(`/v1/alunos/${alunoId}/treinos/${treinoId}/exercicios`).then((r) => r.data),
   createExercicio: (alunoId: string, treinoId: string, body: ExercicioCreate) =>
@@ -70,6 +77,11 @@ export const treinosApi = {
     api.post(`/v1/alunos/${alunoId}/relato/comentar`, body).then((r) => r.data),
   comentarPost: (alunoId: string, body: { post_sk: string; texto?: string; midias?: Array<{ s3_key: string; tipo: string }>; post_tipo?: string }) =>
     api.post(`/v1/alunos/${alunoId}/post/comentar`, body).then((r) => r.data),
+}
+
+export interface ImportarProgramaResponse {
+  treinos_importados: number
+  exercicios_importados: number
 }
 
 export interface Relato {

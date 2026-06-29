@@ -35,6 +35,26 @@ export function useDeleteTreino(alunoId: string) {
   })
 }
 
+export function useExportarPrograma() {
+  return useMutation({
+    mutationFn: (alunoId: string) => treinosApi.exportarPrograma(alunoId),
+  })
+}
+
+export function useImportarPrograma(alunoId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (conteudo: string) => treinosApi.importarPrograma(alunoId, conteudo),
+    onSuccess: () => {
+      // substituição total: invalida treinos + exercícios do aluno + biblioteca (auto-cadastro)
+      qc.invalidateQueries({ queryKey: ['treinos', alunoId] })
+      qc.invalidateQueries({ queryKey: ['exercicios'] })
+      qc.invalidateQueries({ queryKey: ['exercicios-aluno', alunoId] })
+      qc.invalidateQueries({ queryKey: ['biblioteca'] })
+    },
+  })
+}
+
 export function useExercicios(alunoId: string, treinoId: string) {
   return useQuery({
     queryKey: ['exercicios', alunoId, treinoId],
