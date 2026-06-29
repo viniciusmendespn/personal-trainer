@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, BellRing, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info, Repeat, Zap, AlarmClock } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, BellRing, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info, Repeat, Zap, AlarmClock, CalendarDays, List } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
-import { alunoApi, type ExSessao, type SessaoAtiva, type SessaoHistorico, type PostGlobal } from '../api/alunoApp'
+import { alunoApi, type ExSessao, type SessaoAtiva, type SessaoHistorico, type SessaoFinalizada, type PostGlobal } from '../api/alunoApp'
 import { usePushNotification } from '../hooks/usePushNotification'
 import { SeriesPrescritasCompact } from '../components/exercicios/SeriesPrescritasEditor'
 import { AlunoSessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
@@ -23,6 +23,8 @@ import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSe
 import { renderMarkdownLite } from '../components/chat/markdownLite'
 import { AlunoPerfilModal } from '../components/aluno/AlunoPerfilModal'
 import { CronometroOverlay } from '../components/aluno/CronometroOverlay'
+import { CheckinPosTreino } from '../components/aluno/CheckinPosTreino'
+import { CalendarioMes } from '../components/historico/CalendarioMes'
 import { alunoFinanceiroApi } from '../api/financeiro'
 import { PixModal } from '../components/financeiro/PixModal'
 import type { Cobranca, ExercicioSubstituto, SeriePrescrita } from '../types'
@@ -1062,14 +1064,19 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
   const [crono, setCrono] = useState<{ open: boolean; seconds?: number; label?: string }>({ open: false })
   const abrirCrono = (seconds?: number, label?: string) => setCrono({ open: true, seconds, label })
   const ses = useQuery({ queryKey: ['aluno-sessao-exs'], queryFn: alunoApi.sessaoExercicios, retry: false })
+  const [finalizada, setFinalizada] = useState<SessaoFinalizada | null>(null)
   const finish = useMutation({
     mutationFn: () => alunoApi.finish(),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['aluno-sessao'] })
-      qc.invalidateQueries({ queryKey: ['aluno-sessao-exs'] })
-      qc.invalidateQueries({ queryKey: ['aluno-sessoes'] })
-    },
+    // Mantém a sessão montada e abre a tela de check-in; só invalida (transiciona a UI)
+    // quando o aluno fecha o check-in — assim os destaques continuam visíveis no overlay.
+    onSuccess: (data) => setFinalizada(data),
   })
+  const fecharCheckin = () => {
+    setFinalizada(null)
+    qc.invalidateQueries({ queryKey: ['aluno-sessao'] })
+    qc.invalidateQueries({ queryKey: ['aluno-sessao-exs'] })
+    qc.invalidateQueries({ queryKey: ['aluno-sessoes'] })
+  }
   const cancel = useMutation({
     mutationFn: () => alunoApi.cancel(),
     onSuccess: () => {
@@ -1170,6 +1177,7 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
         initialSeconds={crono.seconds}
         label={crono.label}
       />
+      {finalizada && <CheckinPosTreino sessao={finalizada} onClose={fecharCheckin} />}
     </div>
   )
 }
@@ -1582,6 +1590,28 @@ function groupSessoesByPeriodo(sessions: SessaoHistorico[]) {
 }
 
 function HistoricoTab() {
+  const [view, setView] = useState<'mes' | 'lista'>('mes')
+  return (
+    <div className="space-y-4 pb-4">
+      <div className="flex gap-1 p-1 rounded-xl bg-surface-elevated border border-border">
+        {([['mes', 'Mês', <CalendarDays size={14} />], ['lista', 'Lista', <List size={14} />]] as const).map(([key, label, icon]) => (
+          <button
+            key={key}
+            onClick={() => setView(key)}
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-sm font-medium transition-colors ${
+              view === key ? 'bg-surface text-text shadow-[var(--shadow-card)]' : 'text-text-muted hover:text-text'
+            }`}
+          >
+            {icon} {label}
+          </button>
+        ))}
+      </div>
+      {view === 'mes' ? <CalendarioMes /> : <HistoricoLista />}
+    </div>
+  )
+}
+
+function HistoricoLista() {
   const { sessions, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useAlunoTimeline()
   const [expandedId, setExpandedId] = useState<string | null>(null)
 

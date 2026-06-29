@@ -432,6 +432,22 @@ def midia_registrar(body: MidiaRegistrarBody, ctx: dict = Depends(get_current_al
     return {"ok": 1, "midia_id": item["midia_id"]}
 
 
+class CheckinBody(BaseModel):
+    s3_key: str
+
+
+@router.post("/sessao/{sessao_id}/checkin")
+def sessao_checkin(sessao_id: str, body: CheckinBody, ctx: dict = Depends(get_current_aluno)):
+    """Vincula a foto de check-in tirada ao fim do treino à sessão (foto já enviada via presigned URL)."""
+    return sessao_service.set_checkin(ctx["aluno_id"], sessao_id, body.s3_key)
+
+
+@router.get("/historico/mes")
+def historico_mes(ano: int, mes: int, ctx: dict = Depends(get_current_aluno)):
+    """Resumo do mês p/ o calendário do histórico: dias treinados, destaques e fotos de check-in."""
+    return sessao_service.historico_mes(ctx["aluno_id"], ano, mes)
+
+
 class RelatoBody(BaseModel):
     tipo: str                          # "dor" | "duvida"
     exercicio_id: str | None = None

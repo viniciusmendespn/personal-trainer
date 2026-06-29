@@ -13,7 +13,7 @@ from fastapi import HTTPException
 from app.models.enums import Ator, CanalOrigem, Classificacao, SessaoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import badge_service, pontos_service
+from app.services import badge_service, media_service, pontos_service
 from app.utils import epoch_ms, new_id, now_iso, treino_vigente
 
 SESSION_TTL_S = 6 * 3600  # sessão abandonada cai sozinha (ESPEC §3)
@@ -163,6 +163,10 @@ def finish(aluno_id: str) -> dict:
         }
         for r in regs
     ]
+    # Destaques da sessão (alimentam o calendário do mês, o story e a retrospectiva anual).
+    # `novos_prs` já vem acumulado no item ativo via _registrar_pr_sessao() durante os registros.
+    s["volume_total"] = sum(_volume(r.get("series_exec")) for r in regs)
+    s["total_series"] = sum(len(r.get("series_exec") or []) for r in regs)
     snap = {k: v for k, v in s.items() if k not in ("PK", "SK", "ttl")}
     ts = epoch_ms()
     sk_hist = keys.sk_sessao_hist(ts, sessao_id)
@@ -280,6 +284,8 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
         repo.add_and_set(pk, keys.sk_stats_week_grupo(wk, ex_grupo_key), add={"volume": volume}, set_={"semana": wk, "grupo": ex_grupo})
         repo.add_and_set(pk, keys.sk_stats_grupo(ex_grupo_key), add={"volume": volume}, set_={"grupo": ex_grupo})
     pr_novo = _calcular_pr(pk, chave, series, ex_tipo, ex_nome)
+    if pr_novo is not None:
+        _registrar_pr_sessao(aluno_id, ex_nome, pr_novo, ex_tipo)
     return updated, pr_novo
 
 
@@ -290,6 +296,14 @@ def _volume(series: list | None) -> float:
         if cg is not None:
             v += cg * float(s.get("reps") or 0)   # reps pode vir como Decimal do DynamoDB
     return v
+
+
+def _registrar_pr_sessao(aluno_id: str, ex_nome: str | None, carga: float, tipo: str | None) -> None:
+    """Acumula um novo PR no item da sessão ativa — vira destaque do dia no histórico/story e
+    fonte da retrospectiva anual. 1 update barato; silencioso se a sessão já não existir."""
+    repo.list_append_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE, "novos_prs", {
+        "exercicio_nome": ex_nome, "carga": carga, "tipo": tipo,
+    })
 
 
 def set_series(aluno_id: str, exercicio_id: str | None, series: list,
@@ -335,6 +349,8 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
     pr_novo = None
     if not substituto_nome:
         pr_novo = _calcular_pr(pk, chave, series, ex_tipo, ex_nome)
+    if pr_novo is not None:
+        _registrar_pr_sessao(aluno_id, ex_nome, pr_novo, ex_tipo)
     return updated, pr_novo
 
 
@@ -589,6 +605,64 @@ def list_sessoes(aluno_id: str, limit: int = 10, cursor: str | None = None) -> t
     )
     items = [i for i in items if i.get("SK") != keys.SK_SESSION_ACTIVE][:limit]
     return repo.clean_all(items), next_cursor
+
+
+def set_checkin(aluno_id: str, sessao_id: str, s3_key: str) -> dict:
+    """Vincula a foto de check-in (já enviada via presigned URL) ao item histórico da sessão.
+    Resolve o SK arquivado pelo ponteiro SESSAO_IDX (mesmo caminho do detalhe da sessão)."""
+    pk = keys.pk_aluno(aluno_id)
+    idx = repo.get_item(pk, keys.sk_sessao_idx(sessao_id))
+    if not idx or not idx.get("sk"):
+        raise HTTPException(404, "Sessão não encontrada")
+    if repo.update_item_if_exists(pk, idx["sk"], {"checkin_s3_key": s3_key}) is None:
+        raise HTTPException(404, "Sessão não encontrada")
+    return {"ok": 1}
+
+
+def historico_mes(aluno_id: str, ano: int, mes: int) -> dict:
+    """Resumo do mês para o calendário do app do aluno: 1 sessão finalizada = 1 dia treinado,
+    com destaques leves (volume, séries, novos PRs) e a foto de check-in (presigned). Lê só as
+    sessões do mês via BETWEEN no SK por epoch-ms — sem varrer o histórico inteiro."""
+    if not 1 <= mes <= 12:
+        raise HTTPException(400, "Mês inválido")
+    pk = keys.pk_aluno(aluno_id)
+    inicio = datetime(ano, mes, 1, tzinfo=timezone.utc)
+    fim = datetime(ano + (mes // 12), (mes % 12) + 1, 1, tzinfo=timezone.utc)
+    low = keys.sk_sessao_hist(f"{int(inicio.timestamp() * 1000):013d}", "")
+    high = keys.sk_sessao_hist(f"{int(fim.timestamp() * 1000):013d}", "")
+    dias: dict[str, list] = {}
+    volume_total = 0.0
+    prs_total = 0
+    for raw in repo.query_between(pk, low, high):
+        s = repo.clean(raw)
+        dia = (s.get("data_hora_inicio") or "")[:10]
+        if not dia:
+            continue
+        novos_prs = s.get("novos_prs") or []
+        vol = s.get("volume_total") or 0
+        volume_total += vol
+        prs_total += len(novos_prs)
+        checkin_key = s.get("checkin_s3_key")
+        dias.setdefault(dia, []).append({
+            "sessao_id": s.get("sessao_id"),
+            "treino_nome": s.get("treino_nome"),
+            "duracao_segundos": s.get("duracao_segundos"),
+            "volume_total": vol,
+            "total_series": s.get("total_series"),
+            "novos_prs": novos_prs,
+            "checkin_url": media_service.gerar_presigned_view_url(checkin_key) if checkin_key else None,
+        })
+    st = repo.clean(repo.get_item(pk, keys.SK_STATS_ALUNO)) or {}
+    return {
+        "ano": ano,
+        "mes": mes,
+        "dias": dias,
+        "dias_treinados": len(dias),
+        "volume_total": volume_total,
+        "prs_total": prs_total,
+        "streak_atual": st.get("streak_atual", 0),
+        "streak_maximo": st.get("streak_maximo", 0),
+    }
 
 
 def list_exercicios_aluno(aluno_id: str) -> list[dict]:

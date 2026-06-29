@@ -2,6 +2,7 @@ import { alunoClient } from './alunoClient'
 import type { Exercicio, ExercicioSubstituto, Treino } from '../types'
 import type { Evolucao, Resumo } from './evolucao'
 import type { FeedItem, MidiaExercicio, Relato } from './treinos'
+import { prepareMediaForUpload } from '../utils/media'
 
 export interface SessaoAtiva {
   sessao_id: string
@@ -57,6 +58,45 @@ export interface SerieInput {
   carga?: string
   reps?: number
   rpe?: number
+}
+
+export interface NovoPR {
+  exercicio_nome?: string
+  carga: number
+  tipo?: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL'
+}
+
+/** Resposta de finalizar treino — destaques da sessão p/ a tela de check-in pós-treino. */
+export interface SessaoFinalizada {
+  sessao_id: string
+  treino_nome?: string
+  duracao_segundos?: number
+  volume_total?: number
+  total_series?: number
+  novos_prs?: NovoPR[]
+}
+
+/** Uma sessão finalizada num dia do calendário (resumo leve). */
+export interface DiaSessao {
+  sessao_id: string
+  treino_nome?: string
+  duracao_segundos?: number
+  volume_total?: number
+  total_series?: number
+  novos_prs?: NovoPR[]
+  checkin_url?: string | null
+}
+
+/** Resumo do mês para o calendário do histórico. */
+export interface HistoricoMes {
+  ano: number
+  mes: number
+  dias: Record<string, DiaSessao[]>
+  dias_treinados: number
+  volume_total: number
+  prs_total: number
+  streak_atual: number
+  streak_maximo: number
 }
 
 export interface ExSessao {
@@ -133,7 +173,9 @@ export const alunoApi = {
   sessaoExercicios: () => alunoClient.get<SessaoExercicios | null>('/v1/aluno/sessao/exercicios').then((r) => r.data),
   start: (treino_id: string) => alunoClient.post<SessaoAtiva>('/v1/aluno/sessao/start', { treino_id }).then((r) => r.data),
   advance: () => alunoClient.post('/v1/aluno/sessao/advance').then((r) => r.data),
-  finish: () => alunoClient.post('/v1/aluno/sessao/finish').then((r) => r.data),
+  finish: () => alunoClient.post<SessaoFinalizada>('/v1/aluno/sessao/finish').then((r) => r.data),
+  checkinSessao: (sessaoId: string, s3Key: string) =>
+    alunoClient.post(`/v1/aluno/sessao/${sessaoId}/checkin`, { s3_key: s3Key }).then((r) => r.data),
   cancel: () => alunoClient.post('/v1/aluno/sessao/cancel').then((r) => r.data),
   registrar: (series: SerieInput[], exercicio_id?: string, substituto_nome?: string) =>
     alunoClient.post<{ pr_novo?: number }>('/v1/aluno/registros', { series, exercicio_id, substituto_nome }).then((r) => r.data),
@@ -162,6 +204,8 @@ export const alunoApi = {
       .then((r) => r.data),
   sessaoDetalhe: (sessaoId: string) =>
     alunoClient.get<SessaoHistorico>(`/v1/aluno/sessoes/${sessaoId}`).then((r) => r.data),
+  historicoMes: (ano: number, mes: number) =>
+    alunoClient.get<HistoricoMes>('/v1/aluno/historico/mes', { params: { ano, mes } }).then((r) => r.data),
 
   notificacoes: (params?: { cursor?: string; limit?: number }) =>
     alunoClient
@@ -252,4 +296,12 @@ export async function anexarMidiaExecucao(file: File, exercicioId: string, exerc
   await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
   const tipo = file.type.startsWith('video') ? 'video_execucao' : 'foto_exercicio'
   return alunoApi.registrarMidia(s3_key, tipo, exercicioId, exercicioNome)
+}
+
+/** Comprime a foto de check-in, sobe pro S3 (presigned) e vincula à sessão finalizada. */
+export async function enviarCheckin(sessaoId: string, file: File) {
+  const prepared = await prepareMediaForUpload(file)
+  const { upload_url, s3_key } = await alunoApi.midiaUploadUrl(prepared.name, prepared.type)
+  await fetch(upload_url, { method: 'PUT', body: prepared, headers: { 'Content-Type': prepared.type } })
+  return alunoApi.checkinSessao(sessaoId, s3_key)
 }
