@@ -25,6 +25,8 @@ que só um treino tenha mudado. Mantenha exatamente a mesma estrutura. **Respond
 sem explicações antes ou depois (pode dar um resumo curto ANTES do bloco, se o personal pedir, mas o JSON
 final precisa estar completo e isolado em um bloco de código).
 
+> ⚠️ **IMPORTANTE:** Exiba o JSON diretamente no chat como texto, dentro de um bloco de código (` ```json ... ``` `). **NÃO crie um arquivo para download** — o personal precisa copiar o texto da tela e colar no CoachPilot.
+
 **Regras de ouro:**
 - NUNCA invente dados que destruam o que o personal montou — preserve o que não foi pedido para mudar.
 - Mantenha os exercícios em ordem lógica dentro de cada treino (a ordem do array é a ordem de execução).
