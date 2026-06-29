@@ -276,8 +276,9 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
         wk = _isoweek()
         repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_volume": volume}, set_={"ultimo_treino": now_iso()})
         repo.add_and_set(pk, keys.sk_stats_week(wk), add={"volume": volume}, set_={"semana": wk})
-        repo.add_and_set(pk, keys.sk_stats_week_grupo(wk, ex_grupo), add={"volume": volume}, set_={"semana": wk, "grupo": ex_grupo})
-        repo.add_and_set(pk, keys.sk_stats_grupo(ex_grupo), add={"volume": volume}, set_={"grupo": ex_grupo})
+        ex_grupo_key = _normalizar_grupo(ex_grupo)
+        repo.add_and_set(pk, keys.sk_stats_week_grupo(wk, ex_grupo_key), add={"volume": volume}, set_={"semana": wk, "grupo": ex_grupo})
+        repo.add_and_set(pk, keys.sk_stats_grupo(ex_grupo_key), add={"volume": volume}, set_={"grupo": ex_grupo})
     pr_novo = _calcular_pr(pk, chave, series, ex_tipo, ex_nome)
     return updated, pr_novo
 
@@ -328,8 +329,9 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
         wk = _isoweek()
         repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_volume": delta}, set_={"ultimo_treino": now_iso()})
         repo.add_and_set(pk, keys.sk_stats_week(wk), add={"volume": delta}, set_={"semana": wk})
-        repo.add_and_set(pk, keys.sk_stats_week_grupo(wk, ex_grupo), add={"volume": delta}, set_={"semana": wk, "grupo": ex_grupo})
-        repo.add_and_set(pk, keys.sk_stats_grupo(ex_grupo), add={"volume": delta}, set_={"grupo": ex_grupo})
+        ex_grupo_key = _normalizar_grupo(ex_grupo)
+        repo.add_and_set(pk, keys.sk_stats_week_grupo(wk, ex_grupo_key), add={"volume": delta}, set_={"semana": wk, "grupo": ex_grupo})
+        repo.add_and_set(pk, keys.sk_stats_grupo(ex_grupo_key), add={"volume": delta}, set_={"grupo": ex_grupo})
     pr_novo = None
     if not substituto_nome:
         pr_novo = _calcular_pr(pk, chave, series, ex_tipo, ex_nome)
@@ -409,6 +411,26 @@ def chave_exercicio(nome: str | None) -> str:
         return ""
     sem_acento = unicodedata.normalize("NFKD", nome).encode("ascii", "ignore").decode()
     return " ".join(sem_acento.lower().split())
+
+
+def _normalizar_grupo(grupo: str | None) -> str:
+    """Chave canônica do grupo muscular para SK do DynamoDB (lowercase, sem acento, sem espaço extra)."""
+    if not grupo:
+        return "sem grupo"
+    sem_acento = unicodedata.normalize("NFKD", grupo).encode("ascii", "ignore").decode()
+    return " ".join(sem_acento.lower().split())
+
+
+def _dedup_grupos(grupos: list[dict]) -> list[dict]:
+    """Soma volumes de itens com mesmo grupo (normalizado) — corrige dados históricos com casing divergente."""
+    agg: dict[str, dict] = {}
+    for g in grupos:
+        grp_raw = g.get("grupo") or "Sem grupo"
+        grp_key = _normalizar_grupo(grp_raw)
+        if grp_key not in agg:
+            agg[grp_key] = {"grupo": grp_raw, "volume": 0.0}
+        agg[grp_key]["volume"] = agg[grp_key]["volume"] + g.get("volume", 0)
+    return list(agg.values())
 
 
 def nome_por_exercicio_id(aluno_id: str, exercicio_id: str) -> str | None:
@@ -598,7 +620,9 @@ def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
     for wg in wk_grupos:
         sem, grp = wg.get("semana"), wg.get("grupo")
         if sem in semanas_validas and grp:
-            volume_por_semana_grupo.setdefault(sem, {})[grp] = wg.get("volume", 0)
+            grp_key = _normalizar_grupo(grp)
+            cur = volume_por_semana_grupo.setdefault(sem, {})
+            cur[grp_key] = cur.get(grp_key, 0) + wg.get("volume", 0)
     wk_atual = _isoweek()
     streak_atual = int(st.get("streak_atual", 0))
     total_sessoes = int(st.get("total_sessoes", 0))
@@ -625,7 +649,7 @@ def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
             key=lambda x: x.get("carga") or 0, reverse=True,
         ),
         "volume_por_grupo": sorted(
-            [{"grupo": g.get("grupo"), "volume": g.get("volume", 0)} for g in grupos_totais],
+            _dedup_grupos(grupos_totais),
             key=lambda x: x.get("volume") or 0, reverse=True,
         ),
     }
