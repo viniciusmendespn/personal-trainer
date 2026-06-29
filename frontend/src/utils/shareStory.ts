@@ -18,8 +18,26 @@ export async function renderStoryToBlob(node: ReactElement): Promise<Blob> {
 
   const root = createRoot(container)
   root.render(node)
-  // Espera o React pintar e as imagens (fotos de check-in) carregarem antes de capturar.
+  // Espera o React pintar antes de medir/aguardar recursos.
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+
+  // Garante que as webfonts (Sora/Inter) estejam prontas — senão o html2canvas captura
+  // a fonte de fallback do sistema e o texto sai "errado"/desalinhado.
+  if (document.fonts) {
+    try {
+      await Promise.all([
+        document.fonts.load('800 1px Sora'),
+        document.fonts.load('700 1px Sora'),
+        document.fonts.load('700 1px Inter'),
+        document.fonts.load('500 1px Inter'),
+      ])
+      await document.fonts.ready
+    } catch {
+      /* fontes indisponíveis — segue com o fallback */
+    }
+  }
+
+  // Espera as imagens (foto de check-in + logo) carregarem antes de capturar.
   const imgs = Array.from(container.querySelectorAll('img'))
   await Promise.all(
     imgs.map((img) =>
@@ -37,11 +55,11 @@ export async function renderStoryToBlob(node: ReactElement): Promise<Blob> {
     const canvas = await html2canvas(target, {
       width: STORY_W,
       height: STORY_H,
-      scale: 1,
+      scale: 2, // saída 2160×3840 — texto nítido; o Instagram reescala bem
       backgroundColor: '#08070d',
       useCORS: true,
     })
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92))
     if (!blob) throw new Error('Falha ao gerar a imagem do story')
     return blob
   } finally {
@@ -53,7 +71,7 @@ export async function renderStoryToBlob(node: ReactElement): Promise<Blob> {
 /** Gera o story e compartilha via Web Share API (mobile); cai para download no desktop. */
 export async function shareOrDownloadStory(node: ReactElement, filename: string): Promise<'shared' | 'downloaded'> {
   const blob = await renderStoryToBlob(node)
-  const file = new File([blob], filename, { type: 'image/png' })
+  const file = new File([blob], filename, { type: 'image/jpeg' })
   const nav = navigator as Navigator & { canShare?: (data?: ShareData) => boolean }
 
   if (nav.canShare && nav.canShare({ files: [file] })) {

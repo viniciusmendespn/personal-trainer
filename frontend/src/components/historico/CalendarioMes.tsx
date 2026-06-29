@@ -60,7 +60,7 @@ export function CalendarioMes() {
     try {
       const res = await shareOrDownloadStory(
         <StoryShareCard data={data} nome={me.data?.nome} />,
-        `coachpilot-${ano}-${String(mes).padStart(2, '0')}.png`,
+        `coachpilot-${ano}-${String(mes).padStart(2, '0')}.jpg`,
       )
       if (res === 'downloaded') toast.show('Imagem salva! Poste nos seus stories 🎉', 'success')
     } catch (e) {
