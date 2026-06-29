@@ -27,9 +27,9 @@ def _processar_dia_treinos(data: str) -> int:
                 nome = it.get("aluno_nome") or "um aluno"
                 tnome = it.get("treino_nome") or "Treino"
                 notif_service.criar(
-                    personal_id, "TREINO_FIM", "Treino chegou ao fim",
-                    f"O treino '{tnome}' de {nome} venceu em {it.get('data_fim')}. "
-                    f"Hora de renovar ou atualizar.", aluno_id=it.get("aluno_id"))
+                    personal_id, "TREINO_FIM", "Treino vence amanhã",
+                    f"O treino '{tnome}' de {nome} vence amanhã ({it.get('data_fim')}). "
+                    f"Atualize ou renove antes que expire.", aluno_id=it.get("aluno_id"))
             n += 1
         if cursor is None:
             break
@@ -107,7 +107,8 @@ def handler(event, context):
     assinatura_aviso_total = 0
     for i in range(_JANELA_DIAS, -1, -1):
         data = (hoje - timedelta(days=i)).isoformat()
-        treinos_total += _processar_dia_treinos(data)
+        data_treino_aviso = (hoje - timedelta(days=i - 1)).isoformat()
+        treinos_total += _processar_dia_treinos(data_treino_aviso)
         billing_gerar_total += _processar_dia_billing_gerar(data)
         billing_vencer_total += _processar_dia_billing_vencer(data)
         assinatura_aviso_total += _processar_dia_assinatura_aviso(data)
