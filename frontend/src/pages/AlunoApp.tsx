@@ -443,7 +443,12 @@ export function AlunoApp() {
             </div>
           )}
         </button>
-        <h1 className="font-display text-lg font-bold text-text truncate min-w-0 flex-1">Olá, {me.data?.nome ?? 'aluno'}</h1>
+        <div className="flex flex-col min-w-0 flex-1">
+          <h1 className="font-display text-lg font-bold text-text truncate leading-tight">Olá, {me.data?.nome ?? 'aluno'}</h1>
+          <p className="text-xs text-text-muted capitalize leading-tight">
+            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </p>
+        </div>
         <div className="flex items-center gap-1 shrink-0">
           {!isStandalone && (
             <button
