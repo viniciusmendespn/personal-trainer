@@ -38,6 +38,14 @@ const chartTip = {
   fontSize: 12,
 }
 const axisTick = { fill: 'var(--color-text-secondary)', fontSize: 12 }
+const PALETA_GRUPOS = [
+  'var(--color-accent)',
+  'var(--color-energy)',
+  'var(--color-success)',
+  'var(--color-warning)',
+  'var(--color-danger)',
+  'var(--color-info)',
+]
 
 function formatDiaCompleto(iso: string) {
   const d = new Date(iso)
@@ -1728,6 +1736,24 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
     [resumo.data]
   )
 
+  const gruposNomes = useMemo(() => {
+    if (resumo.data?.volume_por_grupo?.length)
+      return resumo.data.volume_por_grupo.map((g) => g.grupo)
+    const set = new Set<string>()
+    for (const w of resumo.data?.semanas ?? [])
+      Object.keys(w.grupos ?? {}).forEach((g) => set.add(g))
+    return Array.from(set)
+  }, [resumo.data])
+
+  const semanasPorGrupo = useMemo(
+    () =>
+      (resumo.data?.semanas ?? []).map((w) => ({
+        semana: w.semana.replace(/^\d+-/, ''),
+        ...Object.fromEntries(gruposNomes.map((g) => [g, w.grupos?.[g] ?? 0])),
+      })),
+    [resumo.data, gruposNomes]
+  )
+
   const prsFiltrados = useMemo(
     () => (resumo.data?.prs ?? []).filter((p) => p.exercicio.toLowerCase().includes(prQuery.toLowerCase())),
     [resumo.data, prQuery]
@@ -1868,18 +1894,43 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
         !semanas.length ? (
           <p className="text-text-muted text-sm">Sem dados de volume ainda.</p>
         ) : (
-          <Card variant="elevated">
-            <p className="text-sm text-text-secondary mb-3">Volume por semana (kg)</p>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={semanas} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis dataKey="semana" tick={axisTick} stroke="var(--color-border-strong)" />
-                <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
-                <Tooltip contentStyle={chartTip} />
-                <Bar dataKey="volume" fill="var(--color-accent)" radius={[6, 6, 0, 0]} name="Volume (kg)" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
+          <>
+            <Card variant="elevated">
+              <p className="text-sm text-text-secondary mb-3">Volume por semana (kg)</p>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={semanas} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                  <XAxis dataKey="semana" tick={axisTick} stroke="var(--color-border-strong)" />
+                  <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
+                  <Tooltip contentStyle={chartTip} />
+                  <Bar dataKey="volume" fill="var(--color-accent)" radius={[6, 6, 0, 0]} name="Volume (kg)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+            {gruposNomes.length > 0 && (
+              <Card variant="elevated">
+                <p className="text-sm text-text-secondary mb-3">Volume por grupo muscular (kg)</p>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={semanasPorGrupo} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                    <XAxis dataKey="semana" tick={axisTick} stroke="var(--color-border-strong)" />
+                    <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
+                    <Tooltip contentStyle={chartTip} />
+                    {gruposNomes.map((g, i) => (
+                      <Bar
+                        key={g}
+                        dataKey={g}
+                        stackId="grupo"
+                        fill={PALETA_GRUPOS[i % PALETA_GRUPOS.length]}
+                        name={g}
+                        radius={i === gruposNomes.length - 1 ? [6, 6, 0, 0] : undefined}
+                      />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+            )}
+          </>
         )
       )}
 
