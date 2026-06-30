@@ -153,8 +153,8 @@ const TIPO_OPTIONS: { value: TipoExercicio; label: string }[] = [
   { value: 'PERFORMANCE', label: 'Performance' },
 ]
 const DIRECAO_OPTIONS: { value: MetricaDirecao; label: string }[] = [
-  { value: 'MAIOR', label: 'Maior é melhor' },
-  { value: 'MENOR', label: 'Menor é melhor' },
+  { value: 'MAIOR', label: '↑ Maior' },
+  { value: 'MENOR', label: '↓ Menor' },
 ]
 const UNIDADE_PRESETS = ['reps', 's', 'min', 'h', 'km', 'm', 'voltas', 'cal', 'passos']
 
@@ -285,37 +285,45 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
 
                 {/* Unidade + direção (Performance) */}
                 {tipo === 'PERFORMANCE' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <Input
-                        label="Unidade da métrica" list={unidadeListId} maxLength={7}
-                        placeholder="ex.: km, min, voltas"
-                        value={ex.unidade_reps ?? ''}
-                        onChange={(e) => updateEx(i, { unidade_reps: e.target.value.slice(0, 7) || undefined })}
-                      />
-                      <datalist id={unidadeListId}>
-                        {UNIDADE_PRESETS.map((u) => <option key={u} value={u} />)}
-                      </datalist>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-text-secondary mb-2">Evolução =</p>
-                      <div className="flex gap-2">
-                        {DIRECAO_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => updateEx(i, { metrica_direcao: opt.value })}
-                            className={`flex-1 text-xs py-1.5 px-2 rounded-lg border transition-colors ${
-                              (ex.metrica_direcao ?? 'MAIOR') === opt.value
-                                ? 'border-accent bg-accent/10 text-accent-hover font-medium'
-                                : 'border-border text-text-muted hover:border-border-strong'
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
+                  <div className="rounded-lg border border-border bg-white/5 p-3 space-y-3">
+                    <p className="text-xs font-medium text-text-secondary">Métrica de performance</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-text-muted mb-1 block">Unidade</label>
+                        <Input
+                          list={unidadeListId} maxLength={7}
+                          placeholder="ex.: km, min, voltas"
+                          value={ex.unidade_reps ?? ''}
+                          onChange={(e) => updateEx(i, { unidade_reps: e.target.value.slice(0, 7) || undefined })}
+                        />
+                        <datalist id={unidadeListId}>
+                          {UNIDADE_PRESETS.map((u) => <option key={u} value={u} />)}
+                        </datalist>
+                      </div>
+                      <div>
+                        <label className="text-xs text-text-muted mb-1 block">O que é evoluir?</label>
+                        <div className="flex gap-2">
+                          {DIRECAO_OPTIONS.map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => updateEx(i, { metrica_direcao: opt.value })}
+                              className={`flex-1 text-xs py-2 px-2 rounded-lg border transition-colors ${
+                                (ex.metrica_direcao ?? 'MAIOR') === opt.value
+                                  ? 'border-accent bg-accent/10 text-accent-hover font-medium'
+                                  : 'border-border text-text-muted hover:border-border-strong'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
+                    <p className="text-xs text-text-muted">
+                      Número por série nessa unidade (≤7 caracteres) — entra no gráfico e no PR.
+                      Use <b>↓ Menor</b> quando diminuir significa evoluir (tempo/pace).
+                    </p>
                   </div>
                 )}
 
