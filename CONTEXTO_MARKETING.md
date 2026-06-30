@@ -10,8 +10,12 @@
 
 **CoachPilot** é um SaaS de gestão para personal trainers e estúdios de treinamento: substitui
 planilhas, papel e WhatsApp manual por uma plataforma única que organiza alunos, treinos, agenda,
-avaliações físicas e evolução — com um **app exclusivo para o aluno (PWA)** e um **assistente de
-IA via WhatsApp** que tira dúvidas e registra a execução dos treinos.
+avaliações físicas e evolução. Seu maior diferencial é a **operação por linguagem natural**: o
+personal cadastra alunos, monta treinos completos e ajusta programas **conversando — por texto ou
+voz — com o próprio ChatGPT/Claude/Gemini** (que "conhece" o CoachPilot via prompts prontos) e
+importa tudo com 1 clique, sem digitar série a série. Inclui ainda um **app exclusivo para o aluno
+(PWA)** e, como add-on opcional, um **Assistente IA do aluno via WhatsApp** que tira dúvidas e
+registra a execução dos treinos.
 
 **Nome do produto:** CoachPilot
 **Categoria:** SaaS / Software de gestão para personal trainers (fitness management software)
@@ -19,6 +23,7 @@ IA via WhatsApp** que tira dúvidas e registra a execução dos treinos.
 **Landing page (produção):** https://coachpilot.com.br (domínio próprio — Route53 + ACM +
 CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, não usar em divulgação)
 **App do aluno:** https://app.coachpilot.com.br (PWA separado, sem instalação de loja)
+**Instagram oficial:** https://instagram.com/coachpilotoficial (@coachpilotoficial)
 **Status:** produto em produção, em fase de aquisição de primeiros clientes pagantes
 
 ---
@@ -56,6 +61,11 @@ CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, nã
 
 ## 4. Benefícios / proposta de valor
 
+- **Cadastre conversando com a IA (grátis)**: o trabalho mais braçal do personal — digitar série a
+  série o treino de cada aluno — vira uma conversa. Por texto ou voz, no seu próprio ChatGPT/Claude/
+  Gemini, você monta treinos completos, cria pacotes (ABC, ABCDE…), importa/migra alunos em massa
+  (de planilha, PDF ou print) e ajusta o programa de um aluno em segundos. A IA gera, você revisa e
+  importa com 1 clique. Sem custo extra — usa a IA que você já tem.
 - **Tudo em um só lugar**: alunos, treinos, agenda, avaliações físicas e evolução, sem planilhas
   soltas.
 - **Economia de tempo**: templates de treino reutilizáveis, rotinas de split completo (ABC,
@@ -68,8 +78,9 @@ CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, nã
 - **Engajamento gamificado**: ranking de frequência/desempenho e sistema de badges/conquistas
   (ex.: "Primeira Passada", "Consistência — 25 sessões", "Centenário — 100 sessões", streak de
   semanas seguidas treinando) — vira competição saudável entre alunos.
-- **Assistente de IA 24h no WhatsApp**: o aluno tira dúvida de treino e recebe orientação a
-  qualquer hora, sem depender do personal estar disponível.
+- **Assistente IA do aluno 24h no WhatsApp (add-on)**: o aluno tira dúvida de treino e recebe
+  orientação a qualquer hora, sem depender do personal estar disponível. É um add-on pago por aluno
+  — não confundir com a operação por IA do personal (grátis), citada acima.
 - **Rastreabilidade total**: cada registro do aluno (carga, repetição, RPE, foto, vídeo, relato de
   dor) fica vinculado a um treino e exercício específico — nada fica "solto"; relato de dor gera
   alerta imediato para o personal.
@@ -89,7 +100,8 @@ CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, nã
 
 | Funcionalidade | Descrição |
 |---|---|
-| Gestão de alunos | Cadastro, histórico e timeline de evolução de cada aluno, sem limite de quantidade. Inclui notas internas, endereço, email e data de nascimento |
+| **Operação por IA (linguagem natural)** | **Diferencial nº 1, grátis.** O personal usa o próprio ChatGPT/Claude/Gemini (texto ou voz) + prompts prontos da plataforma para: montar pacotes de treino completos, atualizar o programa de um aluno e importar/migrar alunos em massa. A IA gera o JSON/CSV, o personal revisa e importa com 1 clique. Não escreve direto no sistema — é geração + importação assistida |
+| Gestão de alunos | Cadastro, histórico e timeline de evolução de cada aluno, sem limite de quantidade. Inclui notas internas, endereço, email e data de nascimento. Importação em massa via IA (a partir de planilha/PDF/print) |
 | Treinos e templates | Criação de treinos com séries/reps/carga prescrita/intervalo; templates reutilizáveis aplicáveis a múltiplos alunos com um clique |
 | Rotinas de treino | Split completo (ex.: rotina ABC ou ABCDE) criado juntando templates ou salvo a partir dos treinos de um aluno — aplicável a vários alunos de uma vez (modo adicionar ou substituir) |
 | Pacotes de treino (.cpkg) | Pacotes prontos com exercícios, templates e rotinas empacotados num arquivo .cpkg — importáveis com um clique, criados com ajuda de IA ou editados manualmente; suporte a pacotes licenciados com token de uso único |
@@ -101,7 +113,7 @@ CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, nã
 | Agenda | Agendamento de sessões com lembretes automáticos via WhatsApp |
 | App do aluno (PWA) | Instalável no celular sem loja de apps; treino do dia, evolução, notificações push |
 | Ranking e gamificação | Ranking de frequência/desempenho + badges/conquistas (sessões e streaks) |
-| Assistente via WhatsApp (IA) | Agente conversacional que entende contexto (treino/exercício atual), desambigua perguntas, registra carga/reps/RPE, recebe fotos e vídeos, prioriza relatos de dor com alerta automático ao personal |
+| Assistente IA do aluno (add-on, via chat/WhatsApp) | Agente conversacional usado pelo **aluno**: entende contexto (treino/exercício atual), desambigua perguntas, registra carga/reps/RPE, recebe fotos e vídeos, prioriza relatos de dor com alerta automático ao personal. Add-on pago por aluno habilitado — distinto da operação por IA do personal |
 | Feed / postagens | Feed de exercícios e posts com mídia (foto/vídeo) vinculados a treino/exercício |
 | Recursos educacionais | Materiais de apoio (texto, foto, vídeo) vinculados a exercícios — o aluno acessa tocando no ícone de livro durante o treino |
 | Notificações automáticas | Lembrete de treino, avaliação e renovação, via push/WhatsApp |
@@ -112,7 +124,7 @@ CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, nã
 | Notificações / Pendências | Central de alertas: dores, dúvidas, mídias, metas atingidas, treinos vencendo — tudo organizado com ação direta |
 | Financeiro dos alunos | Cobranças recorrentes (mensal/anual) ou avulsas, controle de pagamentos, integração Pix via Mercado Pago (o aluno paga diretamente pelo app) |
 | Biblioteca de materiais | Upload de PDFs, vídeos e arquivos para os alunos baixarem no app |
-| Base de IA | Arquivos de conhecimento (protocolos, FAQs) que o agente de IA usa para responder os alunos |
+| Base de IA | Arquivos de conhecimento (protocolos, FAQs) que o Assistente IA do aluno usa para responder os alunos |
 | Multicanal | Tudo funciona tanto pelo portal web quanto pelo WhatsApp, mantendo o mesmo vínculo de contexto |
 | Indique e Ganhe | Código de indicação exclusivo: quem recebe ganha 30 dias grátis; quando vira assinante, quem indicou também ganha 30 dias |
 | Tema claro/escuro | Portal e app suportam modo claro, escuro e automático (segue o sistema) |
@@ -121,16 +133,26 @@ CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, nã
 
 ## 6. Diferencial central (mecanismo único de venda)
 
-> **"Nenhuma informação do aluno fica solta."**
+> **"Pare de digitar série a série. Converse com a IA — ela cadastra por você."**
+
+O maior gargalo do personal é o trabalho braçal: montar e digitar, exercício por exercício, o
+treino de cada aluno. O CoachPilot transforma isso em **conversa em linguagem natural**: o personal
+fala (texto ou voz) com o **próprio ChatGPT/Claude/Gemini** usando os prompts prontos da plataforma,
+e a IA devolve treinos completos, ajustes de programa ou listas de alunos prontos para importar com
+1 clique. É **grátis** (usa a IA que o personal já tem) e o personal **sempre revisa antes de
+importar** — a IA gera, ela não escreve direto no sistema.
+
+> Diferencial de apoio: **"Nenhuma informação do aluno fica solta."**
 
 Todo dado que entra no sistema — mensagem, foto, vídeo, carga, repetição, relato de dor — é
 vinculado obrigatoriamente a um aluno, um treino e um exercício específico. Isso é o que permite
 histórico confiável, gráficos de evolução reais e alertas automáticos (ex.: dor) — diferente de
 planilha/WhatsApp manual, onde a informação se perde ou fica fora de contexto.
 
-O agente de IA no WhatsApp reforça isso: ele **pergunta o contexto que falta** (treino/exercício)
-em vez de registrar algo ambíguo, faz **uma pergunta por vez**, e responde de forma **curta e
-direta** (sem textão no WhatsApp) — pensado para a realidade de uso real do aluno no dia a dia.
+O Assistente IA do aluno no WhatsApp (add-on) reforça isso: ele **pergunta o contexto que falta**
+(treino/exercício) em vez de registrar algo ambíguo, faz **uma pergunta por vez**, e responde de
+forma **curta e direta** (sem textão no WhatsApp) — pensado para a realidade de uso real do aluno
+no dia a dia.
 
 ---
 
@@ -155,7 +177,11 @@ planilha/manual não tem.**
 - **Plano Grátis (Trial)**: até 3 alunos, sem custo e sem prazo.
 - **Plano Gestão Pro — Promo Lançamento**: **R$ 39,90/mês** (de R$ 69,90/mês). Alunos
   ilimitados, todas as funcionalidades inclusas.
-- **Add-ons contratados separadamente**: Canal WhatsApp (assistente IA) e instância W-API.
+- **Operação por IA (cadastro por linguagem natural)**: **grátis e já incluída** em todos os planos
+  — o personal usa o próprio ChatGPT/Claude/Gemini, não é cobrado pela plataforma.
+- **Add-ons contratados separadamente** (não confundir com a operação por IA acima): **Canal
+  WhatsApp** (+R$29,90/mês) e **Assistente IA do aluno** (+R$4,90/aluno/mês habilitado), além da
+  instância W-API.
 - **Sem fidelidade** — cancela quando quiser.
 - **Ativação imediata** após cadastro.
 - **Pagamento via Pix** — confirmação automática, sem cartão de crédito.
@@ -257,24 +283,34 @@ gerenciando seus alunos como um profissional."*
 
 ## 12. Estrutura da landing page (ordem das seções)
 
-1. **Navbar** — logo CoachPilot, links (Funcionalidades, Como funciona, Comparativo, Preços,
-   Depoimentos), botões Entrar / Começar Grátis.
-2. **Hero** — headline "Gerencie seus alunos e treinos de forma profissional", subheadline,
-   CTA duplo (Começar Grátis Agora / Ver como funciona), prova social rápida (+500 alunos
-   gerenciados, App do aluno incluso, IA integrada), mockup de dashboard ao lado.
-3. **Features** — grid de funcionalidades.
-4. **How it works** — jornada em 4 passos.
-5. **Comparison** — tabela CoachPilot vs. Planilha/Manual.
-6. **Pricing** — card de preço (Grátis até 3 alunos / Gestão Pro R$39,90/mês).
-7. **Testimonials** — 2 depoimentos.
-8. **CTA final** — "Pronto para profissionalizar sua gestão de alunos?", botões Criar Conta
-   Grátis / Já tenho conta.
-9. **Footer** — logo, descrição curta, navegação, links de conta, copyright.
+1. **Navbar** — logo CoachPilot, links (Operação com IA, Funcionalidades, Como funciona, Planos,
+   Comparativo, FAQ, Divulgadores), botões Entrar / Começar grátis.
+2. **Hero** — headline "Organize seus alunos, treinos e evolução em uma plataforma profissional",
+   subheadline (cita cadastro por IA / sem digitar série a série), CTA duplo (Começar grátis agora /
+   Ver planos), prova social rápida (Grátis até 3 alunos · Gestão Pro R$39,90/mês · Cadastre treinos
+   conversando com a IA), mockup de perfil do aluno ao lado.
+3. **Operação com IA** (`#ia`, fundo escuro) — seção dedicada de destaque: headline "Pare de digitar
+   série a série…", mock de conversa com o ChatGPT, 3 cards de fluxo (importar/migrar alunos, montar
+   pacotes de treino, atualizar treino de um aluno), faixa "funciona com ChatGPT/Claude/Gemini · você
+   revisa antes de importar · sem custo extra", CTA.
+4. **Features** — grid de funcionalidades (1º card = "Cadastro por IA (linguagem natural)").
+5. **How it works** — jornada em 4 passos.
+6. **Comparison** — tabela CoachPilot vs. Planilha/Manual.
+7. **Pricing** — cards (Grátis até 3 alunos / Gestão Pro R$39,90/mês) + bloco de add-ons (Canal
+   WhatsApp e Assistente IA do aluno) com nota de que o cadastro por IA é grátis.
+8. **Testimonials** — 2 depoimentos.
+9. **FAQ** — perguntas frequentes (inclui "Como o ChatGPT cadastra meus treinos e alunos?").
+10. **CTA final** — botões Criar Conta Grátis / Já tenho conta.
+11. **Footer** — logo, descrição curta, Instagram (@coachpilotoficial), navegação, links de conta,
+    copyright.
 
 ---
 
 ## 13. Ângulos de conteúdo sugeridos (para gerar posts/anúncios)
 
+- **Operação por IA (ângulo nº 1)**: "Pare de digitar série a série — fale com o ChatGPT e ele
+  cadastra." Demonstrar montar um ABCDE de um aluno em ~2 min conversando (texto ou voz) e importando
+  com 1 clique; ou migrar a lista de alunos de uma planilha jogando o arquivo no ChatGPT.
 - **Dor → solução**: "Cansado de planilha de treino bagunçada? [funcionalidade] resolve isso."
 - **Antes/depois**: comparação visual entre gestão manual (planilha, papel, WhatsApp) e CoachPilot.
 - **Feature spotlight**: um post por funcionalidade (ex.: foco só em "ranking e gamificação",
@@ -302,3 +338,11 @@ gerenciando seus alunos como um profissional."*
   landing page (não confirmar como "+500 personal trainers" — é alunos gerenciados, não personals).
 - Preço promo lançamento (R$39,90/mês) pode ser alterado — verificar landing page antes de
   publicar conteúdo de preço.
+- **Sobre a operação por IA**: NÃO afirmar que é um "plugin", "GPT Action", "integração nativa com
+  a OpenAI" ou que a IA "escreve direto no sistema/banco sem revisão". O fluxo real é: prompt pronto
+  → a IA gera JSON/CSV → o personal cola/anexa e importa com 1 clique, revisando antes. Pode dizer
+  "o ChatGPT conhece o CoachPilot" no sentido de que os prompts ensinam o formato — não que há uma
+  conexão automática de API.
+- Não confundir as duas IAs: **operação por IA do personal = grátis**; **Assistente IA do aluno =
+  add-on pago por aluno**. Nunca dizer que "a IA está inclusa no preço" sem qualificar a qual das
+  duas se refere.

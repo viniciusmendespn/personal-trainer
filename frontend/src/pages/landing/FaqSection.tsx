@@ -19,12 +19,16 @@ const FAQS = [
     a: 'O aluno recebe um link exclusivo pelo WhatsApp e abre o app do aluno diretamente no navegador do celular, sem cadastro nem senha. Pode salvar o app na tela inicial como qualquer aplicativo nativo.',
   },
   {
+    q: 'Como o ChatGPT cadastra meus treinos e alunos?',
+    a: 'O CoachPilot foi feito para você operar por linguagem natural. Você conversa — por texto ou voz — com o seu próprio ChatGPT, Claude ou Gemini usando os prompts prontos da plataforma, e ele devolve: a lista de alunos a importar, um pacote de treino completo (exercícios, séries, repetições, cargas e intervalos) ou o ajuste de um treino existente. Você revisa e importa com 1 clique. Isso está incluído e não tem custo extra — você usa a IA que já tem.',
+  },
+  {
     q: 'Posso migrar dados de outro software?',
-    a: 'Sim. Você pode cadastrar seus alunos manualmente em poucos minutos. Para bases maiores, entre em contato pelo WhatsApp e a equipe auxilia na migração assistida sem custo adicional.',
+    a: 'Sim. Você pode cadastrar seus alunos manualmente em poucos minutos ou, mais rápido, jogar sua planilha/lista no ChatGPT com o prompt da plataforma e importar todos de uma vez. Para bases maiores, a equipe auxilia na migração assistida sem custo adicional — fale pelo WhatsApp.',
   },
   {
     q: 'O CoachPilot tem integração com WhatsApp?',
-    a: 'Sim, como add-on opcional por +R$29,90/mês. Conecte seu número de WhatsApp para enviar lembretes de treino, agendar sessões e, se quiser, ativar o assistente de IA que responde dúvidas dos alunos automaticamente.',
+    a: 'Sim, como add-on opcional por +R$29,90/mês. Conecte seu número de WhatsApp para enviar lembretes de treino, agendar sessões e, se quiser, ativar o assistente de IA do aluno, que responde dúvidas dos alunos automaticamente (cobrado por aluno habilitado). Atenção: esse assistente do aluno é diferente do cadastro por IA do personal, que é grátis.',
   },
   {
     q: 'Há fidelidade ou multa para cancelar?',

@@ -23,6 +23,22 @@ O portal é o painel de controle do personal. Tudo começa aqui.
 
 ---
 
+## OPERAÇÃO POR IA (CADASTRE CONVERSANDO COM O CHATGPT)
+
+O maior diferencial do CoachPilot é poder operar a parte braçal por **linguagem natural**, em vez de digitar série a série. Você conversa — **por texto ou voz** — com o **seu próprio ChatGPT, Claude ou Gemini** (não precisa ser uma IA da plataforma), usando os **prompts prontos** que o CoachPilot fornece. A IA entende o formato do CoachPilot e devolve um conteúdo pronto que você **importa com 1 clique**. Você sempre **revisa antes de importar**.
+
+> ⚠️ Importante: isso é **grátis e já incluído** em todos os planos — você usa a IA que já tem. É **diferente** do **Assistente IA do aluno** (add-on pago por aluno), que é o chat que o próprio aluno usa no WhatsApp/app. A "operação por IA" é uma ferramenta do **personal**; o "Assistente IA do aluno" é um recurso do **aluno**.
+
+São **três fluxos** operados por IA (cada um detalhado na sua seção):
+
+1. **Importar/migrar alunos em massa** — jogue sua planilha, PDF ou print de lista de alunos no ChatGPT com o prompt da plataforma; ele extrai os dados em CSV e você importa todos de uma vez. Ver **Gestão de Alunos → Importar alunos em massa via IA**.
+2. **Montar pacotes de treino completos** — peça um treino (ABC, ABCDE, foco específico) e a IA gera exercícios, templates e rotinas prontos para importar. Ver **Pacotes de Treino → Via JSON gerado por IA**.
+3. **Atualizar o treino de um aluno** — exporte o programa atual do aluno, peça o ajuste em linguagem natural (ex.: "aumenta o volume de pernas", "adapta para dor no ombro") e reimporte. Ver **Treinos → Atualizar o treino de um aluno via IA**.
+
+Em todos os casos, a IA gera o conteúdo (JSON ou CSV) e o CoachPilot faz a importação — a IA **não** escreve direto no sistema; você cola/anexa o resultado e confirma.
+
+---
+
 ## VISÃO GERAL DO PORTAL
 
 ### Navegação
@@ -96,6 +112,17 @@ A página inicial do portal exibe:
 4. O sistema sincroniza automaticamente a foto de perfil do WhatsApp
 5. Clique em **Salvar**
 
+#### Importar alunos em massa via IA (migração)
+Em vez de cadastrar um a um, você pode importar vários alunos de uma vez com ajuda de IA — ideal para migrar de planilha ou de outro software.
+
+1. Na página **Alunos**, clique em **"Importar alunos"**
+2. **Copie o prompt** exibido no modal
+3. Abra o **ChatGPT (ou Claude/Gemini)**, cole o prompt e **anexe ou cole** sua lista de alunos — pode ser planilha, CSV, PDF, ou até um print da tela. A IA extrai os dados no formato CSV com as colunas: `nome,telefone,email,data_nascimento,objetivos,endereco,observacoes`
+4. **Cole o CSV** gerado pela IA no campo de texto do modal — uma **prévia** dos alunos é exibida para você conferir
+5. Clique em **"Importar"**
+
+Ao final, o sistema mostra quantos foram **importados**, **pulados** (telefone duplicado — o telefone é a chave única de cada aluno) e **erros** (linhas sem nome ou telefone). A importação é tolerante: linhas com problema são puladas sem abortar o resto. O limite de alunos do seu plano continua valendo.
+
 #### Como gerar o link de acesso do aluno
 1. Na lista de alunos, clique no aluno desejado
 2. Na aba **Perfil**, o link é exibido automaticamente
@@ -124,8 +151,8 @@ No topo da página **Alunos**, use os botões **"Ativos"**, **"Inativos"** ou **
 #### Notas internas
 Na página do aluno há um campo de **notas** para registrar observações internas (visível só para o personal, não para o aluno).
 
-#### Agente de IA por aluno
-Na aba **Perfil** do aluno, você pode **ativar ou desativar o agente de IA** individualmente. Quando desativado, as mensagens chegam diretamente ao personal sem processamento pela IA.
+#### Assistente IA do aluno (agente no WhatsApp) por aluno
+Na aba **Perfil** do aluno, você pode **ativar ou desativar o Assistente IA do aluno** individualmente. Quando desativado, as mensagens chegam diretamente ao personal sem processamento pela IA. Este é o add-on pago por aluno — não confundir com a **operação por IA** do personal (grátis), descrita no início deste guia.
 
 ---
 
@@ -192,6 +219,22 @@ Na aba Treinos do aluno, clique em **"Salvar rotina"** para salvar todos os trei
 
 #### Aplicar rotina ao aluno
 Na aba Treinos do aluno, clique em **"Aplicar rotina"** para aplicar uma rotina existente ao aluno. Você pode escolher entre **adicionar ao lado** dos treinos atuais ou **substituir tudo** (apaga os treinos atuais e cria os da rotina).
+
+#### Atualizar o treino de um aluno via IA
+Você pode pedir à IA para ajustar o programa inteiro de um aluno em linguagem natural, sem editar exercício por exercício.
+
+1. Na aba **Treinos** do aluno, clique em **"Atualizar treino com IA"**
+2. Clique em **"Baixar treino (JSON)"** — baixa o programa atual do aluno, e em **"Baixar prompt"** — baixa o arquivo de instrução
+3. Abra o **ChatGPT (ou Claude/Gemini)**, cole o prompt, **anexe o JSON** do treino e **descreva o ajuste** desejado, por exemplo:
+   - "Aumenta o volume de pernas"
+   - "Troca o supino reto por supino na máquina"
+   - "Adapta para dor no ombro esquerdo"
+   - "Reduz a duração de cada treino"
+   - "Adiciona um treino D de ombros e core"
+4. A IA devolve o **JSON completo atualizado**. Copie e **cole** no campo de texto do modal
+5. Clique em **"Importar e sobrescrever treino"** e confirme
+
+> ⚠️ A importação faz **substituição total**: todo o programa de treinos atual do aluno é apagado e recriado a partir do JSON. O histórico de sessões e a evolução de carga (vinculados ao nome do exercício) são preservados. Sempre revise o JSON antes de importar.
 
 ---
 
@@ -671,7 +714,7 @@ Acesse **Plano** no menu lateral.
 - Se a assinatura Gestão Pro vencer, os alunos que excederem o limite de 3 ficam marcados como **"Bloqueado"** — você não consegue mais abrir o perfil deles até renovar
 - Um banner no topo do portal avisa quando o plano está no grátis, quando a assinatura Pro está perto de vencer (7 dias ou menos) ou quando já venceu
 
-**Add-ons:** Canal WhatsApp e Assistente IA são contratados separadamente da gestão de alunos.
+**Add-ons:** Canal WhatsApp e Assistente IA do aluno são contratados separadamente da gestão de alunos. (A operação por IA do personal — cadastrar e montar treinos conversando com o ChatGPT — é grátis e não é um add-on.)
 
 **Histórico de pagamentos:** A seção "Histórico de pagamentos" lista todos os pagamentos do Gestão Pro confirmados, com data, dias concedidos e validade resultante.
 

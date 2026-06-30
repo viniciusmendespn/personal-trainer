@@ -1,7 +1,13 @@
-import { Users, Dumbbell, Activity, Calendar, Smartphone, Trophy, MessageCircle, BarChart2, Bell } from 'lucide-react'
+import { Users, Dumbbell, Activity, Calendar, Smartphone, Trophy, MessageCircle, BarChart2, Bell, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 
 const FEATURES = [
+  {
+    icon: <Sparkles size={28} />,
+    title: 'Cadastro por IA (linguagem natural)',
+    desc: 'Incluído e grátis: cadastre alunos, monte treinos completos e ajuste programas conversando — por texto ou voz — com o seu próprio ChatGPT. Importe tudo com 1 clique, sem digitar série a série.',
+    color: '#10b981',
+  },
   {
     icon: <Users size={28} />,
     title: 'Gestão de Alunos',
@@ -41,7 +47,7 @@ const FEATURES = [
   {
     icon: <MessageCircle size={28} />,
     title: 'Canal WhatsApp (opcional)',
-    desc: 'Add-on opcional por +R$29,90/mês. Conecte um número de WhatsApp para facilitar a comunicação com seus alunos e, se quiser, ativar o assistente IA via WA.',
+    desc: 'Add-on opcional por +R$29,90/mês. Conecte um número de WhatsApp para facilitar a comunicação com seus alunos e, se quiser, ativar o assistente IA do aluno via WA.',
     color: '#14b8a6',
   },
   {

@@ -15,7 +15,7 @@ const FREE_INCLUDES = [
 
 const FREE_EXCLUDES = [
   'Canal WhatsApp',
-  'Assistente IA',
+  'Assistente IA do aluno',
   'Add-ons pagos',
 ]
 
@@ -42,8 +42,9 @@ const COMPARE_ROWS: { feature: string; free: string; pro: string }[] = [
   { feature: 'Chat interno', free: 'Sim', pro: 'Sim' },
   { feature: 'Dashboard', free: 'Sim', pro: 'Sim' },
   { feature: 'Perfil público', free: 'Sim', pro: 'Sim' },
+  { feature: 'Cadastro por IA (linguagem natural)', free: 'Sim', pro: 'Sim' },
   { feature: 'Canal WhatsApp', free: 'Add-on', pro: 'Add-on' },
-  { feature: 'Assistente IA', free: 'Add-on', pro: 'Add-on' },
+  { feature: 'Assistente IA do aluno', free: 'Add-on', pro: 'Add-on' },
   { feature: 'Preço', free: 'R$0', pro: 'R$39,90/mês ou R$399/ano' },
 ]
 
@@ -233,7 +234,10 @@ export default function PricingSection() {
               Add-ons opcionais
             </h3>
             <p style={{ color: '#475569', fontSize: 15 }}>
-              Comece apenas com a gestão. Ative WhatsApp e IA somente quando fizer sentido para seus alunos.
+              Comece apenas com a gestão. Ative o WhatsApp e o assistente IA do aluno somente quando fizer sentido.
+            </p>
+            <p style={{ color: '#0d9488', fontSize: 13, fontWeight: 600, marginTop: 8 }}>
+              ✨ O cadastro por IA (montar treinos e importar alunos conversando com o seu ChatGPT) já vem incluído, de graça, em todos os planos.
             </p>
           </div>
 
@@ -269,12 +273,12 @@ export default function PricingSection() {
                   <Sparkles size={22} color="#10b981" />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 15 }}>Assistente IA</div>
+                  <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 15 }}>Assistente IA do aluno</div>
                   <div style={{ color: '#10b981', fontWeight: 700, fontSize: 14 }}>+R$4,90/aluno/mês</div>
                 </div>
               </div>
               <p style={{ color: '#475569', fontSize: 13, lineHeight: 1.6, marginBottom: 12 }}>
-                Habilite o assistente para alunos selecionados. Você só paga pela IA dos alunos em que quiser ativar.
+                Chat de IA que o próprio aluno usa para tirar dúvidas e registrar treino. Habilite por aluno — você só paga pelos que quiser ativar. (Diferente do cadastro por IA do personal, que é grátis.)
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {['Habilitado por aluno', 'Uso pelo chat interno', 'Uso via WhatsApp (se o canal estiver ativo)', 'Registro com contexto de treino e exercício'].map((item, i) => (

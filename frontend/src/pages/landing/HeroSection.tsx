@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Users, Smartphone, PlusCircle } from 'lucide-react'
+import { ArrowRight, Users, Smartphone, Sparkles } from 'lucide-react'
 
 const STATS = [
   { icon: <Users size={16} />, label: 'Grátis para até 3 alunos' },
   { icon: <Smartphone size={16} />, label: 'Gestão Pro R$39,90/mês (promo lançamento)' },
-  { icon: <PlusCircle size={16} />, label: 'Add-ons opcionais de IA e WhatsApp' },
+  { icon: <Sparkles size={16} />, label: 'Cadastre treinos conversando com a IA' },
 ]
 
 export default function HeroSection() {
@@ -57,7 +57,7 @@ export default function HeroSection() {
             </h1>
 
             <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, marginBottom: 36, maxWidth: 520 }}>
-              Comece grátis com até 3 alunos. Cadastre treinos, avaliações, agenda e acompanhe a evolução dos seus alunos em um app moderno feito para personal trainers.
+              Comece grátis com até 3 alunos. Cadastre treinos, avaliações, agenda e acompanhe a evolução em um app moderno feito para personal trainers — e cadastre treinos e alunos conversando com o ChatGPT, sem digitar série a série.
             </p>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 48 }}>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthProvider'
 import LandingNavbar from './LandingNavbar'
 import HeroSection from './HeroSection'
+import IaOperacaoSection from './IaOperacaoSection'
 import FeaturesSection from './FeaturesSection'
 import HowItWorksSection from './HowItWorksSection'
 import ComparisonSection from './ComparisonSection'
@@ -97,6 +98,7 @@ export default function LandingPage() {
       <LandingNavbar />
       <main>
         <HeroSection />
+        <IaOperacaoSection />
         <FeaturesSection />
         <HowItWorksSection />
         <ComparisonSection />

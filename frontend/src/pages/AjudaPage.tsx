@@ -16,6 +16,18 @@ const FAQ_PORTAL: FaqItem[] = [
     a: 'Abra a página do aluno → clique em "+ Novo Treino" → preencha nome e datas de vigência → Salvar. Depois clique no treino para adicionar exercícios (séries, repetições, carga e vídeo de referência).',
   },
   {
+    q: 'Como cadastrar/migrar alunos em massa com IA?',
+    a: 'Na página Alunos, clique em "Importar alunos" e copie o prompt. Cole no ChatGPT (ou Claude/Gemini) junto com sua lista — planilha, CSV, PDF ou até um print. A IA devolve os dados em CSV; cole no campo do modal, confira a prévia e clique em "Importar". Telefones duplicados são pulados e linhas sem nome/telefone viram erro, sem abortar o resto.',
+  },
+  {
+    q: 'Como atualizar o treino de um aluno com IA?',
+    a: 'Na aba Treinos do aluno, clique em "Atualizar treino com IA". Baixe o JSON do treino atual e o prompt, cole ambos no ChatGPT e descreva o ajuste ("aumenta o volume de pernas", "adapta para dor no ombro" etc.). Cole o JSON atualizado de volta no modal e confirme. Atenção: a importação substitui o programa de treinos inteiro do aluno (o histórico e a evolução por exercício são preservados).',
+  },
+  {
+    q: 'Qual a diferença entre o cadastro por IA (grátis) e o Assistente IA do aluno (add-on)?',
+    a: 'São coisas diferentes. O cadastro por IA é uma ferramenta do PERSONAL: você usa o seu próprio ChatGPT para montar treinos, criar pacotes e importar alunos por linguagem natural — está incluído e é grátis. Já o Assistente IA do aluno é um add-on pago (+R$4,90/aluno/mês): é o chat de IA que o próprio ALUNO usa no WhatsApp/app para tirar dúvidas e registrar treino, ativado por aluno.',
+  },
+  {
     q: 'Como gerar o link de acesso do aluno ao app?',
     a: 'Na página do aluno, clique em "Gerar Link" ou "Enviar via WhatsApp". O link é único por aluno — ao abrir no celular, ele acessa o app sem precisar criar conta.',
   },
@@ -60,8 +72,8 @@ const FAQ_PORTAL: FaqItem[] = [
     a: 'Na página do aluno, clique em "Exportar PDF" (ícone de impressora). O relatório inclui avaliações com gráficos, badges conquistados e histórico de sessões recentes.',
   },
   {
-    q: 'O que é o Agente de IA e como ativá-lo por aluno?',
-    a: 'O agente de IA responde automaticamente às mensagens do aluno no WhatsApp, registra séries, responde dúvidas e alerta o personal quando necessário. Na página do aluno, há um botão para ativar ou desativar o agente individualmente.',
+    q: 'O que é o Assistente IA do aluno e como ativá-lo por aluno?',
+    a: 'O Assistente IA do aluno (add-on pago, +R$4,90/aluno/mês) responde automaticamente às mensagens do aluno no WhatsApp, registra séries, responde dúvidas e alerta o personal quando necessário. Na página do aluno, há um botão para ativar ou desativar individualmente. É diferente do cadastro por IA do personal (grátis).',
   },
   {
     q: 'O aluno precisa instalar algum aplicativo?',

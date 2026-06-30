@@ -9,7 +9,8 @@ const ROWS: { feature: string; cp: boolean | string; manual: boolean | string }[
   { feature: 'Templates de treino reutilizáveis', cp: true, manual: false },
   { feature: 'Ranking e gamificação para engajamento', cp: true, manual: false },
   { feature: 'Dashboard com visão geral do negócio', cp: true, manual: false },
-  { feature: 'IA opcional por aluno', cp: true, manual: false },
+  { feature: 'Cadastro por linguagem natural (IA)', cp: true, manual: false },
+  { feature: 'Assistente IA do aluno (opcional)', cp: true, manual: false },
   { feature: 'WhatsApp opcional integrado', cp: true, manual: 'Manual' },
 ]
 

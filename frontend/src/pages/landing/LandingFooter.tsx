@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { Instagram } from 'lucide-react'
 
 
 const NAV_LINKS = [
@@ -43,9 +44,25 @@ export default function LandingFooter() {
             <div style={{ marginBottom: 14 }}>
               <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 56, width: 'auto' }} />
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, lineHeight: 1.7, maxWidth: 260 }}>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, lineHeight: 1.7, maxWidth: 260, marginBottom: 16 }}>
               Gestão profissional de alunos, treinos e evolução para personal trainers que querem escalar o negócio.
             </p>
+            <a
+              href="https://instagram.com/coachpilotoficial"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="@coachpilotoficial no Instagram"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                color: 'rgba(255,255,255,0.5)', fontSize: 14, textDecoration: 'none',
+                transition: 'color 0.2s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
+            >
+              <Instagram size={18} />
+              @coachpilotoficial
+            </a>
           </div>
 
           <div>

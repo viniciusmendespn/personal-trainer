@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 
 const NAV_LINKS = [
+  { label: 'Operação com IA', href: '#ia' },
   { label: 'Funcionalidades', href: '#features' },
   { label: 'Como funciona', href: '#how' },
   { label: 'Planos', href: '#pricing' },
