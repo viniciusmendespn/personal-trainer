@@ -24,6 +24,7 @@ class ExercicioTreinoFile(BaseModel):
     observacoes: Optional[str] = None
     unidade_carga: Optional[str] = None
     unidade_reps: Optional[str] = None
+    metrica_direcao: Optional[str] = "MAIOR"   # PERFORMANCE: "MAIOR"|"MENOR"
     substitutos: list[ExercicioSubstituto] = Field(default_factory=list)
 
 

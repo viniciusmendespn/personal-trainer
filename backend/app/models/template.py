@@ -15,6 +15,7 @@ class ExercicioTemplate(BaseModel):
     rm_kg: Optional[float] = None
     unidade_carga: Optional[str] = None
     unidade_reps: Optional[str] = None
+    metrica_direcao: Optional[str] = "MAIOR"   # PERFORMANCE: "MAIOR"|"MENOR"
     series: Optional[int] = None
     reps_prescritas: Optional[str] = None
     carga_prescrita: Optional[str] = None

@@ -30,7 +30,8 @@ import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTre
 import { IntervaloInput } from '../components/exercicios/IntervaloInput'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import { CalendarioMes } from '../components/historico/CalendarioMes'
-import type { Treino, Exercicio, ExercicioCreate, ExercicioSubstituto, SeriePrescrita, TipoExercicio, AlunoExistenteConflict, Aluno, Rotina, AplicarRotinaModo } from '../types'
+import type { Treino, Exercicio, ExercicioCreate, ExercicioSubstituto, SeriePrescrita, TipoExercicio, MetricaDirecao, AlunoExistenteConflict, Aluno, Rotina, AplicarRotinaModo } from '../types'
+import { normalizeTipoExercicio } from '../types'
 import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
 import { MetasTab } from '../components/aluno/MetasTab'
 import { FinanceiroTab } from '../components/financeiro/FinanceiroTab'
@@ -893,14 +894,16 @@ function ExercicioForm({
 }) {
   const listId = useId()
   const grupoListId = useId()
+  const unidadeListId = useId()
   const [nome, setNome] = useState(initial?.nome ?? '')
   const [grupo, setGrupo] = useState(initial?.grupo ?? '')
-  const [tipo, setTipo] = useState<TipoExercicio>(initial?.tipo_exercicio ?? 'FORCA')
+  const [tipo, setTipo] = useState<TipoExercicio>(normalizeTipoExercicio(initial?.tipo_exercicio))
   const [seriesPrescritas, setSeriesPrescritas] = useState<SeriePrescrita[]>(() =>
     initSeriesPrescritas(initial?.series_prescritas, initial?.series, initial?.reps_prescritas, initial?.carga_prescrita)
   )
   const [unidadeCarga] = useState(initial?.unidade_carga ?? '')
-  const [unidadeReps] = useState(initial?.unidade_reps ?? '')
+  const [unidadeReps, setUnidadeReps] = useState(initial?.unidade_reps ?? '')
+  const [metricaDirecao, setMetricaDirecao] = useState<MetricaDirecao>(initial?.metrica_direcao ?? 'MAIOR')
   const [vid, setVid] = useState(initial?.video_url ?? '')
   const [obs, setObs] = useState(initial?.observacoes ?? '')
   const [intervaloS, setIntervaloS] = useState<number | undefined>(initial?.intervalo_s)
@@ -944,7 +947,9 @@ function ExercicioForm({
     const grp = usado?.grupo || lib?.grupo
     if (video) setVid(video)
     if (grp) setGrupo(grp)
-    if (usado?.tipo_exercicio) setTipo(usado.tipo_exercicio)
+    if (usado?.tipo_exercicio) setTipo(normalizeTipoExercicio(usado.tipo_exercicio))
+    if (usado?.unidade_reps) setUnidadeReps(usado.unidade_reps)
+    if (usado?.metrica_direcao) setMetricaDirecao(usado.metrica_direcao)
     const rec = usado?.observacoes ?? lib?.recomendacoes
     if (!obs && rec) setObs(rec)
   }
@@ -959,6 +964,7 @@ function ExercicioForm({
       tipo_exercicio: tipo,
       unidade_carga: unidadeCarga || undefined,
       unidade_reps: unidadeReps || undefined,
+      metrica_direcao: tipo === 'PERFORMANCE' ? metricaDirecao : undefined,
       series_prescritas: validas.length ? validas : undefined,
       intervalo_s: intervaloS,
       video_url: vid || undefined,
@@ -992,8 +998,7 @@ function ExercicioForm({
         <div className="flex gap-2">
           {([
             { value: 'FORCA', label: 'Força' },
-            { value: 'CARDIO', label: 'Cardio' },
-            { value: 'PESO_CORPORAL', label: 'Peso Corporal' },
+            { value: 'PERFORMANCE', label: 'Performance' },
           ] as { value: TipoExercicio; label: string }[]).map((opt) => (
             <button
               key={opt.value}
@@ -1010,16 +1015,55 @@ function ExercicioForm({
           ))}
         </div>
       </div>
+      {tipo === 'PERFORMANCE' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <Input
+              label="Unidade da métrica" list={unidadeListId} maxLength={7}
+              placeholder="ex.: km, min, voltas"
+              value={unidadeReps} onChange={(e) => setUnidadeReps(e.target.value.slice(0, 7))}
+            />
+            <datalist id={unidadeListId}>
+              {['reps', 's', 'min', 'h', 'km', 'm', 'voltas', 'cal', 'passos'].map((u) => <option key={u} value={u} />)}
+            </datalist>
+            <p className="text-xs text-text-muted mt-1">Sufixo da métrica numérica (≤7 caracteres). Entra no gráfico e no PR.</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-text-secondary mb-2">Evolução = </p>
+            <div className="flex gap-2">
+              {([
+                { value: 'MAIOR', label: 'Maior é melhor' },
+                { value: 'MENOR', label: 'Menor é melhor' },
+              ] as { value: MetricaDirecao; label: string }[]).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setMetricaDirecao(opt.value)}
+                  className={`flex-1 text-xs py-1.5 px-2 rounded-lg border transition-colors ${
+                    metricaDirecao === opt.value
+                      ? 'border-accent bg-accent/10 text-accent-hover font-medium'
+                      : 'border-border text-text-muted hover:border-border-strong'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-text-muted mt-1">"Menor é melhor" para tempo/pace (ex.: 5 km).</p>
+          </div>
+        </div>
+      )}
       <div>
         <div className="flex items-center mb-2 gap-2">
           <p className="text-xs font-medium text-text-secondary flex-1">
-            {tipo === 'CARDIO' ? 'Prescrição — blocos × dur./dist. · RPE (1-10)' : 'Prescrição — séries × reps · carga'}
+            {tipo === 'PERFORMANCE' ? `Prescrição — séries × ${unidadeReps || 'métrica'}` : 'Prescrição — séries × reps · carga'}
           </p>
         </div>
         <SeriesPrescritasEditor
           value={seriesPrescritas}
           onChange={setSeriesPrescritas}
           tipoExercicio={tipo}
+          unidadeReps={unidadeReps}
           rm_kg={rmKg ? parseFloat(rmKg) : undefined}
         />
       </div>

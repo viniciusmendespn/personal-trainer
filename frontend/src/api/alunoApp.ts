@@ -43,7 +43,7 @@ export interface SessaoHistorico {
   exercicios_exec?: Array<{
     exercicio_id: string
     exercicio_nome: string
-    tipo_exercicio?: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL'
+    tipo_exercicio?: string   // 'FORCA' | 'PERFORMANCE' (+ legados na leitura)
     series_exec: Array<{ carga?: string; reps?: number; rpe?: number }>
     series_prescritas?: Array<{ series: number; reps: string; carga?: string }>
     series?: number
@@ -63,7 +63,8 @@ export interface SerieInput {
 export interface NovoPR {
   exercicio_nome?: string
   carga: number
-  tipo?: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL'
+  tipo?: string   // 'FORCA' | 'PERFORMANCE' (+ legados na leitura)
+  unidade?: string | null
 }
 
 /** Resposta de finalizar treino — destaques da sessão p/ a tela de check-in pós-treino. */
@@ -102,7 +103,7 @@ export interface HistoricoMes {
 export interface ExSessao {
   exercicio_id: string
   nome: string
-  tipo_exercicio?: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL'
+  tipo_exercicio?: string   // 'FORCA' | 'PERFORMANCE' (+ legados CARDIO/PESO_CORPORAL na leitura)
   unidade_carga?: string
   unidade_reps?: string
   series?: number

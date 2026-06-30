@@ -178,7 +178,13 @@ export interface ArquivoConhecimento {
   uploaded_at: string
 }
 
-export type TipoExercicio = 'FORCA' | 'CARDIO' | 'PESO_CORPORAL'
+export type TipoExercicio = 'FORCA' | 'PERFORMANCE'
+export type MetricaDirecao = 'MAIOR' | 'MENOR'
+
+/** Normaliza tipos legados (CARDIO/PESO_CORPORAL → PERFORMANCE) lidos da API/itens antigos. */
+export function normalizeTipoExercicio(t?: string | null): TipoExercicio {
+  return t === 'PERFORMANCE' || t === 'CARDIO' || t === 'PESO_CORPORAL' ? 'PERFORMANCE' : 'FORCA'
+}
 
 export interface SeriePrescrita {
   series: number
@@ -196,6 +202,7 @@ export interface Exercicio {
   tipo_exercicio?: TipoExercicio
   unidade_carga?: string
   unidade_reps?: string
+  metrica_direcao?: MetricaDirecao
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
@@ -219,6 +226,7 @@ export interface ExercicioCreate {
   tipo_exercicio?: TipoExercicio
   unidade_carga?: string
   unidade_reps?: string
+  metrica_direcao?: MetricaDirecao
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
@@ -288,6 +296,7 @@ export interface ExercicioTemplate {
   rm_kg?: number
   unidade_carga?: string
   unidade_reps?: string
+  metrica_direcao?: MetricaDirecao
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string

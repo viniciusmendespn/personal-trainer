@@ -15,6 +15,7 @@ import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
 import { renderNodeToPdf } from '../utils/exportPdf'
 import { treinosApi } from '../api/treinos'
 import { personalApi } from '../api/personal'
+import { normalizeTipoExercicio } from '../types'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -94,18 +95,15 @@ export function AlunoEvolucaoPage() {
     enabled: !!exId && aba === 'feed',
   })
   const exSel = exercicios?.find((e) => e.exercicio_id === exId)
-  const tipoEvo = (evo?.tipo ?? exSel?.tipo_exercicio ?? 'FORCA') as string
+  const tipoEvo = normalizeTipoExercicio(evo?.tipo ?? exSel?.tipo_exercicio)
+  const unidadePerf = exSel?.unidade_reps || ''
   const prescrita = exSel?.carga_prescrita ? Number(String(exSel.carga_prescrita).replace(',', '.')) : NaN
 
 const chartData = (evo?.serie ?? [])
-    .filter((p) => {
-      if (tipoEvo === 'PESO_CORPORAL') return p.reps_max != null
-      if (tipoEvo === 'CARDIO') return (p.duracao_total_s ?? 0) > 0
-      return p.carga_max != null
-    })
+    .filter((p) => (tipoEvo === 'PERFORMANCE' ? p.metrica_max != null : p.carga_max != null))
     .map((p) => ({
       data: new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-      valor: tipoEvo === 'PESO_CORPORAL' ? p.reps_max : tipoEvo === 'CARDIO' ? p.duracao_total_s : p.carga_max,
+      valor: tipoEvo === 'PERFORMANCE' ? p.metrica_max : p.carga_max,
     }))
 
   const pontosIrm = tipoEvo === 'FORCA'
@@ -194,20 +192,22 @@ const chartData = (evo?.serie ?? [])
                 <Spinner />
               ) : !chartData.length ? (
                 <p className="text-text-muted text-sm">
-                  {tipoEvo === 'PESO_CORPORAL' ? 'Sem registros de reps ainda.' : tipoEvo === 'CARDIO' ? 'Sem registros ainda.' : 'Sem registros com carga numérica ainda.'}
+                  {tipoEvo === 'PERFORMANCE' ? 'Sem registros ainda.' : 'Sem registros com carga numérica ainda.'}
                 </p>
               ) : (
                 <>
                   <Card variant="elevated">
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-sm text-text-secondary">
-                        {tipoEvo === 'PESO_CORPORAL' ? 'Máx. reps por sessão' : tipoEvo === 'CARDIO' ? 'Métrica por sessão' : 'Carga máxima por sessão'}
+                        {tipoEvo === 'PERFORMANCE'
+                          ? `${unidadePerf || 'Métrica'} por sessão${evo?.direcao === 'MENOR' ? ' · menor é melhor' : ''}`
+                          : 'Carga máxima por sessão'}
                       </p>
                       <Badge tone="warning">
                         <Trophy size={12} />
                         {' PR '}
                         {evo?.pr?.carga != null
-                          ? tipoEvo === 'PESO_CORPORAL' ? `${evo.pr.carga} reps` : tipoEvo === 'CARDIO' ? String(evo.pr.carga) : `${evo.pr.carga} ${exSel?.unidade_carga ?? 'kg'}`
+                          ? tipoEvo === 'PERFORMANCE' ? `${evo.pr.carga} ${unidadePerf}`.trimEnd() : `${evo.pr.carga} ${exSel?.unidade_carga ?? 'kg'}`
                           : '—'}
                       </Badge>
                     </div>
@@ -228,8 +228,8 @@ const chartData = (evo?.serie ?? [])
                         <Tooltip
                           contentStyle={chartTip}
                           formatter={(v: number) => [
-                            tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? String(v) : `${v} ${exSel?.unidade_carga ?? 'kg'}`,
-                            tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : (exSel?.unidade_carga ?? 'kg'),
+                            tipoEvo === 'PERFORMANCE' ? `${v} ${unidadePerf}`.trimEnd() : `${v} ${exSel?.unidade_carga ?? 'kg'}`,
+                            tipoEvo === 'PERFORMANCE' ? (unidadePerf || 'Métrica') : (exSel?.unidade_carga ?? 'kg'),
                           ]}
                         />
                         {tipoEvo === 'FORCA' && !isNaN(prescrita) && (
@@ -238,7 +238,7 @@ const chartData = (evo?.serie ?? [])
                         )}
                         <Area type="monotone" dataKey="valor" stroke="var(--color-accent)" strokeWidth={2.5}
                           fill="url(#cargaGradient)" dot={{ r: 3, fill: 'var(--color-accent)' }}
-                          name={tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : 'Carga (kg)'} />
+                          name={tipoEvo === 'PERFORMANCE' ? (unidadePerf || 'Métrica') : 'Carga (kg)'} />
                       </AreaChart>
                     </ResponsiveContainer>
                   </Card>
@@ -338,12 +338,10 @@ const chartData = (evo?.serie ?? [])
                 <div className="flex flex-wrap gap-2">
                   {prsFiltrados.slice(0, prLimit).map((p) => {
                     const exPr = exercicios?.find((e) => e.nome === p.exercicio)
-                    const tipoPr = exPr?.tipo_exercicio ?? 'FORCA'
-                    const valorPr = tipoPr === 'PESO_CORPORAL'
-                      ? `${p.carga} reps`
-                      : tipoPr === 'CARDIO'
-                        ? String(p.carga)
-                        : `${p.carga} ${exPr?.unidade_carga ?? 'kg'}`
+                    const tipoPr = normalizeTipoExercicio(exPr?.tipo_exercicio)
+                    const valorPr = tipoPr === 'PERFORMANCE'
+                      ? `${p.carga} ${exPr?.unidade_reps ?? ''}`.trimEnd()
+                      : `${p.carga} ${exPr?.unidade_carga ?? 'kg'}`
                     return (
                       <Badge key={p.exercicio} tone="warning">
                         {p.exercicio}: <b className="ml-1">{valorPr}</b>

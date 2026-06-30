@@ -8,7 +8,7 @@ from app.models.enums import Ator, CanalOrigem, Classificacao
 class SerieExec(BaseModel):
     """Uma série executada. Acumuladas numa lista do mesmo Registro (ESPEC §3)."""
     carga: Optional[str] = None
-    reps: Optional[int] = None
+    reps: Optional[float] = None               # repetições (FORCA) ou métrica livre (PERFORMANCE — aceita decimais: km, min…)
     rpe: Optional[float] = None                # percepção de esforço (0-10)
 
 

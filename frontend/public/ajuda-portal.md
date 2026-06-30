@@ -169,7 +169,7 @@ Na aba **Perfil** do aluno, você pode **ativar ou desativar o Assistente IA do 
 2. Clique em **"+ Exercício"**
 3. Preencha:
    - Nome do exercício (com autocomplete da biblioteca e dos exercícios já usados por esse aluno)
-   - Tipo: **Força**, **Cardio** ou **Peso Corporal**
+   - Tipo: **Força** ou **Performance**
    - Grupo muscular (opcional)
    - Séries prescritas: para cada série, defina repetições e carga (pode variar por série — ex.: 4×10 com cargas 30/35/35/35)
    - Carga prescrita e unidade (ex.: kg, lb, %1RM, ou personalizado)
@@ -189,12 +189,14 @@ Exercícios com o mesmo nome em treinos diferentes têm a evolução de carga e 
 
 **Força** — exercícios com carga (halteres, barras, máquinas). Carga em kg ou lb, repetições em reps. Suporta 1RM, % 1RM e gráfico de IRM.
 
-**Cardio** — exercícios aeróbicos (esteira, bicicleta, corrida). Carga = RPE (esforço percebido de 0–10). Repetições em **minutos** ou **km** — o aluno pode alternar entre as duas unidades durante o registro.
+**Performance** — qualquer exercício medido por **uma métrica numérica livre**: cardio, tempo, distância, peso corporal, voltas. Você define:
+- a **unidade da métrica** (até 7 caracteres — ex.: `min`, `km`, `s`, `voltas`, `reps`), escolhendo de uma lista ou digitando a sua;
+- a **direção da evolução**: *Maior é melhor* (mais reps/km/voltas/tempo aguentado) ou *Menor é melhor* (tempo/pace, ex.: tempo nos 5 km — diminuir significa evoluir).
 
-**Peso Corporal** — exercícios sem carga externa (flexões, abdominais, barras). Repetições em reps, sem campo de carga.
+O aluno registra **um único número por série** nessa unidade. Esse valor alimenta o gráfico de evolução e o PR (recorde = melhor série, conforme a direção escolhida).
 
 #### Unidades personalizáveis
-Você pode definir manualmente o sufixo de carga e de repetições de qualquer exercício (ex.: carga em `%1RM`, reps em `m`, `passos`, `cal`). As unidades definidas aparecem nos campos de prescrição, no registro do aluno e nos gráficos de evolução.
+Você pode definir manualmente o sufixo de carga (Força) e a unidade da métrica (Performance) de qualquer exercício (ex.: carga em `%1RM`, métrica em `m`, `passos`, `cal`). As unidades definidas aparecem nos campos de prescrição, no registro do aluno e nos gráficos de evolução.
 
 #### % 1RM e cálculo automático de carga
 1. Preencha o campo **"1RM (kg)"** com o peso máximo do aluno naquele exercício
@@ -258,7 +260,7 @@ Você também pode criar um template a partir do treino de um aluno: na página 
 2. Busque e selecione os alunos desejados
 3. Clique em **Aplicar** — um treino é criado para cada aluno selecionado
 
-Templates suportam todos os tipos de exercício (Força, Cardio, Peso Corporal), exercícios substitutos, prescrição de séries variadas por série, % 1RM e observações.
+Templates suportam todos os tipos de exercício (Força e Performance), exercícios substitutos, prescrição de séries variadas por série, % 1RM e observações.
 
 ---
 
@@ -807,8 +809,8 @@ R: Ao cadastrar um exercício de Força, preencha o "1RM (kg)" com o máximo do 
 **P: O que é o IRM?**
 R: IRM (Intensidade Relativa Média) é o percentual médio do 1RM que o aluno utilizou em uma sessão. É exibido como gráfico na evolução do aluno quando o exercício tem 1RM cadastrado.
 
-**P: Como funciona o tipo Cardio?**
-R: Exercícios do tipo Cardio usam RPE (esforço percebido, 0–10) como campo de carga, e as repetições são registradas em minutos ou quilômetros. O aluno pode alternar entre min e km com um toque durante o registro.
+**P: Como funciona o tipo Performance?**
+R: É o tipo único para qualquer exercício medido por uma métrica numérica (cardio, tempo, distância, peso corporal, voltas). Você define a unidade (ex.: min, km, voltas, reps) e a direção da evolução (maior é melhor, ou menor é melhor para tempo/pace). O aluno registra um número por série, e esse valor alimenta o gráfico de evolução e o recorde (PR).
 
 **P: Posso instalar o portal como app no celular ou computador?**
 R: Sim. O portal do personal também é um PWA — clique em "Instalar app" no rodapé do menu lateral ou use o ícone na barra de endereço do navegador.

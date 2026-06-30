@@ -165,6 +165,7 @@ def importar_programa(aluno_id: str, body: ImportarProgramaRequest,
                 series_prescritas=ef.series_prescritas, intervalo_s=ef.intervalo_s,
                 video_url=ef.video_url, observacoes=ef.observacoes,
                 unidade_carga=ef.unidade_carga, unidade_reps=ef.unidade_reps,
+                metrica_direcao=ef.metrica_direcao,
                 substitutos=ef.substitutos,
             ).model_dump()
             ex = Exercicio(exercicio_id=eid, treino_id=tid, aluno_id=aluno_id,

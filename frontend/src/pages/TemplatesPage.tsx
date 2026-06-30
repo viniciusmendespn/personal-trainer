@@ -7,7 +7,8 @@ import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useTo
 import { SeriesPrescritasEditor, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
 import { IntervaloInput } from '../components/exercicios/IntervaloInput'
-import type { ExercicioTemplate, TreinoTemplate, SeriePrescrita, TipoExercicio } from '../types'
+import type { ExercicioTemplate, TreinoTemplate, SeriePrescrita, TipoExercicio, MetricaDirecao } from '../types'
+import { normalizeTipoExercicio } from '../types'
 
 
 export function TemplatesPage() {
@@ -149,9 +150,13 @@ function AplicarForm({ template, onDone }: { template: TreinoTemplate; onDone: (
 
 const TIPO_OPTIONS: { value: TipoExercicio; label: string }[] = [
   { value: 'FORCA', label: 'Força' },
-  { value: 'CARDIO', label: 'Cardio' },
-  { value: 'PESO_CORPORAL', label: 'Peso Corporal' },
+  { value: 'PERFORMANCE', label: 'Performance' },
 ]
+const DIRECAO_OPTIONS: { value: MetricaDirecao; label: string }[] = [
+  { value: 'MAIOR', label: 'Maior é melhor' },
+  { value: 'MENOR', label: 'Menor é melhor' },
+]
+const UNIDADE_PRESETS = ['reps', 's', 'min', 'h', 'km', 'm', 'voltas', 'cal', 'passos']
 
 function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () => void }) {
   const create = useCreateTemplate()
@@ -210,9 +215,10 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
 
       <div className="space-y-3">
         {exercicios.map((ex, i) => {
-          const tipo = ex.tipo_exercicio ?? 'FORCA'
+          const tipo = normalizeTipoExercicio(ex.tipo_exercicio)
           const nomeListId = `${baseId}-ex-${i}-nome`
           const grupoListId = `${baseId}-ex-${i}-grupo`
+          const unidadeListId = `${baseId}-ex-${i}-unidade`
           return (
             <Card key={i} variant="flat" className="relative">
               <Button
@@ -277,17 +283,54 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                   </div>
                 </div>
 
+                {/* Unidade + direção (Performance) */}
+                {tipo === 'PERFORMANCE' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <Input
+                        label="Unidade da métrica" list={unidadeListId} maxLength={7}
+                        placeholder="ex.: km, min, voltas"
+                        value={ex.unidade_reps ?? ''}
+                        onChange={(e) => updateEx(i, { unidade_reps: e.target.value.slice(0, 7) || undefined })}
+                      />
+                      <datalist id={unidadeListId}>
+                        {UNIDADE_PRESETS.map((u) => <option key={u} value={u} />)}
+                      </datalist>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-text-secondary mb-2">Evolução =</p>
+                      <div className="flex gap-2">
+                        {DIRECAO_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => updateEx(i, { metrica_direcao: opt.value })}
+                            className={`flex-1 text-xs py-1.5 px-2 rounded-lg border transition-colors ${
+                              (ex.metrica_direcao ?? 'MAIOR') === opt.value
+                                ? 'border-accent bg-accent/10 text-accent-hover font-medium'
+                                : 'border-border text-text-muted hover:border-border-strong'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Prescrição */}
                 <div>
                   <p className="text-xs font-medium text-text-secondary mb-2">
-                    {tipo === 'CARDIO'
-                      ? 'Prescrição — blocos × dur./dist. · RPE (1-10)'
+                    {tipo === 'PERFORMANCE'
+                      ? `Prescrição — séries × ${ex.unidade_reps || 'métrica'}`
                       : 'Prescrição — séries × reps · carga'}
                   </p>
                   <SeriesPrescritasEditor
                     value={ex.series_prescritas ?? []}
                     onChange={(v: SeriePrescrita[]) => updateEx(i, { series_prescritas: v })}
                     tipoExercicio={tipo}
+                    unidadeReps={ex.unidade_reps}
                     rm_kg={ex.rm_kg}
                   />
                 </div>

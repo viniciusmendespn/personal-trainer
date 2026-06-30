@@ -53,6 +53,8 @@ def _build_exercicio_out(nome: str, item: dict) -> dict:
         "nome": nome,
         "grupo": item.get("grupo"),
         "tipo_exercicio": item.get("tipo_exercicio", "FORCA"),
+        "unidade_reps": item.get("unidade_reps"),
+        "metrica_direcao": item.get("metrica_direcao") or "MAIOR",
         "video_url": item.get("video_url"),
         "descricao": item.get("descricao"),
         "recomendacoes": item.get("recomendacoes"),
@@ -235,6 +237,8 @@ def _instalar(
     ref_to_exlib: dict[str, str] = {}
     ref_to_grupo: dict[str, str] = {}
     ref_to_tipo: dict[str, str] = {}
+    ref_to_unidade: dict[str, str | None] = {}
+    ref_to_direcao: dict[str, str] = {}
     exlib_id_to_nome: dict[str, str] = {}
     exlib_puts: list[dict] = []
     seen_exlib: set[str] = set()
@@ -245,6 +249,8 @@ def _instalar(
         ref_to_exlib[ex_pkg.ref] = exlib_id
         ref_to_grupo[ex_pkg.ref] = ex_pkg.grupo or ""
         ref_to_tipo[ex_pkg.ref] = ex_pkg.tipo_exercicio.value
+        ref_to_unidade[ex_pkg.ref] = ex_pkg.unidade_reps
+        ref_to_direcao[ex_pkg.ref] = ex_pkg.metrica_direcao or "MAIOR"
         exlib_id_to_nome[exlib_id] = nome
         if exlib_id in seen_exlib:
             continue
@@ -256,6 +262,8 @@ def _instalar(
             "nome": nome,
             "grupo": ex_pkg.grupo,
             "tipo_exercicio": ex_pkg.tipo_exercicio.value,
+            "unidade_reps": ex_pkg.unidade_reps,
+            "metrica_direcao": ex_pkg.metrica_direcao or "MAIOR",
             "video_url": ex_pkg.video_url,
             "descricao": ex_pkg.descricao,
             "recomendacoes": ex_pkg.recomendacoes,
@@ -287,6 +295,8 @@ def _instalar(
                 "intervalo_s": ex_ref_item.intervalo_s,
                 "observacoes": ex_ref_item.observacoes,
                 "tipo_exercicio": ref_to_tipo.get(ex_ref_item.ex_ref, "FORCA"),
+                "unidade_reps": ref_to_unidade.get(ex_ref_item.ex_ref),
+                "metrica_direcao": ref_to_direcao.get(ex_ref_item.ex_ref, "MAIOR"),
                 "origem_licenciada": origem_licenciada,
             })
         template_puts.append({
@@ -595,6 +605,8 @@ def gerar_pacote(
                     "nome": ex["nome"].strip(),
                     "grupo": ex.get("grupo"),
                     "tipo_exercicio": ex.get("tipo_exercicio", "FORCA"),
+                    "unidade_reps": ex.get("unidade_reps"),
+                    "metrica_direcao": ex.get("metrica_direcao") or "MAIOR",
                 }
 
     # Enriquece com dados do ExLib (descricao, recomendacoes, video_url, substitutos)
@@ -612,7 +624,7 @@ def gerar_pacote(
         if exlib.get("origem_licenciada"):
             raise HTTPException(400, detail={"code": "PACOTE_LICENCIADO_NAO_PERMITIDO",
                                              "detail": f"Exercício '{base['nome']}' tem origem licenciada e não pode ser redistribuído"})
-        merged = {**base, **{k: v for k, v in exlib.items() if k in ("grupo", "tipo_exercicio", "video_url", "descricao", "recomendacoes", "substitutos") and v}}
+        merged = {**base, **{k: v for k, v in exlib.items() if k in ("grupo", "tipo_exercicio", "unidade_reps", "metrica_direcao", "video_url", "descricao", "recomendacoes", "substitutos") and v}}
         ex_out = _build_exercicio_out(base["nome"], merged)
         nome_lower_to_ref[nl] = ex_out["ref"]
         exercicios_out.append(ex_out)

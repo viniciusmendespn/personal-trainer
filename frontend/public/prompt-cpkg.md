@@ -160,6 +160,21 @@ Cada exercício é um objeto com esta estrutura:
 }
 ```
 
+Para exercícios `PERFORMANCE`, inclua também `unidade_reps` (unidade da métrica, ≤7 chars) e
+`metrica_direcao` (`"MAIOR"` ou `"MENOR"`):
+
+```json
+{
+  "ref": "ex_corrida_5km",
+  "nome": "Corrida 5 km",
+  "grupo": "Cardio",
+  "tipo_exercicio": "PERFORMANCE",
+  "unidade_reps": "min",
+  "metrica_direcao": "MENOR",
+  "descricao": "Corrida contínua de 5 km medida pelo tempo total."
+}
+```
+
 #### Regras do campo `ref` (exercícios)
 - **Sempre começa com `ex_`**
 - Letras minúsculas apenas
@@ -172,9 +187,8 @@ Cada exercício é um objeto com esta estrutura:
 #### Valores válidos para `tipo_exercicio`
 | Valor | Quando usar |
 |---|---|
-| `"FORCA"` | Musculação, pesos livres, máquinas, resistência progressiva |
-| `"CARDIO"` | Corrida, bike, elíptico, esteira, step aeróbico. O campo `reps` representa tempo (ex.: `"30 segundos"`, `"1 minuto"`) |
-| `"PESO_CORPORAL"` | Calistenia e exercícios sem equipamento (flexão, agachamento com peso corporal, barra fixa) |
+| `"FORCA"` | Musculação, pesos livres, máquinas, resistência progressiva (carga em kg/% + repetições) |
+| `"PERFORMANCE"` | Qualquer exercício medido por **uma métrica numérica livre**: cardio, tempo, distância, peso corporal, voltas. Defina `unidade_reps` (ex.: `"min"`, `"km"`, `"voltas"`, `"reps"`) e `metrica_direcao` (`"MAIOR"` = mais é melhor; `"MENOR"` = menos é melhor, p/ tempo/pace) |
 
 #### Grupos musculares sugeridos
 `Peito`, `Costas`, `Ombro`, `Bíceps`, `Tríceps`, `Quadríceps`, `Posterior de Coxa`, `Glúteo`, `Panturrilha`, `Core`, `Abdômen`, `Antebraço`, `Full Body`, `Cardio`
@@ -239,7 +253,7 @@ Cada objeto contém:
 | Campo | Tipo | Obrigatório | Exemplos |
 |---|---|---|---|
 | `series` | Inteiro | ✅ Sim | `3`, `4`, `5` |
-| `reps` | String | ✅ Sim | `"8-12"`, `"10"`, `"15"`, `"30 segundos"`, `"1 minuto"`, `"12-15 por lado"`, `"até a falha"` |
+| `reps` | String | ✅ Sim | `"8-12"`, `"10"`, `"15"`, `"12-15 por lado"`, `"até a falha"`. Em exercícios `PERFORMANCE`, é o alvo da métrica na unidade do exercício (ex.: `"30"` p/ 30 min, `"5"` p/ 5 km) |
 | `carga` | String ou `null` | ❌ Não | `"60%"`, `"20kg"`, `"moderada"`, `"pesada"`, `"leve a moderada"`, `null` |
 
 Use `null` para carga quando o peso varia por aluno ou não é aplicável.

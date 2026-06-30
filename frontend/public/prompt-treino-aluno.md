@@ -91,26 +91,52 @@ A ordem do array é a ordem de execução.
   "observacoes": null,
   "unidade_carga": null,
   "unidade_reps": null,
+  "metrica_direcao": null,
   "substitutos": [
     { "nome": "Supino inclinado com halteres", "video_url": null, "observacao": null, "series_prescritas": null }
   ]
 }
 ```
 
+Exemplo de exercício `PERFORMANCE` (corrida medida por tempo, onde **menor é melhor**):
+
+```json
+{
+  "nome": "Corrida 5 km",
+  "grupo": null,
+  "tipo_exercicio": "PERFORMANCE",
+  "series_prescritas": [ { "series": 1, "reps": "28", "carga": null } ],
+  "intervalo_s": null,
+  "video_url": null,
+  "observacoes": "Registre o tempo total da corrida.",
+  "unidade_carga": null,
+  "unidade_reps": "min",
+  "metrica_direcao": "MENOR",
+  "substitutos": []
+}
+```
+
 Campos:
 - `nome`: nome do exercício (obrigatório).
 - `grupo`: grupo muscular principal (ex.: Peito, Costas, Ombros, Pernas, Glúteos, Bíceps, Tríceps, Abdômen) ou `null`.
-- `tipo_exercicio`: **um de** `"FORCA"`, `"CARDIO"`, `"PESO_CORPORAL"`. Para exercícios de cardio/tempo,
-  use `"CARDIO"` e expresse a duração em `reps` (ex.: `"30 min"`, `"45 segundos"`).
+- `tipo_exercicio`: **um de** `"FORCA"` ou `"PERFORMANCE"`.
+  - `"FORCA"`: musculação tradicional (carga em kg/%/etc. + repetições).
+  - `"PERFORMANCE"`: qualquer exercício medido por **uma métrica numérica livre** (cardio, tempo,
+    distância, peso corporal, voltas…). Defina a unidade em `unidade_reps` (≤7 caracteres: `"min"`,
+    `"km"`, `"s"`, `"voltas"`, `"reps"`…) e a direção em `metrica_direcao`.
+- `metrica_direcao` (só em `PERFORMANCE`): `"MAIOR"` (default — mais é melhor: mais reps/km/voltas/tempo
+  aguentado) ou `"MENOR"` (menos é melhor: tempo/pace, ex.: tempo nos 5 km). Em `FORCA`, deixe `null`.
 - `series_prescritas`: lista de blocos de prescrição. Cada bloco:
   - `series`: número inteiro de séries (ex.: `3`, `4`).
-  - `reps`: texto (ex.: `"8-12"`, `"10"`, `"até a falha"`, `"12-15 por lado"`, `"30 segundos"`).
-  - `carga`: texto ou `null` (ex.: `"60%"`, `"20kg"`, `"moderada"`, `"pesada"`).
+  - `reps`: texto. Em `FORCA` são repetições (ex.: `"8-12"`, `"10"`, `"até a falha"`). Em `PERFORMANCE`
+    é o alvo da métrica na unidade de `unidade_reps` (ex.: `"30"` para 30 min, `"5"` para 5 km).
+  - `carga`: texto ou `null` (ex.: `"60%"`, `"20kg"`, `"moderada"`). Em `PERFORMANCE`, normalmente `null`.
   - Para aquecimento + séries de trabalho, use dois blocos, ex.: `1 série pesada de 6-8` + `3 séries de 8-12`.
 - `intervalo_s`: intervalo de descanso em **segundos** (inteiro) ou `null`. Ex.: `45`, `60`, `90`, `120`, `180`.
 - `video_url`: URL de vídeo ou `null` (mantenha o que veio; não invente links).
 - `observacoes`: dica/observação de execução ou `null`.
-- `unidade_carga` / `unidade_reps`: normalmente `null`. Só preencha se já vier preenchido.
+- `unidade_carga`: sufixo da carga em `FORCA` (ex.: `"kg"`, `"%1RM"`) ou `null`.
+- `unidade_reps`: **unidade da métrica em `PERFORMANCE`** (≤7 chars). Em `FORCA`, normalmente `null`.
 - `substitutos`: lista de opções de troca (exercício alternativo). Cada um: `nome` (obrigatório),
   `video_url`, `observacao`, `series_prescritas` (use `null` para herdar a prescrição do exercício principal).
   Pode ser uma lista vazia `[]`.
@@ -136,7 +162,7 @@ Campos:
 - [ ] `version` é `"1"`.
 - [ ] Cada exercício tem `nome` e `series_prescritas` com pelo menos um bloco válido.
 - [ ] `series` é inteiro; `reps` é texto; `carga` é texto ou `null`.
-- [ ] `tipo_exercicio` é um de `FORCA` / `CARDIO` / `PESO_CORPORAL`.
+- [ ] `tipo_exercicio` é `FORCA` ou `PERFORMANCE`. Em `PERFORMANCE`, `unidade_reps` está definida (≤7) e `metrica_direcao` é `MAIOR`/`MENOR`.
 - [ ] `intervalo_s` é inteiro (segundos) ou `null`.
 - [ ] Nada do que o personal não pediu para mudar foi perdido.
 - [ ] O JSON está completo e isolado em um único bloco de código.

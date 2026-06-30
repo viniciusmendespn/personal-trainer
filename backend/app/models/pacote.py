@@ -32,6 +32,8 @@ class ExercicioPacote(BaseModel):
     descricao: Optional[str] = None
     recomendacoes: Optional[str] = None
     tipo_exercicio: TipoExercicio = TipoExercicio.FORCA
+    unidade_reps: Optional[str] = None         # PERFORMANCE: unidade da métrica (≤7 chars)
+    metrica_direcao: Optional[str] = "MAIOR"   # PERFORMANCE: "MAIOR"|"MENOR"
     substitutos: list[ExercicioSubstituto] = Field(default_factory=list)
 
 

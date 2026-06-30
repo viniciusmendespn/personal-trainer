@@ -7,21 +7,21 @@ interface Props {
   value: SeriePrescrita[]
   onChange: (v: SeriePrescrita[]) => void
   tipoExercicio?: TipoExercicio
+  unidadeReps?: string
   rm_kg?: number
 }
 
-function getLabels(tipo?: TipoExercicio) {
-  if (tipo === 'CARDIO') return { series: 'Blocos', reps: 'Dur./Dist.', carga: 'RPE (1-10)' }
-  if (tipo === 'PESO_CORPORAL') return { series: 'Séries', reps: 'Reps', carga: null }
+function getLabels(tipo?: TipoExercicio, unidadeReps?: string) {
+  if (tipo === 'PERFORMANCE') return { series: 'Séries', reps: unidadeReps || 'Métrica', carga: null }
   return { series: 'Séries', reps: 'Reps', carga: 'Carga' }
 }
 
 export function SeriesPrescritasEditor({
-  value, onChange, tipoExercicio, rm_kg,
+  value, onChange, tipoExercicio, unidadeReps, rm_kg,
 }: Props) {
   const safeValue = Array.isArray(value) ? value : []
-  const labels = getLabels(tipoExercicio)
-  const showPct = !!rm_kg && rm_kg > 0 && tipoExercicio !== 'CARDIO' && tipoExercicio !== 'PESO_CORPORAL'
+  const labels = getLabels(tipoExercicio, unidadeReps)
+  const showPct = !!rm_kg && rm_kg > 0 && tipoExercicio !== 'PERFORMANCE'
 
   const [pcts, setPcts] = useState<string[]>(() => safeValue.map(() => ''))
 
@@ -101,7 +101,7 @@ export function SeriesPrescritasEditor({
         onClick={add}
         className="inline-flex items-center gap-1 text-xs text-accent-hover hover:underline"
       >
-        <Plus size={12} /> {tipoExercicio === 'CARDIO' ? 'bloco' : 'bloco de séries'}
+        <Plus size={12} /> bloco de séries
       </button>
     </div>
   )
@@ -110,7 +110,7 @@ export function SeriesPrescritasEditor({
 /** Resumo compacto para exibição: "2×10 · 132 (88%) + 1×6 · 140 (93%)" */
 export function SeriesPrescritasCompact({ items, tipoExercicio, rm_kg }: { items: SeriePrescrita[]; tipoExercicio?: TipoExercicio; rm_kg?: number }) {
   if (!items.length) return null
-  const ocultarCarga = tipoExercicio === 'PESO_CORPORAL'
+  const ocultarCarga = tipoExercicio === 'PERFORMANCE'
   return (
     <span className="text-xs text-text-muted">
       {items.map((s, i) => {

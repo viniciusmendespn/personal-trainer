@@ -60,7 +60,7 @@ O ícone de **chat** (balão de mensagem) fica flutuando na tela — toque para 
 
 **Treino de hoje:**
 Mostra os exercícios do seu treino atual com:
-- Nome do exercício e tipo (Força, Cardio ou Peso Corporal)
+- Nome do exercício e tipo (Força ou Performance)
 - Séries × Repetições prescritas (com a unidade do exercício, ex: reps, min, km)
 - Carga prescrita — para exercícios de Força, pode aparecer como "80kg (75% 1RM)" quando seu personal cadastrou o % 1RM
 - Intervalo de descanso (em segundos)
@@ -85,15 +85,10 @@ Quando você tem mais de um treino cadastrado (ex.: Treino A, Treino B), eles ap
    **Força (halteres, barras, máquinas):**
    - **Carga** (ex: kg ou lb) — quanto você levantou
    - **Repetições** — quantas repetições fez
-   - **RPE** (opcional) — índice de esforço percebido, de 0 a 10
 
-   **Cardio (esteira, bicicleta, corrida):**
-   - **RPE** — esforço percebido de 0 a 10 (campo de carga no cardio)
-   - **Duração/Distância** — em **minutos** ou **km**. Toque na unidade para alternar entre as duas
-
-   **Peso Corporal (flexões, abdominais, barras):**
-   - **Repetições** — quantas repetições fez
-   - **RPE** (opcional)
+   **Performance (cardio, tempo, distância, peso corporal, voltas…):**
+   - **Um único valor por série** na unidade definida pelo seu personal (ex.: minutos, km, voltas, reps)
+   - Aceita números com vírgula/ponto quando faz sentido (ex.: 5.2 km)
 
 3. Toque em **"Registrar"** para confirmar a série
 4. Repita para cada série do exercício
@@ -437,8 +432,8 @@ R: Sim. Toque em "Cancelar treino" durante a sessão ativa e confirme. A sessão
 **P: O que significa "75kg (75% 1RM)" na prescrição?**
 R: Significa que seu personal prescreveu 75% do seu 1RM (peso máximo em 1 repetição), e que 75% do 1RM cadastrado equivale a 75kg. É só uma referência — você registra a carga real que levantou.
 
-**P: Como registro um exercício de cardio (corrida, bicicleta)?**
-R: Exercícios de cardio usam RPE (esforço percebido, 0–10) como carga. Para a duração, você pode registrar em minutos ou em km — toque na unidade para alternar entre as duas.
+**P: Como registro um exercício de cardio, corrida ou peso corporal?**
+R: Esses são exercícios do tipo **Performance**. Você registra um único valor por série na unidade definida pelo seu personal (ex.: minutos, km, voltas, reps). Esse valor entra no gráfico de evolução e no seu recorde (PR).
 
 **P: O que é o gráfico de IRM na aba Evolução?**
 R: IRM (Intensidade Relativa Média) mostra o percentual médio do seu 1RM que você utilizou em uma sessão. Aparece somente em exercícios de Força onde seu personal registrou o seu 1RM. Serve para acompanhar se você está treinando na intensidade correta ao longo do tempo.

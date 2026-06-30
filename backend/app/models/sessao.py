@@ -16,6 +16,8 @@ class ExercicioAtual(BaseModel):
     carga_prescrita: Optional[str] = None
     series_prescritas: Optional[list] = None
     intervalo_s: Optional[int] = None
+    unidade_reps: Optional[str] = None             # PERFORMANCE: unidade da métrica
+    metrica_direcao: Optional[str] = "MAIOR"       # PERFORMANCE: direção do PR (MAIOR|MENOR)
 
 
 class SessaoTreino(BaseModel):

@@ -9,6 +9,7 @@ import { MediaTimeline, type MediaTimelineItem } from '../media/MediaTimeline'
 import { ExercicioFeedCard } from '../exercicio/ExercicioFeedCard'
 import { PostComposer } from '../exercicio/PostComposer'
 import { Modal } from '../ui'
+import { normalizeTipoExercicio, type TipoExercicio } from '../../types'
 
 function fmtDur(secs: number) {
   const h = Math.floor(secs / 3600)
@@ -32,7 +33,7 @@ interface Relato {
 interface ExecEx {
   exercicio_id: string
   exercicio_nome: string
-  tipo_exercicio?: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL'
+  tipo_exercicio?: string   // 'FORCA' | 'PERFORMANCE' (+ legados na leitura)
   unidade_carga?: string
   unidade_reps?: string
   series_exec: Array<{ carga?: string; reps?: number; rpe?: number }>
@@ -73,19 +74,15 @@ function prescritoLabel(ex: ExecEx): string | null {
   return null
 }
 
-function execLabel(tipo: 'FORCA' | 'CARDIO' | 'PESO_CORPORAL', s: { carga?: string; reps?: number }, unidadeCarga = 'kg', unidadeReps = 'reps'): string {
-  if (tipo === 'CARDIO') {
-    const val = s.reps != null ? String(s.reps) : '—'
-    return s.carga ? `${val} · RPE ${s.carga}` : val
-  }
-  if (tipo === 'PESO_CORPORAL') {
-    return s.reps != null ? `${s.reps} ${unidadeReps}` : '—'
+function execLabel(tipo: TipoExercicio, s: { carga?: string; reps?: number }, unidadeCarga = 'kg', unidadeReps = 'reps'): string {
+  if (tipo === 'PERFORMANCE') {
+    return s.reps != null ? `${s.reps} ${unidadeReps}`.trimEnd() : '—'
   }
   return `${s.reps != null ? `${s.reps} ${unidadeReps}` : '—'}${s.carga ? ` · ${s.carga} ${unidadeCarga}` : ''}`
 }
 
 function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
-  const tipo = ex.tipo_exercicio ?? 'FORCA'
+  const tipo = normalizeTipoExercicio(ex.tipo_exercicio)
   const prescrito = prescritoLabel(ex)
   const [correcaoOpen, setCorrecaoOpen] = useState(false)
   const { data: aluno } = useQuery({ queryKey: ['aluno', alunoId], queryFn: () => alunosApi.get(alunoId!), enabled: !!alunoId })

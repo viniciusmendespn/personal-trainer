@@ -34,7 +34,8 @@ class ExercicioCreate(BaseModel):
     video_url: Optional[str] = None
     observacoes: Optional[str] = None
     unidade_carga: Optional[str] = None          # ex: "kg", "%1RM", "lb" — sufixo do campo carga
-    unidade_reps: Optional[str] = None           # ex: "reps", "min", "m" — sufixo do campo reps
+    unidade_reps: Optional[str] = None           # ex: "reps", "min", "m" — sufixo do campo reps (métrica em PERFORMANCE)
+    metrica_direcao: Optional[str] = "MAIOR"      # PERFORMANCE: "MAIOR"|"MENOR" — direção que representa evolução (PR/melhor série)
     rm_kg: Optional[float] = None               # 1RM em kg — carga máxima para 1 repetição; usado para calcular IRM na evolução
     links_uteis: list[str] = []                 # post_sks adicionados diretamente a este exercício
     links_uteis_excluidos: list[str] = []       # post_sks da biblioteca ocultados para este aluno

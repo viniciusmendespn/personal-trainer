@@ -6,14 +6,13 @@ export interface PontoEvolucao {
   carga_max?: number | null
   volume?: number | null
   reps?: string
-  reps_max?: number | null
-  total_reps?: number | null
-  duracao_total_s?: number | null
+  metrica_max?: number | null
   irm?: number | null
 }
 
 export interface Evolucao {
   tipo?: string
+  direcao?: 'MAIOR' | 'MENOR'
   serie: PontoEvolucao[]
   pr: { carga: number; data: string } | null
   total_sessoes: number

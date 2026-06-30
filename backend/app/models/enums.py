@@ -86,5 +86,22 @@ class FormaPagamento(str, Enum):
 
 class TipoExercicio(str, Enum):
     FORCA = "FORCA"
+    PERFORMANCE = "PERFORMANCE"
+    # Legados — unificados em PERFORMANCE. Mantidos só para validar payloads/pacotes antigos;
+    # normalizados via normalizar_tipo_exercicio(). Não oferecer mais na UI.
     CARDIO = "CARDIO"
     PESO_CORPORAL = "PESO_CORPORAL"
+
+
+# Direção da métrica de exercícios PERFORMANCE: se um valor maior ou menor representa evolução.
+MAIOR = "MAIOR"   # mais reps/km/voltas/tempo aguentado = melhor (default)
+MENOR = "MENOR"   # menos tempo/pace = melhor (ex.: tempo nos 5 km)
+
+
+def normalizar_tipo_exercicio(t) -> str:
+    """Mapeia os tipos legados CARDIO/PESO_CORPORAL para PERFORMANCE e None para FORCA.
+    Aceita str ou TipoExercicio. Usar em todo ponto que LÊ o tipo de um item persistido."""
+    v = t.value if isinstance(t, TipoExercicio) else t
+    if v in ("CARDIO", "PESO_CORPORAL"):
+        return TipoExercicio.PERFORMANCE.value
+    return v or TipoExercicio.FORCA.value

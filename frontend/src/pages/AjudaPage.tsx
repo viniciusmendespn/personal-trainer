@@ -84,8 +84,8 @@ const FAQ_PORTAL: FaqItem[] = [
     a: 'Ao cadastrar um exercício de Força, preencha "1RM (kg)" com o máximo do aluno e "% 1RM" com o percentual desejado. A carga prescrita é calculada automaticamente (ex: 1RM = 100kg, % 1RM = 75 → carga = 75kg). O aluno verá a carga calculada e o percentual entre parênteses.',
   },
   {
-    q: 'O que são os tipos de exercício (Força, Cardio, Peso Corporal)?',
-    a: 'Força: carga em kg/lb + repetições. Cardio: carga = RPE (esforço 0–10), repetições em minutos ou km (o aluno alterna com um toque). Peso Corporal: sem carga externa, só repetições. O tipo define os campos de prescrição e como o volume é calculado.',
+    q: 'O que são os tipos de exercício (Força e Performance)?',
+    a: 'Força: carga em kg/lb + repetições, com 1RM/%1RM e IRM. Performance: qualquer exercício medido por uma métrica numérica livre (cardio, tempo, distância, peso corporal, voltas) — você define a unidade (ex.: min, km, voltas, reps) e a direção da evolução (maior é melhor, ou menor é melhor para tempo/pace). O tipo define os campos de prescrição e como o PR/volume é calculado.',
   },
   {
     q: 'O que é o IRM e onde vejo?',

@@ -28,6 +28,7 @@ import { CalendarioMes } from '../components/historico/CalendarioMes'
 import { alunoFinanceiroApi } from '../api/financeiro'
 import { PixModal } from '../components/financeiro/PixModal'
 import type { Cobranca, ExercicioSubstituto, SeriePrescrita } from '../types'
+import { normalizeTipoExercicio } from '../types'
 import { videoUrlComFallback } from '../utils/video'
 
 const chartTip = {
@@ -1201,10 +1202,9 @@ const sanitizeCarga = (v: string) => {
   return neg ? '-' + digits : digits
 }
 
-function formatPr(val: number, tipo?: string): string {
-  if (tipo === 'PESO_CORPORAL') return `${val} reps`
-  if (tipo === 'CARDIO') return String(val)
-  return `${val} kg`
+function formatPr(val: number, tipo?: string, unidade?: string): string {
+  if (tipo === 'PERFORMANCE') return `${val} ${unidade ?? ''}`.trimEnd()
+  return `${val} ${unidade ?? 'kg'}`
 }
 
 function RecursosModal({ recursos, onClose }: { recursos: PostGlobal[]; onClose: () => void }) {
@@ -1354,7 +1354,7 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
     setPr(null)
   }
 
-  const tipo = ex.tipo_exercicio ?? 'FORCA'
+  const tipo = normalizeTipoExercicio(ex.tipo_exercicio)
 
   const ultimaExec = useQuery({
     queryKey: ['aluno-hist-ex', ex.nome],
@@ -1365,15 +1365,11 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
 
   const save = useMutation({
     mutationFn: () => {
-      if (tipo === 'PESO_CORPORAL') {
-        if (rows.some((r) => !r.reps)) throw new Error('Preencha as repetições de todas as séries.')
-      } else if (tipo === 'CARDIO') {
-        if (rows.some((r) => !r.reps)) throw new Error('Preencha a duração de todos os blocos.')
-      } else {
-        if (rows.some((r) => !r.reps)) throw new Error('Preencha as repetições de todas as séries.')
+      if (rows.some((r) => !r.reps)) {
+        throw new Error(tipo === 'PERFORMANCE' ? 'Preencha a métrica de todas as séries.' : 'Preencha as repetições de todas as séries.')
       }
       const series = rows.map((r) => ({
-        carga: tipo === 'PESO_CORPORAL' ? undefined : (r.carga || undefined),
+        carga: tipo === 'PERFORMANCE' ? undefined : (r.carga || undefined),
         reps: Number(r.reps),
       }))
       return alunoApi.registrar(series, ex.exercicio_id, variante?.nome)
@@ -1411,7 +1407,7 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
             </span>
             <span className="block mt-0.5">
               {seriesAtivas?.length
-                ? <SeriesPrescritasCompact items={seriesAtivas} tipoExercicio={ex.tipo_exercicio} />
+                ? <SeriesPrescritasCompact items={seriesAtivas} tipoExercicio={normalizeTipoExercicio(ex.tipo_exercicio)} />
                 : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
               }
             </span>
@@ -1469,8 +1465,7 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
         <div className="flex flex-wrap gap-1.5 mt-1">
           {ex.registrado!.map((s, i) => {
             let label: string
-            if (tipo === 'PESO_CORPORAL') label = `${s.reps ?? '-'} reps`
-            else if (tipo === 'CARDIO') label = `${s.reps ?? '-'}${s.carga ? ` · RPE ${s.carga}` : ''}`
+            if (tipo === 'PERFORMANCE') label = `${s.reps ?? '-'} ${ex.unidade_reps ?? ''}`.trimEnd()
             else {
               const cargaLabel = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
               label = `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}${cargaLabel}`
@@ -1495,8 +1490,7 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
               <div className="flex flex-wrap gap-1.5">
                 {ultimaExec.data[0].series_exec.map((s, i) => {
                   let label: string
-                  if (tipo === 'PESO_CORPORAL') label = `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}`
-                  else if (tipo === 'CARDIO') label = `${s.reps ?? '-'}${s.carga ? ` · RPE ${s.carga}` : ''}`
+                  if (tipo === 'PERFORMANCE') label = `${s.reps ?? '-'} ${ex.unidade_reps ?? ''}`.trimEnd()
                   else {
                     const cargaLabel = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
                     label = `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}${cargaLabel}`
@@ -1514,32 +1508,32 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
           {rows.map((r, i) => (
             <div key={i} className="flex gap-2 items-center">
               <span className="text-xs text-text-muted w-12">
-                {tipo === 'CARDIO' ? `Bloco ${i + 1}` : `Sér ${i + 1}`}
+                {`Sér ${i + 1}`}
               </span>
               {/* F3 — reps antes de carga */}
               <div className="relative flex-1">
                 <Input
-                  className={tipo === 'CARDIO' ? 'pr-16' : 'pr-10'}
+                  className="pr-12"
                   inputMode="decimal"
                   placeholder={r.repsHint || '0'}
                   value={r.reps}
                   onChange={(e) => upd(i, 'reps', e.target.value.replace(/[^\d.]/g, ''))}
                 />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">
-                  {tipo === 'CARDIO' ? 'dur/dist' : (ex.unidade_reps ?? 'reps')}
+                  {tipo === 'PERFORMANCE' ? (ex.unidade_reps || 'métrica') : (ex.unidade_reps ?? 'reps')}
                 </span>
               </div>
-              {tipo !== 'PESO_CORPORAL' && (
+              {tipo !== 'PERFORMANCE' && (
                 <div className="relative flex-1">
                   <Input
-                    className={tipo === 'CARDIO' ? 'pr-12' : 'pr-7'}
-                    inputMode={tipo === 'CARDIO' ? 'text' : 'decimal'}
-                    placeholder={r.cargaHint || (tipo === 'CARDIO' ? '7' : '0')}
+                    className="pr-7"
+                    inputMode="decimal"
+                    placeholder={r.cargaHint || '0'}
                     value={r.carga}
-                    onChange={(e) => upd(i, 'carga', tipo === 'CARDIO' ? e.target.value.replace(/[^\d.]/g, '') : sanitizeCarga(e.target.value))}
+                    onChange={(e) => upd(i, 'carga', sanitizeCarga(e.target.value))}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">
-                    {tipo === 'CARDIO' ? 'RPE' : (ex.unidade_carga ?? 'kg')}
+                    {ex.unidade_carga ?? 'kg'}
                   </span>
                 </div>
               )}
@@ -1554,11 +1548,11 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
             onClick={() => setRows([...rows, { carga: '', reps: '', repsHint: '', cargaHint: '' }])}
             className="text-xs text-accent-hover"
           >
-            {tipo === 'CARDIO' ? '+ bloco' : '+ série'}
+            + série
           </button>
           {pr != null && (
             <Badge tone="warning" className="text-xs">
-              <Trophy size={12} /> Novo recorde: {formatPr(pr, tipo)}!
+              <Trophy size={12} /> Novo recorde: {formatPr(pr, tipo, tipo === 'PERFORMANCE' ? ex.unidade_reps : ex.unidade_carga)}!
             </Badge>
           )}
           <Button variant="energy" className="w-full" onClick={() => save.mutate()} disabled={save.isPending}>
@@ -1714,17 +1708,14 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
   const feed = useQuery({ queryKey: ['aluno-feed', exId], queryFn: () => alunoApi.feedExercicio(exId), enabled: !!exId && aba === 'feed' })
 
   const exSel = exs.data?.find((e) => e.exercicio_id === exId)
-  const tipoEvo = (evo.data?.tipo ?? exSel?.tipo_exercicio ?? 'FORCA') as string
+  const tipoEvo = normalizeTipoExercicio(evo.data?.tipo ?? exSel?.tipo_exercicio)
+  const unidadePerf = exSel?.unidade_reps || ''
 
   const chartData = (evo.data?.serie ?? [])
-    .filter((p) => {
-      if (tipoEvo === 'PESO_CORPORAL') return p.reps_max != null
-      if (tipoEvo === 'CARDIO') return (p.duracao_total_s ?? 0) > 0
-      return p.carga_max != null
-    })
+    .filter((p) => (tipoEvo === 'PERFORMANCE' ? p.metrica_max != null : p.carga_max != null))
     .map((p) => ({
       data: new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-      carga: tipoEvo === 'PESO_CORPORAL' ? p.reps_max : tipoEvo === 'CARDIO' ? p.duracao_total_s : p.carga_max,
+      carga: tipoEvo === 'PERFORMANCE' ? p.metrica_max : p.carga_max,
     }))
 
   const pontosIrm = tipoEvo === 'FORCA'
@@ -1805,20 +1796,22 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
             />
             {!chartData.length ? (
               <p className="text-text-muted text-sm">
-                {tipoEvo === 'PESO_CORPORAL' ? 'Sem registros de reps ainda.' : tipoEvo === 'CARDIO' ? 'Sem registros ainda.' : 'Sem registros com carga ainda.'}
+                {tipoEvo === 'PERFORMANCE' ? 'Sem registros ainda.' : 'Sem registros com carga ainda.'}
               </p>
             ) : (
               <>
                 <Card variant="elevated">
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-text-secondary">
-                      {tipoEvo === 'PESO_CORPORAL' ? 'Máx. reps por sessão' : tipoEvo === 'CARDIO' ? 'Métrica por sessão' : 'Carga por sessão'}
+                      {tipoEvo === 'PERFORMANCE'
+                        ? `${unidadePerf || 'Métrica'} por sessão${evo.data?.direcao === 'MENOR' ? ' · menor é melhor' : ''}`
+                        : 'Carga por sessão'}
                     </span>
                     <Badge tone="warning">
                       <Trophy size={12} />
                       {' '}
                       {evo.data?.pr?.carga != null
-                        ? tipoEvo === 'PESO_CORPORAL' ? `${evo.data.pr.carga} reps` : tipoEvo === 'CARDIO' ? String(evo.data.pr.carga) : `${evo.data.pr.carga} ${exSel?.unidade_carga ?? 'kg'}`
+                        ? tipoEvo === 'PERFORMANCE' ? `${evo.data.pr.carga} ${unidadePerf}`.trimEnd() : `${evo.data.pr.carga} ${exSel?.unidade_carga ?? 'kg'}`
                         : '—'}
                     </Badge>
                   </div>
@@ -1839,8 +1832,8 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
                       <Tooltip
                         contentStyle={chartTip}
                         formatter={(v: number) => [
-                          tipoEvo === 'PESO_CORPORAL' ? `${v} reps` : tipoEvo === 'CARDIO' ? String(v) : `${v} ${exSel?.unidade_carga ?? 'kg'}`,
-                          tipoEvo === 'PESO_CORPORAL' ? 'Reps' : tipoEvo === 'CARDIO' ? 'Valor' : (exSel?.unidade_carga ?? 'kg'),
+                          tipoEvo === 'PERFORMANCE' ? `${v} ${unidadePerf}`.trimEnd() : `${v} ${exSel?.unidade_carga ?? 'kg'}`,
+                          tipoEvo === 'PERFORMANCE' ? (unidadePerf || 'Métrica') : (exSel?.unidade_carga ?? 'kg'),
                         ]}
                       />
                       <Area type="monotone" dataKey="carga" stroke="var(--color-energy)" strokeWidth={2.5}
@@ -1952,12 +1945,10 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
             <div className="flex flex-wrap gap-2">
               {prsFiltrados.slice(0, prLimit).map((p) => {
                 const exPr = exs.data?.find((e) => e.nome === p.exercicio)
-                const tipoPr = exPr?.tipo_exercicio ?? 'FORCA'
-                const valorPr = tipoPr === 'PESO_CORPORAL'
-                  ? `${p.carga} reps`
-                  : tipoPr === 'CARDIO'
-                    ? String(p.carga)
-                    : `${p.carga} ${exPr?.unidade_carga ?? 'kg'}`
+                const tipoPr = normalizeTipoExercicio(exPr?.tipo_exercicio)
+                const valorPr = tipoPr === 'PERFORMANCE'
+                  ? `${p.carga} ${exPr?.unidade_reps ?? ''}`.trimEnd()
+                  : `${p.carga} ${exPr?.unidade_carga ?? 'kg'}`
                 return (
                   <Badge key={p.exercicio} tone="warning">{p.exercicio}: <b className="ml-1">{valorPr}</b><span className="ml-1 text-xs opacity-70">{new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span></Badge>
                 )

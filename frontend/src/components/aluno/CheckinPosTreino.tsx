@@ -90,7 +90,7 @@ export function CheckinPosTreino({ sessao, onClose }: { sessao: SessaoFinalizada
               <li key={i} className="flex items-center gap-1.5">
                 <Trophy size={11} className="text-warning shrink-0" />
                 <span className="truncate">{pr.exercicio_nome}</span>
-                <span className="ml-auto font-medium text-text">{pr.carga}{pr.tipo === 'PESO_CORPORAL' ? ' reps' : pr.tipo === 'CARDIO' ? '' : ' kg'}</span>
+                <span className="ml-auto font-medium text-text">{pr.carga}{pr.unidade ? ` ${pr.unidade}` : (pr.tipo === 'PERFORMANCE' ? '' : ' kg')}</span>
               </li>
             ))}
           </ul>
