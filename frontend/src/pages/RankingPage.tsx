@@ -27,7 +27,7 @@ function pontosPeriodo(r: RankingPersonalItem, periodo: Periodo): number {
 }
 
 export function RankingPage() {
-  const [periodo, setPeriodo] = useState<Periodo>('geral')
+  const [periodo, setPeriodo] = useState<Periodo>('semana')
   const navigate = useNavigate()
   const { data, isLoading } = useQuery({
     queryKey: ['ranking-personal'],

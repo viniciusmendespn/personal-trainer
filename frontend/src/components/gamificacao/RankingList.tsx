@@ -31,7 +31,7 @@ function rankPorPeriodo(ranking: RankingItem[], periodo: Periodo): (RankingItem 
 }
 
 export function RankingList() {
-  const [periodo, setPeriodo] = useState<Periodo>('geral')
+  const [periodo, setPeriodo] = useState<Periodo>('semana')
   const { data: ranking, isLoading } = useQuery({
     queryKey: ['aluno-ranking'],
     queryFn: alunoApi.ranking,

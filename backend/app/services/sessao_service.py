@@ -619,10 +619,13 @@ def set_checkin(aluno_id: str, sessao_id: str, s3_key: str) -> dict:
     return {"ok": 1}
 
 
-def historico_mes(aluno_id: str, ano: int, mes: int) -> dict:
+def historico_mes(aluno_id: str, ano: int, mes: int, incluir_fotos: bool = True) -> dict:
     """Resumo do mês para o calendário do app do aluno: 1 sessão finalizada = 1 dia treinado,
     com destaques leves (volume, séries, novos PRs) e a foto de check-in (presigned). Lê só as
-    sessões do mês via BETWEEN no SK por epoch-ms — sem varrer o histórico inteiro."""
+    sessões do mês via BETWEEN no SK por epoch-ms — sem varrer o histórico inteiro.
+
+    `incluir_fotos=False` (visão do personal): não gera presigned URL da foto de check-in —
+    a privacidade do aluno é preservada (nem miniatura) e evita-se o custo do presign."""
     if not 1 <= mes <= 12:
         raise HTTPException(400, "Mês inválido")
     pk = keys.pk_aluno(aluno_id)
@@ -650,7 +653,7 @@ def historico_mes(aluno_id: str, ano: int, mes: int) -> dict:
             "volume_total": vol,
             "total_series": s.get("total_series"),
             "novos_prs": novos_prs,
-            "checkin_url": media_service.gerar_presigned_view_url(checkin_key) if checkin_key else None,
+            "checkin_url": (media_service.gerar_presigned_view_url(checkin_key) if checkin_key else None) if incluir_fotos else None,
         })
     st = repo.clean(repo.get_item(pk, keys.SK_STATS_ALUNO)) or {}
     return {

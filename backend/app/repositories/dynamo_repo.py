@@ -14,14 +14,21 @@ from botocore.exceptions import ClientError
 from app.config import settings
 
 _table = None
+_resource = None
 _INTERNAL = {"PK", "SK", "GSI1PK", "GSI1SK", "ttl"}
+
+
+def _get_resource():
+    global _resource
+    if _resource is None:
+        _resource = boto3.resource("dynamodb", region_name=settings.cognito_region)
+    return _resource
 
 
 def _get_table():
     global _table
     if _table is None:
-        dynamodb = boto3.resource("dynamodb", region_name=settings.cognito_region)
-        _table = dynamodb.Table(settings.table_name)
+        _table = _get_resource().Table(settings.table_name)
     return _table
 
 
@@ -101,6 +108,23 @@ def query_pk_page(
     last_key = resp.get("LastEvaluatedKey")
     next_cursor = _encode_cursor(last_key) if last_key else None
     return resp.get("Items", []), next_cursor
+
+
+def batch_get_items(keys_list: list[tuple[str, str]]) -> dict[tuple[str, str], dict]:
+    """BatchGetItem por (PK, SK) — 1 ida ao Dynamo a cada 100 chaves, em vez de N GetItem.
+    Retorna um mapa {(pk, sk): item} só com as chaves encontradas (ordem não garantida).
+    Trata UnprocessedKeys reenviando até esvaziar."""
+    resource = _get_resource()
+    out: dict[tuple[str, str], dict] = {}
+    for i in range(0, len(keys_list), 100):
+        chunk = keys_list[i:i + 100]
+        request = {settings.table_name: {"Keys": [{"PK": pk, "SK": sk} for pk, sk in chunk]}}
+        while request:
+            resp = resource.batch_get_item(RequestItems=request)
+            for item in resp.get("Responses", {}).get(settings.table_name, []):
+                out[(item["PK"], item["SK"])] = item
+            request = resp.get("UnprocessedKeys") or None
+    return out
 
 
 def query_between(pk: str, sk_low: str, sk_high: str) -> list[dict]:

@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { Bot, Calendar, Check, Copy, CreditCard, ExternalLink, Gift, MessageCircle, Receipt, Sparkles, Ticket, Users } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { QRCodeCanvas } from 'qrcode.react'
+import { Bot, Calendar, Check, Copy, CreditCard, Download, ExternalLink, Gift, Link2, MessageCircle, QrCode, Receipt, Sparkles, Ticket, Users } from 'lucide-react'
 import { Badge, Button, Card, Input, useToast } from '../components/ui'
 import { PixPaymentModal } from '../components/billing/PixPaymentModal'
 import { FinPilotBenefitCard } from '../components/billing/FinPilotBenefitCard'
@@ -102,13 +103,35 @@ export function PlanoPage() {
   const [pixOpen, setPixOpen] = useState(false)
   const [pixPeriodo, setPixPeriodo] = useState<'mensal' | 'anual'>('anual')
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [copiedLink, setCopiedLink] = useState(false)
+  const [showQr, setShowQr] = useState(false)
   const [promoInput, setPromoInput] = useState('')
+  const qrRef = useRef<HTMLCanvasElement>(null)
+
+  const refLink = cupom?.codigo ? `${window.location.origin}/signup?ref=${cupom.codigo}` : ''
 
   function copyCode(code: string) {
     navigator.clipboard.writeText(code).then(() => {
       setCopiedCode(code)
       setTimeout(() => setCopiedCode(null), 2000)
     })
+  }
+
+  function copyLink() {
+    if (!refLink) return
+    navigator.clipboard.writeText(refLink).then(() => {
+      setCopiedLink(true)
+      setTimeout(() => setCopiedLink(false), 2000)
+    })
+  }
+
+  function baixarQr() {
+    const canvas = qrRef.current
+    if (!canvas) return
+    const a = document.createElement('a')
+    a.href = canvas.toDataURL('image/png')
+    a.download = `coachpilot-indicacao-${cupom?.codigo ?? 'qr'}.png`
+    a.click()
   }
 
   function handleResgatar() {
@@ -230,6 +253,42 @@ export function PlanoPage() {
             )}
           </button>
         </div>
+
+        {/* Link de cadastro com indicação embutida + QR Code para compartilhar */}
+        {cupom?.codigo && (
+          <div className="mb-4 space-y-3">
+            <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-surface">
+              <div className="flex items-center gap-2 min-w-0">
+                <Link2 size={16} className="text-text-muted shrink-0" />
+                <span className="text-xs text-text-secondary truncate font-mono">{refLink}</span>
+              </div>
+              <button
+                onClick={copyLink}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border hover:bg-surface-secondary transition-colors text-sm text-text-secondary shrink-0"
+              >
+                {copiedLink ? (
+                  <><Check size={14} className="text-success" /> Copiado</>
+                ) : (
+                  <><Copy size={14} /> Copiar link</>
+                )}
+              </button>
+            </div>
+            <button
+              onClick={() => setShowQr((v) => !v)}
+              className="flex items-center gap-1.5 text-sm text-accent hover:text-accent-hover transition-colors"
+            >
+              <QrCode size={16} /> {showQr ? 'Ocultar QR Code' : 'Compartilhar via QR Code'}
+            </button>
+            {showQr && (
+              <div className="flex flex-col items-center gap-3 p-4 rounded-lg border border-border bg-white">
+                <QRCodeCanvas ref={qrRef} value={refLink} size={180} level="M" marginSize={2} />
+                <Button variant="outline" onClick={baixarQr}>
+                  <span className="flex items-center justify-center gap-1.5"><Download size={16} /> Baixar QR Code</span>
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <div className="flex items-center gap-2 text-sm">

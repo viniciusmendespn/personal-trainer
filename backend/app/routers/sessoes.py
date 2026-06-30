@@ -31,6 +31,15 @@ def list_sessoes(aluno_id: str, limit: int = 10, cursor: str | None = None,
     return {"items": items, "next_cursor": next_cursor}
 
 
+@router.get("/historico/mes")
+def historico_mes(aluno_id: str, ano: int, mes: int,
+                  personal_id: str = Depends(get_current_personal_id)):
+    """Resumo mensal do aluno para o calendário do portal — igual ao app do aluno, mas
+    SEM as fotos de check-in (nem miniatura): privacidade do aluno + economia de presign."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    return sessao_service.historico_mes(aluno_id, ano, mes, incluir_fotos=False)
+
+
 @router.get("/sessoes/{sessao_id}")
 def get_sessao_detalhe(aluno_id: str, sessao_id: str,
                        personal_id: str = Depends(get_current_personal_id)):

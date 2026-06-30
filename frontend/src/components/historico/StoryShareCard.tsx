@@ -79,7 +79,7 @@ export function buildStoryTree(data: HistoricoMes, assets: StoryAssets): ReactEl
       {/* ── HERO ── */}
       <div style={{ display: 'flex', width: 1080, height: 600, position: 'relative' }}>
         {heroFoto ? (
-          <img src={heroFoto} width={1080} height={600} style={{ position: 'absolute', top: 0, left: 0, width: 1080, height: 600, objectFit: 'cover' }} />
+          <img src={heroFoto} width={1080} height={600} style={{ position: 'absolute', top: 0, left: 0, width: 1080, height: 600, objectFit: 'cover', objectPosition: 'top' }} />
         ) : (
           <div style={{ display: 'flex', position: 'absolute', top: 0, left: 0, width: 1080, height: 600, backgroundImage: `linear-gradient(135deg, ${C.energy} 0%, #4f46e5 55%, ${C.accent} 100%)` }} />
         )}

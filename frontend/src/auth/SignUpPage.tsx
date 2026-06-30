@@ -10,6 +10,7 @@ import { useResendCooldown } from './useResendCooldown'
 import { SpamNotice } from './SpamNotice'
 import { Button, Input, ErrorText, Card, useToast } from '../components/ui'
 import { AuthBackground } from './AuthBackground'
+import { REF_PENDENTE_KEY } from './AuthProvider'
 
 type Step = 'email' | 'password' | 'confirm'
 const STEP_LABELS = ['E-mail', 'Senha', 'Confirmação']
@@ -41,6 +42,14 @@ export function SignUpPage() {
       setStep('confirm')
     }
   }, [location.state])
+
+  // Captura o código de indicação do link (/signup?ref=… ou ?cupom=…) e guarda para
+  // resgatar automaticamente assim que a conta for criada (ver AuthProvider).
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const ref = (params.get('ref') || params.get('cupom') || '').trim().toUpperCase()
+    if (ref) localStorage.setItem(REF_PENDENTE_KEY, ref)
+  }, [location.search])
 
   useEffect(() => {
     if (!alreadyRegistered) return

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import {
   signIn as amplifySignIn,
   signOut as amplifySignOut,
@@ -8,8 +8,19 @@ import {
 } from 'aws-amplify/auth'
 import { useQueryClient } from '@tanstack/react-query'
 import { setImpersonationToken, resetTokenCache } from '../api/client'
+import { cupomApi } from '../api/cupom'
+import { useToast } from '../components/ui'
 
 const ADMIN_EMAIL = 'admin@coachpilot.com.br'
+
+// Código de indicação capturado em /signup?ref=… — resgatado automaticamente na 1ª sessão
+// autenticada (ativa o mês grátis da campanha). localStorage sobrevive ao fluxo multi-etapa
+// do cadastro e a uma eventual falha do autoSignIn (resgata no login manual seguinte).
+export const REF_PENDENTE_KEY = 'pt:ref_pendente'
+// Erros definitivos: descartam o código (não adianta tentar de novo). Erro transitório/rede mantém.
+const CUPOM_ERROS_DEFINITIVOS = new Set([
+  'CUPOM_INVALIDO', 'CUPOM_PROPRIO', 'CUPOM_CAMPANHA_JA_USADA', 'CUPOM_ESGOTADO',
+])
 
 interface AuthUser {
   userId: string
@@ -42,6 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [impersonating, setImpersonating] = useState<ImpersonatingState | null>(null)
   const queryClient = useQueryClient()
+  const { show } = useToast()
+  const resgateEmAndamento = useRef(false)
 
   async function load(): Promise<AuthUser | null> {
     try {
@@ -67,6 +80,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     load().finally(() => setIsLoading(false))
   }, [])
+
+  // Auto-resgate do cupom de indicação capturado no cadastro (/signup?ref=…). Roda 1x quando
+  // a sessão fica disponível. Pula durante impersonação (o resgate seria atribuído à conta errada).
+  useEffect(() => {
+    if (!user || impersonating || resgateEmAndamento.current) return
+    const codigo = localStorage.getItem(REF_PENDENTE_KEY)
+    if (!codigo) return
+    resgateEmAndamento.current = true
+    cupomApi.resgatar(codigo)
+      .then((res) => {
+        localStorage.removeItem(REF_PENDENTE_KEY)
+        queryClient.invalidateQueries({ queryKey: ['plano'] })
+        queryClient.invalidateQueries({ queryKey: ['cupom'] })
+        show(`Mês grátis ativado! Você ganhou ${res.cupom.dias} dias de Gestão Pro.`, 'success')
+      })
+      .catch((err) => {
+        const code = (err as { response?: { data?: { detail?: { code?: string } } } })?.response?.data?.detail?.code
+        if (code && CUPOM_ERROS_DEFINITIVOS.has(code)) localStorage.removeItem(REF_PENDENTE_KEY)
+        resgateEmAndamento.current = false  // transitório: tenta de novo na próxima sessão
+      })
+  }, [user, impersonating, queryClient, show])
 
   async function signIn(email: string, password: string) {
     // Limpa estado stale do Amplify (localStorage + sessionStorage) antes de nova autenticação.

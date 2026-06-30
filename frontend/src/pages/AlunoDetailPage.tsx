@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { useMutation, useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, Clock, RefreshCw, AlertCircle, History, Power, PowerOff, Bot, ClipboardList } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList } from 'lucide-react'
 import { useAluno, useAlunos, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { useToggleAgenteHabilitado } from '../hooks/usePersonalChat'
 import { usePlanoStatus } from '../hooks/usePlano'
@@ -12,7 +12,7 @@ import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
-import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, EmptyState, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar, ObjetivosPicker } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar, ObjetivosPicker } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { MontarTreinoIaCallout } from '../components/MontarTreinoIaCallout'
 import { AtualizarTreinoIAModal } from '../components/AtualizarTreinoIAModal'
@@ -22,13 +22,14 @@ import { useExerciciosAluno } from '../hooks/useEvolucao'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
 import { useCreateRotinaFromAluno, useRotinas, useAplicarRotina } from '../hooks/useRotinas'
 import { useNotas, useCreateNota } from '../hooks/useNotas'
-import { treinosApi, type SessaoHistoricoPersonal } from '../api/treinos'
+import { treinosApi } from '../api/treinos'
 import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
 import { LinksUteisSelector } from '../components/exercicios/LinksUteisSelector'
 import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
 import { IntervaloInput } from '../components/exercicios/IntervaloInput'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
+import { CalendarioMes } from '../components/historico/CalendarioMes'
 import type { Treino, Exercicio, ExercicioCreate, ExercicioSubstituto, SeriePrescrita, TipoExercicio, AlunoExistenteConflict, Aluno, Rotina, AplicarRotinaModo } from '../types'
 import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
 import { MetasTab } from '../components/aluno/MetasTab'
@@ -494,14 +495,6 @@ export function AlunoDetailPage() {
 
 const fmtDate = (d?: string) => (d ? d.split('-').reverse().slice(0, 2).join('/') : '')
 const fmtDateFull = (d?: string) => (d ? d.split('-').reverse().join('/') : '')
-const fmtDuracao = (secs?: number) => {
-  if (!secs) return null
-  const h = Math.floor(secs / 3600)
-  const m = Math.floor((secs % 3600) / 60)
-  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}min`
-  return `${m}min`
-}
-
 function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[] }) {
   const hoje = new Date().toISOString().slice(0, 10)
   const vigentes = treinos.filter((t) => t.ativo !== false && (!t.data_fim || t.data_fim >= hoje))
@@ -1138,86 +1131,17 @@ function ExercicioRow({
   )
 }
 
-function groupSessoesByPeriodo(sessions: SessaoHistoricoPersonal[]) {
-  const groups: { label: string; items: SessaoHistoricoPersonal[] }[] = []
-  for (const s of sessions) {
-    const d = new Date(s.data_hora_inicio)
-    const now = new Date()
-    const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
-    let label: string
-    if (diffDays <= 6) label = 'Esta semana'
-    else if (diffDays <= 13) label = 'Semana passada'
-    else {
-      const mes = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-      label = mes.charAt(0).toUpperCase() + mes.slice(1)
-    }
-    const last = groups[groups.length - 1]
-    if (last?.label === label) last.items.push(s)
-    else groups.push({ label, items: [s] })
-  }
-  return groups
-}
-
 function HistoricoPersonal({ alunoId }: { alunoId: string }) {
-  const [expandedId, setExpandedId] = useState<string | null>(null)
-  const query = useInfiniteQuery({
-    queryKey: ['sessoes-personal', alunoId],
-    queryFn: ({ pageParam }) => treinosApi.listSessoes(alunoId, { cursor: pageParam as string | undefined, limit: 10 }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
-    enabled: !!alunoId,
-  })
-  const sessions = query.data?.pages.flatMap((p) => p.items) ?? []
-
-  if (query.isLoading) return <div className="flex justify-center py-8"><Spinner /></div>
-  if (!sessions.length)
-    return <EmptyState icon={<History />} title="Nenhum treino finalizado ainda" description="O histórico aparece aqui quando o aluno finalizar uma sessão." />
-
-  const groups = groupSessoesByPeriodo(sessions)
-
+  // Mesmo calendário mensal do app do aluno, porém SEM as fotos de check-in (nem miniatura)
+  // e sem o botão de compartilhar story — o detalhe do dia usa o card do portal.
   return (
-    <div className="space-y-4 pb-4">
-      {groups.map((g) => (
-        <div key={g.label}>
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">{g.label}</p>
-          <div className="space-y-2">
-            {g.items.map((s) => {
-              const expanded = expandedId === s.sessao_id
-              const totalSeries = (s.exercicios_exec ?? []).reduce((acc, e) => acc + (e.series_exec?.length ?? 0), 0)
-              return (
-                <Card key={s.sessao_id} variant="elevated">
-                  <button
-                    className="w-full flex items-start justify-between text-left gap-2"
-                    onClick={() => setExpandedId(expanded ? null : s.sessao_id)}
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium truncate">{s.treino_nome}</p>
-                      <p className="text-xs text-text-muted mt-0.5">
-                        {new Date(s.data_hora_inicio).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                        {s.duracao_segundos ? <> · <Clock size={10} className="inline mb-0.5" /> {fmtDuracao(s.duracao_segundos)}</> : null}
-                        {s.total_ex ? ` · ${s.total_ex} exercício${s.total_ex !== 1 ? 's' : ''}` : null}
-                        {totalSeries ? ` · ${totalSeries} séries` : null}
-                      </p>
-                    </div>
-                    {expanded
-                      ? <ChevronDown size={16} className="shrink-0 text-text-muted mt-0.5" />
-                      : <ChevronRight size={16} className="shrink-0 text-text-muted mt-0.5" />}
-                  </button>
-                  {expanded && (
-                    <SessaoDetalheCard alunoId={alunoId} sessaoId={s.sessao_id} />
-                  )}
-                </Card>
-              )
-            })}
-          </div>
-        </div>
-      ))}
-      {query.hasNextPage && (
-        <Button variant="outline" className="w-full" onClick={() => query.fetchNextPage()} disabled={query.isFetchingNextPage}>
-          {query.isFetchingNextPage ? <Spinner /> : 'Carregar mais'}
-        </Button>
-      )}
-    </div>
+    <CalendarioMes
+      fetcher={(ano, mes) => treinosApi.historicoMesAluno(alunoId, ano, mes)}
+      queryKeyPrefix={`personal-historico-mes-${alunoId}`}
+      mostrarFotos={false}
+      permitirCompartilhar={false}
+      renderDetalhe={(sessaoId) => <SessaoDetalheCard alunoId={alunoId} sessaoId={sessaoId} />}
+    />
   )
 }
 

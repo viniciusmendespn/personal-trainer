@@ -1,5 +1,6 @@
 import { api } from './client'
 import type { Exercicio, ExercicioCreate, Treino, TreinoCreate } from '../types'
+import type { HistoricoMes } from './alunoApp'
 
 export const treinosApi = {
   list: (alunoId: string) =>
@@ -53,6 +54,8 @@ export const treinosApi = {
       .then((r) => r.data),
   sessaoDetalhe: (alunoId: string, sessaoId: string) =>
     api.get<SessaoDetalhe>(`/v1/alunos/${alunoId}/sessoes/${sessaoId}`).then((r) => r.data),
+  historicoMesAluno: (alunoId: string, ano: number, mes: number) =>
+    api.get<HistoricoMes>(`/v1/alunos/${alunoId}/historico/mes`, { params: { ano, mes } }).then((r) => r.data),
 
   feedExercicio: (alunoId: string, exercicioId: string) =>
     api.get<FeedItem[]>(`/v1/alunos/${alunoId}/exercicios/${exercicioId}/feed`).then((r) => r.data),

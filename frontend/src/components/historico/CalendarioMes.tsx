@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Share2, Flame, Trophy, Dumbbell, CalendarDays, Loader2, Download } from 'lucide-react'
-import { alunoApi } from '../../api/alunoApp'
+import { alunoApi, type HistoricoMes } from '../../api/alunoApp'
 import { Card, Spinner, Modal, Button, EmptyState, useToast } from '../ui'
 import { AlunoSessaoDetalheCard } from './SessaoDetalheCard'
 import { shareBlob, downloadBlob } from '../../utils/shareStory'
@@ -27,7 +27,26 @@ function StatChip({ icon, value, label, tone }: { icon: React.ReactNode; value: 
   )
 }
 
-export function CalendarioMes() {
+interface CalendarioMesProps {
+  /** Busca o resumo do mês. Default: app do aluno (`alunoApi.historicoMes`). */
+  fetcher?: (ano: number, mes: number) => Promise<HistoricoMes>
+  /** Prefixo da queryKey (diferencie por aluno no portal). */
+  queryKeyPrefix?: string
+  /** Mostra as fotos de check-in nas células. Portal passa `false`. */
+  mostrarFotos?: boolean
+  /** Exibe o botão de gerar/compartilhar story. Portal passa `false`. */
+  permitirCompartilhar?: boolean
+  /** Renderiza o detalhe de uma sessão no modal do dia. Default: card do app do aluno. */
+  renderDetalhe?: (sessaoId: string) => ReactNode
+}
+
+export function CalendarioMes({
+  fetcher = (ano, mes) => alunoApi.historicoMes(ano, mes),
+  queryKeyPrefix = 'aluno-historico-mes',
+  mostrarFotos = true,
+  permitirCompartilhar = true,
+  renderDetalhe = (sessaoId) => <AlunoSessaoDetalheCard sessaoId={sessaoId} />,
+}: CalendarioMesProps = {}) {
   const hoje = new Date()
   const [ano, setAno] = useState(hoje.getFullYear())
   const [mes, setMes] = useState(hoje.getMonth() + 1) // 1-12
@@ -38,11 +57,11 @@ export function CalendarioMes() {
   const fileName = `coachpilot-${ano}-${String(mes).padStart(2, '0')}.png`
 
   const { data, isLoading } = useQuery({
-    queryKey: ['aluno-historico-mes', ano, mes],
-    queryFn: () => alunoApi.historicoMes(ano, mes),
+    queryKey: [queryKeyPrefix, ano, mes],
+    queryFn: () => fetcher(ano, mes),
     staleTime: 60_000,
   })
-  const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, staleTime: 5 * 60_000 })
+  const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me, staleTime: 5 * 60_000, enabled: permitirCompartilhar })
 
   const noFuturo = ano > hoje.getFullYear() || (ano === hoje.getFullYear() && mes >= hoje.getMonth() + 1)
 
@@ -137,7 +156,7 @@ export function CalendarioMes() {
                 if (d === null) return <div key={i} className="aspect-square" />
                 const sessoes = dias[keyDia(d)]
                 const foi = !!sessoes?.length
-                const foto = sessoes?.find((s) => s.checkin_url)?.checkin_url
+                const foto = mostrarFotos ? sessoes?.find((s) => s.checkin_url)?.checkin_url : undefined
                 return (
                   <button
                     key={i}
@@ -166,14 +185,16 @@ export function CalendarioMes() {
           </Card>
 
           {/* Compartilhar */}
-          <button
-            onClick={gerarPreview}
-            disabled={sharing || !data?.dias_treinados}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-energy hover:bg-energy-hover text-[#0c1404] font-semibold py-3 transition-colors disabled:opacity-40"
-          >
-            {sharing ? <Loader2 size={18} className="animate-spin" /> : <Share2 size={18} />}
-            {sharing ? 'Gerando imagem…' : 'Compartilhar meu mês'}
-          </button>
+          {permitirCompartilhar && (
+            <button
+              onClick={gerarPreview}
+              disabled={sharing || !data?.dias_treinados}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-energy hover:bg-energy-hover text-[#0c1404] font-semibold py-3 transition-colors disabled:opacity-40"
+            >
+              {sharing ? <Loader2 size={18} className="animate-spin" /> : <Share2 size={18} />}
+              {sharing ? 'Gerando imagem…' : 'Compartilhar meu mês'}
+            </button>
+          )}
           {!data?.dias_treinados && (
             <EmptyState icon={<CalendarDays />} title="Nenhum treino neste mês" description="Treinos finalizados aparecem aqui no calendário." />
           )}
@@ -186,7 +207,7 @@ export function CalendarioMes() {
           {(diaSel ? dias[diaSel] ?? [] : []).map((s) => (
             <Card key={s.sessao_id} variant="flat">
               <p className="font-medium mb-1">{s.treino_nome}</p>
-              <AlunoSessaoDetalheCard sessaoId={s.sessao_id} />
+              {renderDetalhe(s.sessao_id)}
             </Card>
           ))}
         </div>

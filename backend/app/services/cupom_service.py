@@ -94,6 +94,33 @@ def ensure_cupom_indicacao(personal_id: str) -> dict:
     return repo.clean(repo.get_item(keys.pk_personal(personal_id), keys.SK_CUPOM_PROPRIO))
 
 
+def listar_indicacoes_admin(personals: list[dict]) -> list[dict]:
+    """Painel admin: enriquece cada personal com seu cupom de indicação e contadores
+    (quantos resgataram o código = `indicacoes_total`; quantos viraram assinantes =
+    `indicacoes_convertidas`). BatchGetItem dos CUPOM#PROPRIO — sem N GetItem.
+    Personals que nunca abriram a página de indicação vêm com `codigo=None` e zeros."""
+    chaves = [
+        (keys.pk_personal(p["personal_id"]), keys.SK_CUPOM_PROPRIO)
+        for p in personals if p.get("personal_id")
+    ]
+    proprios = repo.batch_get_items(chaves) if chaves else {}
+    out = []
+    for p in personals:
+        pid = p.get("personal_id")
+        cupom = proprios.get((keys.pk_personal(pid), keys.SK_CUPOM_PROPRIO)) if pid else None
+        c = repo.clean(cupom) or {}
+        out.append({
+            "personal_id": pid,
+            "name": p.get("name", ""),
+            "email": p.get("email", ""),
+            "codigo": c.get("codigo"),
+            "indicacoes_total": int(c.get("indicacoes_total", 0)),
+            "indicacoes_convertidas": int(c.get("indicacoes_convertidas", 0)),
+        })
+    out.sort(key=lambda x: (x["indicacoes_convertidas"], x["indicacoes_total"]), reverse=True)
+    return out
+
+
 def criar_cupom_campanha(
     *, campanha: str, dias: int, plano: str | None = None,
     tipo: str = TIPO_CAMPANHA, max_usos: int | None = None, expira_em: str | None = None,

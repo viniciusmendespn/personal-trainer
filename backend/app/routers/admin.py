@@ -29,9 +29,8 @@ def _require_admin(creds: HTTPAuthorizationCredentials = Depends(_security)) -> 
     return payload.get("sub", "")
 
 
-@router.get("/personals")
-def list_personals(_: str = Depends(_require_admin)):
-    """Lista todos os personals cadastrados no Cognito, exceto o próprio admin."""
+def _listar_personals() -> list[dict]:
+    """Todos os personals do Cognito, exceto o próprio admin."""
     client = boto3.client("cognito-idp", region_name=settings.cognito_region)
     users = []
     paginator = client.get_paginator("list_users")
@@ -47,7 +46,20 @@ def list_personals(_: str = Depends(_require_admin)):
                 "name": attrs.get("name", ""),
                 "status": u["UserStatus"],
             })
-    return {"personals": users}
+    return users
+
+
+@router.get("/personals")
+def list_personals(_: str = Depends(_require_admin)):
+    """Lista todos os personals cadastrados no Cognito, exceto o próprio admin."""
+    return {"personals": _listar_personals()}
+
+
+@router.get("/indicacoes")
+def list_indicacoes(_: str = Depends(_require_admin)):
+    """Visão da campanha de indicação: todos os personals com seu cupom, quantos resgataram
+    o código (indicacoes_total) e quantos viraram assinantes (indicacoes_convertidas)."""
+    return {"indicacoes": cupom_service.listar_indicacoes_admin(_listar_personals())}
 
 
 @router.post("/impersonate/{personal_id}")
