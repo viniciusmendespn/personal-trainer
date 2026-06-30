@@ -3,12 +3,10 @@ import { Link } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 
 const NAV_LINKS = [
-  { label: 'Operação com IA', href: '#ia' },
   { label: 'Funcionalidades', href: '#features' },
   { label: 'Como funciona', href: '#how' },
   { label: 'Planos', href: '#pricing' },
   { label: 'Comparativo', href: '#compare' },
-  { label: 'FAQ', href: '#faq' },
 ]
 
 export default function LandingNavbar() {
@@ -57,14 +55,6 @@ export default function LandingNavbar() {
               {l.label}
             </button>
           ))}
-          <Link
-            to="/divulgadores"
-            style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.75)')}
-          >
-            Divulgadores
-          </Link>
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }} className="hidden lg:flex">
@@ -112,13 +102,6 @@ export default function LandingNavbar() {
               {l.label}
             </button>
           ))}
-          <Link
-            to="/divulgadores"
-            onClick={() => setMenuOpen(false)}
-            style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 500, padding: '8px 0' }}
-          >
-            Divulgadores
-          </Link>
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <Link to="/login" onClick={() => setMenuOpen(false)} style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 500, padding: '10px 0', textAlign: 'center' }}>
               Entrar

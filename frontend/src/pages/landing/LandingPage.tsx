@@ -98,8 +98,8 @@ export default function LandingPage() {
       <LandingNavbar />
       <main>
         <HeroSection />
-        <IaOperacaoSection />
         <FeaturesSection />
+        <IaOperacaoSection />
         <HowItWorksSection />
         <ComparisonSection />
         <PricingSection />
