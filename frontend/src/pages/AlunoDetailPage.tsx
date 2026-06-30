@@ -439,12 +439,16 @@ export function AlunoDetailPage() {
             <Button variant="outline" onClick={() => setShowAplicarRotina(true)}>
               <span className="flex items-center gap-1"><ListChecks size={16} /> Aplicar rotina</span>
             </Button>
-            <Button variant="outline" onClick={handleSalvarRotina} disabled={salvarRotina.isPending}>
-              <span className="flex items-center gap-1"><ListChecks size={16} /> {salvarRotina.isPending ? 'Salvando…' : 'Salvar rotina'}</span>
-            </Button>
-            <Button variant="outline" onClick={() => setShowAtualizarIA(true)}>
-              <span className="flex items-center gap-1"><Bot size={16} /> Atualizar com IA</span>
-            </Button>
+            {treinos && treinos.length > 0 && (
+              <Button variant="outline" onClick={handleSalvarRotina} disabled={salvarRotina.isPending}>
+                <span className="flex items-center gap-1"><ListChecks size={16} /> {salvarRotina.isPending ? 'Salvando…' : 'Salvar rotina'}</span>
+              </Button>
+            )}
+            {treinos && treinos.length > 0 && (
+              <Button variant="outline" onClick={() => setShowAtualizarIA(true)}>
+                <span className="flex items-center gap-1"><Bot size={16} /> Atualizar com IA</span>
+              </Button>
+            )}
             <Button onClick={() => setShowAddTreino(true)}>
               <span className="flex items-center gap-1"><Plus size={16} /> Adicionar treino</span>
             </Button>
