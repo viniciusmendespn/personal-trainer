@@ -13,13 +13,10 @@ Fluxo legado (magic-link efêmero 48h — mantido para compat):
 import time
 import uuid
 
-from jose import jwt
-
 from app.config import settings
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 
-_ALGO = "HS256"
 _CODE_TTL = 172800     # 48 horas — tempo para o aluno abrir o link (legado)
 _SESSION_TTL = 15552000 # 180 dias (6 meses)
 
@@ -142,18 +139,23 @@ def magic_link(aluno_id: str, personal_id: str) -> str:
 # ---------------------------------------------------------------------------
 
 def issue_cadastro_token(personal_id: str, days: int = 30) -> str:
-    payload = {
-        "sub": personal_id, "personal_id": personal_id,
-        "scope": "cadastro", "exp": int(time.time()) + days * 86400,
-    }
-    return jwt.encode(payload, settings.webhook_secret, algorithm=_ALGO)
+    token = uuid.uuid4().hex
+    repo.put_item(
+        keys.pk_cadastro_invite(token), "META",
+        {"personal_id": personal_id, "ttl": int(time.time()) + days * 86400},
+    )
+    return token
 
 
 def verify_cadastro_token(token: str) -> dict:
-    payload = jwt.decode(token, settings.webhook_secret, algorithms=[_ALGO])
-    if payload.get("scope") != "cadastro":
-        raise ValueError("escopo inválido")
-    return payload
+    item = repo.get_item(keys.pk_cadastro_invite(token), "META")
+    if not item or item.get("ttl", 0) < int(time.time()):
+        raise ValueError("token não encontrado ou expirado")
+    return {"personal_id": item["personal_id"]}
+
+
+def consume_cadastro_token(token: str) -> None:
+    repo.delete_item(keys.pk_cadastro_invite(token), "META")
 
 
 def cadastro_link(personal_id: str) -> str:

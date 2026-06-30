@@ -428,6 +428,10 @@ def pk_token(token_uuid: str) -> str:
     return f"PKTOKEN#{token_uuid}"
 
 
+def pk_cadastro_invite(token: str) -> str:
+    return f"CADASTRO#{token}"
+
+
 def pk_pacote_distrib(pacote_id: str) -> str:
     """Conteúdo do pacote licenciado distribuído (global, legível entre personais no import).
     O arquivo .cpkg licenciado carrega só pacote_id+token; o conteúdo real mora aqui."""

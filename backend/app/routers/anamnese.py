@@ -1,6 +1,5 @@
 """Anamnese / ficha de saúde — template configurável pelo personal e auto-cadastro do aluno."""
 from fastapi import APIRouter, Depends, HTTPException
-from jose import JWTError
 from pydantic import BaseModel
 
 from app import aluno_auth
@@ -72,8 +71,8 @@ def get_form_publico(token: str):
     """Retorna o template + info básica do personal para renderizar o form de cadastro."""
     try:
         payload = aluno_auth.verify_cadastro_token(token)
-    except (JWTError, ValueError) as e:
-        raise HTTPException(401, f"Link inválido ou expirado: {e}")
+    except ValueError as e:
+        raise HTTPException(422, f"Link inválido ou expirado: {e}")
     personal_id = payload["personal_id"]
     template_raw = repo.get_item(keys.pk_personal(personal_id), keys.SK_ANAMNESE_TEMPLATE)
     template = repo.clean(template_raw) if template_raw else AnamneseTemplate().model_dump()
@@ -89,8 +88,8 @@ def cadastrar_aluno(body: CadastroBody, token: str):
     """Cria o aluno e salva a anamnese. Retorna magic link do app do aluno."""
     try:
         payload = aluno_auth.verify_cadastro_token(token)
-    except (JWTError, ValueError) as e:
-        raise HTTPException(401, f"Link inválido ou expirado: {e}")
+    except ValueError as e:
+        raise HTTPException(422, f"Link inválido ou expirado: {e}")
     personal_id = payload["personal_id"]
     # Normaliza telefone (remove +, espaços, traços)
     telefone = body.telefone.replace("+", "").replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
@@ -135,8 +134,9 @@ def cadastrar_aluno(body: CadastroBody, token: str):
         repo.update_item_if_exists(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id),
                                    {"tem_anamnese": True})
     existing_profile = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
-    token = (existing_profile or {}).get("acesso_token")
-    if not token:
-        token = aluno_auth.issue_token(aluno_id, personal_id)
-        repo.update_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, {"acesso_token": token})
-    return {"magic_link": aluno_auth.token_link(token), "aluno_id": aluno_id}
+    acesso_token = (existing_profile or {}).get("acesso_token")
+    if not acesso_token:
+        acesso_token = aluno_auth.issue_token(aluno_id, personal_id)
+        repo.update_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, {"acesso_token": acesso_token})
+    aluno_auth.consume_cadastro_token(token)
+    return {"magic_link": aluno_auth.token_link(acesso_token), "aluno_id": aluno_id}
