@@ -53,7 +53,13 @@ def get_sessao_detalhe(aluno_id: str, sessao_id: str,
     if not session:
         raise HTTPException(404, "Sessão não encontrada")
     s = repo.clean(session)
+    snap_by_id = {e["exercicio_id"]: e for e in s.get("exercicios", [])}
     for ex in s.get("exercicios_exec") or []:
+        snap = snap_by_id.get(ex.get("exercicio_id", ""), {})
+        if ex.get("unidade_reps") is None:
+            ex["unidade_reps"] = snap.get("unidade_reps")
+        if ex.get("unidade_carga") is None:
+            ex["unidade_carga"] = snap.get("unidade_carga")
         ex["midia"] = media_service.list_midia_exercicio(aluno_id, ex["exercicio_id"])
         ex["relatos"] = correcao_service.relatos_sessao(aluno_id, ex["exercicio_id"], sessao_id)
     return s
