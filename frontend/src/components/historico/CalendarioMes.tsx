@@ -1,6 +1,6 @@
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Share2, Flame, Trophy, Dumbbell, CalendarDays, Loader2, Download } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Share2, Flame, Trophy, Dumbbell, CalendarDays, Loader2, Download, MoveVertical, ImageOff } from 'lucide-react'
 import { alunoApi, type HistoricoMes } from '../../api/alunoApp'
 import { Card, Spinner, Modal, Button, EmptyState, useToast } from '../ui'
 import { AlunoSessaoDetalheCard } from './SessaoDetalheCard'
@@ -70,6 +70,10 @@ export function CalendarioMes({
   const [pickerOpen, setPickerOpen] = useState(false)
   const [heroUrlSel, setHeroUrlSel] = useState<string | null | undefined>(undefined)
   const [heroPosSel, setHeroPosSel] = useState(0)
+  const [arrastou, setArrastou] = useState(false)
+  const previewBoxRef = useRef<HTMLDivElement>(null)
+  const imgRatioRef = useRef(1) // naturalHeight / naturalWidth da foto carregada
+  const dragRef = useRef<{ startY: number; startPos: number; rangePx: number } | null>(null)
   const toast = useToast()
   const fileName = `coachpilot-${ano}-${String(mes).padStart(2, '0')}.png`
 
@@ -113,12 +117,46 @@ export function CalendarioMes({
     if (!data) return
     const fotos = extrairFotos(data.dias)
     if (fotos.length > 0) {
-      setHeroUrlSel(fotos[0].url)
-      setHeroPosSel(0)
+      selecionarFoto(fotos[0].url)
       setPickerOpen(true)
     } else {
       gerarPreview(undefined, 0)
     }
+  }
+
+  function selecionarFoto(url: string | null) {
+    setHeroUrlSel(url)
+    setHeroPosSel(0)
+    setArrastou(false)
+    imgRatioRef.current = 1
+  }
+
+  // ── Arraste vertical do preview (mouse + toque via pointer events) ───────────
+  function onImgLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    const img = e.currentTarget
+    imgRatioRef.current = img.naturalWidth ? img.naturalHeight / img.naturalWidth : 1
+  }
+  function onDragStart(e: React.PointerEvent<HTMLDivElement>) {
+    const box = previewBoxRef.current
+    if (!box) return
+    const w = box.getBoundingClientRect().width
+    const boxH = w / (1080 / 600) // altura do box no aspecto do banner
+    const scaledH = w * imgRatioRef.current // altura da img escalada p/ cobrir a largura
+    const rangePx = Math.max(1, scaledH - boxH) // curso vertical disponível
+    dragRef.current = { startY: e.clientY, startPos: heroPosSel, rangePx }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  function onDragMove(e: React.PointerEvent<HTMLDivElement>) {
+    const d = dragRef.current
+    if (!d) return
+    if (!arrastou) setArrastou(true)
+    const dy = e.clientY - d.startY
+    // arrastar p/ baixo (dy>0) revela o topo → diminui o %
+    const next = Math.min(100, Math.max(0, d.startPos - (dy / d.rangePx) * 100))
+    setHeroPosSel(next)
+  }
+  function onDragEnd() {
+    dragRef.current = null
   }
 
   function fecharPreview() {
@@ -236,43 +274,64 @@ export function CalendarioMes({
 
       {/* Picker de foto de destaque */}
       <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title="Foto de destaque" size="md">
-        <div className="space-y-4">
-          <p className="text-sm text-text-muted">Escolha a foto para o banner da imagem:</p>
-          <div className="grid grid-cols-3 gap-2">
+        <div className="space-y-3">
+          {/* Preview do banner — arraste ↕ para posicionar */}
+          <div
+            ref={previewBoxRef}
+            className="relative w-full overflow-hidden rounded-xl border border-border bg-surface select-none"
+            style={{ aspectRatio: '1080 / 600' }}
+          >
+            {heroUrlSel ? (
+              <>
+                <img
+                  src={heroUrlSel}
+                  alt="Prévia do banner"
+                  crossOrigin="anonymous"
+                  draggable={false}
+                  onLoad={onImgLoad}
+                  className="absolute inset-0 w-full h-full object-cover cursor-grab active:cursor-grabbing"
+                  style={{ objectPosition: `center ${heroPosSel}%`, touchAction: 'none' }}
+                  onPointerDown={onDragStart}
+                  onPointerMove={onDragMove}
+                  onPointerUp={onDragEnd}
+                  onPointerCancel={onDragEnd}
+                />
+                {!arrastou && (
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <span className="flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white">
+                      <MoveVertical size={14} /> Arraste para ajustar
+                    </span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-text-muted">
+                <ImageOff size={22} />
+                <span className="text-xs">Banner com fundo colorido</span>
+              </div>
+            )}
+          </div>
+
+          {/* Faixa horizontal de fotos (rola lateralmente; suporta muitas fotos) */}
+          <div className="flex gap-2 overflow-x-auto pb-1">
             <button
-              onClick={() => setHeroUrlSel(null)}
-              className={`aspect-square rounded-lg border-2 flex items-center justify-center bg-surface transition-colors ${heroUrlSel === null ? 'border-energy' : 'border-border'}`}
+              onClick={() => selecionarFoto(null)}
+              className={`shrink-0 w-16 h-16 rounded-lg border-2 flex flex-col items-center justify-center gap-0.5 bg-surface transition-colors ${heroUrlSel === null ? 'border-energy' : 'border-border'}`}
             >
-              <span className="text-xs text-text-muted text-center px-1">Sem foto</span>
+              <ImageOff size={16} className="text-text-muted" />
+              <span className="text-[9px] text-text-muted">Sem foto</span>
             </button>
             {fotos.map(({ url, dia }) => (
               <button
                 key={url}
-                onClick={() => setHeroUrlSel(url)}
-                className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors ${heroUrlSel === url ? 'border-energy' : 'border-border'}`}
+                onClick={() => selecionarFoto(url)}
+                className={`relative shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${heroUrlSel === url ? 'border-energy' : 'border-border'}`}
               >
                 <img src={url} alt={`dia ${dia}`} crossOrigin="anonymous" className="absolute inset-0 w-full h-full object-cover" />
-                <span className="absolute bottom-1 right-1 text-[10px] text-white bg-black/60 px-1 rounded">{dia}</span>
+                <span className="absolute bottom-0.5 right-0.5 text-[9px] text-white bg-black/60 px-1 rounded">{dia}</span>
               </button>
             ))}
           </div>
-
-          {heroUrlSel && (
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-xs text-text-muted">
-                <span>Cima</span>
-                <span>Baixo</span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={heroPosSel}
-                onChange={(e) => setHeroPosSel(Number(e.target.value))}
-                className="w-full accent-[var(--color-energy)]"
-              />
-            </div>
-          )}
 
           <Button
             variant="energy"
