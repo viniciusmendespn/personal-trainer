@@ -1,9 +1,7 @@
-import { useRef, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { Camera, Loader2, Trophy, Dumbbell, Clock, PartyPopper } from 'lucide-react'
-import { Modal, Button, useToast } from '../ui'
-import { enviarCheckin, type SessaoFinalizada } from '../../api/alunoApp'
-import { MediaValidationError } from '../../utils/media'
+import { Trophy, Dumbbell, Clock, PartyPopper } from 'lucide-react'
+import { Modal } from '../ui'
+import { type SessaoFinalizada } from '../../api/alunoApp'
+import { CheckinUploadButton } from './CheckinUploadButton'
 
 function formatDuracao(s?: number): string | null {
   if (!s) return null
@@ -22,38 +20,9 @@ function formatVolume(v?: number): string | null {
 /** Tela de comemoração ao finalizar o treino: mostra os destaques do dia e convida o aluno a
  * registrar uma foto de check-in (tirada na hora pela câmera) — combustível pro engajamento. */
 export function CheckinPosTreino({ sessao, onClose }: { sessao: SessaoFinalizada; onClose: () => void }) {
-  const qc = useQueryClient()
-  const toast = useToast()
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [uploading, setUploading] = useState(false)
-  const [done, setDone] = useState(false)
-
   const duracao = formatDuracao(sessao.duracao_segundos)
   const volume = formatVolume(sessao.volume_total)
   const prs = sessao.novos_prs ?? []
-
-  async function handleFile(file: File) {
-    setUploading(true)
-    try {
-      await enviarCheckin(sessao.sessao_id, file)
-      qc.invalidateQueries({ queryKey: ['aluno-sessoes'] })
-      qc.invalidateQueries({ queryKey: ['aluno-historico-mes'] })
-      setDone(true)
-      toast.show('Check-in registrado! 📸', 'success')
-      setTimeout(onClose, 900)
-    } catch (err) {
-      const msg = err instanceof MediaValidationError ? err.message : 'Não consegui enviar a foto. Tenta de novo.'
-      toast.show(msg, 'error')
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (file) handleFile(file)
-  }
 
   return (
     <Modal open onClose={onClose} title="">
@@ -98,35 +67,18 @@ export function CheckinPosTreino({ sessao, onClose }: { sessao: SessaoFinalizada
 
         <div className="pt-1 space-y-2">
           <p className="text-sm text-text-secondary">Registre seu check-in de hoje pra acompanhar sua evolução e mostrar no seu histórico.</p>
-          <Button
-            variant="energy"
-            className="w-full"
-            disabled={uploading || done}
-            onClick={() => inputRef.current?.click()}
-          >
-            <span className="flex items-center justify-center gap-1.5">
-              {uploading ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-              {uploading ? 'Enviando…' : done ? 'Enviado!' : 'Tirar foto do check-in'}
-            </span>
-          </Button>
+          <CheckinUploadButton
+            sessaoId={sessao.sessao_id}
+            label="Tirar foto do check-in"
+            onDone={() => setTimeout(onClose, 900)}
+          />
           <button
             className="w-full text-sm text-text-muted hover:text-text transition-colors py-1"
             onClick={onClose}
-            disabled={uploading}
           >
             Agora não
           </button>
         </div>
-
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={onChange}
-          disabled={uploading}
-        />
       </div>
     </Modal>
   )

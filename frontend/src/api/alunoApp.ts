@@ -52,6 +52,8 @@ export interface SessaoHistorico {
     midia?: Array<{ midia_id: string; tipo: string; url?: string; data_hora: string; ator?: 'ALUNO' | 'PERSONAL' }>
     relatos?: Relato[]
   }>
+  /** True se a sessão já tem foto de check-in (só na listagem; evita presign na lista). */
+  tem_checkin?: boolean
 }
 
 export interface SerieInput {

@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList, CalendarDays, List } from 'lucide-react'
 import { useAluno, useAlunos, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { useToggleAgenteHabilitado } from '../hooks/usePersonalChat'
 import { usePlanoStatus } from '../hooks/usePlano'
@@ -30,6 +30,8 @@ import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTre
 import { IntervaloInput } from '../components/exercicios/IntervaloInput'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import { CalendarioMes } from '../components/historico/CalendarioMes'
+import { HistoricoLista } from '../components/historico/HistoricoLista'
+import { usePersonalTimeline } from '../hooks/usePersonalTimeline'
 import type { Treino, Exercicio, ExercicioCreate, ExercicioSubstituto, SeriePrescrita, TipoExercicio, MetricaDirecao, AlunoExistenteConflict, Aluno, Rotina, AplicarRotinaModo } from '../types'
 import { normalizeTipoExercicio } from '../types'
 import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
@@ -1186,16 +1188,39 @@ function ExercicioRow({
 }
 
 function HistoricoPersonal({ alunoId }: { alunoId: string }) {
-  // Mesmo calendário mensal do app do aluno, porém SEM as fotos de check-in (nem miniatura)
-  // e sem o botão de compartilhar story — o detalhe do dia usa o card do portal.
+  // Mesmo toggle Mês/Lista do app do aluno. O calendário vai SEM fotos de check-in e sem o botão
+  // de compartilhar story (privacidade do aluno); a lista é read-only (sem envio de foto).
+  const [view, setView] = useState<'mes' | 'lista'>('mes')
   return (
-    <CalendarioMes
-      fetcher={(ano, mes) => treinosApi.historicoMesAluno(alunoId, ano, mes)}
-      queryKeyPrefix={`personal-historico-mes-${alunoId}`}
-      mostrarFotos={false}
-      permitirCompartilhar={false}
-      renderDetalhe={(sessaoId) => <SessaoDetalheCard alunoId={alunoId} sessaoId={sessaoId} />}
-    />
+    <div className="space-y-4 pb-4">
+      <div className="flex gap-1 p-1 rounded-xl bg-surface-elevated border border-border">
+        {([['mes', 'Mês', <CalendarDays size={14} />], ['lista', 'Lista', <List size={14} />]] as const).map(([key, label, icon]) => (
+          <button
+            key={key}
+            onClick={() => setView(key)}
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-sm font-medium transition-colors ${
+              view === key ? 'bg-surface text-text shadow-[var(--shadow-card)]' : 'text-text-muted hover:text-text'
+            }`}
+          >
+            {icon} {label}
+          </button>
+        ))}
+      </div>
+      {view === 'mes' ? (
+        <CalendarioMes
+          fetcher={(ano, mes) => treinosApi.historicoMesAluno(alunoId, ano, mes)}
+          queryKeyPrefix={`personal-historico-mes-${alunoId}`}
+          mostrarFotos={false}
+          permitirCompartilhar={false}
+          renderDetalhe={(sessaoId) => <SessaoDetalheCard alunoId={alunoId} sessaoId={sessaoId} />}
+        />
+      ) : (
+        <HistoricoLista
+          useTimeline={() => usePersonalTimeline(alunoId)}
+          renderDetalhe={(id) => <SessaoDetalheCard alunoId={alunoId} sessaoId={id} />}
+        />
+      )}
+    </div>
   )
 }
 

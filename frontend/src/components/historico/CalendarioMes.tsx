@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Share2, Flame, Trophy, Dumbbell, CalendarDay
 import { alunoApi, type HistoricoMes } from '../../api/alunoApp'
 import { Card, Spinner, Modal, Button, EmptyState, useToast } from '../ui'
 import { AlunoSessaoDetalheCard } from './SessaoDetalheCard'
+import { CheckinUploadButton } from '../aluno/CheckinUploadButton'
 import { shareBlob, downloadBlob } from '../../utils/shareStory'
 
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
@@ -50,6 +51,9 @@ interface CalendarioMesProps {
   mostrarFotos?: boolean
   /** Exibe o botão de gerar/compartilhar story. Portal passa `false`. */
   permitirCompartilhar?: boolean
+  /** Permite enviar a foto de check-in depois, no modal do dia (só dias com treino sem foto).
+   * Default: segue `mostrarFotos` (aluno). Portal passa `false`. */
+  permitirCheckin?: boolean
   /** Renderiza o detalhe de uma sessão no modal do dia. Default: card do app do aluno. */
   renderDetalhe?: (sessaoId: string) => ReactNode
 }
@@ -59,8 +63,10 @@ export function CalendarioMes({
   queryKeyPrefix = 'aluno-historico-mes',
   mostrarFotos = true,
   permitirCompartilhar = true,
+  permitirCheckin,
   renderDetalhe = (sessaoId) => <AlunoSessaoDetalheCard sessaoId={sessaoId} />,
 }: CalendarioMesProps = {}) {
+  const podeCheckin = permitirCheckin ?? mostrarFotos
   const hoje = new Date()
   const [ano, setAno] = useState(hoje.getFullYear())
   const [mes, setMes] = useState(hoje.getMonth() + 1) // 1-12
@@ -355,6 +361,11 @@ export function CalendarioMes({
           {(diaSel ? dias[diaSel] ?? [] : []).map((s) => (
             <Card key={s.sessao_id} variant="flat">
               <p className="font-medium mb-1">{s.treino_nome}</p>
+              {podeCheckin && !s.checkin_url && (
+                <div className="mb-2">
+                  <CheckinUploadButton sessaoId={s.sessao_id} variant="outline" className="w-full text-sm" />
+                </div>
+              )}
               {renderDetalhe(s.sessao_id)}
             </Card>
           ))}

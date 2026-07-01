@@ -150,6 +150,11 @@ def finish(aluno_id: str) -> dict:
     sessao_id = s["sessao_id"]
     regs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=f"REG#{sessao_id}#")
     snap_by_ex = {e["exercicio_id"]: e for e in s.get("exercicios", [])}
+    # A query vem ordenada por SK (REG#{sessao}#{exercicio_id}, alfabético). Reordena pela
+    # ordem prescrita do treino (s["exercicios"] já está ordenado por `ordem` em start_session);
+    # registros sem correspondência (ex.: substitutos) vão para o fim, estável.
+    ordem_by_ex = {e["exercicio_id"]: i for i, e in enumerate(s.get("exercicios", []))}
+    regs.sort(key=lambda r: ordem_by_ex.get(r.get("exercicio_id"), len(ordem_by_ex)))
     s["exercicios_exec"] = [
         {
             "exercicio_id": r.get("exercicio_id"),
@@ -616,7 +621,22 @@ def list_sessoes(aluno_id: str, limit: int = 10, cursor: str | None = None) -> t
         keys.pk_aluno(aluno_id), "SESSION#", limit=limit + 1, cursor=cursor, forward=False
     )
     items = [i for i in items if i.get("SK") != keys.SK_SESSION_ACTIVE][:limit]
-    return repo.clean_all(items), next_cursor
+    out = repo.clean_all(items)
+    # Flag leve p/ a lista oferecer "enviar foto depois" sem presign na listagem.
+    for i, raw in zip(out, items):
+        i["tem_checkin"] = bool(raw.get("checkin_s3_key"))
+    return out, next_cursor
+
+
+def ordenar_exec_por_prescricao(s: dict) -> None:
+    """Reordena `exercicios_exec` in-place pela ordem prescrita (`s["exercicios"]`).
+    Backfill lazy na leitura: corrige a exibição de sessões antigas gravadas fora de ordem,
+    sem exigir migração. Exercícios sem correspondência na prescrição vão para o fim (estável)."""
+    execs = s.get("exercicios_exec")
+    if not execs:
+        return
+    ordem_by_ex = {e["exercicio_id"]: i for i, e in enumerate(s.get("exercicios", []))}
+    execs.sort(key=lambda ex: ordem_by_ex.get(ex.get("exercicio_id"), len(ordem_by_ex)))
 
 
 def set_checkin(aluno_id: str, sessao_id: str, s3_key: str) -> dict:

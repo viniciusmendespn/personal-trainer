@@ -377,6 +377,7 @@ def get_sessao_detalhe_aluno(sessao_id: str, ctx: dict = Depends(get_current_alu
     if not session:
         raise HTTPException(404, "Sessão não encontrada")
     s = repo.clean(session)
+    sessao_service.ordenar_exec_por_prescricao(s)
     snap_by_id = {e["exercicio_id"]: e for e in s.get("exercicios", [])}
     for ex in s.get("exercicios_exec") or []:
         snap = snap_by_id.get(ex.get("exercicio_id", ""), {})
