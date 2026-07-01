@@ -1,11 +1,6 @@
-import { FFmpeg } from '@ffmpeg/ffmpeg'
-import { fetchFile, toBlobURL } from '@ffmpeg/util'
-
 const MAX_IMAGE_MB = 25
 const MAX_VIDEO_MB = 400
 const IMAGE_COMPRESS_THRESHOLD_MB = 1.5
-const VIDEO_COMPRESS_THRESHOLD_MB = 15
-const VIDEO_BIG_INPUT_MB = 60   // acima disso, comprime mais agressivo p/ caber na memória do celular
 const IMAGE_MAX_DIMENSION = 1600
 const IMAGE_QUALITY = 0.8
 
@@ -15,25 +10,6 @@ const IMAGE_QUALITY = 0.8
 export const MEDIA_CACHE_CONTROL = 'public, max-age=31536000, immutable'
 
 export class MediaValidationError extends Error {}
-
-/** Desfecho da compressão de vídeo — permite à UI mostrar feedback quando caímos no original. */
-export type CompressOutcome = {
-  status: 'compressed' | 'skipped' | 'fallback'
-  reason?: string
-  inMB: number
-  outMB?: number
-}
-
-/** Beacon fire-and-forget de telemetria de mídia (CloudWatch via /v1/public/telemetry/media).
- * Nunca lança nem atrasa o upload — falha de compressão hoje é invisível, isto dá visibilidade. */
-function reportMediaTelemetry(payload: Record<string, unknown>): void {
-  try {
-    const body = JSON.stringify({ ...payload, ua: navigator.userAgent })
-    navigator.sendBeacon?.('/v1/public/telemetry/media', new Blob([body], { type: 'application/json' }))
-  } catch {
-    /* telemetria jamais deve quebrar o fluxo de upload */
-  }
-}
 
 /** Rejeita arquivos absurdamente grandes antes de qualquer processamento (evita travar o navegador). */
 export function validateFileSize(file: File): void {
@@ -71,145 +47,14 @@ export async function compressImage(file: File): Promise<File> {
   }
 }
 
-let ffmpegLoadPromise: Promise<FFmpeg> | null = null
-
-// Versão do core servido em /ffmpeg. Os arquivos NÃO têm hash no nome e são servidos com
-// max-age=3600, então o navegador cacheia por até 1h — a invalidação do CloudFront não limpa
-// o cache local. Ao trocar o build do core (ex.: umd → esm), BUMPAR esta string força o
-// navegador a buscar uma URL nova em vez de reusar o core antigo do cache. Ver [[project_video_compressao]].
-const FFMPEG_CORE_VERSION = 'esm-0.12.10'
-
-function loadFFmpeg(): Promise<FFmpeg> {
-  if (!ffmpegLoadPromise) {
-    ffmpegLoadPromise = (async () => {
-      const ffmpeg = new FFmpeg()
-      const base = '/ffmpeg'
-      const v = FFMPEG_CORE_VERSION
-      await ffmpeg.load({
-        coreURL: await toBlobURL(`${base}/ffmpeg-core.js?v=${v}`, 'text/javascript'),
-        wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm?v=${v}`, 'application/wasm'),
-      })
-      return ffmpeg
-    })()
-    // Se o load falhar, não deixa a promise rejeitada memoizada pra sessão inteira —
-    // permite nova tentativa num próximo upload.
-    ffmpegLoadPromise.catch(() => { ffmpegLoadPromise = null })
-  }
-  return ffmpegLoadPromise
-}
-
 /**
- * Reescala (máx. 720p em pé, sem upscale) e recodifica em H.264/AAC com `+faststart` (moov no
- * início → o <video> começa a tocar sem baixar o arquivo todo). Vídeo de execução de exercício
- * não precisa de alta qualidade — prioriza tamanho e streaming sobre fidelidade.
- *
- * Roda dentro de um Web Worker (o próprio @ffmpeg/ffmpeg gerencia isso). O risco real no mobile
- * é MEMÓRIA (input + buffers + output no heap wasm), não a thread — por isso inputs grandes usam
- * cap menor. Se falhar por qualquer motivo, devolve o original (já validado) e emite telemetria,
- * pra que o fallback pare de ser invisível.
+ * Prepara a mídia para upload. IMAGEM é comprimida no cliente (canvas, rápido). VÍDEO sobe
+ * CRU — a compressão acontece no backend (transcode server-side disparado por evento S3), pra
+ * o upload ser rápido e não travar o celular. Ver backend/app/transcode.py.
+ * Lança MediaValidationError se o arquivo exceder o limite de tamanho.
  */
-export async function compressVideo(
-  file: File,
-  onProgress?: (ratio: number) => void,
-  onOutcome?: (o: CompressOutcome) => void,
-): Promise<File> {
-  const inMB = file.size / (1024 * 1024)
-  if (!file.type.startsWith('video/') || file.size <= VIDEO_COMPRESS_THRESHOLD_MB * 1024 * 1024) {
-    onOutcome?.({ status: 'skipped', inMB })
-    return file
-  }
-
-  let ffmpeg: FFmpeg
-  try {
-    ffmpeg = await loadFFmpeg()
-  } catch (e) {
-    const reason = `load: ${e instanceof Error ? e.message : String(e)}`
-    console.warn('[media] ffmpeg.wasm não carregou, enviando vídeo original', e)
-    reportMediaTelemetry({ event: 'compress_fallback', reason, in_mb: Math.round(inMB) })
-    onOutcome?.({ status: 'fallback', reason, inMB })
-    return file
-  }
-
-  const progressHandler = onProgress
-    ? ({ progress }: { progress: number }) => onProgress(Math.min(1, Math.max(0, progress)))
-    : undefined
-  // Guarda as últimas linhas do log do ffmpeg: a razão de um abort/OOM aparece aí.
-  const logTail: string[] = []
-  const logHandler = ({ message }: { message: string }) => {
-    logTail.push(message)
-    if (logTail.length > 20) logTail.shift()
-  }
-  const inputName = 'input' + (file.name.match(/\.\w+$/)?.[0] || '.mp4')
-  const outputName = 'output.mp4'
-
-  // Inputs grandes: cap mais agressivo (480p/CRF32) pra reduzir o pico de memória no celular.
-  const big = file.size > VIDEO_BIG_INPUT_MB * 1024 * 1024
-  const capW = big ? 480 : 720
-  const capH = big ? 854 : 1280
-  const crf = big ? '32' : '30'
-
-  // Fallback comum: emite telemetria+outcome e devolve o ORIGINAL (nunca sobe saída quebrada).
-  const fallback = (reason: string, outMB?: number): File => {
-    console.warn('[media] compressão de vídeo caiu no fallback:', reason, logTail)
-    reportMediaTelemetry({ event: 'compress_fallback', reason, in_mb: Math.round(inMB), out_mb: outMB != null ? Math.round(outMB) : undefined })
-    onOutcome?.({ status: 'fallback', reason, inMB, outMB })
-    return file
-  }
-
-  let inputDeleted = false
-  try {
-    if (progressHandler) ffmpeg.on('progress', progressHandler)
-    ffmpeg.on('log', logHandler)
-    await ffmpeg.writeFile(inputName, await fetchFile(file))
-    // force_divisible_by=2: garante dimensões pares (libx264 + yuv420p FALHA com dimensão
-    // ímpar — celulares com aspecto 19.5:9/20:9 geravam altura/largura ímpar → saída de 0 byte).
-    const code = await ffmpeg.exec([
-      '-i', inputName,
-      '-vf', `scale=w=${capW}:h=${capH}:force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30`,
-      '-c:v', 'libx264', '-profile:v', 'high', '-level', '4.0',
-      '-preset', 'veryfast', '-crf', crf, '-pix_fmt', 'yuv420p',
-      '-c:a', 'aac', '-b:a', '64k', '-ac', '1',
-      '-movflags', '+faststart',
-      outputName,
-    ])
-    // exec do ffmpeg.wasm NÃO lança em erro — retorna o exit code. Precisamos checar.
-    if (code !== 0) {
-      return fallback(`exec exit=${code} | ${logTail.slice(-8).join(' ⏎ ')}`)
-    }
-    // Libera o input antes de ler o output — reduz o pico de memória no worker.
-    await ffmpeg.deleteFile(inputName).catch(() => {})
-    inputDeleted = true
-    const data = await ffmpeg.readFile(outputName)
-    const blob = new Blob([data as unknown as BlobPart], { type: 'video/mp4' })
-    const outMB = blob.size / (1024 * 1024)
-    // Saída vazia/minúscula = codificação falhou silenciosamente → nunca subir isso.
-    if (blob.size < 1024) {
-      return fallback(`output vazio (${blob.size}B) | ${logTail.slice(-8).join(' ⏎ ')}`, outMB)
-    }
-    if (blob.size >= file.size) {
-      return fallback(`output maior que original (${Math.round(outMB)}MB)`, outMB)
-    }
-    const name = file.name.replace(/\.\w+$/, '') + '.mp4'
-    onOutcome?.({ status: 'compressed', inMB, outMB })
-    return new File([blob], name, { type: 'video/mp4' })
-  } catch (e) {
-    return fallback(`throw: ${e instanceof Error ? e.message : String(e)} | ${logTail.slice(-6).join(' ⏎ ')}`)
-  } finally {
-    if (progressHandler) ffmpeg.off('progress', progressHandler)
-    ffmpeg.off('log', logHandler)
-    if (!inputDeleted) await ffmpeg.deleteFile(inputName).catch(() => {})
-    await ffmpeg.deleteFile(outputName).catch(() => {})
-  }
-}
-
-/** Valida tamanho e comprime (imagem ou vídeo) antes do upload. Lança MediaValidationError se reprovar. */
-export async function prepareMediaForUpload(
-  file: File,
-  onProgress?: (ratio: number) => void,
-  onOutcome?: (o: CompressOutcome) => void,
-): Promise<File> {
+export async function prepareMediaForUpload(file: File): Promise<File> {
   validateFileSize(file)
   if (file.type.startsWith('image/')) return compressImage(file)
-  if (file.type.startsWith('video/')) return compressVideo(file, onProgress, onOutcome)
   return file
 }

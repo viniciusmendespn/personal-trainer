@@ -375,6 +375,48 @@ Resources:
             AllowedHeaders: ["*"]
             MaxAge: 3600
 
+  # ── Layer com ffmpeg estático (arm64) para o transcode de vídeo ──────────────
+  # Conteúdo local (layers/ffmpeg/bin/ffmpeg) — SAM empacota e sobe no deploy.
+  # /opt é read-only e o zip vem do Windows sem bit +x: a Lambda copia o binário
+  # pra /tmp e dá chmod lá (ver app/transcode.py).
+  FfmpegLayer:
+    Type: AWS::Serverless::LayerVersion
+    DeletionPolicy: Delete
+    Properties:
+      LayerName: !Sub "${ProjectName}-ffmpeg-${Stage}"
+      Description: "ffmpeg estático (arm64) para transcode de vídeo pós-upload"
+      ContentUri: ./layers/ffmpeg/
+      CompatibleArchitectures: [arm64]
+      CompatibleRuntimes: [python3.12]
+
+  # ── Transcode de vídeo (evento S3 no upload → comprime 720p+faststart in-place) ─
+  TranscodeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.transcode.handler
+      CodeUri: ./
+      Description: "Comprime vídeo (H.264 720p + faststart) e regrava no mesmo s3_key"
+      Timeout: 600            # clipes curtos; margem p/ inputs grandes
+      MemorySize: 4096        # mais memória = mais vCPU = transcode mais rápido
+      EphemeralStorage:
+        Size: 2048            # /tmp: binário + input + output
+      Layers:
+        - !Ref FfmpegLayer
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Sub "${ProjectName}-media-${Stage}-${AWS::AccountId}"
+      Events:
+        VideoUpload:
+          Type: S3
+          Properties:
+            Bucket: !Ref MediaBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: midia/
+
   # ── CloudFront Function: roteia rotas SPA ao HTML correto antes do S3 ────────
   SpaRouterFunction:
     Type: AWS::CloudFront::Function

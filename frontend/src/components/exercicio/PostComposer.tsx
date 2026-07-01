@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import axios from 'axios'
 import { AlertTriangle, Camera, HelpCircle, MessageCircle, Paperclip, Send, Wrench, X } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button, Textarea, useToast } from '../ui'
@@ -80,7 +81,6 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
   const [descricao, setDescricao] = useState('')
   const [files, setFiles] = useState<FilePreview[]>([])
   const [loading, setLoading] = useState(false)
-  const [stage, setStage] = useState<'comprimindo' | 'enviando' | null>(null)
   const [pct, setPct] = useState<number | null>(null)
 
   const isPersonal = viewerAtor === 'PERSONAL'
@@ -102,20 +102,15 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
   }
 
   async function uploadFile(file: File): Promise<{ s3_key: string; tipo: string }> {
-    setStage('comprimindo')
-    setPct(null)
-    // Se a compressão falhar, o upload segue com o original — não alarmamos o usuário
-    // (só registramos via console + beacon dentro de prepareMediaForUpload).
-    const prepared = await prepareMediaForUpload(file, (r) => setPct(Math.round(r * 100)))
-    setStage('enviando')
-    setPct(null)
+    setPct(0)
+    // Imagem é comprimida no cliente (rápido); vídeo sobe cru e o backend comprime depois.
+    const prepared = await prepareMediaForUpload(file)
     const { upload_url, s3_key } = isPersonal && alunoId
       ? await treinosApi.uploadUrlMidia(alunoId, prepared.name, prepared.type)
       : await alunoApi.midiaUploadUrl(prepared.name, prepared.type)
-    await fetch(upload_url, {
-      method: 'PUT',
-      body: prepared,
+    await axios.put(upload_url, prepared, {
       headers: { 'Content-Type': prepared.type, 'Cache-Control': MEDIA_CACHE_CONTROL },
+      onUploadProgress: (e) => { if (e.total) setPct(Math.round((e.loaded / e.total) * 100)) },
     })
     const isVideo = prepared.type.startsWith('video')
     const midiaTipo = isPersonal
@@ -160,7 +155,6 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
       show(message, 'error')
     } finally {
       setLoading(false)
-      setStage(null)
       setPct(null)
     }
   }
@@ -183,9 +177,7 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
         <div className="absolute inset-0 z-10 rounded-lg bg-surface/80 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2">
           <span className="inline-block h-5 w-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
           <span className="text-xs text-text-muted">
-            {stage === 'comprimindo'
-              ? `Comprimindo vídeo…${pct != null ? ` ${pct}%` : ''}`
-              : 'Enviando…'}
+            {`Enviando…${pct != null ? ` ${pct}%` : ''}`}
           </span>
         </div>
       )}
