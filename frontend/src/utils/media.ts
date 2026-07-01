@@ -148,40 +148,52 @@ export async function compressVideo(
   const capH = big ? 854 : 1280
   const crf = big ? '32' : '30'
 
+  // Fallback comum: emite telemetria+outcome e devolve o ORIGINAL (nunca sobe saída quebrada).
+  const fallback = (reason: string, outMB?: number): File => {
+    console.warn('[media] compressão de vídeo caiu no fallback:', reason, logTail)
+    reportMediaTelemetry({ event: 'compress_fallback', reason, in_mb: Math.round(inMB), out_mb: outMB != null ? Math.round(outMB) : undefined })
+    onOutcome?.({ status: 'fallback', reason, inMB, outMB })
+    return file
+  }
+
   let inputDeleted = false
   try {
     if (progressHandler) ffmpeg.on('progress', progressHandler)
     ffmpeg.on('log', logHandler)
     await ffmpeg.writeFile(inputName, await fetchFile(file))
-    await ffmpeg.exec([
+    // force_divisible_by=2: garante dimensões pares (libx264 + yuv420p FALHA com dimensão
+    // ímpar — celulares com aspecto 19.5:9/20:9 geravam altura/largura ímpar → saída de 0 byte).
+    const code = await ffmpeg.exec([
       '-i', inputName,
-      '-vf', `scale='min(${capW},iw)':'min(${capH},ih)':force_original_aspect_ratio=decrease,fps=30`,
+      '-vf', `scale=w=${capW}:h=${capH}:force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30`,
       '-c:v', 'libx264', '-profile:v', 'high', '-level', '4.0',
       '-preset', 'veryfast', '-crf', crf, '-pix_fmt', 'yuv420p',
       '-c:a', 'aac', '-b:a', '64k', '-ac', '1',
       '-movflags', '+faststart',
       outputName,
     ])
+    // exec do ffmpeg.wasm NÃO lança em erro — retorna o exit code. Precisamos checar.
+    if (code !== 0) {
+      return fallback(`exec exit=${code} | ${logTail.slice(-8).join(' ⏎ ')}`)
+    }
     // Libera o input antes de ler o output — reduz o pico de memória no worker.
     await ffmpeg.deleteFile(inputName).catch(() => {})
     inputDeleted = true
     const data = await ffmpeg.readFile(outputName)
     const blob = new Blob([data as unknown as BlobPart], { type: 'video/mp4' })
+    const outMB = blob.size / (1024 * 1024)
+    // Saída vazia/minúscula = codificação falhou silenciosamente → nunca subir isso.
+    if (blob.size < 1024) {
+      return fallback(`output vazio (${blob.size}B) | ${logTail.slice(-8).join(' ⏎ ')}`, outMB)
+    }
     if (blob.size >= file.size) {
-      const reason = `output maior que original (${Math.round(blob.size / 1024 / 1024)}MB)`
-      reportMediaTelemetry({ event: 'compress_fallback', reason, in_mb: Math.round(inMB), out_mb: Math.round(blob.size / 1024 / 1024) })
-      onOutcome?.({ status: 'fallback', reason, inMB, outMB: blob.size / (1024 * 1024) })
-      return file
+      return fallback(`output maior que original (${Math.round(outMB)}MB)`, outMB)
     }
     const name = file.name.replace(/\.\w+$/, '') + '.mp4'
-    onOutcome?.({ status: 'compressed', inMB, outMB: blob.size / (1024 * 1024) })
+    onOutcome?.({ status: 'compressed', inMB, outMB })
     return new File([blob], name, { type: 'video/mp4' })
   } catch (e) {
-    const reason = `exec: ${e instanceof Error ? e.message : String(e)} | ${logTail.slice(-6).join(' ⏎ ')}`
-    console.warn('[media] compressão de vídeo falhou, enviando original', e, logTail)
-    reportMediaTelemetry({ event: 'compress_fallback', reason, in_mb: Math.round(inMB) })
-    onOutcome?.({ status: 'fallback', reason, inMB })
-    return file
+    return fallback(`throw: ${e instanceof Error ? e.message : String(e)} | ${logTail.slice(-6).join(' ⏎ ')}`)
   } finally {
     if (progressHandler) ffmpeg.off('progress', progressHandler)
     ffmpeg.off('log', logHandler)
