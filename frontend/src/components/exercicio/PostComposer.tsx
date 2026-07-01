@@ -104,15 +104,9 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
   async function uploadFile(file: File): Promise<{ s3_key: string; tipo: string }> {
     setStage('comprimindo')
     setPct(null)
-    const prepared = await prepareMediaForUpload(
-      file,
-      (r) => setPct(Math.round(r * 100)),
-      (o) => {
-        if (o.status === 'fallback') {
-          show('Não consegui comprimir o vídeo; enviando o original (pode demorar mais).', 'error')
-        }
-      },
-    )
+    // Se a compressão falhar, o upload segue com o original — não alarmamos o usuário
+    // (só registramos via console + beacon dentro de prepareMediaForUpload).
+    const prepared = await prepareMediaForUpload(file, (r) => setPct(Math.round(r * 100)))
     setStage('enviando')
     setPct(null)
     const { upload_url, s3_key } = isPersonal && alunoId
