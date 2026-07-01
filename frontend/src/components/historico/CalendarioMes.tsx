@@ -27,6 +27,20 @@ function StatChip({ icon, value, label, tone }: { icon: React.ReactNode; value: 
   )
 }
 
+function extrairFotos(dias: HistoricoMes['dias']): { url: string; dia: number }[] {
+  const fotos: { url: string; dia: number }[] = []
+  for (const [diaIso, sessoes] of Object.entries(dias)) {
+    const dia = parseInt(diaIso.slice(8, 10), 10)
+    for (const s of sessoes) {
+      if (s.checkin_url) {
+        fotos.push({ url: s.checkin_url, dia })
+        break
+      }
+    }
+  }
+  return fotos.sort((a, b) => b.dia - a.dia)
+}
+
 interface CalendarioMesProps {
   /** Busca o resumo do mês. Default: app do aluno (`alunoApi.historicoMes`). */
   fetcher?: (ano: number, mes: number) => Promise<HistoricoMes>
@@ -53,6 +67,9 @@ export function CalendarioMes({
   const [diaSel, setDiaSel] = useState<string | null>(null)
   const [sharing, setSharing] = useState(false)
   const [preview, setPreview] = useState<{ url: string; blob: Blob } | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [heroUrlSel, setHeroUrlSel] = useState<string | null | undefined>(undefined)
+  const [heroPosSel, setHeroPosSel] = useState(0)
   const toast = useToast()
   const fileName = `coachpilot-${ano}-${String(mes).padStart(2, '0')}.png`
 
@@ -74,18 +91,33 @@ export function CalendarioMes({
     setMes(m)
   }
 
-  async function gerarPreview() {
+  async function gerarPreview(heroUrl?: string | null, heroPos = 0) {
     if (!data) return
     setSharing(true)
     try {
       const { buildStoryPng } = await import('../../utils/storyImage')
-      const blob = await buildStoryPng(data, me.data?.nome)
+      const blob = await buildStoryPng(data, me.data?.nome, {
+        heroUrl,
+        heroPosition: heroUrl !== undefined && heroUrl !== null ? `center ${heroPos}%` : undefined,
+      })
       setPreview({ url: URL.createObjectURL(blob), blob })
     } catch (e) {
       console.warn('[story] falhou', e)
       toast.show('Não consegui gerar a imagem. Tenta de novo.', 'error')
     } finally {
       setSharing(false)
+    }
+  }
+
+  function abrirCompartilhar() {
+    if (!data) return
+    const fotos = extrairFotos(data.dias)
+    if (fotos.length > 0) {
+      setHeroUrlSel(fotos[0].url)
+      setHeroPosSel(0)
+      setPickerOpen(true)
+    } else {
+      gerarPreview(undefined, 0)
     }
   }
 
@@ -105,6 +137,7 @@ export function CalendarioMes({
     }
   }
 
+  const fotos = data ? extrairFotos(data.dias) : []
   const dias = data?.dias ?? {}
   const diasNoMes = new Date(ano, mes, 0).getDate()
   const primeiroDiaSemana = new Date(ano, mes - 1, 1).getDay()
@@ -187,7 +220,7 @@ export function CalendarioMes({
           {/* Compartilhar */}
           {permitirCompartilhar && (
             <button
-              onClick={gerarPreview}
+              onClick={abrirCompartilhar}
               disabled={sharing || !data?.dias_treinados}
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-energy hover:bg-energy-hover text-[#0c1404] font-semibold py-3 transition-colors disabled:opacity-40"
             >
@@ -200,6 +233,62 @@ export function CalendarioMes({
           )}
         </>
       )}
+
+      {/* Picker de foto de destaque */}
+      <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title="Foto de destaque" size="md">
+        <div className="space-y-4">
+          <p className="text-sm text-text-muted">Escolha a foto para o banner da imagem:</p>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => setHeroUrlSel(null)}
+              className={`aspect-square rounded-lg border-2 flex items-center justify-center bg-surface transition-colors ${heroUrlSel === null ? 'border-energy' : 'border-border'}`}
+            >
+              <span className="text-xs text-text-muted text-center px-1">Sem foto</span>
+            </button>
+            {fotos.map(({ url, dia }) => (
+              <button
+                key={url}
+                onClick={() => setHeroUrlSel(url)}
+                className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors ${heroUrlSel === url ? 'border-energy' : 'border-border'}`}
+              >
+                <img src={url} alt={`dia ${dia}`} crossOrigin="anonymous" className="absolute inset-0 w-full h-full object-cover" />
+                <span className="absolute bottom-1 right-1 text-[10px] text-white bg-black/60 px-1 rounded">{dia}</span>
+              </button>
+            ))}
+          </div>
+
+          {heroUrlSel && (
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs text-text-muted">
+                <span>Cima</span>
+                <span>Baixo</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={heroPosSel}
+                onChange={(e) => setHeroPosSel(Number(e.target.value))}
+                className="w-full accent-[var(--color-energy)]"
+              />
+            </div>
+          )}
+
+          <Button
+            variant="energy"
+            className="w-full"
+            onClick={() => {
+              setPickerOpen(false)
+              gerarPreview(heroUrlSel, heroPosSel)
+            }}
+          >
+            <span className="flex items-center justify-center gap-1.5">
+              {sharing ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
+              Gerar imagem
+            </span>
+          </Button>
+        </div>
+      </Modal>
 
       {/* Detalhe do dia */}
       <Modal open={!!diaSel} onClose={() => setDiaSel(null)} title={diaSel ? new Date(diaSel + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) : ''} size="lg">

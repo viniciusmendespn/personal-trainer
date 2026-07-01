@@ -53,21 +53,34 @@ async function toDataUrl(url: string): Promise<string | null> {
 }
 
 /** Gera o PNG (1080×1920) do story do mês via Satori + resvg. */
-export async function buildStoryPng(data: HistoricoMes, nome?: string): Promise<Blob> {
-  // 1. Pré-baixa as fotos de check-in p/ dataURL (Satori embute; evita asset externo).
-  const urls = new Set<string>()
-  for (const sessoes of Object.values(data.dias)) {
-    for (const s of sessoes) if (s.checkin_url) urls.add(s.checkin_url)
-  }
-  const pares = await Promise.all([...urls].map(async (u) => [u, await toDataUrl(u)] as const))
+export async function buildStoryPng(
+  data: HistoricoMes,
+  nome?: string,
+  opts?: { heroUrl?: string | null; heroPosition?: string },
+): Promise<Blob> {
+  // 1. Pré-baixa fotos de check-in p/ dataURL (Satori embute; evita asset externo).
   const photoMap: Record<string, string> = {}
-  for (const [u, d] of pares) if (d) photoMap[u] = d
+  let heroOverride: string | null | undefined = undefined
+
+  if (opts?.heroUrl !== undefined) {
+    // Modo manual: baixar só a foto escolhida (null = gradiente, sem download)
+    heroOverride = opts.heroUrl === null ? null : await toDataUrl(opts.heroUrl) ?? null
+    if (opts.heroUrl !== null && heroOverride) photoMap[opts.heroUrl] = heroOverride
+  } else {
+    // Modo auto: baixar todas as fotos do mês
+    const urls = new Set<string>()
+    for (const sessoes of Object.values(data.dias)) {
+      for (const s of sessoes) if (s.checkin_url) urls.add(s.checkin_url)
+    }
+    const pares = await Promise.all([...urls].map(async (u) => [u, await toDataUrl(u)] as const))
+    for (const [u, d] of pares) if (d) photoMap[u] = d
+  }
 
   // 2. Fontes + wasm.
   const [fonts] = await Promise.all([loadFonts(), ensureResvg()])
 
   // 3. Satori → SVG → PNG.
-  const tree = buildStoryTree(data, { nome, photoMap })
+  const tree = buildStoryTree(data, { nome, photoMap, heroOverride, heroPosition: opts?.heroPosition })
   const svg = await satori(tree, { width: 1080, height: 1920, fonts })
   const png = new Resvg(svg, { fitTo: { mode: 'width', value: 1080 } }).render().asPng()
   return new Blob([new Uint8Array(png)], { type: 'image/png' })

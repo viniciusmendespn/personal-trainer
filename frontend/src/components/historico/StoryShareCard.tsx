@@ -30,6 +30,10 @@ export interface StoryAssets {
   nome?: string
   /** mapa checkin_url → dataURL (já pré-baixado p/ o Satori embutir) */
   photoMap: Record<string, string>
+  /** dataURL da foto escolhida manualmente (null = forçar gradiente; undefined = auto) */
+  heroOverride?: string | null
+  /** CSS objectPosition para o hero, ex: "center 30%" */
+  heroPosition?: string
 }
 
 /**
@@ -53,7 +57,8 @@ export function buildStoryTree(data: HistoricoMes, assets: StoryAssets): ReactEl
     }
   }
   const diasComFoto = Object.keys(fotoPorDia).map(Number).sort((a, b) => b - a)
-  const heroFoto = diasComFoto.length ? fotoPorDia[diasComFoto[0]] : null
+  const heroFotoAuto = diasComFoto.length ? fotoPorDia[diasComFoto[0]] : null
+  const heroFoto = assets.heroOverride !== undefined ? assets.heroOverride : heroFotoAuto
 
   // Células do calendário em semanas (linhas de 7).
   const cells: (number | null)[] = []
@@ -79,7 +84,7 @@ export function buildStoryTree(data: HistoricoMes, assets: StoryAssets): ReactEl
       {/* ── HERO ── */}
       <div style={{ display: 'flex', width: 1080, height: 600, position: 'relative' }}>
         {heroFoto ? (
-          <img src={heroFoto} width={1080} height={600} style={{ position: 'absolute', top: 0, left: 0, width: 1080, height: 600, objectFit: 'cover', objectPosition: 'top' }} />
+          <img src={heroFoto} width={1080} height={600} style={{ position: 'absolute', top: 0, left: 0, width: 1080, height: 600, objectFit: 'cover', objectPosition: assets.heroPosition ?? 'center top' }} />
         ) : (
           <div style={{ display: 'flex', position: 'absolute', top: 0, left: 0, width: 1080, height: 600, backgroundImage: `linear-gradient(135deg, ${C.energy} 0%, #4f46e5 55%, ${C.accent} 100%)` }} />
         )}
