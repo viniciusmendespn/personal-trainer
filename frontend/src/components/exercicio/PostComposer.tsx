@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Button, Textarea, useToast } from '../ui'
 import { alunoApi } from '../../api/alunoApp'
 import { treinosApi } from '../../api/treinos'
-import { MediaValidationError, prepareMediaForUpload } from '../../utils/media'
+import { MediaValidationError, prepareMediaForUpload, MEDIA_CACHE_CONTROL } from '../../utils/media'
 
 type TipoAluno = 'EXECUCAO' | 'DOR' | 'DUVIDA' | 'OUTRO'
 type TipoPersonal = 'CORRECAO' | 'EXECUCAO' | 'OUTRO'
@@ -81,6 +81,7 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
   const [files, setFiles] = useState<FilePreview[]>([])
   const [loading, setLoading] = useState(false)
   const [stage, setStage] = useState<'comprimindo' | 'enviando' | null>(null)
+  const [pct, setPct] = useState<number | null>(null)
 
   const isPersonal = viewerAtor === 'PERSONAL'
   const cfg = isPersonal ? TIPO_CONFIG_PERSONAL[tipoPersonal] : TIPO_CONFIG_ALUNO[tipoAluno]
@@ -102,12 +103,26 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
 
   async function uploadFile(file: File): Promise<{ s3_key: string; tipo: string }> {
     setStage('comprimindo')
-    const prepared = await prepareMediaForUpload(file)
+    setPct(null)
+    const prepared = await prepareMediaForUpload(
+      file,
+      (r) => setPct(Math.round(r * 100)),
+      (o) => {
+        if (o.status === 'fallback') {
+          show('Não consegui comprimir o vídeo; enviando o original (pode demorar mais).', 'error')
+        }
+      },
+    )
     setStage('enviando')
+    setPct(null)
     const { upload_url, s3_key } = isPersonal && alunoId
       ? await treinosApi.uploadUrlMidia(alunoId, prepared.name, prepared.type)
       : await alunoApi.midiaUploadUrl(prepared.name, prepared.type)
-    await fetch(upload_url, { method: 'PUT', body: prepared, headers: { 'Content-Type': prepared.type } })
+    await fetch(upload_url, {
+      method: 'PUT',
+      body: prepared,
+      headers: { 'Content-Type': prepared.type, 'Cache-Control': MEDIA_CACHE_CONTROL },
+    })
     const isVideo = prepared.type.startsWith('video')
     const midiaTipo = isPersonal
       ? (isVideo ? 'video_correcao' : 'foto_correcao')
@@ -152,6 +167,7 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
     } finally {
       setLoading(false)
       setStage(null)
+      setPct(null)
     }
   }
 
@@ -173,7 +189,9 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
         <div className="absolute inset-0 z-10 rounded-lg bg-surface/80 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2">
           <span className="inline-block h-5 w-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
           <span className="text-xs text-text-muted">
-            {stage === 'comprimindo' ? 'Comprimindo mídia…' : 'Enviando…'}
+            {stage === 'comprimindo'
+              ? `Comprimindo vídeo…${pct != null ? ` ${pct}%` : ''}`
+              : 'Enviando…'}
           </span>
         </div>
       )}

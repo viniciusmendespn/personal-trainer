@@ -2,7 +2,7 @@ import { alunoClient } from './alunoClient'
 import type { Exercicio, ExercicioSubstituto, Treino } from '../types'
 import type { Evolucao, Resumo } from './evolucao'
 import type { FeedItem, MidiaExercicio, Relato } from './treinos'
-import { prepareMediaForUpload } from '../utils/media'
+import { prepareMediaForUpload, MEDIA_CACHE_CONTROL } from '../utils/media'
 
 export interface SessaoAtiva {
   sessao_id: string
@@ -293,11 +293,16 @@ export interface PontoLog {
   data_hora: string
 }
 
-/** Pede a presigned URL e sobe o arquivo direto pro S3, depois registra vinculado ao exercício. */
+/** Comprime, pede a presigned URL e sobe direto pro S3, depois registra vinculado ao exercício. */
 export async function anexarMidiaExecucao(file: File, exercicioId: string, exercicioNome?: string) {
-  const { upload_url, s3_key } = await alunoApi.midiaUploadUrl(file.name, file.type)
-  await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
-  const tipo = file.type.startsWith('video') ? 'video_execucao' : 'foto_exercicio'
+  const prepared = await prepareMediaForUpload(file)
+  const { upload_url, s3_key } = await alunoApi.midiaUploadUrl(prepared.name, prepared.type)
+  await fetch(upload_url, {
+    method: 'PUT',
+    body: prepared,
+    headers: { 'Content-Type': prepared.type, 'Cache-Control': MEDIA_CACHE_CONTROL },
+  })
+  const tipo = prepared.type.startsWith('video') ? 'video_execucao' : 'foto_exercicio'
   return alunoApi.registrarMidia(s3_key, tipo, exercicioId, exercicioNome)
 }
 
@@ -305,6 +310,10 @@ export async function anexarMidiaExecucao(file: File, exercicioId: string, exerc
 export async function enviarCheckin(sessaoId: string, file: File) {
   const prepared = await prepareMediaForUpload(file)
   const { upload_url, s3_key } = await alunoApi.midiaUploadUrl(prepared.name, prepared.type)
-  await fetch(upload_url, { method: 'PUT', body: prepared, headers: { 'Content-Type': prepared.type } })
+  await fetch(upload_url, {
+    method: 'PUT',
+    body: prepared,
+    headers: { 'Content-Type': prepared.type, 'Cache-Control': MEDIA_CACHE_CONTROL },
+  })
   return alunoApi.checkinSessao(sessaoId, s3_key)
 }

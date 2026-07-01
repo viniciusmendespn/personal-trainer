@@ -19,6 +19,11 @@ from app.utils import new_id, now_iso
 logger = logging.getLogger(__name__)
 _s3 = None
 
+# Mídia é content-addressed por uuid (imutável). Este valor PRECISA ser idêntico ao header
+# 'Cache-Control' enviado no PUT pelo front (MEDIA_CACHE_CONTROL em utils/media.ts), senão a
+# assinatura do presigned PUT não valida.
+MEDIA_CACHE_CONTROL = "public, max-age=31536000, immutable"
+
 
 def _s3c():
     global _s3
@@ -37,7 +42,8 @@ def gerar_presigned_upload_url(aluno_id: str, filename: str, content_type: str,
     try:
         url = _s3c().generate_presigned_url(
             "put_object",
-            Params={"Bucket": settings.media_bucket_name, "Key": key, "ContentType": content_type},
+            Params={"Bucket": settings.media_bucket_name, "Key": key,
+                    "ContentType": content_type, "CacheControl": MEDIA_CACHE_CONTROL},
             ExpiresIn=expires_in,
         )
         return {"upload_url": url, "s3_key": key}
@@ -57,7 +63,8 @@ def gerar_presigned_upload_url_perfil(entity_type: str, entity_id: str, filename
     try:
         url = _s3c().generate_presigned_url(
             "put_object",
-            Params={"Bucket": settings.media_bucket_name, "Key": key, "ContentType": content_type},
+            Params={"Bucket": settings.media_bucket_name, "Key": key,
+                    "ContentType": content_type, "CacheControl": MEDIA_CACHE_CONTROL},
             ExpiresIn=expires_in,
         )
         return {"upload_url": url, "s3_key": key}
