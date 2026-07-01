@@ -3,6 +3,7 @@ from app.models.enums import CanalOrigem
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import anotif_service, notif_service
+from app.services.sessao_service import chave_exercicio
 from app.utils import epoch_ms, new_id, now_iso
 
 
@@ -30,6 +31,7 @@ def criar_postagem(
         "ator": ator,
         "exercicio_id": exercicio_id,
         "exercicio_nome": exercicio_nome,
+        "chave": chave_exercicio(exercicio_nome or ""),
         "descricao": descricao,
         "texto": descricao,       # alias usado pelo CorrecaoItem no frontend
         "midias": midias,

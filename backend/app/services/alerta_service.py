@@ -3,6 +3,7 @@ from app.models.enums import Ator, CanalOrigem
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import anotif_service, notif_service
+from app.services.sessao_service import chave_exercicio
 from app.utils import epoch_ms, new_id, now_iso
 
 SK_PREFIX_DOR = "DOR#"
@@ -19,6 +20,7 @@ def registrar_dor(personal_id: str, aluno_id: str, descricao: str,
     sk = keys.sk_dor(exercicio_id or "NA", ts, dor_id)
     repo.put_item(keys.pk_aluno(aluno_id), sk, {
         "aluno_id": aluno_id, "exercicio_id": exercicio_id, "exercicio_nome": exercicio_nome,
+        "chave": chave_exercicio(exercicio_nome or ""),
         "descricao": descricao, "data_hora": now_iso(), "respondido": False,
         "canal_origem": canal.value, "ator": ator.value,
         **({"sessao_id": sessao_id} if sessao_id else {}),
@@ -41,6 +43,7 @@ def registrar_duvida(personal_id: str, aluno_id: str, descricao: str,
     sk = keys.sk_duvida(exercicio_id or "NA", ts, duvida_id)
     repo.put_item(keys.pk_aluno(aluno_id), sk, {
         "aluno_id": aluno_id, "exercicio_id": exercicio_id, "exercicio_nome": exercicio_nome,
+        "chave": chave_exercicio(exercicio_nome or ""),
         "descricao": descricao, "data_hora": now_iso(), "respondido": False,
         "canal_origem": canal.value, "ator": ator.value,
         **({"sessao_id": sessao_id} if sessao_id else {}),

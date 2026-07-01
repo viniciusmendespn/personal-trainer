@@ -71,10 +71,12 @@ def registrar_midia_vinculada(aluno_id: str, exercicio_id: str, exercicio_nome: 
     """Registra uma mídia já enviada (via presigned URL) — pelo próprio app do aluno ou
     pelo personal (vídeo/foto de correção) — o exercício já é conhecido nesse fluxo, então
     a mídia nasce vinculada (sem pendência)."""
+    from app.services.sessao_service import chave_exercicio  # evita import circular (sessao_service→media_service)
     midia_id = new_id()
     item = {
         "midia_id": midia_id, "tipo": tipo, "s3_key": s3_key,
         "exercicio_id": exercicio_id, "exercicio_nome": exercicio_nome,
+        "chave": chave_exercicio(exercicio_nome or ""),
         "status": "VINCULADA", "data_hora": now_iso(), "ator": ator.value,
     }
     repo.put_item(keys.pk_aluno(aluno_id), f"MIDIA#{exercicio_id}#{midia_id}", item)
@@ -221,10 +223,12 @@ def salvar_midia(cfg: dict, media: dict, aluno_id: str, exercicio_id: str | None
     ok = _stream_to_s3(link, key, media.get("mimetype") or "application/octet-stream")
     if not ok:
         return None
+    from app.services.sessao_service import chave_exercicio  # evita import circular (sessao_service→media_service)
     midia_id = new_id()
     item = {
         "midia_id": midia_id, "tipo": tipo, "s3_key": key,
         "exercicio_id": exercicio_id, "exercicio_nome": exercicio_nome,
+        "chave": chave_exercicio(exercicio_nome or ""),
         "status": "VINCULADA" if exercicio_id else "PENDENTE", "data_hora": now_iso(),
     }
     repo.put_item(keys.pk_aluno(aluno_id), f"MIDIA#{exercicio_id or 'NA'}#{midia_id}", item)

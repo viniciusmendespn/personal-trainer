@@ -300,6 +300,9 @@ def update_exercicio(aluno_id: str, treino_id: str, exercicio_id: str, body: Exe
     )
     if updated is None:
         raise HTTPException(404, "Exercício não encontrado")
+    # Renomear = tratar como exercício novo: o nome (identidade de feed/carga/PR) passa a valer,
+    # então cadastra o nome no catálogo do personal para buscas seguintes (first-write-wins).
+    biblioteca_service.upsert_from_exercicios(personal_id, [body.model_dump()])
     _touch_aluno_pointer(personal_id, aluno_id)
     return repo.clean(updated)
 
