@@ -73,17 +73,27 @@ export async function compressImage(file: File): Promise<File> {
 
 let ffmpegLoadPromise: Promise<FFmpeg> | null = null
 
+// Versão do core servido em /ffmpeg. Os arquivos NÃO têm hash no nome e são servidos com
+// max-age=3600, então o navegador cacheia por até 1h — a invalidação do CloudFront não limpa
+// o cache local. Ao trocar o build do core (ex.: umd → esm), BUMPAR esta string força o
+// navegador a buscar uma URL nova em vez de reusar o core antigo do cache. Ver [[project_video_compressao]].
+const FFMPEG_CORE_VERSION = 'esm-0.12.10'
+
 function loadFFmpeg(): Promise<FFmpeg> {
   if (!ffmpegLoadPromise) {
     ffmpegLoadPromise = (async () => {
       const ffmpeg = new FFmpeg()
       const base = '/ffmpeg'
+      const v = FFMPEG_CORE_VERSION
       await ffmpeg.load({
-        coreURL: await toBlobURL(`${base}/ffmpeg-core.js`, 'text/javascript'),
-        wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm`, 'application/wasm'),
+        coreURL: await toBlobURL(`${base}/ffmpeg-core.js?v=${v}`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm?v=${v}`, 'application/wasm'),
       })
       return ffmpeg
     })()
+    // Se o load falhar, não deixa a promise rejeitada memoizada pra sessão inteira —
+    // permite nova tentativa num próximo upload.
+    ffmpegLoadPromise.catch(() => { ffmpegLoadPromise = null })
   }
   return ffmpegLoadPromise
 }
