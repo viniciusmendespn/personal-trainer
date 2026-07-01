@@ -74,11 +74,15 @@ function prescritoLabel(ex: ExecEx): string | null {
   return null
 }
 
-function execLabel(tipo: TipoExercicio, s: { carga?: string; reps?: number }, unidadeCarga = 'kg', unidadeReps = 'reps'): string {
+function execLabel(tipo: TipoExercicio, s: { carga?: string; reps?: number }, unidadeCarga?: string | null, unidadeReps?: string | null): string {
+  // `||` cobre null/undefined/'' — default params só cobrem undefined, e o backend grava null
+  // p/ FORÇA (kg/reps implícitos), o que renderizava a unidade literal "null".
+  const uc = unidadeCarga || 'kg'
+  const ur = unidadeReps || 'reps'
   if (tipo === 'PERFORMANCE') {
-    return s.reps != null ? `${s.reps} ${unidadeReps}`.trimEnd() : '—'
+    return s.reps != null ? `${s.reps} ${ur}`.trimEnd() : '—'
   }
-  return `${s.reps != null ? `${s.reps} ${unidadeReps}` : '—'}${s.carga ? ` · ${s.carga} ${unidadeCarga}` : ''}`
+  return `${s.reps != null ? `${s.reps} ${ur}` : '—'}${s.carga ? ` · ${s.carga} ${uc}` : ''}`
 }
 
 function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {

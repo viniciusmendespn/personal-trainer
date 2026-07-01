@@ -70,6 +70,7 @@ export function CheckinPosTreino({ sessao, onClose }: { sessao: SessaoFinalizada
           <CheckinUploadButton
             sessaoId={sessao.sessao_id}
             label="Tirar foto do check-in"
+            usarCamera
             onDone={() => setTimeout(onClose, 900)}
           />
           <button

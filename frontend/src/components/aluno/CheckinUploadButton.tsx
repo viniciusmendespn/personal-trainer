@@ -12,12 +12,15 @@ export function CheckinUploadButton({
   label = 'Adicionar foto de check-in',
   variant = 'energy',
   className = 'w-full',
+  usarCamera = false,
   onDone,
 }: {
   sessaoId: string
   label?: string
   variant?: 'energy' | 'outline' | 'primary' | 'ghost'
   className?: string
+  /** Abre a câmera direto (pós-treino). Default: false = escolher da galeria. */
+  usarCamera?: boolean
   onDone?: () => void
 }) {
   const qc = useQueryClient()
@@ -61,7 +64,7 @@ export function CheckinUploadButton({
         ref={inputRef}
         type="file"
         accept="image/*"
-        capture="environment"
+        capture={usarCamera ? 'environment' : undefined}
         className="hidden"
         onChange={onChange}
         disabled={uploading}
