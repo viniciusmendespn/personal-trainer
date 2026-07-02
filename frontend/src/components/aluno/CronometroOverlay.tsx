@@ -225,11 +225,15 @@ export function CronometroOverlay({
   progress = Math.max(0, Math.min(1, progress))
   const ringColor = alerta ? 'stroke-warning' : modo === 'regressivo' ? 'stroke-energy' : 'stroke-accent'
 
+  // Android PWA quase nunca reporta safe-area-inset-top; garante margem mínima pros controles do topo.
+  const androidStandalone =
+    /Android/i.test(navigator.userAgent) && window.matchMedia('(display-mode: standalone)').matches
+
   return createPortal(
     <div
       className={`fixed inset-0 z-[60] flex flex-col transition-colors duration-100 ${bgClass}`}
       style={{
-        paddingTop: 'env(safe-area-inset-top)',
+        paddingTop: androidStandalone ? 'max(env(safe-area-inset-top), 24px)' : 'env(safe-area-inset-top)',
         paddingBottom: 'env(safe-area-inset-bottom)',
         paddingLeft: 'env(safe-area-inset-left)',
         paddingRight: 'env(safe-area-inset-right)',

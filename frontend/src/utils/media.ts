@@ -1,6 +1,6 @@
 const MAX_IMAGE_MB = 25
 const MAX_VIDEO_MB = 400
-const IMAGE_COMPRESS_THRESHOLD_MB = 1.5
+const IMAGE_COMPRESS_THRESHOLD_MB = 1
 const IMAGE_MAX_DIMENSION = 1600
 const IMAGE_QUALITY = 0.8
 
@@ -22,22 +22,46 @@ export function validateFileSize(file: File): void {
   }
 }
 
-/** Redesenha em canvas e reexporta como JPEG. Não mexe em arquivos já pequenos. */
+/** Lê só as dimensões da imagem (decode lazy via <img>, não aloca o raster full-res). */
+async function readImageSize(file: File): Promise<{ width: number; height: number }> {
+  const url = URL.createObjectURL(file)
+  try {
+    const img = document.createElement('img')
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve()
+      img.onerror = () => reject(new Error('decode falhou'))
+      img.src = url
+    })
+    return { width: img.naturalWidth, height: img.naturalHeight }
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
+/** Redesenha em canvas e reexporta como JPEG. Não mexe em arquivos já pequenos.
+ * Decodifica JÁ reduzido (resizeWidth/Height do createImageBitmap) para NUNCA materializar o
+ * bitmap full-res na memória — fotos de câmera Android de 48–108MP causavam OOM e crash/reload
+ * da PWA. Ver ARCHITECTURE / plano issue 3. */
 export async function compressImage(file: File): Promise<File> {
   if (!file.type.startsWith('image/') || file.size <= IMAGE_COMPRESS_THRESHOLD_MB * 1024 * 1024) {
     return file
   }
   try {
-    const bitmap = await createImageBitmap(file)
-    const scale = Math.min(1, IMAGE_MAX_DIMENSION / Math.max(bitmap.width, bitmap.height))
-    const w = Math.round(bitmap.width * scale)
-    const h = Math.round(bitmap.height * scale)
+    const { width, height } = await readImageSize(file)
+    const scale = Math.min(1, IMAGE_MAX_DIMENSION / Math.max(width, height))
+    const w = Math.max(1, Math.round(width * scale))
+    const h = Math.max(1, Math.round(height * scale))
+    const bitmap = await createImageBitmap(file, { resizeWidth: w, resizeHeight: h, resizeQuality: 'high' })
     const canvas = document.createElement('canvas')
-    canvas.width = w
-    canvas.height = h
+    canvas.width = bitmap.width
+    canvas.height = bitmap.height
     const ctx = canvas.getContext('2d')
-    if (!ctx) return file
-    ctx.drawImage(bitmap, 0, 0, w, h)
+    if (!ctx) {
+      bitmap.close?.()
+      return file
+    }
+    ctx.drawImage(bitmap, 0, 0)
+    bitmap.close?.()
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', IMAGE_QUALITY))
     if (!blob || blob.size >= file.size) return file
     const name = file.name.replace(/\.\w+$/, '') + '.jpg'

@@ -333,6 +333,7 @@ export function AlunoApp() {
   const [showPerfilModal, setShowPerfilModal] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+  const isAndroid = /Android/i.test(navigator.userAgent)
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
   // Botão para ativar notificações: iOS (exige gesto + app instalado) e Android como fallback
   const podeAtivarNotif =
@@ -429,7 +430,10 @@ export function AlunoApp() {
     <AlunoErrorBoundary onCrash={() => setDisabled(true)}>
     <div
       className="min-h-screen max-w-md mx-auto flex flex-col"
-      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
+      style={{
+        paddingTop: isStandalone && isAndroid ? 'max(env(safe-area-inset-top), 24px)' : 'env(safe-area-inset-top)',
+        paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))',
+      }}
     >
       <header className="px-4 pt-4 pb-2 shrink-0 flex items-center gap-2">
         <button
@@ -1199,9 +1203,19 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
 
 const sanitizeCarga = (v: string) => {
   const neg = v.startsWith('-')
-  const digits = v.replace(/[^\d.,]/g, '')
+  let digits = v.replace(/[^\d.,]/g, '')
+  // Permite no máximo um separador decimal (vírgula OU ponto). Evita valores malformados
+  // tipo "10,5,5" ou "10.5." que quebram silenciosamente os cálculos de volume/PR.
+  const firstSep = digits.search(/[.,]/)
+  if (firstSep !== -1) {
+    // mantém o primeiro separador e remove quaisquer outros
+    digits = digits.slice(0, firstSep + 1) + digits.slice(firstSep + 1).replace(/[.,]/g, '')
+  }
   return neg ? '-' + digits : digits
 }
+
+/** Normaliza a carga para ponto decimal antes de persistir (dado canônico no Dynamo). */
+const normalizeCargaOut = (v?: string) => v?.replace(',', '.')
 
 function formatPr(val: number, tipo?: string, unidade?: string): string {
   if (tipo === 'PERFORMANCE') return `${val} ${unidade ?? ''}`.trimEnd()
@@ -1370,7 +1384,7 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
         throw new Error(tipo === 'PERFORMANCE' ? 'Preencha a métrica de todas as séries.' : 'Preencha as repetições de todas as séries.')
       }
       const series = rows.map((r) => ({
-        carga: tipo === 'PERFORMANCE' ? undefined : (r.carga || undefined),
+        carga: tipo === 'PERFORMANCE' ? undefined : (normalizeCargaOut(r.carga) || undefined),
         reps: Number(r.reps),
       }))
       return alunoApi.registrar(series, ex.exercicio_id, variante?.nome)

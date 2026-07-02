@@ -297,11 +297,12 @@ export interface PontoLog {
 export async function anexarMidiaExecucao(file: File, exercicioId: string, exercicioNome?: string) {
   const prepared = await prepareMediaForUpload(file)
   const { upload_url, s3_key } = await alunoApi.midiaUploadUrl(prepared.name, prepared.type)
-  await fetch(upload_url, {
+  const putRes = await fetch(upload_url, {
     method: 'PUT',
     body: prepared,
     headers: { 'Content-Type': prepared.type, 'Cache-Control': MEDIA_CACHE_CONTROL },
   })
+  if (!putRes.ok) throw new Error(`Falha no upload (${putRes.status})`)
   const tipo = prepared.type.startsWith('video') ? 'video_execucao' : 'foto_exercicio'
   return alunoApi.registrarMidia(s3_key, tipo, exercicioId, exercicioNome)
 }
@@ -310,10 +311,11 @@ export async function anexarMidiaExecucao(file: File, exercicioId: string, exerc
 export async function enviarCheckin(sessaoId: string, file: File) {
   const prepared = await prepareMediaForUpload(file)
   const { upload_url, s3_key } = await alunoApi.midiaUploadUrl(prepared.name, prepared.type)
-  await fetch(upload_url, {
+  const putRes = await fetch(upload_url, {
     method: 'PUT',
     body: prepared,
     headers: { 'Content-Type': prepared.type, 'Cache-Control': MEDIA_CACHE_CONTROL },
   })
+  if (!putRes.ok) throw new Error(`Falha no upload (${putRes.status})`)
   return alunoApi.checkinSessao(sessaoId, s3_key)
 }
