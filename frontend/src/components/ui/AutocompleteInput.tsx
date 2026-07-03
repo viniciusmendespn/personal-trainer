@@ -11,9 +11,13 @@ interface Props {
   label?: string
   placeholder?: string
   disabled?: boolean
+  autoFocus?: boolean
+  maxLength?: number
+  required?: boolean
+  className?: string
 }
 
-export function AutocompleteInput({ value, onChange, suggestions, label, placeholder, disabled }: Props) {
+export function AutocompleteInput({ value, onChange, suggestions, label, placeholder, disabled, autoFocus, maxLength, required, className }: Props) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -32,7 +36,7 @@ export function AutocompleteInput({ value, onChange, suggestions, label, placeho
   }, [])
 
   return (
-    <div ref={containerRef} className="relative block">
+    <div ref={containerRef} className={`relative block ${className ?? ''}`}>
       {label && <span className="block text-xs font-medium text-text-secondary mb-1">{label}</span>}
       <input
         value={value}
@@ -40,6 +44,9 @@ export function AutocompleteInput({ value, onChange, suggestions, label, placeho
         onFocus={() => setOpen(true)}
         placeholder={placeholder}
         disabled={disabled}
+        autoFocus={autoFocus}
+        maxLength={maxLength}
+        required={required}
         className={fieldBase}
         autoComplete="off"
       />

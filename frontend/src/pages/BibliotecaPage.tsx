@@ -1,7 +1,7 @@
-import { useId, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus, Trash2, Video, Pencil, BookOpen, Search, Upload } from 'lucide-react'
 import { useBiblioteca, useCreateExLib, useUpdateExLib, useDeleteExLib } from '../hooks/useDominio'
-import { Button, Card, Input, Textarea, Spinner, EmptyState, Modal, useConfirm } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, EmptyState, Modal, useConfirm, AutocompleteInput } from '../components/ui'
 import { ImportarExerciciosModal } from '../components/ImportarExerciciosModal'
 import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
 import { SubstitutosBibliotecaEditor } from '../components/exercicios/SubstitutosBibliotecaEditor'
@@ -80,7 +80,6 @@ function ExLibForm({
   submitting?: boolean
   submitLabel: string
 }) {
-  const listId = useId()
   const [nome, setNome] = useState(initial?.nome ?? '')
   const [grupo, setGrupo] = useState(initial?.grupo ?? '')
   const [video, setVideo] = useState(initial?.video_url ?? '')
@@ -103,8 +102,7 @@ function ExLibForm({
     <form onSubmit={submit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input label="Nome" value={nome} onChange={(e) => setNome(e.target.value)} autoFocus />
-        <Input label="Grupo muscular" list={listId} value={grupo} onChange={(e) => setGrupo(e.target.value)} />
-        <datalist id={listId}>{grupos.map((g) => <option key={g} value={g} />)}</datalist>
+        <AutocompleteInput label="Grupo muscular" value={grupo} onChange={setGrupo} suggestions={grupos} />
       </div>
       <Input label="Vídeo (URL)" value={video} onChange={(e) => setVideo(e.target.value)} />
       <Textarea label="Descrição" rows={2} value={descricao} onChange={(e) => setDescricao(e.target.value)} />

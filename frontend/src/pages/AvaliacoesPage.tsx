@@ -7,7 +7,7 @@ import {
 import { useAluno } from '../hooks/useAlunos'
 import { useAvaliacoes, useCreateAvaliacao, useDeleteAvaliacao } from '../hooks/useDominio'
 import { uploadAvaliacaoFile } from '../api/avaliacoes'
-import { Button, Card, Input, SearchableSelect, Textarea, Spinner, Modal, EmptyState, useToast, useConfirm } from '../components/ui'
+import { Button, Card, Input, SearchableSelect, Textarea, Spinner, Modal, EmptyState, useToast, useConfirm, AutocompleteInput } from '../components/ui'
 import { FotoComparacaoModal } from '../components/avaliacoes/FotoComparacaoModal'
 import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
 import { renderNodeToPdf } from '../utils/exportPdf'
@@ -436,15 +436,13 @@ function NovaAvaliacaoForm({
 
       <div>
         <p className="text-xs font-medium text-text-secondary mb-2">Métricas customizadas (opcional)</p>
-        <datalist id="metricas-conhecidas">
-          {nomesMetricasConhecidos.map((n) => <option key={n} value={n} />)}
-        </datalist>
         <div className="space-y-2">
           {metricas.map((m, i) => (
             <div key={i} className="flex gap-2 items-end">
-              <Input
-                className="flex-1" placeholder="Nome do campo" value={m.nome} list="metricas-conhecidas"
-                onChange={(e) => updateMetrica(i, { nome: e.target.value })}
+              <AutocompleteInput
+                className="flex-1" placeholder="Nome do campo" value={m.nome}
+                suggestions={nomesMetricasConhecidos}
+                onChange={(v) => updateMetrica(i, { nome: v })}
               />
               <Input
                 className="w-20" placeholder="Unidade" maxLength={10} value={m.unidade}

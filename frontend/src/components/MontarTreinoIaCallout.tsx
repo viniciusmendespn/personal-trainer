@@ -35,7 +35,8 @@ export function MontarTreinoIaCallout({ compact = false }: { compact?: boolean }
       </div>
       {!compact && (
         <p className="text-xs text-text-muted mt-3">
-          ou adicione manualmente no botão <span className="text-text-secondary">Adicionar treino</span> acima.
+          ou adicione manualmente no botão <span className="text-text-secondary">Adicionar treino</span> acima,
+          ou clique em <span className="text-text-secondary">Aplicar rotina</span> para usar uma rotina pronta.
         </p>
       )}
     </div>

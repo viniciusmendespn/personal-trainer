@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList, CalendarDays, List } from 'lucide-react'
@@ -12,7 +12,7 @@ import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
-import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar, ObjetivosPicker } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar, ObjetivosPicker, AutocompleteInput } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { MontarTreinoIaCallout } from '../components/MontarTreinoIaCallout'
 import { AtualizarTreinoIAModal } from '../components/AtualizarTreinoIAModal'
@@ -894,9 +894,6 @@ function ExercicioForm({
   submitting?: boolean
   submitLabel: string
 }) {
-  const listId = useId()
-  const grupoListId = useId()
-  const unidadeListId = useId()
   const [nome, setNome] = useState(initial?.nome ?? '')
   const [grupo, setGrupo] = useState(initial?.grupo ?? '')
   const [tipo, setTipo] = useState<TipoExercicio>(normalizeTipoExercicio(initial?.tipo_exercicio))
@@ -984,16 +981,17 @@ function ExercicioForm({
       <div>
         <p className="text-xs font-medium text-text-secondary mb-2">Identificação</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input
-            label="Exercício" list={listId} autoFocus
-            value={nome} onChange={(e) => onNome(e.target.value)}
+          <AutocompleteInput
+            label="Exercício" autoFocus
+            value={nome} onChange={onNome}
+            suggestions={datalistNomes.map((item) => item.nome)}
           />
-          <Input label="Grupo muscular" list={grupoListId} value={grupo} onChange={(e) => setGrupo(e.target.value)} />
+          <AutocompleteInput
+            label="Grupo muscular"
+            value={grupo} onChange={setGrupo}
+            suggestions={grupos}
+          />
         </div>
-        <datalist id={listId}>
-          {datalistNomes.map((item) => <option key={item.key} value={item.nome} />)}
-        </datalist>
-        <datalist id={grupoListId}>{grupos.map((g) => <option key={g} value={g} />)}</datalist>
       </div>
       <div>
         <p className="text-xs font-medium text-text-secondary mb-2">Tipo de exercício</p>
@@ -1023,14 +1021,12 @@ function ExercicioForm({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-text-muted mb-1 block">Unidade</label>
-              <Input
-                list={unidadeListId} maxLength={7}
+              <AutocompleteInput
+                maxLength={7}
                 placeholder="ex.: km, min, voltas"
-                value={unidadeReps} onChange={(e) => setUnidadeReps(e.target.value.slice(0, 7))}
+                value={unidadeReps} onChange={(v) => setUnidadeReps(v.slice(0, 7))}
+                suggestions={['reps', 's', 'min', 'h', 'km', 'm', 'voltas', 'cal', 'passos']}
               />
-              <datalist id={unidadeListId}>
-                {['reps', 's', 'min', 'h', 'km', 'm', 'voltas', 'cal', 'passos'].map((u) => <option key={u} value={u} />)}
-              </datalist>
             </div>
             <div>
               <label className="text-xs text-text-muted mb-1 block">O que é evoluir?</label>

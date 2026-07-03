@@ -1,10 +1,10 @@
-import { useState, useMemo, useId } from 'react'
+import { useState, useMemo } from 'react'
 import { Trash2, Users, LayoutTemplate, Dumbbell, Pencil, Plus, X, Search } from 'lucide-react'
 import { useAlunos } from '../hooks/useAlunos'
 import { normalizeText } from '../utils/normalizeText'
 import { useTemplates, useCreateTemplate, useDeleteTemplate, useUpdateTemplate, useAplicarTemplate } from '../hooks/useTemplates'
 import { useBiblioteca } from '../hooks/useDominio'
-import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm, AutocompleteInput } from '../components/ui'
 import { SeriesPrescritasEditor, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
 import { IntervaloInput } from '../components/exercicios/IntervaloInput'
@@ -164,7 +164,6 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
   const upd = useUpdateTemplate()
   const { show } = useToast()
   const { data: biblioteca } = useBiblioteca()
-  const baseId = useId()
   const [nome, setNome] = useState(template?.nome ?? '')
   const [foco, setFoco] = useState(template?.foco ?? '')
   const [exercicios, setExercicios] = useState<ExercicioTemplate[]>(() =>
@@ -217,9 +216,6 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
       <div className="space-y-3">
         {exercicios.map((ex, i) => {
           const tipo = normalizeTipoExercicio(ex.tipo_exercicio)
-          const nomeListId = `${baseId}-ex-${i}-nome`
-          const grupoListId = `${baseId}-ex-${i}-grupo`
-          const unidadeListId = `${baseId}-ex-${i}-unidade`
           return (
             <Card key={i} variant="flat" className="relative">
               <Button
@@ -234,13 +230,12 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                 <div>
                   <p className="text-xs font-medium text-text-secondary mb-2">Identificação</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <Input
+                    <AutocompleteInput
                       label="Exercício"
                       className="col-span-2"
-                      list={nomeListId}
                       value={ex.nome}
-                      onChange={(e) => {
-                        const v = e.target.value
+                      suggestions={(biblioteca ?? []).map((b) => b.nome)}
+                      onChange={(v) => {
                         const lib = biblioteca?.find((b) => b.nome.toLowerCase() === v.toLowerCase())
                         updateEx(i, {
                           nome: v,
@@ -248,19 +243,13 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                         })
                       }}
                     />
-                    <Input
+                    <AutocompleteInput
                       label="Grupo muscular"
-                      list={grupoListId}
                       value={ex.grupo ?? ''}
-                      onChange={(e) => updateEx(i, { grupo: e.target.value || undefined })}
+                      suggestions={gruposUnicos}
+                      onChange={(v) => updateEx(i, { grupo: v || undefined })}
                     />
                   </div>
-                  <datalist id={nomeListId}>
-                    {biblioteca?.map((b) => <option key={b.exlib_id} value={b.nome} />)}
-                  </datalist>
-                  <datalist id={grupoListId}>
-                    {gruposUnicos.map((g) => <option key={g} value={g} />)}
-                  </datalist>
                 </div>
 
                 {/* Tipo de exercício */}
@@ -291,15 +280,13 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="text-xs text-text-muted mb-1 block">Unidade</label>
-                        <Input
-                          list={unidadeListId} maxLength={7}
+                        <AutocompleteInput
+                          maxLength={7}
                           placeholder="ex.: km, min, voltas"
                           value={ex.unidade_reps ?? ''}
-                          onChange={(e) => updateEx(i, { unidade_reps: e.target.value.slice(0, 7) || undefined })}
+                          suggestions={UNIDADE_PRESETS}
+                          onChange={(v) => updateEx(i, { unidade_reps: v.slice(0, 7) || undefined })}
                         />
-                        <datalist id={unidadeListId}>
-                          {UNIDADE_PRESETS.map((u) => <option key={u} value={u} />)}
-                        </datalist>
                       </div>
                       <div>
                         <label className="text-xs text-text-muted mb-1 block">O que é evoluir?</label>
