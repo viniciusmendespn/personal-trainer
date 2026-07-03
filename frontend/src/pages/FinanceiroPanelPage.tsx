@@ -133,7 +133,7 @@ export function FinanceiroPanelPage() {
 
       {/* ── KPIs ── */}
       {isLoading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[0, 1, 2, 3].map((i) => (
             <Card key={i} variant="elevated" className="flex items-start gap-3">
               <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
@@ -145,7 +145,7 @@ export function FinanceiroPanelPage() {
           ))}
         </div>
       ) : resumo ? (
-        <div className={`grid grid-cols-2 ${resumo.mp_configurado ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-3`}>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${resumo.mp_configurado ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-3`}>
           <StatCard
             icon={<DollarSign />}
             label="Recebido no mês"
