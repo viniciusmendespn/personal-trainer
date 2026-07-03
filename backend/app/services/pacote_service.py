@@ -371,6 +371,7 @@ def _instalar(
     for rot_pkg in pacote_file.rotinas:
         rotina_id = det_id(pacote_id, rot_pkg.ref)
         treinos: list[dict] = []
+        rotina_template_ids: list[str] = []
         for ordem, tmpl_ref in enumerate(rot_pkg.treinos):
             template_id = ref_to_template.get(tmpl_ref)
             if not template_id:
@@ -383,6 +384,7 @@ def _instalar(
                     "ordem": ordem,
                     "exercicios": tmpl_item.get("exercicios", []),
                 })
+                rotina_template_ids.append(template_id)
         rotina_puts.append({
             "PK": pk_pt,
             "SK": keys.sk_rotina(rotina_id),
@@ -391,6 +393,7 @@ def _instalar(
             "nome": rot_pkg.nome,
             "descricao": rot_pkg.descricao,
             "treinos": treinos,
+            "template_ids": rotina_template_ids,
             "pacote_id": pacote_id,
             "ativo": True,
             "created_at": now,
