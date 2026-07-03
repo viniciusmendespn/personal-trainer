@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
-import { ArrowLeft, Dumbbell, HandCoins, Layers, Repeat, ShieldCheck, Zap } from 'lucide-react'
-import { lojaApi, formatPreco, type Pedido } from '../../api/loja'
+import { ArrowLeft, Dumbbell, Gift, HandCoins, Layers, Repeat, ShieldCheck, Zap } from 'lucide-react'
+import { lojaApi, formatPreco, precoLabel, type Pedido } from '../../api/loja'
 import { Button, Card, Modal, RichTextContent, Spinner, useToast } from '../../components/ui'
 import { StarRating } from '../StarRating'
 import { CheckoutPixModal } from '../CheckoutPixModal'
+import { InstalarActions } from '../InstalarActions'
 import { isLoggedIn } from '../useLojaAuth'
 
 export function AnuncioDetailPage() {
@@ -16,6 +17,7 @@ export function AnuncioDetailPage() {
   const [buying, setBuying] = useState(false)
   const [pedidoPix, setPedidoPix] = useState<Pedido | null>(null)
   const [pedidoManual, setPedidoManual] = useState<Pedido | null>(null)
+  const [pedidoGratis, setPedidoGratis] = useState<Pedido | null>(null)
 
   const { data: anuncio, isLoading, isError } = useQuery({
     queryKey: ['loja-anuncio', anuncioId],
@@ -28,6 +30,8 @@ export function AnuncioDetailPage() {
     queryFn: () => lojaApi.avaliacoes(anuncioId),
     enabled: !!anuncioId,
   })
+
+  const gratis = anuncio?.preco_centavos === 0
 
   useEffect(() => {
     if (anuncio?.titulo) document.title = `${anuncio.titulo} — Loja CoachPilot`
@@ -42,12 +46,18 @@ export function AnuncioDetailPage() {
     setBuying(true)
     try {
       const pedido = await lojaApi.criarPedido(anuncioId)
-      if (pedido.modo === 'MP') setPedidoPix(pedido)
+      if (pedido.modo === 'GRATIS') setPedidoGratis(pedido)
+      else if (pedido.modo === 'MP') setPedidoPix(pedido)
       else setPedidoManual(pedido)
     } catch (err) {
       const code = isAxiosError(err) ? err.response?.data?.detail?.code : undefined
       if (code === 'JA_COMPRADO') {
-        toast.show('Você já comprou este pacote — veja em Minhas compras.', 'info')
+        toast.show(
+          gratis
+            ? 'Você já resgatou este pacote — veja em Minhas compras.'
+            : 'Você já comprou este pacote — veja em Minhas compras.',
+          'info',
+        )
         navigate('/compras')
       } else if (code === 'COMPRA_PROPRIA') {
         toast.show('Este anúncio é seu — não é possível comprar o próprio pacote.', 'info')
@@ -100,7 +110,11 @@ export function AnuncioDetailPage() {
             <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-text-secondary">
               <span>por <span className="text-text font-medium">{anuncio.vendedor_nome || 'Personal Trainer'}</span></span>
               <StarRating media={anuncio.avaliacao_media} count={anuncio.avaliacao_count} />
-              {anuncio.vendas_count > 0 && <span className="text-xs text-text-muted">{anuncio.vendas_count} venda{anuncio.vendas_count === 1 ? '' : 's'}</span>}
+              {anuncio.vendas_count > 0 && (
+                <span className="text-xs text-text-muted">
+                  {anuncio.vendas_count} {gratis ? 'resgate' : 'venda'}{anuncio.vendas_count === 1 ? '' : 's'}
+                </span>
+              )}
             </div>
           </div>
 
@@ -135,8 +149,8 @@ export function AnuncioDetailPage() {
         {/* Card de compra */}
         <div className="lg:col-span-1">
           <Card className="p-5 space-y-4 lg:sticky lg:top-20">
-            <p className="text-3xl font-bold text-text" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>
-              {formatPreco(anuncio.preco_centavos)}
+            <p className={`text-3xl font-bold ${gratis ? 'text-success' : 'text-text'}`} style={{ fontFamily: 'Sora, Inter, sans-serif' }}>
+              {precoLabel(anuncio.preco_centavos)}
             </p>
 
             <ul className="space-y-2 text-sm text-text-secondary">
@@ -155,7 +169,12 @@ export function AnuncioDetailPage() {
             </ul>
 
             <div className="rounded-xl bg-surface border border-border p-3 space-y-2 text-xs text-text-secondary">
-              {anuncio.mp_disponivel ? (
+              {gratis ? (
+                <p className="flex items-start gap-2">
+                  <Gift size={14} className="text-success shrink-0 mt-0.5" />
+                  Pacote gratuito — resgate e instalação imediata na sua conta, sem pagamento.
+                </p>
+              ) : anuncio.mp_disponivel ? (
                 <p className="flex items-start gap-2">
                   <Zap size={14} className="text-success shrink-0 mt-0.5" />
                   Pagamento via PIX com liberação imediata do pacote.
@@ -179,10 +198,10 @@ export function AnuncioDetailPage() {
               disabled={buying}
               style={{ background: 'linear-gradient(135deg, #14b8a6, #10b981)', boxShadow: '0 8px 25px rgba(20,184,166,0.3)' }}
             >
-              {buying ? 'Processando…' : 'Comprar agora'}
+              {buying ? 'Processando…' : gratis ? 'Resgatar grátis' : 'Comprar agora'}
             </Button>
             <p className="text-[11px] text-text-muted text-center">
-              É preciso ter uma conta CoachPilot (grátis) para comprar e instalar.
+              É preciso ter uma conta CoachPilot (grátis) para {gratis ? 'resgatar' : 'comprar'} e instalar.
             </p>
           </Card>
         </div>
@@ -190,6 +209,22 @@ export function AnuncioDetailPage() {
 
       {pedidoPix && (
         <CheckoutPixModal pedido={pedidoPix} onClose={() => setPedidoPix(null)} />
+      )}
+
+      {pedidoGratis && (
+        <Modal open title="Pacote resgatado!" onClose={() => setPedidoGratis(null)}>
+          <div className="space-y-4">
+            <p className="text-sm text-text-secondary">
+              <span className="font-semibold text-text">"{pedidoGratis.titulo}"</span> foi liberado
+              na sua conta. Instale agora ou baixe o arquivo .cpkg — você também encontra este
+              pacote em <Link to="/compras" className="text-accent hover:underline">Minhas compras</Link>.
+            </p>
+            <InstalarActions pedidoId={pedidoGratis.pedido_id} />
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => setPedidoGratis(null)}>Fechar</Button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {pedidoManual && (

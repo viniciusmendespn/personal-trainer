@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ShoppingBag, Star } from 'lucide-react'
-import { lojaApi, formatPreco, type Pedido, type PedidoStatus } from '../../api/loja'
+import { lojaApi, precoLabel, type Pedido, type PedidoStatus } from '../../api/loja'
 import { Badge, Button, Card, Modal, Spinner, Textarea, EmptyState, useToast } from '../../components/ui'
 import { StarPicker } from '../StarRating'
 import { CheckoutPixModal } from '../CheckoutPixModal'
@@ -105,7 +105,7 @@ function CompraCard({ pedido, onRefresh }: { pedido: Pedido; onRefresh: () => vo
             {pedido.titulo}
           </Link>
           <p className="text-xs text-text-muted mt-0.5">
-            {formatPreco(pedido.preco_centavos)} · vendedor: {pedido.vendedor_nome || 'Personal'} ·{' '}
+            {precoLabel(pedido.preco_centavos)} · vendedor: {pedido.vendedor_nome || 'Personal'} ·{' '}
             {new Date(pedido.criado_em).toLocaleDateString('pt-BR')}
           </p>
         </div>

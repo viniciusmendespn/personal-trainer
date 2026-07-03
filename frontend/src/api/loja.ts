@@ -69,7 +69,7 @@ export interface Pedido {
   vendedor_nome?: string
   comprador_id: string
   comprador_nome?: string
-  modo: 'MP' | 'MANUAL'
+  modo: 'MP' | 'MANUAL' | 'GRATIS'
   status: PedidoStatus
   mp_payment_id?: string
   expira_em?: string
@@ -101,6 +101,11 @@ export interface PacoteGerado {
 
 export function formatPreco(centavos: number): string {
   return (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
+/** Rótulo de preço para exibição — pacotes com preço 0 são gratuitos (resgate). */
+export function precoLabel(centavos: number): string {
+  return centavos === 0 ? 'Grátis' : formatPreco(centavos)
 }
 
 // ── API ──────────────────────────────────────────────────────────────────────

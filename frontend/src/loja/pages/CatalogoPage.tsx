@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Dumbbell, Layers, Package, Repeat, Store } from 'lucide-react'
-import { lojaApi, formatPreco, type AnuncioCard } from '../../api/loja'
+import { lojaApi, precoLabel, type AnuncioCard } from '../../api/loja'
 import { Button, EmptyState } from '../../components/ui'
 import { StarRating } from '../StarRating'
 
@@ -34,12 +34,20 @@ function StatPill({ icon, children }: { icon: React.ReactNode; children: React.R
 
 function AnuncioCardView({ anuncio }: { anuncio: AnuncioCard }) {
   const s = anuncio.stats || { n_exercicios: 0, n_templates: 0, n_rotinas: 0 }
+  const gratis = anuncio.preco_centavos === 0
   return (
     <Link
       to={`/anuncio/${anuncio.anuncio_id}`}
       className="group rounded-2xl border border-border bg-surface overflow-hidden hover:border-accent/60 hover:shadow-[var(--shadow-card)] hover:-translate-y-0.5 transition-all"
     >
-      <Capa anuncio={anuncio} />
+      <div className="relative">
+        <Capa anuncio={anuncio} />
+        {gratis && (
+          <span className="absolute top-2 left-2 rounded-full bg-success px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white shadow">
+            Grátis
+          </span>
+        )}
+      </div>
       <div className="p-4 space-y-2">
         <h3 className="font-semibold text-text leading-snug line-clamp-2 group-hover:text-accent transition-colors">
           {anuncio.titulo}
@@ -58,11 +66,13 @@ function AnuncioCardView({ anuncio }: { anuncio: AnuncioCard }) {
           </StatPill>
         </div>
         <div className="flex items-center justify-between pt-1">
-          <span className="text-lg font-bold text-accent" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>
-            {formatPreco(anuncio.preco_centavos)}
+          <span className={`text-lg font-bold ${gratis ? 'text-success' : 'text-accent'}`} style={{ fontFamily: 'Sora, Inter, sans-serif' }}>
+            {precoLabel(anuncio.preco_centavos)}
           </span>
           {anuncio.vendas_count > 0 && (
-            <span className="text-xs text-text-muted">{anuncio.vendas_count} venda{anuncio.vendas_count === 1 ? '' : 's'}</span>
+            <span className="text-xs text-text-muted">
+              {anuncio.vendas_count} {gratis ? 'resgate' : 'venda'}{anuncio.vendas_count === 1 ? '' : 's'}
+            </span>
           )}
         </div>
       </div>

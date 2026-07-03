@@ -5,6 +5,7 @@ import { CheckCircle2, ExternalLink, ImagePlus, Pause, Play, Pencil, Plus, Store
 import {
   lojaApi,
   formatPreco,
+  precoLabel,
   type AnuncioDetalhe,
   type PacoteGerado,
   type Pedido,
@@ -39,6 +40,7 @@ interface FormState {
   titulo: string
   descricao: string
   preco: string          // em reais, convertido para centavos no submit
+  gratuito: boolean      // preco_centavos = 0 (resgate sem pagamento)
   capa_s3_key: string | null
 }
 
@@ -55,7 +57,10 @@ function AnuncioFormModal({
     pacote_id: anuncio?.pacote_id ?? '',
     titulo: anuncio?.titulo ?? '',
     descricao: anuncio?.descricao ?? '',
-    preco: anuncio ? (anuncio.preco_centavos / 100).toFixed(2).replace('.', ',') : '',
+    preco: anuncio && anuncio.preco_centavos > 0
+      ? (anuncio.preco_centavos / 100).toFixed(2).replace('.', ',')
+      : '',
+    gratuito: anuncio ? anuncio.preco_centavos === 0 : false,
     capa_s3_key: anuncio?.capa_s3_key ?? null,
   })
   const [capaPreview, setCapaPreview] = useState<string | null>(anuncio?.capa_url ?? null)
@@ -88,6 +93,7 @@ function AnuncioFormModal({
   }
 
   function precoCentavos(): number {
+    if (form.gratuito) return 0
     const n = parseFloat(form.preco.replace(/\./g, '').replace(',', '.'))
     return Number.isFinite(n) ? Math.round(n * 100) : 0
   }
@@ -96,8 +102,8 @@ function AnuncioFormModal({
     e.preventDefault()
     setError('')
     const centavos = precoCentavos()
-    if (centavos < 100 || centavos > 500000) {
-      setError('Preço deve ser entre R$ 1,00 e R$ 5.000,00.')
+    if (!form.gratuito && (centavos < 100 || centavos > 500000)) {
+      setError('Preço deve ser entre R$ 1,00 e R$ 5.000,00 — ou marque "Pacote gratuito".')
       return
     }
     if (!anuncio && !form.pacote_id) {
@@ -176,14 +182,31 @@ function AnuncioFormModal({
           placeholder="Descreva seu método: para quem é, o que inclui, como aplicar, resultados esperados…"
         />
 
-        <Input
-          label="Preço (R$)"
-          value={form.preco}
-          onChange={(e) => setForm((f) => ({ ...f, preco: e.target.value }))}
-          inputMode="decimal"
-          required
-          placeholder="97,00"
-        />
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 cursor-pointer text-sm text-text">
+            <input
+              type="checkbox"
+              checked={form.gratuito}
+              onChange={(e) => setForm((f) => ({ ...f, gratuito: e.target.checked }))}
+              className="accent-accent"
+            />
+            Pacote gratuito (resgate sem pagamento)
+          </label>
+          {form.gratuito ? (
+            <p className="text-xs text-text-muted">
+              Qualquer personal poderá resgatar e instalar este pacote pela loja, sem pagar.
+            </p>
+          ) : (
+            <Input
+              label="Preço (R$)"
+              value={form.preco}
+              onChange={(e) => setForm((f) => ({ ...f, preco: e.target.value }))}
+              inputMode="decimal"
+              required
+              placeholder="97,00"
+            />
+          )}
+        </div>
 
         <div>
           <p className="text-xs font-medium text-text-secondary mb-1">Imagem de capa</p>
@@ -284,7 +307,8 @@ function AnunciosTab() {
                   <div className="min-w-0">
                     <p className="font-semibold text-text line-clamp-1">{a.titulo}</p>
                     <p className="text-xs text-text-muted mt-0.5">
-                      {formatPreco(a.preco_centavos)} · {a.vendas_count} venda{a.vendas_count === 1 ? '' : 's'}
+                      {precoLabel(a.preco_centavos)} · {a.vendas_count}{' '}
+                      {a.preco_centavos === 0 ? 'resgate' : 'venda'}{a.vendas_count === 1 ? '' : 's'}
                       {a.avaliacao_count > 0 && a.avaliacao_media != null && ` · ★ ${a.avaliacao_media.toFixed(1)} (${a.avaliacao_count})`}
                     </p>
                   </div>
@@ -390,9 +414,9 @@ function VendasTab() {
               <div className="min-w-0">
                 <p className="font-semibold text-text line-clamp-1">{p.titulo}</p>
                 <p className="text-xs text-text-muted mt-0.5">
-                  {formatPreco(p.preco_centavos)} · comprador: {p.comprador_nome || '—'} ·{' '}
+                  {precoLabel(p.preco_centavos)} · comprador: {p.comprador_nome || '—'} ·{' '}
                   {new Date(p.criado_em).toLocaleDateString('pt-BR')} ·{' '}
-                  {p.modo === 'MP' ? 'PIX automático' : 'pagamento por fora'}
+                  {p.modo === 'GRATIS' ? 'resgate gratuito' : p.modo === 'MP' ? 'PIX automático' : 'pagamento por fora'}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">

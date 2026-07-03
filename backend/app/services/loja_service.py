@@ -305,7 +305,10 @@ def criar_pedido(comprador_id: str, anuncio_id: str) -> dict:
                                              "pedido_id": marcador.get("pedido_id")})
 
     vendedor_id = anuncio["vendedor_id"]
-    modo = "MP" if mp_service.is_configured(vendedor_id) else "MANUAL"
+    if anuncio["preco_centavos"] == 0:
+        modo = "GRATIS"   # resgate sem pagamento — entrega imediata
+    else:
+        modo = "MP" if mp_service.is_configured(vendedor_id) else "MANUAL"
     pedido_id = new_id()
     epoch = epoch_ms()
     agora = now_iso()
@@ -349,7 +352,15 @@ def criar_pedido(comprador_id: str, anuncio_id: str) -> dict:
         "criado_em": agora,
     })
 
-    if modo == "MANUAL":
+    if modo == "GRATIS":
+        # Sem etapa de pagamento: entrega na hora (mesmo caminho idempotente da venda paga)
+        _entregar(pedido)
+        notif_service.criar(
+            vendedor_id, "LOJA_RESGATE_GRATIS",
+            "Pacote gratuito resgatado",
+            f"{pedido['comprador_nome']} resgatou seu pacote gratuito \"{pedido['titulo']}\".",
+        )
+    elif modo == "MANUAL":
         preco = pedido["preco_centavos"] / 100
         notif_service.criar(
             vendedor_id, "LOJA_PEDIDO_MANUAL",
@@ -430,11 +441,14 @@ def _entregar(pedido: dict, notificar_vendedor: bool = False) -> None:
         _sync_catalogo(repo.clean(anuncio_atual))
 
     preco = pedido["preco_centavos"] / 100
+    if pedido["preco_centavos"] == 0:
+        liberado = f"Seu resgate de \"{pedido['titulo']}\" foi liberado."
+    else:
+        liberado = f"Sua compra de \"{pedido['titulo']}\" foi liberada."
     notif_service.criar(
         pedido["comprador_id"], "LOJA_PEDIDO_LIBERADO",
         "Pacote liberado!",
-        f"Sua compra de \"{pedido['titulo']}\" foi liberada. "
-        "Instale o pacote na sua conta em Pacotes ou na loja.",
+        f"{liberado} Instale o pacote na sua conta em Pacotes ou na loja.",
     )
     if notificar_vendedor:
         notif_service.criar(
