@@ -120,7 +120,7 @@ export function AnuncioDetailPage() {
 
           <Card className="p-5">
             <h2 className="font-semibold text-text mb-2">Sobre este pacote</h2>
-            <RichTextContent html={anuncio.descricao} />
+            <RichTextContent html={anuncio.descricao} className="rich-content--spaced" />
           </Card>
 
           {/* Avaliações */}

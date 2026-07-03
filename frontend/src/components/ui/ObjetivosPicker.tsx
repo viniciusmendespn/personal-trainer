@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { normalizeText } from '../../utils/normalizeText'
 
 const fieldBase =
   'w-full px-3 py-2 rounded-lg bg-surface border border-border text-text placeholder-text-muted transition-colors focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:opacity-50'
@@ -31,8 +32,8 @@ export function ObjetivosPicker({ value, onChange, suggestions = [], label, disa
   const allSuggestions = [...new Set([...PREDEFINIDOS, ...suggestions])]
   const filtered = allSuggestions.filter(
     (s) =>
-      s.toLowerCase().includes(input.toLowerCase()) &&
-      !value.some((v) => v.toLowerCase() === s.toLowerCase()),
+      normalizeText(s).includes(normalizeText(input)) &&
+      !value.some((v) => normalizeText(v) === normalizeText(s)),
   )
 
   useEffect(() => {

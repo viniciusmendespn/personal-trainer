@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { MessageCircle, X, ChevronLeft, Search } from 'lucide-react'
 import { useAlunos } from '../../hooks/useAlunos'
+import { normalizeText } from '../../utils/normalizeText'
 import { useExerciciosAluno } from '../../hooks/useEvolucao'
 import { usePersonalChat, useSendPersonalChat, useEnviarCorrecao } from '../../hooks/usePersonalChat'
 import { Avatar, Spinner, Modal, Select, Button } from '../ui'
@@ -17,7 +18,7 @@ export function ChatWidget() {
   const send = useSendPersonalChat(alunoId)
   const aluno = alunos.data?.find((a) => a.aluno_id === alunoId)
   const alunosFiltrados = useMemo(
-    () => alunos.data?.filter((a) => a.nome.toLowerCase().includes(busca.toLowerCase())) ?? [],
+    () => alunos.data?.filter((a) => normalizeText(a.nome).includes(normalizeText(busca))) ?? [],
     [alunos.data, busca],
   )
 

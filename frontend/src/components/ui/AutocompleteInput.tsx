@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { normalizeText } from '../../utils/normalizeText'
 
 const fieldBase =
   'w-full px-3 py-2 rounded-lg bg-surface border border-border text-text placeholder-text-muted transition-colors focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:opacity-50'
@@ -17,7 +18,7 @@ export function AutocompleteInput({ value, onChange, suggestions, label, placeho
   const containerRef = useRef<HTMLDivElement>(null)
 
   const filtered = suggestions.filter(
-    (s) => s.toLowerCase().includes(value.toLowerCase()) && s.toLowerCase() !== value.toLowerCase(),
+    (s) => normalizeText(s).includes(normalizeText(value)) && normalizeText(s) !== normalizeText(value),
   )
 
   useEffect(() => {

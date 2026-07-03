@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, Repeat, X as XIcon } from 'lucide-react'
 import { Button, Input, Tabs, Textarea } from '../ui'
 import type { ExercicioSubstituto } from '../../types'
+import { normalizeText } from '../../utils/normalizeText'
 
 interface ExercicioOpcao {
   nome: string
@@ -31,7 +32,7 @@ export function SubstitutoPicker({ biblioteca, exercicioAtual, jaAdicionados, on
     return lista.filter(
       (o) =>
         !excluidos.has(o.nome.trim().toLowerCase()) &&
-        (search.trim() === '' || o.nome.toLowerCase().includes(search.trim().toLowerCase())),
+        (search.trim() === '' || normalizeText(o.nome).includes(normalizeText(search))),
     )
   }
 

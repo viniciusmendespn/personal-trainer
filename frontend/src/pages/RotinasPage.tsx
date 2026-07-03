@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Trash2, Users, ListChecks, Dumbbell, Pencil, Plus, Search, ChevronUp, ChevronDown, X, Layers } from 'lucide-react'
 import { useAlunos } from '../hooks/useAlunos'
+import { normalizeText } from '../utils/normalizeText'
 import {
   useRotinas, useDeleteRotina, useAplicarRotina, useCreateRotinaFromTemplates, useUpdateRotina,
 } from '../hooks/useRotinas'
@@ -118,7 +119,7 @@ function AplicarForm({ rotina, onDone }: { rotina: Rotina; onDone: () => void })
   const [modo, setModo] = useState<AplicarRotinaModo>('adicionar')
 
   const alunosFiltrados = useMemo(
-    () => (alunos ?? []).filter((a) => a.nome.toLowerCase().includes(query.toLowerCase())),
+    () => (alunos ?? []).filter((a) => normalizeText(a.nome).includes(normalizeText(query))),
     [alunos, query]
   )
 
@@ -188,7 +189,7 @@ function TemplatePicker({ onAdd }: { onAdd: (tpl: TreinoTemplate) => void }) {
   const { data: templates } = useTemplates()
   const [query, setQuery] = useState('')
   const filtrados = useMemo(
-    () => (templates ?? []).filter((t) => t.nome.toLowerCase().includes(query.toLowerCase())),
+    () => (templates ?? []).filter((t) => normalizeText(t.nome).includes(normalizeText(query))),
     [templates, query]
   )
   return (

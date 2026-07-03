@@ -10,6 +10,7 @@ import { useAluno } from '../hooks/useAlunos'
 import { useExerciciosAluno, useEvolucao, useResumo } from '../hooks/useEvolucao'
 import { Card, Spinner, StatCard, Badge, EmptyState, Button, Input, SearchableSelect, useToast } from '../components/ui'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
+import { normalizeText } from '../utils/normalizeText'
 import { PostComposer } from '../components/exercicio/PostComposer'
 import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
 import { renderNodeToPdf } from '../utils/exportPdf'
@@ -64,7 +65,7 @@ export function AlunoEvolucaoPage() {
     [exerciciosOrdenados]
   )
   const prsFiltrados = useMemo(
-    () => (resumo?.prs ?? []).filter((p) => p.exercicio.toLowerCase().includes(prQuery.toLowerCase())),
+    () => (resumo?.prs ?? []).filter((p) => normalizeText(p.exercicio).includes(normalizeText(prQuery))),
     [resumo, prQuery]
   )
 

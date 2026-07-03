@@ -8,6 +8,11 @@ let ctx: AudioContext | null = null
 let alarmTimer: number | null = null
 let safetyTimer: number | null = null
 
+// Keep-alive: um buffer mudo em loop mantém o AudioContext em 'running' enquanto o cronômetro
+// corre, para o YouTube (ou outra aba/app tocando áudio) não suspender/duckar nosso contexto e
+// silenciar o beep/tique agendados. Fica quase inaudível (ganho ínfimo).
+let keepAliveNode: AudioBufferSourceNode | null = null
+
 function getCtx(): AudioContext | null {
   if (typeof window === 'undefined') return null
   const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
@@ -81,5 +86,42 @@ export function stopAlarm(): void {
   if (safetyTimer != null) {
     clearTimeout(safetyTimer)
     safetyTimer = null
+  }
+}
+
+/**
+ * Inicia o keep-alive de áudio: mantém o AudioContext ativo enquanto o cronômetro corre, para que
+ * o beep/tique e o alarme não sejam engolidos quando outro áudio (ex.: YouTube) toma o foco.
+ * Chamar dentro de um gesto do usuário (junto do "Iniciar"). Idempotente.
+ */
+export function startKeepAlive(): void {
+  const c = getCtx()
+  if (!c || keepAliveNode) return
+  if (c.state === 'suspended') void c.resume()
+  try {
+    const buffer = c.createBuffer(1, c.sampleRate, c.sampleRate) // 1s de silêncio
+    const src = c.createBufferSource()
+    src.buffer = buffer
+    src.loop = true
+    const gain = c.createGain()
+    gain.gain.value = 0.0001 // praticamente inaudível, só p/ manter o contexto vivo
+    src.connect(gain).connect(c.destination)
+    src.start()
+    keepAliveNode = src
+  } catch {
+    /* noop */
+  }
+}
+
+/** Para o keep-alive de áudio. Idempotente. */
+export function stopKeepAlive(): void {
+  if (keepAliveNode) {
+    try {
+      keepAliveNode.stop()
+      keepAliveNode.disconnect()
+    } catch {
+      /* noop */
+    }
+    keepAliveNode = null
   }
 }

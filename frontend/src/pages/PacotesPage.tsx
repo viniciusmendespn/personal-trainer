@@ -7,6 +7,7 @@ import { useBiblioteca } from '../hooks/useDominio'
 import { Button, Card, Spinner, EmptyState, Modal, Badge, Tabs, useToast, useConfirm } from '../components/ui'
 import { downloadJson } from '../api/pacotes'
 import type { ExLib, ImportarPacoteResponse, PacoteInstalado } from '../types'
+import { normalizeText } from '../utils/normalizeText'
 
 // ── Tela de importação ────────────────────────────────────────────────────────
 
@@ -513,11 +514,11 @@ function CriarPacoteTab() {
 
   // Exercícios da biblioteca: filtro por busca + agrupamento por grupo muscular
   const exerciciosFiltrados = useMemo(() => {
-    const q = exQuery.trim().toLowerCase()
+    const q = normalizeText(exQuery)
     const items = biblioteca ?? []
     if (!q) return items
     return items.filter(
-      (e) => e.nome.toLowerCase().includes(q) || (e.grupo ?? '').toLowerCase().includes(q),
+      (e) => normalizeText(e.nome).includes(q) || normalizeText(e.grupo).includes(q),
     )
   }, [biblioteca, exQuery])
 

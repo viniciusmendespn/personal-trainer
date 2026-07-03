@@ -8,6 +8,7 @@ import { SubstitutosBibliotecaEditor } from '../components/exercicios/Substituto
 import type { ExLibCreate } from '../api/biblioteca'
 import type { ExercicioSubstituto, ExLib } from '../types'
 import { videoUrlComFallback } from '../utils/video'
+import { normalizeText } from '../utils/normalizeText'
 
 export function BibliotecaPage() {
   const { data: exs, isLoading } = useBiblioteca()
@@ -28,9 +29,9 @@ export function BibliotecaPage() {
 
   const filtered = useMemo(() => {
     if (!exs) return exs
-    const q = query.trim().toLowerCase()
+    const q = normalizeText(query)
     if (!q) return exs
-    return exs.filter((ex) => ex.nome.toLowerCase().includes(q) || ex.grupo?.toLowerCase().includes(q))
+    return exs.filter((ex) => normalizeText(ex.nome).includes(q) || normalizeText(ex.grupo).includes(q))
   }, [exs, query])
 
   return (

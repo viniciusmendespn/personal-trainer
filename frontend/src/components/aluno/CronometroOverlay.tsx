@@ -1,123 +1,40 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Play, Pause, RotateCcw } from 'lucide-react'
-import { startAlarm, stopAlarm, tick, unlockAudio } from '../../utils/beep'
+import { X, Play, Pause, RotateCcw, ChevronDown, PictureInPicture2 } from 'lucide-react'
 import { DurationInput } from '../ui/DurationInput'
-
-type Modo = 'regressivo' | 'progressivo'
-
-const DEFAULT_SECONDS = 90 // padrão (1:30) quando o personal não cadastrou intervalo
-const MAX_SECONDS = 99 * 60 + 59
-
-function fmt(ms: number): string {
-  const total = Math.max(0, Math.ceil(ms / 1000))
-  const m = Math.floor(total / 60)
-  const s = total % 60
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-}
+import { useCronometro, fmtCrono } from './cronometroContext'
 
 /**
- * Cronômetro em tela cheia para o app do aluno. Dois modos: regressivo (intervalo
- * de descanso, padrão) e progressivo (conta pra cima). Ao abrir vem carregado com
- * `initialSeconds` mas aguarda o aluno tocar em Iniciar. Nos últimos 5 s dá um tique
- * por segundo e, ao zerar o regressivo, dispara alarme contínuo + flash sólido +
- * vibração até o aluno dispensar.
+ * Cronômetro em tela cheia do app do aluno (apresentacional — o relógio vive no
+ * CronometroProvider, então continua contando ao minimizar/navegar). Dois modos: regressivo
+ * (intervalo de descanso, padrão) e progressivo (conta pra cima). Botões de minimizar (mantém
+ * rodando na pílula) e Picture-in-Picture (onde houver suporte) no topo.
  */
-export function CronometroOverlay({
-  open,
-  onClose,
-  initialSeconds,
-  label,
-}: {
-  open: boolean
-  onClose: () => void
-  initialSeconds?: number
-  label?: string
-}) {
-  const baseSeconds = initialSeconds === 0
-    ? 0
-    : (initialSeconds != null && initialSeconds > 0)
-      ? initialSeconds
-      : DEFAULT_SECONDS
-  const [modo, setModo] = useState<Modo>('regressivo')
-  const [running, setRunning] = useState(false)
-  const [displayMs, setDisplayMs] = useState(baseSeconds * 1000)
-  const [done, setDone] = useState(false)
+export function CronometroOverlay() {
+  const {
+    modo,
+    running,
+    done,
+    displayMs,
+    label,
+    runTotalMs,
+    minimizar,
+    fechar,
+    iniciar,
+    pausar,
+    resetar,
+    dismiss,
+    addSeconds,
+    trocarModo,
+    setDisplaySeconds,
+    pipSupported,
+    pipActive,
+    togglePiP,
+  } = useCronometro()
+
   const [flashOn, setFlashOn] = useState(false)
 
-  // regressivo: instante-alvo do fim; progressivo: instante de início (ambos em epoch ms)
-  const anchorRef = useRef(0)
-  const wakeRef = useRef<WakeLockSentinel | null>(null)
-  const lastTickSecRef = useRef<number | null>(null)
-  const runTotalMsRef = useRef(baseSeconds * 1000) // total da execução atual, p/ o anel de progresso
-
-  function releaseWakeLock() {
-    try {
-      void wakeRef.current?.release()
-    } catch {
-      /* noop */
-    }
-    wakeRef.current = null
-  }
-
-  async function requestWakeLock() {
-    try {
-      const wl = (navigator as Navigator & { wakeLock?: { request: (t: 'screen') => Promise<WakeLockSentinel> } }).wakeLock
-      if (wl) wakeRef.current = await wl.request('screen')
-    } catch {
-      /* sem suporte / negado — ignora */
-    }
-  }
-
-  // (Re)inicializa o estado a cada abertura.
-  useEffect(() => {
-    if (!open) return
-    setModo('regressivo')
-    setRunning(false)
-    setDone(false)
-    setDisplayMs(baseSeconds * 1000)
-    lastTickSecRef.current = null
-  }, [open, baseSeconds])
-
-  // Limpeza ao desmontar: libera wake lock e silencia qualquer alarme.
-  useEffect(
-    () => () => {
-      releaseWakeLock()
-      stopAlarm()
-    },
-    []
-  )
-
-  // Tick principal — recalcula a partir de Date.now() para não acumular drift.
-  useEffect(() => {
-    if (!running) return
-    const id = setInterval(() => {
-      const now = Date.now()
-      if (modo === 'regressivo') {
-        const rem = anchorRef.current - now
-        if (rem <= 0) {
-          setDisplayMs(0)
-          setRunning(false)
-          setDone(true)
-          releaseWakeLock()
-          startAlarm()
-          navigator.vibrate?.([200, 100, 200])
-          return
-        }
-        setDisplayMs(rem)
-        const wholeSec = Math.ceil(rem / 1000)
-        if (wholeSec <= 5 && wholeSec >= 1 && lastTickSecRef.current !== wholeSec) {
-          lastTickSecRef.current = wholeSec
-          tick()
-        }
-      } else {
-        setDisplayMs(now - anchorRef.current)
-      }
-    }, 200)
-    return () => clearInterval(id)
-  }, [running, modo])
-
-  // Flash sólido enquanto "concluído" — alterna cores opacas (sem transparência).
+  // Flash sólido enquanto "concluído".
   useEffect(() => {
     if (!done) {
       setFlashOn(false)
@@ -127,81 +44,7 @@ export function CronometroOverlay({
     return () => clearInterval(id)
   }, [done])
 
-  // Re-adquire o wake lock ao voltar do background (iOS/Android liberam ao ocultar a aba).
-  useEffect(() => {
-    if (!running) return
-    const onVis = () => {
-      if (document.visibilityState === 'visible') {
-        void requestWakeLock()
-        unlockAudio()
-      }
-    }
-    document.addEventListener('visibilitychange', onVis)
-    return () => document.removeEventListener('visibilitychange', onVis)
-  }, [running])
-
-  function start() {
-    unlockAudio()
-    stopAlarm()
-    setDone(false)
-    lastTickSecRef.current = null
-    runTotalMsRef.current = displayMs
-    const now = Date.now()
-    anchorRef.current = modo === 'regressivo' ? now + displayMs : now - displayMs
-    setRunning(true)
-    void requestWakeLock()
-  }
-
-  function pause() {
-    setRunning(false)
-    releaseWakeLock()
-  }
-
-  function reset() {
-    setRunning(false)
-    setDone(false)
-    stopAlarm()
-    releaseWakeLock()
-    lastTickSecRef.current = null
-    setDisplayMs(modo === 'regressivo' ? baseSeconds * 1000 : 0)
-  }
-
-  function dismissDone() {
-    stopAlarm()
-    setDone(false)
-    setDisplayMs(baseSeconds * 1000)
-  }
-
-  function addSeconds(sec: number) {
-    stopAlarm()
-    setDone(false)
-    if (running) {
-      anchorRef.current += sec * 1000
-      runTotalMsRef.current += sec * 1000
-    }
-    setDisplayMs((d) => Math.min(MAX_SECONDS * 1000, Math.max(0, d + sec * 1000)))
-  }
-
-  function trocarModo(m: Modo) {
-    if (m === modo) return
-    setRunning(false)
-    setDone(false)
-    stopAlarm()
-    releaseWakeLock()
-    lastTickSecRef.current = null
-    setModo(m)
-    setDisplayMs(m === 'regressivo' ? baseSeconds * 1000 : 0)
-  }
-
-  function fechar() {
-    pause()
-    stopAlarm()
-    onClose()
-  }
-
-  if (!open) return null
-
-  const tabCls = (m: Modo) =>
+  const tabCls = (m: typeof modo) =>
     `px-4 py-1.5 text-sm transition-colors ${
       modo === m ? 'bg-accent/15 text-accent-hover font-medium' : 'text-text-muted hover:text-text'
     }`
@@ -214,18 +57,16 @@ export function CronometroOverlay({
     ? (flashOn ? (isLight ? 'bg-border-strong' : 'bg-surface-elevated') : 'bg-bg')
     : 'bg-bg'
 
-  // Anel de progresso ao redor do número.
   const RING_C = 2 * Math.PI * 45
   let progress: number
   if (modo === 'regressivo') {
-    progress = done ? 0 : running ? (runTotalMsRef.current > 0 ? displayMs / runTotalMsRef.current : 0) : 1
+    progress = done ? 0 : running ? (runTotalMs > 0 ? displayMs / runTotalMs : 0) : 1
   } else {
-    progress = ((displayMs / 1000) % 60) / 60 // varre a cada minuto
+    progress = ((displayMs / 1000) % 60) / 60
   }
   progress = Math.max(0, Math.min(1, progress))
   const ringColor = alerta ? 'stroke-warning' : modo === 'regressivo' ? 'stroke-energy' : 'stroke-accent'
 
-  // Android PWA quase nunca reporta safe-area-inset-top; garante margem mínima pros controles do topo.
   const androidStandalone =
     /Android/i.test(navigator.userAgent) && window.matchMedia('(display-mode: standalone)').matches
 
@@ -238,7 +79,7 @@ export function CronometroOverlay({
         paddingLeft: 'env(safe-area-inset-left)',
         paddingRight: 'env(safe-area-inset-right)',
       }}
-      onClick={done ? dismissDone : undefined}
+      onClick={done ? dismiss : undefined}
     >
       <div className="flex items-center justify-between p-4">
         {done ? (
@@ -253,17 +94,45 @@ export function CronometroOverlay({
             </button>
           </div>
         )}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            fechar()
-          }}
-          aria-label="Fechar cronômetro"
-          className="p-2 rounded-lg text-text-secondary hover:bg-white/10 hover:text-text"
-        >
-          <X size={26} />
-        </button>
+        <div className="flex items-center gap-1">
+          {pipSupported && !done && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                togglePiP()
+              }}
+              aria-label="Janela flutuante (Picture-in-Picture)"
+              className={`p-2 rounded-lg hover:bg-white/10 hover:text-text ${pipActive ? 'text-energy' : 'text-text-secondary'}`}
+            >
+              <PictureInPicture2 size={24} />
+            </button>
+          )}
+          {!done && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                minimizar()
+              }}
+              aria-label="Minimizar cronômetro"
+              className="p-2 rounded-lg text-text-secondary hover:bg-white/10 hover:text-text"
+            >
+              <ChevronDown size={26} />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              fechar()
+            }}
+            aria-label="Fechar cronômetro"
+            className="p-2 rounded-lg text-text-secondary hover:bg-white/10 hover:text-text"
+          >
+            <X size={26} />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-4 min-h-0">
@@ -300,12 +169,12 @@ export function CronometroOverlay({
                   alerta ? 'text-warning' : 'text-text'
                 }`}
               >
-                {fmt(displayMs)}
+                {fmtCrono(displayMs)}
               </span>
             ) : modo === 'regressivo' ? (
               <DurationInput
                 value={Math.round(displayMs / 1000)}
-                onChange={(s) => setDisplayMs((s ?? 0) * 1000)}
+                onChange={(s) => setDisplaySeconds(s ?? 0)}
                 placeholder="0:00"
                 ariaLabel="Tempo do cronômetro"
                 inputClassName="w-[70vw] max-w-[20rem] bg-transparent text-center font-display tabular-nums leading-none text-[15vw] sm:text-[7rem] text-text caret-energy focus:outline-none"
@@ -343,7 +212,7 @@ export function CronometroOverlay({
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              dismissDone()
+              dismiss()
             }}
             className="px-12 py-4 rounded-full bg-energy text-[#0c1404] font-display text-xl font-bold shadow-[var(--shadow-glow-energy)]"
           >
@@ -353,7 +222,7 @@ export function CronometroOverlay({
           <>
             <button
               type="button"
-              onClick={reset}
+              onClick={resetar}
               aria-label="Resetar"
               className="p-4 rounded-full bg-white/5 text-text-secondary hover:bg-white/10 hover:text-text"
             >
@@ -361,7 +230,7 @@ export function CronometroOverlay({
             </button>
             <button
               type="button"
-              onClick={running ? pause : start}
+              onClick={running ? pausar : iniciar}
               aria-label={running ? 'Pausar' : 'Iniciar'}
               className="p-6 rounded-full bg-energy text-[#0c1404] shadow-[var(--shadow-glow-energy)] hover:bg-energy-hover transition-colors"
             >

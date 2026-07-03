@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { Plus, ChevronRight, Search, Users, Bot, Settings, Copy, Clock, Upload } from 'lucide-react'
 import { useAlunosPaginated, useCreateAluno, useUpdateAluno } from '../hooks/useAlunos'
+import { normalizeText } from '../utils/normalizeText'
 import { usePlanoStatus } from '../hooks/usePlano'
 import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState, useToast, ObjetivosPicker } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
@@ -82,9 +83,9 @@ export function AlunosPage() {
 
   const filtered = useMemo(() => {
     if (!alunos) return alunos
-    const q = query.trim().toLowerCase()
+    const q = normalizeText(query)
     let base = statusFilter !== 'TODOS' ? alunos.filter((a) => a.status === statusFilter) : alunos
-    if (q) base = base.filter((a) => a.nome.toLowerCase().includes(q) || a.telefone.includes(q))
+    if (q) base = base.filter((a) => normalizeText(a.nome).includes(q) || a.telefone.includes(q))
     return [...base].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
   }, [alunos, query, statusFilter])
 

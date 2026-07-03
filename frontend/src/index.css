@@ -136,6 +136,14 @@ h1, h2, h3, .font-display { font-family: var(--font-display); }
 .rich-content u      { text-decoration: underline; }
 .rich-content code   { font-family: monospace; font-size: 0.8125rem; background: var(--color-surface-elevated); border-radius: 3px; padding: 0 3px; }
 
+/* Variante com mais respiro entre parágrafos — usada em textos longos (ex.: descrição de anúncio na loja) */
+.rich-content.rich-content--spaced p  { margin-bottom: 0.7rem; line-height: 1.55; }
+.rich-content.rich-content--spaced p:last-child { margin-bottom: 0; }
+.rich-content.rich-content--spaced h2 { margin-top: 1rem; }
+.rich-content.rich-content--spaced ul,
+.rich-content.rich-content--spaced ol { margin-bottom: 0.7rem; }
+.rich-content.rich-content--spaced li { margin-bottom: 0.25rem; }
+
 /* Banner PIX (Mercado Pago) — tema escuro com amber translúcido e suave */
 [data-theme="dark"] .banner-pix-mp {
   background-color: rgb(120 53 15 / 0.14);

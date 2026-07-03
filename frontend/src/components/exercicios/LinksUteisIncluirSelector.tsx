@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link2, X as XIcon } from 'lucide-react'
 import { feedGlobalApi, type PostGlobalItem } from '../../api/feedGlobal'
 import { Input } from '../ui'
+import { normalizeText } from '../../utils/normalizeText'
 
 interface Props {
   value: string[]
@@ -22,7 +23,7 @@ export function LinksUteisIncluirSelector({ value, onChange }: Props) {
   const disponiveis: PostGlobalItem[] = recursos.filter(
     (r) =>
       !value.includes(r.post_sk) &&
-      (search.trim() === '' || r.texto.toLowerCase().includes(search.trim().toLowerCase())),
+      (search.trim() === '' || normalizeText(r.texto).includes(normalizeText(search))),
   )
 
   return (

@@ -1,6 +1,7 @@
 import { useState, useMemo, useId } from 'react'
 import { Trash2, Users, LayoutTemplate, Dumbbell, Pencil, Plus, X, Search } from 'lucide-react'
 import { useAlunos } from '../hooks/useAlunos'
+import { normalizeText } from '../utils/normalizeText'
 import { useTemplates, useCreateTemplate, useDeleteTemplate, useUpdateTemplate, useAplicarTemplate } from '../hooks/useTemplates'
 import { useBiblioteca } from '../hooks/useDominio'
 import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm } from '../components/ui'
@@ -107,7 +108,7 @@ function AplicarForm({ template, onDone }: { template: TreinoTemplate; onDone: (
   const [query, setQuery] = useState('')
 
   const alunosFiltrados = useMemo(
-    () => (alunos ?? []).filter((a) => a.nome.toLowerCase().includes(query.toLowerCase())),
+    () => (alunos ?? []).filter((a) => normalizeText(a.nome).includes(normalizeText(query))),
     [alunos, query]
   )
 

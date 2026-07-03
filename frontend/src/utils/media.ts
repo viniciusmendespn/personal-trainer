@@ -1,8 +1,17 @@
 const MAX_IMAGE_MB = 25
 const MAX_VIDEO_MB = 400
 const IMAGE_COMPRESS_THRESHOLD_MB = 1
-const IMAGE_MAX_DIMENSION = 1600
 const IMAGE_QUALITY = 0.8
+// Limite de área do canvas (iOS Safari corta ~16.7M px; abaixo disso é seguro em todo lugar).
+const MAX_CANVAS_AREA = 16_000_000
+
+/** Dimensão-alvo escolhida conforme a RAM do aparelho — celulares fracos ganham alvo menor
+ * para reduzir o pico de memória no decode (foto de câmera de 48–108MP causava OOM/crash). */
+function targetMaxDimension(): number {
+  const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory
+  if (typeof mem === 'number' && mem > 0 && mem <= 2) return 1280
+  return 1600
+}
 
 /** Cache-Control aplicado no upload (presigned PUT). As chaves de mídia são content-addressed
  * por uuid, então o conteúdo é imutável. Este header PRECISA ser idêntico ao assinado no
@@ -22,52 +31,54 @@ export function validateFileSize(file: File): void {
   }
 }
 
-/** Lê só as dimensões da imagem (decode lazy via <img>, não aloca o raster full-res). */
-async function readImageSize(file: File): Promise<{ width: number; height: number }> {
-  const url = URL.createObjectURL(file)
-  try {
-    const img = document.createElement('img')
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve()
-      img.onerror = () => reject(new Error('decode falhou'))
-      img.src = url
-    })
-    return { width: img.naturalWidth, height: img.naturalHeight }
-  } finally {
-    URL.revokeObjectURL(url)
-  }
-}
-
 /** Redesenha em canvas e reexporta como JPEG. Não mexe em arquivos já pequenos.
- * Decodifica JÁ reduzido (resizeWidth/Height do createImageBitmap) para NUNCA materializar o
- * bitmap full-res na memória — fotos de câmera Android de 48–108MP causavam OOM e crash/reload
- * da PWA. Ver ARCHITECTURE / plano issue 3. */
+ *
+ * Faz UM ÚNICO decode via <img> (`img.decode()`) e desenha já reduzido com `drawImage(img,…,w,h)`.
+ * Evita o decode duplo do modelo antigo (readImageSize + createImageBitmap, que mantinha ~2× o
+ * raster full-res vivo) e o fato de o `createImageBitmap({resizeWidth})` do Chromium escalar só
+ * DEPOIS de decodificar em resolução cheia — o que estourava a memória e reiniciava a PWA com
+ * fotos de câmera Android de 48–108MP. O caminho <img> também deixa o Blink subamostrar imagens
+ * muito grandes no próprio decode, reduzindo o pico. Ver plano issue 3. */
 export async function compressImage(file: File): Promise<File> {
   if (!file.type.startsWith('image/') || file.size <= IMAGE_COMPRESS_THRESHOLD_MB * 1024 * 1024) {
     return file
   }
+  const url = URL.createObjectURL(file)
+  const img = new Image()
+  img.decoding = 'async'
   try {
-    const { width, height } = await readImageSize(file)
-    const scale = Math.min(1, IMAGE_MAX_DIMENSION / Math.max(width, height))
+    img.src = url
+    await img.decode()
+    const width = img.naturalWidth
+    const height = img.naturalHeight
+    if (!width || !height) return file
+
+    // Escala pra caber na dimensão-alvo E no limite de área do canvas.
+    let scale = Math.min(1, targetMaxDimension() / Math.max(width, height))
+    if (width * height * scale * scale > MAX_CANVAS_AREA) {
+      scale = Math.sqrt(MAX_CANVAS_AREA / (width * height))
+    }
     const w = Math.max(1, Math.round(width * scale))
     const h = Math.max(1, Math.round(height * scale))
-    const bitmap = await createImageBitmap(file, { resizeWidth: w, resizeHeight: h, resizeQuality: 'high' })
+
     const canvas = document.createElement('canvas')
-    canvas.width = bitmap.width
-    canvas.height = bitmap.height
+    canvas.width = w
+    canvas.height = h
     const ctx = canvas.getContext('2d')
-    if (!ctx) {
-      bitmap.close?.()
-      return file
-    }
-    ctx.drawImage(bitmap, 0, 0)
-    bitmap.close?.()
+    if (!ctx) return file
+    ctx.drawImage(img, 0, 0, w, h)
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', IMAGE_QUALITY))
+    // Libera o canvas imediatamente (não segura o raster).
+    canvas.width = 0
+    canvas.height = 0
     if (!blob || blob.size >= file.size) return file
     const name = file.name.replace(/\.\w+$/, '') + '.jpg'
     return new File([blob], name, { type: 'image/jpeg' })
   } catch {
     return file
+  } finally {
+    img.src = ''
+    URL.revokeObjectURL(url)
   }
 }
 

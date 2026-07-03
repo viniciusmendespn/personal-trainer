@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 import { Search } from 'lucide-react'
+import { normalizeText } from '../../utils/normalizeText'
 
 const fieldBase =
   'w-full px-3 py-2 rounded-lg bg-surface border border-border text-text placeholder-text-muted transition-colors focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:opacity-50'
@@ -78,7 +79,7 @@ export function SearchableSelect({
   const ref = useRef<HTMLDivElement>(null)
 
   const filtered = query
-    ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
+    ? options.filter((o) => normalizeText(o.label).includes(normalizeText(query)))
     : options
   const selectedLabel = options.find((o) => o.value === value)?.label ?? ''
 

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Shield, LogIn, Search, Gift } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { adminApi, type Personal } from '../api/admin'
+import { normalizeText } from '../utils/normalizeText'
 import { useAuth } from '../auth/AuthProvider'
 
 type Tab = 'personais' | 'indicacoes'
@@ -22,8 +23,8 @@ export function AdminPage() {
 
   const filtered = (data?.personals ?? []).filter(
     (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.email.toLowerCase().includes(search.toLowerCase()),
+      normalizeText(p.name).includes(normalizeText(search)) ||
+      normalizeText(p.email).includes(normalizeText(search)),
   )
 
   async function handleImpersonate(p: Personal) {

@@ -22,7 +22,8 @@ import { PostComposer } from '../components/exercicio/PostComposer'
 import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSelect, SocialLinks, useToast, useConfirm, Modal, RichTextContent } from '../components/ui'
 import { renderMarkdownLite } from '../components/chat/markdownLite'
 import { AlunoPerfilModal } from '../components/aluno/AlunoPerfilModal'
-import { CronometroOverlay } from '../components/aluno/CronometroOverlay'
+import { CronometroProvider } from '../components/aluno/CronometroProvider'
+import { useCronometro } from '../components/aluno/cronometroContext'
 import { CheckinPosTreino } from '../components/aluno/CheckinPosTreino'
 import { CalendarioMes } from '../components/historico/CalendarioMes'
 import { HistoricoLista } from '../components/historico/HistoricoLista'
@@ -31,6 +32,7 @@ import { PixModal } from '../components/financeiro/PixModal'
 import type { Cobranca, ExercicioSubstituto, SeriePrescrita } from '../types'
 import { normalizeTipoExercicio } from '../types'
 import { videoUrlComFallback } from '../utils/video'
+import { normalizeText } from '../utils/normalizeText'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -428,6 +430,7 @@ export function AlunoApp() {
 
   return (
     <AlunoErrorBoundary onCrash={() => setDisabled(true)}>
+    <CronometroProvider>
     <div
       className="min-h-screen max-w-md mx-auto flex flex-col"
       style={{
@@ -643,6 +646,7 @@ export function AlunoApp() {
       </div>
     )}
 
+    </CronometroProvider>
     </AlunoErrorBoundary>
   )
 }
@@ -1080,8 +1084,8 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [elapsed, setElapsed] = useState(0)
-  const [crono, setCrono] = useState<{ open: boolean; seconds?: number; label?: string }>({ open: false })
-  const abrirCrono = (seconds?: number, label?: string) => setCrono({ open: true, seconds, label })
+  const crono = useCronometro()
+  const abrirCrono = (seconds?: number, label?: string) => crono.abrir(seconds, label)
   const ses = useQuery({ queryKey: ['aluno-sessao-exs'], queryFn: alunoApi.sessaoExercicios, retry: false })
   const [finalizada, setFinalizada] = useState<SessaoFinalizada | null>(null)
   const finish = useMutation({
@@ -1123,7 +1127,7 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
         <p className="font-display font-semibold">{ses.data.treino_nome}</p>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => abrirCrono(0)}
+            onClick={() => (crono.open ? crono.expandir() : abrirCrono(0))}
             aria-label="Abrir cronômetro"
             className="flex items-center text-text-secondary hover:text-energy transition-colors"
           >
@@ -1190,12 +1194,6 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
       >
         {cancel.isPending ? 'Cancelando…' : 'Cancelar treino'}
       </Button>
-      <CronometroOverlay
-        open={crono.open}
-        onClose={() => setCrono((c) => ({ ...c, open: false }))}
-        initialSeconds={crono.seconds}
-        label={crono.label}
-      />
       {finalizada && <CheckinPosTreino sessao={finalizada} onClose={fecharCheckin} />}
     </div>
   )
@@ -1689,7 +1687,7 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
   )
 
   const prsFiltrados = useMemo(
-    () => (resumo.data?.prs ?? []).filter((p) => p.exercicio.toLowerCase().includes(prQuery.toLowerCase())),
+    () => (resumo.data?.prs ?? []).filter((p) => normalizeText(p.exercicio).includes(normalizeText(prQuery))),
     [resumo.data, prQuery]
   )
 
