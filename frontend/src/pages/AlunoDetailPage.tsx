@@ -1281,6 +1281,8 @@ const ROTINA_MODO_OPTIONS: { value: AplicarRotinaModo; label: string; hint: stri
   { value: 'substituir', label: 'Substituir tudo', hint: 'Apaga os treinos atuais' },
 ]
 
+const LOJA_URL = 'https://loja.coachpilot.com.br'
+
 function AplicarRotinaNoAluno({ alunoId, temTreinos, onDone }: { alunoId: string; temTreinos: boolean; onDone: () => void }) {
   const { data: rotinas, isLoading } = useRotinas()
   const aplicar = useAplicarRotina()
@@ -1306,7 +1308,14 @@ function AplicarRotinaNoAluno({ alunoId, temTreinos, onDone }: { alunoId: string
 
   if (isLoading) return <div className="flex justify-center py-4"><Spinner /></div>
   if (!rotinas?.length) {
-    return <p className="text-sm text-text-muted">Nenhuma rotina criada ainda. Salve a rotina de um aluno ou monte uma na aba Rotinas.</p>
+    return (
+      <p className="text-sm text-text-muted">
+        Nenhuma rotina criada ainda. Salve a rotina de um aluno ou monte uma na aba Rotinas — ou{' '}
+        <a href={LOJA_URL} target="_blank" rel="noreferrer" className="text-accent hover:underline">
+          compre ou resgate pacotes prontos (inclusive gratuitos) na Loja do CoachPilot
+        </a>.
+      </p>
+    )
   }
 
   return (
