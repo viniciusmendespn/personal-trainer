@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   Users, Bell, MessageCircle, ArrowRight, Calendar, Cake,
-  BookOpen, LayoutTemplate, Target, Zap, CalendarCheck,
-  DollarSign, Clock, AlertTriangle, Repeat,
+  BookOpen, LayoutTemplate, Target, Zap, CalendarCheck, DollarSign,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
@@ -323,10 +322,10 @@ export function DashboardPage() {
             />
           </div>
 
-          {/* ── Row 1.5: Financeiro (resumo da carteira) ── */}
+          {/* ── Financeiro (resumo da carteira) — bloco coeso, tiles simétricos ── */}
           {data.financeiro && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
+            <Card variant="elevated">
+              <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium text-text-secondary flex items-center gap-1.5">
                   <DollarSign size={13} /> Financeiro
                 </p>
@@ -334,13 +333,26 @@ export function DashboardPage() {
                   Ver painel <ArrowRight size={11} />
                 </Link>
               </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <StatCard icon={<DollarSign />} label="Recebido no mês" value={formatBRL(data.financeiro.recebido_valor)} tone="success" to="/financeiro" />
-                <StatCard icon={<Clock />} label="A receber" value={formatBRL(data.financeiro.a_receber_valor)} tone="warning" to="/financeiro" />
-                <StatCard icon={<AlertTriangle />} label="Vencido" value={formatBRL(data.financeiro.vencido_valor)} hint={`${data.financeiro.vencido_count} em atraso`} tone="danger" to="/financeiro" />
-                <StatCard icon={<Repeat />} label="Recorrente / mês" value={formatBRL(data.financeiro.mrr)} tone="accent" to="/financeiro" />
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                {[
+                  { label: 'Recebido no mês', value: data.financeiro.recebido_valor },
+                  { label: 'A receber', value: data.financeiro.a_receber_valor },
+                  { label: 'Vencido', value: data.financeiro.vencido_valor, danger: data.financeiro.vencido_valor > 0 },
+                  { label: 'Recorrente / mês', value: data.financeiro.mrr },
+                ].map((t) => (
+                  <Link
+                    key={t.label}
+                    to="/financeiro"
+                    className="rounded-xl bg-surface px-3 py-2.5 hover:opacity-80 active:scale-[0.98] transition-all"
+                  >
+                    <p className="text-[11px] text-text-secondary truncate">{t.label}</p>
+                    <p className={`font-display text-lg font-bold mt-0.5 truncate ${t.danger ? 'text-danger' : 'text-text'}`}>
+                      {formatBRL(t.value)}
+                    </p>
+                  </Link>
+                ))}
               </div>
-            </div>
+            </Card>
           )}
 
           {/* ── Row 2: Métricas + atalhos ── */}

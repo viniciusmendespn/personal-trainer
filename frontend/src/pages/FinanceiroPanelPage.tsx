@@ -145,13 +145,14 @@ export function FinanceiroPanelPage() {
           ))}
         </div>
       ) : resumo ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className={`grid grid-cols-2 ${resumo.mp_configurado ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-3`}>
           <StatCard
             icon={<DollarSign />}
             label="Recebido no mês"
             value={formatBRL(resumo.recebido_valor)}
             hint={`${resumo.pago_count} pagamento${resumo.pago_count === 1 ? '' : 's'}`}
             tone="success"
+            className="h-full"
           />
           <StatCard
             icon={<Clock />}
@@ -159,6 +160,7 @@ export function FinanceiroPanelPage() {
             value={formatBRL(resumo.a_receber_valor)}
             hint={`${resumo.pendente_count} pendente${resumo.pendente_count === 1 ? '' : 's'}`}
             tone="warning"
+            className="h-full"
           />
           <StatCard
             icon={<AlertTriangle />}
@@ -166,6 +168,7 @@ export function FinanceiroPanelPage() {
             value={formatBRL(resumo.vencido_valor)}
             hint={`${resumo.vencido_count} em atraso`}
             tone="danger"
+            className="h-full"
           />
           <StatCard
             icon={<Repeat />}
@@ -173,6 +176,7 @@ export function FinanceiroPanelPage() {
             value={formatBRL(resumo.mrr)}
             hint="mensalidades ativas / mês"
             tone="accent"
+            className="h-full"
           />
           {resumo.mp_configurado && (
             <>
@@ -182,13 +186,15 @@ export function FinanceiroPanelPage() {
                 value={formatBRL(resumo.mp_liquido)}
                 hint="após taxas do Mercado Pago"
                 tone="success"
+                className="h-full"
               />
               <StatCard
                 icon={<Receipt />}
                 label="Taxas do mês"
                 value={formatBRL(resumo.mp_taxa)}
                 hint="pagas ao Mercado Pago"
-                tone="energy"
+                tone="accent"
+                className="h-full"
               />
             </>
           )}
