@@ -11,7 +11,7 @@ import {
   type PedidoStatus,
 } from '../api/loja'
 import {
-  Badge, Button, Card, EmptyState, Input, Modal, Select, Spinner, Tabs, Textarea,
+  Badge, Button, Card, EmptyState, Input, Modal, RichTextEditor, Select, Spinner, Tabs,
   useConfirm, useToast,
 } from '../components/ui'
 import { MEDIA_CACHE_CONTROL } from '../utils/media'
@@ -169,14 +169,11 @@ function AnuncioFormModal({
           placeholder="Ex.: Método Hipertrofia 12 semanas — ABC completo"
         />
 
-        <Textarea
+        <RichTextEditor
           label="Descrição completa"
           value={form.descricao}
-          onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))}
-          rows={8}
-          maxLength={4000}
-          required
-          placeholder={'Descreva seu método: para quem é, o que inclui, como aplicar, resultados esperados…\nQuanto mais completa a descrição, mais confiança o comprador tem.'}
+          onChange={(html) => setForm((f) => ({ ...f, descricao: html }))}
+          placeholder="Descreva seu método: para quem é, o que inclui, como aplicar, resultados esperados…"
         />
 
         <Input

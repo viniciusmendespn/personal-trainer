@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { ArrowLeft, Dumbbell, HandCoins, Layers, Repeat, ShieldCheck, Zap } from 'lucide-react'
 import { lojaApi, formatPreco, type Pedido } from '../../api/loja'
-import { Button, Card, Modal, Spinner, useToast } from '../../components/ui'
+import { Button, Card, Modal, RichTextContent, Spinner, useToast } from '../../components/ui'
 import { StarRating } from '../StarRating'
 import { CheckoutPixModal } from '../CheckoutPixModal'
 import { isLoggedIn } from '../useLojaAuth'
@@ -106,7 +106,7 @@ export function AnuncioDetailPage() {
 
           <Card className="p-5">
             <h2 className="font-semibold text-text mb-2">Sobre este pacote</h2>
-            <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">{anuncio.descricao}</p>
+            <RichTextContent html={anuncio.descricao} />
           </Card>
 
           {/* Avaliações */}

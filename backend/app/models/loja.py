@@ -18,14 +18,14 @@ ANUNCIO_REMOVIDO_ADMIN = "REMOVIDO_ADMIN"
 class CriarAnuncioBody(BaseModel):
     pacote_id: str
     titulo: str = Field(min_length=3, max_length=120)
-    descricao: str = Field(min_length=10, max_length=4000)
+    descricao: str = Field(min_length=10, max_length=8000)
     preco_centavos: int = Field(ge=100, le=500000)   # R$ 1,00 a R$ 5.000,00
     capa_s3_key: Optional[str] = None
 
 
 class EditarAnuncioBody(BaseModel):
     titulo: Optional[str] = Field(default=None, min_length=3, max_length=120)
-    descricao: Optional[str] = Field(default=None, min_length=10, max_length=4000)
+    descricao: Optional[str] = Field(default=None, min_length=10, max_length=8000)
     preco_centavos: Optional[int] = Field(default=None, ge=100, le=500000)
     capa_s3_key: Optional[str] = None
     pacote_id: Optional[str] = None   # vendedor re-gerou o pacote (nova versão)
