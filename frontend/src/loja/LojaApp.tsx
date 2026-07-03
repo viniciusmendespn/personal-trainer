@@ -1,6 +1,6 @@
-import { createContext, useContext } from 'react'
-import { BrowserRouter, Link, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
-import { LogIn, LogOut, ShoppingBag, Store } from 'lucide-react'
+import { createContext, useContext, useEffect } from 'react'
+import { BrowserRouter, Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { Instagram, LogIn, LogOut, ShoppingBag } from 'lucide-react'
 import { useLojaAuth } from './useLojaAuth'
 import { CatalogoPage } from './pages/CatalogoPage'
 import { AnuncioDetailPage } from './pages/AnuncioDetailPage'
@@ -21,11 +21,11 @@ function Header() {
   const navigate = useNavigate()
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-bg/80 backdrop-blur-xl">
-      <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between gap-3">
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <Store size={22} className="text-accent" />
-          <span className="font-semibold text-text" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>
-            Loja <span className="text-accent">CoachPilot</span>
+      <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between gap-3">
+        <Link to="/" aria-label="Loja CoachPilot — início" className="flex items-center gap-2.5 shrink-0">
+          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" className="h-12 w-auto" />
+          <span className="loja-gradient rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
+            Loja
           </span>
         </Link>
         <nav className="flex items-center gap-1.5">
@@ -64,19 +64,45 @@ function Header() {
 function Footer() {
   return (
     <footer className="border-t border-border mt-12">
-      <div className="mx-auto max-w-6xl px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-text-muted">
-        <p>
-          Loja CoachPilot — pacotes de treino criados por personal trainers.
-        </p>
-        <p>
-          Quer vender seu método?{' '}
-          <a href="https://coachpilot.com.br/loja-vendas" className="text-accent hover:underline">
-            Anuncie no portal
+      <div className="mx-auto max-w-6xl px-4 py-8 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+        <div className="flex flex-col items-center sm:items-start gap-2">
+          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" className="h-9 w-auto" />
+          <p className="text-xs text-text-muted max-w-xs text-center sm:text-left">
+            Marketplace de pacotes de treino criados por personal trainers.
+          </p>
+        </div>
+        <nav className="flex flex-col items-center sm:items-end gap-1.5 text-xs">
+          <Link to="/" className="text-text-secondary hover:text-accent transition-colors">Catálogo</Link>
+          <Link to="/compras" className="text-text-secondary hover:text-accent transition-colors">Minhas compras</Link>
+          <a href="https://coachpilot.com.br/loja-vendas" className="text-text-secondary hover:text-accent transition-colors">
+            Anuncie seu método
           </a>
+          <a href="https://coachpilot.com.br" className="text-text-secondary hover:text-accent transition-colors">
+            Conheça o CoachPilot
+          </a>
+          <a
+            href="https://instagram.com/coachpilotoficial"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-text-secondary hover:text-accent transition-colors"
+          >
+            <Instagram size={13} /> @coachpilotoficial
+          </a>
+        </nav>
+      </div>
+      <div className="border-t border-border/60">
+        <p className="mx-auto max-w-6xl px-4 py-3 text-[11px] text-text-muted text-center sm:text-left">
+          © {new Date().getFullYear()} CoachPilot — Loja CoachPilot
         </p>
       </div>
     </footer>
   )
+}
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
 }
 
 export function LojaApp() {
@@ -84,6 +110,7 @@ export function LojaApp() {
   return (
     <AuthCtx.Provider value={auth}>
       <BrowserRouter>
+        <ScrollToTop />
         <div className="min-h-screen bg-bg text-text flex flex-col">
           <Header />
           <main className="flex-1">

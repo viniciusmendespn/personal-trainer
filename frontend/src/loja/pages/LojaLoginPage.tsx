@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, Store } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { cognitoErrorPtBr } from '../../auth/cognitoErrors'
 import { Button, Card, ErrorText, Input } from '../../components/ui'
 import { useLojaAuthContext } from '../LojaApp'
@@ -35,14 +35,19 @@ export function LojaLoginPage() {
   }
 
   return (
-    <div className="flex justify-center px-4 py-12">
-      <Card variant="glass" className="w-full max-w-sm p-6">
+    <div className="relative flex justify-center px-4 py-12">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-72 w-72 rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(20,184,166,0.18), transparent 70%)', filter: 'blur(24px)' }}
+      />
+      <Card variant="glass" className="relative w-full max-w-sm p-6">
         <form onSubmit={handle} className="space-y-4">
           <div className="text-center mb-2">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <Store size={22} className="text-accent" />
-              <span className="font-semibold text-text" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>
-                Loja CoachPilot
+            <div className="flex flex-col items-center gap-1.5 mb-2">
+              <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" className="h-16 w-auto" />
+              <span className="loja-gradient rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
+                Loja
               </span>
             </div>
             <p className="text-sm text-text-secondary">

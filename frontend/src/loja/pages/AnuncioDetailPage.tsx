@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
-import { ArrowLeft, Dumbbell, HandCoins, ShieldCheck, Zap } from 'lucide-react'
+import { ArrowLeft, Dumbbell, HandCoins, Layers, Repeat, ShieldCheck, Zap } from 'lucide-react'
 import { lojaApi, formatPreco, type Pedido } from '../../api/loja'
 import { Button, Card, Modal, Spinner, useToast } from '../../components/ui'
 import { StarRating } from '../StarRating'
@@ -28,6 +28,11 @@ export function AnuncioDetailPage() {
     queryFn: () => lojaApi.avaliacoes(anuncioId),
     enabled: !!anuncioId,
   })
+
+  useEffect(() => {
+    if (anuncio?.titulo) document.title = `${anuncio.titulo} — Loja CoachPilot`
+    return () => { document.title = 'Loja CoachPilot — Marketplace de Pacotes de Treino' }
+  }, [anuncio?.titulo])
 
   async function handleComprar() {
     if (!(await isLoggedIn())) {
@@ -130,12 +135,23 @@ export function AnuncioDetailPage() {
         {/* Card de compra */}
         <div className="lg:col-span-1">
           <Card className="p-5 space-y-4 lg:sticky lg:top-20">
-            <p className="text-3xl font-bold text-text">{formatPreco(anuncio.preco_centavos)}</p>
+            <p className="text-3xl font-bold text-text" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>
+              {formatPreco(anuncio.preco_centavos)}
+            </p>
 
-            <ul className="space-y-1.5 text-sm text-text-secondary">
-              <li>• {s.n_rotinas} rotina{s.n_rotinas === 1 ? '' : 's'} completa{s.n_rotinas === 1 ? '' : 's'}</li>
-              <li>• {s.n_templates} treino{s.n_templates === 1 ? '' : 's'} (template{s.n_templates === 1 ? '' : 's'})</li>
-              <li>• {s.n_exercicios} exercício{s.n_exercicios === 1 ? '' : 's'} com orientações</li>
+            <ul className="space-y-2 text-sm text-text-secondary">
+              <li className="flex items-center gap-2">
+                <Repeat size={15} className="text-accent shrink-0" />
+                {s.n_rotinas} rotina{s.n_rotinas === 1 ? '' : 's'} completa{s.n_rotinas === 1 ? '' : 's'}
+              </li>
+              <li className="flex items-center gap-2">
+                <Dumbbell size={15} className="text-accent shrink-0" />
+                {s.n_templates} treino{s.n_templates === 1 ? '' : 's'} (template{s.n_templates === 1 ? '' : 's'})
+              </li>
+              <li className="flex items-center gap-2">
+                <Layers size={15} className="text-accent shrink-0" />
+                {s.n_exercicios} exercício{s.n_exercicios === 1 ? '' : 's'} com orientações
+              </li>
             </ul>
 
             <div className="rounded-xl bg-surface border border-border p-3 space-y-2 text-xs text-text-secondary">
@@ -156,7 +172,13 @@ export function AnuncioDetailPage() {
               </p>
             </div>
 
-            <Button className="w-full" size="lg" onClick={handleComprar} disabled={buying}>
+            <Button
+              className="w-full border-0"
+              size="lg"
+              onClick={handleComprar}
+              disabled={buying}
+              style={{ background: 'linear-gradient(135deg, #14b8a6, #10b981)', boxShadow: '0 8px 25px rgba(20,184,166,0.3)' }}
+            >
               {buying ? 'Processando…' : 'Comprar agora'}
             </Button>
             <p className="text-[11px] text-text-muted text-center">

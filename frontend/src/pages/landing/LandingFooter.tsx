@@ -5,6 +5,7 @@ import { Instagram } from 'lucide-react'
 const NAV_LINKS = [
   { label: 'Funcionalidades', href: '#features' },
   { label: 'Como funciona', href: '#how' },
+  { label: 'Loja', href: '#loja' },
   { label: 'Planos', href: '#pricing' },
   { label: 'Comparativo', href: '#compare' },
 ]
@@ -128,6 +129,14 @@ export default function LandingFooter() {
                   {l.label}
                 </Link>
               ))}
+              <a
+                href="https://loja.coachpilot.com.br"
+                style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
+              >
+                Loja de pacotes de treino
+              </a>
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { Menu, X } from 'lucide-react'
 const NAV_LINKS = [
   { label: 'Funcionalidades', href: '#features' },
   { label: 'Como funciona', href: '#how' },
+  { label: 'Loja', href: '#loja' },
   { label: 'Planos', href: '#pricing' },
   { label: 'Comparativo', href: '#compare' },
 ]
@@ -40,7 +41,7 @@ export default function LandingNavbar() {
     >
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 70, width: 'auto', display: 'block' }} />
+          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 52, width: 'auto', display: 'block' }} />
         </button>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: 32 }} className="hidden lg:flex">

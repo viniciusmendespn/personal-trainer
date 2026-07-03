@@ -159,6 +159,11 @@ export function ComprasPage() {
     if (!loading && !user) navigate('/login?next=/compras', { replace: true })
   }, [loading, user, navigate])
 
+  useEffect(() => {
+    document.title = 'Minhas compras — Loja CoachPilot'
+    return () => { document.title = 'Loja CoachPilot — Marketplace de Pacotes de Treino' }
+  }, [])
+
   const { data, isLoading } = useQuery({
     queryKey: ['loja-compras'],
     queryFn: () => lojaApi.minhasCompras(),

@@ -6,6 +6,7 @@ import HeroSection from './HeroSection'
 import IaOperacaoSection from './IaOperacaoSection'
 import FeaturesSection from './FeaturesSection'
 import HowItWorksSection from './HowItWorksSection'
+import LojaSection from './LojaSection'
 import ComparisonSection from './ComparisonSection'
 import PricingSection from './PricingSection'
 import TestimonialsSection from './TestimonialsSection'
@@ -93,6 +94,14 @@ export default function LandingPage() {
         @media (max-width: 1023px) {
           .flex.lg\\:hidden { display: flex; }
         }
+        a:focus-visible, button:focus-visible {
+          outline: 2px solid #14b8a6;
+          outline-offset: 3px;
+          border-radius: 4px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+        }
       `}</style>
 
       <LandingNavbar />
@@ -101,6 +110,7 @@ export default function LandingPage() {
         <FeaturesSection />
         <IaOperacaoSection />
         <HowItWorksSection />
+        <LojaSection />
         <ComparisonSection />
         <PricingSection />
         <TestimonialsSection />

@@ -134,6 +134,7 @@ function renderHomeContent() {
       <li>Gestao Pro por R$39,90/mes com alunos ilimitados.</li>
       <li>Canal WhatsApp e Assistente IA como add-ons opcionais.</li>
       <li>App do aluno via PWA, sem instalacao pela loja de aplicativos.</li>
+      <li><a href="https://loja.coachpilot.com.br">Loja CoachPilot: marketplace de pacotes de treino para personal trainers</a>.</li>
     </ul>
     <p><a href="/signup">Comecar gratis</a> | <a href="/precos">Ver precos</a> | <a href="/software-para-personal-trainer">Software para personal trainer</a></p>
   </main>`

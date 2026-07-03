@@ -141,7 +141,7 @@ export function CheckoutPixModal({ pedido, onClose }: Props) {
               </div>
             )}
 
-            <div className="flex items-center gap-2 rounded-xl bg-info/10 px-3 py-2">
+            <div className="flex items-center gap-2 rounded-xl bg-accent/10 px-3 py-2">
               <Spinner className="w-4 h-4 shrink-0" />
               <p className="text-xs text-text-secondary">
                 Aguardando confirmação do pagamento… o pacote é liberado na hora. (expira em 30 min)
