@@ -489,6 +489,28 @@ function CriarPacoteTab() {
     return next
   }
 
+  // Exercícios já incluídos implicitamente pelos treinos selecionados (derivado ao vivo:
+  // desmarcar um template libera os exercícios dele). Matching por nome, igual ao backend.
+  const nomesViaTreinos = useMemo(() => {
+    const s = new Set<string>()
+    for (const t of templates ?? []) {
+      if (!templatesSel.has(t.template_id)) continue
+      for (const ex of t.exercicios ?? []) {
+        const nl = ex.nome?.trim().toLowerCase()
+        if (nl) s.add(nl)
+      }
+    }
+    return s
+  }, [templates, templatesSel])
+
+  function nomeLower(e: ExLib): string {
+    return e.nome.trim().toLowerCase()
+  }
+
+  function isViaTreino(e: ExLib): boolean {
+    return nomesViaTreinos.has(nomeLower(e))
+  }
+
   // Exercícios da biblioteca: filtro por busca + agrupamento por grupo muscular
   const exerciciosFiltrados = useMemo(() => {
     const q = exQuery.trim().toLowerCase()
@@ -513,13 +535,37 @@ function CriarPacoteTab() {
     setExerciciosSel((prev) => {
       const next = new Set(prev)
       for (const e of items) {
-        if (isBloqueado(e)) continue
+        if (isBloqueado(e) || isViaTreino(e)) continue
         if (marcar) next.add(e.exlib_id)
         else next.delete(e.exlib_id)
       }
       return next
     })
   }
+
+  const bibliotecaById = useMemo(() => {
+    const m = new Map<string, ExLib>()
+    for (const e of biblioteca ?? []) m.set(e.exlib_id, e)
+    return m
+  }, [biblioteca])
+
+  // Avulsos efetivos: seleção manual menos os já cobertos pelos treinos (dedup por nome,
+  // espelhando o backend — o payload vai limpo, sem redundância)
+  const avulsosEfetivos = useMemo(() => {
+    const vistos = new Set<string>()
+    const ids: string[] = []
+    for (const id of exerciciosSel) {
+      const e = bibliotecaById.get(id)
+      if (!e) continue
+      const nl = nomeLower(e)
+      if (nomesViaTreinos.has(nl) || vistos.has(nl)) continue
+      vistos.add(nl)
+      ids.push(id)
+    }
+    return ids
+  }, [exerciciosSel, bibliotecaById, nomesViaTreinos])   // eslint-disable-line react-hooks/exhaustive-deps
+
+  const totalExerciciosPacote = nomesViaTreinos.size + avulsosEfetivos.length
 
   const baseBody = {
     nome: nome.trim(),
@@ -528,7 +574,7 @@ function CriarPacoteTab() {
     versao: versao.trim() || '1.0',
     template_ids: [...templatesSel],
     rotina_ids: [...rotinasSel],
-    exlib_ids: [...exerciciosSel],
+    exlib_ids: avulsosEfetivos,
   }
 
   const errMsgs: Record<string, string> = {
@@ -672,11 +718,14 @@ function CriarPacoteTab() {
       </Card>
 
       <Card className="p-5">
-        <p className="text-sm font-medium mb-3">
+        <p className="text-sm font-medium mb-1">
           Rotinas{' '}
           {rotinasSel.size > 0 && (
             <span className="text-xs text-accent ml-1">({rotinasSel.size} selecionada{rotinasSel.size > 1 ? 's' : ''})</span>
           )}
+        </p>
+        <p className="text-xs text-text-secondary mb-3">
+          Selecionar uma rotina marca os treinos dela automaticamente — e os exercícios desses treinos entram no pacote (aparecem como "via treino" na seção abaixo).
         </p>
         {isLoading ? (
           <div className="flex justify-center py-4"><Spinner /></div>
@@ -725,12 +774,16 @@ function CriarPacoteTab() {
       <Card className="p-5">
         <p className="text-sm font-medium mb-1">
           Exercícios da biblioteca{' '}
-          {exerciciosSel.size > 0 && (
-            <span className="text-xs text-accent ml-1">({exerciciosSel.size} selecionado{exerciciosSel.size > 1 ? 's' : ''})</span>
+          {(avulsosEfetivos.length > 0 || nomesViaTreinos.size > 0) && (
+            <span className="text-xs text-accent ml-1">
+              ({avulsosEfetivos.length} avulso{avulsosEfetivos.length === 1 ? '' : 's'}
+              {nomesViaTreinos.size > 0 && ` + ${nomesViaTreinos.size} via treino${nomesViaTreinos.size === 1 ? '' : 's'}`})
+            </span>
           )}
         </p>
         <p className="text-xs text-text-secondary mb-3">
-          Adicione exercícios avulsos ao pacote — dá para gerar um pacote só de exercícios, sem templates ou rotinas.
+          Adicione exercícios avulsos ao pacote — dá para gerar um pacote só de exercícios, sem treinos ou rotinas.
+          Exercícios dos treinos selecionados já entram automaticamente (marcados como "via treino").
         </p>
         {loadingBib ? (
           <div className="flex justify-center py-4"><Spinner /></div>
@@ -754,7 +807,10 @@ function CriarPacoteTab() {
                 onClick={() => selecionarExercicios(exerciciosFiltrados, true)}
                 className="text-accent hover:underline"
               >
-                Selecionar todos{exQuery.trim() ? ` (${exerciciosFiltrados.length} filtrados)` : ` (${exerciciosFiltrados.length})`}
+                {(() => {
+                  const n = exerciciosFiltrados.filter((e) => !isBloqueado(e) && !isViaTreino(e)).length
+                  return `Selecionar todos${exQuery.trim() ? ` (${n} filtrados)` : ` (${n})`}`
+                })()}
               </button>
               {exerciciosSel.size > 0 && (
                 <button
@@ -773,8 +829,10 @@ function CriarPacoteTab() {
                 <p className="text-xs text-text-muted py-2">Nenhum exercício corresponde à busca.</p>
               )}
               {gruposExercicios.map(([grupo, items]) => {
-                const elegiveis = items.filter((e) => !isBloqueado(e))
+                const elegiveis = items.filter((e) => !isBloqueado(e) && !isViaTreino(e))
                 const selecionadosNoGrupo = elegiveis.filter((e) => exerciciosSel.has(e.exlib_id)).length
+                const viaTreinoNoGrupo = items.filter((e) => !isBloqueado(e) && isViaTreino(e)).length
+                const noPacoteNoGrupo = selecionadosNoGrupo + viaTreinoNoGrupo
                 const todosSel = elegiveis.length > 0 && selecionadosNoGrupo === elegiveis.length
                 const parcial = selecionadosNoGrupo > 0 && !todosSel
                 const fechado = gruposFechados.has(grupo)
@@ -797,7 +855,7 @@ function CriarPacoteTab() {
                         {fechado ? <ChevronRight size={14} className="text-text-muted" /> : <ChevronDown size={14} className="text-text-muted" />}
                         <span className="text-sm font-medium">{grupo}</span>
                         <span className="text-xs text-text-muted">
-                          {selecionadosNoGrupo}/{items.length}
+                          {noPacoteNoGrupo}/{items.length} no pacote
                         </span>
                       </button>
                     </div>
@@ -805,20 +863,22 @@ function CriarPacoteTab() {
                       <div className="py-0.5">
                         {items.map((e) => {
                           const bloqueado = isBloqueado(e)
-                          const selecionado = exerciciosSel.has(e.exlib_id)
+                          const viaTreino = !bloqueado && isViaTreino(e)
+                          const selecionado = viaTreino || exerciciosSel.has(e.exlib_id)
                           return (
                             <label
                               key={e.exlib_id}
-                              className={`flex items-center gap-3 px-2 py-1 mx-1 rounded-lg cursor-pointer ${bloqueado ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-secondary'}`}
+                              className={`flex items-center gap-3 px-2 py-1 mx-1 rounded-lg ${bloqueado ? 'opacity-40 cursor-not-allowed' : viaTreino ? 'cursor-default' : 'cursor-pointer hover:bg-surface-secondary'}`}
                             >
                               <input
                                 type="checkbox"
                                 checked={selecionado}
-                                disabled={bloqueado}
-                                onChange={() => !bloqueado && setExerciciosSel(toggleSet(exerciciosSel, e.exlib_id))}
+                                disabled={bloqueado || viaTreino}
+                                onChange={() => !bloqueado && !viaTreino && setExerciciosSel(toggleSet(exerciciosSel, e.exlib_id))}
                                 className="accent-accent"
                               />
                               <span className="text-sm flex-1">{e.nome}</span>
+                              {viaTreino && <Badge tone="info" className="text-xs">via treino</Badge>}
                               {bloqueado && <Badge tone="accent" className="text-xs">Licenciado</Badge>}
                             </label>
                           )
@@ -833,10 +893,22 @@ function CriarPacoteTab() {
         )}
       </Card>
 
+      {(templatesSel.size > 0 || rotinasSel.size > 0 || totalExerciciosPacote > 0) && (
+        <div className="rounded-xl border border-accent/30 bg-accent/5 px-4 py-3 text-sm">
+          <span className="font-medium">Este pacote terá:</span>{' '}
+          {rotinasSel.size} rotina{rotinasSel.size === 1 ? '' : 's'} · {templatesSel.size} treino{templatesSel.size === 1 ? '' : 's'} · {totalExerciciosPacote} exercício{totalExerciciosPacote === 1 ? '' : 's'}
+          {totalExerciciosPacote > 0 && nomesViaTreinos.size > 0 && (
+            <span className="text-text-secondary">
+              {' '}({nomesViaTreinos.size} dos treinos{avulsosEfetivos.length > 0 ? ` + ${avulsosEfetivos.length} avulso${avulsosEfetivos.length === 1 ? '' : 's'}` : ''})
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="flex justify-end">
         <Button
           onClick={handleGerar}
-          disabled={!nome.trim() || (templatesSel.size === 0 && rotinasSel.size === 0 && exerciciosSel.size === 0) || isPending}
+          disabled={!nome.trim() || (templatesSel.size === 0 && rotinasSel.size === 0 && avulsosEfetivos.length === 0) || isPending}
         >
           {isPending ? (
             <span className="flex items-center gap-2"><Spinner className="w-4 h-4" /> Gerando...</span>
