@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Store, Package, Zap, HandCoins, ArrowRight, Star, Dumbbell } from 'lucide-react'
+import { Store, Package, Zap, HandCoins, ArrowRight, Star } from 'lucide-react'
 
 const BULLETS = [
   {
@@ -38,13 +38,12 @@ function MockAnuncioCard() {
         backdropFilter: 'blur(10px)',
         boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
       }}>
-        <div style={{
-          aspectRatio: '16 / 9',
-          background: 'linear-gradient(135deg, rgba(20,184,166,0.35), rgba(16,185,129,0.15))',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Dumbbell size={44} color="rgba(255,255,255,0.85)" />
-        </div>
+        <img
+          src="/academia_musculacao.webp"
+          alt="Academia de musculação"
+          loading="lazy"
+          style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', display: 'block' }}
+        />
         <div style={{ padding: '18px 20px 20px' }}>
           <div style={{ color: '#fff', fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 17, marginBottom: 4 }}>
             Hipertrofia ABCDE — 12 semanas
