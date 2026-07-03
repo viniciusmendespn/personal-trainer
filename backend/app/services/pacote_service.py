@@ -335,6 +335,7 @@ def _instalar(
             nome_ex = exlib_id_to_nome.get(exlib_id, ex_ref_item.ex_ref)
             exercicios.append({
                 "nome": nome_ex,
+                "exlib_id": exlib_id,
                 "grupo": ref_to_grupo.get(ex_ref_item.ex_ref),
                 "ordem": ex_ref_item.ordem,
                 "series_prescritas": [s.model_dump() for s in (ex_ref_item.series_prescritas or [])],
@@ -649,13 +650,14 @@ def gerar_pacote(
         rotinas_data.append(repo.clean(item))
 
     # Coleta nomes únicos de exercícios a partir dos templates
-    exercise_info: dict[str, dict] = {}  # nome_lower → {nome, grupo, tipo_exercicio}
+    exercise_info: dict[str, dict] = {}  # nome_lower → {nome, exlib_id, grupo, tipo_exercicio}
     for tmpl in templates_data:
         for ex in tmpl.get("exercicios") or []:
             nl = (ex.get("nome") or "").strip().lower()
             if nl and nl not in exercise_info:
                 exercise_info[nl] = {
                     "nome": ex["nome"].strip(),
+                    "exlib_id": ex.get("exlib_id"),
                     "grupo": ex.get("grupo"),
                     "tipo_exercicio": ex.get("tipo_exercicio", "FORCA"),
                     "unidade_reps": ex.get("unidade_reps"),
@@ -676,14 +678,21 @@ def gerar_pacote(
             if nl and nl not in exercise_info:
                 exercise_info[nl] = {
                     "nome": item["nome"].strip(),
+                    "exlib_id": item.get("exlib_id"),
                     "grupo": item.get("grupo"),
                     "tipo_exercicio": item.get("tipo_exercicio", "FORCA"),
                     "unidade_reps": item.get("unidade_reps"),
                     "metrica_direcao": item.get("metrica_direcao") or "MAIOR",
                 }
 
-    # Enriquece com dados do ExLib (descricao, recomendacoes, video_url, substitutos)
+    # Enriquece com dados do ExLib (descricao, recomendacoes, video_url, substitutos).
+    # Resolução por exlib_id exato sempre que disponível — casar só por nome é ambíguo
+    # quando a conta tem exercícios homônimos em pacotes diferentes (ex.: "Supino Reto
+    # com Barra" cadastrado em dois pacotes de teste, um deles sem vídeo).
     all_exlib = repo.clean_all(repo.query_pk(pk_pt, sk_prefix=keys.EXLIB_PREFIX))
+    exlib_by_id: dict[str, dict] = {
+        e["exlib_id"]: e for e in all_exlib if e.get("exlib_id")
+    }
     exlib_by_name: dict[str, dict] = {
         (e.get("nome") or "").strip().lower(): e
         for e in all_exlib
@@ -693,11 +702,15 @@ def gerar_pacote(
     nome_lower_to_ref: dict[str, str] = {}
     exercicios_out: list[dict] = []
     for nl, base in exercise_info.items():
-        exlib = exlib_by_name.get(nl, {})
+        exlib = exlib_by_id.get(base.get("exlib_id") or "") or exlib_by_name.get(nl, {})
         if exlib.get("origem_licenciada"):
             raise HTTPException(400, detail={"code": "PACOTE_LICENCIADO_NAO_PERMITIDO",
                                              "detail": f"Exercício '{base['nome']}' tem origem licenciada e não pode ser redistribuído"})
-        merged = {**base, **{k: v for k, v in exlib.items() if k in ("grupo", "tipo_exercicio", "unidade_reps", "metrica_direcao", "video_url", "descricao", "recomendacoes", "substitutos") and v}}
+        # base (dados do template/exlib já resolvido) tem prioridade sobre o enriquecimento
+        # por nome — evita que um homônimo de outro pacote sobrescreva o dado correto.
+        exlib_filtered = {k: v for k, v in exlib.items() if k in ("grupo", "tipo_exercicio", "unidade_reps", "metrica_direcao", "video_url", "descricao", "recomendacoes", "substitutos") and v}
+        base_filtered = {k: v for k, v in base.items() if k != "exlib_id" and v}
+        merged = {**exlib_filtered, **base_filtered}
         ex_out = _build_exercicio_out(base["nome"], merged)
         nome_lower_to_ref[nl] = ex_out["ref"]
         exercicios_out.append(ex_out)
