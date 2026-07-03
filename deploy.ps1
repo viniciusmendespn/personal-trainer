@@ -12,7 +12,7 @@ $StackName  = "personal-trainer-prod"
 $Bucket     = "personal-trainer-frontend-prod-421219980792"
 $CfId       = "E3JZ6U88Q0GYGF"   # CloudFrontDistributionId (portal — coachpilot.com.br)
 $AlunoCfId  = "E2IHNZ34C3PI8V"   # AlunoCloudFrontDistributionId (aluno — app.coachpilot.com.br)
-$LojaCfId   = ""                 # LojaCloudFrontDistributionId (loja — loja.coachpilot.com.br) — preencher após deploy do backend
+$LojaCfId   = "EEN1FE9Z7MUEK"    # LojaCloudFrontDistributionId (loja — loja.coachpilot.com.br)
 
 function Get-EnvLocal {
     param([string]$Key)
