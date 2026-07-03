@@ -439,3 +439,63 @@ def pk_pacote_distrib(pacote_id: str) -> str:
 
 
 SK_CONTENT = "CONTENT"
+
+
+PACOTE_GERADO_PREFIX = "PACGERADO#"
+
+
+def sk_pacote_gerado(pacote_id: str) -> str:
+    """PT#{autor}: registro dos pacotes licenciados que o personal gerou (para anunciar na loja)."""
+    return f"PACGERADO#{pacote_id}"
+
+
+# ── Loja / marketplace de pacotes ────────────────────────────────────────────
+# Catálogo: partição única com cópia leve dos anúncios PUBLICADOS. Escrita rara
+# (mutação de anúncio + sync de agregados) — bem abaixo do limite por partição;
+# leitura pública é cacheada no CloudFront (behavior /v1/public/loja/*).
+PK_LOJA_CATALOGO = "LOJA#CATALOGO"
+LOJA_CATALOGO_PREFIX = "AN#"
+
+
+def sk_loja_catalogo(criado_epoch_ms: str, anuncio_id: str) -> str:
+    return f"AN#{criado_epoch_ms}#{anuncio_id}"
+
+
+def pk_loja_anuncio(anuncio_id: str) -> str:
+    """Anúncio canônico (SK=META) + avaliações (AVAL#) + marcadores de comprador (COMPRADOR#)."""
+    return f"LOJAAN#{anuncio_id}"
+
+
+LOJA_AVAL_PREFIX = "AVAL#"
+LOJA_COMPRADOR_PREFIX = "COMPRADOR#"
+
+
+def sk_loja_aval(comprador_id: str) -> str:
+    return f"AVAL#{comprador_id}"
+
+
+def sk_loja_comprador(comprador_id: str) -> str:
+    return f"COMPRADOR#{comprador_id}"
+
+
+def pk_loja_pedido(pedido_id: str) -> str:
+    """Pedido canônico — lookup global O(1) (SK=META)."""
+    return f"LOJAPED#{pedido_id}"
+
+
+# Visões sem Scan na partição PT# (cópias denormalizadas do pedido):
+LOJA_COMPRA_PREFIX = "LOJACOMPRA#"
+LOJA_VENDA_PREFIX = "LOJAVENDA#"
+LOJA_MEU_ANUNCIO_PREFIX = "LOJAMEU#"
+
+
+def sk_loja_compra(criado_epoch_ms: str, pedido_id: str) -> str:
+    return f"LOJACOMPRA#{criado_epoch_ms}#{pedido_id}"
+
+
+def sk_loja_venda(criado_epoch_ms: str, pedido_id: str) -> str:
+    return f"LOJAVENDA#{criado_epoch_ms}#{pedido_id}"
+
+
+def sk_loja_meu_anuncio(anuncio_id: str) -> str:
+    return f"LOJAMEU#{anuncio_id}"

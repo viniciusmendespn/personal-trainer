@@ -73,6 +73,26 @@ def gerar_presigned_upload_url_perfil(entity_type: str, entity_id: str, filename
         return None
 
 
+def gerar_presigned_upload_url_loja(personal_id: str, filename: str, content_type: str,
+                                    expires_in: int = 900) -> dict | None:
+    """Presigned PUT URL para capa de anúncio da loja. Prefixo loja/ (fora de midia/ —
+    não dispara a TranscodeFunction); key nova a cada upload (cache immutable)."""
+    if not settings.media_bucket_name:
+        return None
+    key = f"loja/{personal_id}/{uuid.uuid4()}/{filename}"
+    try:
+        url = _s3c().generate_presigned_url(
+            "put_object",
+            Params={"Bucket": settings.media_bucket_name, "Key": key,
+                    "ContentType": content_type, "CacheControl": MEDIA_CACHE_CONTROL},
+            ExpiresIn=expires_in,
+        )
+        return {"upload_url": url, "s3_key": key}
+    except Exception as e:
+        logger.warning("[media] presigned loja url falhou: %s", e)
+        return None
+
+
 def registrar_midia_vinculada(aluno_id: str, exercicio_id: str, exercicio_nome: str | None,
                               tipo: str, s3_key: str, ator: Ator = Ator.ALUNO) -> dict:
     """Registra uma mídia já enviada (via presigned URL) — pelo próprio app do aluno ou

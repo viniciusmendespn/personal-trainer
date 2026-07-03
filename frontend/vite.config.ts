@@ -34,6 +34,7 @@ export default defineConfig({
       input: {
         main:  resolve(__dirname, 'index.html'),
         aluno: resolve(__dirname, 'aluno.html'),
+        loja:  resolve(__dirname, 'loja.html'),
       },
     },
   },

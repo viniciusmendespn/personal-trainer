@@ -16,6 +16,10 @@ _URL_MAP_PERSONAL: dict[str, str] = {
     "LEMBRETE_AULA": "/agenda",
     "ASSINATURA_PAGA":      "/plano",
     "INDICACAO_RECOMPENSA": "/plano",
+    "LOJA_PEDIDO_MANUAL":    "/loja-vendas",
+    "LOJA_VENDA_PAGA":       "/loja-vendas",
+    "LOJA_ANUNCIO_REMOVIDO": "/loja-vendas",
+    "LOJA_PEDIDO_LIBERADO":  "/pacotes",
 }
 
 

@@ -111,3 +111,11 @@ def criar_cupom(body: CriarCupomBody, _: str = Depends(_require_admin)):
         campanha=body.campanha, dias=body.dias, plano=body.plano,
         max_usos=body.max_usos, expira_em=body.expira_em,
     )
+
+
+@router.post("/loja/anuncios/{anuncio_id}/despublicar")
+def despublicar_anuncio(anuncio_id: str, _: str = Depends(_require_admin)):
+    """Remove um anúncio do catálogo da loja (moderação). Notifica o vendedor."""
+    from app.services import loja_service
+    loja_service.despublicar_admin(anuncio_id)
+    return {"ok": True}

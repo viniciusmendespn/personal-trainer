@@ -157,6 +157,86 @@ def get_payment_status(personal_id: str, payment_id: str) -> dict:
         "status": resp.get("status"),   # approved | pending | rejected | cancelled
         "valor_liquido": valor_liquido,
         "taxa": taxa,
+        "external_reference": resp.get("external_reference"),
+    }
+
+
+# ── Loja (marketplace de pacotes) ─────────────────────────────────────────────
+
+def criar_pix_loja(vendedor_id: str, comprador_id: str, comprador_nome: str,
+                   pedido: dict) -> dict:
+    """PIX de venda de pacote na loja — pagamento cai na conta MP do VENDEDOR.
+    external_reference LOJA|... roteia o webhook para loja_service."""
+    token = _get_token(vendedor_id)
+    if not token:
+        raise ValueError("Mercado Pago não configurado para este vendedor.")
+
+    pedido_id = pedido["pedido_id"]
+    external_reference = f"LOJA|{vendedor_id}|{comprador_id}|{pedido_id}"
+    expires_at = (datetime.now(timezone.utc) + timedelta(minutes=30)).strftime(
+        "%Y-%m-%dT%H:%M:%S.000+00:00"
+    )
+    nome_partes = (comprador_nome or "Personal Comprador").split()
+    payload = {
+        "transaction_amount": round(pedido["preco_centavos"] / 100, 2),
+        "payment_method_id": "pix",
+        "payer": {
+            "email": f"comprador_{comprador_id[:8]}@coachpilot.app",
+            "first_name": nome_partes[0],
+            "last_name": " ".join(nome_partes[1:]) or "Comprador",
+        },
+        "description": f"CoachPilot Loja — {pedido['titulo']}"[:250],
+        "external_reference": external_reference,
+        "date_of_expiration": expires_at,
+    }
+    if settings.webhook_base_url:
+        payload["notification_url"] = f"{settings.webhook_base_url}/v1/public/mp/webhook"
+    try:
+        resp = _mp_request("POST", "/v1/payments", token, payload,
+                           idempotency_key=pedido_id)
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode(errors="ignore")
+        logger.error("MP criar_pix_loja HTTP %s: %s", exc.code, body)
+        raise ValueError(f"Erro Mercado Pago: {exc.code}")
+
+    payment_id = str(resp["id"])
+    pix_data = resp.get("point_of_interaction", {}).get("transaction_data", {})
+
+    # Routing payment_id → pedido da loja (o webhook resolve por aqui; tipo=LOJA despacha)
+    repo.put_item(keys.pk_mp_lock(payment_id), "routing", {
+        "tipo": "LOJA",
+        "vendedor_id": vendedor_id,
+        "comprador_id": comprador_id,
+        "pedido_id": pedido_id,
+        "ttl": int(time.time()) + _ROUTING_TTL_S,
+    })
+
+    return {
+        "payment_id": payment_id,
+        "qr_code": pix_data.get("qr_code"),
+        "qr_code_base64": pix_data.get("qr_code_base64"),
+        "expires_at": expires_at,
+    }
+
+
+def consultar_pix(personal_id: str, payment_id: str) -> dict:
+    """Re-obtém os dados do PIX (QR) de um pagamento existente — o checkout não
+    persiste o QR no Dynamo (item pequeno); ao reabrir, busca no MP."""
+    token = _get_token(personal_id)
+    if not token:
+        raise ValueError("Mercado Pago não configurado.")
+    try:
+        resp = _mp_request("GET", f"/v1/payments/{payment_id}", token)
+    except urllib.error.HTTPError as exc:
+        logger.error("MP consultar_pix HTTP %s payment_id=%s", exc.code, payment_id)
+        raise ValueError(f"Erro Mercado Pago: {exc.code}")
+    pix_data = resp.get("point_of_interaction", {}).get("transaction_data", {})
+    return {
+        "payment_id": payment_id,
+        "status": resp.get("status"),
+        "qr_code": pix_data.get("qr_code"),
+        "qr_code_base64": pix_data.get("qr_code_base64"),
+        "expires_at": resp.get("date_of_expiration"),
     }
 
 
@@ -183,6 +263,12 @@ def processar_webhook(body: dict) -> None:
     routing = repo.get_item(lock_pk, "routing")
     if not routing:
         logger.warning("MP webhook sem routing payment_id=%s — descartado", payment_id)
+        return
+
+    # Ramo LOJA (marketplace de pacotes): routing próprio, entrega delegada.
+    if routing.get("tipo") == "LOJA":
+        from app.services import loja_service   # import tardio — evita ciclo
+        loja_service.processar_pagamento_loja(payment_id, routing)
         return
 
     personal_id = routing.get("personal_id")

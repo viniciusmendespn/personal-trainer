@@ -117,6 +117,52 @@ def _draft_json(pacote_meta: dict, exercicios: list, templates: list, rotinas: l
 
 # ── Token de uso único ───────────────────────────────────────────────────────
 
+def _criar_token(pacote_id: str, max_usos: int = 1) -> str:
+    """Cria um token de uso único (PKTOKEN#) apontando para o pacote distribuído."""
+    token_uuid = new_id()
+    token = f"tok_{token_uuid}"
+    repo.put_item(keys.pk_token(token_uuid), keys.SK_META, {
+        "token": token,
+        "pacote_id": pacote_id,
+        "max_usos": max_usos,
+        "usos_count": 0,
+        "usado_por": [],
+        "criado_em": now_iso(),
+    })
+    return token
+
+
+def emitir_token(pacote_id: str, max_usos: int = 1) -> str:
+    """Emite um token NOVO para um pacote já distribuído (venda na loja).
+    Valida que o conteúdo existe e está ativo antes de emitir."""
+    distrib = repo.get_item(keys.pk_pacote_distrib(pacote_id), keys.SK_CONTENT)
+    if not distrib or distrib.get("ativo") is False:
+        raise HTTPException(404, detail={"code": "PACOTE_INDISPONIVEL"})
+    return _criar_token(pacote_id, max_usos)
+
+
+def metadados_distrib(pacote_id: str) -> Optional[dict]:
+    """Metadados do pacote distribuído (para anúncio da loja): autor, stats e status.
+    None se o pacote não existe."""
+    distrib = repo.get_item(keys.pk_pacote_distrib(pacote_id), keys.SK_CONTENT)
+    if not distrib:
+        return None
+    conteudo = repo.clean(distrib).get("conteudo") or {}
+    meta = conteudo.get("pacote") or {}
+    return {
+        "pacote_id": pacote_id,
+        "nome": meta.get("nome"),
+        "descricao": meta.get("descricao"),
+        "autor": meta.get("autor"),
+        "versao": meta.get("versao"),
+        "autor_personal_id": distrib.get("autor_personal_id"),
+        "ativo": distrib.get("ativo", True),
+        "n_exercicios": len(conteudo.get("exercicios") or []),
+        "n_templates": len(conteudo.get("templates") or []),
+        "n_rotinas": len(conteudo.get("rotinas") or []),
+    }
+
+
 def _consumir_token(token: str, personal_id: str) -> None:
     """Consome o token atomicamente. Lança HTTPException se inválido/esgotado/já usado."""
     token_uuid = token.removeprefix("tok_")
@@ -673,16 +719,29 @@ def gerar_pacote_licenciado(
         "ativo": True,
     })
 
-    token_uuid = new_id()
-    token = f"tok_{token_uuid}"
-    repo.put_item(keys.pk_token(token_uuid), keys.SK_META, {
-        "token": token,
+    token = _criar_token(pacote_id, max_usos)
+
+    # Registro do pacote gerado na partição do autor (lista "meus pacotes gerados" —
+    # base para anunciar na loja sem Scan).
+    repo.put_item(keys.pk_personal(personal_id), keys.sk_pacote_gerado(pacote_id), {
         "pacote_id": pacote_id,
+        "nome": nome,
+        "descricao": descricao,
+        "versao": versao,
         "max_usos": max_usos,
-        "usos_count": 0,
-        "usado_por": [],
+        "n_exercicios": len(draft.get("exercicios") or []),
+        "n_templates": len(draft.get("templates") or []),
+        "n_rotinas": len(draft.get("rotinas") or []),
         "criado_em": now_iso(),
     })
 
     # Arquivo fino — é isso que o personal baixa como .cpkg
     return {"fmt": REF_FMT, "pacote_id": pacote_id, "token": token}
+
+
+def listar_pacotes_gerados(personal_id: str) -> list[dict]:
+    """Pacotes licenciados que o personal gerou (candidatos a anúncio na loja)."""
+    items = repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.PACOTE_GERADO_PREFIX)
+    out = repo.clean_all(items)
+    out.sort(key=lambda p: p.get("criado_em") or "", reverse=True)
+    return out

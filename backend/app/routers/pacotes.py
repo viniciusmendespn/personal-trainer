@@ -69,6 +69,11 @@ def listar_pacotes(personal_id: str = Depends(get_current_personal_id)):
     return pacote_service.listar_pacotes(personal_id)
 
 
+@router.get("/gerados")
+def listar_pacotes_gerados(personal_id: str = Depends(get_current_personal_id)):
+    return {"pacotes": pacote_service.listar_pacotes_gerados(personal_id)}
+
+
 @router.get("/{pacote_id}/exportar")
 def exportar_pacote(
     pacote_id: str,

@@ -12,6 +12,7 @@ $StackName  = "personal-trainer-prod"
 $Bucket     = "personal-trainer-frontend-prod-421219980792"
 $CfId       = "E3JZ6U88Q0GYGF"   # CloudFrontDistributionId (portal — coachpilot.com.br)
 $AlunoCfId  = "E2IHNZ34C3PI8V"   # AlunoCloudFrontDistributionId (aluno — app.coachpilot.com.br)
+$LojaCfId   = ""                 # LojaCloudFrontDistributionId (loja — loja.coachpilot.com.br) — preencher após deploy do backend
 
 function Get-EnvLocal {
     param([string]$Key)
@@ -72,6 +73,17 @@ function Deploy-Frontend {
     if ((Get-Content $alunoPath -Raw) -notmatch 'href="/aluno\.webmanifest"') { Write-Host "AVISO: troca de manifest no aluno.html nao aplicada — conferir VitePWA." -ForegroundColor Yellow }
     Write-Host "aluno.html: manifest -> /aluno.webmanifest" -ForegroundColor Cyan
 
+    # loja.html: mesmo tratamento (manifest da loja)
+    $lojaPath = "$PWD\dist\loja.html"
+    if (Test-Path $lojaPath) {
+        $htmlLoja = Get-Content -Path $lojaPath -Raw -Encoding UTF8
+        $htmlLoja = $htmlLoja -replace '<link rel="manifest" href="[^"]*">', '<link rel="manifest" href="/loja.webmanifest">'
+        [System.IO.File]::WriteAllText($lojaPath, $htmlLoja, [System.Text.UTF8Encoding]::new($false))
+        Write-Host "loja.html: manifest -> /loja.webmanifest" -ForegroundColor Cyan
+    } else {
+        Write-Host "AVISO: dist/loja.html nao encontrado — verifique vite.config.ts multi-entry." -ForegroundColor Yellow
+    }
+
     # index.html e aluno.html sem cache (ARCHITECTURE §10.2)
     aws s3 cp dist/index.html "s3://$Bucket/index.html" `
         --cache-control "no-cache, no-store, must-revalidate" `
@@ -81,6 +93,12 @@ function Deploy-Frontend {
         --cache-control "no-cache, no-store, must-revalidate" `
         --content-type "text/html; charset=utf-8" `
         --region $Region --profile $Profile
+    if (Test-Path $lojaPath) {
+        aws s3 cp dist/loja.html "s3://$Bucket/loja.html" `
+            --cache-control "no-cache, no-store, must-revalidate" `
+            --content-type "text/html; charset=utf-8" `
+            --region $Region --profile $Profile
+    }
     # Manifestos PWA (portal + aluno): sem cache
     aws s3 sync dist/ "s3://$Bucket/" --delete `
         --exclude "*" --include "*.webmanifest" `
@@ -104,7 +122,7 @@ function Deploy-Frontend {
     # Demais arquivos públicos sem hash (ícones, logos, imagens, robots.txt etc.):
     # cache curto, senão troca de logo/favicon fica presa em cache por 1 ano (browser + CDN)
     aws s3 sync dist/ "s3://$Bucket/" --delete `
-        --exclude "index.html" --exclude "aluno.html" --exclude "*.webmanifest" `
+        --exclude "index.html" --exclude "aluno.html" --exclude "loja.html" --exclude "*.webmanifest" `
         --exclude "sw.js" --exclude "workbox-*.js" --exclude "registerSW.js" `
         --exclude "assets/*" `
         --cache-control "public, max-age=3600" `
@@ -121,6 +139,13 @@ function Deploy-Frontend {
             --region $Region --profile $Profile | Out-Null
     } else {
         Write-Host "AlunoCfId vazio — preencher deploy.ps1 com AlunoCloudFrontDistributionId do stack." -ForegroundColor Yellow
+    }
+    if ($LojaCfId) {
+        aws cloudfront create-invalidation --distribution-id $LojaCfId `
+            --paths "/*" `
+            --region $Region --profile $Profile | Out-Null
+    } else {
+        Write-Host "LojaCfId vazio — preencher deploy.ps1 com LojaCloudFrontDistributionId do stack." -ForegroundColor Yellow
     }
     Set-Location ..
     Write-Host "Frontend deployed!" -ForegroundColor Green

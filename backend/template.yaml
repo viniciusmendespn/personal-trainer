@@ -397,7 +397,7 @@ Resources:
       CodeUri: ./
       Description: "Comprime vídeo (H.264 720p + faststart) e regrava no mesmo s3_key"
       Timeout: 600            # clipes curtos; margem p/ inputs grandes
-      MemorySize: 4096        # mais memória = mais vCPU = transcode mais rápido
+      MemorySize: 3008        # teto da conta (limite Lambda) — ~2 vCPU, suficiente p/ transcode
       EphemeralStorage:
         Size: 2048            # /tmp: binário + input + output
       Layers:
@@ -431,6 +431,9 @@ Resources:
         function handler(event) {
           var request = event.request;
           var uri = request.uri;
+          if (uri === '/loja' || uri.indexOf('/loja/') === 0 || uri.indexOf('/loja?') === 0) {
+            return { statusCode: 301, headers: { location: { value: 'https://loja.coachpilot.com.br' }, 'cache-control': { value: 'no-store' } } };
+          }
           if (uri === '/aluno' || uri.indexOf('/aluno/') === 0 || uri.indexOf('/aluno?') === 0) {
             var parts = [];
             var qs = request.querystring;
@@ -471,6 +474,43 @@ Resources:
           return event.request;
         }
 
+  # ── CloudFront Function para a loja (loja.coachpilot.com.br) ─────────────────
+  LojaSpaRouterFunction:
+    Type: AWS::CloudFront::Function
+    Condition: CreateFrontendInfra
+    Properties:
+      Name: !Sub "${ProjectName}-loja-router-${Stage}"
+      AutoPublish: true
+      FunctionConfig:
+        Comment: "SPA da loja: assets pass-through, todo o resto serve loja.html"
+        Runtime: cloudfront-js-2.0
+      FunctionCode: |
+        function handler(event) {
+          var uri = event.request.uri;
+          if (uri.lastIndexOf('.') > uri.lastIndexOf('/')) return event.request;
+          event.request.uri = '/loja.html';
+          return event.request;
+        }
+
+  # Cache curto do catálogo público da loja: absorve o tráfego de leitura no edge
+  # (GETs sem auth) — o Dynamo/Lambda recebem no máximo ~1 req/min por variação.
+  LojaCatalogoCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Condition: CreateFrontendInfra
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub "${ProjectName}-loja-catalogo-${Stage}"
+        Comment: "Catalogo publico da loja — TTL curto, query strings na cache key"
+        DefaultTTL: 60
+        MinTTL: 30
+        MaxTTL: 120
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingGzip: true
+          EnableAcceptEncodingBrotli: true
+          CookiesConfig: { CookieBehavior: none }
+          HeadersConfig: { HeaderBehavior: none }
+          QueryStringsConfig: { QueryStringBehavior: all }
+
   # ── S3 + CloudFront (frontend SPA — criar quando a conta estiver pronta) ─────
   FrontendBucket:
     Type: AWS::S3::Bucket
@@ -503,6 +543,7 @@ Resources:
                 AWS:SourceArn:
                   - !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
                   - !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${AlunoCloudFrontDistribution}"
+                  - !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${LojaCloudFrontDistribution}"
 
   CloudFrontOAC:
     Type: AWS::CloudFront::OriginAccessControl
@@ -613,6 +654,30 @@ Resources:
         HostedZoneId: Z2FDTNDATAQYW2
         EvaluateTargetHealth: false
 
+  LojaAliasRecordA:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateFrontendInfra
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub "loja.${DomainName}"
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LojaCloudFrontDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+        EvaluateTargetHealth: false
+
+  LojaAliasRecordAAAA:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateFrontendInfra
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub "loja.${DomainName}"
+      Type: AAAA
+      AliasTarget:
+        DNSName: !GetAtt LojaCloudFrontDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+        EvaluateTargetHealth: false
+
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     Condition: CreateFrontendInfra
@@ -706,6 +771,55 @@ Resources:
           - { ErrorCode: 403, ResponseCode: 200, ResponsePagePath: /aluno.html }
           - { ErrorCode: 404, ResponseCode: 200, ResponsePagePath: /aluno.html }
 
+  LojaCloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Condition: CreateFrontendInfra
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: loja.html
+        Aliases:
+          - !Sub "loja.${DomainName}"
+        ViewerCertificate:
+          AcmCertificateArn: !Ref SiteCertificate   # wildcard *.coachpilot.com.br já cobre loja.
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            OriginAccessControlId: !Ref CloudFrontOAC
+            S3OriginConfig: {}
+          - Id: ApiOrigin
+            DomainName: !Sub "${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com"
+            OriginPath: !Sub "/${Stage}"
+            CustomOriginConfig:
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6   # CachingOptimized
+          AllowedMethods: [GET, HEAD]
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt LojaSpaRouterFunction.FunctionMetadata.FunctionARN
+        CacheBehaviors:
+          - PathPattern: /v1/public/loja/*   # catálogo público — cache curto no edge (antes do /v1/*)
+            TargetOriginId: ApiOrigin
+            ViewerProtocolPolicy: https-only
+            CachePolicyId: !Ref LojaCatalogoCachePolicy
+            AllowedMethods: [GET, HEAD]
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac  # AllViewerExceptHostHeader
+          - PathPattern: /v1/*
+            TargetOriginId: ApiOrigin
+            ViewerProtocolPolicy: https-only
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad  # CachingDisabled
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac  # AllViewerExceptHostHeader
+        CustomErrorResponses:
+          - { ErrorCode: 403, ResponseCode: 200, ResponsePagePath: /loja.html }
+          - { ErrorCode: 404, ResponseCode: 200, ResponsePagePath: /loja.html }
+
 Outputs:
   ApiUrl:
     Value: !Sub "${ApiGateway.ApiEndpoint}/${Stage}"
@@ -745,3 +859,9 @@ Outputs:
   AlunoCloudFrontDistributionId:
     Condition: CreateFrontendInfra
     Value: !Ref AlunoCloudFrontDistribution
+  LojaCloudFrontUrl:
+    Condition: CreateFrontendInfra
+    Value: !Sub "https://loja.${DomainName}"
+  LojaCloudFrontDistributionId:
+    Condition: CreateFrontendInfra
+    Value: !Ref LojaCloudFrontDistribution
