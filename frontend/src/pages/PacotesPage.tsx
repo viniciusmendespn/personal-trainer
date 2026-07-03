@@ -707,63 +707,6 @@ function CriarPacoteTab() {
       </Card>
 
       <Card className="p-5">
-        <p className="text-sm font-medium mb-3">
-          Templates{' '}
-          {templatesSel.size > 0 && (
-            <span className="text-xs text-accent ml-1">({templatesSel.size} selecionado{templatesSel.size > 1 ? 's' : ''})</span>
-          )}
-        </p>
-        {isLoading ? (
-          <div className="flex justify-center py-4"><Spinner /></div>
-        ) : !templates || templates.length === 0 ? (
-          <p className="text-xs text-text-secondary">Nenhum template disponível.</p>
-        ) : (
-          <>
-            <div className="flex items-center gap-3 text-xs mb-2">
-              <button
-                type="button"
-                onClick={() => setTemplatesSel(new Set(templates.filter((t) => !isBloqueado(t)).map((t) => t.template_id)))}
-                className="text-accent hover:underline"
-              >
-                Selecionar todos ({templates.filter((t) => !isBloqueado(t)).length})
-              </button>
-              {templatesSel.size > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setTemplatesSel(new Set())}
-                  className="text-text-secondary hover:text-text hover:underline"
-                >
-                  Limpar seleção
-                </button>
-              )}
-            </div>
-            <div className="space-y-1 max-h-52 overflow-y-auto">
-            {templates.map((t) => {
-              const bloqueado = isBloqueado(t)
-              const selecionado = templatesSel.has(t.template_id)
-              return (
-                <label
-                  key={t.template_id}
-                  className={`flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer ${bloqueado ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-secondary'}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selecionado}
-                    disabled={bloqueado}
-                    onChange={() => !bloqueado && setTemplatesSel(toggleSet(templatesSel, t.template_id))}
-                    className="accent-accent"
-                  />
-                  <span className="text-sm flex-1">{t.nome}</span>
-                  {bloqueado && <Badge tone="accent" className="text-xs">Licenciado</Badge>}
-                </label>
-              )
-            })}
-            </div>
-          </>
-        )}
-      </Card>
-
-      <Card className="p-5">
         <p className="text-sm font-medium mb-1">
           Rotinas{' '}
           {rotinasSel.size > 0 && (
@@ -828,6 +771,63 @@ function CriarPacoteTab() {
                     className="accent-accent"
                   />
                   <span className="text-sm flex-1">{r.nome}</span>
+                  {bloqueado && <Badge tone="accent" className="text-xs">Licenciado</Badge>}
+                </label>
+              )
+            })}
+            </div>
+          </>
+        )}
+      </Card>
+
+      <Card className="p-5">
+        <p className="text-sm font-medium mb-3">
+          Templates{' '}
+          {templatesSel.size > 0 && (
+            <span className="text-xs text-accent ml-1">({templatesSel.size} selecionado{templatesSel.size > 1 ? 's' : ''})</span>
+          )}
+        </p>
+        {isLoading ? (
+          <div className="flex justify-center py-4"><Spinner /></div>
+        ) : !templates || templates.length === 0 ? (
+          <p className="text-xs text-text-secondary">Nenhum template disponível.</p>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 text-xs mb-2">
+              <button
+                type="button"
+                onClick={() => setTemplatesSel(new Set(templates.filter((t) => !isBloqueado(t)).map((t) => t.template_id)))}
+                className="text-accent hover:underline"
+              >
+                Selecionar todos ({templates.filter((t) => !isBloqueado(t)).length})
+              </button>
+              {templatesSel.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setTemplatesSel(new Set())}
+                  className="text-text-secondary hover:text-text hover:underline"
+                >
+                  Limpar seleção
+                </button>
+              )}
+            </div>
+            <div className="space-y-1 max-h-52 overflow-y-auto">
+            {templates.map((t) => {
+              const bloqueado = isBloqueado(t)
+              const selecionado = templatesSel.has(t.template_id)
+              return (
+                <label
+                  key={t.template_id}
+                  className={`flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer ${bloqueado ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-secondary'}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selecionado}
+                    disabled={bloqueado}
+                    onChange={() => !bloqueado && setTemplatesSel(toggleSet(templatesSel, t.template_id))}
+                    className="accent-accent"
+                  />
+                  <span className="text-sm flex-1">{t.nome}</span>
                   {bloqueado && <Badge tone="accent" className="text-xs">Licenciado</Badge>}
                 </label>
               )
