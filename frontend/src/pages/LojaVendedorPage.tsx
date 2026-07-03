@@ -155,7 +155,7 @@ function AnuncioFormModal({
           <option value="">Selecione um pacote gerado…</option>
           {gerados.map((p) => (
             <option key={p.pacote_id} value={p.pacote_id}>
-              {p.nome} (v{p.versao ?? '1'} — {p.n_rotinas ?? 0} rotinas, {p.n_templates ?? 0} treinos)
+              {p.nome} (v{p.versao ?? '1'} — {p.n_rotinas ?? 0} rotinas, {p.n_templates ?? 0} treinos, {p.n_exercicios ?? 0} exercícios)
             </option>
           ))}
         </Select>
