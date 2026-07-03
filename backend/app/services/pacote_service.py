@@ -285,6 +285,7 @@ def _instalar(
     ref_to_tipo: dict[str, str] = {}
     ref_to_unidade: dict[str, str | None] = {}
     ref_to_direcao: dict[str, str] = {}
+    ref_to_video: dict[str, str | None] = {}
     exlib_id_to_nome: dict[str, str] = {}
     exlib_puts: list[dict] = []
     seen_exlib: set[str] = set()
@@ -297,6 +298,7 @@ def _instalar(
         ref_to_tipo[ex_pkg.ref] = ex_pkg.tipo_exercicio.value
         ref_to_unidade[ex_pkg.ref] = ex_pkg.unidade_reps
         ref_to_direcao[ex_pkg.ref] = ex_pkg.metrica_direcao or "MAIOR"
+        ref_to_video[ex_pkg.ref] = ex_pkg.video_url
         exlib_id_to_nome[exlib_id] = nome
         if exlib_id in seen_exlib:
             continue
@@ -344,6 +346,7 @@ def _instalar(
                 "tipo_exercicio": ref_to_tipo.get(ex_ref_item.ex_ref, "FORCA"),
                 "unidade_reps": ref_to_unidade.get(ex_ref_item.ex_ref),
                 "metrica_direcao": ref_to_direcao.get(ex_ref_item.ex_ref, "MAIOR"),
+                "video_url": ref_to_video.get(ex_ref_item.ex_ref),
                 "origem_licenciada": origem_licenciada,
             })
         template_puts.append({
