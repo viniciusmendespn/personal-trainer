@@ -43,6 +43,7 @@ const DivulgadoresPage = lazy(() => import('./pages/landing/DivulgadoresPage').t
 const PlanoPage = lazy(() => import('./pages/PlanoPage').then((m) => ({ default: m.PlanoPage })))
 const PacotesPage = lazy(() => import('./pages/PacotesPage').then((m) => ({ default: m.PacotesPage })))
 const LojaVendedorPage = lazy(() => import('./pages/LojaVendedorPage').then((m) => ({ default: m.LojaVendedorPage })))
+const FinanceiroPanelPage = lazy(() => import('./pages/FinanceiroPanelPage').then((m) => ({ default: m.FinanceiroPanelPage })))
 
 function PageFallback() {
   return <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" srcLight="/novo-logo-slogan-vertical-brancosemfundo.png" rounded={false} />
@@ -113,6 +114,7 @@ const router = createBrowserRouter([
                   { path: 'conhecimento', element: lazyPage(<ConhecimentoPage />) },
                   { path: 'pacotes', element: lazyPage(<PacotesPage />) },
                   { path: 'loja-vendas', element: lazyPage(<LojaVendedorPage />) },
+                  { path: 'financeiro', element: lazyPage(<FinanceiroPanelPage />) },
                   { path: 'feed', element: lazyPage(<FeedGlobalPage />) },
                   { path: 'ranking', element: lazyPage(<RankingPage />) },
                   { path: 'notificacoes', element: lazyPage(<PendenciasPage />) },

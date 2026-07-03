@@ -314,21 +314,20 @@ def processar_webhook(body: dict) -> None:
     valor_liquido = float(resp.get("net_received_amount") or valor_total)
     taxa = round(valor_total - valor_liquido, 4)
 
-    # ── Registra pagamento ────────────────────────────────────────────────────
+    # ── Registra pagamento (valor líquido/taxa entram no agregado do painel) ──
     from app.services import financeiro_service
     result = financeiro_service.registrar_pagamento(
         personal_id, aluno_id, cobranca_id,
-        {"data_pagamento": now_iso()[:10], "forma_pagamento": "PIX_MP", "notas": None},
+        {"data_pagamento": now_iso()[:10], "forma_pagamento": "PIX_MP", "notas": None,
+         "mp_valor_liquido": valor_liquido, "mp_taxa": taxa},
     )
 
     if result:
-        # Atualiza campos MP na cobrança
+        # mp_payment_id não trafega pelo body do registrar_pagamento — grava aqui.
         idx = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_cobranca_idx(cobranca_id))
         if idx and idx.get("sk"):
             repo.update_item_if_exists(keys.pk_aluno(aluno_id), idx["sk"], {
                 "mp_payment_id": payment_id,
-                "mp_valor_liquido": valor_liquido,
-                "mp_taxa": taxa,
             })
         # Notifica aluno
         from app.services import anotif_service

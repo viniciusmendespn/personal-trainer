@@ -9,10 +9,37 @@ from app.services import authz, financeiro_service
 
 router = APIRouter(prefix="/v1/alunos/{aluno_id}/financeiro", tags=["financeiro"])
 
+# Painel financeiro do personal (visão de carteira, agregada) — sem aluno_id no path.
+painel_router = APIRouter(prefix="/v1/financeiro", tags=["financeiro-painel"])
+
 
 def _aluno_do_personal(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)
     return personal_id
+
+
+@painel_router.get("/resumo")
+def resumo_financeiro(
+    mes: Optional[str] = Query(default=None, pattern=r"^\d{4}-\d{2}$"),
+    personal_id: str = Depends(get_current_personal_id),
+):
+    return financeiro_service.resumo(personal_id, mes)
+
+
+@painel_router.get("/recebiveis")
+def listar_recebiveis(
+    status: Optional[str] = Query(default=None, pattern="^(PENDENTE|VENCIDA)$"),
+    personal_id: str = Depends(get_current_personal_id),
+):
+    return {"items": financeiro_service.listar_recebiveis(personal_id, status)}
+
+
+@painel_router.get("/pagamentos-recentes")
+def listar_pagamentos_recentes(
+    limit: int = Query(default=20, ge=1, le=100),
+    personal_id: str = Depends(get_current_personal_id),
+):
+    return {"items": financeiro_service.listar_pagamentos_recentes(personal_id, limit)}
 
 
 @router.get("/config")

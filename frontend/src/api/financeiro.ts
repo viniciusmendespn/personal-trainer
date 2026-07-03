@@ -12,6 +12,38 @@ export interface MercadoPagoStatus {
   configurado_em?: string
 }
 
+// ── Painel financeiro (visão de carteira do personal) ──────────────────────────
+export interface FinanceiroResumo {
+  mes: string
+  recebido_valor: number
+  pago_count: number
+  a_receber_valor: number
+  pendente_count: number
+  vencido_valor: number
+  vencido_count: number
+  mrr: number
+  mp_configurado: boolean
+  mp_liquido: number | null
+  mp_taxa: number | null
+  historico: { mes: string; recebido: number }[]
+}
+
+/** Cobrança em aberto/paga enriquecida com o nome do aluno (endpoints agregados). */
+export type CobrancaComAluno = Cobranca & { aluno_nome: string }
+
+export const financeiroPainelApi = {
+  getResumo: (mes?: string) =>
+    api.get<FinanceiroResumo>('/v1/financeiro/resumo', { params: mes ? { mes } : undefined }).then((r) => r.data),
+
+  listRecebiveis: (status?: 'PENDENTE' | 'VENCIDA') =>
+    api.get<{ items: CobrancaComAluno[] }>('/v1/financeiro/recebiveis', { params: status ? { status } : undefined })
+      .then((r) => r.data.items),
+
+  listPagamentosRecentes: (limit = 20) =>
+    api.get<{ items: CobrancaComAluno[] }>('/v1/financeiro/pagamentos-recentes', { params: { limit } })
+      .then((r) => r.data.items),
+}
+
 export const financeiroApi = {
   getConfig: (alunoId: string) =>
     api.get<CobrancaConfig>(`/v1/alunos/${alunoId}/financeiro/config`).then((r) => r.data),

@@ -336,6 +336,17 @@ def sk_cobranca_aluno(aluno_id: str) -> str:
     return f"COBRANCA_ALUNO#{aluno_id}"
 
 
+# ── Financeiro: agregados do painel (partição PT#, mesma família STATS# do dashboard) ─
+# Snapshot do saldo em aberto (recebíveis) — atualizado a cada transição de cobrança.
+SK_STATS_FIN_OPEN = "STATS#FINOPEN"
+# Fluxo mensal de recebimentos (regime de caixa) — 1 item por mês de pagamento.
+STATS_FIN_MES_PREFIX = "STATS#FINM#"
+
+
+def sk_stats_fin_mes(ano_mes: str) -> str:
+    return f"STATS#FINM#{ano_mes}"
+
+
 # ── Financeiro: config Mercado Pago (partição PT#) ───────────────────────────
 SK_CONFIG_MP = "CONFIG#MERCADOPAGO"
 

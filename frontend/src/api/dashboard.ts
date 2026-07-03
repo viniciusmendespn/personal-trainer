@@ -26,10 +26,19 @@ export interface ProximoEvento {
   observacao?: string
 }
 
+export interface DashboardFinanceiro {
+  recebido_valor: number
+  a_receber_valor: number
+  vencido_valor: number
+  vencido_count: number
+  mrr: number
+}
+
 export interface DashboardData {
   alunos: number
   alunos_ativos: number
   notificacoes_nao_lidas: number
+  financeiro?: DashboardFinanceiro
   sessoes_por_dia?: SessaoDia[]
   atividade_recente?: AtividadeAluno[]
   aderencia_7d?: { alunos_unicos: number; alunos_unicos_prev: number }

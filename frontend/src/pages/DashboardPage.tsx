@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   Users, Bell, MessageCircle, ArrowRight, Calendar, Cake,
   BookOpen, LayoutTemplate, Target, Zap, CalendarCheck,
+  DollarSign, Clock, AlertTriangle, Repeat,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
@@ -16,6 +17,7 @@ import { useTemplates } from '../hooks/useTemplates'
 import { wapiApi } from '../api/wapi'
 import { Card, StatCard, Skeleton, SkeletonLine, EmptyState, Avatar, Badge } from '../components/ui'
 import { tempoRelativo } from '../utils/datetime'
+import { formatBRL } from '../utils/currency'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -320,6 +322,26 @@ export function DashboardPage() {
               to="/notificacoes"
             />
           </div>
+
+          {/* ── Row 1.5: Financeiro (resumo da carteira) ── */}
+          {data.financeiro && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-text-secondary flex items-center gap-1.5">
+                  <DollarSign size={13} /> Financeiro
+                </p>
+                <Link to="/financeiro" className="text-xs text-accent-hover hover:underline flex items-center gap-0.5">
+                  Ver painel <ArrowRight size={11} />
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <StatCard icon={<DollarSign />} label="Recebido no mês" value={formatBRL(data.financeiro.recebido_valor)} tone="success" to="/financeiro" />
+                <StatCard icon={<Clock />} label="A receber" value={formatBRL(data.financeiro.a_receber_valor)} tone="warning" to="/financeiro" />
+                <StatCard icon={<AlertTriangle />} label="Vencido" value={formatBRL(data.financeiro.vencido_valor)} hint={`${data.financeiro.vencido_count} em atraso`} tone="danger" to="/financeiro" />
+                <StatCard icon={<Repeat />} label="Recorrente / mês" value={formatBRL(data.financeiro.mrr)} tone="accent" to="/financeiro" />
+              </div>
+            </div>
+          )}
 
           {/* ── Row 2: Métricas + atalhos ── */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

@@ -8,7 +8,7 @@ from app.dependencies import get_current_personal_id
 from app.models.enums import SessaoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import media_service, notif_service
+from app.services import financeiro_service, media_service, notif_service
 from app.services.sessao_service import SESSION_TTL_S
 
 router = APIRouter(prefix="/v1", tags=["dashboard"])
@@ -114,10 +114,15 @@ def dashboard(personal_id: str = Depends(get_current_personal_id)):
             "atualizado_em": a.get("atualizado_em"),
         })
 
+    # Financeiro (bounded): snapshot O(1) da partição PT# + recebido do mês + MRR. O único
+    # fan-out possível é o backfill preguiçoso 1x (mesma ideia do lazy-init de STATS#ALUNOS).
+    financeiro = financeiro_service.dashboard_bloco(personal_id)
+
     return {
         "alunos": total_alunos,
         "alunos_ativos": alunos_ativos,
         "notificacoes_nao_lidas": nao_lidas,
+        "financeiro": financeiro,
         "sessoes_por_dia": sessoes_por_dia,
         "atividade_recente": atividade_recente,
         "aderencia_7d": {

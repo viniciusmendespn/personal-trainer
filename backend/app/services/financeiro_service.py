@@ -15,6 +15,28 @@ logger = logging.getLogger(__name__)
 _SCHED_TTL_S = 120 * 24 * 3600   # 120 dias de cleanup para entradas de scheduler
 
 
+# ── Agregados do painel financeiro (ADD atômico na partição PT#) ──────────────
+# Mantidos de forma incremental em cada transição de cobrança, no mesmo espírito do
+# STATS#ALUNOS do dashboard: o painel/dashboard leem O(1), sem fan-out por aluno.
+#   STATS#FINOPEN  → snapshot de recebíveis em aberto (pendente/vencido)
+#   STATS#FINM#YM  → recebido no mês YM (regime de caixa, por data_pagamento)
+
+def _bump_open(personal_id: str, add: dict) -> None:
+    repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_FIN_OPEN, add=add)
+
+
+def _bump_mes(personal_id: str, ano_mes: str, add: dict) -> None:
+    repo.add_and_set(keys.pk_personal(personal_id), keys.sk_stats_fin_mes(ano_mes), add=add)
+
+
+def _remover_de_aberto(personal_id: str, status: str, valor: float) -> None:
+    """Estorna uma cobrança do snapshot de recebíveis, no balde certo (pendente vs vencido)."""
+    if status == "VENCIDA":
+        _bump_open(personal_id, {"vencido_valor": -valor, "vencido_count": -1})
+    else:  # PENDENTE (ou qualquer estado não-pago)
+        _bump_open(personal_id, {"pendente_valor": -valor, "pendente_count": -1})
+
+
 # ── Config de faturamento ─────────────────────────────────────────────────────
 
 def get_config(personal_id: str, aluno_id: str) -> dict | None:
@@ -42,8 +64,8 @@ def set_config(personal_id: str, aluno_id: str, body: dict) -> dict:
     }
     repo.put_item(keys.pk_aluno(aluno_id), keys.SK_COBRANCA_CFG, cfg)
     repo.put_item(keys.pk_personal(personal_id), keys.sk_cobranca_aluno(aluno_id), {
-        "aluno_id": aluno_id, "ativo": cfg["ativo"],
-        "valor": cfg["valor"], "atualizado_em": now,
+        "aluno_id": aluno_id, "ativo": cfg["ativo"], "valor": cfg["valor"],
+        "recorrencia": cfg["recorrencia"], "atualizado_em": now,
     })
     if cfg["ativo"]:
         hoje = date.today()
@@ -79,6 +101,174 @@ def listar_cobrancas(personal_id: str, aluno_id: str,
     return result, next_cursor
 
 
+# ── Painel financeiro do personal (visão de carteira) ─────────────────────────
+
+def _ym_offset(d: date, meses_atras: int) -> str:
+    y, m = d.year, d.month - meses_atras
+    while m <= 0:
+        m += 12
+        y -= 1
+    return f"{y:04d}-{m:02d}"
+
+
+def _iter_ponteiros_alunos(personal_id: str) -> list[dict]:
+    """Ponteiros ALUNO# na partição PT# — carregam aluno_id/nome, sem GetItem de perfil."""
+    return repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.sk_aluno_pointer(""))
+
+
+def _cobrancas_do_aluno(aluno_id: str) -> list[dict]:
+    # begins_with("COBRANCA#") pega só cobranças reais (CONFIG/IDX usam underscore).
+    return repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.COBRANCA_PREFIX)
+
+
+def mrr(personal_id: str) -> float:
+    """Receita recorrente mensal — soma das mensalidades ativas (ANUAL vira /12).
+    1 query na partição-ponteiro PT#/COBRANCA_ALUNO#, sem fan-out por aluno."""
+    total = 0.0
+    for p in repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.COBRANCA_ALUNO_PREFIX):
+        if not p.get("ativo"):
+            continue
+        valor = float(p.get("valor", 0) or 0)
+        total += valor / 12 if p.get("recorrencia") == "ANUAL" else valor
+    return round(total, 2)
+
+
+_STATS_FIN_VER = 1   # bump se o esquema do agregado mudar (força re-backfill)
+
+
+def _backfill_stats(personal_id: str) -> dict:
+    """Recalcula os agregados por fan-out (1x, quando o snapshot não existe/está desatualizado
+    — personal legado ou migração). Persiste STATS#FINOPEN (com marcador de versão) e
+    STATS#FINM#YM. Mesma ideia do lazy-init de STATS#ALUNOS no dashboard."""
+    aberto = {"pendente_valor": 0.0, "pendente_count": 0, "vencido_valor": 0.0,
+              "vencido_count": 0, "v": _STATS_FIN_VER}
+    por_mes: dict[str, dict] = {}
+    for ptr in _iter_ponteiros_alunos(personal_id):
+        aluno_id = ptr.get("aluno_id")
+        if not aluno_id:
+            continue
+        for c in _cobrancas_do_aluno(aluno_id):
+            if c.get("personal_id") != personal_id:
+                continue
+            status = c.get("status")
+            valor = float(c.get("valor", 0) or 0)
+            if status == "PENDENTE":
+                aberto["pendente_valor"] += valor
+                aberto["pendente_count"] += 1
+            elif status == "VENCIDA":
+                aberto["vencido_valor"] += valor
+                aberto["vencido_count"] += 1
+            elif status == "PAGA" and c.get("data_pagamento"):
+                ym = str(c["data_pagamento"])[:7]
+                m = por_mes.setdefault(ym, {"recebido_valor": 0.0, "pago_count": 0, "mp_taxa": 0.0})
+                m["recebido_valor"] += valor
+                m["pago_count"] += 1
+                if c.get("mp_taxa") is not None:
+                    m["mp_taxa"] += float(c["mp_taxa"])
+    repo.put_item(keys.pk_personal(personal_id), keys.SK_STATS_FIN_OPEN, aberto)
+    for ym, m in por_mes.items():
+        repo.put_item(keys.pk_personal(personal_id), keys.sk_stats_fin_mes(ym), m)
+    return aberto
+
+
+def _ensure_aberto(personal_id: str) -> dict:
+    """Snapshot de recebíveis pronto para leitura O(1). Faz backfill 1x se o item não existe
+    ou está parcial (um bump incremental pode tê-lo criado sem o marcador de versão) — evita
+    servir números incompletos de um personal legado."""
+    aberto = repo.get_item(keys.pk_personal(personal_id), keys.SK_STATS_FIN_OPEN)
+    if aberto is None or aberto.get("v") != _STATS_FIN_VER:
+        aberto = _backfill_stats(personal_id)
+    return aberto
+
+
+def dashboard_bloco(personal_id: str) -> dict:
+    """Bloco financeiro do dashboard (bounded): snapshot O(1) + recebido do mês + MRR.
+    Faz backfill 1x na primeira leitura, igual ao lazy-init de STATS#ALUNOS."""
+    aberto = _ensure_aberto(personal_id)
+    mes_item = repo.get_item(keys.pk_personal(personal_id),
+                             keys.sk_stats_fin_mes(date.today().strftime("%Y-%m"))) or {}
+    return {
+        "recebido_valor": float(mes_item.get("recebido_valor", 0) or 0),
+        "a_receber_valor": float(aberto.get("pendente_valor", 0) or 0),
+        "vencido_valor": float(aberto.get("vencido_valor", 0) or 0),
+        "vencido_count": int(aberto.get("vencido_count", 0) or 0),
+        "mrr": mrr(personal_id),
+    }
+
+
+def resumo(personal_id: str, mes: str | None = None) -> dict:
+    """KPIs do painel — leitura O(1) dos agregados (com backfill preguiçoso)."""
+    from app.services import mp_service   # import tardio — evita ciclo
+    hoje = date.today()
+    mes = mes or hoje.strftime("%Y-%m")
+
+    aberto = _ensure_aberto(personal_id)
+    mes_item = repo.get_item(keys.pk_personal(personal_id), keys.sk_stats_fin_mes(mes)) or {}
+
+    hist_raw = repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.STATS_FIN_MES_PREFIX)
+    hist_map = {it["SK"].rsplit("#", 1)[-1]: float(it.get("recebido_valor", 0) or 0) for it in hist_raw}
+    historico = [{"mes": (ym := _ym_offset(hoje, i)), "recebido": hist_map.get(ym, 0.0)}
+                 for i in range(11, -1, -1)]
+
+    recebido = float(mes_item.get("recebido_valor", 0) or 0)
+    taxa = float(mes_item.get("mp_taxa", 0) or 0)
+    mp_conf = mp_service.is_configured(personal_id)
+    return {
+        "mes": mes,
+        "recebido_valor": recebido,
+        "pago_count": int(mes_item.get("pago_count", 0) or 0),
+        "a_receber_valor": float(aberto.get("pendente_valor", 0) or 0),
+        "pendente_count": int(aberto.get("pendente_count", 0) or 0),
+        "vencido_valor": float(aberto.get("vencido_valor", 0) or 0),
+        "vencido_count": int(aberto.get("vencido_count", 0) or 0),
+        "mrr": mrr(personal_id),
+        "mp_configurado": mp_conf,
+        # Líquido = recebido - taxas MP (pagamentos manuais não têm taxa, entram cheios).
+        "mp_liquido": round(recebido - taxa, 2) if mp_conf else None,
+        "mp_taxa": taxa if mp_conf else None,
+        "historico": historico,
+    }
+
+
+def listar_recebiveis(personal_id: str, status: str | None = None, limit: int = 200) -> list[dict]:
+    """Cobranças em aberto (pendentes/vencidas) de toda a carteira, com nome do aluno,
+    ordenadas por vencimento (mais atrasadas primeiro). Fan-out bounded — página aberta
+    deliberadamente, não no caminho do dashboard."""
+    alvo = {status} if status else {"PENDENTE", "VENCIDA"}
+    out: list[dict] = []
+    for ptr in _iter_ponteiros_alunos(personal_id):
+        aluno_id, nome = ptr.get("aluno_id"), ptr.get("nome", "Aluno")
+        if not aluno_id:
+            continue
+        for c in _cobrancas_do_aluno(aluno_id):
+            if c.get("personal_id") != personal_id or c.get("status") not in alvo:
+                continue
+            cc = repo.clean(c)
+            cc["ref"] = c["SK"]
+            cc["aluno_nome"] = nome
+            out.append(cc)
+    out.sort(key=lambda x: x.get("vencimento") or "")
+    return out[:limit]
+
+
+def listar_pagamentos_recentes(personal_id: str, limit: int = 20) -> list[dict]:
+    """Últimos pagamentos confirmados da carteira (aluno, valor, data, forma). Fan-out bounded."""
+    out: list[dict] = []
+    for ptr in _iter_ponteiros_alunos(personal_id):
+        aluno_id, nome = ptr.get("aluno_id"), ptr.get("nome", "Aluno")
+        if not aluno_id:
+            continue
+        for c in repo.query_pk_last_n(keys.pk_aluno(aluno_id), keys.COBRANCA_PREFIX, 12):
+            if c.get("personal_id") != personal_id:
+                continue
+            if c.get("status") == "PAGA" and c.get("data_pagamento"):
+                cc = repo.clean(c)
+                cc["aluno_nome"] = nome
+                out.append(cc)
+    out.sort(key=lambda x: x.get("data_pagamento") or "", reverse=True)
+    return out[:limit]
+
+
 # ── Criação manual ────────────────────────────────────────────────────────────
 
 def criar_cobranca_manual(personal_id: str, aluno_id: str, body: dict) -> dict:
@@ -99,6 +289,7 @@ def criar_cobranca_manual(personal_id: str, aluno_id: str, body: dict) -> dict:
     repo.put_item(keys.pk_aluno(aluno_id), sk, item)
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_cobranca_idx(cid),
                   {"cobranca_id": cid, "sk": sk, "personal_id": personal_id})
+    _bump_open(personal_id, {"pendente_valor": float(body["valor"]), "pendente_count": 1})
     # Agenda transição para VENCIDA no dia do vencimento
     _agendar_vencer(aluno_id, cid, personal_id, vencimento)
     item["ref"] = sk
@@ -108,9 +299,15 @@ def criar_cobranca_manual(personal_id: str, aluno_id: str, body: dict) -> dict:
 # ── Registrar pagamento (manual) ──────────────────────────────────────────────
 
 def registrar_pagamento(personal_id: str, aluno_id: str, cobranca_id: str, body: dict) -> dict | None:
+    """Marca uma cobrança como PAGA. Caminho único para pagamento manual e via PIX/MP
+    (o webhook do Mercado Pago também chama aqui, passando mp_valor_liquido/mp_taxa)."""
     sk = _lookup_sk(aluno_id, cobranca_id)
     if not sk:
         return None
+    atual = repo.get_item(keys.pk_aluno(aluno_id), sk)
+    if not atual or atual.get("personal_id") != personal_id:
+        return None
+    ja_paga = atual.get("status") == "PAGA"
     fields = {
         "status": "PAGA",
         "forma_pagamento": body.get("forma_pagamento", "MANUAL"),
@@ -119,15 +316,28 @@ def registrar_pagamento(personal_id: str, aluno_id: str, cobranca_id: str, body:
         "notas": body.get("notas"),
         "atualizado_em": now_iso(),
     }
+    mp_liquido = body.get("mp_valor_liquido")
+    mp_taxa = body.get("mp_taxa")
+    if mp_liquido is not None:
+        fields["mp_valor_liquido"] = mp_liquido
+    if mp_taxa is not None:
+        fields["mp_taxa"] = mp_taxa
     updated = repo.update_item_if_exists(keys.pk_aluno(aluno_id), sk, fields)
-    if updated:
-        updated = repo.clean(updated)
-        updated["ref"] = sk
+    if updated and not ja_paga:
+        valor = float(atual.get("valor", 0))
+        _remover_de_aberto(personal_id, atual.get("status"), valor)
+        add = {"recebido_valor": valor, "pago_count": 1}
+        if mp_taxa is not None:
+            add["mp_taxa"] = float(mp_taxa)
+        _bump_mes(personal_id, str(body["data_pagamento"])[:7], add)
         aluno = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE) or {}
         notif_service.criar(personal_id, "COBRANCA_PAGA",
             f"Pagamento registrado — {aluno.get('nome', 'Aluno')}",
             f"Cobrança de {aluno.get('nome', 'Aluno')} marcada como paga.",
             aluno_id=aluno_id)
+    if updated:
+        updated = repo.clean(updated)
+        updated["ref"] = sk
     return updated
 
 
@@ -144,6 +354,7 @@ def cancelar_cobranca(personal_id: str, aluno_id: str, cobranca_id: str) -> bool
         return False  # não cancela cobranças pagas
     repo.delete_item(keys.pk_aluno(aluno_id), sk)
     repo.delete_item(keys.pk_aluno(aluno_id), keys.sk_cobranca_idx(cobranca_id))
+    _remover_de_aberto(personal_id, item.get("status"), float(item.get("valor", 0)))
     return True
 
 
@@ -173,8 +384,12 @@ def _marcar_vencida(aluno_id: str, cobranca_id: str, vencimento_str: str, person
         return  # já paga ou inexistente
     repo.update_item_if_exists(keys.pk_aluno(aluno_id), sk,
                                 {"status": "VENCIDA", "atualizado_em": now_iso()})
-    aluno = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE) or {}
     valor = float(item.get("valor", 0))
+    _bump_open(personal_id, {
+        "pendente_valor": -valor, "pendente_count": -1,
+        "vencido_valor": valor, "vencido_count": 1,
+    })
+    aluno = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE) or {}
     venc_fmt = date.fromisoformat(vencimento_str).strftime("%d/%m/%Y")
     notif_service.criar(personal_id, "COBRANCA_VENCIDA",
         f"Cobrança vencida — {aluno.get('nome', 'Aluno')}",
@@ -215,6 +430,7 @@ def _criar_cobranca_pendente(aluno_id: str, personal_id: str, valor: float,
     repo.put_item(keys.pk_aluno(aluno_id), sk, item)
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_cobranca_idx(cid),
                   {"cobranca_id": cid, "sk": sk, "personal_id": personal_id})
+    _bump_open(personal_id, {"pendente_valor": float(valor), "pendente_count": 1})
     _agendar_vencer(aluno_id, cid, personal_id, vencimento)
     aluno = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE) or {}
     aluno_nome = aluno.get("nome", "Aluno")
