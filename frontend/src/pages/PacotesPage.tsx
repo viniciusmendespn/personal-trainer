@@ -543,6 +543,32 @@ function CriarPacoteTab() {
     })
   }
 
+  // Selecionar todas as rotinas elegíveis marca também os treinos delas (mesmo efeito
+  // cascata do checkbox individual de rotina).
+  function selecionarRotinas(items: typeof rotinas, marcar: boolean) {
+    const elegiveis = (items ?? []).filter((r) => !isBloqueado(r))
+    setRotinasSel((prev) => {
+      const next = new Set(prev)
+      for (const r of elegiveis) {
+        if (marcar) next.add(r.rotina_id)
+        else next.delete(r.rotina_id)
+      }
+      return next
+    })
+    if (marcar) {
+      setTemplatesSel((prev) => {
+        const next = new Set(prev)
+        for (const r of elegiveis) {
+          for (const tid of r.template_ids ?? []) {
+            const tpl = templates?.find((t) => t.template_id === tid)
+            if (tpl && !isBloqueado(tpl)) next.add(tid)
+          }
+        }
+        return next
+      })
+    }
+  }
+
   const bibliotecaById = useMemo(() => {
     const m = new Map<string, ExLib>()
     for (const e of biblioteca ?? []) m.set(e.exlib_id, e)
@@ -692,7 +718,26 @@ function CriarPacoteTab() {
         ) : !templates || templates.length === 0 ? (
           <p className="text-xs text-text-secondary">Nenhum template disponível.</p>
         ) : (
-          <div className="space-y-1 max-h-52 overflow-y-auto">
+          <>
+            <div className="flex items-center gap-3 text-xs mb-2">
+              <button
+                type="button"
+                onClick={() => setTemplatesSel(new Set(templates.filter((t) => !isBloqueado(t)).map((t) => t.template_id)))}
+                className="text-accent hover:underline"
+              >
+                Selecionar todos ({templates.filter((t) => !isBloqueado(t)).length})
+              </button>
+              {templatesSel.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setTemplatesSel(new Set())}
+                  className="text-text-secondary hover:text-text hover:underline"
+                >
+                  Limpar seleção
+                </button>
+              )}
+            </div>
+            <div className="space-y-1 max-h-52 overflow-y-auto">
             {templates.map((t) => {
               const bloqueado = isBloqueado(t)
               const selecionado = templatesSel.has(t.template_id)
@@ -713,7 +758,8 @@ function CriarPacoteTab() {
                 </label>
               )
             })}
-          </div>
+            </div>
+          </>
         )}
       </Card>
 
@@ -732,7 +778,26 @@ function CriarPacoteTab() {
         ) : !rotinas || rotinas.length === 0 ? (
           <p className="text-xs text-text-secondary">Nenhuma rotina disponível.</p>
         ) : (
-          <div className="space-y-1 max-h-52 overflow-y-auto">
+          <>
+            <div className="flex items-center gap-3 text-xs mb-2">
+              <button
+                type="button"
+                onClick={() => selecionarRotinas(rotinas, true)}
+                className="text-accent hover:underline"
+              >
+                Selecionar todas ({rotinas.filter((r) => !isBloqueado(r)).length})
+              </button>
+              {rotinasSel.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setRotinasSel(new Set())}
+                  className="text-text-secondary hover:text-text hover:underline"
+                >
+                  Limpar seleção
+                </button>
+              )}
+            </div>
+            <div className="space-y-1 max-h-52 overflow-y-auto">
             {rotinas.map((r) => {
               const bloqueado = isBloqueado(r)
               const selecionado = rotinasSel.has(r.rotina_id)
@@ -767,7 +832,8 @@ function CriarPacoteTab() {
                 </label>
               )
             })}
-          </div>
+            </div>
+          </>
         )}
       </Card>
 
