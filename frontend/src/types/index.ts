@@ -167,6 +167,7 @@ export interface ExLib {
   substitutos?: ExercicioSubstituto[]
   pacote_id?: string
   ativo?: boolean
+  origem_licenciada?: boolean
 }
 
 export interface ArquivoConhecimento {

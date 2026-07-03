@@ -1,11 +1,12 @@
-import { useRef, useState } from 'react'
-import { Package, Upload, ChevronDown, ChevronRight, Trash2, ToggleLeft, ToggleRight, Bot, Download, Lock, Unlock } from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
+import { Package, Upload, ChevronDown, ChevronRight, Trash2, ToggleLeft, ToggleRight, Bot, Download, Lock, Unlock, Search } from 'lucide-react'
 import { usePacotes, useImportarPacote, useImportarRascunho, useTogglePacote, useToggleItem, useRemoverPacote, useExportarPacote, useGerarPacote, useGerarPacoteLicenciado } from '../hooks/usePacotes'
 import { useTemplates } from '../hooks/useTemplates'
 import { useRotinas } from '../hooks/useRotinas'
+import { useBiblioteca } from '../hooks/useDominio'
 import { Button, Card, Spinner, EmptyState, Modal, Badge, Tabs, useToast, useConfirm } from '../components/ui'
 import { downloadJson } from '../api/pacotes'
-import type { ImportarPacoteResponse, PacoteInstalado } from '../types'
+import type { ExLib, ImportarPacoteResponse, PacoteInstalado } from '../types'
 
 // ── Tela de importação ────────────────────────────────────────────────────────
 
@@ -451,6 +452,7 @@ function CriarPacoteTab() {
   const { data: pacotes } = usePacotes()
   const { data: templates, isLoading: loadingTmpl } = useTemplates(false)
   const { data: rotinas, isLoading: loadingRot } = useRotinas(false)
+  const { data: biblioteca, isLoading: loadingBib } = useBiblioteca()
   const gerar = useGerarPacote()
   const gerarLicenciado = useGerarPacoteLicenciado()
   const { show: toast } = useToast()
@@ -461,6 +463,9 @@ function CriarPacoteTab() {
   const [versao, setVersao] = useState('1.0')
   const [templatesSel, setTemplatesSel] = useState<Set<string>>(new Set())
   const [rotinasSel, setRotinasSel] = useState<Set<string>>(new Set())
+  const [exerciciosSel, setExerciciosSel] = useState<Set<string>>(new Set())
+  const [exQuery, setExQuery] = useState('')
+  const [gruposFechados, setGruposFechados] = useState<Set<string>>(new Set())
   const [licenciadoMode, setLicenciadoMode] = useState(false)
   const [maxUsos, setMaxUsos] = useState(1)
 
@@ -484,6 +489,38 @@ function CriarPacoteTab() {
     return next
   }
 
+  // Exercícios da biblioteca: filtro por busca + agrupamento por grupo muscular
+  const exerciciosFiltrados = useMemo(() => {
+    const q = exQuery.trim().toLowerCase()
+    const items = biblioteca ?? []
+    if (!q) return items
+    return items.filter(
+      (e) => e.nome.toLowerCase().includes(q) || (e.grupo ?? '').toLowerCase().includes(q),
+    )
+  }, [biblioteca, exQuery])
+
+  const gruposExercicios = useMemo(() => {
+    const map = new Map<string, ExLib[]>()
+    for (const e of exerciciosFiltrados) {
+      const g = e.grupo?.trim() || 'Sem grupo'
+      if (!map.has(g)) map.set(g, [])
+      map.get(g)!.push(e)
+    }
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b, 'pt-BR'))
+  }, [exerciciosFiltrados])
+
+  function selecionarExercicios(items: ExLib[], marcar: boolean) {
+    setExerciciosSel((prev) => {
+      const next = new Set(prev)
+      for (const e of items) {
+        if (isBloqueado(e)) continue
+        if (marcar) next.add(e.exlib_id)
+        else next.delete(e.exlib_id)
+      }
+      return next
+    })
+  }
+
   const baseBody = {
     nome: nome.trim(),
     descricao: descricao.trim(),
@@ -491,12 +528,15 @@ function CriarPacoteTab() {
     versao: versao.trim() || '1.0',
     template_ids: [...templatesSel],
     rotina_ids: [...rotinasSel],
+    exlib_ids: [...exerciciosSel],
   }
 
   const errMsgs: Record<string, string> = {
     PACOTE_LICENCIADO_NAO_PERMITIDO: 'Um dos itens selecionados pertence a um pacote licenciado.',
     TEMPLATE_NAO_ENCONTRADO: 'Template não encontrado.',
     ROTINA_NAO_ENCONTRADA: 'Rotina não encontrada.',
+    EXERCICIO_NAO_ENCONTRADO: 'Exercício não encontrado na biblioteca.',
+    SELECAO_VAZIA: 'Selecione ao menos um template, rotina ou exercício.',
     PACOTE_SECRET_NAO_CONFIGURADO: 'Configuração do servidor incompleta. Contate o suporte.',
   }
 
@@ -682,10 +722,121 @@ function CriarPacoteTab() {
         )}
       </Card>
 
+      <Card className="p-5">
+        <p className="text-sm font-medium mb-1">
+          Exercícios da biblioteca{' '}
+          {exerciciosSel.size > 0 && (
+            <span className="text-xs text-accent ml-1">({exerciciosSel.size} selecionado{exerciciosSel.size > 1 ? 's' : ''})</span>
+          )}
+        </p>
+        <p className="text-xs text-text-secondary mb-3">
+          Adicione exercícios avulsos ao pacote — dá para gerar um pacote só de exercícios, sem templates ou rotinas.
+        </p>
+        {loadingBib ? (
+          <div className="flex justify-center py-4"><Spinner /></div>
+        ) : !biblioteca || biblioteca.length === 0 ? (
+          <p className="text-xs text-text-secondary">Nenhum exercício na biblioteca.</p>
+        ) : (
+          <div className="space-y-2">
+            {/* Busca + ações em massa */}
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+              <input
+                value={exQuery}
+                onChange={(e) => setExQuery(e.target.value)}
+                placeholder="Buscar por nome ou grupo muscular…"
+                className="w-full rounded-lg border border-border bg-surface-secondary pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+            </div>
+            <div className="flex items-center gap-3 text-xs">
+              <button
+                type="button"
+                onClick={() => selecionarExercicios(exerciciosFiltrados, true)}
+                className="text-accent hover:underline"
+              >
+                Selecionar todos{exQuery.trim() ? ` (${exerciciosFiltrados.length} filtrados)` : ` (${exerciciosFiltrados.length})`}
+              </button>
+              {exerciciosSel.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setExerciciosSel(new Set())}
+                  className="text-text-secondary hover:text-text hover:underline"
+                >
+                  Limpar seleção
+                </button>
+              )}
+            </div>
+
+            {/* Grupos colapsáveis com checkbox de grupo */}
+            <div className="max-h-72 overflow-y-auto space-y-1 pr-1">
+              {gruposExercicios.length === 0 && (
+                <p className="text-xs text-text-muted py-2">Nenhum exercício corresponde à busca.</p>
+              )}
+              {gruposExercicios.map(([grupo, items]) => {
+                const elegiveis = items.filter((e) => !isBloqueado(e))
+                const selecionadosNoGrupo = elegiveis.filter((e) => exerciciosSel.has(e.exlib_id)).length
+                const todosSel = elegiveis.length > 0 && selecionadosNoGrupo === elegiveis.length
+                const parcial = selecionadosNoGrupo > 0 && !todosSel
+                const fechado = gruposFechados.has(grupo)
+                return (
+                  <div key={grupo} className="rounded-lg border border-border">
+                    <div className="flex items-center gap-2 px-2 py-1.5 bg-surface-secondary/60 rounded-t-lg">
+                      <input
+                        type="checkbox"
+                        checked={todosSel}
+                        disabled={elegiveis.length === 0}
+                        ref={(el) => { if (el) el.indeterminate = parcial }}
+                        onChange={() => selecionarExercicios(items, !todosSel)}
+                        className="accent-accent"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setGruposFechados((prev) => toggleSet(prev, grupo))}
+                        className="flex items-center gap-1.5 flex-1 text-left"
+                      >
+                        {fechado ? <ChevronRight size={14} className="text-text-muted" /> : <ChevronDown size={14} className="text-text-muted" />}
+                        <span className="text-sm font-medium">{grupo}</span>
+                        <span className="text-xs text-text-muted">
+                          {selecionadosNoGrupo}/{items.length}
+                        </span>
+                      </button>
+                    </div>
+                    {!fechado && (
+                      <div className="py-0.5">
+                        {items.map((e) => {
+                          const bloqueado = isBloqueado(e)
+                          const selecionado = exerciciosSel.has(e.exlib_id)
+                          return (
+                            <label
+                              key={e.exlib_id}
+                              className={`flex items-center gap-3 px-2 py-1 mx-1 rounded-lg cursor-pointer ${bloqueado ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-secondary'}`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selecionado}
+                                disabled={bloqueado}
+                                onChange={() => !bloqueado && setExerciciosSel(toggleSet(exerciciosSel, e.exlib_id))}
+                                className="accent-accent"
+                              />
+                              <span className="text-sm flex-1">{e.nome}</span>
+                              {bloqueado && <Badge tone="accent" className="text-xs">Licenciado</Badge>}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </Card>
+
       <div className="flex justify-end">
         <Button
           onClick={handleGerar}
-          disabled={!nome.trim() || (templatesSel.size === 0 && rotinasSel.size === 0) || isPending}
+          disabled={!nome.trim() || (templatesSel.size === 0 && rotinasSel.size === 0 && exerciciosSel.size === 0) || isPending}
         >
           {isPending ? (
             <span className="flex items-center gap-2"><Spinner className="w-4 h-4" /> Gerando...</span>

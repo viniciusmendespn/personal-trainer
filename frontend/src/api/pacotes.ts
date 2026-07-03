@@ -8,6 +8,7 @@ export interface GerarPacoteBody {
   versao?: string
   template_ids: string[]
   rotina_ids: string[]
+  exlib_ids: string[]
 }
 
 export interface GerarPacoteLicenciadoBody extends GerarPacoteBody {

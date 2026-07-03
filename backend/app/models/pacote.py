@@ -123,6 +123,7 @@ class GerarPacoteBody(BaseModel):
     versao: str = "1.0"
     template_ids: list[str] = Field(default_factory=list)
     rotina_ids: list[str] = Field(default_factory=list)
+    exlib_ids: list[str] = Field(default_factory=list)   # exercícios avulsos da biblioteca
 
 
 class GerarPacoteLicenciadoBody(GerarPacoteBody):

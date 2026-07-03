@@ -609,11 +609,18 @@ def gerar_pacote(
     versao: str,
     template_ids: list[str],
     rotina_ids: list[str],
+    exlib_ids: list[str] | None = None,
 ) -> dict:
-    """Gera JSON draft de um novo pacote a partir de templates/rotinas selecionados.
+    """Gera JSON draft de um novo pacote a partir de templates/rotinas selecionados
+    e/ou exercícios avulsos da biblioteca (pacote só-exercícios é válido).
 
     Bloqueia qualquer item de pacote licenciado para evitar plágio.
     """
+    exlib_ids = exlib_ids or []
+    if not template_ids and not rotina_ids and not exlib_ids:
+        raise HTTPException(400, detail={"code": "SELECAO_VAZIA",
+                                         "detail": "Selecione ao menos um template, rotina ou exercício"})
+
     pk_pt = keys.pk_personal(personal_id)
 
     def _assert_nao_licenciado(item: dict, kind: str) -> None:
@@ -653,6 +660,26 @@ def gerar_pacote(
                     "tipo_exercicio": ex.get("tipo_exercicio", "FORCA"),
                     "unidade_reps": ex.get("unidade_reps"),
                     "metrica_direcao": ex.get("metrica_direcao") or "MAIOR",
+                }
+
+    # Exercícios avulsos selecionados direto da biblioteca (dedup por nome com os
+    # derivados de template — quem já está em exercise_info não entra de novo)
+    if exlib_ids:
+        encontrados = repo.batch_get_items([(pk_pt, keys.sk_exlib(i)) for i in exlib_ids])
+        for eid in exlib_ids:
+            item = encontrados.get((pk_pt, keys.sk_exlib(eid)))
+            if not item or item.get("ativo") is False:
+                raise HTTPException(404, detail={"code": "EXERCICIO_NAO_ENCONTRADO", "detail": eid})
+            item = repo.clean(item)
+            _assert_nao_licenciado(item, "Exercício")
+            nl = (item.get("nome") or "").strip().lower()
+            if nl and nl not in exercise_info:
+                exercise_info[nl] = {
+                    "nome": item["nome"].strip(),
+                    "grupo": item.get("grupo"),
+                    "tipo_exercicio": item.get("tipo_exercicio", "FORCA"),
+                    "unidade_reps": item.get("unidade_reps"),
+                    "metrica_direcao": item.get("metrica_direcao") or "MAIOR",
                 }
 
     # Enriquece com dados do ExLib (descricao, recomendacoes, video_url, substitutos)
@@ -705,10 +732,12 @@ def gerar_pacote_licenciado(
     template_ids: list[str],
     rotina_ids: list[str],
     max_usos: int,
+    exlib_ids: list[str] | None = None,
 ) -> dict:
     """Gera pacote licenciado (Opção A): grava o conteúdo no servidor + token de uso único,
     e retorna o arquivo FINO {fmt, pacote_id, token} — sem conteúdo copiável."""
-    draft = gerar_pacote(personal_id, nome, descricao, autor, versao, template_ids, rotina_ids)
+    draft = gerar_pacote(personal_id, nome, descricao, autor, versao, template_ids, rotina_ids,
+                         exlib_ids)
     pacote_id = draft["pacote"]["id"]
 
     # Conteúdo real fica no servidor (legível entre personais só na importação com token válido)

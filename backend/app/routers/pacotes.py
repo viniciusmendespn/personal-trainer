@@ -44,6 +44,7 @@ def gerar_pacote(
         body.versao,
         body.template_ids,
         body.rotina_ids,
+        body.exlib_ids,
     )
 
 
@@ -61,6 +62,7 @@ def gerar_pacote_licenciado(
         body.template_ids,
         body.rotina_ids,
         body.max_usos,
+        body.exlib_ids,
     )
 
 
