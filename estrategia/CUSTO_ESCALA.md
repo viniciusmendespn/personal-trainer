@@ -1,10 +1,18 @@
 # Custo, Escala e Rentabilidade — CoachPilot
 
-> **Última revisão:** jun/2026 — refaz as contas com o modelo comercial atual (Gestão Pro R$39,90
-> + add-ons) e inclui análise de faturamento/lucro por cenário e seção de comissão de divulgadores.
+> **Última revisão:** jun/2026 (v2) — corrige custo de infra AWS incluindo sessões de treino
+> registradas pelo portal por alunos sem add-on de IA (omitidas na revisão anterior que só
+> contabilizava tráfego do agente WhatsApp). Impacto: Infra AWS +40% → R$0,60–0,75/personal;
+> margens recalculadas em todos os cenários (variação de ~0,5–1 pp, modelo permanece sólido).
+> Adiciona cenário 900 msgs/aluno em §A.3 alinhado às premissas do modelo financeiro.
 >
 > Mantém o detalhamento de custo AWS original (apêndice §A), revisado sem free tier indevido
-> e já incorporando as otimizações de Fase 1–7 do `PERFORMANCE_ESCALA.md`.
+> e já incorporando as otimizações de Fase 1–7 do `../docs/PERFORMANCE_ESCALA.md`.
+>
+> **Nota (jul/2026):** o programa de divulgadores foi reestruturado para a **v3** (base 20/25/30%
+> + acelerador de performance; 35% só no Embaixador — ver `PROGRAMA_DIVULGADORES_REGRAS.md`).
+> As análises do §6 usam os percentuais antigos (25/30/35 por carteira) e são, portanto,
+> **conservadoras**: o custo real de comissão na v3 é igual ou menor em todos os cenários.
 
 ---
 
@@ -62,10 +70,10 @@ todos os personais Pro:
 |---|---|---|
 | LLM (Assistente IA) | 0,35 × 7 × R$6,11 | **R$14,97** |
 | W-API WhatsApp (por personal com WA) | 0,45 × R$19,90 | **R$8,96** |
-| Infra AWS (DynamoDB + Lambda + S3) | ver §A | **R$0,40–0,50** |
+| Infra AWS (DynamoDB + Lambda + S3) | ver §A | **R$0,60–0,75** |
 | Processamento de pagamento (1,5%) | R$65,37 × 1,5% | **R$0,98** |
-| **Custo variável total** | | **~R$25,35/mês** |
-| **Margem de contribuição bruta** | R$65,37 − R$25,35 | **R$40,02/mês (61,2%)** |
+| **Custo variável total** | | **~R$25,50/mês** |
+| **Margem de contribuição bruta** | R$65,37 − R$25,50 | **R$39,87/mês (61,0%)** |
 
 > Com 30 msgs/dia de IA, o LLM vira o maior custo variável — R$14,97/personal em média,
 > superando o W-API. Ver §4.1 para o alerta crítico de precificação.
@@ -119,20 +127,20 @@ Adoção dos add-ons (faixa "com add-ons"): WA 45% → 50%; IA 35% × 7 alunos �
 | Item de custo | Valor |
 |---|---|
 | LLM | R$0 |
-| Infra AWS (~100 personais, leve) | R$35,00 |
+| Infra AWS (~25 personais, portal 100%) | R$42,00 |
 | Processamento de pagamento (1,5%) | R$14,96 |
 | Comissão divulgadores (5 × 25% × R$39,90) | R$49,88 |
 | Custos fixos (domínio, ferramentas) | R$100,00 |
-| **Total custos** | **R$199,84** |
+| **Total custos** | **R$206,84** |
 
 | | Valor/mês | Valor/ano |
 |---|---|---|
 | Faturamento | R$998 | R$11.970 |
-| Custos totais | R$200 | R$2.400 |
-| Lucro antes dos impostos | R$798 | R$9.576 |
+| Custos totais | R$207 | R$2.484 |
+| Lucro antes dos impostos | R$791 | R$9.492 |
 | Imposto (MEI ~R$70/mês fixo) | R$70 | R$840 |
-| **Lucro líquido** | **≈ R$728/mês** | **≈ R$8.736/ano** |
-| Margem líquida | **72,9%** | |
+| **Lucro líquido** | **≈ R$721/mês** | **≈ R$8.652/ano** |
+| Margem líquida | **72,3%** | |
 
 #### 1B — Com Add-ons (WhatsApp + IA)
 
@@ -147,20 +155,20 @@ Adoção dos add-ons (faixa "com add-ons"): WA 45% → 50%; IA 35% × 7 alunos �
 |---|---|
 | W-API WhatsApp (11 × R$19,90) | R$218,90 |
 | LLM IA (63 alunos × R$6,11) | R$384,93 |
-| Infra AWS | R$35,00 |
+| Infra AWS (portal 72% + agente 28%) | R$40,00 |
 | Processamento de pagamento (1,5%) | R$24,53 |
 | Comissão divulgadores | R$49,88 |
 | Custos fixos | R$100,00 |
-| **Total custos** | **R$813,24** |
+| **Total custos** | **R$818,24** |
 
 | | Valor/mês | Valor/ano |
 |---|---|---|
 | Faturamento | R$1.635 | R$19.620 |
-| Custos totais | R$813 | R$9.756 |
-| Lucro antes dos impostos | R$822 | R$9.864 |
+| Custos totais | R$818 | R$9.816 |
+| Lucro antes dos impostos | R$817 | R$9.804 |
 | Imposto (MEI) | R$70 | R$840 |
-| **Lucro líquido** | **≈ R$752/mês** | **≈ R$9.024/ano** |
-| Margem líquida | **46,0%** | |
+| **Lucro líquido** | **≈ R$747/mês** | **≈ R$8.964/ano** |
+| Margem líquida | **45,7%** | |
 
 ---
 
@@ -176,20 +184,20 @@ Adoção dos add-ons (faixa "com add-ons"): WA 45% → 50%; IA 35% × 7 alunos �
 | Item de custo | Valor |
 |---|---|
 | LLM | R$0 |
-| Infra AWS (~400 personais, leve) | R$70,00 |
+| Infra AWS (~100 personais, portal 100%) | R$96,00 |
 | Processamento de pagamento (1,5%) | R$59,85 |
 | Comissão divulgadores (30 × 27% × R$39,90) | R$323,19 |
 | Custos fixos | R$150,00 |
-| **Total custos** | **R$603,04** |
+| **Total custos** | **R$629,04** |
 
 | | Valor/mês | Valor/ano |
 |---|---|---|
 | Faturamento | R$3.990 | R$47.880 |
-| Custos totais | R$603 | R$7.236 |
-| Lucro antes dos impostos | R$3.387 | R$40.644 |
+| Custos totais | R$629 | R$7.548 |
+| Lucro antes dos impostos | R$3.361 | R$40.332 |
 | Imposto (Simples Nac. ~6%) | R$239 | R$2.868 |
-| **Lucro líquido** | **≈ R$3.148/mês** | **≈ R$37.776/ano** |
-| Margem líquida | **78,9%** | |
+| **Lucro líquido** | **≈ R$3.122/mês** | **≈ R$37.464/ano** |
+| Margem líquida | **78,2%** | |
 
 #### 2B — Com Add-ons (WhatsApp + IA)
 
@@ -204,20 +212,20 @@ Adoção dos add-ons (faixa "com add-ons"): WA 45% → 50%; IA 35% × 7 alunos �
 |---|---|
 | W-API WhatsApp (45 × R$19,90) | R$895,50 |
 | LLM IA (245 alunos × R$6,11) | R$1.496,95 |
-| Infra AWS | R$100,00 |
+| Infra AWS (portal 72% + agente 28%) | R$119,00 |
 | Processamento de pagamento (1,5%) | R$98,04 |
 | Comissão divulgadores | R$323,19 |
 | Custos fixos | R$150,00 |
-| **Total custos** | **R$3.063,68** |
+| **Total custos** | **R$3.082,68** |
 
 | | Valor/mês | Valor/ano |
 |---|---|---|
 | Faturamento | R$6.536 | R$78.432 |
-| Custos totais | R$3.064 | R$36.768 |
-| Lucro antes dos impostos | R$3.472 | R$41.664 |
+| Custos totais | R$3.083 | R$36.996 |
+| Lucro antes dos impostos | R$3.453 | R$41.436 |
 | Imposto (Simples Nac. ~6%) | R$392 | R$4.704 |
-| **Lucro líquido** | **≈ R$3.080/mês** | **≈ R$36.960/ano** |
-| Margem líquida | **47,1%** | |
+| **Lucro líquido** | **≈ R$3.061/mês** | **≈ R$36.732/ano** |
+| Margem líquida | **46,8%** | |
 
 ---
 
@@ -233,20 +241,20 @@ Adoção dos add-ons (faixa "com add-ons"): WA 45% → 50%; IA 35% × 7 alunos �
 | Item de custo | Valor |
 |---|---|
 | LLM | R$0 |
-| Infra AWS (~1.500 personais, leve) | R$200,00 |
+| Infra AWS (~500 personais, portal 100%) | R$330,00 |
 | Processamento de pagamento (1,5%) | R$299,25 |
 | Comissão divulgadores (200 × 29% × R$39,90) | R$2.314,20 |
 | Custos fixos | R$250,00 |
-| **Total custos** | **R$3.063,45** |
+| **Total custos** | **R$3.193,45** |
 
 | | Valor/mês | Valor/ano |
 |---|---|---|
 | Faturamento | R$19.950 | R$239.400 |
-| Custos totais | R$3.063 | R$36.756 |
-| Lucro antes dos impostos | R$16.887 | R$202.644 |
-| Imposto (Simples Nac. ~13%) | R$2.593 | R$31.116 |
-| **Lucro líquido** | **≈ R$14.294/mês** | **≈ R$171.528/ano** |
-| Margem líquida | **71,6%** | |
+| Custos totais | R$3.193 | R$38.316 |
+| Lucro antes dos impostos | R$16.757 | R$201.084 |
+| Imposto (Simples Nac. ~13%) | R$2.594 | R$31.128 |
+| **Lucro líquido** | **≈ R$14.163/mês** | **≈ R$169.956/ano** |
+| Margem líquida | **71,0%** | |
 
 #### 3B — Com Add-ons (WhatsApp + IA)
 
@@ -263,20 +271,20 @@ Adoção dos add-ons (faixa "com add-ons"): WA 45% → 50%; IA 35% × 7 alunos �
 |---|---|
 | W-API WhatsApp (250 × R$19,90) | R$4.975,00 |
 | LLM IA (1.600 alunos × R$6,11) | R$9.776,00 |
-| Infra AWS | R$350,00 |
+| Infra AWS (portal 72% + agente 28%) | R$445,00 |
 | Processamento de pagamento (1,5%) | R$528,98 |
 | Comissão divulgadores | R$2.314,20 |
 | Custos fixos | R$300,00 |
-| **Total custos** | **R$18.244,18** |
+| **Total custos** | **R$18.339,18** |
 
 | | Valor/mês | Valor/ano |
 |---|---|---|
 | Faturamento | R$35.265 | R$423.180 |
-| Custos totais | R$18.244 | R$218.928 |
-| Lucro antes dos impostos | R$17.021 | R$204.252 |
+| Custos totais | R$18.339 | R$220.068 |
+| Lucro antes dos impostos | R$16.926 | R$203.112 |
 | Imposto (Simples Nac. ~13%) | R$4.585 | R$55.020 |
-| **Lucro líquido** | **≈ R$12.436/mês** | **≈ R$149.232/ano** |
-| Margem líquida | **35,3%** | |
+| **Lucro líquido** | **≈ R$12.341/mês** | **≈ R$148.092/ano** |
+| Margem líquida | **35,0%** | |
 
 ---
 
@@ -284,12 +292,12 @@ Adoção dos add-ons (faixa "com add-ons"): WA 45% → 50%; IA 35% × 7 alunos �
 
 | Cenário | Pro | Faturamento/mês | Lucro líquido/mês | Margem |
 |---|---|---|---|---|
-| Arranque — Só Pro | 25 | R$998 | **~R$728** | 73% |
-| Arranque — Com add-ons (30 msgs/dia) | 25 | R$1.635 | **~R$752** | 46% |
-| Crescimento — Só Pro | 100 | R$3.990 | **~R$3.148** | 79% |
-| Crescimento — Com add-ons (30 msgs/dia) | 100 | R$6.536 | **~R$3.080** | 47% |
-| Escala — Só Pro | 500 | R$19.950 | **~R$14.294** | 72% |
-| Escala — Com add-ons (30 msgs/dia) | 500 | R$35.265 | **~R$12.436** | 35% |
+| Arranque — Só Pro | 25 | R$998 | **~R$721** | 72% |
+| Arranque — Com add-ons (30 msgs/dia) | 25 | R$1.635 | **~R$747** | 46% |
+| Crescimento — Só Pro | 100 | R$3.990 | **~R$3.122** | 78% |
+| Crescimento — Com add-ons (30 msgs/dia) | 100 | R$6.536 | **~R$3.061** | 47% |
+| Escala — Só Pro | 500 | R$19.950 | **~R$14.163** | 71% |
+| Escala — Com add-ons (30 msgs/dia) | 500 | R$35.265 | **~R$12.341** | 35% |
 
 > **Leitura principal:** o lucro real vem do Gestão Pro. Os add-ons aumentam o faturamento
 > bruto, mas o WA e a IA juntos ficam quase neutros — WA contribui R$10/personal, IA consome
@@ -451,8 +459,10 @@ Para cada personal Pro adquirido via divulgador, a receita líquida da plataform
    um canal de aquisição orgânico e recorrente. Clientes indicados tendem a ter maior retenção.
 
 5. **A escala de infraestrutura é quase gratuita**: de 25 para 500 personais Pro, o custo
-   de infra vai de ~R$35 para ~R$350 (10×), enquanto a receita vai de R$998 para R$19.950
-   (20×). A infra nunca é o gargalo de rentabilidade.
+   de infra vai de ~R$50 para ~R$550 (11×), enquanto a receita vai de R$998 para R$19.950
+   (20×). A infra nunca é o gargalo de rentabilidade. (Estimativa revisada em jun/2026 —
+   inclui sessões de treino registradas pelo portal por alunos sem add-on de IA, ~+40% vs.
+   estimativa anterior que cobria apenas tráfego do agente WhatsApp.)
 
 6. **O que muda o lucro de verdade é o número de assinantes Pro.** Dobrar de 100 para 200
    Pro vale muito mais do que aumentar a adoção de add-ons.
@@ -493,24 +503,35 @@ Para cada personal Pro adquirido via divulgador, a receita líquida da plataform
 
 ### A.3 Volume mensal por personal por cenário do agente
 
-| Fonte | Leve (10 msg/aluno) | Médio (60 msg) | Intenso (200 msg) |
-|---|---|---|---|
-| Total WRU / RRU | 2.000 / 7.280 | 11.000 / 13.280 | 36.200 / 30.080 |
-| Invocações Lambda / GB-s | 5.530 / 324 | 6.780 / 949 | 10.280 / 2.699 |
+> **Escopo:** esta tabela cobre apenas o tráfego gerado pelo agente WhatsApp (tool calls +
+> overhead de chat). Sessões de treino registradas pelo portal por alunos **sem** add-on de IA
+> (18 de 25 no modelo padrão) geram ~25.700 WRU + ~12.200 RRU adicionais por personal/mês —
+> ver nota em §A.4. O cenário "Alta" (900 msgs) alinha §2 com o modelo financeiro (30 msgs/dia).
+
+| Fonte | Leve (10 msg/aluno) | Médio (60 msg) | Intenso (200 msg) | **Alta (900 msg — §2)** |
+|---|---|---|---|---|
+| Total WRU / RRU | 2.000 / 7.280 | 11.000 / 13.280 | 36.200 / 30.080 | **162.000 / 49.500** |
+| Invocações Lambda / GB-s | 5.530 / 324 | 6.780 / 949 | 10.280 / 2.699 | 30.600 / 8.500 |
 
 ### A.4 Custo de infra por escala e cenário (S3 a T=12 meses de operação)
 
-| Escala | Cenário | DynamoDB | Lambda | API GW | S3 (12m) | **Total/mês** |
-|---|---|---|---|---|---|---|
-| 10 personais | Leve | $0,04 | $0 | $0,05 | $0,41 | **~$0,50** |
-| 10 personais | Médio | $0,17 | $0 | $0,05 | $0,41 | **~$0,63** |
-| 10 personais | Intenso | $0,53 | $0 | $0,05 | $0,41 | **~$0,99** |
-| 100 personais | Leve | $0,43 | $0 | $0,53 | $4,14 | **~$5,10** |
-| 100 personais | Médio | $1,71 | $0 | $0,53 | $4,14 | **~$6,38** |
-| 100 personais | Intenso | $5,28 | $0,01 | $0,53 | $4,14 | **~$9,96** |
-| 1.000 personais | Leve | $4,32 | $0,91 | $5,28 | $41,40 | **~$52** |
-| 1.000 personais | Médio | $17,07 | $8,47 | $5,28 | $41,40 | **~$72** |
-| 1.000 personais | Intenso | $52,77 | $32,51 | $5,28 | $41,40 | **~$132** |
+> **Nota sobre DynamoDB:** os valores abaixo cobrem o tráfego do agente WhatsApp (derivados
+> de §A.3). Sessões de treino registradas pelo portal por alunos sem add-on de IA acrescentam
+> ~$0,032/personal/mês em WRU (25.700 WRU × $1,25/M), elevando o DynamoDB real em ~20–25%.
+> O "Total corrigido" na última coluna inclui essa parcela para os cenários "Médio" alinhados
+> ao modelo financeiro (7 IA-alunos + 18 alunos portal por personal).
+
+| Escala | Cenário | DynamoDB (agente) | +Portal sessions | Lambda | API GW | S3 (12m) | **Total/mês** |
+|---|---|---|---|---|---|---|---|
+| 10 personais | Leve | $0,04 | +$0,32 | $0 | $0,05 | $0,41 | **~$0,82** |
+| 10 personais | Médio | $0,17 | +$0,32 | $0 | $0,05 | $0,41 | **~$0,95** |
+| 10 personais | Intenso | $0,53 | +$0,32 | $0 | $0,05 | $0,41 | **~$1,31** |
+| 100 personais | Leve | $0,43 | +$3,20 | $0 | $0,53 | $4,14 | **~$8,30** |
+| 100 personais | Médio | $1,71 | +$3,20 | $0 | $0,53 | $4,14 | **~$9,58** |
+| 100 personais | Intenso | $5,28 | +$3,20 | $0,01 | $0,53 | $4,14 | **~$13,16** |
+| 1.000 personais | Leve | $4,32 | +$32,00 | $0,91 | $5,28 | $41,40 | **~$84** |
+| 1.000 personais | Médio | $17,07 | +$32,00 | $8,47 | $5,28 | $41,40 | **~$104** |
+| 1.000 personais | Intenso | $52,77 | +$32,00 | $32,51 | $5,28 | $41,40 | **~$164** |
 
 > **⚠️ S3 sem lifecycle policy** — único item que cresce indefinidamente mesmo com base
 > de personais estável. Ao atingir 100 personais, implementar lifecycle para mover mídia
@@ -518,8 +539,11 @@ Para cada personal Pro adquirido via divulgador, a receita líquida da plataform
 
 ### A.5 Custo de LLM (agente IA) por cenário
 
-Modelo: `gpt-5.4-nano` — $0,20/M tokens input · $1,25/M tokens output.
+Modelo: **placeholder `gpt-5.4-nano`** — substituir pelo modelo real em uso no deploy.
+Pricing referência (compatível com gpt-4o-mini na data de revisão): $0,20/M tokens input · $1,25/M tokens output.
 Overhead fixo por mensagem: ~1.900 tokens (system prompt + 12 tool definitions), reenviados em toda chamada.
+Custo por mensagem cresce linearmente; múltiplas chamadas LLM por turno (até 5 passos via `_MAX_STEPS`)
+aumentam o custo por tool-chain longa — valor de $0,00117/msg assume média de ~2 chamadas LLM por turno.
 
 | Cenário | Custo/aluno/mês | Custo/personal/mês (25 alunos) |
 |---|---|---|
@@ -539,5 +563,6 @@ está muito abaixo do limite técnico. O custo é limitado superiormente mesmo e
 
 ---
 
-*Documento atualizado em jun/2026. Revisitar ao mudar preços, trocar provider de LLM ou atingir
-escala que mude a faixa do Simples Nacional. Câmbio de R$5,80/USD — ajustar se variar ±15%.*
+*Documento atualizado em jun/2026 (v2). Revisitar ao mudar preços, trocar provider de LLM ou atingir
+escala que mude a faixa do Simples Nacional. Câmbio de R$5,80/USD — ajustar se variar ±15%.
+Ao substituir `gpt-5.4-nano` pelo modelo real em deploy, recalcular §A.5 e a linha LLM de §4.*

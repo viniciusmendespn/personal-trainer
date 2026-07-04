@@ -156,8 +156,10 @@ dificuldade e de troca de ferramenta.
 
 ## 6. Para divulgadores (resumo do programa)
 
-- Comissão **recorrente** sobre o Gestão Pro: 25% (1–4 clientes ativos) → 30% (5–14) → 35% (15+).
-  Ou seja: R$ 9,98 a R$ 13,97 por cliente **por mês, enquanto ele ficar ativo**.
+- Comissão **recorrente** sobre o Gestão Pro (v3): base 20% (1–4 clientes ativos) → 25% (5–14) →
+  30% (15+), com **acelerador de +5 p.p. em todo mês com 2+ vendas novas**; 35% exclusivo dos
+  Embaixadores (convite). Ou seja: R$ 7,98 a R$ 13,97 por cliente **por mês, enquanto ele ficar
+  ativo** (`PROGRAMA_DIVULGADORES_REGRAS.md`).
 - 50 clientes ativos ≈ **R$ 698/mês de renda passiva** (~R$ 8,4 mil/ano).
 - O que o divulgador precisa fazer: compartilhar o link/cupom próprio; o indicado ganha 30 dias
   grátis. O material deste playbook (pitch, objeções, scripts) é do divulgador também.

@@ -20,7 +20,9 @@ parecer mais profissional.
 grupos de WhatsApp/Telegram de personais; comentaristas ativos em perfis fitness; professores de
 academia com influência local.
 
-**A oferta:** comissão **recorrente** de 25% → 30% (5+ ativos) → 35% (15+) sobre cada Gestão Pro
+**A oferta (v3):** comissão **recorrente** base de 20% → 25% (5+ ativos) → 30% (15+), com
+acelerador de +5 p.p. em todo mês com 2+ vendas novas — 35% para Embaixadores, por convite —
+sobre cada Gestão Pro
 ativo. Tradução obrigatória em dinheiro: *"10 colegas usando = R$ 119/mês caindo todo mês; 50 =
 R$ 698/mês — sem atender ninguém a mais."* + kit pronto (cupom, vídeos, artes, playbook).
 
@@ -61,7 +63,8 @@ que não dê trabalho.
 
 **A oferta em 3 degraus (nunca começar oferecendo cachê):**
 1. **Permuta + comissão:** Pro + add-ons grátis vitalícios + cupom próprio com **35% recorrente**
-   (entra direto como Master) + benefício para a audiência (30 dias grátis, além do trial).
+   (entra nas condições de Embaixador, com as contrapartidas de conteúdo) + benefício para a
+   audiência (30 dias grátis, além do trial).
 2. **Conteúdo pago pontual** (1 Reel de demo real) — só depois que o degrau 1 provar conversão.
 3. **Embaixador** (contrato semestral com meta e bônus) — fase com aporte.
 
@@ -106,7 +109,8 @@ prontos para o mercado"); conteúdo/aula gratuita de qualidade; eventualmente re
    entrega valor real sem pagar nada.
 2. **Workshop gratuito** "Gestão e IA para personal trainers" (60–90 min, presencial ou online,
    ministrado por nós) — aula real com demonstração, não infomercial.
-3. **Receita:** a escola entra como divulgadora **Master (35%)** sobre os formandos que assinarem.
+3. **Receita:** a escola entra nas **condições de Embaixador (30% base, 35% com performance)**
+   sobre os formandos que assinarem.
 
 **Script (e-mail/DM ao coordenador):**
 > "Olá, prof. [nome]. Sou o fundador do CoachPilot, plataforma brasileira de gestão para personal
@@ -204,7 +208,7 @@ dentro da academia sem aval do gerente (queima o local — sempre pedir permiss�
 
 | Parceiro | Decisor | Ciclo | Oferta-núcleo | Fechamento mínimo | Métrica de sucesso |
 |---|---|---|---|---|---|
-| Personal divulgador | Ele mesmo | Dias | Comissão recorrente 25–35% + kit | Cupom + onboarding 30 min | ≥1 venda/mês |
+| Personal divulgador | Ele mesmo | Dias | Comissão recorrente 20–35% (v3) + kit | Cupom + onboarding 30 min | ≥1 venda/mês |
 | Influencer | Ele/agente | 1–3 sem | Permuta + 35% (degrau 1) | Acesso entregue + cupom | Pro pelo cupom em 60d |
 | Escola de EF | Coordenador | 2–8 sem | 60d grátis formandos + workshop + 35% | Cupom + workshop agendado | Contas/turma, Pro em 90d |
 | Estúdio | Dono | 1–2 sem | 20% off 5+ contas + workshop no local | Workshop + cupom do estúdio | % do time ativo em 30d |

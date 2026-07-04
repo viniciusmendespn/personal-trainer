@@ -4,10 +4,9 @@
 > performance; 35% exclusivo do programa Embaixador da Marca (por convite)**, com regras claras
 > de divulgação, produção de conteúdo e direcionamento de novos usuários.
 > Contrato-base: `juridico/MINUTA_CONTRATO_DIVULGADOR.md` · Aditivo do Embaixador:
-> `juridico/MINUTA_ADITIVO_EMBAIXADOR.md` · Análise financeira: `../CUSTO_ESCALA.md` §6.
+> `juridico/MINUTA_ADITIVO_EMBAIXADOR.md` · Análise financeira: `CUSTO_ESCALA.md` §6.
 >
-> ⚠️ A página pública `/divulgadores` ainda exibe o modelo antigo (25/30/35 por carteira) —
-> **atualizar o frontend antes de divulgar a v3.**
+> ✅ A página pública `/divulgadores` já exibe o modelo v3 (atualizada em jul/2026).
 
 ---
 

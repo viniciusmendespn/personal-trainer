@@ -3,7 +3,7 @@
 > Roteiro completo de apresentação (estrutura de deck, slide a slide, com narrativa) + memória de
 > cálculo do valuation e do uso do aporte. Rodada-alvo: **anjo/pré-seed de R$ 500 mil por 10%**
 > (post-money R$ 5 mi). Elaborado em jul/2026, estágio pré-receita com produto completo em produção.
-> Números de mercado com fontes em `ANALISE_MERCADO_CONCORRENTES.md`; economics em `../CUSTO_ESCALA.md`.
+> Números de mercado com fontes em `ANALISE_MERCADO_CONCORRENTES.md`; economics em `CUSTO_ESCALA.md`.
 
 ---
 
@@ -87,7 +87,7 @@ PIX, landing com SEO. Não é protótipo — **o aporte não compra desenvolvime
   receita cresce 20x e a infra apenas 11x (sobre uma base ínfima); escala validada em arquitetura
   até 1.000+ personais.
 - LTV (18 meses) R$ 1.176 · CAC via divulgadores ~R$ 194 (18m) · **LTV/CAC > 3** já no modelo atual.
-- Canal proprietário: **programa de divulgadores com comissão recorrente (25–35%)** — personais
+- Canal proprietário: **programa de divulgadores com comissão recorrente (20–35%)** — personais
   vendendo para pares, CAC 100% variável, sem queima de caixa antecipada.
 
 ## Slide 8 — Tração e estágio (transparência total)

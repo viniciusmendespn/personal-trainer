@@ -4,7 +4,7 @@
 > operação, finanças e riscos. Detalhes de execução nos documentos irmãos:
 > `ANALISE_MERCADO_CONCORRENTES.md` (mercado), `PITCH_VENDAS.md` (comercial),
 > `PLANO_BOOTSTRAP.md` (execução sem aporte), `PITCH_INVESTIDORES.md` (com aporte),
-> `PARCERIAS_CANAIS.md` (canais) e `../CUSTO_ESCALA.md` (modelo financeiro unitário).
+> `PARCERIAS_CANAIS.md` (canais) e `CUSTO_ESCALA.md` (modelo financeiro unitário).
 > Elaborado em jul/2026. Status do negócio: produto em produção, fase de aquisição dos primeiros
 > clientes pagantes.
 
@@ -137,7 +137,7 @@ que governa tudo é o número de assinantes Pro ativos.**
 
 ### 6.1 Canais (por ordem de prioridade)
 
-1. **Divulgadores (comissão recorrente 25–35%)** — canal principal. Personais influentes,
+1. **Divulgadores (comissão recorrente 20–35%, v3)** — canal principal. Personais influentes,
    professores e donos de estúdio vendendo para os pares. CAC recorrente ~R$ 10,77/mês, sem caixa
    antecipado — ideal para bootstrap. Requisito: construir o painel do divulgador.
 2. **Indique e Ganhe (viral loop)** — 30 dias grátis para os dois lados; já implementado.

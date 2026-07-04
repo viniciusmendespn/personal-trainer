@@ -12,7 +12,7 @@
 
 | Canal | Quem é | Potencial | Custo | Prioridade |
 |---|---|---|---|---|
-| Divulgadores-personais | Clientes influentes vendendo para pares | Alto e composto | Comissão 25–35% | ⭐ 1 |
+| Divulgadores-personais | Clientes influentes vendendo para pares | Alto e composto | Comissão 20–35% (v3) | ⭐ 1 |
 | Cursos e certificações de personal | Escolas formando novos personais todo mês | Alto (fluxo constante de entrantes) | 60 dias grátis + comissão à escola | ⭐ 2 |
 | Influencers fitness de nicho | 10–100k seguidores, audiência de personais | Médio-alto | Cupom + comissão (sem cachê no início) | ⭐ 3 |
 | Donos de estúdio | Estúdios com 3–15 personais | Médio (venda multiplicada) | Desconto por volume | 4 |
@@ -28,7 +28,8 @@
 universitário de educação física; dono de estúdio; criador de conteúdo fitness iniciante (que
 quer renda recorrente).
 
-**A oferta (já definida):** 25–35% recorrente sobre cada Gestão Pro ativo. Discurso: *"50 colegas
+**A oferta (v3 — `PROGRAMA_DIVULGADORES_REGRAS.md`):** base 20–30% recorrente + acelerador de
++5 p.p. no mês com 2+ vendas; 35% para Embaixadores (convite). Discurso: *"50 colegas
 usando = R$ 698/mês caindo na sua conta todo mês, para sempre, sem você atender ninguém."*
 
 **Onde encontrar:** dentro da própria base (todo cliente Pro feliz recebe o convite no 2º mês);
@@ -56,7 +57,8 @@ certificação (presencial e online); professores de disciplinas de treinamento 
 **A oferta para a escola:**
 - Alunos formandos ganham **60 dias de Gestão Pro grátis** (cupom da escola) — a escola entrega
   benefício real de empregabilidade sem custo.
-- A escola (ou o professor) entra como **divulgador Master (35%)** sobre quem converter — receita
+- A escola (ou o professor) entra nas **condições de Embaixador (30% base, 35% com performance)**
+  sobre quem converter — receita
   recorrente para a instituição.
 - Opcional: aula/workshop gratuito "Gestão e IA para personal trainers" ministrado pelo fundador
   (gera autoridade e demonstra o produto ao vivo).

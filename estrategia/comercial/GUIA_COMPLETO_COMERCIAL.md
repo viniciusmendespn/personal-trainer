@@ -196,8 +196,9 @@ Regra: **nunca falar mal do concorrente.** Validar ("é bom mesmo") e ancorar no
 
 ## 10. Programa de divulgadores (o comercial também recruta)
 
-Todo cliente Pro feliz é candidato: comissão **recorrente** de 25% (1–4 ativos) → 30% (5–14) →
-35% (15+) sobre o Gestão Pro. 50 clientes ativos ≈ **R$ 698/mês** de renda passiva. Add-ons não
+Todo cliente Pro feliz é candidato: comissão **recorrente** base de 20% (1–4 ativos) → 25%
+(5–14) → 30% (15+), com acelerador de +5 p.p. em todo mês com 2+ vendas novas; **35% é exclusivo
+do Embaixador da Marca (convite)**. 50 clientes ativos como Embaixador ≈ **R$ 698/mês**. Add-ons não
 comissionam. Página: coachpilot.com.br/divulgadores.
 
 ## 11. Glossário rápido

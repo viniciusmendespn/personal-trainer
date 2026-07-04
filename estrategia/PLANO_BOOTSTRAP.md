@@ -17,7 +17,7 @@
 3. **Fazer coisas que não escalam primeiro**: migração assistida 1-a-1, onboarding por WhatsApp,
    suporte pessoal. Um cliente encantado no início vale 10 anúncios.
 4. **O funil é: conhecido → grátis → ativado → Pro → divulgador.** Cada cliente feliz é convidado
-   a virar divulgador (comissão recorrente de 25–35% — ele tem incentivo real).
+   a virar divulgador (comissão recorrente de 20–35% na v3 — ele tem incentivo real).
 
 ---
 

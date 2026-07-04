@@ -2,8 +2,8 @@
 
 > Documento gerado por investigação de código. Cobre backend (DynamoDB, Lambda, agente LLM),
 > frontend (portal + app do aluno) e infraestrutura. Achados classificados por severidade —
-> prioridade pensando em 10 → 100 → 1.000 personal trainers. Complementa `CUSTO_ESCALA.md`
-> (estimativa de custo). Os achados abaixo permanecem como registro histórico da investigação;
+> prioridade pensando em 10 → 100 → 1.000 personal trainers. Complementa
+> `../estrategia/CUSTO_ESCALA.md` (estimativa de custo). Os achados abaixo permanecem como registro histórico da investigação;
 > o status de implementação de cada um está em §5 e no resumo abaixo.
 
 ## Status de implementação (itens 1–6, 8, 9 de §5)

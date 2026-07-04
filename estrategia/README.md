@@ -32,8 +32,15 @@
 | [comercial/BATTLECARD.md](comercial/BATTLECARD.md) | Batalha por concorrente (MFIT, Tecnofit, Nexur, planilha, internacionais, ChatGPT do aluno): onde ganham, onde ganhamos, discurso, minas e tabela comparativa | Quando o prospect cita um concorrente |
 | [comercial/ABORDAGEM_PARCERIAS.md](comercial/ABORDAGEM_PARCERIAS.md) | Roteiro de abordagem por tipo de parceiro (personal, influencer, escola de EF, estúdio, academia): decisor, oferta, script, objeções, fechamento e métricas | Prospecção de parcerias no campo |
 
-Documentos de base (raiz do repo): `../CUSTO_ESCALA.md` (modelo financeiro unitário) e
-`../CONTEXTO_MARKETING.md` (produto, personas, identidade visual).
+Documentos de base (nesta pasta): [CUSTO_ESCALA.md](CUSTO_ESCALA.md) (modelo financeiro unitário)
+e [CONTEXTO_MARKETING.md](CONTEXTO_MARKETING.md) (produto, personas, identidade visual).
+
+## Kit do divulgador (`kit-divulgador/`) — material EXTERNO (pode ser enviado a parceiros)
+
+| Documento | O que contém |
+|---|---|
+| [kit-divulgador/KIT_DIVULGADOR.md](kit-divulgador/KIT_DIVULGADOR.md) | Guia do divulgador: produto, preços, como divulgar, scripts, comissões v3, primeiros passos e regras |
+| [kit-divulgador/BASE_CONHECIMENTO_IA.md](kit-divulgador/BASE_CONHECIMENTO_IA.md) | Base de conhecimento única para o divulgador subir no ChatGPT/Claude/Gemini e tirar dúvidas — sem informação interna |
 
 ## Decisão central
 

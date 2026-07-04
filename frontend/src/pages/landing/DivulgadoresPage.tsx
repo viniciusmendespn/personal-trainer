@@ -8,34 +8,37 @@ const WA_EMBAIXADOR = 'https://wa.me/5513991830305?text=Oi%2C%20quero%20conversa
 const WA_ENTRAR = 'https://wa.me/5513991830305?text=Oi%2C%20quero%20entrar%20no%20programa%20de%20divulgadores%20do%20CoachPilot'
 
 const NIVEIS = [
-  { nivel: 'Divulgador Inicial', clientes: '1 a 4 clientes ativos', comissao: '25%', cor: '#64748b' },
-  { nivel: 'Divulgador Oficial', clientes: '5 a 14 clientes ativos', comissao: '30%', cor: '#14b8a6' },
-  { nivel: 'Divulgador Master', clientes: '15+ clientes ativos', comissao: '35%', cor: '#10b981' },
+  { nivel: 'Divulgador Inicial', clientes: '1 a 4 clientes ativos', comissao: '20%', turbo: '25% no mês com 2+ vendas novas', cor: '#64748b' },
+  { nivel: 'Divulgador Oficial', clientes: '5 a 14 clientes ativos', comissao: '25%', turbo: '30% no mês com 2+ vendas novas', cor: '#14b8a6' },
+  { nivel: 'Divulgador Master', clientes: '15+ clientes ativos', comissao: '30%', turbo: '+R$100 no mês com 4+ vendas novas', cor: '#10b981' },
+  { nivel: 'Embaixador da Marca', clientes: 'Somente por convite', comissao: '35%', turbo: 'produção de conteúdo + benefícios exclusivos', cor: '#0d9488' },
 ]
 
 const SIMULACAO = [
-  { clientes: 5, comissao: '30%', ganho: 'R$59,85/mês' },
-  { clientes: 10, comissao: '30%', ganho: 'R$119,70/mês' },
-  { clientes: 15, comissao: '35%', ganho: 'R$209,48/mês' },
-  { clientes: 30, comissao: '35%', ganho: 'R$418,95/mês' },
-  { clientes: 50, comissao: '35%', ganho: 'R$698,25/mês' },
+  { clientes: 5, comissao: '25% → 30%', ganho: 'até R$59,85/mês' },
+  { clientes: 10, comissao: '25% → 30%', ganho: 'até R$119,70/mês' },
+  { clientes: 15, comissao: '30%', ganho: 'R$179,55/mês' },
+  { clientes: 30, comissao: '30%', ganho: 'R$359,10/mês' },
+  { clientes: 50, comissao: '35% (Embaixador)', ganho: 'R$698,25/mês' },
 ]
 
 const PASSOS = [
   { icon: <Share2 size={24} />, titulo: 'Você recebe um cupom ou link exclusivo', desc: 'Cada divulgador recebe um identificador próprio para acompanhar suas indicações.' },
   { icon: <Users size={24} />, titulo: 'Você divulga o CoachPilot', desc: 'Nos stories, reels, grupos, alunos, colegas de profissão ou conteúdos educativos.' },
   { icon: <Check size={24} />, titulo: 'O personal indicado assina o Gestão Pro', desc: 'A comissão é calculada sobre o plano Gestão Pro de R$39,90/mês.' },
-  { icon: <DollarSign size={24} />, titulo: 'Você recebe comissão recorrente', desc: 'Enquanto o cliente indicado permanecer ativo, você continua recebendo sua comissão.' },
+  { icon: <DollarSign size={24} />, titulo: 'Você recebe comissão recorrente', desc: 'A comissão-base da sua faixa é paga todo mês — e sobe 5 pontos percentuais nos meses em que você fizer 2 ou mais vendas novas.' },
 ]
 
 const REGRAS = [
   'A comissão é paga somente sobre assinaturas ativas do plano Gestão Pro',
   'O plano grátis não gera comissão',
   'Add-ons de WhatsApp, IA e serviços extras não geram comissão',
-  'A comissão começa em 25%',
-  'A comissão pode subir para 30% ou 35% conforme a quantidade de clientes ativos indicados',
+  'A comissão-base começa em 20% e sobe para 25% (5+ clientes ativos) e 30% (15+ clientes ativos)',
+  'Acelerador de performance: +5 pontos percentuais em todo mês com 2 ou mais vendas novas',
+  'A comissão de 35% é exclusiva do programa Embaixador da Marca, por convite',
   'A comissão é recorrente enquanto o cliente indicado permanecer ativo',
   'Cancelamentos deixam de gerar comissão',
+  'Não é permitido usar o próprio cupom em conta própria (auto-indicação)',
   'O divulgador deve usar uma comunicação clara e honesta sobre o CoachPilot',
   'Não é permitido prometer funcionalidades que não existem',
   'Não é permitido anunciar valores diferentes dos preços oficiais sem autorização',
@@ -57,6 +60,14 @@ const FAQS = [
   {
     pergunta: 'Por quanto tempo recebo comissão?',
     resposta: 'Você recebe comissão enquanto o cliente indicado permanecer ativo no plano Gestão Pro, de acordo com as regras do programa.',
+  },
+  {
+    pergunta: 'Como funciona o acelerador de performance?',
+    resposta: 'Todo mês em que você fizer 2 ou mais vendas novas, a comissão daquele mês sobe 5 pontos percentuais sobre toda a sua carteira (ex.: um Divulgador Oficial passa de 25% para 30%). No mês seguinte, basta vender de novo para manter o acelerador ativo.',
+  },
+  {
+    pergunta: 'Como chego aos 35%?',
+    resposta: 'A comissão de 35% é exclusiva do programa Embaixador da Marca, que funciona por convite: além de indicar, o Embaixador produz conteúdos sobre a plataforma e acompanha seus indicados nos primeiros passos. Divulgadores com boa performance e presença digital no nicho são convidados.',
   },
   {
     pergunta: 'Como entro no programa?',
@@ -227,17 +238,18 @@ export function DivulgadoresPage() {
             <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px, 4vw, 38px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', marginBottom: 12 }}>
               Quanto você pode ganhar
             </h2>
-            <p style={{ color: '#475569', fontSize: 16, maxWidth: 480, margin: '0 auto' }}>
-              Comece com 25% de comissão e aumente conforme o volume de indicações ativas.
+            <p style={{ color: '#475569', fontSize: 16, maxWidth: 520, margin: '0 auto' }}>
+              Comece com 20% de comissão-base, suba de faixa com o volume de indicações ativas e ganhe +5 pontos nos meses em que vender mais.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20, marginBottom: 40 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 40 }}>
             {NIVEIS.map((n, i) => (
-              <div key={i} style={{ background: i === 2 ? 'linear-gradient(135deg, #14b8a6, #10b981)' : '#f8fafc', border: `1.5px solid ${i === 2 ? 'transparent' : '#e2e8f0'}`, borderRadius: 16, padding: 28, textAlign: 'center' }}>
-                <div style={{ color: i === 2 ? 'rgba(255,255,255,0.8)' : '#64748b', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{n.nivel}</div>
-                <div style={{ color: i === 2 ? '#fff' : '#0f172a', fontSize: 48, fontWeight: 800, lineHeight: 1, letterSpacing: '-2px', marginBottom: 8 }}>{n.comissao}</div>
-                <div style={{ color: i === 2 ? 'rgba(255,255,255,0.75)' : '#64748b', fontSize: 14 }}>{n.clientes}</div>
+              <div key={i} style={{ background: i === 3 ? 'linear-gradient(135deg, #14b8a6, #10b981)' : '#f8fafc', border: `1.5px solid ${i === 3 ? 'transparent' : '#e2e8f0'}`, borderRadius: 16, padding: 28, textAlign: 'center' }}>
+                <div style={{ color: i === 3 ? 'rgba(255,255,255,0.8)' : '#64748b', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{n.nivel}</div>
+                <div style={{ color: i === 3 ? '#fff' : '#0f172a', fontSize: 44, fontWeight: 800, lineHeight: 1, letterSpacing: '-2px', marginBottom: 8 }}>{n.comissao}</div>
+                <div style={{ color: i === 3 ? 'rgba(255,255,255,0.75)' : '#64748b', fontSize: 14, marginBottom: 6 }}>{n.clientes}</div>
+                <div style={{ color: i === 3 ? 'rgba(255,255,255,0.9)' : '#0d9488', fontSize: 12, fontWeight: 600 }}>{n.turbo}</div>
               </div>
             ))}
           </div>
@@ -279,7 +291,8 @@ export function DivulgadoresPage() {
             ))}
           </div>
           <p style={{ textAlign: 'center', color: '#64748b', fontSize: 13, marginTop: 16 }}>
-            Quanto mais clientes ativos você indicar, maior pode ser sua comissão mensal.
+            "→" indica o acelerador de performance: +5 pontos percentuais em todo mês com 2 ou mais vendas novas.
+            A comissão de 35% é exclusiva do programa Embaixador da Marca (por convite).
           </p>
         </div>
       </section>
@@ -297,7 +310,7 @@ export function DivulgadoresPage() {
                 Quer ser um Embaixador CoachPilot?
               </h2>
               <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 15, lineHeight: 1.7, marginBottom: 24 }}>
-                Alguns divulgadores podem se tornar embaixadores oficiais, criando conteúdos, ajudando novos usuários e participando mais de perto da evolução da plataforma.
+                O Embaixador da Marca é a camada mais alta do programa, por convite: quem cria conteúdo, ajuda os novos usuários nos primeiros passos e participa de perto da evolução da plataforma recebe a maior comissão do programa — 35%.
               </p>
               <a
                 href={WA_EMBAIXADOR}
@@ -316,7 +329,7 @@ export function DivulgadoresPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
                 <div style={{ color: '#14b8a6', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Benefícios</div>
-                {['Comissão recorrente', 'Cupom exclusivo', 'Acesso antecipado a novidades', 'Destaque como parceiro', 'Participação em conteúdos oficiais'].map((b, i) => (
+                {['Comissão de 35% — a maior do programa', 'Assinatura Gestão Pro bonificada', 'Cupom exclusivo', 'Acesso antecipado a novidades', 'Destaque como parceiro oficial'].map((b, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
                     <Check size={14} color="#14b8a6" style={{ marginTop: 2, flexShrink: 0 }} />
                     <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 1.5 }}>{b}</span>
@@ -325,7 +338,7 @@ export function DivulgadoresPage() {
               </div>
               <div>
                 <div style={{ color: '#10b981', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Contrapartidas</div>
-                {['Criar conteúdos sobre o CoachPilot', 'Usar a plataforma na prática', 'Ajudar indicados com dúvidas básicas', 'Dar feedbacks para o produto'].map((b, i) => (
+                {['Criar 2 conteúdos por mês sobre o CoachPilot', 'Usar a plataforma na prática', 'Direcionar os indicados nos primeiros passos', 'Dar feedbacks para o produto'].map((b, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
                     <Check size={14} color="#10b981" style={{ marginTop: 2, flexShrink: 0 }} />
                     <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 1.5 }}>{b}</span>

@@ -4,7 +4,8 @@
 > marca nos primeiros 90 dias. Princípio: **recrutar largo com oferta irrecusável, ativar fundo
 > com gamificação** — o nome se constrói com parceiro ATIVO e cliente visível, não com lista de
 > recrutados. Complementa `PARCERIAS_CANAIS.md` (canais) e `comercial/ABORDAGEM_PARCERIAS.md`
-> (scripts). Regras econômicas do programa: comissão só sobre Gestão Pro; recorrente 25/30/35%.
+> (scripts). Regras econômicas do programa (v3): comissão só sobre Gestão Pro; base 20/25/30%
+> + acelerador de performance; 35% exclusivo do Embaixador (`PROGRAMA_DIVULGADORES_REGRAS.md`).
 
 ---
 

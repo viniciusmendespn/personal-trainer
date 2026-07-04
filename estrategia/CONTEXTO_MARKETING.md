@@ -225,19 +225,31 @@ gerenciando seus alunos como um profissional."*
 ## 11. Identidade visual
 
 ### 11.1 Nome e logotipo
-- **Nome da marca:** CoachPilot (sempre "Coach" + "Pilot" grudados, com "Pilot" geralmente
-  destacado na cor primária quando em duas cores).
-- **Arquivos de logo (URLs públicas, servidas via CloudFront no domínio de produção —
-  confirmado acessível, usar direto como referência de imagem para a LLM):**
-  - https://coachpilot.com.br/coach-icon.png — ícone principal (favicon / uso geral)
-  - https://coachpilot.com.br/icon-semfundo.png — versão sem fundo (fundo transparente)
-  - https://coachpilot.com.br/horizontal-icon.png — versão horizontal (logo + texto lado a lado)
-  - https://coachpilot.com.br/vertical-icon.png — versão vertical
+- **Nome da marca:** CoachPilot (sempre "Coach" + "Pilot" grudados; "Pilot" geralmente em
+  gradiente teal→emerald, "Coach" na cor de texto padrão do fundo onde está aplicado).
+- **Símbolo:** monograma abstrato formado pelas letras **"C" e "P" entrelaçadas** (não é ícone de
+  halter/treino), em gradiente teal→emerald (`#14b8a6` → `#10b981`) sobre fundo navy escuro nos
+  ícones de app.
+- **Arquivos de logo em uso real no código (URLs públicas, servidas via CloudFront no domínio de
+  produção — confirmado acessível, usar direto como referência de imagem para a LLM):**
+  - https://coachpilot.com.br/novo-logo-slogan-semfundo.png — **logo principal**: horizontal,
+    símbolo "CP" + wordmark "CoachPilot" + slogan "Gestão completa para personal trainers", fundo
+    transparente. Usado na navbar, footer, telas de login/cadastro e loja.
+  - https://coachpilot.com.br/novo-logo-slogan-vertical-semfundo.png — versão vertical (símbolo
+    em cima, wordmark+slogan embaixo), texto claro/branco — para aplicar sobre **fundo escuro**
+    (splash screen em dark mode, app do aluno).
+  - https://coachpilot.com.br/novo-logo-slogan-vertical-brancosemfundo.png — mesma versão
+    vertical, texto escuro (navy) — para aplicar sobre **fundo claro** (splash screen em light
+    mode). *Obs.: o nome do arquivo tem "branco" mas o texto renderizado é navy escuro — usar a
+    URL, não o nome, para saber qual variante é qual.*
   - https://coachpilot.com.br/icon-192.png, https://coachpilot.com.br/icon-512.png,
-    https://coachpilot.com.br/icon-512-maskable.png — ícones PWA em várias resoluções
-  - https://coachpilot.com.br/apple-touch-icon.png — ícone para iOS
-- Símbolo: ícone com tema de "🏋️" / treino, em estilo flat moderno (ver URLs acima para o
-  desenho exato).
+    https://coachpilot.com.br/icon-512-maskable.png — ícones PWA (só o símbolo "CP", sem
+    wordmark) em várias resoluções, fundo navy.
+  - https://coachpilot.com.br/apple-touch-icon.png — ícone para iOS.
+  - https://coachpilot.com.br/og-image.jpg — imagem de compartilhamento social (Open Graph/
+    Twitter Card), 1200×630.
+- **Não usar/não existem mais** (removidos do produto, não referenciar): `coach-icon.png`,
+  `icon-semfundo.png`, `horizontal-icon.png`, `vertical-icon.png`.
 
 ### 11.2 Paleta de cores
 | Uso | Cor | Hex |
