@@ -14,7 +14,14 @@
 | [PITCH_INVESTIDORES.md](PITCH_INVESTIDORES.md) | Deck slide a slide: mercado TAM/SAM/SOM, diferenciais, projeções, **aporte R$ 500 mil por 10% (post R$ 5 mi)**, memória de valuation, uso do capital, Q&A difícil, term sheet | Captação anjo/pré-seed |
 | [PARCERIAS_CANAIS.md](PARCERIAS_CANAIS.md) | 7 canais priorizados (divulgadores, escolas, influencers, estúdios, academias, eventos, ecossistema) com oferta, script e metas por trimestre | Prospecção de parcerias |
 | [BLITZ_PARCEIROS_FUNDADORES.md](BLITZ_PARCEIROS_FUNDADORES.md) | Estratégia de lançamento: 50 vagas de "Divulgador Fundador" (35% direto + Pro grátis + selo), blitz de 6 semanas, desafio gamificado de 90 dias, metas de funil e antídotos de risco | Executar nos primeiros 90 dias para ganhar nome |
-| [PROGRAMA_DIVULGADORES_REGRAS.md](PROGRAMA_DIVULGADORES_REGRAS.md) | Regras operacionais completas do programa: faixas, **Faixas Vivas** (queda de percentual por inatividade trimestral, recuperação instantânea), bônus de marco, campanhas de ritmo, reativação/desligamento e anti-abuso | Regra oficial do programa; base do futuro painel do divulgador |
+| [PROGRAMA_DIVULGADORES_REGRAS.md](PROGRAMA_DIVULGADORES_REGRAS.md) | Regras v3 do programa: escada 20/25/30% (base + acelerador de performance mensal), **35% só no Embaixador da Marca (convite)**, obrigações e métricas por faixa, bônus de marco/performance, reativação e anti-abuso | Regra oficial do programa; base do futuro painel do divulgador |
+
+## Jurídico (`juridico/`) — minutas para revisão de advogado
+
+| Documento | O que contém |
+|---|---|
+| [juridico/MINUTA_CONTRATO_DIVULGADOR.md](juridico/MINUTA_CONTRATO_DIVULGADOR.md) | Contrato-base de parceria de divulgação: natureza autônoma (sem CLT/representação comercial), comissões (Anexo I na estrutura v3), cláusula de reajuste do programa com aviso prévio, efeitos do término (cauda de 12 meses), marca, LGPD, anti-abuso. CNPJ em aberto (cláusula de cessão à futura PJ) |
+| [juridico/MINUTA_ADITIVO_EMBAIXADOR.md](juridico/MINUTA_ADITIVO_EMBAIXADOR.md) | Termo aditivo do Embaixador da Marca: obrigações de conteúdo e divulgação, direcionamento de novos usuários, licença de imagem, exclusividade de categoria, remuneração 30/35%, manutenção/perda de status, vigência 12 meses |
 
 ## Kit de treinamento comercial (`comercial/`)
 

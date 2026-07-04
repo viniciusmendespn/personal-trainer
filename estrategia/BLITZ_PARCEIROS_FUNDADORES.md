@@ -15,7 +15,7 @@ normal (25% → 30% → 35%). O Fundador ganha:
 
 | Benefício | Normal | Fundador |
 |---|---|---|
-| Comissão | Começa em 25%, sobe com clientes | **35% (nível Master) desde o 1º cliente, permanente** |
+| Comissão | Escada 20/25/30% (base + acelerador — `PROGRAMA_DIVULGADORES_REGRAS.md` v3) | **Condições de Embaixador desde o 1º cliente: base 30%, 35% nos meses com 2+ vendas** (com as contrapartidas de conteúdo do §5 das regras) |
 | Plataforma | Paga como qualquer cliente | **Gestão Pro grátis enquanto for divulgador ativo** (≥1 venda/trimestre) |
 | Status | — | Selo "Fundador" no perfil público + nome na página de divulgadores |
 | Acesso | — | Grupo direto com o fundador; voz ativa no roadmap |
