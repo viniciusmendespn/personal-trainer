@@ -14,6 +14,15 @@
 | [PITCH_INVESTIDORES.md](PITCH_INVESTIDORES.md) | Deck slide a slide: mercado TAM/SAM/SOM, diferenciais, projeções, **aporte R$ 500 mil por 10% (post R$ 5 mi)**, memória de valuation, uso do capital, Q&A difícil, term sheet | Captação anjo/pré-seed |
 | [PARCERIAS_CANAIS.md](PARCERIAS_CANAIS.md) | 7 canais priorizados (divulgadores, escolas, influencers, estúdios, academias, eventos, ecossistema) com oferta, script e metas por trimestre | Prospecção de parcerias |
 
+## Kit de treinamento comercial (`comercial/`)
+
+| Documento | O que contém | Quando usar |
+|---|---|---|
+| [comercial/GUIA_COMPLETO_COMERCIAL.md](comercial/GUIA_COMPLETO_COMERCIAL.md) | Material de estudo completo: produto módulo a módulo, as duas IAs, preços, personas, processo de venda, demo, FAQ, glossário, checklist de onboarding | Treinar um comercial do zero |
+| [comercial/RESUMO_COMERCIAL.md](comercial/RESUMO_COMERCIAL.md) | Cola de bolso de 1 página: pitch, preços, momentos "uau", objeções em 1 linha | Revisar antes de cada conversa |
+| [comercial/BATTLECARD.md](comercial/BATTLECARD.md) | Batalha por concorrente (MFIT, Tecnofit, Nexur, planilha, internacionais, ChatGPT do aluno): onde ganham, onde ganhamos, discurso, minas e tabela comparativa | Quando o prospect cita um concorrente |
+| [comercial/ABORDAGEM_PARCERIAS.md](comercial/ABORDAGEM_PARCERIAS.md) | Roteiro de abordagem por tipo de parceiro (personal, influencer, escola de EF, estúdio, academia): decisor, oferta, script, objeções, fechamento e métricas | Prospecção de parcerias no campo |
+
 Documentos de base (raiz do repo): `../CUSTO_ESCALA.md` (modelo financeiro unitário) e
 `../CONTEXTO_MARKETING.md` (produto, personas, identidade visual).
 
