@@ -5,11 +5,16 @@ aluno (partição AL#{aluno_id}), com semântica de SUBSTITUIÇÃO TOTAL no impo
 
 Arquivo enxuto: sem campos internos (treino_id, aluno_id, links_uteis, custom,
 canonical_exercicio_id, rm_kg, origem_licenciada). `ordem` é implícita pela posição no array.
-`ref` (t_a, t_b, …) existe só para legibilidade — não é persistido."""
+`ref` (t_a, t_b, …) existe só para legibilidade — não é persistido.
+
+Par export-rico / import-enxuto: o DOWNLOAD usa `ProgramaTreinoExportFile` (programa +
+`contexto_aluno` para a IA analisar); o IMPORT continua validando só `ProgramaTreinoFile` —
+campo extra `contexto_aluno` colado de volta é descartado (extra='ignore', default Pydantic)."""
 from typing import Optional
 
 from pydantic import BaseModel, Field
 
+from app.models.contexto_export import ContextoAluno
 from app.models.enums import TipoExercicio
 from app.models.exercicio import ExercicioSubstituto, SeriePrescrita
 
@@ -42,6 +47,12 @@ class TreinoFileItem(BaseModel):
 class ProgramaTreinoFile(BaseModel):
     version: str = "1"
     treinos: list[TreinoFileItem] = Field(default_factory=list)
+
+
+class ProgramaTreinoExportFile(ProgramaTreinoFile):
+    """Formato do DOWNLOAD: programa + contexto completo do aluno para análise por IA.
+    O import aceita este mesmo arquivo de volta — `contexto_aluno` é ignorado."""
+    contexto_aluno: Optional[ContextoAluno] = None
 
 
 class ImportarProgramaResponse(BaseModel):

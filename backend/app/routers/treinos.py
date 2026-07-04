@@ -12,12 +12,13 @@ from app.models.treino import Treino, TreinoCreate
 from app.models.treino_export import (
     ExercicioTreinoFile,
     ImportarProgramaResponse,
+    ProgramaTreinoExportFile,
     ProgramaTreinoFile,
     TreinoFileItem,
 )
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz, biblioteca_service
+from app.services import authz, biblioteca_service, contexto_aluno_service
 from app.services.sessao_service import chave_exercicio, list_exercicios_aluno
 from app.utils import init_series_prescritas, new_id, now_iso
 
@@ -77,14 +78,16 @@ def _ref_treino(i: int) -> str:
     return f"t_{letras}"
 
 
-@router.get("/exportar", response_model=ProgramaTreinoFile)
+@router.get("/exportar", response_model=ProgramaTreinoExportFile)
 def exportar_programa(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
-    """Programa completo do aluno (todos os treinos + exercícios) no formato editável por IA.
-    O personal baixa, pede ajustes a uma LLM e reimporta em /importar (substituição total)."""
+    """Programa completo do aluno (treinos + exercícios) + `contexto_aluno` (perfil, histórico,
+    dores, avaliações…) no formato editável por IA. O personal baixa, pede ajustes a uma LLM
+    e reimporta em /importar (substituição total — o contexto é ignorado na volta)."""
     _guard(personal_id, aluno_id)
     treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
     treinos.sort(key=lambda t: t.get("ordem", 0))
     out: list[TreinoFileItem] = []
+    nomes_exercicios: list[str] = []
     for i, t in enumerate(treinos):
         exs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.sk_exercicio_prefix(t["treino_id"]))
         exs.sort(key=lambda e: e.get("ordem", 0))
@@ -97,6 +100,8 @@ def exportar_programa(aluno_id: str, personal_id: str = Depends(get_current_pers
                 ec.get("reps_prescritas"), ec.get("carga_prescrita"),
             )
             exercicios.append(ExercicioTreinoFile(**ec))
+            if ec.get("nome"):
+                nomes_exercicios.append(ec["nome"])
         tc = repo.clean(t)
         out.append(TreinoFileItem(
             ref=_ref_treino(i),
@@ -108,7 +113,9 @@ def exportar_programa(aluno_id: str, personal_id: str = Depends(get_current_pers
             data_fim=tc.get("data_fim"),
             exercicios=exercicios,
         ))
-    return ProgramaTreinoFile(treinos=out)
+    contexto = contexto_aluno_service.montar_contexto(personal_id, aluno_id,
+                                                      exercicios_programa=nomes_exercicios)
+    return ProgramaTreinoExportFile(treinos=out, contexto_aluno=contexto)
 
 
 @router.post("/importar", response_model=ImportarProgramaResponse, status_code=201)
@@ -123,6 +130,8 @@ def importar_programa(aluno_id: str, body: ImportarProgramaRequest,
     except (json.JSONDecodeError, TypeError) as exc:
         raise HTTPException(400, detail={"code": "ARQUIVO_INVALIDO", "detail": str(exc)})
     try:
+        # extra='ignore' (default Pydantic): `contexto_aluno` presente no JSON colado
+        # (arquivo do export colado de volta sem edição) é descartado sem erro.
         programa = ProgramaTreinoFile(**data)
     except Exception as exc:
         raise HTTPException(400, detail={"code": "ESTRUTURA_INVALIDA", "detail": str(exc)})

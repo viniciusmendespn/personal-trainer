@@ -81,17 +81,18 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
       ) : (
         <div className="space-y-5">
           <p className="text-sm text-text-secondary">
-            Baixe o treino atual do aluno e o prompt, cole os dois numa IA (ChatGPT, Claude, Gemini) e
-            peça o ajuste que quiser — aumentar volume, trocar exercício, mexer em cargas, adaptar a uma
-            lesão. A IA devolve o JSON do programa atualizado; cole abaixo para sobrescrever.
+            Baixe o arquivo do aluno — treino atual + perfil completo (histórico de sessões, frequência,
+            dores, dúvidas, avaliações, metas e anamnese) — e o prompt, cole os dois numa IA (ChatGPT,
+            Claude, Gemini) e peça o ajuste que quiser. A IA analisa o histórico do aluno antes de mexer
+            no treino e devolve o JSON do programa atualizado; cole abaixo para sobrescrever.
           </p>
 
           <div>
-            <p className="text-sm font-medium mb-2">1. Baixe o treino atual e o prompt</p>
+            <p className="text-sm font-medium mb-2">1. Baixe o treino + contexto e o prompt</p>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={handleBaixarTreino} disabled={exportar.isPending}>
                 <span className="flex items-center gap-1.5">
-                  {exportar.isPending ? <Spinner className="w-4 h-4" /> : <Download size={15} />} Baixar treino do aluno
+                  {exportar.isPending ? <Spinner className="w-4 h-4" /> : <Download size={15} />} Baixar treino + contexto do aluno
                 </span>
               </Button>
               <a href="/prompt-treino-aluno.md" download="prompt-treino-aluno.md" onClick={() => setBaixouPrompt(true)}>
@@ -110,8 +111,9 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
           <div>
             <p className="text-sm font-medium mb-1">2. Peça o ajuste à IA</p>
             <p className="text-xs text-text-secondary">
-              Envie o prompt + o arquivo do treino e descreva a mudança em linguagem natural. A IA sempre
-              devolve o programa COMPLETO atualizado, no mesmo formato.
+              Envie o prompt + o arquivo e descreva a mudança em linguagem natural — ou peça "atualize o
+              treino com base no histórico". A IA analisa o perfil e o histórico completos do aluno e
+              devolve o programa COMPLETO atualizado, apenas com o bloco de treinos.
             </p>
           </div>
 
