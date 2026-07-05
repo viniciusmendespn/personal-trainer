@@ -13,7 +13,7 @@ $Bucket     = "personal-trainer-frontend-prod-421219980792"
 $CfId       = "E3JZ6U88Q0GYGF"   # CloudFrontDistributionId (portal — coachpilot.com.br)
 $AlunoCfId  = "E2IHNZ34C3PI8V"   # AlunoCloudFrontDistributionId (aluno — app.coachpilot.com.br)
 $LojaCfId   = "EEN1FE9Z7MUEK"    # LojaCloudFrontDistributionId (loja — loja.coachpilot.com.br)
-$DivulgadorCfId = ""             # DivulgadorCloudFrontDistributionId (divulgador.coachpilot.com.br) — preencher após o 1º sam deploy
+$DivulgadorCfId = "E3T7YCMACS7AVL"  # DivulgadorCloudFrontDistributionId (divulgador.coachpilot.com.br)
 
 function Get-EnvLocal {
     param([string]$Key)

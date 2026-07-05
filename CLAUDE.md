@@ -60,7 +60,7 @@ O frontend usa **um único bucket S3** (`personal-trainer-frontend-prod-42121998
 | Portal (personal) | `E3JZ6U88Q0GYGF` | `coachpilot.com.br` | `index.html` |
 | App do aluno | `E2IHNZ34C3PI8V` | `app.coachpilot.com.br` | `aluno.html` |
 | Loja (marketplace) | `EEN1FE9Z7MUEK` | `loja.coachpilot.com.br` | `loja.html` |
-| Painel do divulgador | ver Output `DivulgadorCloudFrontDistributionId` | `divulgador.coachpilot.com.br` | `divulgador.html` |
+| Painel do divulgador | `E3T7YCMACS7AVL` | `divulgador.coachpilot.com.br` | `divulgador.html` |
 
 O build (`npm run build`) gera os **quatro HTML** via Rollup multi-entry, cada um com seu próprio
 manifest e bundle JS. **NÃO copiar index.html sobre os outros** — o build já gera cada um correto.
