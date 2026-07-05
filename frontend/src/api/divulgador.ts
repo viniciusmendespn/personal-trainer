@@ -25,6 +25,7 @@ export interface PainelDivulgador {
   fundador: boolean
   pix_key: string | null
   faixa: Faixa
+  faixa_manual: Faixa | null
   pct_base: number
   assinantes_ativos: number
   contas_total: number

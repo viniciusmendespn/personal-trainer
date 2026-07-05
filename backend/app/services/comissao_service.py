@@ -42,8 +42,19 @@ BONUS_ALTA_PERFORMANCE = 100.0
 BONUS_MIN_VENDAS = 4
 _HISTORICO_MESES = 6
 
+# Faixas selecionáveis manualmente pelo admin (override do automático por carteira).
+FAIXA_POR_NOME: dict[str, tuple[str, float, float]] = {
+    "INICIAL": ("INICIAL", 0.20, 0.25),
+    "OFICIAL": ("OFICIAL", 0.25, 0.30),
+    "MASTER": ("MASTER", 0.30, 0.30),
+    "EMBAIXADOR": EMBAIXADOR,
+}
 
-def _faixa(assinantes_ativos: int, embaixador: bool) -> tuple[str, float, float]:
+
+def _faixa(assinantes_ativos: int, embaixador: bool, faixa_manual: str | None = None) -> tuple[str, float, float]:
+    # Override manual do admin tem prioridade sobre a faixa automática por carteira.
+    if faixa_manual and faixa_manual in FAIXA_POR_NOME:
+        return FAIXA_POR_NOME[faixa_manual]
     if embaixador:
         return EMBAIXADOR
     for minimo, nome, base, teto in FAIXAS:
@@ -52,8 +63,8 @@ def _faixa(assinantes_ativos: int, embaixador: bool) -> tuple[str, float, float]
     return ("INICIAL", 0.20, 0.25)
 
 
-def _pct_mes(assinantes_ativos: int, vendas_novas: int, embaixador: bool) -> tuple[str, float]:
-    nome, base, teto = _faixa(assinantes_ativos, embaixador)
+def _pct_mes(assinantes_ativos: int, vendas_novas: int, embaixador: bool, faixa_manual: str | None = None) -> tuple[str, float]:
+    nome, base, teto = _faixa(assinantes_ativos, embaixador, faixa_manual)
     pct = base + (ACELERADOR_PP if vendas_novas >= ACELERADOR_MIN_VENDAS else 0.0)
     return nome, min(pct, teto)
 
@@ -114,9 +125,15 @@ def excluir_divulgador(divulgador_id: str) -> dict:
 
 
 def atualizar_divulgador(divulgador_id: str, fields: dict) -> dict:
-    permitidos = {k: v for k, v in fields.items() if k in ("ativo", "embaixador", "fundador", "pix_key")}
+    permitidos = {k: v for k, v in fields.items() if k in ("ativo", "embaixador", "fundador", "pix_key", "faixa_manual")}
     if not permitidos:
         raise HTTPException(400, {"code": "NADA_PARA_ATUALIZAR"})
+    if "faixa_manual" in permitidos:
+        fm = permitidos["faixa_manual"]
+        if fm in (None, "", "AUTO"):
+            permitidos["faixa_manual"] = None   # remove o override → volta ao automático por carteira
+        elif fm not in FAIXA_POR_NOME:
+            raise HTTPException(400, {"code": "FAIXA_INVALIDA"})
     if not get_perfil(divulgador_id):
         raise HTTPException(404, {"code": "DIVULGADOR_NAO_ENCONTRADO"})
     updated = repo.update_item(keys.pk_personal(divulgador_id), keys.SK_DIVULGADOR, permitidos, return_values=True)
@@ -190,10 +207,10 @@ def _clientes(divulgador_id: str) -> list[dict]:
     return [repo.clean(it) for it in items]
 
 
-def _montar_mes(ym: str, item: dict, assinantes_para_faixa: int, embaixador: bool) -> dict:
+def _montar_mes(ym: str, item: dict, assinantes_para_faixa: int, embaixador: bool, faixa_manual: str | None = None) -> dict:
     vendas = int(item.get("vendas_novas_count", 0) or 0)
     base_valor = float(item.get("base_valor", 0) or 0)
-    faixa, pct = _pct_mes(assinantes_para_faixa, vendas, embaixador)
+    faixa, pct = _pct_mes(assinantes_para_faixa, vendas, embaixador, faixa_manual)
     bonus = BONUS_ALTA_PERFORMANCE if vendas >= BONUS_MIN_VENDAS else 0.0
     comissao = round(base_valor * pct + bonus, 2)
     return {
@@ -227,6 +244,7 @@ def painel(divulgador_id: str, *, exigir_ativo: bool = True) -> dict:
     hoje = date.today()
     ym_atual = hoje.strftime("%Y-%m")
     embaixador = bool(perfil.get("embaixador"))
+    faixa_manual = perfil.get("faixa_manual")
 
     geral = repo.get_item(keys.pk_personal(divulgador_id), keys.SK_STATS_DIVGERAL) or {}
     clientes = _clientes(divulgador_id)
@@ -241,7 +259,7 @@ def painel(divulgador_id: str, *, exigir_ativo: bool = True) -> dict:
         return assinantes_ativos if ym == ym_atual else int(item.get("assinantes_snapshot", 0) or 0)
 
     # Agregadores de PERÍODO INTEIRO — a query já traz todos os meses.
-    todos = [_montar_mes(ym, item, _assinantes_do_mes(ym, item), embaixador) for ym, item in hist_map.items()]
+    todos = [_montar_mes(ym, item, _assinantes_do_mes(ym, item), embaixador, faixa_manual) for ym, item in hist_map.items()]
     total_comissao = round(sum(m["comissao_valor"] for m in todos), 2)
     meses_ativos = sum(1 for m in todos if m["base_valor"] > 0)
 
@@ -250,14 +268,14 @@ def painel(divulgador_id: str, *, exigir_ativo: bool = True) -> dict:
     for i in range(_HISTORICO_MESES - 1, -1, -1):
         ym = _ym_offset(hoje, i)
         item = hist_map.get(ym, {})
-        meses.append(_montar_mes(ym, item, _assinantes_do_mes(ym, item), embaixador))
+        meses.append(_montar_mes(ym, item, _assinantes_do_mes(ym, item), embaixador, faixa_manual))
 
     mes_atual = meses[-1]
     a_receber = round(sum(
         m["comissao_valor"] for m in meses
         if m["mes"] != ym_atual and m["comissao_valor"] > 0 and m["repasse_status"] != "PAGO"
     ), 2)
-    faixa_nome, pct_base, _ = _faixa(assinantes_ativos, embaixador)
+    faixa_nome, pct_base, _ = _faixa(assinantes_ativos, embaixador, faixa_manual)
 
     return {
         "cupom_codigo": perfil.get("cupom_codigo"),
@@ -265,6 +283,7 @@ def painel(divulgador_id: str, *, exigir_ativo: bool = True) -> dict:
         "fundador": bool(perfil.get("fundador")),
         "pix_key": perfil.get("pix_key"),
         "faixa": faixa_nome,
+        "faixa_manual": faixa_manual,
         "pct_base": pct_base,
         "assinantes_ativos": assinantes_ativos,
         "contas_total": int(geral.get("contas_total", 0) or 0),
@@ -327,7 +346,7 @@ def listar_divulgadores_admin() -> list[dict]:
         mes = itens.get((keys.pk_personal(did), keys.sk_stats_comissao_mes(ym))) or {}
         vendas = int(mes.get("vendas_novas_count", 0) or 0)
         assinantes = int(geral.get("assinantes_total", 0) or 0)
-        _, pct = _pct_mes(assinantes, vendas, bool(perfil.get("embaixador")))
+        _, pct = _pct_mes(assinantes, vendas, bool(perfil.get("embaixador")), perfil.get("faixa_manual"))
         base_valor = float(mes.get("base_valor", 0) or 0)
         bonus = BONUS_ALTA_PERFORMANCE if vendas >= BONUS_MIN_VENDAS else 0.0
         out.append({

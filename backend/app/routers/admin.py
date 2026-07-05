@@ -183,6 +183,7 @@ class AtualizarDivulgadorBody(BaseModel):
     embaixador: bool | None = None
     fundador: bool | None = None
     pix_key: str | None = None
+    faixa_manual: str | None = None   # INICIAL|OFICIAL|MASTER|EMBAIXADOR, ou "AUTO" p/ voltar ao automático
 
 
 @router.patch("/divulgador/{divulgador_id}")

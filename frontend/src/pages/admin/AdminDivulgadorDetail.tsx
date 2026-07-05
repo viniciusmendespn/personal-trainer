@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Check, UserPlus, Users, Wallet } from 'lucide-react'
 import { adminApi, type DivulgadorAdmin } from '../../api/admin'
-import { Card } from '../../components/ui'
+import { Card, useToast } from '../../components/ui'
 import { BarrasMeses, DivStatCard, TabelaMeses, brl, mesLabel, pct } from '../../divulgador/historico'
 
 function dataBr(iso: string | null): string {
@@ -27,6 +27,18 @@ export function AdminDivulgadorDetail({ d, onBack, onRepasse }: {
     queryFn: () => adminApi.divulgadorClientes(d.divulgador_id),
   })
 
+  const queryClient = useQueryClient()
+  const toast = useToast()
+  const faixaMut = useMutation({
+    mutationFn: (faixa_manual: string) => adminApi.atualizarDivulgador(d.divulgador_id, { faixa_manual }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-div-painel', d.divulgador_id] })
+      queryClient.invalidateQueries({ queryKey: ['admin-divulgadores'] })
+      toast.show('Faixa atualizada.', 'success')
+    },
+    onError: () => toast.show('Não foi possível atualizar a faixa.', 'error'),
+  })
+
   const p = painel.data
 
   return (
@@ -41,7 +53,6 @@ export function AdminDivulgadorDetail({ d, onBack, onRepasse }: {
           <h2 className="text-lg font-bold flex items-center gap-2 flex-wrap">
             {d.nome || '(sem nome)'}
             {d.embaixador && <span className="text-[10px] text-accent font-semibold">EMB</span>}
-            {d.fundador && <span className="text-[10px] text-amber-400 font-semibold">FND</span>}
             {!d.ativo && <span className="text-[10px] text-red-400 font-semibold">INATIVO</span>}
           </h2>
           <p className="text-xs text-text-muted break-all">
@@ -89,6 +100,25 @@ export function AdminDivulgadorDetail({ d, onBack, onRepasse }: {
             <span className="font-semibold text-accent">{pct(p.mes_atual.pct)}</span> · mês corrente{' '}
             <span className="font-semibold text-text">{brl(p.mes_atual.comissao_valor)}</span>
           </p>
+
+          {/* Faixa manual — override do automático por carteira */}
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-xs font-semibold uppercase tracking-wide text-text-muted">Faixa de comissão</label>
+            <select
+              value={p.faixa_manual ?? 'AUTO'}
+              onChange={(e) => faixaMut.mutate(e.target.value)}
+              disabled={faixaMut.isPending}
+              className="px-3 py-1.5 text-sm bg-bg border border-border rounded-lg text-text outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+            >
+              <option value="AUTO">Automática (por carteira)</option>
+              <option value="INICIAL">Inicial (20%)</option>
+              <option value="OFICIAL">Oficial (25%)</option>
+              <option value="MASTER">Master (30%)</option>
+              <option value="EMBAIXADOR">Embaixador (30–35%)</option>
+            </select>
+            {p.faixa_manual && <span className="text-[11px] font-semibold text-amber-400">override manual</span>}
+            {faixaMut.isPending && <span className="text-xs text-text-muted">salvando…</span>}
+          </div>
 
           {/* Gráfico 6 meses */}
           <Card className="p-4">

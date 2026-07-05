@@ -192,7 +192,7 @@ function DivulgadoresTab() {
   const personals = useQuery({ queryKey: ['admin-personals'], queryFn: adminApi.listPersonals })
   const [busca, setBusca] = useState('')
   const [selecionado, setSelecionado] = useState<Personal | null>(null)
-  const [form, setForm] = useState({ codigo: '', embaixador: false, fundador: false })
+  const [form, setForm] = useState({ codigo: '', embaixador: false })
   const [msg, setMsg] = useState('')
   const [detalheId, setDetalheId] = useState<string | null>(null)
   const [repasseAlvo, setRepasseAlvo] = useState<DivulgadorAdmin | null>(null)
@@ -214,11 +214,11 @@ function DivulgadoresTab() {
   const criar = useMutation({
     mutationFn: () => adminApi.criarDivulgador({
       email: selecionado!.email, codigo: form.codigo,
-      embaixador: form.embaixador, fundador: form.fundador,
+      embaixador: form.embaixador,
     }),
     onSuccess: () => {
       setMsg('Divulgador criado!')
-      setForm({ codigo: '', embaixador: false, fundador: false })
+      setForm({ codigo: '', embaixador: false })
       setSelecionado(null)
       setBusca('')
       queryClient.invalidateQueries({ queryKey: ['admin-divulgadores'] })
@@ -331,7 +331,8 @@ function DivulgadoresTab() {
           <Megaphone size={13} /> Novo divulgador — busque uma conta existente
         </p>
         {!selecionado ? (
-          <div className="relative">
+          <div className="space-y-1.5">
+            <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
             <input
               type="text"
@@ -355,8 +356,9 @@ function DivulgadoresTab() {
                 ))}
               </div>
             )}
+            </div>
             {busca.trim().length >= 2 && !personals.isLoading && candidatos.length === 0 && (
-              <p className="mt-1.5 text-xs text-text-muted">
+              <p className="text-xs text-text-muted">
                 Nenhuma conta encontrada com "{busca}". O divulgador precisa criar a conta grátis em coachpilot.com.br/signup primeiro.
               </p>
             )}
@@ -385,10 +387,6 @@ function DivulgadoresTab() {
             <input type="checkbox" checked={form.embaixador} onChange={(e) => setForm(f => ({ ...f, embaixador: e.target.checked }))} />
             Embaixador (35%)
           </label>
-          <label className="flex items-center gap-1.5 text-sm text-text-secondary">
-            <input type="checkbox" checked={form.fundador} onChange={(e) => setForm(f => ({ ...f, fundador: e.target.checked }))} />
-            Fundador
-          </label>
           <button
             type="submit" disabled={criar.isPending || !selecionado || !form.codigo}
             className="sm:ml-auto px-3 py-1.5 text-xs font-medium bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 transition-colors"
@@ -407,7 +405,6 @@ function DivulgadoresTab() {
           <thead>
             <tr className="bg-surface-elevated text-text-muted text-xs uppercase tracking-wide">
               <th className="text-left font-medium px-3 py-2">Divulgador</th>
-              <th className="text-left font-medium px-3 py-2">Cupom</th>
               <th className="text-right font-medium px-3 py-2">Contas</th>
               <th className="text-right font-medium px-3 py-2">Assinantes</th>
               <th className="text-right font-medium px-3 py-2">Comissão do mês</th>
@@ -421,12 +418,10 @@ function DivulgadoresTab() {
                   <p className="text-text truncate max-w-[180px]">
                     {d.nome || '(sem nome)'}
                     {d.embaixador && <span className="ml-1.5 text-[10px] text-accent font-semibold">EMB</span>}
-                    {d.fundador && <span className="ml-1 text-[10px] text-amber-400 font-semibold">FND</span>}
                     {!d.ativo && <span className="ml-1 text-[10px] text-red-400 font-semibold">INATIVO</span>}
                   </p>
                   <p className="text-xs text-text-muted truncate max-w-[180px]">{d.email}</p>
                 </td>
-                <td className="px-3 py-2 font-mono text-text-secondary">{d.codigo}</td>
                 <td className="px-3 py-2 text-right text-text">{d.contas_total}</td>
                 <td className="px-3 py-2 text-right text-text">{d.assinantes_total}</td>
                 <td className="px-3 py-2 text-right text-text">
@@ -465,7 +460,7 @@ function DivulgadoresTab() {
               </tr>
             ))}
             {linhas.length === 0 && !isLoading && (
-              <tr><td colSpan={6} className="px-3 py-4 text-center text-text-muted">Nenhum divulgador cadastrado.</td></tr>
+              <tr><td colSpan={5} className="px-3 py-4 text-center text-text-muted">Nenhum divulgador cadastrado.</td></tr>
             )}
           </tbody>
         </table>

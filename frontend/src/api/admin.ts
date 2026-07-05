@@ -57,7 +57,7 @@ export const adminApi = {
   criarDivulgador: (body: { email: string; codigo: string; embaixador?: boolean; fundador?: boolean; pix_key?: string }) =>
     api.post('/v1/admin/divulgador', body).then((r) => r.data),
 
-  atualizarDivulgador: (divulgadorId: string, body: { ativo?: boolean; embaixador?: boolean; fundador?: boolean; pix_key?: string }) =>
+  atualizarDivulgador: (divulgadorId: string, body: { ativo?: boolean; embaixador?: boolean; fundador?: boolean; pix_key?: string; faixa_manual?: string }) =>
     api.patch(`/v1/admin/divulgador/${divulgadorId}`, body).then((r) => r.data),
 
   marcarRepasse: (divulgadorId: string, body: { mes: string; valor: number; obs?: string }) =>
