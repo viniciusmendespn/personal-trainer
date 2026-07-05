@@ -6,7 +6,7 @@ import { adminApi, type DivulgadorAdmin, type Personal } from '../api/admin'
 import { AdminDivulgadorDetail } from './admin/AdminDivulgadorDetail'
 import { normalizeText } from '../utils/normalizeText'
 import { useAuth } from '../auth/AuthProvider'
-import { Tabs } from '../components/ui'
+import { Tabs, Modal, Button, useToast, useConfirm } from '../components/ui'
 
 type Tab = 'personais' | 'indicacoes' | 'divulgadores'
 
@@ -42,7 +42,7 @@ export function AdminPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
         <Shield size={20} className="text-accent" />
         <h1 className="font-display font-bold text-lg text-text">Painel Admin</h1>
@@ -169,8 +169,21 @@ const ERRO_DIVULGADOR: Record<string, string> = {
   DIVULGADOR_COM_CLIENTES: 'Este divulgador já tem contas indicadas — desative em vez de excluir.',
 }
 
+function mesAnterior(ym: string): string {
+  const [y, m] = ym.split('-').map(Number)
+  return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`
+}
+
+function mesExtenso(ym: string): string {
+  const [y, m] = ym.split('-')
+  const nomes = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
+  return `${nomes[parseInt(m, 10) - 1]}/${y}`
+}
+
 function DivulgadoresTab() {
   const queryClient = useQueryClient()
+  const toast = useToast()
+  const confirm = useConfirm()
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin-divulgadores'],
     queryFn: adminApi.listDivulgadores,
@@ -182,6 +195,8 @@ function DivulgadoresTab() {
   const [form, setForm] = useState({ codigo: '', embaixador: false, fundador: false })
   const [msg, setMsg] = useState('')
   const [detalheId, setDetalheId] = useState<string | null>(null)
+  const [repasseAlvo, setRepasseAlvo] = useState<DivulgadorAdmin | null>(null)
+  const [repasseValor, setRepasseValor] = useState('')
 
   const jaDivulgador = new Set((data?.divulgadores ?? []).map(d => d.email.toLowerCase()))
   const candidatos = busca.trim().length >= 2 && !selecionado
@@ -214,7 +229,7 @@ function DivulgadoresTab() {
   const excluir = useMutation({
     mutationFn: (id: string) => adminApi.excluirDivulgador(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-divulgadores'] }),
-    onError: (e: { response?: { data?: { detail?: { code?: string } } } }) => setMsg(`Erro: ${erroMsg(e)}`),
+    onError: (e: { response?: { data?: { detail?: { code?: string } } } }) => toast.show(erroMsg(e), 'error'),
   })
 
   const repasse = useMutation({
@@ -223,28 +238,85 @@ function DivulgadoresTab() {
     onSuccess: (_r, v) => {
       queryClient.invalidateQueries({ queryKey: ['admin-divulgadores'] })
       queryClient.invalidateQueries({ queryKey: ['admin-div-painel', v.id] })
+      setRepasseAlvo(null)
+      setRepasseValor('')
+      toast.show('Repasse registrado.', 'success')
     },
+    onError: (e: { response?: { data?: { detail?: { code?: string } } } }) => toast.show(erroMsg(e), 'error'),
   })
 
+  // Repasse do mês ANTERIOR (mês corrente ainda está em curso).
+  const mesRepasse = repasseAlvo ? mesAnterior(repasseAlvo.mes_atual.mes) : ''
+
   function marcarRepasse(d: DivulgadorAdmin) {
-    // Repasse do mês ANTERIOR (mês corrente ainda está em curso).
-    const [y, m] = d.mes_atual.mes.split('-').map(Number)
-    const ant = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`
-    const valor = window.prompt(`Valor repassado a ${d.nome || d.email} referente a ${ant} (R$):`)
-    if (!valor) return
-    repasse.mutate({ id: d.divulgador_id, mes: ant, valor: parseFloat(valor.replace(',', '.')) })
+    setRepasseValor('')
+    setRepasseAlvo(d)
+  }
+
+  function confirmarRepasse() {
+    if (!repasseAlvo) return
+    const valor = parseFloat(repasseValor.replace(',', '.'))
+    if (!valor || valor <= 0) {
+      toast.show('Informe um valor válido.', 'error')
+      return
+    }
+    repasse.mutate({ id: repasseAlvo.divulgador_id, mes: mesRepasse, valor })
+  }
+
+  async function confirmarExclusao(d: DivulgadorAdmin) {
+    const ok = await confirm({
+      title: 'Excluir divulgador',
+      message: <>Excluir o divulgador <strong>{d.nome || d.email}</strong>? O código <strong>{d.codigo}</strong> será liberado para reuso.</>,
+      confirmLabel: 'Excluir',
+      tone: 'danger',
+    })
+    if (ok) excluir.mutate(d.divulgador_id)
   }
 
   const linhas = data?.divulgadores ?? []
 
+  const repasseModal = (
+    <Modal open={!!repasseAlvo} onClose={() => setRepasseAlvo(null)} title="Marcar repasse">
+      {repasseAlvo && (
+        <div className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Repasse a <strong className="text-text">{repasseAlvo.nome || repasseAlvo.email}</strong> referente a{' '}
+            <strong className="text-text">{mesExtenso(mesRepasse)}</strong> (mês fechado). Informe o valor
+            efetivamente transferido via PIX.
+          </p>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wide text-text-muted mb-1">Valor transferido (R$)</label>
+            <input
+              type="text" inputMode="decimal" autoFocus placeholder="0,00"
+              value={repasseValor}
+              onChange={(e) => setRepasseValor(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') confirmarRepasse() }}
+              className="w-full px-3 py-2 text-sm bg-bg border border-border rounded-lg text-text placeholder-text-muted outline-none focus:ring-1 focus:ring-accent"
+            />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button type="button" variant="ghost" onClick={() => setRepasseAlvo(null)}>Cancelar</Button>
+            <Button type="button" variant="primary" onClick={confirmarRepasse} disabled={repasse.isPending}>
+              {repasse.isPending ? 'Registrando…' : 'Confirmar repasse'}
+            </Button>
+          </div>
+        </div>
+      )}
+    </Modal>
+  )
+
   const detalhe = detalheId ? linhas.find(d => d.divulgador_id === detalheId) : null
+
   if (detalhe) {
     return (
-      <AdminDivulgadorDetail
-        d={detalhe}
-        onBack={() => setDetalheId(null)}
-        onRepasse={marcarRepasse}
-      />
+      <>
+        <AdminDivulgadorDetail
+          d={detalhe}
+          onBack={() => setDetalheId(null)}
+          onRepasse={marcarRepasse}
+        />
+        {repasseModal}
+      </>
     )
   }
 
@@ -380,11 +452,7 @@ function DivulgadoresTab() {
                     </button>
                     {d.contas_total === 0 && (
                       <button
-                        onClick={() => {
-                          if (window.confirm(`Excluir o divulgador ${d.nome || d.email}? O código ${d.codigo} será liberado.`)) {
-                            excluir.mutate(d.divulgador_id)
-                          }
-                        }}
+                        onClick={() => confirmarExclusao(d)}
                         disabled={excluir.isPending}
                         title="Excluir divulgador (sem clientes — libera o código)"
                         className="inline-flex items-center px-2 py-1 text-[11px] font-medium border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-colors"
@@ -402,6 +470,8 @@ function DivulgadoresTab() {
           </tbody>
         </table>
       </div>
+
+      {repasseModal}
     </div>
   )
 }
