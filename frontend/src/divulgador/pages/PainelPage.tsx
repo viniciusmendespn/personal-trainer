@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { Check, Copy, Crown, Rocket, TrendingUp, Wallet } from 'lucide-react'
+import { Check, Copy, Crown, TrendingUp, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { divulgadorApi, type MesComissao } from '../../api/divulgador'
 import { Card } from '../../components/ui'
+import { PainelExclusivo } from '../components/PainelExclusivo'
 
 const FAIXA_LABEL: Record<string, string> = {
   INICIAL: 'Divulgador Inicial',
@@ -58,30 +59,6 @@ function BarrasMeses({ meses }: { meses: MesComissao[] }) {
   )
 }
 
-function NaoCadastrado() {
-  return (
-    <div className="mx-auto max-w-md px-4 py-16 text-center">
-      <Rocket size={40} className="mx-auto text-accent mb-4" />
-      <h1 className="text-xl font-bold mb-2">Você ainda não é divulgador</h1>
-      <p className="text-sm text-text-secondary mb-6">
-        O programa de divulgadores CoachPilot paga comissão recorrente sobre cada assinatura
-        Gestão Pro que você indicar. A entrada é feita pela nossa equipe.
-      </p>
-      <a
-        href="https://wa.me/5513991830305?text=Oi%2C%20quero%20entrar%20no%20programa%20de%20divulgadores%20do%20CoachPilot"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover transition-colors"
-      >
-        Quero ser divulgador
-      </a>
-      <p className="text-xs text-text-muted mt-4">
-        <a href="https://coachpilot.com.br/divulgadores" className="hover:underline">Conheça as regras do programa</a>
-      </p>
-    </div>
-  )
-}
-
 export function PainelPage() {
   const { data, isLoading, error } = useQuery({ queryKey: ['div-painel'], queryFn: divulgadorApi.painel })
   const [copiado, setCopiado] = useState(false)
@@ -90,7 +67,7 @@ export function PainelPage() {
   if (error || !data) {
     const code = (error as { response?: { data?: { detail?: { code?: string } } } })?.response?.data?.detail?.code
     if (code === 'DIVULGADOR_NAO_CADASTRADO' || (error as { response?: { status?: number } })?.response?.status === 404) {
-      return <NaoCadastrado />
+      return <PainelExclusivo />
     }
     return <div className="py-24 text-center text-text-muted text-sm">Não foi possível carregar o painel. Tente novamente.</div>
   }

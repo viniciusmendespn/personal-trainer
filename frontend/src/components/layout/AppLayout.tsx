@@ -6,6 +6,7 @@ import { useAuth } from '../../auth/AuthProvider'
 import { useTheme, type ThemeChoice } from '../../context/ThemeContext'
 import { useUnreadCount } from '../../hooks/useNotificacoes'
 import { personalApi } from '../../api/personal'
+import { divulgadorApi } from '../../api/divulgador'
 import { Avatar } from '../ui'
 import { ChatWidget } from '../chat/ChatWidget'
 import { ChatContextProvider } from '../../context/ChatContext'
@@ -65,6 +66,7 @@ function SidebarContent({ unread, onNavigate, showInstallBtn, isIos, onInstall }
 }) {
   const { user, signOut, isAdmin } = useAuth()
   const profile = useQuery({ queryKey: ['personal-profile'], queryFn: personalApi.getProfile, staleTime: 300_000 })
+  const divStatus = useQuery({ queryKey: ['div-status'], queryFn: divulgadorApi.status, enabled: !!user, staleTime: 600_000 })
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const { theme, setTheme } = useTheme()
@@ -118,7 +120,7 @@ function SidebarContent({ unread, onNavigate, showInstallBtn, isIos, onInstall }
                 )}
               </NavLink>
             ))}
-            {group.title === 'Conta' && (
+            {group.title === 'Conta' && divStatus.data?.is_divulgador && (
               <a
                 href="https://divulgador.coachpilot.com.br"
                 target="_blank"
@@ -126,7 +128,7 @@ function SidebarContent({ unread, onNavigate, showInstallBtn, isIos, onInstall }
                 onClick={onNavigate}
                 className={link(false)}
               >
-                <Megaphone size={16} /> Painel do Divulgador
+                <Megaphone size={16} /> Divulgador
               </a>
             )}
             {group.title === 'Conta' && isAdmin && (

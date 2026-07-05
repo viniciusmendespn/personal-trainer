@@ -13,6 +13,14 @@ from app.services import comissao_service
 router = APIRouter(prefix="/v1/divulgador", tags=["divulgador"])
 
 
+@router.get("/status")
+def status(divulgador_id: str = Depends(get_current_personal_id)):
+    """Checagem leve (1 GetItem) usada pelo portal e pelo painel para decidir se a
+    conta logada é um divulgador ativo — sem carregar o painel completo."""
+    perfil = comissao_service.get_perfil(divulgador_id)
+    return {"is_divulgador": bool(perfil and perfil.get("ativo", True))}
+
+
 @router.get("/painel")
 def painel(divulgador_id: str = Depends(get_current_personal_id)):
     """Visão completa: faixa, % vigente, acelerador, mês corrente, 6 meses, a receber."""

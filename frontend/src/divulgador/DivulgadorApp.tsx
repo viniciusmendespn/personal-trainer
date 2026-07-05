@@ -1,10 +1,22 @@
 import { createContext, useContext, useEffect } from 'react'
 import { BrowserRouter, Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { Instagram, LogIn, LogOut, Users } from 'lucide-react'
 import { useDivulgadorAuth } from './useDivulgadorAuth'
+import { divulgadorApi } from '../api/divulgador'
 import { PainelPage } from './pages/PainelPage'
 import { ClientesPage } from './pages/ClientesPage'
 import { DivLoginPage } from './pages/DivLoginPage'
+import { PainelExclusivo } from './components/PainelExclusivo'
+
+function useDivulgadorStatus(enabled: boolean) {
+  return useQuery({
+    queryKey: ['div-status'],
+    queryFn: divulgadorApi.status,
+    enabled,
+    staleTime: 5 * 60 * 1000,
+  })
+}
 
 type DivAuthCtx = ReturnType<typeof useDivulgadorAuth>
 const AuthCtx = createContext<DivAuthCtx | null>(null)
@@ -18,6 +30,7 @@ export function useDivAuthContext(): DivAuthCtx {
 function Header() {
   const { user, signOut } = useDivAuthContext()
   const navigate = useNavigate()
+  const { data: status } = useDivulgadorStatus(!!user)
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-bg/80 backdrop-blur-xl">
       <div className="mx-auto max-w-4xl px-4 h-16 flex items-center justify-between gap-3">
@@ -28,7 +41,7 @@ function Header() {
           </span>
         </Link>
         <nav className="flex items-center gap-1.5">
-          {user && (
+          {user && status?.is_divulgador && (
             <Link
               to="/clientes"
               className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-text-secondary hover:text-text hover:bg-white/5 transition-colors"
@@ -110,6 +123,14 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function RequireDivulgador({ children }: { children: React.ReactNode }) {
+  const { user } = useDivAuthContext()
+  const { data: status, isLoading } = useDivulgadorStatus(!!user)
+  if (isLoading) return <div className="py-24 text-center text-text-muted text-sm">Carregando…</div>
+  if (!status?.is_divulgador) return <PainelExclusivo />
+  return <>{children}</>
+}
+
 export function DivulgadorApp() {
   const auth = useDivulgadorAuth()
   return (
@@ -120,8 +141,8 @@ export function DivulgadorApp() {
           <Header />
           <main className="flex-1">
             <Routes>
-              <Route path="/" element={<RequireAuth><PainelPage /></RequireAuth>} />
-              <Route path="/clientes" element={<RequireAuth><ClientesPage /></RequireAuth>} />
+              <Route path="/" element={<RequireAuth><RequireDivulgador><PainelPage /></RequireDivulgador></RequireAuth>} />
+              <Route path="/clientes" element={<RequireAuth><RequireDivulgador><ClientesPage /></RequireDivulgador></RequireAuth>} />
               <Route path="/login" element={<DivLoginPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

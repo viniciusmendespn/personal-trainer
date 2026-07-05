@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { adminApi, type DivulgadorAdmin, type Personal } from '../api/admin'
 import { normalizeText } from '../utils/normalizeText'
 import { useAuth } from '../auth/AuthProvider'
+import { Tabs } from '../components/ui'
 
 type Tab = 'personais' | 'indicacoes' | 'divulgadores'
 
@@ -46,19 +47,16 @@ export function AdminPage() {
         <h1 className="font-display font-bold text-lg text-text">Painel Admin</h1>
       </div>
 
-      <div className="flex gap-2">
-        {([['personais', 'Personais'], ['indicacoes', 'Campanha de Indicação'], ['divulgadores', 'Divulgadores']] as [Tab, string][]).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-              tab === key ? 'bg-accent text-white border-accent' : 'border-border text-text-secondary hover:bg-surface-elevated'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        className="mb-4"
+        tabs={[
+          { key: 'personais', label: 'Personais' },
+          { key: 'indicacoes', label: 'Campanha de Indicação' },
+          { key: 'divulgadores', label: 'Divulgadores' },
+        ]}
+        active={tab}
+        onChange={(k) => setTab(k as Tab)}
+      />
 
       {tab === 'personais' && (
         <>

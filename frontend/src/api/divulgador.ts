@@ -46,6 +46,7 @@ export interface ClienteDivulgador {
 // ── Chamadas ──────────────────────────────────────────────────────────────────
 
 export const divulgadorApi = {
+  status: () => api.get<{ is_divulgador: boolean }>('/v1/divulgador/status').then(r => r.data),
   painel: () => api.get<PainelDivulgador>('/v1/divulgador/painel').then(r => r.data),
   clientes: () => api.get<{ clientes: ClienteDivulgador[] }>('/v1/divulgador/clientes').then(r => r.data.clientes),
 }
