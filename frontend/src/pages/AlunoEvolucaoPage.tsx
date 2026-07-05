@@ -7,7 +7,7 @@ import {
 } from 'recharts'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAluno } from '../hooks/useAlunos'
-import { useExerciciosAluno, useEvolucao, useResumo } from '../hooks/useEvolucao'
+import { useExerciciosAlunoHistorico, useEvolucaoPorChave, useResumo } from '../hooks/useEvolucao'
 import { Card, Spinner, StatCard, Badge, EmptyState, Button, Input, SearchableSelect, useToast } from '../components/ui'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
 import { normalizeText } from '../utils/normalizeText'
@@ -43,12 +43,13 @@ const ABA_EVOLUCAO: { key: AbaEvolucao; label: string; icon: React.ReactNode }[]
 export function AlunoEvolucaoPage() {
   const { alunoId = '' } = useParams()
   const [searchParams] = useSearchParams()
-  const highlightExId = searchParams.get('highlight') ?? undefined
+  // Pode ser a chave canônica (notifs novas) ou um exercicio_id legado — resolvido no efeito.
+  const highlightRef = searchParams.get('highlight') ?? undefined
   const { data: aluno } = useAluno(alunoId)
   const { data: myProfile } = useQuery({ queryKey: ['personal-profile'], queryFn: personalApi.getProfile })
-  const { data: exercicios } = useExerciciosAluno(alunoId)
+  const { data: exercicios } = useExerciciosAlunoHistorico(alunoId)
   const { data: resumo } = useResumo(alunoId)
-  const [exId, setExId] = useState(highlightExId ?? '')
+  const [exKey, setExKey] = useState('')
   const [aba, setAba] = useState<AbaEvolucao>('feed')
   const [exporting, setExporting] = useState(false)
   const [prQuery, setPrQuery] = useState('')
@@ -61,7 +62,7 @@ export function AlunoEvolucaoPage() {
     [exercicios]
   )
   const exerciciosOptions = useMemo(
-    () => exerciciosOrdenados.map((e) => ({ value: e.exercicio_id, label: e.nome })),
+    () => exerciciosOrdenados.map((e) => ({ value: e.chave, label: e.atual ? e.nome : `${e.nome} (anterior)` })),
     [exerciciosOrdenados]
   )
   const prsFiltrados = useMemo(
@@ -85,17 +86,26 @@ export function AlunoEvolucaoPage() {
   }
 
   useEffect(() => {
-    if (highlightExId) { setExId(highlightExId); setAba('feed'); return }
-    if (!exId && exerciciosOrdenados.length) setExId(exerciciosOrdenados[0].exercicio_id)
-  }, [exerciciosOrdenados, exId, highlightExId])
+    if (!exerciciosOrdenados.length) return
+    if (highlightRef) {
+      // Resolve chave OU exercicio_id legado; se o exercício sumiu, cai no primeiro da
+      // lista — o select nunca fica em branco.
+      const hit = exerciciosOrdenados.find((e) => e.chave === highlightRef)
+        ?? exerciciosOrdenados.find((e) => e.exercicio_ids?.includes(highlightRef))
+      setExKey(hit?.chave ?? exerciciosOrdenados[0].chave)
+      setAba('feed')
+      return
+    }
+    if (!exKey) setExKey(exerciciosOrdenados[0].chave)
+  }, [exerciciosOrdenados, exKey, highlightRef])
 
-  const { data: evo, isLoading } = useEvolucao(alunoId, exId)
+  const { data: evo, isLoading } = useEvolucaoPorChave(alunoId, exKey)
   const { data: feed } = useQuery({
-    queryKey: ['feed-exercicio', alunoId, exId],
-    queryFn: () => treinosApi.feedExercicio(alunoId, exId),
-    enabled: !!exId && aba === 'feed',
+    queryKey: ['feed-exercicio', alunoId, exKey],
+    queryFn: () => treinosApi.feedExercicioPorChave(alunoId, exKey),
+    enabled: !!exKey && aba === 'feed',
   })
-  const exSel = exercicios?.find((e) => e.exercicio_id === exId)
+  const exSel = exercicios?.find((e) => e.chave === exKey)
   const tipoEvo = normalizeTipoExercicio(evo?.tipo ?? exSel?.tipo_exercicio)
   const unidadePerf = exSel?.unidade_reps || ''
   const prescrita = exSel?.carga_prescrita ? Number(String(exSel.carga_prescrita).replace(',', '.')) : NaN
@@ -184,8 +194,8 @@ const chartData = (evo?.serie ?? [])
             <>
               <SearchableSelect
                 options={exerciciosOptions}
-                value={exId}
-                onChange={setExId}
+                value={exKey}
+                onChange={setExKey}
                 placeholder="Buscar exercício…"
                 className="mb-4 max-w-xs"
               />
@@ -338,7 +348,7 @@ const chartData = (evo?.serie ?? [])
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {prsFiltrados.slice(0, prLimit).map((p) => {
-                    const exPr = exercicios?.find((e) => e.nome === p.exercicio)
+                    const exPr = exercicios?.find((e) => (p.chave ? e.chave === p.chave : e.nome === p.exercicio))
                     const tipoPr = normalizeTipoExercicio(exPr?.tipo_exercicio)
                     const valorPr = tipoPr === 'PERFORMANCE'
                       ? `${p.carga} ${exPr?.unidade_reps ?? ''}`.trimEnd()
@@ -365,27 +375,27 @@ const chartData = (evo?.serie ?? [])
             <div className="space-y-3">
               <SearchableSelect
                 options={exerciciosOptions}
-                value={exId}
-                onChange={setExId}
+                value={exKey}
+                onChange={setExKey}
                 placeholder="Buscar exercício…"
                 className="max-w-xs"
               />
-              {!!exId && (
+              {!!exSel && (
                 <PostComposer
-                  exercicioId={exId}
-                  exercicioNome={exSel?.nome}
+                  exercicioId={exSel.exercicio_id ?? undefined}
+                  exercicioNome={exSel.nome}
                   viewerAtor="PERSONAL"
                   alunoId={alunoId}
-                  onSuccess={() => qc.invalidateQueries({ queryKey: ['feed-exercicio', alunoId, exId] })}
+                  onSuccess={() => qc.invalidateQueries({ queryKey: ['feed-exercicio', alunoId, exKey] })}
                 />
               )}
-              {!!exId && (
+              {!!exKey && (
                 <p className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
                   <MessageSquareDot size={15} className="text-accent-hover" /> Feed do exercício
                 </p>
               )}
               <ExercicioFeedCard
-                items={feed ?? []}
+                items={feed?.items ?? []}
                 emptyText="Nenhuma postagem ainda."
                 viewerAtor="PERSONAL"
                 alunoNome={aluno?.nome}
@@ -404,7 +414,7 @@ const chartData = (evo?.serie ?? [])
                     } else {
                       await treinosApi.comentarRelato(alunoId, { relato_sk: relatoSk, texto, midias })
                     }
-                    qc.invalidateQueries({ queryKey: ['feed-exercicio', alunoId, exId] })
+                    qc.invalidateQueries({ queryKey: ['feed-exercicio', alunoId, exKey] })
                   } catch {
                     show('Não foi possível enviar o comentário.', 'error')
                   }

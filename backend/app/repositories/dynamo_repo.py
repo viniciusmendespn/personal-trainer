@@ -144,6 +144,22 @@ def query_gsi1_last(gsi1pk: str, limit: int = 1) -> list[dict]:
     return resp.get("Items", [])
 
 
+def query_gsi1_page(gsi1pk: str, limit: int, cursor: str | None = None) -> tuple[list[dict], str | None]:
+    """Página do GSI1 mais recente primeiro, com cursor opaco — p/ séries que crescem sem
+    limite (ex.: feed de exercício por nome canônico)."""
+    kwargs: dict = {
+        "IndexName": "GSI1",
+        "KeyConditionExpression": Key("GSI1PK").eq(gsi1pk),
+        "ScanIndexForward": False,
+        "Limit": limit,
+    }
+    if cursor:
+        kwargs["ExclusiveStartKey"] = _decode_cursor(cursor)
+    resp = _get_table().query(**kwargs)
+    last_key = resp.get("LastEvaluatedKey")
+    return resp.get("Items", []), _encode_cursor(last_key) if last_key else None
+
+
 # ── Escrita ──────────────────────────────────────────────────────────────────
 def put_item(pk: str, sk: str, data: dict) -> None:
     _get_table().put_item(Item={"PK": pk, "SK": sk, **_san(data)})
@@ -339,20 +355,22 @@ def update_if_less(pk: str, sk: str, field: str, value, extra: dict | None = Non
         raise
 
 
-def list_append_item(pk: str, sk: str, field: str, item: dict) -> bool:
-    """Appends one dict to a list field. Returns False if the parent item does not exist."""
+def list_append_item(pk: str, sk: str, field: str, item: dict) -> dict | None:
+    """Appends one dict to a list field. Retorna o item atualizado (ALL_NEW) — os chamadores
+    leem dele exercicio_id/chave/nome sem parsear a SK — ou None se o item pai não existe."""
     try:
-        _get_table().update_item(
+        resp = _get_table().update_item(
             Key={"PK": pk, "SK": sk},
             UpdateExpression="SET #f = list_append(if_not_exists(#f, :empty), :new)",
             ConditionExpression=Attr("PK").exists(),
             ExpressionAttributeNames={"#f": field},
             ExpressionAttributeValues={":empty": [], ":new": [_san(item)]},
+            ReturnValues="ALL_NEW",
         )
-        return True
+        return resp.get("Attributes", {})
     except ClientError as e:
         if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-            return False
+            return None
         raise
 
 

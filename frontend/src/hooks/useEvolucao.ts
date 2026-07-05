@@ -9,11 +9,28 @@ export function useExerciciosAluno(alunoId: string) {
   })
 }
 
+/** Todos os exercícios já feitos (programa atual + histórico), identidade por chave. */
+export function useExerciciosAlunoHistorico(alunoId: string) {
+  return useQuery({
+    queryKey: ['exercicios-aluno-historico', alunoId],
+    queryFn: () => evolucaoApi.listExerciciosHistorico(alunoId),
+    enabled: !!alunoId,
+  })
+}
+
 export function useEvolucao(alunoId: string, exercicioId: string) {
   return useQuery({
     queryKey: ['evolucao', alunoId, exercicioId],
     queryFn: () => evolucaoApi.get(alunoId, exercicioId),
     enabled: !!alunoId && !!exercicioId,
+  })
+}
+
+export function useEvolucaoPorChave(alunoId: string, chave: string) {
+  return useQuery({
+    queryKey: ['evolucao-chave', alunoId, chave],
+    queryFn: () => evolucaoApi.getPorChave(alunoId, chave),
+    enabled: !!alunoId && !!chave,
   })
 }
 

@@ -14,7 +14,7 @@ from app.models.enums import Ator
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services.wapi_service import WAPIClient
-from app.utils import new_id, now_iso
+from app.utils import epoch_ms, new_id, now_iso
 
 logger = logging.getLogger(__name__)
 _s3 = None
@@ -98,15 +98,18 @@ def registrar_midia_vinculada(aluno_id: str, exercicio_id: str, exercicio_nome: 
     """Registra uma mídia já enviada (via presigned URL) — pelo próprio app do aluno ou
     pelo personal (vídeo/foto de correção) — o exercício já é conhecido nesse fluxo, então
     a mídia nasce vinculada (sem pendência)."""
-    from app.services.sessao_service import chave_exercicio  # evita import circular (sessao_service→media_service)
+    from app.services.sessao_service import chave_exercicio, upsert_excat  # evita import circular (sessao_service→media_service)
     midia_id = new_id()
+    chave = chave_exercicio(exercicio_nome or "")
     item = {
         "midia_id": midia_id, "tipo": tipo, "s3_key": s3_key,
         "exercicio_id": exercicio_id, "exercicio_nome": exercicio_nome,
-        "chave": chave_exercicio(exercicio_nome or ""),
+        "chave": chave,
         "status": "VINCULADA", "data_hora": now_iso(), "ator": ator.value,
+        **({"GSI1PK": keys.gsi1_feed(aluno_id, chave), "GSI1SK": keys.gsi1sk_feed(epoch_ms())} if chave else {}),
     }
     repo.put_item(keys.pk_aluno(aluno_id), f"MIDIA#{exercicio_id}#{midia_id}", item)
+    upsert_excat(aluno_id, exercicio_nome)
     return item
 
 

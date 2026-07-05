@@ -1,6 +1,6 @@
 import { alunoClient } from './alunoClient'
 import type { Exercicio, ExercicioSubstituto, Treino } from '../types'
-import type { Evolucao, Resumo } from './evolucao'
+import type { Evolucao, ExercicioEvolucao, Resumo } from './evolucao'
 import type { FeedItem, MidiaExercicio, Relato } from './treinos'
 import { prepareMediaForUpload, MEDIA_CACHE_CONTROL } from '../utils/media'
 
@@ -28,8 +28,13 @@ export interface AlunoNotificacao {
   data_hora: string
   ref_id?: string
   exercicio_id?: string
+  /** Nome canônico do exercício — identidade estável p/ deep link (id muda a cada semana). */
+  chave?: string
+  exercicio_nome?: string
   relato_sk?: string
 }
+
+export type { ExercicioEvolucao }
 
 export interface SessaoHistorico {
   sessao_id: string
@@ -184,9 +189,14 @@ export const alunoApi = {
     alunoClient.post<{ pr_novo?: number }>('/v1/aluno/registros', { series, exercicio_id, substituto_nome }).then((r) => r.data),
   resumo: () => alunoClient.get<Resumo>('/v1/aluno/resumo').then((r) => r.data),
   listExercicios: () => alunoClient.get<Exercicio[]>('/v1/aluno/exercicios').then((r) => r.data),
+  /** Todos os exercícios já feitos (programa atual + histórico), em ordem alfabética. */
+  listExerciciosHistorico: () =>
+    alunoClient.get<ExercicioEvolucao[]>('/v1/aluno/exercicios', { params: { historico: 1 } }).then((r) => r.data),
   historicoExercicio: (exercicioNome: string) =>
     alunoClient.get<Array<{ data_hora: string; series_exec: SerieInput[] }>>('/v1/aluno/exercicios/historico', { params: { exercicio_nome: exercicioNome, limit: 1 } }).then((r) => r.data),
   evolucao: (id: string) => alunoClient.get<Evolucao>(`/v1/aluno/exercicios/${id}/evolucao`).then((r) => r.data),
+  evolucaoPorChave: (chave: string) =>
+    alunoClient.get<Evolucao>('/v1/aluno/exercicios/evolucao', { params: { chave } }).then((r) => r.data),
   listMidia: (exercicioId: string) =>
     alunoClient.get<MidiaExercicio[]>(`/v1/aluno/exercicios/${exercicioId}/midia`).then((r) => r.data),
   midiaUploadUrl: (filename: string, contentType: string) =>
@@ -220,6 +230,10 @@ export const alunoApi = {
     alunoClient.post('/v1/aluno/notificacoes/lida', { ref }).then((r) => r.data),
   feedExercicio: (exercicioId: string) =>
     alunoClient.get<FeedItem[]>(`/v1/aluno/exercicios/${exercicioId}/feed`).then((r) => r.data),
+  feedPorChave: (chave: string, cursor?: string) =>
+    alunoClient
+      .get<{ items: FeedItem[]; next_cursor: string | null }>('/v1/aluno/exercicios/feed', { params: { chave, cursor } })
+      .then((r) => r.data),
   comentarRelato: (body: { relato_sk: string; texto?: string; midias?: Array<{ s3_key: string; tipo: string }> }) =>
     alunoClient.post('/v1/aluno/relato/comentar', body).then((r) => r.data),
   criarPostagem: (
@@ -234,6 +248,15 @@ export const alunoApi = {
     alunoClient
       .post<{ ok: number; post_id: string }>(`/v1/aluno/exercicios/${exercicioId}/postagem`, body)
       .then((r) => r.data),
+  /** Postagem body-based: identifica o exercício pelo nome; id só quando está no programa atual. */
+  criarPostagemV2: (body: {
+    tipo: 'DOR' | 'DUVIDA' | 'EXECUCAO' | 'OUTRO'
+    exercicio_nome: string
+    exercicio_id?: string
+    descricao?: string
+    midias?: Array<{ s3_key: string; tipo: string }>
+  }) =>
+    alunoClient.post<{ ok: number; post_id: string }>('/v1/aluno/postagens', body).then((r) => r.data),
   comentarPost: (body: { post_sk: string; texto?: string; midias?: Array<{ s3_key: string; tipo: string }>; post_tipo?: string }) =>
     alunoClient.post('/v1/aluno/post/comentar', body).then((r) => r.data),
 

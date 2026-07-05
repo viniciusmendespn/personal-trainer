@@ -14,6 +14,7 @@ from app.models.treino import Treino
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import authz
+from app.services.sessao_service import chave_exercicio, upsert_excat
 from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/rotinas", tags=["rotinas"])
@@ -211,6 +212,14 @@ def aplicar_rotina(
             treino_ids.append(treino_id)
 
         repo.batch_write(puts=puts, deletes=deletes or None)
+        # Semeia o catálogo permanente do aluno (1 upsert por nome canônico distinto)
+        vistos: set[str] = set()
+        for tr in rot.treinos:
+            for et in tr.exercicios:
+                ch = chave_exercicio(et.nome or "")
+                if ch and ch not in vistos:
+                    vistos.add(ch)
+                    upsert_excat(aluno_id, et.nome, et.model_dump())
         _touch_aluno_pointer(personal_id, aluno_id)
         aplicados.append({"aluno_id": aluno_id, "treinos": treino_ids})
 

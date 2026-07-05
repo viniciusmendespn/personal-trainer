@@ -15,6 +15,8 @@ export interface Notificacao {
   relato_sk?: string
   relato_tipo?: 'dor' | 'duvida'
   exercicio_id?: string
+  /** Nome canônico do exercício — identidade estável p/ deep link (id muda a cada semana). */
+  chave?: string
   exercicio_nome?: string
 }
 

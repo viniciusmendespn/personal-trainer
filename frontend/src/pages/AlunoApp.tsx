@@ -32,7 +32,7 @@ import { PixModal } from '../components/financeiro/PixModal'
 import type { Cobranca, ExercicioSubstituto, SeriePrescrita } from '../types'
 import { normalizeTipoExercicio } from '../types'
 import { videoUrlComFallback } from '../utils/video'
-import { normalizeText } from '../utils/normalizeText'
+import { chaveExercicio, normalizeText } from '../utils/normalizeText'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -186,8 +186,9 @@ function NotifDrawer({ onClose, onNavigate, onOpenChat, onFinanceiro }: {
     } else if (FINANCEIRO_TIPOS.includes(n.tipo)) {
       onFinanceiro()
       onClose()
-    } else if (DEEP_LINK_TIPOS.includes(n.tipo) && n.exercicio_id) {
-      onNavigate('evolucao', n.exercicio_id)
+    } else if (DEEP_LINK_TIPOS.includes(n.tipo) && (n.chave || n.exercicio_id)) {
+      // Preferir a chave (nome canônico, estável); id legado é resolvido pela Evolucao.
+      onNavigate('evolucao', n.chave ?? n.exercicio_id)
       onClose()
     }
   }
@@ -504,7 +505,7 @@ export function AlunoApp() {
       ) : tab === 'feed' ? (
         <main className="px-4 flex-1 pt-2"><FeedGlobalTab /></main>
       ) : tab === 'evolucao' ? (
-        <main className="px-4 flex-1"><Evolucao initialExId={highlightExId} /></main>
+        <main className="px-4 flex-1"><Evolucao initialExRef={highlightExId} /></main>
       ) : tab === 'personal' ? (
         <main className="px-4 flex-1 pt-2"><SobrePersonalTab /></main>
       ) : (
@@ -1453,7 +1454,7 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
           </button>
         )}
         <button
-          onClick={() => onVerFeed(ex.exercicio_id)}
+          onClick={() => onVerFeed(chaveExercicio(ex.nome))}
           aria-label="Ver feed do exercício"
           className="shrink-0 text-accent hover:text-accent-hover transition-colors p-1"
         >
@@ -1619,31 +1620,42 @@ const ABA_EVOLUCAO: { key: AbaEvolucao; label: string; icon: React.ReactNode }[]
   { key: 'conquistas', label: 'Conquistas', icon: <Medal size={13} /> },
 ]
 
-function Evolucao({ initialExId }: { initialExId?: string }) {
+function Evolucao({ initialExRef }: { initialExRef?: string }) {
   const qc = useQueryClient()
   const { show } = useToast()
   const resumo = useQuery({ queryKey: ['aluno-resumo'], queryFn: alunoApi.resumo })
-  const exs = useQuery({ queryKey: ['aluno-exs'], queryFn: alunoApi.listExercicios })
+  const exs = useQuery({ queryKey: ['aluno-exs-historico'], queryFn: alunoApi.listExerciciosHistorico })
   const me = useQuery({ queryKey: ['aluno-me'], queryFn: alunoApi.me })
   const personal = useQuery({ queryKey: ['aluno-personal-profile'], queryFn: alunoApi.personalProfile, staleTime: 300_000 })
-  const [exId, setExId] = useState(initialExId ?? '')
+  const [exKey, setExKey] = useState('')
   const [aba, setAba] = useState<AbaEvolucao>('feed')
   const [prQuery, setPrQuery] = useState('')
   const [prLimit, setPrLimit] = useState(12)
   const exsOptions = useMemo(
-    () => (exs.data ?? []).map((e) => ({ value: e.exercicio_id, label: e.nome })),
+    () => (exs.data ?? [])
+      .map((e) => ({ value: e.chave, label: e.atual ? e.nome : `${e.nome} (anterior)` }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR')),
     [exs.data]
   )
 
   useEffect(() => {
-    if (initialExId) { setExId(initialExId); setAba('feed'); return }
-    if (!exId && exs.data?.length) setExId(exs.data[0].exercicio_id)
-  }, [exs.data, exId, initialExId])
+    if (!exs.data?.length) return
+    if (initialExRef) {
+      // Deep link: pode vir a chave (notifs novas) ou um exercicio_id legado — resolve
+      // pelos dois; se o exercício sumiu, cai no primeiro da lista (nunca fica em branco).
+      const hit = exs.data.find((e) => e.chave === initialExRef)
+        ?? exs.data.find((e) => e.exercicio_ids?.includes(initialExRef))
+      setExKey(hit?.chave ?? exs.data[0].chave)
+      setAba('feed')
+      return
+    }
+    if (!exKey) setExKey(exs.data[0].chave)
+  }, [exs.data, exKey, initialExRef])
 
-  const evo = useQuery({ queryKey: ['aluno-evo', exId], queryFn: () => alunoApi.evolucao(exId), enabled: !!exId && aba === 'carga' })
-  const feed = useQuery({ queryKey: ['aluno-feed', exId], queryFn: () => alunoApi.feedExercicio(exId), enabled: !!exId && aba === 'feed' })
+  const evo = useQuery({ queryKey: ['aluno-evo', exKey], queryFn: () => alunoApi.evolucaoPorChave(exKey), enabled: !!exKey && aba === 'carga' })
+  const feed = useQuery({ queryKey: ['aluno-feed', exKey], queryFn: () => alunoApi.feedPorChave(exKey), enabled: !!exKey && aba === 'feed' })
 
-  const exSel = exs.data?.find((e) => e.exercicio_id === exId)
+  const exSel = exs.data?.find((e) => e.chave === exKey)
   const tipoEvo = normalizeTipoExercicio(evo.data?.tipo ?? exSel?.tipo_exercicio)
   const unidadePerf = exSel?.unidade_reps || ''
 
@@ -1726,8 +1738,8 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
           <>
             <SearchableSelect
               options={exsOptions}
-              value={exId}
-              onChange={setExId}
+              value={exKey}
+              onChange={setExKey}
               placeholder="Buscar exercício…"
             />
             {!chartData.length ? (
@@ -1880,7 +1892,7 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
             </div>
             <div className="flex flex-wrap gap-2">
               {prsFiltrados.slice(0, prLimit).map((p) => {
-                const exPr = exs.data?.find((e) => e.nome === p.exercicio)
+                const exPr = exs.data?.find((e) => (p.chave ? e.chave === p.chave : e.nome === p.exercicio))
                 const tipoPr = normalizeTipoExercicio(exPr?.tipo_exercicio)
                 const valorPr = tipoPr === 'PERFORMANCE'
                   ? `${p.carga} ${exPr?.unidade_reps ?? ''}`.trimEnd()
@@ -1910,19 +1922,19 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
           <div className="space-y-3">
             <SearchableSelect
               options={exsOptions}
-              value={exId}
-              onChange={setExId}
+              value={exKey}
+              onChange={setExKey}
               placeholder="Buscar exercício…"
             />
-            {!!exId && (
+            {!!exSel && (
               <PostComposer
-                exercicioId={exId}
-                exercicioNome={exs.data?.find((e) => e.exercicio_id === exId)?.nome}
+                exercicioId={exSel.exercicio_id ?? undefined}
+                exercicioNome={exSel.nome}
                 viewerAtor="ALUNO"
               />
             )}
             <ExercicioFeedCard
-              items={feed.data ?? []}
+              items={feed.data?.items ?? []}
               emptyText="Nenhuma postagem ainda. Use o botão acima para postar."
               viewerAtor="ALUNO"
               alunoNome={me.data?.nome}
@@ -1941,7 +1953,7 @@ function Evolucao({ initialExId }: { initialExId?: string }) {
                   } else {
                     await alunoApi.comentarRelato({ relato_sk: relatoSk, texto, midias })
                   }
-                  qc.invalidateQueries({ queryKey: ['aluno-feed', exId] })
+                  qc.invalidateQueries({ queryKey: ['aluno-feed', exKey] })
                 } catch {
                   show('Não foi possível enviar o comentário.', 'error')
                 }

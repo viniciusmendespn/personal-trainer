@@ -19,6 +19,7 @@ class MidiaRef(BaseModel):
 class PostagemCreate(BaseModel):
     tipo: PostagemTipo
     exercicio_nome: str | None = None
+    exercicio_id: str | None = None   # rota body-based: id só quando o exercício está no programa atual
     descricao: str | None = None
     midias: list[MidiaRef] = []
     sessao_id: str | None = None
@@ -36,6 +37,7 @@ _TIPOS_PERSONAL = {PostagemTipo.CORRECAO, PostagemTipo.EXECUCAO, PostagemTipo.OU
 class PostagemPersonalCreate(BaseModel):
     tipo: PostagemTipo = PostagemTipo.CORRECAO
     exercicio_nome: str | None = None
+    exercicio_id: str | None = None   # rota body-based: id só quando o exercício está no programa atual
     descricao: str | None = None
     midias: list[MidiaRef] = []
 

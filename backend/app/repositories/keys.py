@@ -148,6 +148,18 @@ def sk_exercicio(treino_id: str, exercicio_id: str) -> str:
     return f"EX#{treino_id}#{exercicio_id}"
 
 
+# Catálogo permanente de exercícios do aluno (1 item pequeno por nome canônico já visto).
+# Diferente de EX# (prescrição do programa atual, apagada a cada reimport), o EXCAT# nunca
+# é apagado: é a fonte de "todos os exercícios que o aluno já fez" no seletor de evolução.
+# A SK usa a chave canônica (lowercase sem acento) → Query begins_with retorna em ordem
+# alfabética nativa. Prefixo não colide com "EX#" (3º char 'C' ≠ '#').
+EXCAT_PREFIX = "EXCAT#"
+
+
+def sk_excat(chave: str) -> str:
+    return f"EXCAT#{chave}"
+
+
 def sk_exercicio_prefix(treino_id: str) -> str:
     return f"EX#{treino_id}#"
 
@@ -312,6 +324,18 @@ def gsi1_registro(aluno_id: str, exercicio_id: str) -> str:
 
 def gsi1sk_registro(ts: str) -> str:
     return f"R#{ts}"
+
+
+# ── GSI1: "itens de feed por exercício (nome canônico) no tempo" ─────────────
+# Mesmo padrão de gsi1_registro: itens POST#/DOR#/DUVIDA#/CORRECAO#/MIDIA# carimbam
+# essas chaves na escrita → feed de um exercício = 1 Query no GSI1, mesmo quando o
+# exercicio_id embutido na SK já saiu do programa.
+def gsi1_feed(aluno_id: str, chave: str) -> str:
+    return f"AL#{aluno_id}#FEED#{chave}"
+
+
+def gsi1sk_feed(ts: str) -> str:
+    return f"F#{ts}"
 
 
 # ── Financeiro: config e cobranças por aluno (partição AL#) ──────────────────

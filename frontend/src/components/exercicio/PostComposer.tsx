@@ -6,6 +6,7 @@ import { Button, Textarea, useToast } from '../ui'
 import { alunoApi } from '../../api/alunoApp'
 import { treinosApi } from '../../api/treinos'
 import { MediaValidationError, prepareMediaForUpload, MEDIA_CACHE_CONTROL } from '../../utils/media'
+import { chaveExercicio } from '../../utils/normalizeText'
 
 type TipoAluno = 'EXECUCAO' | 'DOR' | 'DUVIDA' | 'OUTRO'
 type TipoPersonal = 'CORRECAO' | 'EXECUCAO' | 'OUTRO'
@@ -16,7 +17,8 @@ interface FilePreview {
 }
 
 interface PostComposerProps {
-  exercicioId: string
+  /** Só quando o exercício está no programa atual; exercício histórico posta apenas pelo nome. */
+  exercicioId?: string
   exercicioNome?: string
   viewerAtor: 'ALUNO' | 'PERSONAL'
   alunoId?: string   // obrigatório quando viewerAtor === 'PERSONAL'
@@ -121,27 +123,34 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
 
   async function submit() {
     if (!descricao.trim() && !files.length) return
+    if (!exercicioNome?.trim()) {
+      show('Exercício sem nome — não é possível postar.', 'error')
+      return
+    }
     setLoading(true)
     try {
       const midias: { s3_key: string; tipo: string }[] = []
       for (const f of files) midias.push(await uploadFile(f.file))
 
+      const chave = chaveExercicio(exercicioNome)
       if (isPersonal && alunoId) {
-        await treinosApi.criarPostagemPersonal(alunoId, exercicioId, {
+        await treinosApi.criarPostagemPersonalV2(alunoId, {
           tipo: tipoPersonal,
           exercicio_nome: exercicioNome,
+          exercicio_id: exercicioId,
           descricao: descricao.trim() || undefined,
           midias,
         })
-        qc.invalidateQueries({ queryKey: ['feed-exercicio', alunoId, exercicioId] })
+        qc.invalidateQueries({ queryKey: ['feed-exercicio', alunoId, chave] })
       } else {
-        await alunoApi.criarPostagem(exercicioId, {
+        await alunoApi.criarPostagemV2({
           tipo: tipoAluno,
           exercicio_nome: exercicioNome,
+          exercicio_id: exercicioId,
           descricao: descricao.trim() || undefined,
           midias,
         })
-        qc.invalidateQueries({ queryKey: ['aluno-feed', exercicioId] })
+        qc.invalidateQueries({ queryKey: ['aluno-feed', chave] })
       }
 
       files.forEach((f) => URL.revokeObjectURL(f.preview))

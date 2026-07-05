@@ -73,9 +73,11 @@ function useQuickAction(item: Notificacao, markRead: ReturnType<typeof useMarkRe
       fn: doAndRead(() => openChat(item.aluno_id!)),
     }
   }
+  // Preferir a chave (nome canônico, estável); id legado é resolvido pela página de evolução.
+  const exRef = item.chave ?? item.exercicio_id
   if (item.tipo === 'MIDIA' || item.tipo === 'EXECUCAO') {
-    const dest = item.exercicio_id
-      ? `/alunos/${item.aluno_id}/evolucao?highlight=${item.exercicio_id}`
+    const dest = exRef
+      ? `/alunos/${item.aluno_id}/evolucao?highlight=${encodeURIComponent(exRef)}`
       : `/alunos/${item.aluno_id}/evolucao`
     return {
       label: 'Ver feed',
@@ -84,8 +86,8 @@ function useQuickAction(item: Notificacao, markRead: ReturnType<typeof useMarkRe
     }
   }
   if (item.tipo === 'DOR' || item.tipo === 'DUVIDA' || item.tipo === 'OUTRO') {
-    const dest = item.exercicio_id
-      ? `/alunos/${item.aluno_id}/evolucao?highlight=${item.exercicio_id}`
+    const dest = exRef
+      ? `/alunos/${item.aluno_id}/evolucao?highlight=${encodeURIComponent(exRef)}`
       : `/alunos/${item.aluno_id}/evolucao`
     return {
       label: 'Ver feed',

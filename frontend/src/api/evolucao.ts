@@ -16,6 +16,24 @@ export interface Evolucao {
   serie: PontoEvolucao[]
   pr: { carga: number; data: string } | null
   total_sessoes: number
+  nome?: string | null
+  chave?: string
+}
+
+/** Item do seletor de evolução (historico=1): identidade por nome canônico (chave). */
+export interface ExercicioEvolucao {
+  chave: string
+  nome: string
+  atual: boolean
+  exercicio_id?: string | null
+  exercicio_ids?: string[]
+  tipo_exercicio?: string
+  grupo?: string
+  unidade_carga?: string
+  unidade_reps?: string
+  metrica_direcao?: 'MAIOR' | 'MENOR'
+  rm_kg?: number
+  carga_prescrita?: string
 }
 
 export interface ResumoSemana {
@@ -31,7 +49,7 @@ export interface Resumo {
   ultimo_treino: string | null
   sessoes_semana: number
   semanas: ResumoSemana[]
-  prs: { exercicio: string; carga: number; data: string }[]
+  prs: { exercicio: string; carga: number; data: string; chave?: string }[]
   streak_atual?: number
   streak_maximo?: number
   multiplicador_atual?: number
@@ -42,8 +60,14 @@ export interface Resumo {
 export const evolucaoApi = {
   listExercicios: (alunoId: string) =>
     api.get<Exercicio[]>(`/v1/alunos/${alunoId}/exercicios`).then((r) => r.data),
+  /** Todos os exercícios já feitos (programa atual + histórico), em ordem alfabética. */
+  listExerciciosHistorico: (alunoId: string) =>
+    api.get<ExercicioEvolucao[]>(`/v1/alunos/${alunoId}/exercicios`, { params: { historico: 1 } }).then((r) => r.data),
   get: (alunoId: string, exercicioId: string) =>
     api.get<Evolucao>(`/v1/alunos/${alunoId}/exercicios/${exercicioId}/evolucao`).then((r) => r.data),
+  /** Evolução pelo nome canônico — funciona p/ exercício fora do programa atual. */
+  getPorChave: (alunoId: string, chave: string) =>
+    api.get<Evolucao>(`/v1/alunos/${alunoId}/exercicios/evolucao`, { params: { chave } }).then((r) => r.data),
   resumo: (alunoId: string) =>
     api.get<Resumo>(`/v1/alunos/${alunoId}/resumo`).then((r) => r.data),
 }

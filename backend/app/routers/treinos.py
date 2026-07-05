@@ -19,7 +19,7 @@ from app.models.treino_export import (
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import authz, biblioteca_service, contexto_aluno_service
-from app.services.sessao_service import chave_exercicio, list_exercicios_aluno
+from app.services.sessao_service import chave_exercicio, list_exercicios_aluno, upsert_excat
 from app.utils import init_series_prescritas, new_id, now_iso
 
 router = APIRouter(prefix="/v1/alunos/{aluno_id}/treinos", tags=["treinos"])
@@ -37,6 +37,16 @@ class ImportarProgramaRequest(BaseModel):
 def _aluno_nome(personal_id: str, aluno_id: str) -> str | None:
     ptr = repo.get_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id))
     return (ptr or {}).get("nome")
+
+
+def _upsert_excat_lote(aluno_id: str, exercicios: list[dict]) -> None:
+    """Semeia o catálogo permanente do aluno (1 upsert por nome canônico distinto)."""
+    vistos: set[str] = set()
+    for e in exercicios:
+        ch = chave_exercicio(e.get("nome") or "")
+        if ch and ch not in vistos:
+            vistos.add(ch)
+            upsert_excat(aluno_id, e.get("nome"), e)
 
 
 def _sync_due(personal_id: str, aluno_id: str, treino_id: str, treino_nome: str,
@@ -183,7 +193,7 @@ def importar_programa(aluno_id: str, body: ImportarProgramaRequest,
             all_dados.append(dados)
             n_ex += 1
 
-    # 3) Aplicar (apaga e recria), agenda e biblioteca
+    # 3) Aplicar (apaga e recria), agenda, biblioteca e catálogo do aluno
     if deletes:
         repo.batch_write(deletes=deletes)
     repo.batch_write(puts=puts)
@@ -191,6 +201,7 @@ def importar_programa(aluno_id: str, body: ImportarProgramaRequest,
         _sync_due(personal_id, aluno_id, tid, nome, data_fim)
     if all_dados:
         biblioteca_service.upsert_from_exercicios(personal_id, all_dados)
+        _upsert_excat_lote(aluno_id, all_dados)
     _touch_aluno_pointer(personal_id, aluno_id)
 
     return ImportarProgramaResponse(treinos_importados=len(programa.treinos), exercicios_importados=n_ex)
@@ -239,6 +250,7 @@ def copiar_treino(aluno_id: str, body: CopiarBody, personal_id: str = Depends(ge
         ne.update({"exercicio_id": new_eid, "treino_id": new_tid, "aluno_id": aluno_id})
         puts.append({"PK": dest_pk, "SK": keys.sk_exercicio(new_tid, new_eid), **ne})
     repo.batch_write(puts=puts)
+    _upsert_excat_lote(aluno_id, [repo.clean(e) for e in exs])
     _touch_aluno_pointer(personal_id, aluno_id)
     return {"treino_id": new_tid, "exercicios": len(exs)}
 
@@ -296,6 +308,7 @@ def create_exercicio(aluno_id: str, treino_id: str, body: ExercicioCreate,
     ex = Exercicio(exercicio_id=exercicio_id, treino_id=treino_id, aluno_id=aluno_id, **dados)
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_exercicio(treino_id, exercicio_id), ex.model_dump())
     biblioteca_service.upsert_from_exercicios(personal_id, [dados])
+    upsert_excat(aluno_id, body.nome, dados)
     _touch_aluno_pointer(personal_id, aluno_id)
     return ex
 
@@ -312,6 +325,7 @@ def update_exercicio(aluno_id: str, treino_id: str, exercicio_id: str, body: Exe
     # Renomear = tratar como exercício novo: o nome (identidade de feed/carga/PR) passa a valer,
     # então cadastra o nome no catálogo do personal para buscas seguintes (first-write-wins).
     biblioteca_service.upsert_from_exercicios(personal_id, [body.model_dump()])
+    upsert_excat(aluno_id, body.nome, body.model_dump())
     _touch_aluno_pointer(personal_id, aluno_id)
     return repo.clean(updated)
 

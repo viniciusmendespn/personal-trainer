@@ -336,8 +336,28 @@ def registrar(body: RegistroBody, ctx: dict = Depends(get_current_aluno)):
 
 
 @router.get("/exercicios")
-def list_exercicios(ctx: dict = Depends(get_current_aluno)):
-    return sessao_service.list_exercicios_aluno(ctx["aluno_id"])
+def list_exercicios(historico: int = 0, ctx: dict = Depends(get_current_aluno)):
+    """Sem flag: programa atual (shape original). Com historico=1: todos os exercícios já
+    feitos (catálogo EXCAT# + programa atual), por chave canônica, em ordem alfabética."""
+    return sessao_service.list_exercicios_aluno(ctx["aluno_id"], incluir_historico=bool(historico))
+
+
+@router.get("/exercicios/evolucao")
+def evolucao_por_chave(chave: str, ctx: dict = Depends(get_current_aluno)):
+    """Evolução pelo nome canônico — funciona para exercício fora do programa atual."""
+    if not chave.strip():
+        raise HTTPException(400, "Informe a chave do exercício.")
+    return sessao_service.evolucao_por_chave(ctx["aluno_id"], chave.strip())
+
+
+@router.get("/exercicios/feed")
+def feed_por_chave(chave: str, limit: int = 50, cursor: str | None = None,
+                   ctx: dict = Depends(get_current_aluno)):
+    """Feed unificado pelo nome canônico (1 Query GSI1, paginado, mais recente primeiro)."""
+    if not chave.strip():
+        raise HTTPException(400, "Informe a chave do exercício.")
+    items, next_cursor = correcao_service.feed_por_chave(ctx["aluno_id"], chave.strip(), limit, cursor)
+    return {"items": items, "next_cursor": next_cursor}
 
 
 @router.get("/exercicios/{exercicio_id}/evolucao")
@@ -432,7 +452,8 @@ def midia_registrar(body: MidiaRegistrarBody, ctx: dict = Depends(get_current_al
         ctx["personal_id"], "MIDIA", "Nova mídia de execução",
         f"O aluno enviou uma mídia em {body.exercicio_nome or 'um exercício'} pra você analisar.",
         aluno_id=ctx["aluno_id"],
-        ref_extra={"exercicio_id": body.exercicio_id, "exercicio_nome": body.exercicio_nome},
+        ref_extra={"exercicio_id": body.exercicio_id, "exercicio_nome": body.exercicio_nome,
+                   "chave": sessao_service.chave_exercicio(body.exercicio_nome or "")},
     )
     return {"ok": 1, "midia_id": item["midia_id"]}
 
@@ -496,11 +517,9 @@ class ComentarRelatoBody(BaseModel):
 def comentar_relato(body: ComentarRelatoBody, ctx: dict = Depends(get_current_aluno)):
     """Aluno adiciona comentário (com ou sem mídia) em uma thread de dor ou dúvida."""
     midias = [m.model_dump() for m in body.midias]
-    ok = alerta_service.adicionar_comentario(ctx["aluno_id"], body.relato_sk, Ator.ALUNO.value, body.texto, midias)
-    if not ok:
+    item = alerta_service.adicionar_comentario(ctx["aluno_id"], body.relato_sk, Ator.ALUNO.value, body.texto, midias)
+    if not item:
         raise HTTPException(404, "Relato não encontrado")
-    parts = body.relato_sk.split("#")
-    exercicio_id = parts[1] if len(parts) > 1 and parts[1] != "NA" else None
     tipo_notif = "DOR" if body.relato_sk.startswith("DOR#") else "DUVIDA"
     preview = body.texto or "Enviou uma mídia"
     notif_service.criar(
@@ -508,7 +527,8 @@ def comentar_relato(body: ComentarRelatoBody, ctx: dict = Depends(get_current_al
         preview[:120] + ("…" if len(preview) > 120 else ""),
         aluno_id=ctx["aluno_id"],
         ref_extra={"relato_sk": body.relato_sk, "relato_tipo": tipo_notif.lower(),
-                   "exercicio_id": exercicio_id},
+                   "exercicio_id": item.get("exercicio_id"), "chave": item.get("chave"),
+                   "exercicio_nome": item.get("exercicio_nome")},
     )
     return {"ok": 1}
 
@@ -544,6 +564,19 @@ def feed_exercicio_aluno(exercicio_id: str, ctx: dict = Depends(get_current_alun
 @router.post("/exercicios/{exercicio_id}/postagem", status_code=201)
 def criar_postagem(exercicio_id: str, body: PostagemCreate, ctx: dict = Depends(get_current_aluno)):
     """Aluno cria postagem no exercício: execução, dor, dúvida ou outro."""
+    return _criar_postagem_aluno(ctx, body, exercicio_id)
+
+
+@router.post("/postagens", status_code=201)
+def criar_postagem_v2(body: PostagemCreate, ctx: dict = Depends(get_current_aluno)):
+    """Postagem body-based: identifica o exercício pelo nome (obrigatório); `exercicio_id`
+    só quando o exercício está no programa atual — permite postar em exercício histórico."""
+    if not (body.exercicio_nome or "").strip():
+        raise HTTPException(400, "Informe o nome do exercício.")
+    return _criar_postagem_aluno(ctx, body, body.exercicio_id)
+
+
+def _criar_postagem_aluno(ctx: dict, body: PostagemCreate, exercicio_id: str | None) -> dict:
     if body.tipo == PostagemTipo.CORRECAO:
         raise HTTPException(403, "Aluno não pode criar postagem do tipo CORRECAO.")
     sessao_ativa = sessao_service.get_active(ctx["aluno_id"])
@@ -580,18 +613,17 @@ class ComentarPostBody(BaseModel):
 def comentar_post(body: ComentarPostBody, ctx: dict = Depends(get_current_aluno)):
     """Aluno adiciona comentário (com ou sem mídia) em thread de postagem (POST#)."""
     midias = [m.model_dump() for m in body.midias]
-    ok = alerta_service.adicionar_comentario(ctx["aluno_id"], body.post_sk, "ALUNO", body.texto, midias)
-    if not ok:
+    item = alerta_service.adicionar_comentario(ctx["aluno_id"], body.post_sk, "ALUNO", body.texto, midias)
+    if not item:
         raise HTTPException(404, "Postagem não encontrada.")
-    parts = body.post_sk.split("#")
-    exercicio_id = parts[1] if len(parts) > 1 else None
     preview = body.texto or "Enviou uma mídia"
     tipo_notif = "DOR" if body.post_tipo == "DOR" else "DUVIDA"
     notif_service.criar(
         ctx["personal_id"], tipo_notif, "Novo comentário do aluno",
         preview[:120] + ("…" if len(preview) > 120 else ""),
         aluno_id=ctx["aluno_id"],
-        ref_extra={"relato_sk": body.post_sk, "exercicio_id": exercicio_id},
+        ref_extra={"relato_sk": body.post_sk, "exercicio_id": item.get("exercicio_id"),
+                   "chave": item.get("chave"), "exercicio_nome": item.get("exercicio_nome")},
     )
     pontos_service.award(ctx["aluno_id"], "COMENTARIO", ctx["personal_id"], descricao="Comentário em post")
     return {"ok": 1}

@@ -155,10 +155,33 @@ def historico(aluno_id: str, exercicio_id: str, limit: int = 5,
 
 
 @router.get("/exercicios")
-def list_exercicios(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
-    """Lista plana de exercícios do aluno (todos os treinos)."""
+def list_exercicios(aluno_id: str, historico: int = 0,
+                    personal_id: str = Depends(get_current_personal_id)):
+    """Lista plana de exercícios do aluno. Com historico=1: inclui o catálogo permanente
+    (todos os exercícios já feitos), por chave canônica, em ordem alfabética."""
     authz.authorize_aluno(personal_id, aluno_id)
-    return sessao_service.list_exercicios_aluno(aluno_id)
+    return sessao_service.list_exercicios_aluno(aluno_id, incluir_historico=bool(historico))
+
+
+@router.get("/exercicios/evolucao")
+def evolucao_por_chave(aluno_id: str, chave: str,
+                       personal_id: str = Depends(get_current_personal_id)):
+    """Evolução pelo nome canônico — funciona para exercício fora do programa atual."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    if not chave.strip():
+        raise HTTPException(400, "Informe a chave do exercício.")
+    return sessao_service.evolucao_por_chave(aluno_id, chave.strip())
+
+
+@router.get("/exercicios/feed")
+def feed_por_chave(aluno_id: str, chave: str, limit: int = 50, cursor: str | None = None,
+                   personal_id: str = Depends(get_current_personal_id)):
+    """Feed unificado pelo nome canônico (1 Query GSI1, paginado, mais recente primeiro)."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    if not chave.strip():
+        raise HTTPException(400, "Informe a chave do exercício.")
+    items, next_cursor = correcao_service.feed_por_chave(aluno_id, chave.strip(), limit, cursor)
+    return {"items": items, "next_cursor": next_cursor}
 
 
 @router.get("/resumo")
@@ -214,6 +237,22 @@ def criar_postagem_personal(aluno_id: str, exercicio_id: str, body: PostagemPers
                             personal_id: str = Depends(get_current_personal_id)):
     """Personal cria postagem no exercício do aluno (correção, execução ou outro)."""
     authz.authorize_aluno(personal_id, aluno_id)
+    return _criar_postagem_personal(aluno_id, exercicio_id, body, personal_id)
+
+
+@router.post("/postagens", status_code=201)
+def criar_postagem_personal_v2(aluno_id: str, body: PostagemPersonalCreate,
+                               personal_id: str = Depends(get_current_personal_id)):
+    """Postagem body-based: identifica o exercício pelo nome (obrigatório); `exercicio_id`
+    só quando o exercício está no programa atual — permite postar em exercício histórico."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    if not (body.exercicio_nome or "").strip():
+        raise HTTPException(400, "Informe o nome do exercício.")
+    return _criar_postagem_personal(aluno_id, body.exercicio_id, body, personal_id)
+
+
+def _criar_postagem_personal(aluno_id: str, exercicio_id: str | None,
+                             body: PostagemPersonalCreate, personal_id: str) -> dict:
     item = postagem_service.criar_postagem(
         aluno_id=aluno_id,
         exercicio_id=exercicio_id,
@@ -247,17 +286,16 @@ def comentar_post_personal(aluno_id: str, body: ComentarPostPersonalBody,
     """Personal adiciona comentário (com ou sem mídia) em thread de postagem (POST#)."""
     authz.authorize_aluno(personal_id, aluno_id)
     midias = [m.model_dump() for m in body.midias]
-    ok = alerta_service.adicionar_comentario(aluno_id, body.post_sk, "PERSONAL", body.texto, midias)
-    if not ok:
+    item = alerta_service.adicionar_comentario(aluno_id, body.post_sk, "PERSONAL", body.texto, midias)
+    if not item:
         raise HTTPException(404, "Postagem não encontrada.")
-    parts = body.post_sk.split("#")
-    exercicio_id = parts[1] if len(parts) > 1 else None
     preview = body.texto or "Enviou uma mídia"
     tipo_notif = "DOR_RESPONDIDA" if body.post_tipo == "DOR" else "DUVIDA_RESPONDIDA"
     anotif_service.criar(
         aluno_id, tipo_notif, "Resposta do seu personal",
         preview[:120] + ("…" if len(preview) > 120 else ""),
-        ref_extra={"exercicio_id": exercicio_id, "relato_sk": body.post_sk},
+        ref_extra={"exercicio_id": item.get("exercicio_id"), "chave": item.get("chave"),
+                   "exercicio_nome": item.get("exercicio_nome"), "relato_sk": body.post_sk},
     )
     return {"ok": True}
 
@@ -280,16 +318,15 @@ def comentar_relato_personal(aluno_id: str, body: ComentarRelatoPersonalBody,
     """Personal adiciona comentário (com ou sem mídia) em thread de dor/dúvida."""
     authz.authorize_aluno(personal_id, aluno_id)
     midias = [m.model_dump() for m in body.midias]
-    ok = alerta_service.adicionar_comentario(aluno_id, body.relato_sk, "PERSONAL", body.texto, midias)
-    if not ok:
+    item = alerta_service.adicionar_comentario(aluno_id, body.relato_sk, "PERSONAL", body.texto, midias)
+    if not item:
         raise HTTPException(404, "Relato não encontrado")
-    parts = body.relato_sk.split("#")
-    exercicio_id = parts[1] if len(parts) > 1 and parts[1] != "NA" else None
     tipo_notif = "DOR_RESPONDIDA" if body.relato_sk.startswith("DOR#") else "DUVIDA_RESPONDIDA"
     preview = body.texto or "Enviou uma mídia"
     anotif_service.criar(aluno_id, tipo_notif, "Resposta do seu personal",
                          preview[:120] + ("…" if len(preview) > 120 else ""),
-                         ref_extra={"exercicio_id": exercicio_id, "relato_sk": body.relato_sk})
+                         ref_extra={"exercicio_id": item.get("exercicio_id"), "chave": item.get("chave"),
+                                    "exercicio_nome": item.get("exercicio_nome"), "relato_sk": body.relato_sk})
     return {"ok": True}
 
 

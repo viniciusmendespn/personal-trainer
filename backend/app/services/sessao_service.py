@@ -171,6 +171,15 @@ def finish(aluno_id: str) -> dict:
         }
         for r in regs
     ]
+    # Catálogo permanente de exercícios (seletor de evolução): 1 upsert por exercício
+    # executado nesta sessão — garante que ele siga listável mesmo após o programa mudar.
+    excat_vistos: set[str] = set()
+    for r in regs:
+        ch = chave_exercicio(r.get("exercicio_nome"))
+        if ch and ch not in excat_vistos:
+            excat_vistos.add(ch)
+            upsert_excat(aluno_id, r.get("exercicio_nome"),
+                         snap_by_ex.get(r.get("exercicio_id", ""), {}))
     # Destaques da sessão (alimentam o calendário do mês, o story e a retrospectiva anual).
     # `novos_prs` já vem acumulado no item ativo via _registrar_pr_sessao() durante os registros.
     s["volume_total"] = sum(_volume(r.get("series_exec")) for r in regs)
@@ -447,6 +456,25 @@ def chave_exercicio(nome: str | None) -> str:
     return " ".join(sem_acento.lower().split())
 
 
+_EXCAT_META_CAMPOS = ("tipo_exercicio", "grupo", "unidade_carga", "unidade_reps",
+                      "metrica_direcao", "rm_kg")
+
+
+def upsert_excat(aluno_id: str, nome: str | None, meta: dict | None = None) -> None:
+    """Registra o exercício no catálogo permanente do aluno (EXCAT#{chave}) — a fonte de
+    "todos os exercícios já feitos" do seletor de evolução, imune ao apagamento dos EX#
+    quando o programa é recriado. UpdateItem idempotente, 1 write pequeno, sem read prévio."""
+    chave = chave_exercicio(nome)
+    if not chave:
+        return
+    fields: dict = {"nome": nome, "last_seen": now_iso()}
+    for k in _EXCAT_META_CAMPOS:
+        v = (meta or {}).get(k)
+        if v is not None:
+            fields[k] = v
+    repo.update_item(keys.pk_aluno(aluno_id), keys.sk_excat(chave), fields)
+
+
 def _normalizar_grupo(grupo: str | None) -> str:
     """Chave canônica do grupo muscular para SK do DynamoDB (lowercase, sem acento, sem espaço extra)."""
     if not grupo:
@@ -491,15 +519,48 @@ def _ex_info(aluno_id: str, exercicio_id: str) -> dict:
     return {"nome": None, "tipo_exercicio": "FORCA", "grupo": None, "rm_kg": None, "metrica_direcao": "MAIOR"}
 
 
+def _ex_info_por_chave(aluno_id: str, chave: str) -> dict:
+    """Metadados (tipo/direção/rm) de um exercício pelo nome canônico: prescrição atual
+    (EX#) quando existe, senão o catálogo permanente (EXCAT#), senão defaults."""
+    items = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")
+    for i in items:
+        if chave_exercicio(i.get("nome") or "") == chave:
+            return {
+                "nome": i.get("nome"),
+                "tipo_exercicio": normalizar_tipo_exercicio(i.get("tipo_exercicio")),
+                "grupo": i.get("grupo"),
+                "rm_kg": i.get("rm_kg"),
+                "metrica_direcao": i.get("metrica_direcao") or "MAIOR",
+            }
+    cat = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_excat(chave)) or {}
+    return {
+        "nome": cat.get("nome"),
+        "tipo_exercicio": normalizar_tipo_exercicio(cat.get("tipo_exercicio")),
+        "grupo": cat.get("grupo"),
+        "rm_kg": cat.get("rm_kg"),
+        "metrica_direcao": cat.get("metrica_direcao") or "MAIOR",
+    }
+
+
+def evolucao_por_chave(aluno_id: str, chave: str, limit: int = 100) -> dict:
+    """Série temporal + PR pelo nome canônico — funciona mesmo quando o exercício
+    já saiu do programa atual (o histórico vive no GSI1, indexado pela chave)."""
+    return _evolucao_serie(aluno_id, chave, _ex_info_por_chave(aluno_id, chave), limit)
+
+
 def evolucao_exercicio(aluno_id: str, exercicio_id: str, limit: int = 100) -> dict:
-    """Série temporal + PR de um exercício, adaptando métricas por tipo (FORCA/PERFORMANCE).
+    """Compat (rota antiga por exercicio_id): resolve o nome via EX# vivo e delega.
     Agrupa por nome canônico: exercícios homônimos em treinos diferentes compartilham a mesma evolução."""
     info = _ex_info(aluno_id, exercicio_id)
+    nome = info.get("nome") or nome_por_exercicio_id(aluno_id, exercicio_id)
+    return _evolucao_serie(aluno_id, chave_exercicio(nome), info, limit)
+
+
+def _evolucao_serie(aluno_id: str, chave: str, info: dict, limit: int) -> dict:
+    """Série temporal + PR de um exercício, adaptando métricas por tipo (FORCA/PERFORMANCE)."""
     tipo = info.get("tipo_exercicio") or "FORCA"
     direcao = info.get("metrica_direcao") or "MAIOR"
-    nome = info.get("nome") or nome_por_exercicio_id(aluno_id, exercicio_id)
-    chave = chave_exercicio(nome)
-    items = repo.query_gsi1_last(keys.gsi1_registro(aluno_id, chave), limit)
+    items = repo.query_gsi1_last(keys.gsi1_registro(aluno_id, chave), limit) if chave else []
     items.sort(key=lambda i: i.get("GSI1SK", ""))  # ascendente por tempo
     serie: list[dict] = []
     pr: dict | None = None
@@ -542,7 +603,8 @@ def evolucao_exercicio(aluno_id: str, exercicio_id: str, limit: int = 100) -> di
                 pr = {"carga": carga_max, "data": c.get("data_hora")}
 
         serie.append(ponto)
-    return {"tipo": tipo, "direcao": direcao, "serie": serie, "pr": pr, "total_sessoes": len(serie)}
+    return {"tipo": tipo, "direcao": direcao, "serie": serie, "pr": pr,
+            "total_sessoes": len(serie), "nome": info.get("nome"), "chave": chave}
 
 
 def backfill_reg_from_history(aluno_id: str) -> dict:
@@ -700,9 +762,11 @@ def historico_mes(aluno_id: str, ano: int, mes: int, incluir_fotos: bool = True)
     }
 
 
-def list_exercicios_aluno(aluno_id: str) -> list[dict]:
-    """Lista plana de todos os exercícios do aluno (todos os treinos) — p/ seletor de evolução.
-    Deduplica por nome canônico: exercícios homônimos em treinos diferentes aparecem uma só vez."""
+def list_exercicios_aluno(aluno_id: str, incluir_historico: bool = False) -> list[dict]:
+    """Lista plana de exercícios do aluno p/ seletores, deduplicada por nome canônico.
+    Default: só o programa atual (EX#), na ordem de prescrição — shape original, usado
+    pelos seletores de treino do portal. Com `incluir_historico`, une o catálogo permanente
+    EXCAT# (tudo que o aluno já fez/postou) num shape por chave, em ordem alfabética."""
     items = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")
     items.sort(key=lambda e: e.get("ordem", 0))
     seen: set[str] = set()
@@ -713,7 +777,41 @@ def list_exercicios_aluno(aluno_id: str) -> list[dict]:
             if chave:
                 seen.add(chave)
             deduped.append(item)
-    return repo.clean_all(deduped)
+    if not incluir_historico:
+        return repo.clean_all(deduped)
+
+    ids_por_chave: dict[str, list[str]] = {}
+    for item in items:
+        ch = chave_exercicio(item.get("nome") or "")
+        if ch and item.get("exercicio_id"):
+            ids_por_chave.setdefault(ch, []).append(item["exercicio_id"])
+
+    def _shape(c: dict, ch: str, atual: bool) -> dict:
+        return {
+            "chave": ch,
+            "nome": c.get("nome"),
+            "atual": atual,
+            "exercicio_id": c.get("exercicio_id") if atual else None,
+            "exercicio_ids": ids_por_chave.get(ch, []) if atual else [],
+            "tipo_exercicio": normalizar_tipo_exercicio(c.get("tipo_exercicio")),
+            "grupo": c.get("grupo"),
+            "unidade_carga": c.get("unidade_carga"),
+            "unidade_reps": c.get("unidade_reps"),
+            "metrica_direcao": c.get("metrica_direcao") or "MAIOR",
+            "rm_kg": c.get("rm_kg"),
+            "carga_prescrita": c.get("carga_prescrita") if atual else None,
+        }
+
+    por_chave: dict[str, dict] = {}
+    for item in deduped:
+        ch = chave_exercicio(item.get("nome") or "")
+        if ch:
+            por_chave[ch] = _shape(repo.clean(item), ch, atual=True)
+    for cat in repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.EXCAT_PREFIX):
+        ch = cat["SK"][len(keys.EXCAT_PREFIX):]
+        if ch and ch not in por_chave:
+            por_chave[ch] = _shape(repo.clean(cat), ch, atual=False)
+    return [por_chave[ch] for ch in sorted(por_chave)]
 
 
 def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
@@ -723,7 +821,8 @@ def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
     st = repo.clean(repo.get_item(pk, keys.SK_STATS_ALUNO)) or {}
     weeks = [repo.clean(w) for w in repo.query_pk_last_n(pk, "STATS#W#", semanas)]
     weeks.sort(key=lambda w: w.get("semana", ""))
-    prs = [repo.clean(p) for p in repo.query_pk(pk, sk_prefix="STATS#PR#")]
+    prs = [{**repo.clean(p), "chave": (p.get("SK") or "")[len("STATS#PR#"):]}
+           for p in repo.query_pk(pk, sk_prefix="STATS#PR#")]
     wk_grupos = [repo.clean(w) for w in repo.query_pk(pk, sk_prefix="STATS#WG#")]
     grupos_totais = [repo.clean(g) for g in repo.query_pk(pk, sk_prefix="STATS#G#")]
     semanas_validas = {w.get("semana") for w in weeks}
@@ -756,7 +855,8 @@ def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
             for w in weeks
         ],
         "prs": sorted(
-            [{"exercicio": p.get("exercicio_nome"), "carga": p.get("carga"), "data": p.get("data")} for p in prs],
+            [{"exercicio": p.get("exercicio_nome"), "carga": p.get("carga"), "data": p.get("data"),
+              "chave": p.get("chave")} for p in prs],
             key=lambda x: x.get("carga") or 0, reverse=True,
         ),
         "volume_por_grupo": sorted(

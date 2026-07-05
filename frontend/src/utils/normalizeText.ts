@@ -16,3 +16,12 @@ export function matchesQuery(target: string | null | undefined, query: string): 
   const q = normalizeText(query)
   return q === '' || normalizeText(target).includes(q)
 }
+
+/**
+ * Chave canônica do nome do exercício — espelho do `chave_exercicio` do backend
+ * (sem acento, minúsculas, espaços internos colapsados). É a identidade estável do
+ * exercício em feed/evolução/PR: "Supino Reto" ≡ "supíno  reto".
+ */
+export function chaveExercicio(nome: string | null | undefined): string {
+  return normalizeText(nome).split(/\s+/).filter(Boolean).join(' ')
+}

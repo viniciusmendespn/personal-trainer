@@ -60,6 +60,12 @@ export const treinosApi = {
   feedExercicio: (alunoId: string, exercicioId: string) =>
     api.get<FeedItem[]>(`/v1/alunos/${alunoId}/exercicios/${exercicioId}/feed`).then((r) => r.data),
 
+  /** Feed pelo nome canônico do exercício — funciona p/ exercício fora do programa atual. */
+  feedExercicioPorChave: (alunoId: string, chave: string, cursor?: string) =>
+    api
+      .get<{ items: FeedItem[]; next_cursor: string | null }>(`/v1/alunos/${alunoId}/exercicios/feed`, { params: { chave, cursor } })
+      .then((r) => r.data),
+
   criarCorrecao: (
     alunoId: string,
     body: { exercicio_id: string; exercicio_nome?: string; texto: string; midias: Array<{ s3_key: string; tipo: string }> },
@@ -73,6 +79,13 @@ export const treinosApi = {
     api
       .post<{ ok: number; post_id: string }>(`/v1/alunos/${alunoId}/exercicios/${exercicioId}/postagem`, body)
       .then((r) => r.data),
+
+  /** Postagem body-based: identifica o exercício pelo nome; id só quando está no programa atual. */
+  criarPostagemPersonalV2: (
+    alunoId: string,
+    body: { tipo?: 'CORRECAO' | 'EXECUCAO' | 'OUTRO'; exercicio_nome: string; exercicio_id?: string; descricao?: string; midias?: Array<{ s3_key: string; tipo: string }> },
+  ) =>
+    api.post<{ ok: number; post_id: string }>(`/v1/alunos/${alunoId}/postagens`, body).then((r) => r.data),
 
   responderNotificacao: (body: { ref: string; texto: string; aluno_id: string }) =>
     api.post('/v1/notificacoes/responder', body).then((r) => r.data),

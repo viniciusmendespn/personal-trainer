@@ -7,7 +7,7 @@ from app.dependencies import get_current_personal_id
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import alerta_service, anotif_service, authz, media_service, notif_service
-from app.utils import new_id, now_iso
+from app.utils import epoch_ms, new_id, now_iso
 
 router = APIRouter(prefix="/v1", tags=["notificacoes"])
 
@@ -101,14 +101,14 @@ def comentar_notif(body: ComentarBody, personal_id: str = Depends(get_current_pe
     relato_sk = notif.get("relato_sk")
     if not relato_sk:
         raise HTTPException(400, "Esta notificação não tem relato vinculado")
-    ok = alerta_service.adicionar_comentario(body.aluno_id, relato_sk, "PERSONAL", body.texto)
-    if not ok:
+    item = alerta_service.adicionar_comentario(body.aluno_id, relato_sk, "PERSONAL", body.texto)
+    if not item:
         raise HTTPException(404, "Relato não encontrado")
-    exercicio_id = notif.get("exercicio_id")
     tipo_notif = "DOR_RESPONDIDA" if relato_sk.startswith("DOR#") else "DUVIDA_RESPONDIDA"
     anotif_service.criar(body.aluno_id, tipo_notif, "Resposta do seu personal",
                          body.texto[:120] + ("…" if len(body.texto) > 120 else ""),
-                         ref_extra={"exercicio_id": exercicio_id, "relato_sk": relato_sk})
+                         ref_extra={"exercicio_id": item.get("exercicio_id"), "chave": item.get("chave"),
+                                    "exercicio_nome": item.get("exercicio_nome"), "relato_sk": relato_sk})
     return {"ok": True}
 
 
@@ -149,13 +149,20 @@ def vincular_midia(body: VincularMidiaBody, personal_id: str = Depends(get_curre
     item = repo.get_item(keys.pk_aluno(body.aluno_id), old_sk)
     if not item:
         raise HTTPException(404, "Mídia não encontrada")
+    from app.services.sessao_service import chave_exercicio, upsert_excat
+    chave = chave_exercicio(body.exercicio_nome or "")
     novo = {
         **repo.clean(item),
         "exercicio_id": body.exercicio_id,
         "exercicio_nome": body.exercicio_nome,
+        "chave": chave,
         "status": "VINCULADA",
+        **({"GSI1PK": keys.gsi1_feed(body.aluno_id, chave),
+            "GSI1SK": keys.gsi1sk_feed(epoch_ms())} if chave else {}),
     }
     new_sk = f"MIDIA#{body.exercicio_id}#{body.midia_id}"
+    if chave:
+        upsert_excat(body.aluno_id, body.exercicio_nome)
     repo.batch_write(
         puts=[{"PK": keys.pk_aluno(body.aluno_id), "SK": new_sk, **novo}],
         deletes=[(keys.pk_aluno(body.aluno_id), old_sk)],
