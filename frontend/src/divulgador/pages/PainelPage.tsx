@@ -1,62 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
-import { Check, Copy, Crown, TrendingUp, Wallet } from 'lucide-react'
+import { Check, Copy, Crown, Sparkles, TrendingUp, UserPlus, Users, Wallet } from 'lucide-react'
 import { useState } from 'react'
-import { divulgadorApi, type MesComissao } from '../../api/divulgador'
+import { divulgadorApi } from '../../api/divulgador'
 import { Card } from '../../components/ui'
 import { PainelExclusivo } from '../components/PainelExclusivo'
+import { BarrasMeses, DivStatCard, TabelaMeses, brl, mesLabel, pct } from '../historico'
 
 const FAIXA_LABEL: Record<string, string> = {
   INICIAL: 'Divulgador Inicial',
   OFICIAL: 'Divulgador Oficial',
   MASTER: 'Divulgador Master',
   EMBAIXADOR: 'Embaixador da Marca',
-}
-
-function brl(v: number): string {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
-
-function pct(v: number): string {
-  return `${Math.round(v * 100)}%`
-}
-
-function mesLabel(ym: string): string {
-  const [y, m] = ym.split('-')
-  const nomes = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
-  return `${nomes[parseInt(m, 10) - 1]}/${y.slice(2)}`
-}
-
-function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string }) {
-  return (
-    <Card className="p-4">
-      <div className="flex items-center gap-2 text-text-muted text-xs font-semibold uppercase tracking-wide mb-2">
-        {icon} {label}
-      </div>
-      <div className="text-2xl font-bold text-text">{value}</div>
-      {sub && <div className="text-xs text-text-muted mt-1">{sub}</div>}
-    </Card>
-  )
-}
-
-function BarrasMeses({ meses }: { meses: MesComissao[] }) {
-  const max = Math.max(...meses.map(m => m.comissao_valor), 1)
-  return (
-    <div className="flex items-end gap-2 h-36">
-      {meses.map(m => (
-        <div key={m.mes} className="flex-1 flex flex-col items-center gap-1 min-w-0">
-          <span className="text-[10px] text-text-secondary font-medium truncate max-w-full">
-            {m.comissao_valor > 0 ? brl(m.comissao_valor) : ''}
-          </span>
-          <div
-            className="w-full rounded-t-md loja-gradient transition-all"
-            style={{ height: `${Math.max((m.comissao_valor / max) * 100, m.comissao_valor > 0 ? 6 : 2)}%`, opacity: m.comissao_valor > 0 ? 1 : 0.15 }}
-            title={`${mesLabel(m.mes)}: ${brl(m.comissao_valor)}`}
-          />
-          <span className="text-[10px] text-text-muted">{mesLabel(m.mes)}</span>
-        </div>
-      ))}
-    </div>
-  )
 }
 
 export function PainelPage() {
@@ -113,28 +67,49 @@ export function PainelPage() {
         </Card>
       </div>
 
-      {/* Cards */}
+      {/* Cards do mês corrente */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard
+        <DivStatCard
           icon={<Wallet size={14} />} label="Comissão do mês"
           value={brl(mesAtual.comissao_valor)}
           sub={`${mesAtual.pagamentos_count} pagamento${mesAtual.pagamentos_count === 1 ? '' : 's'} · ${pct(mesAtual.pct)}${mesAtual.bonus > 0 ? ` · +${brl(mesAtual.bonus)} bônus` : ''}`}
         />
-        <StatCard
+        <DivStatCard
           icon={<Wallet size={14} />} label="A receber"
           value={brl(data.a_receber)}
           sub="Meses fechados aguardando repasse"
         />
-        <StatCard
+        <DivStatCard
           icon={<Check size={14} />} label="Assinantes ativos"
           value={String(data.assinantes_ativos)}
           sub={`${data.assinantes_total} assinantes no total`}
         />
-        <StatCard
+        <DivStatCard
           icon={<TrendingUp size={14} />} label="Contas criadas"
           value={String(data.contas_total)}
           sub="pelo seu cupom"
         />
+      </div>
+
+      {/* Período inteiro — visão de lucratividade */}
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-sm font-bold text-text flex items-center gap-1.5">
+            <Sparkles size={15} className="text-accent" /> Desde que você começou
+          </h2>
+          <p className="text-xs text-text-muted">
+            {data.totais.desde ? `Divulgando desde ${mesLabel(data.totais.desde.slice(0, 7))}` : 'Seu resultado acumulado'}
+            {data.totais.meses_ativos > 0 && ` · ${data.totais.meses_ativos} ${data.totais.meses_ativos === 1 ? 'mês' : 'meses'} com vendas`}
+          </p>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <DivStatCard icon={<Wallet size={14} />} label="Total em comissões" value={brl(data.totais.total_comissao)} sub="acumulado no período" />
+          <DivStatCard icon={<UserPlus size={14} />} label="Contas ativadas" value={String(data.contas_total)} sub="criadas pelo seu cupom" />
+          <DivStatCard icon={<Users size={14} />} label="Assinantes conquistados" value={String(data.assinantes_total)} sub="total que já assinaram" />
+        </div>
+        <p className="text-[11px] text-text-muted">
+          Enquanto seus indicados forem assinantes, você continua recebendo comissão recorrente todo mês.
+        </p>
       </div>
 
       {/* Seu cupom */}
@@ -164,46 +139,7 @@ export function PainelPage() {
       </Card>
 
       {/* Tabela mensal */}
-      <Card className="p-0 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-xs text-text-muted uppercase tracking-wide">
-                <th className="px-4 py-3">Mês</th>
-                <th className="px-4 py-3 text-right">Base (Gestão Pro)</th>
-                <th className="px-4 py-3 text-center">Vendas novas</th>
-                <th className="px-4 py-3 text-center">%</th>
-                <th className="px-4 py-3 text-right">Comissão</th>
-                <th className="px-4 py-3 text-center">Repasse</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...data.meses].reverse().map(m => (
-                <tr key={m.mes} className="border-b border-border/50 last:border-0">
-                  <td className="px-4 py-3 font-medium">{mesLabel(m.mes)}{m.mes === mesAtual.mes && <span className="ml-1.5 text-[10px] text-accent">(em curso)</span>}</td>
-                  <td className="px-4 py-3 text-right">{brl(m.base_valor)}</td>
-                  <td className="px-4 py-3 text-center">{m.vendas_novas}</td>
-                  <td className="px-4 py-3 text-center">{pct(m.pct)}{m.bonus > 0 && <span className="text-[10px] text-accent"> +{brl(m.bonus)}</span>}</td>
-                  <td className="px-4 py-3 text-right font-semibold">{brl(m.comissao_valor)}</td>
-                  <td className="px-4 py-3 text-center">
-                    {m.comissao_valor <= 0 ? (
-                      <span className="text-text-muted text-xs">—</span>
-                    ) : m.mes === mesAtual.mes ? (
-                      <span className="text-xs text-text-muted">em curso</span>
-                    ) : m.repasse_status === 'PAGO' ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-400">
-                        <Check size={11} /> Pago
-                      </span>
-                    ) : (
-                      <span className="rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-400">A receber</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      <TabelaMeses meses={data.meses} mesAtualMes={mesAtual.mes} />
 
       <p className="text-[11px] text-text-muted">
         A comissão incide somente sobre pagamentos confirmados do plano Gestão Pro (add-ons não comissionam).

@@ -211,11 +211,17 @@ def _montar_mes(ym: str, item: dict, assinantes_para_faixa: int, embaixador: boo
     }
 
 
-def painel(divulgador_id: str) -> dict:
+def painel(divulgador_id: str, *, exigir_ativo: bool = True) -> dict:
     """Visão completa do divulgador: perfil, faixa/% vigente, mês corrente + últimos
-    meses, carteira e saldo a receber. Leitura: 2 GetItem + 2 Query (carteira pequena)."""
+    meses, agregadores de período inteiro, carteira e saldo a receber. Leitura: 2 GetItem
+    + 2 Query (carteira pequena).
+
+    `exigir_ativo=False` (uso do admin) permite abrir o painel de um divulgador desativado —
+    mantém apenas o 404 de perfil inexistente."""
     perfil = get_perfil(divulgador_id)
-    if not perfil or not perfil.get("ativo", True):
+    if not perfil:
+        raise HTTPException(404, {"code": "DIVULGADOR_NAO_CADASTRADO"})
+    if exigir_ativo and not perfil.get("ativo", True):
         raise HTTPException(404, {"code": "DIVULGADOR_NAO_CADASTRADO"})
 
     hoje = date.today()
@@ -230,13 +236,21 @@ def painel(divulgador_id: str) -> dict:
     hist_raw = repo.query_pk(keys.pk_personal(divulgador_id), sk_prefix=keys.STATS_COMISSAO_PREFIX)
     hist_map = {it["SK"].rsplit("#", 1)[-1]: it for it in hist_raw}
 
+    # Mês corrente usa a carteira ativa AO VIVO; meses fechados usam o snapshot da época.
+    def _assinantes_do_mes(ym: str, item: dict) -> int:
+        return assinantes_ativos if ym == ym_atual else int(item.get("assinantes_snapshot", 0) or 0)
+
+    # Agregadores de PERÍODO INTEIRO — a query já traz todos os meses.
+    todos = [_montar_mes(ym, item, _assinantes_do_mes(ym, item), embaixador) for ym, item in hist_map.items()]
+    total_comissao = round(sum(m["comissao_valor"] for m in todos), 2)
+    meses_ativos = sum(1 for m in todos if m["base_valor"] > 0)
+
+    # Últimos N meses para o gráfico/tabela (inclui meses vazios do período).
     meses = []
     for i in range(_HISTORICO_MESES - 1, -1, -1):
         ym = _ym_offset(hoje, i)
         item = hist_map.get(ym, {})
-        # Mês corrente usa a carteira ativa AO VIVO; meses fechados usam o snapshot da época.
-        assinantes = assinantes_ativos if ym == ym_atual else int(item.get("assinantes_snapshot", 0) or 0)
-        meses.append(_montar_mes(ym, item, assinantes, embaixador))
+        meses.append(_montar_mes(ym, item, _assinantes_do_mes(ym, item), embaixador))
 
     mes_atual = meses[-1]
     a_receber = round(sum(
@@ -263,6 +277,11 @@ def painel(divulgador_id: str) -> dict:
         },
         "a_receber": a_receber,
         "meses": meses,
+        "totais": {
+            "total_comissao": total_comissao,   # comissão acumulada em todos os meses
+            "meses_ativos": meses_ativos,
+            "desde": perfil.get("criado_em"),
+        },
     }
 
 

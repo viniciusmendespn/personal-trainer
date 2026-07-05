@@ -163,6 +163,21 @@ def listar_divulgadores(_: str = Depends(_require_admin)):
     return {"divulgadores": comissao_service.listar_divulgadores_admin()}
 
 
+@router.get("/divulgador/{divulgador_id}/painel")
+def painel_divulgador(divulgador_id: str, _: str = Depends(_require_admin)):
+    """Painel completo de um divulgador (mesma visão do próprio), com agregadores de período
+    inteiro e histórico. Abre mesmo para divulgador desativado (exigir_ativo=False)."""
+    from app.services import comissao_service
+    return comissao_service.painel(divulgador_id, exigir_ativo=False)
+
+
+@router.get("/divulgador/{divulgador_id}/clientes")
+def clientes_divulgador(divulgador_id: str, _: str = Depends(_require_admin)):
+    """Carteira de contas indicadas por um divulgador (nome, situação, datas)."""
+    from app.services import comissao_service
+    return {"clientes": comissao_service.listar_clientes(divulgador_id)}
+
+
 class AtualizarDivulgadorBody(BaseModel):
     ativo: bool | None = None
     embaixador: bool | None = None

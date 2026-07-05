@@ -1,0 +1,148 @@
+import { useQuery } from '@tanstack/react-query'
+import { ArrowLeft, Check, UserPlus, Users, Wallet } from 'lucide-react'
+import { adminApi, type DivulgadorAdmin } from '../../api/admin'
+import { Card } from '../../components/ui'
+import { BarrasMeses, DivStatCard, TabelaMeses, brl, mesLabel, pct } from '../../divulgador/historico'
+
+function dataBr(iso: string | null): string {
+  if (!iso) return '—'
+  try {
+    return new Date(iso).toLocaleDateString('pt-BR')
+  } catch {
+    return '—'
+  }
+}
+
+export function AdminDivulgadorDetail({ d, onBack, onRepasse }: {
+  d: DivulgadorAdmin
+  onBack: () => void
+  onRepasse: (d: DivulgadorAdmin) => void
+}) {
+  const painel = useQuery({
+    queryKey: ['admin-div-painel', d.divulgador_id],
+    queryFn: () => adminApi.divulgadorPainel(d.divulgador_id),
+  })
+  const clientes = useQuery({
+    queryKey: ['admin-div-clientes', d.divulgador_id],
+    queryFn: () => adminApi.divulgadorClientes(d.divulgador_id),
+  })
+
+  const p = painel.data
+
+  return (
+    <div className="space-y-5">
+      <button onClick={onBack} className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text transition-colors">
+        <ArrowLeft size={15} /> Voltar aos divulgadores
+      </button>
+
+      {/* Cabeçalho */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold flex items-center gap-2 flex-wrap">
+            {d.nome || '(sem nome)'}
+            {d.embaixador && <span className="text-[10px] text-accent font-semibold">EMB</span>}
+            {d.fundador && <span className="text-[10px] text-amber-400 font-semibold">FND</span>}
+            {!d.ativo && <span className="text-[10px] text-red-400 font-semibold">INATIVO</span>}
+          </h2>
+          <p className="text-xs text-text-muted break-all">
+            {d.email} · cupom <span className="font-mono text-text-secondary">{d.codigo}</span>
+            {d.pix_key ? <> · PIX <span className="text-text-secondary">{d.pix_key}</span></> : ''}
+          </p>
+        </div>
+        <button
+          onClick={() => onRepasse(d)}
+          title="Marcar repasse do mês anterior como pago"
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium border border-border rounded-lg text-text-secondary hover:bg-surface-elevated transition-colors shrink-0"
+        >
+          <Check size={12} /> Marcar repasse
+        </button>
+      </div>
+
+      {painel.isLoading && <p className="text-sm text-text-muted">Carregando painel…</p>}
+      {painel.error && <p className="text-sm text-red-400">Erro ao carregar o painel deste divulgador.</p>}
+
+      {p && (
+        <>
+          {/* Agregadores de período inteiro */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <DivStatCard
+              icon={<Wallet size={14} />} label="Total em comissões"
+              value={brl(p.totais.total_comissao)}
+              sub={p.totais.desde ? `desde ${mesLabel(p.totais.desde.slice(0, 7))} · ${p.totais.meses_ativos} ${p.totais.meses_ativos === 1 ? 'mês' : 'meses'}` : 'acumulado'}
+            />
+            <DivStatCard
+              icon={<Wallet size={14} />} label="A receber"
+              value={brl(p.a_receber)} sub="meses fechados"
+            />
+            <DivStatCard
+              icon={<UserPlus size={14} />} label="Contas ativadas"
+              value={String(p.contas_total)} sub="pelo cupom"
+            />
+            <DivStatCard
+              icon={<Users size={14} />} label="Assinantes"
+              value={`${p.assinantes_ativos} / ${p.assinantes_total}`} sub="ativos / total"
+            />
+          </div>
+
+          <p className="text-sm text-text-secondary">
+            Faixa <span className="font-semibold text-text">{p.faixa}</span> · comissão vigente{' '}
+            <span className="font-semibold text-accent">{pct(p.mes_atual.pct)}</span> · mês corrente{' '}
+            <span className="font-semibold text-text">{brl(p.mes_atual.comissao_valor)}</span>
+          </p>
+
+          {/* Gráfico 6 meses */}
+          <Card className="p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-4">Comissões — últimos 6 meses</p>
+            <BarrasMeses meses={p.meses} />
+          </Card>
+
+          {/* Tabela mensal */}
+          <TabelaMeses meses={p.meses} mesAtualMes={p.mes_atual.mes} />
+        </>
+      )}
+
+      {/* Carteira de indicados */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-bold flex items-center gap-1.5"><Users size={15} /> Carteira de indicados</h3>
+        {clientes.isLoading ? (
+          <p className="text-sm text-text-muted">Carregando…</p>
+        ) : clientes.data && clientes.data.length > 0 ? (
+          <Card className="p-0 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-xs text-text-muted uppercase tracking-wide">
+                    <th className="px-4 py-3">Nome</th>
+                    <th className="px-4 py-3 text-center">Situação</th>
+                    <th className="px-4 py-3 text-center">Entrou em</th>
+                    <th className="px-4 py-3 text-center">1º pagamento</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clientes.data.map((c, i) => (
+                    <tr key={i} className="border-b border-border/50 last:border-0">
+                      <td className="px-4 py-3 font-medium">{c.nome}</td>
+                      <td className="px-4 py-3 text-center">
+                        {c.status === 'ASSINANTE' && c.ativo ? (
+                          <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-400">Assinante ativo</span>
+                        ) : c.status === 'ASSINANTE' ? (
+                          <span className="rounded-md bg-slate-500/15 px-2 py-0.5 text-[11px] font-semibold text-slate-400">Assinatura vencida</span>
+                        ) : (
+                          <span className="rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-400">Ainda não assinou</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center text-text-secondary">{dataBr(c.desde)}</td>
+                      <td className="px-4 py-3 text-center text-text-secondary">{dataBr(c.primeiro_pgto_em)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        ) : (
+          <Card className="p-6 text-center text-sm text-text-secondary">Nenhuma conta criada com este cupom ainda.</Card>
+        )}
+      </div>
+    </div>
+  )
+}

@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Shield, LogIn, Search, Gift, Megaphone, Check, Trash2 } from 'lucide-react'
+import { Shield, LogIn, Search, Gift, Megaphone, Check, Trash2, BarChart3 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { adminApi, type DivulgadorAdmin, type Personal } from '../api/admin'
+import { AdminDivulgadorDetail } from './admin/AdminDivulgadorDetail'
 import { normalizeText } from '../utils/normalizeText'
 import { useAuth } from '../auth/AuthProvider'
 import { Tabs } from '../components/ui'
@@ -180,6 +181,7 @@ function DivulgadoresTab() {
   const [selecionado, setSelecionado] = useState<Personal | null>(null)
   const [form, setForm] = useState({ codigo: '', embaixador: false, fundador: false })
   const [msg, setMsg] = useState('')
+  const [detalheId, setDetalheId] = useState<string | null>(null)
 
   const jaDivulgador = new Set((data?.divulgadores ?? []).map(d => d.email.toLowerCase()))
   const candidatos = busca.trim().length >= 2 && !selecionado
@@ -218,7 +220,10 @@ function DivulgadoresTab() {
   const repasse = useMutation({
     mutationFn: ({ id, mes, valor }: { id: string; mes: string; valor: number }) =>
       adminApi.marcarRepasse(id, { mes, valor }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-divulgadores'] }),
+    onSuccess: (_r, v) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-divulgadores'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-div-painel', v.id] })
+    },
   })
 
   function marcarRepasse(d: DivulgadorAdmin) {
@@ -231,6 +236,17 @@ function DivulgadoresTab() {
   }
 
   const linhas = data?.divulgadores ?? []
+
+  const detalhe = detalheId ? linhas.find(d => d.divulgador_id === detalheId) : null
+  if (detalhe) {
+    return (
+      <AdminDivulgadorDetail
+        d={detalhe}
+        onBack={() => setDetalheId(null)}
+        onRepasse={marcarRepasse}
+      />
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -347,6 +363,13 @@ function DivulgadoresTab() {
                 </td>
                 <td className="px-3 py-2 text-right">
                   <div className="inline-flex items-center gap-1.5">
+                    <button
+                      onClick={() => setDetalheId(d.divulgador_id)}
+                      title="Ver painel detalhado do divulgador"
+                      className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium border border-border rounded-lg text-text-secondary hover:bg-surface-elevated transition-colors"
+                    >
+                      <BarChart3 size={11} /> Ver painel
+                    </button>
                     <button
                       onClick={() => marcarRepasse(d)}
                       disabled={repasse.isPending}

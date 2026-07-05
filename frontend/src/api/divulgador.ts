@@ -33,6 +33,7 @@ export interface PainelDivulgador {
   acelerador: { vendas_no_mes: number; vendas_para_ativar: number; ativo: boolean }
   a_receber: number
   meses: MesComissao[]
+  totais: { total_comissao: number; meses_ativos: number; desde: string | null }
 }
 
 export interface ClienteDivulgador {

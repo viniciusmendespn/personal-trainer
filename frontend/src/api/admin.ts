@@ -1,4 +1,5 @@
 import { api } from './client'
+import type { ClienteDivulgador, PainelDivulgador } from './divulgador'
 
 export interface Personal {
   personal_id: string
@@ -46,6 +47,12 @@ export const adminApi = {
 
   listDivulgadores: () =>
     api.get<{ divulgadores: DivulgadorAdmin[] }>('/v1/admin/divulgadores').then((r) => r.data),
+
+  divulgadorPainel: (divulgadorId: string) =>
+    api.get<PainelDivulgador>(`/v1/admin/divulgador/${divulgadorId}/painel`).then((r) => r.data),
+
+  divulgadorClientes: (divulgadorId: string) =>
+    api.get<{ clientes: ClienteDivulgador[] }>(`/v1/admin/divulgador/${divulgadorId}/clientes`).then((r) => r.data.clientes),
 
   criarDivulgador: (body: { email: string; codigo: string; embaixador?: boolean; fundador?: boolean; pix_key?: string }) =>
     api.post('/v1/admin/divulgador', body).then((r) => r.data),
