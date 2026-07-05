@@ -424,6 +424,35 @@ def sk_indicacao(indicado_id: str) -> str:
     return f"INDICACAO#{indicado_id}"
 
 
+# ── Programa de divulgadores (comissão em dinheiro — distinto de INDICACAO#) ──
+# Tudo na partição PT#{divulgador_id} (divulgador = conta CoachPilot comum,
+# marcada pelo admin). Regras de negócio: estrategia/PROGRAMA_DIVULGADORES_REGRAS.md.
+SK_DIVULGADOR = "DIVULGADOR"                 # perfil: cupom, embaixador, pix_key, ativo
+SK_STATS_DIVGERAL = "STATS#DIVGERAL"          # contadores vivos: contas_total, assinantes_total
+DIVCLIENTE_PREFIX = "DIVCLIENTE#"
+STATS_COMISSAO_PREFIX = "STATS#COMISSAO#"
+
+
+def sk_div_cliente(personal_id: str) -> str:
+    # PT#{divulgador_id}: ledger de contas criadas com o cupom do divulgador.
+    return f"DIVCLIENTE#{personal_id}"
+
+
+def sk_stats_comissao_mes(ano_mes: str) -> str:
+    # PT#{divulgador_id}: agregado mensal (base_valor, vendas_novas, repasse) —
+    # mesmo padrão de STATS#FINM# do financeiro.
+    return f"STATS#COMISSAO#{ano_mes}"
+
+
+# Registro global de divulgadores (partição única, baixa cardinalidade/escrita rara —
+# mesmo racional do LOJA#CATALOGO) para o admin listar sem Scan.
+PK_DIVULGADOR_REGISTRY = "DIVULGADOR#REGISTRY"
+
+
+def sk_div_registry(divulgador_id: str) -> str:
+    return f"DIV#{divulgador_id}"
+
+
 # ── Pacotes de treino (.cpkg) ────────────────────────────────────────────────
 # Lookup global O(1) por token (mesmo padrão de pk_cupom()).
 # Metadados de pacotes instalados ficam na partição PT#{personal_id}.

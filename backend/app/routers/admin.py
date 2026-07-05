@@ -119,3 +119,71 @@ def despublicar_anuncio(anuncio_id: str, _: str = Depends(_require_admin)):
     from app.services import loja_service
     loja_service.despublicar_admin(anuncio_id)
     return {"ok": True}
+
+
+# ── Programa de divulgadores (comissão em dinheiro — comissao_service) ─────────
+
+class CriarDivulgadorBody(BaseModel):
+    email: str            # conta CoachPilot existente (o divulgador cria conta normal antes)
+    codigo: str           # cupom nomeado, ex.: MARIA (3–20 chars alfanum/hífen)
+    embaixador: bool = False
+    fundador: bool = False
+    pix_key: str | None = None
+
+
+@router.post("/divulgador")
+def criar_divulgador(body: CriarDivulgadorBody, _: str = Depends(_require_admin)):
+    """Registra uma conta CoachPilot como divulgador: cria o cupom nomeado (tipo
+    DIVULGADOR) e o perfil. A conta é resolvida pelo e-mail no Cognito."""
+    from app.services import comissao_service, cupom_service
+    email = body.email.strip().lower()
+    alvo = next((p for p in _listar_personals() if p["email"].lower() == email), None)
+    if not alvo:
+        raise HTTPException(404, {"code": "CONTA_NAO_ENCONTRADA", "email": email})
+    registro = cupom_service.criar_cupom_divulgador(codigo=body.codigo, divulgador_id=alvo["personal_id"])
+    try:
+        perfil = comissao_service.registrar_divulgador(
+            alvo["personal_id"], nome=alvo.get("name", ""), email=email,
+            codigo=registro["codigo"], embaixador=body.embaixador,
+            fundador=body.fundador, pix_key=body.pix_key,
+        )
+    except HTTPException:
+        # Perfil já existia — desfaz o cupom órfão recém-criado e propaga.
+        from app.repositories import dynamo_repo as repo
+        from app.repositories import keys
+        repo.delete_item(keys.pk_cupom(registro["codigo"]), keys.SK_META)
+        raise
+    return {"divulgador_id": alvo["personal_id"], "codigo": registro["codigo"], **perfil}
+
+
+@router.get("/divulgadores")
+def listar_divulgadores(_: str = Depends(_require_admin)):
+    """Todos os divulgadores com contadores e a prévia de comissão do mês corrente."""
+    from app.services import comissao_service
+    return {"divulgadores": comissao_service.listar_divulgadores_admin()}
+
+
+class AtualizarDivulgadorBody(BaseModel):
+    ativo: bool | None = None
+    embaixador: bool | None = None
+    fundador: bool | None = None
+    pix_key: str | None = None
+
+
+@router.patch("/divulgador/{divulgador_id}")
+def atualizar_divulgador(divulgador_id: str, body: AtualizarDivulgadorBody, _: str = Depends(_require_admin)):
+    from app.services import comissao_service
+    return comissao_service.atualizar_divulgador(divulgador_id, body.model_dump(exclude_none=True))
+
+
+class RepasseBody(BaseModel):
+    mes: str              # YYYY-MM
+    valor: float          # valor efetivamente transferido via PIX
+    obs: str | None = None
+
+
+@router.post("/divulgador/{divulgador_id}/repasse")
+def marcar_repasse(divulgador_id: str, body: RepasseBody, _: str = Depends(_require_admin)):
+    """Marca a comissão do mês como paga (repasse PIX manual). Condicional — não paga 2x."""
+    from app.services import comissao_service
+    return comissao_service.marcar_repasse_pago(divulgador_id, body.mes, body.valor, body.obs)

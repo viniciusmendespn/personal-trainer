@@ -38,6 +38,10 @@ CAMPANHA_INDICACAO = "INDICACAO"
 TIPO_INDICACAO = "INDICACAO"
 TIPO_CAMPANHA = "CAMPANHA"
 TIPO_ADMIN = "ADMIN"
+# Cupom do programa de divulgadores (comissão em dinheiro — comissao_service). Usa a
+# MESMA campanha INDICACAO: o benefício ao indicado é o mesmo (30 dias) e a guarda
+# "1 cupom por campanha" impede acumular indicação de personal + cupom de divulgador.
+TIPO_DIVULGADOR = "DIVULGADOR"
 
 INDICACAO_DIAS = 30
 
@@ -121,6 +125,24 @@ def listar_indicacoes_admin(personals: list[dict]) -> list[dict]:
     return out
 
 
+def criar_cupom_divulgador(*, codigo: str, divulgador_id: str) -> dict:
+    """Cria o cupom nomeado do divulgador (admin escolhe o código, ex.: MARIA).
+    Registro global igual ao de indicação, com tipo DIVULGADOR — o resgate dá 30 dias
+    ao indicado e registra a conta no ledger do divulgador (sem recompensa em dias ao dono)."""
+    codigo = normalizar(codigo)
+    if not codigo or len(codigo) < 3 or len(codigo) > 20 or not codigo.replace("-", "").isalnum():
+        raise HTTPException(400, {"code": "CODIGO_INVALIDO"})
+    registro = {
+        "codigo": codigo, "tipo": TIPO_DIVULGADOR, "campanha": CAMPANHA_INDICACAO,
+        "plano": assinatura_service.PLANO_GESTAO_PRO, "dias": INDICACAO_DIAS,
+        "owner_personal_id": divulgador_id, "ativo": True,
+        "max_usos": None, "usos": 0, "expira_em": None, "criado_em": now_iso(),
+    }
+    if not repo.put_item_if_absent(keys.pk_cupom(codigo), keys.SK_META, registro):
+        raise HTTPException(409, {"code": "CODIGO_JA_EXISTE"})
+    return registro
+
+
 def criar_cupom_campanha(
     *, campanha: str, dias: int, plano: str | None = None,
     tipo: str = TIPO_CAMPANHA, max_usos: int | None = None, expira_em: str | None = None,
@@ -186,6 +208,14 @@ def resgatar(personal_id: str, codigo: str) -> dict:
              "usado_em": now_iso(), "recompensado_em": None},
         )
         repo.increment_counter(keys.pk_personal(owner_id), keys.SK_CUPOM_PROPRIO, "indicacoes_total", 1)
+
+    # Cupom de DIVULGADOR: ledger de comissão (comissao_service) + vínculo reverso na
+    # assinatura do indicado (o webhook de pagamento resolve o divulgador em 1 GetItem).
+    if registro.get("tipo") == TIPO_DIVULGADOR and owner_id:
+        from app.services import comissao_service
+        comissao_service.registrar_conta(owner_id, personal_id)
+        repo.update_item(keys.pk_personal(personal_id), keys.SK_ASSINATURA,
+                         {"divulgador_id": owner_id})
 
     return {**assinatura_service.get_status(personal_id), "cupom": {"campanha": campanha, "dias": dias}}
 

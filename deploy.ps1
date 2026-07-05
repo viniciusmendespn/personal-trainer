@@ -13,6 +13,7 @@ $Bucket     = "personal-trainer-frontend-prod-421219980792"
 $CfId       = "E3JZ6U88Q0GYGF"   # CloudFrontDistributionId (portal — coachpilot.com.br)
 $AlunoCfId  = "E2IHNZ34C3PI8V"   # AlunoCloudFrontDistributionId (aluno — app.coachpilot.com.br)
 $LojaCfId   = "EEN1FE9Z7MUEK"    # LojaCloudFrontDistributionId (loja — loja.coachpilot.com.br)
+$DivulgadorCfId = ""             # DivulgadorCloudFrontDistributionId (divulgador.coachpilot.com.br) — preencher após o 1º sam deploy
 
 function Get-EnvLocal {
     param([string]$Key)
@@ -84,6 +85,17 @@ function Deploy-Frontend {
         Write-Host "AVISO: dist/loja.html nao encontrado — verifique vite.config.ts multi-entry." -ForegroundColor Yellow
     }
 
+    # divulgador.html: mesmo tratamento (manifest do painel do divulgador)
+    $divPath = "$PWD\dist\divulgador.html"
+    if (Test-Path $divPath) {
+        $htmlDiv = Get-Content -Path $divPath -Raw -Encoding UTF8
+        $htmlDiv = $htmlDiv -replace '<link rel="manifest" href="[^"]*">', '<link rel="manifest" href="/divulgador.webmanifest">'
+        [System.IO.File]::WriteAllText($divPath, $htmlDiv, [System.Text.UTF8Encoding]::new($false))
+        Write-Host "divulgador.html: manifest -> /divulgador.webmanifest" -ForegroundColor Cyan
+    } else {
+        Write-Host "AVISO: dist/divulgador.html nao encontrado — verifique vite.config.ts multi-entry." -ForegroundColor Yellow
+    }
+
     # index.html e aluno.html sem cache (ARCHITECTURE §10.2)
     aws s3 cp dist/index.html "s3://$Bucket/index.html" `
         --cache-control "no-cache, no-store, must-revalidate" `
@@ -95,6 +107,12 @@ function Deploy-Frontend {
         --region $Region --profile $Profile
     if (Test-Path $lojaPath) {
         aws s3 cp dist/loja.html "s3://$Bucket/loja.html" `
+            --cache-control "no-cache, no-store, must-revalidate" `
+            --content-type "text/html; charset=utf-8" `
+            --region $Region --profile $Profile
+    }
+    if (Test-Path $divPath) {
+        aws s3 cp dist/divulgador.html "s3://$Bucket/divulgador.html" `
             --cache-control "no-cache, no-store, must-revalidate" `
             --content-type "text/html; charset=utf-8" `
             --region $Region --profile $Profile
@@ -122,7 +140,7 @@ function Deploy-Frontend {
     # Demais arquivos públicos sem hash (ícones, logos, imagens, robots.txt etc.):
     # cache curto, senão troca de logo/favicon fica presa em cache por 1 ano (browser + CDN)
     aws s3 sync dist/ "s3://$Bucket/" --delete `
-        --exclude "index.html" --exclude "aluno.html" --exclude "loja.html" --exclude "*.webmanifest" `
+        --exclude "index.html" --exclude "aluno.html" --exclude "loja.html" --exclude "divulgador.html" --exclude "*.webmanifest" `
         --exclude "sw.js" --exclude "workbox-*.js" --exclude "registerSW.js" `
         --exclude "assets/*" `
         --cache-control "public, max-age=3600" `
@@ -146,6 +164,13 @@ function Deploy-Frontend {
             --region $Region --profile $Profile | Out-Null
     } else {
         Write-Host "LojaCfId vazio — preencher deploy.ps1 com LojaCloudFrontDistributionId do stack." -ForegroundColor Yellow
+    }
+    if ($DivulgadorCfId) {
+        aws cloudfront create-invalidation --distribution-id $DivulgadorCfId `
+            --paths "/*" `
+            --region $Region --profile $Profile | Out-Null
+    } else {
+        Write-Host "DivulgadorCfId vazio — preencher deploy.ps1 com DivulgadorCloudFrontDistributionId do stack." -ForegroundColor Yellow
     }
     Set-Location ..
     Write-Host "Frontend deployed!" -ForegroundColor Green

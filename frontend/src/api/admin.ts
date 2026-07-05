@@ -16,6 +16,20 @@ export interface IndicacaoAdmin {
   indicacoes_convertidas: number
 }
 
+export interface DivulgadorAdmin {
+  divulgador_id: string
+  nome: string
+  email: string
+  codigo: string
+  ativo: boolean
+  embaixador: boolean
+  fundador: boolean
+  pix_key: string | null
+  contas_total: number
+  assinantes_total: number
+  mes_atual: { mes: string; base_valor: number; vendas_novas: number; pct: number; comissao_valor: number }
+}
+
 export const adminApi = {
   listPersonals: () =>
     api.get<{ personals: Personal[] }>('/v1/admin/personals').then((r) => r.data),
@@ -29,4 +43,16 @@ export const adminApi = {
         `/v1/admin/impersonate/${personalId}`
       )
       .then((r) => r.data),
+
+  listDivulgadores: () =>
+    api.get<{ divulgadores: DivulgadorAdmin[] }>('/v1/admin/divulgadores').then((r) => r.data),
+
+  criarDivulgador: (body: { email: string; codigo: string; embaixador?: boolean; fundador?: boolean; pix_key?: string }) =>
+    api.post('/v1/admin/divulgador', body).then((r) => r.data),
+
+  atualizarDivulgador: (divulgadorId: string, body: { ativo?: boolean; embaixador?: boolean; fundador?: boolean; pix_key?: string }) =>
+    api.patch(`/v1/admin/divulgador/${divulgadorId}`, body).then((r) => r.data),
+
+  marcarRepasse: (divulgadorId: string, body: { mes: string; valor: number; obs?: string }) =>
+    api.post(`/v1/admin/divulgador/${divulgadorId}/repasse`, body).then((r) => r.data),
 }

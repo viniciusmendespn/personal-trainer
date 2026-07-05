@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, LayoutTemplate, ListChecks, Bell, BookOpen, Brain, Package, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronUp, HelpCircle, CreditCard, Download, Smartphone, Sun, Moon, Monitor, Store, Wallet } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, LayoutTemplate, ListChecks, Bell, BookOpen, Brain, Package, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronUp, HelpCircle, CreditCard, Download, Smartphone, Sun, Moon, Monitor, Store, Wallet, Megaphone } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
 import { useTheme, type ThemeChoice } from '../../context/ThemeContext'
@@ -118,6 +118,17 @@ function SidebarContent({ unread, onNavigate, showInstallBtn, isIos, onInstall }
                 )}
               </NavLink>
             ))}
+            {group.title === 'Conta' && (
+              <a
+                href="https://divulgador.coachpilot.com.br"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={onNavigate}
+                className={link(false)}
+              >
+                <Megaphone size={16} /> Painel do Divulgador
+              </a>
+            )}
             {group.title === 'Conta' && isAdmin && (
               <NavLink to="/admin" onClick={onNavigate} className={({ isActive }) => link(isActive)}>
                 <Shield size={16} /> Admin

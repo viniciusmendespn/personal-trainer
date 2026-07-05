@@ -50,35 +50,23 @@ Detalhes completos em **`docs/ARCHITECTURE.md` §12 — Separação de Custos**.
 
 ## Deploy
 
-### ⚠️ REGRA OBRIGATÓRIA — Duas distribuições CloudFront, um bucket S3
+### ⚠️ REGRA OBRIGATÓRIA — Quatro distribuições CloudFront, um bucket S3
 O frontend usa **um único bucket S3** (`personal-trainer-frontend-prod-421219980792`) servido por
-**duas distribuições CloudFront separadas**:
+**quatro distribuições CloudFront separadas** (uma por app, cada uma com seu default root object
++ custom error pages 403/404 + CloudFront Function de SPA routing):
 
-| Distribuição | ID | Domínio |
-|---|---|---|
-| Portal (personal) | `E3JZ6U88Q0GYGF` | portal do personal trainer |
-| App do aluno | `E2IHNZ34C3PI8V` | `app.coachpilot.com.br` |
+| Distribuição | ID | Domínio | HTML |
+|---|---|---|---|
+| Portal (personal) | `E3JZ6U88Q0GYGF` | `coachpilot.com.br` | `index.html` |
+| App do aluno | `E2IHNZ34C3PI8V` | `app.coachpilot.com.br` | `aluno.html` |
+| Loja (marketplace) | `EEN1FE9Z7MUEK` | `loja.coachpilot.com.br` | `loja.html` |
+| Painel do divulgador | ver Output `DivulgadorCloudFrontDistributionId` | `divulgador.coachpilot.com.br` | `divulgador.html` |
 
-O build (`npm run build`) gera **dois HTML separados** via Rollup multi-entry: `dist/index.html`
-(portal) e `dist/aluno.html` (app do aluno). O CloudFront do **portal** usa `index.html`; o
-CloudFront do **aluno** usa `aluno.html` (default root object + custom error pages 403/404).
-**NÃO copiar index.html para aluno.html** — o build já gera o aluno.html correto com seu próprio
-manifest (`/aluno.webmanifest`) e bundle JS separado. O deploy de frontend é:
-
-```powershell
-cd frontend
-npm run build
-# ⚠️ NÃO executar Copy-Item — dist/aluno.html já é gerado pelo build multi-entry
-# Sync (--delete remove arquivos obsoletos)
-aws s3 sync dist/ s3://personal-trainer-frontend-prod-421219980792/ --delete --profile pessoal-hotmail --region us-east-1
-# Invalidar AS DUAS distribuições
-aws cloudfront create-invalidation --distribution-id E3JZ6U88Q0GYGF --paths "/*" --profile pessoal-hotmail
-aws cloudfront create-invalidation --distribution-id E2IHNZ34C3PI8V --paths "/*" --profile pessoal-hotmail
-```
-
-Nunca invalidar só uma das distribuições — a outra ficaria com cache stale.
-
-> Replicar o `deploy.ps1` do gerenciador-financeiro com `$Profile = "pessoal-hotmail"` e os nomes acima.
+O build (`npm run build`) gera os **quatro HTML** via Rollup multi-entry, cada um com seu próprio
+manifest e bundle JS. **NÃO copiar index.html sobre os outros** — o build já gera cada um correto.
+**Deploy de frontend: usar `.\deploy.ps1 frontend`** — ele troca os manifests, aplica as políticas
+de cache corretas por tipo de arquivo e **invalida as QUATRO distribuições**. Nunca invalidar só
+uma parte — as demais ficariam com cache stale.
 
 ### ⚠️ REGRA OBRIGATÓRIA — Commit antes do deploy
 O SAM faz build a partir do disco local, não do git. Nunca rodar deploy com arquivos não commitados.

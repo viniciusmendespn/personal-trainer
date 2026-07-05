@@ -35,6 +35,7 @@ export default defineConfig({
         main:  resolve(__dirname, 'index.html'),
         aluno: resolve(__dirname, 'aluno.html'),
         loja:  resolve(__dirname, 'loja.html'),
+        divulgador: resolve(__dirname, 'divulgador.html'),
       },
     },
   },

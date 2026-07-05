@@ -180,7 +180,7 @@ def processar_webhook(body: dict) -> None:
         "ttl": int(time.time()) + _LOCK_TTL_S,
     })
 
-    assinatura_service.aplicar_pagamento(
+    assinatura_atualizada = assinatura_service.aplicar_pagamento(
         personal_id, dias=dias,
         payment_id=payment_id, valor=resp.get("transaction_amount"), origem="PIX",
     )
@@ -199,5 +199,16 @@ def processar_webhook(body: dict) -> None:
         cupom_service.processar_recompensa_indicador(personal_id)
     except Exception as exc:
         logger.warning("Falha ao processar recompensa de indicação para %s: %s", personal_id, exc)
+
+    # Comissão de divulgador: se este personal veio de um cupom de divulgador, acumula
+    # a base de comissão do mês. Best-effort — nunca pode derrubar o webhook.
+    try:
+        from app.services import comissao_service
+        comissao_service.registrar_pagamento(
+            personal_id, assinatura_atualizada,
+            valor=resp.get("transaction_amount"), payment_id=payment_id,
+        )
+    except Exception as exc:
+        logger.warning("Falha ao registrar comissão de divulgador para %s: %s", personal_id, exc)
 
     logger.info("MP assinatura webhook processado payment_id=%s personal_id=%s", payment_id, personal_id)
