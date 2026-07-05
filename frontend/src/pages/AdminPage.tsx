@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Shield, LogIn, Search, Gift, Megaphone, Check } from 'lucide-react'
+import { Shield, LogIn, Search, Gift, Megaphone, Check, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { adminApi, type DivulgadorAdmin, type Personal } from '../api/admin'
 import { normalizeText } from '../utils/normalizeText'
@@ -162,28 +162,59 @@ function IndicacoesTab() {
   )
 }
 
+const ERRO_DIVULGADOR: Record<string, string> = {
+  CONTA_NAO_ENCONTRADA: 'Esta conta não existe no CoachPilot — o divulgador precisa criar a conta grátis primeiro.',
+  CODIGO_JA_EXISTE: 'Este código de cupom já está em uso — escolha outro.',
+  CODIGO_INVALIDO: 'Código inválido: use 3 a 20 letras/números (hífen permitido).',
+  DIVULGADOR_JA_CADASTRADO: 'Esta conta já é divulgadora.',
+  DIVULGADOR_COM_CLIENTES: 'Este divulgador já tem contas indicadas — desative em vez de excluir.',
+}
+
 function DivulgadoresTab() {
   const queryClient = useQueryClient()
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin-divulgadores'],
     queryFn: adminApi.listDivulgadores,
   })
-  const [form, setForm] = useState({ email: '', codigo: '', embaixador: false, fundador: false })
+  // Contas reais do Cognito — o divulgador é SELECIONADO, nunca digitado livremente.
+  const personals = useQuery({ queryKey: ['admin-personals'], queryFn: adminApi.listPersonals })
+  const [busca, setBusca] = useState('')
+  const [selecionado, setSelecionado] = useState<Personal | null>(null)
+  const [form, setForm] = useState({ codigo: '', embaixador: false, fundador: false })
   const [msg, setMsg] = useState('')
+
+  const jaDivulgador = new Set((data?.divulgadores ?? []).map(d => d.email.toLowerCase()))
+  const candidatos = busca.trim().length >= 2 && !selecionado
+    ? (personals.data?.personals ?? [])
+        .filter(p => !jaDivulgador.has(p.email.toLowerCase()))
+        .filter(p => normalizeText(p.name).includes(normalizeText(busca)) || normalizeText(p.email).includes(normalizeText(busca)))
+        .slice(0, 6)
+    : []
+
+  function erroMsg(e: { response?: { data?: { detail?: { code?: string } } } }): string {
+    const code = e?.response?.data?.detail?.code || ''
+    return ERRO_DIVULGADOR[code] || 'Falha na operação — tente novamente.'
+  }
 
   const criar = useMutation({
     mutationFn: () => adminApi.criarDivulgador({
-      email: form.email, codigo: form.codigo,
+      email: selecionado!.email, codigo: form.codigo,
       embaixador: form.embaixador, fundador: form.fundador,
     }),
     onSuccess: () => {
       setMsg('Divulgador criado!')
-      setForm({ email: '', codigo: '', embaixador: false, fundador: false })
+      setForm({ codigo: '', embaixador: false, fundador: false })
+      setSelecionado(null)
+      setBusca('')
       queryClient.invalidateQueries({ queryKey: ['admin-divulgadores'] })
     },
-    onError: (e: { response?: { data?: { detail?: { code?: string } } } }) => {
-      setMsg(`Erro: ${e?.response?.data?.detail?.code || 'falha ao criar'}`)
-    },
+    onError: (e: { response?: { data?: { detail?: { code?: string } } } }) => setMsg(`Erro: ${erroMsg(e)}`),
+  })
+
+  const excluir = useMutation({
+    mutationFn: (id: string) => adminApi.excluirDivulgador(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-divulgadores'] }),
+    onError: (e: { response?: { data?: { detail?: { code?: string } } } }) => setMsg(`Erro: ${erroMsg(e)}`),
   })
 
   const repasse = useMutation({
@@ -205,40 +236,78 @@ function DivulgadoresTab() {
 
   return (
     <div className="space-y-4">
-      {/* Criar divulgador */}
+      {/* Criar divulgador — seleção de conta existente, nunca e-mail digitado livre */}
       <form
-        onSubmit={(e) => { e.preventDefault(); setMsg(''); criar.mutate() }}
+        onSubmit={(e) => { e.preventDefault(); setMsg(''); if (selecionado) criar.mutate() }}
         className="p-3 bg-surface-elevated border border-border rounded-lg space-y-2"
       >
         <p className="text-xs font-semibold uppercase tracking-wide text-text-muted flex items-center gap-1.5">
-          <Megaphone size={13} /> Novo divulgador (a conta CoachPilot já deve existir)
+          <Megaphone size={13} /> Novo divulgador — busque uma conta existente
         </p>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            type="email" required placeholder="E-mail da conta"
-            value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
-            className="flex-1 px-3 py-2 text-sm bg-bg border border-border rounded-lg text-text placeholder-text-muted outline-none focus:ring-1 focus:ring-accent"
-          />
+        {!selecionado ? (
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <input
+              type="text"
+              placeholder={personals.isLoading ? 'Carregando contas…' : 'Buscar conta por nome ou e-mail (mín. 2 letras)'}
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              disabled={personals.isLoading}
+              className="w-full pl-9 pr-3 py-2 text-sm bg-bg border border-border rounded-lg text-text placeholder-text-muted outline-none focus:ring-1 focus:ring-accent"
+            />
+            {candidatos.length > 0 && (
+              <div className="absolute z-10 mt-1 w-full bg-surface-elevated border border-border rounded-lg overflow-hidden shadow-lg">
+                {candidatos.map((p) => (
+                  <button
+                    key={p.personal_id} type="button"
+                    onClick={() => { setSelecionado(p); setMsg('') }}
+                    className="w-full text-left px-3 py-2 hover:bg-accent/10 transition-colors"
+                  >
+                    <p className="text-sm text-text truncate">{p.name || '(sem nome)'}</p>
+                    <p className="text-xs text-text-muted truncate">{p.email}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+            {busca.trim().length >= 2 && !personals.isLoading && candidatos.length === 0 && (
+              <p className="mt-1.5 text-xs text-text-muted">
+                Nenhuma conta encontrada com "{busca}". O divulgador precisa criar a conta grátis em coachpilot.com.br/signup primeiro.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-2 px-3 py-2 bg-bg border border-accent/40 rounded-lg">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-text truncate">{selecionado.name || '(sem nome)'}</p>
+              <p className="text-xs text-text-muted truncate">{selecionado.email}</p>
+            </div>
+            <button
+              type="button" onClick={() => { setSelecionado(null); setBusca('') }}
+              className="text-xs text-text-secondary hover:text-text shrink-0"
+            >
+              Trocar
+            </button>
+          </div>
+        )}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <input
             type="text" required placeholder="Cupom (ex.: MARIA)" maxLength={20}
             value={form.codigo} onChange={(e) => setForm(f => ({ ...f, codigo: e.target.value.toUpperCase() }))}
             className="w-full sm:w-44 px-3 py-2 text-sm bg-bg border border-border rounded-lg text-text placeholder-text-muted outline-none focus:ring-1 focus:ring-accent font-mono"
           />
-        </div>
-        <div className="flex items-center gap-4 text-sm text-text-secondary">
-          <label className="flex items-center gap-1.5">
+          <label className="flex items-center gap-1.5 text-sm text-text-secondary">
             <input type="checkbox" checked={form.embaixador} onChange={(e) => setForm(f => ({ ...f, embaixador: e.target.checked }))} />
             Embaixador (35%)
           </label>
-          <label className="flex items-center gap-1.5">
+          <label className="flex items-center gap-1.5 text-sm text-text-secondary">
             <input type="checkbox" checked={form.fundador} onChange={(e) => setForm(f => ({ ...f, fundador: e.target.checked }))} />
             Fundador
           </label>
           <button
-            type="submit" disabled={criar.isPending}
-            className="ml-auto px-3 py-1.5 text-xs font-medium bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 transition-colors"
+            type="submit" disabled={criar.isPending || !selecionado || !form.codigo}
+            className="sm:ml-auto px-3 py-1.5 text-xs font-medium bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 transition-colors"
           >
-            {criar.isPending ? 'Criando…' : 'Criar'}
+            {criar.isPending ? 'Criando…' : 'Criar divulgador'}
           </button>
         </div>
         {msg && <p className={`text-xs ${msg.startsWith('Erro') ? 'text-red-400' : 'text-emerald-400'}`}>{msg}</p>}
@@ -279,14 +348,30 @@ function DivulgadoresTab() {
                   <span className="text-xs text-text-muted"> ({Math.round(d.mes_atual.pct * 100)}%)</span>
                 </td>
                 <td className="px-3 py-2 text-right">
-                  <button
-                    onClick={() => marcarRepasse(d)}
-                    disabled={repasse.isPending}
-                    title="Marcar repasse do mês anterior como pago"
-                    className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium border border-border rounded-lg text-text-secondary hover:bg-surface-elevated disabled:opacity-50 transition-colors"
-                  >
-                    <Check size={11} /> Repasse
-                  </button>
+                  <div className="inline-flex items-center gap-1.5">
+                    <button
+                      onClick={() => marcarRepasse(d)}
+                      disabled={repasse.isPending}
+                      title="Marcar repasse do mês anterior como pago"
+                      className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium border border-border rounded-lg text-text-secondary hover:bg-surface-elevated disabled:opacity-50 transition-colors"
+                    >
+                      <Check size={11} /> Repasse
+                    </button>
+                    {d.contas_total === 0 && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Excluir o divulgador ${d.nome || d.email}? O código ${d.codigo} será liberado.`)) {
+                            excluir.mutate(d.divulgador_id)
+                          }
+                        }}
+                        disabled={excluir.isPending}
+                        title="Excluir divulgador (sem clientes — libera o código)"
+                        className="inline-flex items-center px-2 py-1 text-[11px] font-medium border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-colors"
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

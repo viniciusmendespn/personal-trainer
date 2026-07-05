@@ -94,6 +94,25 @@ def registrar_divulgador(
     return perfil
 
 
+def excluir_divulgador(divulgador_id: str) -> dict:
+    """Remove um divulgador criado por engano. Só permitido enquanto ninguém usou o
+    cupom (contas_total == 0) — com carteira, o caminho é desativar (PATCH ativo=false),
+    preservando ledger e histórico de comissões."""
+    perfil = get_perfil(divulgador_id)
+    if not perfil:
+        raise HTTPException(404, {"code": "DIVULGADOR_NAO_ENCONTRADO"})
+    geral = repo.get_item(keys.pk_personal(divulgador_id), keys.SK_STATS_DIVGERAL) or {}
+    if int(geral.get("contas_total", 0) or 0) > 0:
+        raise HTTPException(409, {"code": "DIVULGADOR_COM_CLIENTES"})
+    codigo = perfil.get("cupom_codigo")
+    if codigo:
+        repo.delete_item(keys.pk_cupom(codigo), keys.SK_META)   # libera o código para reuso
+    repo.delete_item(keys.pk_personal(divulgador_id), keys.SK_DIVULGADOR)
+    repo.delete_item(keys.pk_personal(divulgador_id), keys.SK_STATS_DIVGERAL)
+    repo.delete_item(keys.PK_DIVULGADOR_REGISTRY, keys.sk_div_registry(divulgador_id))
+    return {"ok": True, "codigo_liberado": codigo}
+
+
 def atualizar_divulgador(divulgador_id: str, fields: dict) -> dict:
     permitidos = {k: v for k, v in fields.items() if k in ("ativo", "embaixador", "fundador", "pix_key")}
     if not permitidos:

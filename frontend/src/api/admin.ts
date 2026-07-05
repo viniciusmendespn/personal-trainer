@@ -55,4 +55,7 @@ export const adminApi = {
 
   marcarRepasse: (divulgadorId: string, body: { mes: string; valor: number; obs?: string }) =>
     api.post(`/v1/admin/divulgador/${divulgadorId}/repasse`, body).then((r) => r.data),
+
+  excluirDivulgador: (divulgadorId: string) =>
+    api.delete(`/v1/admin/divulgador/${divulgadorId}`).then((r) => r.data),
 }

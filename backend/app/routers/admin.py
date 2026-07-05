@@ -176,6 +176,14 @@ def atualizar_divulgador(divulgador_id: str, body: AtualizarDivulgadorBody, _: s
     return comissao_service.atualizar_divulgador(divulgador_id, body.model_dump(exclude_none=True))
 
 
+@router.delete("/divulgador/{divulgador_id}")
+def excluir_divulgador(divulgador_id: str, _: str = Depends(_require_admin)):
+    """Remove um divulgador criado por engano (só sem clientes; libera o código do cupom).
+    Com carteira, usar PATCH ativo=false."""
+    from app.services import comissao_service
+    return comissao_service.excluir_divulgador(divulgador_id)
+
+
 class RepasseBody(BaseModel):
     mes: str              # YYYY-MM
     valor: float          # valor efetivamente transferido via PIX
