@@ -62,7 +62,7 @@ export function AlunoEvolucaoPage() {
     [exercicios]
   )
   const exerciciosOptions = useMemo(
-    () => exerciciosOrdenados.map((e) => ({ value: e.chave, label: e.atual ? e.nome : `${e.nome} (anterior)` })),
+    () => exerciciosOrdenados.map((e) => ({ value: e.chave, label: e.nome })),
     [exerciciosOrdenados]
   )
   const prsFiltrados = useMemo(

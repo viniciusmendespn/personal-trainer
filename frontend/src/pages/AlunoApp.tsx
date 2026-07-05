@@ -1633,7 +1633,7 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
   const [prLimit, setPrLimit] = useState(12)
   const exsOptions = useMemo(
     () => (exs.data ?? [])
-      .map((e) => ({ value: e.chave, label: e.atual ? e.nome : `${e.nome} (anterior)` }))
+      .map((e) => ({ value: e.chave, label: e.nome }))
       .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR')),
     [exs.data]
   )
