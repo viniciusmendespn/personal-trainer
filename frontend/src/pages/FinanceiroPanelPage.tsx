@@ -153,6 +153,7 @@ export function FinanceiroPanelPage() {
             hint={`${resumo.pago_count} pagamento${resumo.pago_count === 1 ? '' : 's'}`}
             tone="success"
             className="h-full"
+            valueClassName="text-xl"
           />
           <StatCard
             icon={<Clock />}
@@ -161,6 +162,7 @@ export function FinanceiroPanelPage() {
             hint={`${resumo.pendente_count} pendente${resumo.pendente_count === 1 ? '' : 's'}`}
             tone="warning"
             className="h-full"
+            valueClassName="text-xl"
           />
           <StatCard
             icon={<AlertTriangle />}
@@ -169,6 +171,7 @@ export function FinanceiroPanelPage() {
             hint={`${resumo.vencido_count} em atraso`}
             tone="danger"
             className="h-full"
+            valueClassName="text-xl"
           />
           <StatCard
             icon={<Repeat />}
@@ -177,6 +180,7 @@ export function FinanceiroPanelPage() {
             hint="mensalidades ativas / mês"
             tone="accent"
             className="h-full"
+            valueClassName="text-xl"
           />
           {resumo.mp_configurado && resumo.mp_liquido != null && (
             <>
@@ -187,6 +191,7 @@ export function FinanceiroPanelPage() {
                 hint="após taxas do Mercado Pago"
                 tone="success"
                 className="h-full"
+                valueClassName="text-xl"
               />
               <StatCard
                 icon={<Receipt />}
@@ -195,6 +200,7 @@ export function FinanceiroPanelPage() {
                 hint="pagas ao Mercado Pago"
                 tone="accent"
                 className="h-full"
+                valueClassName="text-xl"
               />
             </>
           )}

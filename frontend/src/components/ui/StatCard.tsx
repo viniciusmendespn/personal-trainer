@@ -9,6 +9,7 @@ export function StatCard({
   hint,
   tone = 'accent',
   className = '',
+  valueClassName = 'text-2xl',
   to,
 }: {
   icon?: ReactNode
@@ -17,6 +18,8 @@ export function StatCard({
   hint?: string
   tone?: 'accent' | 'energy' | 'success' | 'warning' | 'danger'
   className?: string
+  /** Tamanho/estilo do valor. Default text-2xl; reduza p/ valores longos (ex.: moeda). */
+  valueClassName?: string
   to?: string
 }) {
   const toneStyles = {
@@ -35,7 +38,7 @@ export function StatCard({
       {icon && <div className={`p-2 rounded-lg ${toneStyles} [&>svg]:w-5 [&>svg]:h-5`}>{icon}</div>}
       <div className="min-w-0">
         <p className="text-xs text-text-secondary">{label}</p>
-        <p className="font-display text-2xl font-bold text-text mt-0.5 truncate">{value}</p>
+        <p className={`font-display ${valueClassName} font-bold text-text mt-0.5 truncate`}>{value}</p>
         {hint && <p className="text-[11px] text-text-muted mt-0.5">{hint}</p>}
       </div>
     </Card>
