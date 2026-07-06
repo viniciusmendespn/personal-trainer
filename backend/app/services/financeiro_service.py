@@ -401,7 +401,12 @@ def _gerar_cobranca_agendada(aluno_id: str, personal_id: str, vencimento_str: st
 
 
 def _marcar_vencida(aluno_id: str, cobranca_id: str, vencimento_str: str, personal_id: str) -> None:
-    """Chamado pelo scheduler ao disparar BILLING_VENCER#."""
+    """Chamado pelo scheduler ao disparar BILLING_VENCER#. A cobrança só vence em D+1."""
+    vencimento = date.fromisoformat(vencimento_str)
+    if date.today() <= vencimento:
+        # Ainda não venceu (entrada legada agendada em D-0) → reagenda p/ D+1 e sai.
+        _agendar_vencer(aluno_id, cobranca_id, personal_id, vencimento)
+        return
     ano_mes = vencimento_str[:7]
     sk = keys.sk_cobranca(ano_mes, cobranca_id)
     item = repo.get_item(keys.pk_aluno(aluno_id), sk)
@@ -485,6 +490,7 @@ def _criar_cobranca_pendente(aluno_id: str, personal_id: str, valor: float,
                   {"cobranca_id": cid, "sk": sk, "personal_id": personal_id})
     _bump_open(personal_id, {"pendente_valor": float(valor), "pendente_count": 1})
     _agendar_vencer(aluno_id, cid, personal_id, vencimento)
+    _agendar_aviso_dia(aluno_id, cid, personal_id, vencimento)
     aluno = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE) or {}
     aluno_nome = aluno.get("nome", "Aluno")
     venc_fmt = vencimento.strftime("%d/%m/%Y")
@@ -499,8 +505,10 @@ def _criar_cobranca_pendente(aluno_id: str, personal_id: str, valor: float,
 
 
 def _agendar_vencer(aluno_id: str, cobranca_id: str, personal_id: str, vencimento: date) -> None:
+    # Marca VENCIDA só no dia seguinte ao vencimento (D+1) — nunca no próprio dia.
+    data_vencer = vencimento + timedelta(days=1)
     repo.put_item(
-        keys.pk_sched(vencimento.isoformat()),
+        keys.pk_sched(data_vencer.isoformat()),
         keys.sk_sched_billing_vencer(aluno_id, cobranca_id),
         {
             "aluno_id": aluno_id, "cobranca_id": cobranca_id,
@@ -508,6 +516,33 @@ def _agendar_vencer(aluno_id: str, cobranca_id: str, personal_id: str, venciment
             "ttl": int(time.time()) + _SCHED_TTL_S,
         },
     )
+
+
+def _agendar_aviso_dia(aluno_id: str, cobranca_id: str, personal_id: str, vencimento: date) -> None:
+    # Aviso "dia de pagamento" ao aluno, na partição do próprio dia do vencimento (D-0).
+    repo.put_item(
+        keys.pk_sched(vencimento.isoformat()),
+        keys.sk_sched_billing_aviso(aluno_id, cobranca_id),
+        {
+            "aluno_id": aluno_id, "cobranca_id": cobranca_id,
+            "personal_id": personal_id, "vencimento": vencimento.isoformat(),
+            "ttl": int(time.time()) + _SCHED_TTL_S,
+        },
+    )
+
+
+def _avisar_dia_pagamento(aluno_id: str, cobranca_id: str, vencimento_str: str, personal_id: str) -> None:
+    """Chamado pelo scheduler ao disparar BILLING_AVISO# (D-0). Só avisa o aluno; silencia se já paga."""
+    sk = keys.sk_cobranca(vencimento_str[:7], cobranca_id)
+    item = repo.get_item(keys.pk_aluno(aluno_id), sk)
+    if not item or item.get("status") != "PENDENTE":
+        return  # já paga, cancelada ou inexistente
+    valor = float(item.get("valor", 0))
+    venc_fmt = date.fromisoformat(vencimento_str).strftime("%d/%m/%Y")
+    anotif_service.criar(aluno_id, "COBRANCA_VENCER",
+        "Dia de pagamento",
+        f"Hoje é o dia de pagamento da sua mensalidade de R$ {valor:.2f} "
+        f"(vencimento {venc_fmt}).")
 
 
 def _agendar_lembretes_vencida(aluno_id: str, cobranca_id: str, personal_id: str,

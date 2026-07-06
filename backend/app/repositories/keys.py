@@ -377,12 +377,18 @@ SK_CONFIG_MP = "CONFIG#MERCADOPAGO"
 
 # ── Financeiro: entradas do scheduler (partição SCHED#) ─────────────────────
 BILLING_GERAR_PREFIX = "BILLING_GERAR#"
+BILLING_AVISO_PREFIX = "BILLING_AVISO#"
 BILLING_VENCER_PREFIX = "BILLING_VENCER#"
 BILLING_LEMBRETE_PREFIX = "BILLING_LEMBRETE#"
 
 
 def sk_sched_billing_gerar(aluno_id: str) -> str:
     return f"BILLING_GERAR#{aluno_id}"
+
+
+def sk_sched_billing_aviso(aluno_id: str, cobranca_id: str) -> str:
+    # Aviso "dia de pagamento" (D-0), só para o aluno.
+    return f"BILLING_AVISO#{aluno_id}#{cobranca_id}"
 
 
 def sk_sched_billing_vencer(aluno_id: str, cobranca_id: str) -> str:
