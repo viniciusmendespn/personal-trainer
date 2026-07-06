@@ -215,7 +215,23 @@ def finish(aluno_id: str) -> dict:
     else:
         novo_streak = 1
     novo_streak_maximo = max(novo_streak, int(st_atual.get("streak_maximo", 0)))
-    repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_sessoes": 1}, set_={
+    # Agregados de tempo/frequência para os indicadores do personal (aba Frequência do aluno).
+    # `sessoes_com_metrica` é o denominador próprio das médias — conta só sessões a partir desta
+    # mudança, sem diluir a média com histórico antigo que não somou duração.
+    add_stats: dict = {"total_sessoes": 1}
+    dur = s.get("duracao_segundos")
+    if isinstance(dur, int) and dur > 0:
+        add_stats["soma_duracao_segundos"] = dur
+        add_stats["soma_total_series"] = int(s.get("total_series") or 0)
+        add_stats["sessoes_com_metrica"] = 1
+        # dia da semana (0=segunda) do início do treino. Datas em UTC — leve deriva de fuso,
+        # aceitável para o padrão "dias que treina".
+        try:
+            dow = datetime.fromisoformat(s["data_hora_inicio"].replace("Z", "+00:00")).weekday()
+            add_stats[f"dow_{dow}"] = 1
+        except Exception:
+            pass
+    repo.add_and_set(pk, keys.SK_STATS_ALUNO, add=add_stats, set_={
         "ultimo_treino": fim_iso,
         "streak_atual": novo_streak,
         "streak_maximo": novo_streak_maximo,
@@ -838,10 +854,20 @@ def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
     total_sessoes = int(st.get("total_sessoes", 0))
     semanas_com_treino = sum(1 for w in weeks if w.get("sessoes", 0) > 0)
     media_semana = round(total_sessoes / semanas_com_treino, 1) if semanas_com_treino > 0 else 0.0
+    # Indicadores de tempo/frequência (agregados on-write; None quando ainda não há dado).
+    n_metrica = int(st.get("sessoes_com_metrica", 0) or 0)
+    soma_dur = int(st.get("soma_duracao_segundos", 0) or 0)
+    soma_series = int(st.get("soma_total_series", 0) or 0)
+    tempo_medio = round(soma_dur / n_metrica) if n_metrica > 0 else None
+    tempo_medio_serie = round(soma_dur / soma_series) if soma_series > 0 else None
+    dias_semana = [int(st.get(f"dow_{n}", 0) or 0) for n in range(7)]  # [seg..dom]
     return {
         "total_sessoes": total_sessoes,
         "total_volume": st.get("total_volume", 0),
         "ultimo_treino": st.get("ultimo_treino"),
+        "tempo_medio_segundos": tempo_medio,
+        "tempo_medio_serie_segundos": tempo_medio_serie,
+        "dias_semana": dias_semana,
         "sessoes_semana": next((w.get("sessoes", 0) for w in weeks if w.get("semana") == wk_atual), 0),
         "streak_atual": streak_atual,
         "streak_maximo": int(st.get("streak_maximo", 0)),

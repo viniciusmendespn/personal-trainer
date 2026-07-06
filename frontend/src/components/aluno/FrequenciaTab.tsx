@@ -1,9 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
-import { Flame, Trophy, TrendingUp, Dumbbell } from 'lucide-react'
+import { Flame, Trophy, TrendingUp, Dumbbell, Clock, CalendarDays } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { evolucaoApi } from '../../api/evolucao'
 import { badgesApi } from '../../api/badges'
 import { Card, StatCard, Spinner, EmptyState } from '../ui'
+import { formatDuracao } from '../../utils/datetime'
+
+const DIAS_SEMANA_LABEL = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+
+/** Tempo médio por série (curto): "3,2min" acima de 1min, senão "45s". */
+function fmtTempoSerie(s?: number | null): string {
+  if (!s || s <= 0) return '—'
+  if (s < 60) return `${Math.round(s)}s`
+  return `${(s / 60).toFixed(1).replace('.', ',')}min`
+}
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -33,6 +43,11 @@ export function FrequenciaTab({ alunoId }: { alunoId: string }) {
   const streakMax = r?.streak_maximo ?? 0
   const mult = r?.multiplicador_atual ?? 1.0
   const media = r?.media_sessoes_semana
+  const tempoMedio = formatDuracao(r?.tempo_medio_segundos)
+  const tempoSerie = r?.tempo_medio_serie_segundos
+  const diasSemana = r?.dias_semana ?? []
+  const maxDia = Math.max(1, ...diasSemana)
+  const temFrequencia = diasSemana.some((d) => d > 0)
   const semanas = (r?.semanas ?? []).slice(-16).map((w) => ({
     semana: 'Sem ' + w.semana.replace(/^\d+-W/, ''),
     sessoes: w.sessoes,
@@ -47,6 +62,16 @@ export function FrequenciaTab({ alunoId }: { alunoId: string }) {
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="Total de sessões" value={r?.total_sessoes ?? 0} tone="accent" />
         <StatCard label="Média semanal" value={media != null ? `${media.toFixed(1)}/sem` : '—'} tone="success" />
+        <StatCard
+          icon={<Clock />} label="Tempo médio" tone="energy"
+          value={tempoMedio ?? '—'}
+          hint={tempoMedio ? 'por treino' : 'sem dados ainda'}
+        />
+        <StatCard
+          icon={<Clock />} label="Tempo médio/série" tone="accent"
+          value={fmtTempoSerie(tempoSerie)}
+          hint={tempoSerie ? 'estimado (inclui descanso)' : 'sem dados ainda'}
+        />
         <div className="bg-surface-elevated rounded-2xl p-3 border border-border">
           <p className="text-xs text-text-muted mb-0.5 flex items-center gap-1">
             <Flame size={12} className="text-orange-400" /> Sequência atual
@@ -63,6 +88,34 @@ export function FrequenciaTab({ alunoId }: { alunoId: string }) {
           <p className="text-xl font-bold text-text">{streakMax} <span className="text-sm font-normal text-text-muted">sem{streakMax !== 1 ? 'anas' : 'ana'}</span></p>
         </div>
       </div>
+
+      {/* Dias que treina — padrão semanal (intensidade proporcional à frequência) */}
+      {temFrequencia && (
+        <Card variant="elevated">
+          <p className="text-sm text-text-secondary mb-3 flex items-center gap-1"><CalendarDays size={14} /> Dias que treina</p>
+          <div className="grid grid-cols-7 gap-1.5">
+            {DIAS_SEMANA_LABEL.map((label, i) => {
+              const n = diasSemana[i] ?? 0
+              const intensidade = n / maxDia   // 0..1
+              return (
+                <div key={label} className="flex flex-col items-center gap-1">
+                  <div
+                    className="w-full aspect-square rounded-lg border border-border flex items-center justify-center text-xs font-semibold"
+                    style={{
+                      backgroundColor: n > 0 ? `color-mix(in srgb, var(--color-energy) ${15 + intensidade * 65}%, transparent)` : 'transparent',
+                      color: n > 0 ? 'var(--color-text)' : 'var(--color-text-muted)',
+                    }}
+                    title={`${n} treino${n !== 1 ? 's' : ''}`}
+                  >
+                    {n > 0 ? n : ''}
+                  </div>
+                  <span className="text-[10px] text-text-muted">{label}</span>
+                </div>
+              )
+            })}
+          </div>
+        </Card>
+      )}
 
       {/* Gráfico de sessões por semana */}
       {semanas.length > 1 ? (

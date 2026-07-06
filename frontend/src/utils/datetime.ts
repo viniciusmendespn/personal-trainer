@@ -1,3 +1,12 @@
+/** Duração legível a partir de segundos: "1h 30min" / "48min" / "45s". Retorna null se vazio. */
+export function formatDuracao(s?: number | null): string | null {
+  if (!s || s <= 0) return null
+  const m = Math.floor(s / 60)
+  if (m >= 60) return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}min`
+  if (m > 0) return `${m}min`
+  return `${Math.round(s)}s`
+}
+
 export function tempoRelativo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime()
   const min = Math.floor(diffMs / 60000)

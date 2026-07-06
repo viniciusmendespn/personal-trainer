@@ -55,6 +55,9 @@ export interface Resumo {
   multiplicador_atual?: number
   media_sessoes_semana?: number
   volume_por_grupo?: { grupo: string; volume: number }[]
+  tempo_medio_segundos?: number | null       // duração média de treino
+  tempo_medio_serie_segundos?: number | null // estimado (duração ÷ nº de séries, inclui descanso)
+  dias_semana?: number[]                      // [seg..dom] contagem de execuções por dia da semana
 }
 
 export const evolucaoApi = {
