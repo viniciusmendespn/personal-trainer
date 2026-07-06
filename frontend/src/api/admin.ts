@@ -26,6 +26,7 @@ export interface DivulgadorAdmin {
   embaixador: boolean
   fundador: boolean
   pix_key: string | null
+  cupom_dias: number | null   // duração (dias) do Gestão Pro grátis que o cupom concede; null = padrão antigo (30)
   contas_total: number
   assinantes_total: number
   mes_atual: { mes: string; base_valor: number; vendas_novas: number; pct: number; comissao_valor: number }
@@ -54,7 +55,7 @@ export const adminApi = {
   divulgadorClientes: (divulgadorId: string) =>
     api.get<{ clientes: ClienteDivulgador[] }>(`/v1/admin/divulgador/${divulgadorId}/clientes`).then((r) => r.data.clientes),
 
-  criarDivulgador: (body: { email: string; codigo: string; embaixador?: boolean; fundador?: boolean; pix_key?: string }) =>
+  criarDivulgador: (body: { email: string; codigo: string; embaixador?: boolean; fundador?: boolean; pix_key?: string; dias?: number }) =>
     api.post('/v1/admin/divulgador', body).then((r) => r.data),
 
   atualizarDivulgador: (divulgadorId: string, body: { ativo?: boolean; embaixador?: boolean; fundador?: boolean; pix_key?: string; faixa_manual?: string }) =>

@@ -129,6 +129,7 @@ class CriarDivulgadorBody(BaseModel):
     embaixador: bool = False
     fundador: bool = False
     pix_key: str | None = None
+    dias: int = 30        # duração do Gestão Pro grátis concedida no resgate (frontend converte meses→dias)
 
 
 @router.post("/divulgador")
@@ -140,7 +141,8 @@ def criar_divulgador(body: CriarDivulgadorBody, _: str = Depends(_require_admin)
     alvo = next((p for p in _listar_personals() if p["email"].lower() == email), None)
     if not alvo:
         raise HTTPException(404, {"code": "CONTA_NAO_ENCONTRADA", "email": email})
-    registro = cupom_service.criar_cupom_divulgador(codigo=body.codigo, divulgador_id=alvo["personal_id"])
+    registro = cupom_service.criar_cupom_divulgador(
+        codigo=body.codigo, divulgador_id=alvo["personal_id"], dias=body.dias)
     try:
         perfil = comissao_service.registrar_divulgador(
             alvo["personal_id"], nome=alvo.get("name", ""), email=email,

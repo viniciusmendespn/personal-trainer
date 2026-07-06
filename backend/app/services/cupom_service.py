@@ -125,16 +125,19 @@ def listar_indicacoes_admin(personals: list[dict]) -> list[dict]:
     return out
 
 
-def criar_cupom_divulgador(*, codigo: str, divulgador_id: str) -> dict:
+def criar_cupom_divulgador(*, codigo: str, divulgador_id: str, dias: int = INDICACAO_DIAS) -> dict:
     """Cria o cupom nomeado do divulgador (admin escolhe o código, ex.: MARIA).
-    Registro global igual ao de indicação, com tipo DIVULGADOR — o resgate dá 30 dias
-    ao indicado e registra a conta no ledger do divulgador (sem recompensa em dias ao dono)."""
+    Registro global igual ao de indicação, com tipo DIVULGADOR — o resgate concede
+    `dias` de Gestão Pro ao indicado e registra a conta no ledger do divulgador (sem
+    recompensa em dias ao dono). `dias` é configurável por cupom (padrão 30)."""
     codigo = normalizar(codigo)
     if not codigo or len(codigo) < 3 or len(codigo) > 20 or not codigo.replace("-", "").isalnum():
         raise HTTPException(400, {"code": "CODIGO_INVALIDO"})
+    if not isinstance(dias, int) or not 1 <= dias <= 3650:
+        raise HTTPException(400, {"code": "DIAS_INVALIDO"})
     registro = {
         "codigo": codigo, "tipo": TIPO_DIVULGADOR, "campanha": CAMPANHA_INDICACAO,
-        "plano": assinatura_service.PLANO_GESTAO_PRO, "dias": INDICACAO_DIAS,
+        "plano": assinatura_service.PLANO_GESTAO_PRO, "dias": dias,
         "owner_personal_id": divulgador_id, "ativo": True,
         "max_usos": None, "usos": 0, "expira_em": None, "criado_em": now_iso(),
     }

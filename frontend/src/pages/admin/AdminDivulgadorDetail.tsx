@@ -13,6 +13,16 @@ function dataBr(iso: string | null): string {
   }
 }
 
+/** Duração do cupom em texto amigável: "60 dias · 2 meses" quando múltiplo exato de 30. */
+function duracaoCupom(dias: number | null): string {
+  const d = dias ?? 30   // cupons antigos não têm o campo — sempre foram 30 dias
+  if (d % 30 === 0) {
+    const m = d / 30
+    return `${d} dias · ${m} ${m === 1 ? 'mês' : 'meses'}`
+  }
+  return `${d} dias`
+}
+
 export function AdminDivulgadorDetail({ d, onBack, onRepasse }: {
   d: DivulgadorAdmin
   onBack: () => void
@@ -57,6 +67,7 @@ export function AdminDivulgadorDetail({ d, onBack, onRepasse }: {
           </h2>
           <p className="text-xs text-text-muted break-all">
             {d.email} · cupom <span className="font-mono text-text-secondary">{d.codigo}</span>
+            {' '}· grátis por <span className="text-text-secondary">{duracaoCupom(d.cupom_dias)}</span>
             {d.pix_key ? <> · PIX <span className="text-text-secondary">{d.pix_key}</span></> : ''}
           </p>
         </div>

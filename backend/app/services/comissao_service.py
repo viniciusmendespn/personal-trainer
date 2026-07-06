@@ -337,6 +337,8 @@ def listar_divulgadores_admin() -> list[dict]:
             (keys.pk_personal(did), keys.SK_STATS_DIVGERAL),
             (keys.pk_personal(did), keys.sk_stats_comissao_mes(ym)),
         ]
+        if r.get("codigo"):
+            chaves.append((keys.pk_cupom(r["codigo"]), keys.SK_META))
     itens = repo.batch_get_items(chaves)
     out = []
     for r in registros:
@@ -344,6 +346,7 @@ def listar_divulgadores_admin() -> list[dict]:
         perfil = repo.clean(itens.get((keys.pk_personal(did), keys.SK_DIVULGADOR))) or {}
         geral = itens.get((keys.pk_personal(did), keys.SK_STATS_DIVGERAL)) or {}
         mes = itens.get((keys.pk_personal(did), keys.sk_stats_comissao_mes(ym))) or {}
+        cupom = itens.get((keys.pk_cupom(r["codigo"]), keys.SK_META)) if r.get("codigo") else None
         vendas = int(mes.get("vendas_novas_count", 0) or 0)
         assinantes = int(geral.get("assinantes_total", 0) or 0)
         _, pct = _pct_mes(assinantes, vendas, bool(perfil.get("embaixador")), perfil.get("faixa_manual"))
@@ -355,6 +358,7 @@ def listar_divulgadores_admin() -> list[dict]:
             "embaixador": bool(perfil.get("embaixador")),
             "fundador": bool(perfil.get("fundador")),
             "pix_key": perfil.get("pix_key"),
+            "cupom_dias": int(cupom.get("dias", 0)) if cupom and cupom.get("dias") else None,
             "contas_total": int(geral.get("contas_total", 0) or 0),
             "assinantes_total": assinantes,
             "mes_atual": {"mes": ym, "base_valor": round(base_valor, 2), "vendas_novas": vendas,

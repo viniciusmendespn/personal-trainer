@@ -192,7 +192,7 @@ function DivulgadoresTab() {
   const personals = useQuery({ queryKey: ['admin-personals'], queryFn: adminApi.listPersonals })
   const [busca, setBusca] = useState('')
   const [selecionado, setSelecionado] = useState<Personal | null>(null)
-  const [form, setForm] = useState({ codigo: '', embaixador: false })
+  const [form, setForm] = useState({ codigo: '', embaixador: false, duracaoValor: 30, duracaoUnidade: 'dias' as 'dias' | 'meses' })
   const [msg, setMsg] = useState('')
   const [detalheId, setDetalheId] = useState<string | null>(null)
   const [repasseAlvo, setRepasseAlvo] = useState<DivulgadorAdmin | null>(null)
@@ -215,10 +215,11 @@ function DivulgadoresTab() {
     mutationFn: () => adminApi.criarDivulgador({
       email: selecionado!.email, codigo: form.codigo,
       embaixador: form.embaixador,
+      dias: form.duracaoUnidade === 'meses' ? form.duracaoValor * 30 : form.duracaoValor,
     }),
     onSuccess: () => {
       setMsg('Divulgador criado!')
-      setForm({ codigo: '', embaixador: false })
+      setForm({ codigo: '', embaixador: false, duracaoValor: 30, duracaoUnidade: 'dias' })
       setSelecionado(null)
       setBusca('')
       queryClient.invalidateQueries({ queryKey: ['admin-divulgadores'] })
@@ -383,6 +384,23 @@ function DivulgadoresTab() {
             value={form.codigo} onChange={(e) => setForm(f => ({ ...f, codigo: e.target.value.toUpperCase() }))}
             className="w-full sm:w-44 px-3 py-2 text-sm bg-bg border border-border rounded-lg text-text placeholder-text-muted outline-none focus:ring-1 focus:ring-accent font-mono"
           />
+          <div className="flex items-center gap-1.5" title="Duração do plano Gestão Pro grátis que o cupom concede ao resgatar">
+            <span className="text-sm text-text-secondary">Grátis por</span>
+            <input
+              type="number" min={1} max={form.duracaoUnidade === 'meses' ? 120 : 3650}
+              value={form.duracaoValor}
+              onChange={(e) => setForm(f => ({ ...f, duracaoValor: Math.max(1, Number(e.target.value) || 1) }))}
+              className="w-16 px-2 py-2 text-sm bg-bg border border-border rounded-lg text-text outline-none focus:ring-1 focus:ring-accent"
+            />
+            <select
+              value={form.duracaoUnidade}
+              onChange={(e) => setForm(f => ({ ...f, duracaoUnidade: e.target.value as 'dias' | 'meses' }))}
+              className="px-2 py-2 text-sm bg-bg border border-border rounded-lg text-text outline-none focus:ring-1 focus:ring-accent"
+            >
+              <option value="dias">dias</option>
+              <option value="meses">meses</option>
+            </select>
+          </div>
           <label className="flex items-center gap-1.5 text-sm text-text-secondary">
             <input type="checkbox" checked={form.embaixador} onChange={(e) => setForm(f => ({ ...f, embaixador: e.target.checked }))} />
             Embaixador (35%)
