@@ -196,10 +196,18 @@ def finish(aluno_id: str) -> dict:
     for r in regs:
         repo.update_item(keys.pk_aluno(aluno_id), r["SK"], {"ttl": None})
     repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE)
-    # Contador de execuções no próprio item do treino (informativo para o personal)
+    # Contador de execuções + tempo médio no próprio item do treino (informativo para o personal:
+    # quanto aquele treino específico leva pra executar). Mesmas somas dos stats do aluno, mas por
+    # treino — `sessoes_com_metrica` é o denominador (conta só execuções a partir desta mudança).
     treino_id = s.get("treino_id")
     if treino_id:
-        repo.add_and_set(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id), add={"total_execucoes": 1})
+        add_treino: dict = {"total_execucoes": 1}
+        dur = s.get("duracao_segundos")
+        if isinstance(dur, int) and dur > 0:
+            add_treino["soma_duracao_segundos"] = dur
+            add_treino["soma_total_series"] = int(s.get("total_series") or 0)
+            add_treino["sessoes_com_metrica"] = 1
+        repo.add_and_set(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id), add=add_treino)
     # Agregação na escrita: conta a sessão (aluno + semana) — ESPEC §3.1
     pk = keys.pk_aluno(aluno_id)
     # Lê stats antes do update para calcular streak (1 GetItem extra, inevitável)

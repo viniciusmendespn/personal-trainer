@@ -109,6 +109,10 @@ export interface Treino {
   data_inicio?: string
   data_fim?: string
   total_execucoes?: number
+  // Agregados de tempo por treino (somados no finish); médias contam execuções a partir do deploy.
+  soma_duracao_segundos?: number
+  soma_total_series?: number
+  sessoes_com_metrica?: number
   custom?: Custom
   created_at: string
   updated_at: string

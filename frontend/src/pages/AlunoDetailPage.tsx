@@ -38,6 +38,7 @@ import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
 import { MetasTab } from '../components/aluno/MetasTab'
 import { FinanceiroTab } from '../components/financeiro/FinanceiroTab'
 import { videoUrlComFallback } from '../utils/video'
+import { formatDuracao } from '../utils/datetime'
 
 export function AlunoDetailPage() {
   const { alunoId = '' } = useParams()
@@ -830,6 +831,10 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
               if (treino.data_fim) dateParts.push(`até ${fmtDate(treino.data_fim)}`)
               if (dateParts.length) parts.push(dateParts.join(' '))
               if (treino.total_execucoes) parts.push(`${treino.total_execucoes}× executado`)
+              const nMet = treino.sessoes_com_metrica ?? 0
+              const tMedio = nMet > 0 && treino.soma_duracao_segundos
+                ? formatDuracao(Math.round(treino.soma_duracao_segundos / nMet)) : null
+              if (tMedio) parts.push(`~${tMedio}/treino`)
               return parts.length > 0
                 ? <span className="text-xs text-text-muted truncate block">{parts.join(' · ')}</span>
                 : null
@@ -868,6 +873,20 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
 
       {open && (
         <div className="mt-3 pl-2 sm:pl-6 space-y-1">
+          {(() => {
+            const nMet = treino.sessoes_com_metrica ?? 0
+            if (nMet <= 0 || !treino.soma_duracao_segundos) return null
+            const tMedio = formatDuracao(Math.round(treino.soma_duracao_segundos / nMet))
+            const somaSeries = treino.soma_total_series ?? 0
+            const secSerie = somaSeries > 0 ? treino.soma_duracao_segundos / somaSeries : 0
+            const tSerie = secSerie > 0 ? (secSerie < 60 ? `${Math.round(secSerie)}s` : `${(secSerie / 60).toFixed(1).replace('.', ',')}min`) : null
+            return (
+              <div className="flex flex-wrap gap-2 pb-1 text-xs text-text-muted">
+                {tMedio && <span className="inline-flex items-center gap-1 rounded-md bg-surface-elevated border border-border px-2 py-1">⏱ ~{tMedio} por execução</span>}
+                {tSerie && <span className="inline-flex items-center gap-1 rounded-md bg-surface-elevated border border-border px-2 py-1">~{tSerie}/série <span className="opacity-70">(estim.)</span></span>}
+              </div>
+            )
+          })()}
           {(exs ?? []).sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)).map((ex) => (
             <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} />
           ))}
