@@ -378,6 +378,7 @@ SK_CONFIG_MP = "CONFIG#MERCADOPAGO"
 # ── Financeiro: entradas do scheduler (partição SCHED#) ─────────────────────
 BILLING_GERAR_PREFIX = "BILLING_GERAR#"
 BILLING_VENCER_PREFIX = "BILLING_VENCER#"
+BILLING_LEMBRETE_PREFIX = "BILLING_LEMBRETE#"
 
 
 def sk_sched_billing_gerar(aluno_id: str) -> str:
@@ -386,6 +387,11 @@ def sk_sched_billing_gerar(aluno_id: str) -> str:
 
 def sk_sched_billing_vencer(aluno_id: str, cobranca_id: str) -> str:
     return f"BILLING_VENCER#{aluno_id}#{cobranca_id}"
+
+
+def sk_sched_billing_lembrete(aluno_id: str, cobranca_id: str) -> str:
+    # D+5 e D+10 caem em partições SCHED# de dias diferentes — sem colisão de SK.
+    return f"BILLING_LEMBRETE#{aluno_id}#{cobranca_id}"
 
 
 # ── Mercado Pago: idempotência de webhook ────────────────────────────────────

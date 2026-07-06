@@ -99,11 +99,33 @@ def _processar_dia_billing_vencer(data: str) -> int:
     return n
 
 
+def _processar_dia_billing_lembrete(data: str) -> int:
+    """Relembra cobranças ainda VENCIDAS (D+5 e D+10 após o vencimento)."""
+    n = 0
+    cursor = None
+    while True:
+        items, cursor = repo.query_pk_page(
+            keys.pk_sched(data), keys.BILLING_LEMBRETE_PREFIX, limit=50, cursor=cursor)
+        for it in items:
+            if not repo.delete_item_if_exists(keys.pk_sched(data), it["SK"]):
+                continue
+            try:
+                financeiro_service._lembrar_vencida(
+                    it["aluno_id"], it["cobranca_id"], it["personal_id"], int(it.get("dias", 0)))
+            except Exception as exc:
+                logger.error("[scheduler] billing_lembrete falhou aluno=%s: %s", it.get("aluno_id"), exc)
+            n += 1
+        if cursor is None:
+            break
+    return n
+
+
 def handler(event, context):
     hoje = datetime.now(timezone.utc).date()
     treinos_total = 0
     billing_gerar_total = 0
     billing_vencer_total = 0
+    billing_lembrete_total = 0
     assinatura_aviso_total = 0
     for i in range(_JANELA_DIAS, -1, -1):
         data = (hoje - timedelta(days=i)).isoformat()
@@ -111,14 +133,17 @@ def handler(event, context):
         treinos_total += _processar_dia_treinos(data_treino_aviso)
         billing_gerar_total += _processar_dia_billing_gerar(data)
         billing_vencer_total += _processar_dia_billing_vencer(data)
+        billing_lembrete_total += _processar_dia_billing_lembrete(data)
         assinatura_aviso_total += _processar_dia_assinatura_aviso(data)
     logger.info(
-        "[scheduler] treinos=%d billing_gerar=%d billing_vencer=%d assinatura_aviso=%d",
-        treinos_total, billing_gerar_total, billing_vencer_total, assinatura_aviso_total,
+        "[scheduler] treinos=%d billing_gerar=%d billing_vencer=%d billing_lembrete=%d assinatura_aviso=%d",
+        treinos_total, billing_gerar_total, billing_vencer_total,
+        billing_lembrete_total, assinatura_aviso_total,
     )
     return {
         "treinos": treinos_total,
         "billing_gerar": billing_gerar_total,
         "billing_vencer": billing_vencer_total,
+        "billing_lembrete": billing_lembrete_total,
         "assinatura_aviso": assinatura_aviso_total,
     }

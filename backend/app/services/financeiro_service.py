@@ -14,6 +14,11 @@ logger = logging.getLogger(__name__)
 
 _SCHED_TTL_S = 120 * 24 * 3600   # 120 dias de cleanup para entradas de scheduler
 
+# Lembretes de cobrança vencida: dias após o vencimento em que o aluno é relembrado.
+# Agendados só quando a cobrança de fato vence (a maioria paga em dia — sem entrada extra).
+_LEMBRETES_POS_VENCIMENTO = (5, 10)
+_LEMBRETE_ESCALA_PERSONAL = 10   # a partir deste atraso, o personal também é notificado
+
 
 # ── Agregados do painel financeiro (ADD atômico na partição PT#) ──────────────
 # Mantidos de forma incremental em cada transição de cobrança, no mesmo espírito do
@@ -418,6 +423,34 @@ def _marcar_vencida(aluno_id: str, cobranca_id: str, vencimento_str: str, person
     anotif_service.criar(aluno_id, "COBRANCA_VENCIDA",
         "Mensalidade vencida",
         f"Sua mensalidade de R$ {valor:.2f} venceu em {venc_fmt}. Fale com seu personal.")
+    _agendar_lembretes_vencida(aluno_id, cobranca_id, personal_id,
+                               date.fromisoformat(vencimento_str))
+
+
+def _lembrar_vencida(aluno_id: str, cobranca_id: str, personal_id: str, dias: int) -> None:
+    """Chamado pelo scheduler ao disparar BILLING_LEMBRETE# (D+5 e D+10 do vencimento).
+    Só notifica se a cobrança ainda está VENCIDA — paga/cancelada nesse meio-tempo, silencia."""
+    sk = _lookup_sk(aluno_id, cobranca_id)
+    if not sk:
+        return  # cobrança cancelada (idx removido)
+    item = repo.get_item(keys.pk_aluno(aluno_id), sk)
+    if not item or item.get("status") != "VENCIDA" or item.get("personal_id") != personal_id:
+        return
+    valor = float(item.get("valor", 0))
+    vencimento = date.fromisoformat(item["vencimento"])
+    venc_fmt = vencimento.strftime("%d/%m/%Y")
+    # Atraso real (o scheduler pode processar a entrada com dias de folga)
+    atraso = max((date.today() - vencimento).days, dias)
+    anotif_service.criar(aluno_id, "COBRANCA_VENCIDA",
+        "Mensalidade em atraso",
+        f"Sua mensalidade de R$ {valor:.2f} está vencida há {atraso} dias "
+        f"(venceu em {venc_fmt}). Fale com seu personal para regularizar.")
+    if dias >= _LEMBRETE_ESCALA_PERSONAL:
+        aluno = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE) or {}
+        notif_service.criar(personal_id, "COBRANCA_VENCIDA",
+            f"Cobrança em atraso há {atraso} dias — {aluno.get('nome', 'Aluno')}",
+            f"Cobrança de R$ {valor:.2f} vencida desde {venc_fmt} sem pagamento.",
+            aluno_id=aluno_id)
 
 
 # ── Helpers privados ──────────────────────────────────────────────────────────
@@ -475,6 +508,24 @@ def _agendar_vencer(aluno_id: str, cobranca_id: str, personal_id: str, venciment
             "ttl": int(time.time()) + _SCHED_TTL_S,
         },
     )
+
+
+def _agendar_lembretes_vencida(aluno_id: str, cobranca_id: str, personal_id: str,
+                                vencimento: date) -> None:
+    """Agenda os lembretes pós-vencimento (D+5 e D+10). Datas já passadas não são
+    problema: o handler do scheduler varre uma janela de 30 dias para trás."""
+    for dias in _LEMBRETES_POS_VENCIMENTO:
+        data = vencimento + timedelta(days=dias)
+        repo.put_item(
+            keys.pk_sched(data.isoformat()),
+            keys.sk_sched_billing_lembrete(aluno_id, cobranca_id),
+            {
+                "aluno_id": aluno_id, "cobranca_id": cobranca_id,
+                "personal_id": personal_id, "vencimento": vencimento.isoformat(),
+                "dias": dias,
+                "ttl": int(time.time()) + _SCHED_TTL_S,
+            },
+        )
 
 
 def _agendar_proxima_geracao(aluno_id: str, personal_id: str, dia: int,
