@@ -2,14 +2,7 @@ import { Trophy, Dumbbell, Clock, PartyPopper } from 'lucide-react'
 import { Modal } from '../ui'
 import { type SessaoFinalizada } from '../../api/alunoApp'
 import { CheckinUploadButton } from './CheckinUploadButton'
-
-function formatDuracao(s?: number): string | null {
-  if (!s) return null
-  const m = Math.floor(s / 60)
-  if (m >= 60) return `${Math.floor(m / 60)}h ${m % 60}min`
-  if (m > 0) return `${m}min`
-  return `${s}s`
-}
+import { formatDuracao } from '../../utils/datetime'
 
 function formatVolume(v?: number): string | null {
   if (!v || v <= 0) return null
@@ -18,7 +11,8 @@ function formatVolume(v?: number): string | null {
 }
 
 /** Tela de comemoração ao finalizar o treino: mostra os destaques do dia e convida o aluno a
- * registrar uma foto de check-in (tirada na hora pela câmera) — combustível pro engajamento. */
+ * registrar uma foto de check-in (escolhida da galeria — o seletor do Android também oferece a
+ * câmera) — combustível pro engajamento. Galeria evita o OOM da foto full-res da câmera no S23. */
 export function CheckinPosTreino({ sessao, onClose }: { sessao: SessaoFinalizada; onClose: () => void }) {
   const duracao = formatDuracao(sessao.duracao_segundos)
   const volume = formatVolume(sessao.volume_total)
@@ -69,8 +63,7 @@ export function CheckinPosTreino({ sessao, onClose }: { sessao: SessaoFinalizada
           <p className="text-sm text-text-secondary">Registre seu check-in de hoje pra acompanhar sua evolução e mostrar no seu histórico.</p>
           <CheckinUploadButton
             sessaoId={sessao.sessao_id}
-            label="Tirar foto do check-in"
-            usarCamera
+            label="Escolher foto do check-in"
             onDone={() => setTimeout(onClose, 900)}
           />
           <button
