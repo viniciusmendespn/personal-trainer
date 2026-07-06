@@ -6,7 +6,7 @@ import {
 } from 'recharts'
 import {
   DollarSign, Clock, AlertTriangle, Repeat, Wallet, QrCode, ChevronLeft, ChevronRight,
-  CheckCircle, Receipt,
+  CheckCircle, Receipt, Info,
 } from 'lucide-react'
 import { useFinanceiroResumo, useRecebiveis, usePagamentosRecentes } from '../hooks/useFinanceiro'
 import { financeiroApi, type CobrancaComAluno } from '../api/financeiro'
@@ -145,7 +145,7 @@ export function FinanceiroPanelPage() {
           ))}
         </div>
       ) : resumo ? (
-        <div className={`grid grid-cols-1 sm:grid-cols-2 ${resumo.mp_configurado ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-3`}>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${resumo.mp_liquido != null ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-3`}>
           <StatCard
             icon={<DollarSign />}
             label="Recebido no mês"
@@ -178,7 +178,7 @@ export function FinanceiroPanelPage() {
             tone="accent"
             className="h-full"
           />
-          {resumo.mp_configurado && (
+          {resumo.mp_configurado && resumo.mp_liquido != null && (
             <>
               <StatCard
                 icon={<Wallet />}
@@ -200,6 +200,22 @@ export function FinanceiroPanelPage() {
           )}
         </div>
       ) : null}
+
+      {/* Aviso de taxas — quando o MP está ativo mas não temos a taxa exata de todos
+          os Pix do mês. Preferimos informar a existência da taxa a exibir um líquido
+          calculado que poderia enganar (ex.: mostrar R$ 150 e cair R$ 148 na conta). */}
+      {resumo && resumo.mp_configurado && resumo.mp_liquido == null && (
+        <div className="rounded-xl border border-border bg-surface-elevated px-4 py-3 flex gap-3 items-start">
+          <div className="mt-0.5 rounded-lg bg-accent/10 p-2 shrink-0">
+            <Info size={16} className="text-accent" />
+          </div>
+          <p className="text-xs text-text-secondary leading-relaxed">
+            Os valores acima são <span className="font-medium text-text">brutos</span>. O Mercado Pago
+            desconta uma taxa por transação recebida via Pix, então o valor creditado na sua conta é um
+            pouco menor. O líquido exato aparece aqui assim que o Mercado Pago informa a taxa de cada pagamento.
+          </p>
+        </div>
+      )}
 
       {/* ── Gráfico 12 meses ── */}
       <Card variant="elevated" className="flex flex-col">

@@ -136,6 +136,31 @@ def criar_pix(personal_id: str, aluno: dict, cobranca: dict) -> dict:
     }
 
 
+# ── Líquido / taxa real do pagamento ────────────────────────────────────────────
+
+def extrair_liquido_taxa(resp: dict, valor_total: float) -> tuple[float | None, float | None]:
+    """Extrai (valor_liquido, taxa_real) da resposta do MP — só quando há certeza.
+
+    `net_received_amount` vive dentro de `transaction_details` (NÃO no topo do JSON);
+    ler no topo devolvia sempre None e zerava a taxa em todo Pix. Se o net não vier,
+    soma os `fee_details` do collector como 2ª fonte. Se nada disso existir, devolve
+    (None, None) — sinal explícito de "taxa desconhecida". Nunca finge líquido = bruto,
+    para não passar ao personal a impressão de que recebeu o valor cheio.
+    """
+    td = resp.get("transaction_details") or {}
+    net = td.get("net_received_amount")
+    if net is None:
+        fees = resp.get("fee_details") or []
+        if fees:
+            taxa_mp = sum(float(f.get("amount", 0) or 0) for f in fees
+                          if f.get("fee_payer") == "collector")
+            net = valor_total - taxa_mp
+    if net is None:
+        return None, None
+    net = float(net)
+    return net, round(valor_total - net, 4)
+
+
 # ── Status do pagamento ────────────────────────────────────────────────────────
 
 def get_payment_status(personal_id: str, payment_id: str) -> dict:
@@ -150,13 +175,14 @@ def get_payment_status(personal_id: str, payment_id: str) -> dict:
         raise ValueError(f"Erro Mercado Pago: {exc.code}")
 
     valor_total = float(resp.get("transaction_amount", 0))
-    valor_liquido = float(resp.get("net_received_amount") or valor_total)
-    taxa = round(valor_total - valor_liquido, 4)
+    valor_liquido, taxa = extrair_liquido_taxa(resp, valor_total)
     return {
         "payment_id": payment_id,
         "status": resp.get("status"),   # approved | pending | rejected | cancelled
-        "valor_liquido": valor_liquido,
-        "taxa": taxa,
+        # Endpoint de polling/status — quando a taxa ainda não veio do MP, devolve o
+        # bruto (aqui não precisa de precisão; o líquido oficial é apurado no webhook).
+        "valor_liquido": valor_liquido if valor_liquido is not None else valor_total,
+        "taxa": taxa if taxa is not None else 0.0,
         "external_reference": resp.get("external_reference"),
     }
 
@@ -311,8 +337,11 @@ def processar_webhook(body: dict) -> None:
     })
 
     valor_total = float(resp.get("transaction_amount", 0))
-    valor_liquido = float(resp.get("net_received_amount") or valor_total)
-    taxa = round(valor_total - valor_liquido, 4)
+    # None quando o MP ainda não informou o líquido — o painel trata como taxa
+    # desconhecida (mês fica "incerto") em vez de assumir que recebeu o valor cheio.
+    valor_liquido, taxa = extrair_liquido_taxa(resp, valor_total)
+    if taxa is None:
+        logger.warning("MP sem net/fee_details payment_id=%s — taxa desconhecida", payment_id)
 
     # ── Registra pagamento (valor líquido/taxa entram no agregado do painel) ──
     from app.services import financeiro_service

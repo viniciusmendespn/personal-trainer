@@ -133,7 +133,8 @@ def mrr(personal_id: str) -> float:
     return round(total, 2)
 
 
-_STATS_FIN_VER = 1   # bump se o esquema do agregado mudar (força re-backfill)
+_STATS_FIN_VER = 2   # bump se o esquema do agregado mudar (força re-backfill)
+                     # v2: passa a contar mp_pix_count / mp_taxa_count (certeza da taxa)
 
 
 def _backfill_stats(personal_id: str) -> dict:
@@ -160,11 +161,18 @@ def _backfill_stats(personal_id: str) -> dict:
                 aberto["vencido_count"] += 1
             elif status == "PAGA" and c.get("data_pagamento"):
                 ym = str(c["data_pagamento"])[:7]
-                m = por_mes.setdefault(ym, {"recebido_valor": 0.0, "pago_count": 0, "mp_taxa": 0.0})
+                m = por_mes.setdefault(ym, {"recebido_valor": 0.0, "pago_count": 0,
+                                            "mp_taxa": 0.0, "mp_pix_count": 0, "mp_taxa_count": 0})
                 m["recebido_valor"] += valor
                 m["pago_count"] += 1
-                if c.get("mp_taxa") is not None:
-                    m["mp_taxa"] += float(c["mp_taxa"])
+                if c.get("forma_pagamento") == "PIX_MP":
+                    m["mp_pix_count"] += 1
+                    # Taxa só conta quando conhecida e > 0. Pix legado (bug de leitura)
+                    # gravou mp_taxa=0, indistinguível de taxa real zero — tratamos como
+                    # desconhecida, deixando o mês "incerto" (mostra aviso, não número).
+                    if c.get("mp_taxa"):
+                        m["mp_taxa"] += float(c["mp_taxa"])
+                        m["mp_taxa_count"] += 1
     repo.put_item(keys.pk_personal(personal_id), keys.SK_STATS_FIN_OPEN, aberto)
     for ym, m in por_mes.items():
         repo.put_item(keys.pk_personal(personal_id), keys.sk_stats_fin_mes(ym), m)
@@ -213,6 +221,13 @@ def resumo(personal_id: str, mes: str | None = None) -> dict:
     recebido = float(mes_item.get("recebido_valor", 0) or 0)
     taxa = float(mes_item.get("mp_taxa", 0) or 0)
     mp_conf = mp_service.is_configured(personal_id)
+    mp_pix_count = int(mes_item.get("mp_pix_count", 0) or 0)
+    mp_taxa_count = int(mes_item.get("mp_taxa_count", 0) or 0)
+    # Só afirmamos líquido/taxa com CERTEZA: todo Pix do mês trouxe a taxa real do MP.
+    # Se algum ficou sem taxa conhecida (pagamento legado, ou MP ainda não informou),
+    # devolvemos None — o painel mostra apenas o aviso sobre as taxas, sem inventar
+    # um número que faria o personal achar que recebeu o valor bruto cheio.
+    mp_certo = mp_conf and mp_pix_count > 0 and mp_pix_count == mp_taxa_count
     return {
         "mes": mes,
         "recebido_valor": recebido,
@@ -224,8 +239,8 @@ def resumo(personal_id: str, mes: str | None = None) -> dict:
         "mrr": mrr(personal_id),
         "mp_configurado": mp_conf,
         # Líquido = recebido - taxas MP (pagamentos manuais não têm taxa, entram cheios).
-        "mp_liquido": round(recebido - taxa, 2) if mp_conf else None,
-        "mp_taxa": taxa if mp_conf else None,
+        "mp_liquido": round(recebido - taxa, 2) if mp_certo else None,
+        "mp_taxa": round(taxa, 2) if mp_certo else None,
         "historico": historico,
     }
 
@@ -327,8 +342,13 @@ def registrar_pagamento(personal_id: str, aluno_id: str, cobranca_id: str, body:
         valor = float(atual.get("valor", 0))
         _remover_de_aberto(personal_id, atual.get("status"), valor)
         add = {"recebido_valor": valor, "pago_count": 1}
-        if mp_taxa is not None:
-            add["mp_taxa"] = float(mp_taxa)
+        # Só Pix via MP entra na conta de certeza da taxa. mp_pix_count = todos os Pix
+        # do mês; mp_taxa_count = os que trouxeram taxa real. Iguais ⇒ mês "certo".
+        if body.get("forma_pagamento") == "PIX_MP":
+            add["mp_pix_count"] = 1
+            if mp_taxa is not None:
+                add["mp_taxa"] = float(mp_taxa)
+                add["mp_taxa_count"] = 1
         _bump_mes(personal_id, str(body["data_pagamento"])[:7], add)
         aluno = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE) or {}
         notif_service.criar(personal_id, "COBRANCA_PAGA",
