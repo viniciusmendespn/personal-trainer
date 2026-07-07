@@ -154,6 +154,27 @@ treino abre com um bloco "Aquecimento" (ex.: "2 rounds: 10 Air Squats, 12 Afundo
   Opcional futuro: leaderboard por WOD benchmark entre alunos do personal — o ranking atual é
   de engajamento, não misturar.
 
+### 3.6 Segunda métrica em exercícios PERFORMANCE
+
+Gap apontado pelo usuário: há treinos medidos em mais de uma métrica (corrida 8min → distância
+percorrida; remo 500m → tempo; bike → kcal + tempo), e hoje PERFORMANCE só tem 1 métrica de
+evolução/PR.
+
+- **Aproveitar o que já existe**: `SerieExec` já persiste dois campos (`carga` string livre +
+  `reps` float), e `unidade_carga` (string livre) já existe no Exercicio e no EXCAT#. Em
+  PERFORMANCE a UI do aluno apenas **esconde** o campo carga — a mudança é parar de esconder
+  quando o personal preencher `unidade_carga` (ex.: "min", "bpm", "kcal"), usando-a como rótulo.
+- **Métrica principal continua única**: só `unidade_reps` + `metrica_direcao` geram PR e gráfico
+  de evolução. A segunda métrica é **contextual** — aparece no histórico, no "última vez" e no
+  tooltip do gráfico. Evita a ambiguidade de PR bidimensional ("correu mais longe porém mais
+  devagar é PR?").
+- **Regra prática para o personal** (documentar na ajuda): a métrica principal é o resultado
+  que varia; a dimensão fixa fica na prescrição ou na segunda métrica. Corrida de 8min →
+  principal = distância (MAIOR); Remo 500m → principal = tempo (MENOR).
+- Custo: essencialmente frontend + exibição no histórico. Zero migração, zero mudança no motor
+  de PR.
+- Futuro, só com demanda: métrica derivada (pace = tempo/distância) e gráfico secundário.
+
 ## 4. O que fica explicitamente FORA (para não inchar)
 
 - Entidade "round" ou prescrição por round (round N com reps decrescentes → usar string livre
@@ -163,6 +184,8 @@ treino abre com um bloco "Aquecimento" (ex.: "2 rounds: 10 Air Squats, 12 Afundo
 - Tabata, ladders, chipper como enums próprios — cabem em FOR_TIME/AMRAP/EMOM + observações.
 - Leaderboard público de benchmarks (fase 2, se houver tração com boxes).
 - Zonas de FC estruturadas / integração com monitor cardíaco.
+- Modelo multi-métrica completo (lista de métricas por exercício, PR por métrica) — a "segunda
+  métrica" contextual (§3.6) cobre os casos reais com fração do custo e sem ambiguidade de PR.
 
 ## 5. Faseamento sugerido
 
