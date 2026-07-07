@@ -489,6 +489,17 @@ def sk_div_registry(divulgador_id: str) -> str:
     return f"DIV#{divulgador_id}"
 
 
+# ── Canal de feedback/sugestões do personal (admin lê tudo, partição única) ──
+# Baixo volume/escrita rara → 1 partição global (mesmo racional de PK_DIVULGADOR_REGISTRY
+# e LOJA#CATALOGO): admin lista tudo com 1 Query begins_with, sem Scan e sem GSI novo.
+PK_FEEDBACK = "FEEDBACK#REGISTRY"
+FEEDBACK_PREFIX = "FEEDBACK#"
+
+
+def sk_feedback(ts: str, fid: str) -> str:
+    return f"FEEDBACK#{ts}#{fid}"
+
+
 # ── Pacotes de treino (.cpkg) ────────────────────────────────────────────────
 # Lookup global O(1) por token (mesmo padrão de pk_cupom()).
 # Metadados de pacotes instalados ficam na partição PT#{personal_id}.

@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Shield, LogIn, Search, Gift, Megaphone, Check, Trash2, BarChart3 } from 'lucide-react'
+import { Shield, LogIn, Search, Gift, Megaphone, Check, Trash2, BarChart3, MessageSquareText, Archive } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { adminApi, type DivulgadorAdmin, type Personal } from '../api/admin'
+import { adminApi, type DivulgadorAdmin, type FeedbackAdmin, type Personal } from '../api/admin'
 import { AdminDivulgadorDetail } from './admin/AdminDivulgadorDetail'
 import { normalizeText } from '../utils/normalizeText'
 import { useAuth } from '../auth/AuthProvider'
 import { Tabs, Modal, Button, useToast, useConfirm } from '../components/ui'
 
-type Tab = 'personais' | 'indicacoes' | 'divulgadores'
+type Tab = 'personais' | 'indicacoes' | 'divulgadores' | 'feedbacks'
 
 export function AdminPage() {
   const { impersonate } = useAuth()
@@ -54,6 +54,7 @@ export function AdminPage() {
           { key: 'personais', label: 'Personais' },
           { key: 'indicacoes', label: 'Campanha de Indicação' },
           { key: 'divulgadores', label: 'Divulgadores' },
+          { key: 'feedbacks', label: 'Feedbacks' },
         ]}
         active={tab}
         onChange={(k) => setTab(k as Tab)}
@@ -104,6 +105,121 @@ export function AdminPage() {
 
       {tab === 'indicacoes' && <IndicacoesTab />}
       {tab === 'divulgadores' && <DivulgadoresTab />}
+      {tab === 'feedbacks' && <FeedbacksTab />}
+    </div>
+  )
+}
+
+const STATUS_FEEDBACK: Record<FeedbackAdmin['status'], { label: string; cls: string }> = {
+  NOVO:       { label: 'Nova',       cls: 'bg-accent/15 text-accent-hover' },
+  LIDO:       { label: 'Lida',       cls: 'bg-white/5 text-text-secondary' },
+  ARQUIVADO:  { label: 'Arquivada',  cls: 'bg-white/5 text-text-muted' },
+  BONIFICADO: { label: 'Bonificada', cls: 'bg-emerald-500/15 text-emerald-400' },
+}
+
+function FeedbacksTab() {
+  const queryClient = useQueryClient()
+  const toast = useToast()
+  const [dias, setDias] = useState<Record<string, number>>({})
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['admin-feedbacks'],
+    queryFn: () => adminApi.listFeedbacks(),
+  })
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin-feedbacks'] })
+
+  const bonificar = useMutation({
+    mutationFn: (f: FeedbackAdmin) =>
+      adminApi.bonificarFeedback({ personal_id: f.personal_id, ref: f.ref, dias: dias[f.ref] || 30 }),
+    onSuccess: (_r, f) => {
+      invalidate()
+      toast.show(`Bônus de ${dias[f.ref] || 30} dias concedido.`, 'success')
+    },
+    onError: () => toast.show('Falha ao bonificar — tente novamente.', 'error'),
+  })
+
+  const arquivar = useMutation({
+    mutationFn: (f: FeedbackAdmin) => adminApi.setFeedbackStatus({ ref: f.ref, status: 'ARQUIVADO' }),
+    onSuccess: invalidate,
+    onError: () => toast.show('Falha ao arquivar.', 'error'),
+  })
+
+  if (isLoading) return <p className="text-sm text-text-muted">Carregando...</p>
+  if (error) return <p className="text-sm text-red-400">Erro ao carregar feedbacks.</p>
+
+  const linhas = data?.feedbacks ?? []
+  const novos = linhas.filter((f) => f.status === 'NOVO').length
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 text-sm text-text-secondary">
+        <MessageSquareText size={15} className="text-accent" />
+        <span><strong className="text-text">{linhas.length}</strong> mensagens</span>
+        {novos > 0 && <span className="text-accent-hover">· {novos} nova(s)</span>}
+      </div>
+
+      {linhas.length === 0 && (
+        <p className="text-sm text-text-muted">Nenhuma mensagem enviada ainda.</p>
+      )}
+
+      <div className="space-y-2">
+        {linhas.map((f) => (
+          <div
+            key={f.ref}
+            className={`p-3 rounded-lg border ${f.status === 'NOVO' ? 'border-accent/40 bg-accent/[0.04]' : 'border-border bg-surface-elevated'}`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-text truncate">{f.name || '(sem nome)'}</p>
+                <p className="text-xs text-text-muted truncate">{f.email || f.personal_id}</p>
+              </div>
+              <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${STATUS_FEEDBACK[f.status]?.cls ?? ''}`}>
+                {STATUS_FEEDBACK[f.status]?.label ?? f.status}
+                {f.status === 'BONIFICADO' && f.dias_bonificados ? ` · ${f.dias_bonificados}d` : ''}
+              </span>
+            </div>
+
+            <p className="mt-2 text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">{f.mensagem}</p>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] text-text-muted mr-auto">
+                {new Date(f.criado_em).toLocaleString('pt-BR')}
+              </span>
+              {f.status !== 'BONIFICADO' && (
+                <>
+                  <div className="flex items-center gap-1.5" title="Dias grátis de Gestão Pro a conceder">
+                    <input
+                      type="number" min={1} max={3650}
+                      value={dias[f.ref] ?? 30}
+                      onChange={(e) => setDias((d) => ({ ...d, [f.ref]: Math.max(1, Number(e.target.value) || 1) }))}
+                      className="w-16 px-2 py-1 text-xs bg-bg border border-border rounded-lg text-text outline-none focus:ring-1 focus:ring-accent"
+                    />
+                    <span className="text-xs text-text-secondary">dias</span>
+                  </div>
+                  <button
+                    onClick={() => bonificar.mutate(f)}
+                    disabled={bonificar.isPending}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium bg-emerald-500/15 text-emerald-400 rounded-lg hover:bg-emerald-500/25 disabled:opacity-50 transition-colors"
+                  >
+                    <Gift size={12} /> Bonificar
+                  </button>
+                </>
+              )}
+              {f.status !== 'ARQUIVADO' && (
+                <button
+                  onClick={() => arquivar.mutate(f)}
+                  disabled={arquivar.isPending}
+                  title="Arquivar mensagem"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium border border-border rounded-lg text-text-secondary hover:bg-surface-elevated disabled:opacity-50 transition-colors"
+                >
+                  <Archive size={12} /> Arquivar
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

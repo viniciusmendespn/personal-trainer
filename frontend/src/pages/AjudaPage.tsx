@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { HelpCircle, ChevronDown, Download, Bot, MessageSquare } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { HelpCircle, ChevronDown, Download, Bot, MessageSquare, Lightbulb, Send } from 'lucide-react'
+import { feedbackApi } from '../api/feedback'
+import { Button, useToast } from '../components/ui'
 
 interface FaqItem {
   q: string
@@ -129,6 +132,60 @@ function FaqSection({ items }: { items: FaqItem[] }) {
   )
 }
 
+function FeedbackCard() {
+  const toast = useToast()
+  const [mensagem, setMensagem] = useState('')
+
+  const enviar = useMutation({
+    mutationFn: () => feedbackApi.enviar(mensagem.trim()),
+    onSuccess: () => {
+      setMensagem('')
+      toast.show('Mensagem enviada! Obrigado pela contribuição.', 'success')
+    },
+    onError: () => toast.show('Não foi possível enviar. Tente novamente.', 'error'),
+  })
+
+  return (
+    <section className="rounded-2xl border border-border bg-surface-elevated p-5 space-y-4">
+      <div className="flex items-start gap-3">
+        <div className="w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center shrink-0 mt-0.5">
+          <Lightbulb size={18} className="text-accent-hover" />
+        </div>
+        <div>
+          <h2 className="font-semibold text-text text-sm">Sugestões, feedback e melhorias</h2>
+          <p className="text-xs text-text-secondary mt-1 leading-relaxed">
+            Tem uma ideia de funcionalidade, um feedback ou uma reclamação sobre o sistema? Escreva
+            abaixo — sua mensagem vai direto para a nossa equipe. <strong>Ideias boas podem ser
+            premiadas com dias grátis</strong> no seu plano.
+          </p>
+        </div>
+      </div>
+
+      <textarea
+        value={mensagem}
+        onChange={(e) => setMensagem(e.target.value)}
+        rows={4}
+        maxLength={2000}
+        placeholder="Escreva sua sugestão, feedback ou reclamação..."
+        className="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-xl text-text placeholder-text-muted outline-none focus:ring-1 focus:ring-accent resize-y"
+      />
+
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[11px] text-text-muted">{mensagem.length}/2000</span>
+        <Button
+          type="button"
+          variant="primary"
+          onClick={() => enviar.mutate()}
+          disabled={enviar.isPending || !mensagem.trim()}
+        >
+          <Send size={15} className="mr-1.5" />
+          {enviar.isPending ? 'Enviando…' : 'Enviar'}
+        </Button>
+      </div>
+    </section>
+  )
+}
+
 export function AjudaPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-8">
@@ -141,6 +198,8 @@ export function AjudaPage() {
           <p className="text-sm text-text-secondary">Perguntas frequentes e guias completos</p>
         </div>
       </div>
+
+      <FeedbackCard />
 
       {/* FAQ */}
       <section className="space-y-4">

@@ -32,6 +32,18 @@ export interface DivulgadorAdmin {
   mes_atual: { mes: string; base_valor: number; vendas_novas: number; pct: number; comissao_valor: number }
 }
 
+export interface FeedbackAdmin {
+  ref: string
+  feedback_id: string
+  personal_id: string
+  name?: string
+  email?: string
+  mensagem: string
+  status: 'NOVO' | 'LIDO' | 'ARQUIVADO' | 'BONIFICADO'
+  criado_em: string
+  dias_bonificados?: number
+}
+
 export const adminApi = {
   listPersonals: () =>
     api.get<{ personals: Personal[] }>('/v1/admin/personals').then((r) => r.data),
@@ -66,4 +78,15 @@ export const adminApi = {
 
   excluirDivulgador: (divulgadorId: string) =>
     api.delete(`/v1/admin/divulgador/${divulgadorId}`).then((r) => r.data),
+
+  listFeedbacks: (cursor?: string) =>
+    api.get<{ feedbacks: FeedbackAdmin[]; cursor: string | null }>('/v1/admin/feedbacks', {
+      params: cursor ? { cursor } : undefined,
+    }).then((r) => r.data),
+
+  bonificarFeedback: (body: { personal_id: string; ref: string; dias: number }) =>
+    api.post('/v1/admin/feedbacks/bonificar', body).then((r) => r.data),
+
+  setFeedbackStatus: (body: { ref: string; status: FeedbackAdmin['status'] }) =>
+    api.post('/v1/admin/feedbacks/status', body).then((r) => r.data),
 }

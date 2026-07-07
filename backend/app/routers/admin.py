@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from app.config import settings
 from app.dependencies import _verify_token
-from app.services import assinatura_service, cupom_service
+from app.services import assinatura_service, cupom_service, feedback_service
 
 router = APIRouter(prefix="/v1/admin", tags=["admin"])
 _security = HTTPBearer()
@@ -111,6 +111,45 @@ def criar_cupom(body: CriarCupomBody, _: str = Depends(_require_admin)):
         campanha=body.campanha, dias=body.dias, plano=body.plano,
         max_usos=body.max_usos, expira_em=body.expira_em,
     )
+
+
+# ── Canal de feedback/sugestões do personal ────────────────────────────────────
+
+@router.get("/feedbacks")
+def listar_feedbacks(cursor: str | None = None, _: str = Depends(_require_admin)):
+    """Todas as mensagens enviadas pelos personais (mais recentes primeiro), com nome/email
+    resolvidos do Cognito (mesmo cruzamento de /indicacoes)."""
+    feedbacks, next_cursor = feedback_service.listar_admin(cursor=cursor)
+    por_id = {p["personal_id"]: p for p in _listar_personals()}
+    for f in feedbacks:
+        p = por_id.get(f.get("personal_id"), {})
+        f["name"] = p.get("name", "")
+        f["email"] = p.get("email", "")
+    return {"feedbacks": feedbacks, "cursor": next_cursor}
+
+
+class BonificarFeedbackBody(BaseModel):
+    personal_id: str
+    ref: str            # SK do feedback (retornada em GET /feedbacks)
+    dias: int = 30
+
+
+@router.post("/feedbacks/bonificar")
+def bonificar_feedback(body: BonificarFeedbackBody, _: str = Depends(_require_admin)):
+    """Premia uma boa ideia estendendo o plano do personal em N dias grátis (padrão 30) e
+    marca o feedback como BONIFICADO. Notifica o personal."""
+    return feedback_service.bonificar(body.personal_id, body.ref, body.dias)
+
+
+class StatusFeedbackBody(BaseModel):
+    ref: str
+    status: str         # LIDO | ARQUIVADO | NOVO
+
+
+@router.post("/feedbacks/status")
+def status_feedback(body: StatusFeedbackBody, _: str = Depends(_require_admin)):
+    """Triagem do admin: marcar como lido/arquivado."""
+    return feedback_service.definir_status(body.ref, body.status)
 
 
 @router.post("/loja/anuncios/{anuncio_id}/despublicar")
