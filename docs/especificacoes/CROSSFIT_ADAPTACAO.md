@@ -125,14 +125,22 @@ maior valor percebido para o aluno de cross.
 Requisito direto do usuário: marcar exercícios como aquecimento. Nos exemplos reais, todo
 treino abre com um bloco "Aquecimento" (ex.: "2 rounds: 10 Air Squats, 12 Afundos…").
 
-- **Modelo**: flag `Exercicio.aquecimento: bool` (default `false`). Serve os dois mundos:
-  - **Cross**: bloco marcado como aquecimento (checkbox no bloco) seta a flag em todos os
-    exercícios dele; bloco de aquecimento não tem formato/score.
-  - **Musculação (sem blocos)**: o personal marca exercícios individuais como aquecimento no
-    formulário atual — aparecem agrupados no topo com selo "Aquecimento".
-- **Efeitos** (o motivo de ser flag e não só um nome de bloco):
+Aquecimento existe em **três níveis**, e a mesma flag booleana resolve os três:
+
+- **Nível bloco** (cross): bloco marcado como aquecimento (checkbox) seta a flag em todos os
+  exercícios dele; bloco de aquecimento não tem formato/score.
+- **Nível exercício** (musculação sem blocos): flag `Exercicio.aquecimento: bool` (default
+  `false`) — o personal marca no formulário atual; aparecem agrupados no topo com selo
+  "Aquecimento".
+- **Nível série** (séries de aproximação/ramp-up antes das séries válidas — ex.:
+  `50%×10, 70%×5` antes do `5×5 a 80%`): flag `aquecimento: bool` em `SeriePrescrita` e
+  `SerieExec`. No editor de prescrição, um toggle por linha; no app do aluno, as linhas de
+  aquecimento aparecem atenuadas com selo "aq." antes das válidas. `SeriePrescrita`/`SerieExec`
+  já são listas de objetos — campo aditivo, sem migração.
+- **Efeitos** (iguais nos três níveis — o motivo de ser flag e não só um nome de bloco):
   - **Fora das estatísticas**: não conta em `volume_total`, não gera PR (`STATS#PR#`), não
-    entra nos gráficos de evolução — 10 air squats de aquecimento não podem virar "recorde".
+    entra nos gráficos de evolução — 10 air squats de aquecimento ou uma série a 50% não
+    podem virar "recorde".
   - **Fora dos pontos por série** (gamificação) — evita inflar pontuação com warmup.
   - **Conta para "treino completo"** normalmente (aquecimento faz parte do treino), mas o
     registro é simplificado: um toque "feito" no bloco/exercício, sem anotar série a série.
