@@ -341,6 +341,19 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                       Número por série nessa unidade (≤7 caracteres) — entra no gráfico e no PR.
                       Use <b>↓ Menor</b> quando diminuir significa evoluir (tempo/pace).
                     </p>
+                    <div>
+                      <label className="text-xs text-text-muted mb-1 block">2ª medida (opcional)</label>
+                      <AutocompleteInput
+                        maxLength={7}
+                        placeholder="ex.: min, kcal, bpm"
+                        value={ex.unidade_carga ?? ''}
+                        suggestions={['min', 's', 'kcal', 'bpm', 'kg', 'm']}
+                        onChange={(v) => updateEx(i, { unidade_carga: v.slice(0, 7) || undefined })}
+                      />
+                      <p className="text-xs text-text-muted mt-1">
+                        Segunda medida por série (contexto no histórico; PR/gráfico seguem na métrica principal).
+                      </p>
+                    </div>
                   </div>
                 )}
 
@@ -356,6 +369,7 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                     onChange={(v: SeriePrescrita[]) => updateEx(i, { series_prescritas: v })}
                     tipoExercicio={tipo}
                     unidadeReps={ex.unidade_reps}
+                    unidadeCarga={ex.unidade_carga}
                     rm_kg={ex.rm_kg}
                   />
                 </div>

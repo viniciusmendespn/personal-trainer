@@ -1492,6 +1492,10 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro, marcadoFeito, onToggl
   }
 
   const tipo = normalizeTipoExercicio(ex.tipo_exercicio)
+  // 2ª medida em PERFORMANCE (spec CROSSFIT §3.6): personal preencheu unidade_carga →
+  // aluno registra também esse campo (contextual: histórico/última vez; PR segue na métrica).
+  const temSegundaMetrica = tipo === 'PERFORMANCE' && !!ex.unidade_carga
+  const mostraCarga = tipo !== 'PERFORMANCE' || temSegundaMetrica
 
   const ultimaExec = useQuery({
     queryKey: ['aluno-hist-ex', ex.nome],
@@ -1506,7 +1510,7 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro, marcadoFeito, onToggl
         throw new Error(tipo === 'PERFORMANCE' ? 'Preencha a métrica de todas as séries.' : 'Preencha as repetições de todas as séries.')
       }
       const series = rows.map((r) => ({
-        carga: tipo === 'PERFORMANCE' ? undefined : (normalizeCargaOut(r.carga) || undefined),
+        carga: mostraCarga ? (normalizeCargaOut(r.carga) || undefined) : undefined,
         reps: Number(r.reps),
         aquecimento: r.aquecimento || undefined,
       }))
@@ -1617,8 +1621,10 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro, marcadoFeito, onToggl
         <div className="flex flex-wrap gap-1.5 mt-1">
           {ex.registrado!.map((s, i) => {
             let label: string
-            if (tipo === 'PERFORMANCE') label = `${s.reps ?? '-'} ${ex.unidade_reps ?? ''}`.trimEnd()
-            else {
+            if (tipo === 'PERFORMANCE') {
+              const extra = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? ''}`.trimEnd() : ''
+              label = `${s.reps ?? '-'} ${ex.unidade_reps ?? ''}`.trimEnd() + extra
+            } else {
               const cargaLabel = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
               label = `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}${cargaLabel}`
             }
@@ -1642,8 +1648,10 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro, marcadoFeito, onToggl
               <div className="flex flex-wrap gap-1.5">
                 {ultimaExec.data[0].series_exec.map((s, i) => {
                   let label: string
-                  if (tipo === 'PERFORMANCE') label = `${s.reps ?? '-'} ${ex.unidade_reps ?? ''}`.trimEnd()
-                  else {
+                  if (tipo === 'PERFORMANCE') {
+                    const extra = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? ''}`.trimEnd() : ''
+                    label = `${s.reps ?? '-'} ${ex.unidade_reps ?? ''}`.trimEnd() + extra
+                  } else {
                     const cargaLabel = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
                     label = `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}${cargaLabel}`
                   }
@@ -1676,7 +1684,7 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro, marcadoFeito, onToggl
                   {tipo === 'PERFORMANCE' ? (ex.unidade_reps || 'métrica') : (ex.unidade_reps ?? 'reps')}
                 </span>
               </div>
-              {tipo !== 'PERFORMANCE' && (
+              {mostraCarga && (
                 <div className="relative flex-1">
                   <Input
                     className="pr-7"

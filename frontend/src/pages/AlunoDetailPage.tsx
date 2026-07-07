@@ -962,7 +962,7 @@ function ExercicioForm({
   const [seriesPrescritas, setSeriesPrescritas] = useState<SeriePrescrita[]>(() =>
     initSeriesPrescritas(initial?.series_prescritas, initial?.series, initial?.reps_prescritas, initial?.carga_prescrita)
   )
-  const [unidadeCarga] = useState(initial?.unidade_carga ?? '')
+  const [unidadeCarga, setUnidadeCarga] = useState(initial?.unidade_carga ?? '')
   const [unidadeReps, setUnidadeReps] = useState(initial?.unidade_reps ?? '')
   const [metricaDirecao, setMetricaDirecao] = useState<MetricaDirecao>(initial?.metrica_direcao ?? 'MAIOR')
   const [vid, setVid] = useState(initial?.video_url ?? '')
@@ -1140,6 +1140,20 @@ function ExercicioForm({
             O aluno registra um número por série nessa unidade (≤7 caracteres) — entra no gráfico e no PR.
             Use <b>↓ Menor</b> quando diminuir significa evoluir (tempo/pace, ex.: 5 km).
           </p>
+          <div>
+            <label className="text-xs text-text-muted mb-1 block">2ª medida (opcional)</label>
+            <AutocompleteInput
+              maxLength={7}
+              placeholder="ex.: min, kcal, bpm"
+              value={unidadeCarga} onChange={(v) => setUnidadeCarga(v.slice(0, 7))}
+              suggestions={['min', 's', 'kcal', 'bpm', 'kg', 'm']}
+            />
+            <p className="text-xs text-text-muted mt-1">
+              Preencha para o aluno registrar uma segunda medida por série (ex.: corrida — distância
+              como métrica principal e <b>min</b> aqui). Só a métrica principal gera PR e gráfico;
+              a 2ª aparece no histórico como contexto.
+            </p>
+          </div>
         </div>
       )}
       <div>
@@ -1153,6 +1167,7 @@ function ExercicioForm({
           onChange={setSeriesPrescritas}
           tipoExercicio={tipo}
           unidadeReps={unidadeReps}
+          unidadeCarga={unidadeCarga}
           rm_kg={rmKg ? parseFloat(rmKg) : undefined}
         />
       </div>

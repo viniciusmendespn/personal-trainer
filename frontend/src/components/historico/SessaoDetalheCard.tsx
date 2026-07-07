@@ -86,7 +86,9 @@ function execLabel(tipo: TipoExercicio, s: { carga?: string; reps?: number }, un
   const uc = unidadeCarga || 'kg'
   const ur = unidadeReps || 'reps'
   if (tipo === 'PERFORMANCE') {
-    return s.reps != null ? `${s.reps} ${ur}`.trimEnd() : '—'
+    // 2ª medida (spec CROSSFIT §3.6): carga registrada em PERFORMANCE é contexto (ex.: min, kcal)
+    const extra = s.carga ? ` · ${s.carga} ${unidadeCarga || ''}`.trimEnd() : ''
+    return s.reps != null ? `${s.reps} ${ur}`.trimEnd() + extra : '—'
   }
   return `${s.reps != null ? `${s.reps} ${ur}` : '—'}${s.carga ? ` · ${s.carga} ${uc}` : ''}`
 }
