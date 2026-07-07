@@ -7,6 +7,7 @@ from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 from app.models.template import ExercicioTemplate
+from app.models.treino import BlocoTreino
 
 
 class TreinoRotina(BaseModel):
@@ -14,6 +15,7 @@ class TreinoRotina(BaseModel):
     nome: str
     foco: Optional[str] = None
     ordem: int = 0
+    blocos: list[BlocoTreino] = Field(default_factory=list)   # blocos (CrossFit); vazio = clássico
     exercicios: list[ExercicioTemplate] = Field(default_factory=list)
 
 

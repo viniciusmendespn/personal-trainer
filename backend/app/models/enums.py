@@ -93,6 +93,15 @@ class TipoExercicio(str, Enum):
     PESO_CORPORAL = "PESO_CORPORAL"
 
 
+class FormatoBloco(str, Enum):
+    """Formato de um bloco de treino (CrossFit/HIIT). LIVRE = comportamento clássico
+    (musculação/skills), sem timer nem score de bloco."""
+    LIVRE = "LIVRE"
+    FOR_TIME = "FOR_TIME"
+    AMRAP = "AMRAP"
+    EMOM = "EMOM"
+
+
 # Direção da métrica de exercícios PERFORMANCE: se um valor maior ou menor representa evolução.
 MAIOR = "MAIOR"   # mais reps/km/voltas/tempo aguentado = melhor (default)
 MENOR = "MENOR"   # menos tempo/pace = melhor (ex.: tempo nos 5 km)

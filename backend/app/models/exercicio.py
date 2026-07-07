@@ -9,6 +9,7 @@ class SeriePrescrita(BaseModel):
     series: int
     reps: str
     carga: Optional[str] = None
+    aquecimento: Optional[bool] = None         # série de aproximação/ramp-up — fora de PR/volume/pontos
 
 
 class ExercicioSubstituto(BaseModel):
@@ -25,6 +26,8 @@ class ExercicioCreate(BaseModel):
     nome: str                                  # ex.: "Supino reto"
     grupo: Optional[str] = None                # ex.: "Peito", "Pernas" — herdado da biblioteca ou livre
     ordem: int = 0
+    bloco_id: Optional[str] = None             # bloco do treino a que pertence (CrossFit); None = lista plana clássica
+    aquecimento: bool = False                  # exercício de warmup — fora de PR/volume/pontos
     tipo_exercicio: TipoExercicio = TipoExercicio.FORCA
     series: Optional[int] = None               # legado — leitura de itens antigos
     reps_prescritas: Optional[str] = None      # legado — leitura de itens antigos

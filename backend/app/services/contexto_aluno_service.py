@@ -199,10 +199,12 @@ def _compactar_sessao(s: dict) -> SessaoContexto:
                 series_realizadas=" | ".join(
                     _fmt_serie(x, e.get("unidade_carga"), e.get("unidade_reps"))
                     for x in e.get("series_exec") or []
+                    if not x.get("aquecimento")   # séries de warmup não entram na análise
                 ),
                 substituto_executado=e.get("substituto_nome"),
             )
             for e in s.get("exercicios_exec") or []
+            if not e.get("aquecimento")           # exercícios de warmup não entram na análise
         ],
     )
 
@@ -227,9 +229,10 @@ def _evolucao_do_programa(sessoes: list[dict], prs: list[dict],
     for s in reversed(sessoes):
         for e in s.get("exercicios_exec") or []:
             ch = chave_exercicio(e.get("exercicio_nome"))
-            if not ch or e.get("substituto_nome"):
+            if not ch or e.get("substituto_nome") or e.get("aquecimento"):
                 continue
-            cargas = [c for c in (_num(x.get("carga")) for x in e.get("series_exec") or []) if c is not None]
+            cargas = [c for c in (_num(x.get("carga")) for x in e.get("series_exec") or []
+                                  if not x.get("aquecimento")) if c is not None]
             if cargas:
                 cargas_por_chave.setdefault(ch, []).append(max(cargas))
     out: list[EvolucaoExercicioContexto] = []

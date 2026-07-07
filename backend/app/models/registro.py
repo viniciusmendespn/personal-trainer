@@ -10,6 +10,7 @@ class SerieExec(BaseModel):
     carga: Optional[str] = None
     reps: Optional[float] = None               # repetições (FORCA) ou métrica livre (PERFORMANCE — aceita decimais: km, min…)
     rpe: Optional[float] = None                # percepção de esforço (0-10)
+    aquecimento: Optional[bool] = None         # série de aquecimento — excluída de PR/volume/pontos
 
 
 class Registro(BaseModel):

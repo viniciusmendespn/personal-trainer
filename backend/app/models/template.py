@@ -4,12 +4,15 @@ from pydantic import BaseModel, Field
 
 from app.models.enums import TipoExercicio
 from app.models.exercicio import ExercicioSubstituto, SeriePrescrita
+from app.models.treino import BlocoTreino
 
 
 class ExercicioTemplate(BaseModel):
     nome: str
     grupo: Optional[str] = None
     ordem: int = 0
+    bloco_id: Optional[str] = None             # bloco do treino/template (CrossFit)
+    aquecimento: bool = False                  # exercício de warmup — fora de PR/volume/pontos
     dia_semana: Optional[int] = None
     tipo_exercicio: Optional[TipoExercicio] = TipoExercicio.FORCA
     rm_kg: Optional[float] = None
@@ -33,6 +36,7 @@ class ExercicioTemplate(BaseModel):
 class TreinoTemplateCreate(BaseModel):
     nome: str
     foco: Optional[str] = None
+    blocos: list[BlocoTreino] = Field(default_factory=list)   # blocos (CrossFit); vazio = clássico
     exercicios: list[ExercicioTemplate] = Field(default_factory=list)
     pacote_id: Optional[str] = None   # preenchido quando criado via importação de pacote
     ativo: bool = True                # False = oculto na montagem de treinos

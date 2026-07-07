@@ -65,6 +65,7 @@ def create_template_from_treino(
         created_at=now_iso(),
         nome=body.nome or treino_clean["nome"],
         foco=treino_clean.get("foco"),
+        blocos=treino_clean.get("blocos") or [],
         exercicios=exercicios,
         origem_licenciada=taint,
     )
@@ -120,6 +121,7 @@ def aplicar_template(
         dest_pk = keys.pk_aluno(aluno_id)
         treino = Treino(
             treino_id=treino_id, aluno_id=aluno_id, nome=tpl.nome, foco=tpl.foco,
+            blocos=tpl.blocos,
             created_at=now, updated_at=now, origem_licenciada=tpl.origem_licenciada,
         )
         puts = [{"PK": dest_pk, "SK": keys.sk_treino(treino_id), **treino.model_dump()}]

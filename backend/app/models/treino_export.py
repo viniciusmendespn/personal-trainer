@@ -17,11 +17,14 @@ from pydantic import BaseModel, Field
 from app.models.contexto_export import ContextoAluno
 from app.models.enums import TipoExercicio
 from app.models.exercicio import ExercicioSubstituto, SeriePrescrita
+from app.models.treino import BlocoTreino
 
 
 class ExercicioTreinoFile(BaseModel):
     nome: str
     grupo: Optional[str] = None
+    bloco_id: Optional[str] = None             # referencia BlocoTreino.id do treino (CrossFit)
+    aquecimento: bool = False                  # exercício de warmup
     tipo_exercicio: TipoExercicio = TipoExercicio.FORCA
     series_prescritas: Optional[list[SeriePrescrita]] = None
     intervalo_s: Optional[int] = None
@@ -41,6 +44,7 @@ class TreinoFileItem(BaseModel):
     ativo: bool = True
     data_inicio: Optional[str] = None
     data_fim: Optional[str] = None
+    blocos: list[BlocoTreino] = Field(default_factory=list)   # blocos (CrossFit); vazio = clássico
     exercicios: list[ExercicioTreinoFile] = Field(default_factory=list)
 
 

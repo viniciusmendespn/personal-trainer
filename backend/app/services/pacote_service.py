@@ -70,6 +70,8 @@ def _build_template_out(tmpl: dict, nome_lower_to_ref: dict[str, str]) -> dict:
         exercicios_tmpl.append({
             "ex_ref": ex_ref,
             "ordem": ex.get("ordem", 0),
+            "bloco_id": ex.get("bloco_id"),
+            "aquecimento": bool(ex.get("aquecimento")),
             "series_prescritas": ex.get("series_prescritas"),
             "intervalo_s": ex.get("intervalo_s"),
             "observacoes": ex.get("observacoes"),
@@ -78,6 +80,7 @@ def _build_template_out(tmpl: dict, nome_lower_to_ref: dict[str, str]) -> dict:
         "ref": _nome_para_ref("tmpl_", tmpl["nome"]),
         "nome": tmpl["nome"],
         "foco": tmpl.get("foco"),
+        "blocos": tmpl.get("blocos") or [],
         "exercicios": exercicios_tmpl,
     }
 
@@ -340,6 +343,8 @@ def _instalar(
                 "exlib_id": exlib_id,
                 "grupo": ref_to_grupo.get(ex_ref_item.ex_ref),
                 "ordem": ex_ref_item.ordem,
+                "bloco_id": ex_ref_item.bloco_id,
+                "aquecimento": ex_ref_item.aquecimento,
                 "series_prescritas": [s.model_dump() for s in (ex_ref_item.series_prescritas or [])],
                 "intervalo_s": ex_ref_item.intervalo_s,
                 "observacoes": ex_ref_item.observacoes,
@@ -356,6 +361,7 @@ def _instalar(
             "personal_id": personal_id,
             "nome": tmpl_pkg.nome,
             "foco": tmpl_pkg.foco,
+            "blocos": [b.model_dump() for b in tmpl_pkg.blocos],
             "exercicios": exercicios,
             "pacote_id": pacote_id,
             "ativo": True,
@@ -385,6 +391,7 @@ def _instalar(
                     "nome": tmpl_item["nome"],
                     "foco": tmpl_item.get("foco"),
                     "ordem": ordem,
+                    "blocos": tmpl_item.get("blocos") or [],
                     "exercicios": tmpl_item.get("exercicios", []),
                 })
                 rotina_template_ids.append(template_id)

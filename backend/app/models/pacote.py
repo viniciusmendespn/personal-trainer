@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from app.models.enums import TipoExercicio
 from app.models.exercicio import ExercicioSubstituto, SeriePrescrita
+from app.models.treino import BlocoTreino
 
 
 # ── Estrutura do arquivo .cpkg ────────────────────────────────────────────────
@@ -41,6 +42,8 @@ class ExercicioPacoteTemplate(BaseModel):
     """Exercício dentro de um template no arquivo — usa ex_ref para resolução."""
     ex_ref: str
     ordem: int = 0
+    bloco_id: Optional[str] = None             # referencia BlocoTreino.id do template (CrossFit)
+    aquecimento: bool = False                  # exercício de warmup
     series_prescritas: Optional[list[SeriePrescrita]] = None
     intervalo_s: Optional[int] = None
     observacoes: Optional[str] = None
@@ -50,6 +53,7 @@ class TemplatePacote(BaseModel):
     ref: str                               # ex: "tmpl_peito_a"
     nome: str
     foco: Optional[str] = None
+    blocos: list[BlocoTreino] = Field(default_factory=list)   # blocos (CrossFit); vazio = clássico
     exercicios: list[ExercicioPacoteTemplate] = Field(default_factory=list)
 
 

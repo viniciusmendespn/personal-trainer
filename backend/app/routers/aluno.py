@@ -330,8 +330,10 @@ def registrar(body: RegistroBody, ctx: dict = Depends(get_current_aluno)):
         meta_service.verificar_metas_carga(
             ctx["aluno_id"], ctx["personal_id"], body.exercicio_id or "", float(pr)
         )
-    pontos_service.award(ctx["aluno_id"], "SERIE", ctx["personal_id"],
-                        descricao="Série registrada", streak=streak)
+    # Só séries válidas pontuam — aquecimento (flag materializada em set_series) não conta
+    if any(not s.get("aquecimento") for s in series):
+        pontos_service.award(ctx["aluno_id"], "SERIE", ctx["personal_id"],
+                            descricao="Série registrada", streak=streak)
     return out
 
 

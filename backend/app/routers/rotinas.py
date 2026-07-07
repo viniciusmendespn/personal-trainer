@@ -78,12 +78,14 @@ def create_rotina_from_aluno(
         tc_taint = bool(tc.get("origem_licenciada")) or any(e.origem_licenciada for e in exercicios)
         rotina_taint = rotina_taint or tc_taint
         treinos_rotina.append(TreinoRotina(
-            nome=tc["nome"], foco=tc.get("foco"), ordem=ordem, exercicios=exercicios,
+            nome=tc["nome"], foco=tc.get("foco"), ordem=ordem,
+            blocos=tc.get("blocos") or [], exercicios=exercicios,
         ))
         if body.salvar_templates:
             tpl = TreinoTemplate(
                 template_id=new_id(), personal_id=personal_id, created_at=now,
-                nome=tc["nome"], foco=tc.get("foco"), exercicios=exercicios,
+                nome=tc["nome"], foco=tc.get("foco"),
+                blocos=tc.get("blocos") or [], exercicios=exercicios,
                 origem_licenciada=tc_taint,
             )
             puts_templates.append(
@@ -122,7 +124,8 @@ def create_rotina_from_templates(
         tpl = TreinoTemplate(**repo.clean(item))
         rotina_taint = rotina_taint or tpl.origem_licenciada
         treinos_rotina.append(TreinoRotina(
-            nome=tpl.nome, foco=tpl.foco, ordem=ordem, exercicios=tpl.exercicios,
+            nome=tpl.nome, foco=tpl.foco, ordem=ordem,
+            blocos=tpl.blocos, exercicios=tpl.exercicios,
         ))
     rot = Rotina(
         rotina_id=new_id(), personal_id=personal_id, created_at=now_iso(),
@@ -195,7 +198,8 @@ def aplicar_rotina(
             tr_taint = rot.origem_licenciada or any(e.origem_licenciada for e in tr.exercicios)
             treino = Treino(
                 treino_id=treino_id, aluno_id=aluno_id, nome=tr.nome, foco=tr.foco,
-                ordem=tr.ordem, created_at=now, updated_at=now, origem_licenciada=tr_taint,
+                ordem=tr.ordem, blocos=tr.blocos,
+                created_at=now, updated_at=now, origem_licenciada=tr_taint,
             )
             puts.append({"PK": dest_pk, "SK": keys.sk_treino(treino_id), **treino.model_dump()})
             for et in tr.exercicios:

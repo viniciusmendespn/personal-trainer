@@ -32,11 +32,21 @@ def _semana_anterior(semana: str) -> str:
     return f"{prev[0]}-W{prev[1]:02d}"
 
 
-def _snapshot(ex: dict) -> dict:
+def _serie_valida(s: dict) -> bool:
+    """Série que conta para PR/volume/pontos — exclui séries de aquecimento (ramp-up),
+    materializadas com `aquecimento=True` no registro (spec CROSSFIT §3.4)."""
+    return not s.get("aquecimento")
+
+
+def _snapshot(ex: dict, blocos_by_id: dict | None = None) -> dict:
+    bloco = (blocos_by_id or {}).get(ex.get("bloco_id")) or {}
     return {
         "exercicio_id": ex["exercicio_id"],
         "nome": ex.get("nome"),
         "grupo": ex.get("grupo"),
+        "bloco_id": ex.get("bloco_id"),
+        # Resolvido aqui (único ponto): exercício herda warmup do bloco (spec CROSSFIT §3.4)
+        "aquecimento": bool(ex.get("aquecimento") or bloco.get("aquecimento")),
         "tipo_exercicio": ex.get("tipo_exercicio"),
         "series": ex.get("series"),
         "reps_prescritas": ex.get("reps_prescritas"),
@@ -85,7 +95,9 @@ def start_session(personal_id: str, aluno_id: str, treino_id: str, iniciado_pelo
     if not exs:
         raise HTTPException(400, "Este treino não tem exercícios")
     exs.sort(key=lambda e: e.get("ordem", 0))
-    snaps = [_snapshot(e) for e in exs]
+    blocos = treino.get("blocos") or []
+    blocos_by_id = {b.get("id"): b for b in blocos}
+    snaps = [_snapshot(e, blocos_by_id) for e in exs]
     item = {
         "sessao_id": new_id(),
         "aluno_id": aluno_id,
@@ -93,6 +105,7 @@ def start_session(personal_id: str, aluno_id: str, treino_id: str, iniciado_pelo
         "treino_id": treino_id,
         "treino_nome": treino.get("nome"),
         "status": SessaoStatus.EM_ANDAMENTO.value,
+        "blocos": blocos,
         "exercicios": snaps,
         "ex_atual": snaps[0] if snaps else None,
         "ordem_atual": 0,
@@ -167,6 +180,8 @@ def finish(aluno_id: str) -> dict:
             "series": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("series"),
             "reps_prescritas": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("reps_prescritas"),
             "carga_prescrita": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("carga_prescrita"),
+            "bloco_id": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("bloco_id"),
+            "aquecimento": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("aquecimento"),
             "substituto_nome": r.get("substituto_nome"),
         }
         for r in regs
@@ -313,8 +328,11 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
     ex_snap = next((e for e in snaps if e.get("exercicio_id") == ex_id), None) or ex
     ex_tipo = normalizar_tipo_exercicio(ex_snap.get("tipo_exercicio"))
     ex_direcao = ex_snap.get("metrica_direcao") or "MAIOR"
+    _marcar_aquecimento(series, ex_snap)
     cargas, volume = [], 0.0
     for it in series:
+        if not _serie_valida(it):
+            continue
         cg = _num(it.get("carga"))
         if cg is not None:
             cargas.append(cg)
@@ -336,10 +354,22 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
 def _volume(series: list | None) -> float:
     v = 0.0
     for s in series or []:
+        if not _serie_valida(s):
+            continue
         cg = _num(s.get("carga"))
         if cg is not None:
             v += cg * float(s.get("reps") or 0)   # reps pode vir como Decimal do DynamoDB
     return v
+
+
+def _marcar_aquecimento(series: list, ex_snap: dict) -> None:
+    """Materializa a flag de aquecimento nas séries que serão gravadas: exercício de
+    warmup (direto ou herdado do bloco, já resolvido no snapshot) marca todas; séries
+    individuais podem chegar flagadas do app (série de aproximação). Único ponto de
+    escrita — todos os cálculos filtram por `_serie_valida`."""
+    if ex_snap.get("aquecimento"):
+        for it in series:
+            it["aquecimento"] = True
 
 
 def _registrar_pr_sessao(aluno_id: str, ex_nome: str | None, carga: float, tipo: str | None,
@@ -372,6 +402,7 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
     ex_snap = next((e for e in snaps if e.get("exercicio_id") == ex_id), None) or ex_atual
     ex_tipo = normalizar_tipo_exercicio(ex_snap.get("tipo_exercicio"))
     ex_direcao = ex_snap.get("metrica_direcao") or "MAIOR"
+    _marcar_aquecimento(series, ex_snap)
     chave = chave_exercicio(ex_nome)
     pk = keys.pk_aluno(aluno_id)
     sk = keys.sk_registro(s["sessao_id"], ex_id)
@@ -411,6 +442,7 @@ def sessao_exercicios(aluno_id: str) -> dict | None:
     regs_by_ex = {r.get("exercicio_id"): repo.clean(r) for r in regs}
     return {
         "sessao_id": s["sessao_id"], "treino_nome": s.get("treino_nome"),
+        "blocos": s.get("blocos") or [],
         "exercicios": [
             {
                 **e,
@@ -442,6 +474,7 @@ def _calcular_pr(pk: str, chave: str, series: list, tipo: str, ex_nome: str,
     """Calcula e grava o PR de acordo com o tipo de exercício. Retorna o valor do PR se for novo.
     Para carga negativa (contrapeso/graviton), max() ainda é o PR correto: -10 > -30, ou seja
     menos contrapeso (menos negativo) = mais difícil = melhor desempenho."""
+    series = [it for it in series if _serie_valida(it)]
     if tipo == "PERFORMANCE":
         # Métrica numérica livre no campo `reps`. A melhor série é o máx (maior é melhor)
         # ou o mín (menor é melhor — ex.: tempo nos 5 km). PR = melhor entre as sessões.
@@ -590,7 +623,7 @@ def _evolucao_serie(aluno_id: str, chave: str, info: dict, limit: int) -> dict:
     pr: dict | None = None
     for it in items:
         c = repo.clean(it)
-        series_exec = c.get("series_exec") or []
+        series_exec = [s for s in (c.get("series_exec") or []) if _serie_valida(s)]
         ponto: dict = {"data": c.get("data_hora")}
 
         if tipo == "PERFORMANCE":

@@ -121,6 +121,7 @@ def exportar_programa(aluno_id: str, personal_id: str = Depends(get_current_pers
             ativo=tc.get("ativo", True),
             data_inicio=tc.get("data_inicio"),
             data_fim=tc.get("data_fim"),
+            blocos=tc.get("blocos") or [],
             exercicios=exercicios,
         ))
     contexto = contexto_aluno_service.montar_contexto(personal_id, aluno_id,
@@ -165,10 +166,12 @@ def importar_programa(aluno_id: str, body: ImportarProgramaRequest,
     n_ex = 0
     for ordem_t, tf in enumerate(programa.treinos):
         tid = new_id()
+        blocos_ids = {b.id for b in tf.blocos}
         treino = Treino(
             treino_id=tid, aluno_id=aluno_id, created_at=now, updated_at=now,
             nome=tf.nome, ordem=ordem_t, foco=tf.foco, observacoes=tf.observacoes,
             ativo=tf.ativo, data_inicio=tf.data_inicio, data_fim=tf.data_fim,
+            blocos=tf.blocos,
         )
         puts.append({"PK": pk, "SK": keys.sk_treino(tid), **treino.model_dump()})
         if tf.data_fim:
@@ -186,6 +189,9 @@ def importar_programa(aluno_id: str, body: ImportarProgramaRequest,
                 unidade_carga=ef.unidade_carga, unidade_reps=ef.unidade_reps,
                 metrica_direcao=ef.metrica_direcao,
                 substitutos=ef.substitutos,
+                # bloco_id órfão (IA pode alucinar referência) é descartado
+                bloco_id=ef.bloco_id if ef.bloco_id in blocos_ids else None,
+                aquecimento=ef.aquecimento,
             ).model_dump()
             ex = Exercicio(exercicio_id=eid, treino_id=tid, aluno_id=aluno_id,
                            canonical_exercicio_id=canonical, **dados)
