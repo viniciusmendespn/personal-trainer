@@ -32,7 +32,12 @@ export function LoginPage() {
     setLoading(true)
     try {
       await signIn(email, password)
-      navigate(homeRoute(email), { replace: true })
+      // Navegação DURA (não SPA): força o Amplify a reconstruir o estado de token a partir do
+      // localStorage recém-gravado. Após a sessão expirar de verdade, o TokenOrchestrator em
+      // memória do Amplify fica preso servindo o idToken expirado dentro do mesmo contexto de
+      // página — mesmo depois do signOut+signIn. Uma navegação soft levaria esse token morto ao
+      // dashboard → 401 → volta pro /login (loop). O reload recria o contexto, igual abrir nova aba.
+      window.location.assign(homeRoute(email))
     } catch (err) {
       if ((err as { name?: string })?.name === 'UserNotConfirmedException') {
         setUnconfirmed(true)

@@ -60,7 +60,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const u = await getCurrentUser()
       const session = await fetchAuthSession()
-      if (!session.tokens?.idToken) { setUser(null); return null }
+      const idToken = session.tokens?.idToken
+      // Checa validade, não só existência: o Amplify pode devolver um idToken presente porém
+      // expirado (quando o refresh falha). Tratar isso como "logado" mandaria o token morto ao
+      // backend → 401 → loop de redirect pro /login. Sem idToken válido, sessão = não autenticada.
+      const exp = (idToken?.payload?.exp as number | undefined) ?? 0
+      if (!idToken || exp * 1000 <= Date.now()) { setUser(null); return null }
       const attrs = (await fetchUserAttributes().catch(() => ({}))) as Record<string, string>
       const authUser: AuthUser = { userId: u.userId, username: u.username, email: attrs.email, name: attrs.name }
       setUser(authUser)
