@@ -146,7 +146,103 @@ def advance(aluno_id: str) -> dict:
     return s
 
 
-def finish(aluno_id: str) -> dict:
+# Unidade da métrica de score por formato de WOD (exibição + EXCAT do WOD)
+_WOD_UNIDADE = {"FOR_TIME": "s", "AMRAP": "rounds", "EMOM": "min"}
+
+
+def _processar_scores_wod(aluno_id: str, s: dict, scores_blocos: list, fim_iso: str) -> list[dict]:
+    """Valida os scores contra os blocos da sessão, calcula o score ordenável e grava
+    PR (STATS#PR#wod#...), item de evolução (REG shape, GSI1) e EXCAT do WOD — reusando o
+    motor de PR/evolução existente pelo caminho PERFORMANCE (spec CROSSFIT §3.2/§6).
+    Retorna a lista enriquecida (persistida em `s["scores_blocos"]`); PRs novos também são
+    appendados em memória a `s["novos_prs"]`."""
+    blocos = s.get("blocos") or []
+    blocos_by_id = {b.get("id"): b for b in blocos}
+    pontuaveis = [b for b in blocos
+                  if (b.get("formato") or "LIVRE") != "LIVRE" and not b.get("aquecimento")]
+    treino_nome = s.get("treino_nome") or ""
+    pk = keys.pk_aluno(aluno_id)
+    out: list[dict] = []
+    for sc in scores_blocos:
+        bloco = blocos_by_id.get(sc.bloco_id)
+        if not bloco or bloco.get("aquecimento"):
+            continue
+        formato = bloco.get("formato") or "LIVRE"
+        if formato == "LIVRE" or sc.formato != formato:
+            continue
+        params = bloco.get("params") or {}
+        if formato == "FOR_TIME":
+            direcao = "MENOR"
+            if sc.cap_estourado:
+                # Capado é sempre pior que qualquer tempo dentro do cap; mais reps
+                # restantes = pior — mantém o score monotônico na mesma escala (s).
+                cap = int(params.get("time_cap_s") or sc.tempo_s or 0)
+                if cap <= 0:
+                    continue
+                score_valor = float(cap + (sc.reps_restantes or 0))
+            elif sc.tempo_s and sc.tempo_s > 0:
+                score_valor = float(sc.tempo_s)
+            else:
+                continue
+        elif formato == "AMRAP":
+            direcao = "MAIOR"
+            if sc.rounds is None and sc.reps_extras is None:
+                continue
+            score_valor = float((sc.rounds or 0) * 1000 + (sc.reps_extras or 0))
+        else:  # EMOM
+            direcao = "MAIOR"
+            if sc.minutos_completos is None:
+                continue
+            score_valor = float(sc.minutos_completos)
+        # Chave do WOD: treino com 1 bloco pontuável = nome do treino (benchmarks tipo
+        # "Fran" compartilham histórico entre origens); vários = treino + bloco.
+        nome_wod = treino_nome if len(pontuaveis) <= 1 else f"{treino_nome} — {bloco.get('nome') or ''}".strip(" —")
+        chave_wod = f"wod#{chave_exercicio(nome_wod)}"
+        unidade = _WOD_UNIDADE.get(formato)
+        entry = {
+            **sc.model_dump(),
+            "bloco_nome": bloco.get("nome"),
+            "nome": nome_wod,
+            "chave": chave_wod,
+            "score_valor": score_valor,
+            "direcao": direcao,
+            "unidade": unidade,
+        }
+        out.append(entry)
+        # PR do WOD — mesmo motor dos exercícios, namespace "wod#" no SK de STATS#PR#
+        extra_pr = {"exercicio_nome": nome_wod, "data": fim_iso, "direcao": direcao,
+                    "formato": formato, "wod": True, "unidade": unidade, "rx": sc.rx}
+        upd = repo.update_if_less if direcao == "MENOR" else repo.update_if_greater
+        if upd(pk, keys.sk_stats_pr(chave_wod), "carga", score_valor, extra=extra_pr):
+            entry["pr_novo"] = True
+            s.setdefault("novos_prs", []).append({
+                "exercicio_nome": nome_wod, "carga": score_valor, "tipo": "WOD",
+                "unidade": unidade, "formato": formato, "rx": sc.rx,
+            })
+        # Item de evolução (shape REG, permanente): _evolucao_serie lê `series_exec[].reps`
+        # pelo caminho PERFORMANCE — evolução do WOD sem mudar o motor.
+        repo.put_item(pk, keys.sk_registro(s["sessao_id"], f"wod#{sc.bloco_id}"), {
+            "sessao_id": s["sessao_id"],
+            "exercicio_id": f"wod#{sc.bloco_id}",
+            "exercicio_nome": nome_wod,
+            "aluno_id": aluno_id,
+            "data_hora": fim_iso,
+            "series_exec": [{"reps": score_valor}],
+            "wod": True, "formato": formato, "rx": sc.rx,
+            "GSI1PK": keys.gsi1_registro(aluno_id, chave_wod),
+            "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
+            # sem ttl — fonte permanente da evolução
+        })
+        upsert_excat(aluno_id, nome_wod, {
+            "tipo_exercicio": "PERFORMANCE", "metrica_direcao": direcao,
+            "unidade_reps": unidade, "wod": True, "formato": formato,
+        }, chave=chave_wod)
+    return out
+
+
+def finish(aluno_id: str, body=None) -> dict:
+    """Finaliza a sessão ativa. `body` (FinishBody) é opcional — ausente = fluxo clássico
+    (musculação), inclusive para o agente WhatsApp, que chama sem payload."""
     s = get_active(aluno_id, consistent=True)
     if not s:
         raise HTTPException(404, "Sem sessão ativa")
@@ -199,6 +295,14 @@ def finish(aluno_id: str) -> dict:
     # `novos_prs` já vem acumulado no item ativo via _registrar_pr_sessao() durante os registros.
     s["volume_total"] = sum(_volume(r.get("series_exec")) for r in regs)
     s["total_series"] = sum(len(r.get("series_exec") or []) for r in regs)
+    # Score de WOD por bloco + "feito sem registro" (aquecimento) — spec CROSSFIT §3.2/§3.4
+    ids_validos = {e.get("exercicio_id") for e in s.get("exercicios", [])}
+    if body and getattr(body, "scores_blocos", None):
+        s["scores_blocos"] = _processar_scores_wod(aluno_id, s, body.scores_blocos, fim_iso)
+    if body and getattr(body, "exercicios_feitos_sem_registro", None):
+        s["exercicios_feitos_sem_registro"] = [
+            i for i in body.exercicios_feitos_sem_registro if i in ids_validos
+        ]
     snap = {k: v for k, v in s.items() if k not in ("PK", "SK", "ttl")}
     ts = epoch_ms()
     sk_hist = keys.sk_sessao_hist(ts, sessao_id)
@@ -269,13 +373,30 @@ def finish(aluno_id: str) -> dict:
                          add={"sessoes": 1}, set_={"data": hoje})
         repo.add_to_set(keys.pk_personal(personal_id), f"STATS#D#{hoje}",
                         "alunos_set", {aluno_id})
-        # Gamificação: pontos por sessão finalizada (com multiplicador de streak)
+        # Gamificação: pontos por sessão finalizada (com multiplicador de streak).
+        # "Feito" = tem registro OU pertence a bloco de WOD com score informado OU foi
+        # marcado "feito sem registro" (aquecimento) — spec CROSSFIT §3.2 (decisão ii).
         total_ex = len(s.get("exercicios", []))
-        feitos_ex = len(snap.get("exercicios_exec", []))
+        feitos_ids = {e.get("exercicio_id") for e in snap.get("exercicios_exec", [])}
+        blocos_com_score = {sc.get("bloco_id") for sc in s.get("scores_blocos") or []}
+        if blocos_com_score:
+            feitos_ids |= {e.get("exercicio_id") for e in s.get("exercicios", [])
+                           if e.get("bloco_id") in blocos_com_score}
+        feitos_ids |= set(s.get("exercicios_feitos_sem_registro") or [])
+        feitos_ex = len(feitos_ids & ids_validos)
         completo = total_ex > 0 and feitos_ex >= total_ex
         desc = "Sessão 100% completa" if completo else "Sessão finalizada"
         pts = pontos_service.PONTOS["SESSAO"] + (pontos_service.PONTOS["SESSAO_COMPLETA_BONUS"] if completo else 0)
         pontos_service.award(aluno_id, "SESSAO", personal_id, pts=pts, descricao=desc, streak=novo_streak)
+        # PRs de WOD: pontos + verificação de metas (por chave "wod#...", direção-aware)
+        for sc in s.get("scores_blocos") or []:
+            if not sc.get("pr_novo"):
+                continue
+            pontos_service.award(aluno_id, "PR", personal_id,
+                                 descricao=f"Novo recorde: {sc.get('nome')}", streak=novo_streak)
+            from app.services import meta_service as _ms
+            _ms.verificar_metas_carga(aluno_id, personal_id, "", float(sc["score_valor"]),
+                                      chave=sc.get("chave"))
         # Badges: verifica conquistas de sessão e streak
         badge_service.verificar_e_conceder(aluno_id, personal_id,
                                            total_sessoes=total_sessoes_novo, streak_atual=novo_streak)
@@ -514,14 +635,17 @@ def chave_exercicio(nome: str | None) -> str:
 
 
 _EXCAT_META_CAMPOS = ("tipo_exercicio", "grupo", "unidade_carga", "unidade_reps",
-                      "metrica_direcao", "rm_kg")
+                      "metrica_direcao", "rm_kg", "wod", "formato")
 
 
-def upsert_excat(aluno_id: str, nome: str | None, meta: dict | None = None) -> None:
+def upsert_excat(aluno_id: str, nome: str | None, meta: dict | None = None,
+                 chave: str | None = None) -> None:
     """Registra o exercício no catálogo permanente do aluno (EXCAT#{chave}) — a fonte de
     "todos os exercícios já feitos" do seletor de evolução, imune ao apagamento dos EX#
-    quando o programa é recriado. UpdateItem idempotente, 1 write pequeno, sem read prévio."""
-    chave = chave_exercicio(nome)
+    quando o programa é recriado. UpdateItem idempotente, 1 write pequeno, sem read prévio.
+    `chave` explícita é usada pelos WODs ("wod#{...}" — namespace que nomes de exercício
+    nunca produzem, pois a normalização não gera '#')."""
+    chave = chave or chave_exercicio(nome)
     if not chave:
         return
     fields: dict = {"nome": nome, "last_seen": now_iso()}
@@ -804,6 +928,7 @@ def historico_mes(aluno_id: str, ano: int, mes: int, incluir_fotos: bool = True)
             "volume_total": vol,
             "total_series": s.get("total_series"),
             "novos_prs": novos_prs,
+            "scores_blocos": s.get("scores_blocos") or None,
             "checkin_url": (media_service.gerar_presigned_view_url(checkin_key) if checkin_key else None) if incluir_fotos else None,
         })
     st = repo.clean(repo.get_item(pk, keys.SK_STATS_ALUNO)) or {}
@@ -857,6 +982,8 @@ def list_exercicios_aluno(aluno_id: str, incluir_historico: bool = False) -> lis
             "metrica_direcao": c.get("metrica_direcao") or "MAIOR",
             "rm_kg": c.get("rm_kg"),
             "carga_prescrita": c.get("carga_prescrita") if atual else None,
+            "wod": c.get("wod") or False,
+            "formato": c.get("formato"),
         }
 
     por_chave: dict[str, dict] = {}
@@ -923,7 +1050,9 @@ def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
         ],
         "prs": sorted(
             [{"exercicio": p.get("exercicio_nome"), "carga": p.get("carga"), "data": p.get("data"),
-              "chave": p.get("chave")} for p in prs],
+              "chave": p.get("chave"), "direcao": p.get("direcao"), "formato": p.get("formato"),
+              "wod": p.get("wod") or False, "unidade": p.get("unidade"), "rx": p.get("rx")}
+             for p in prs],
             key=lambda x: x.get("carga") or 0, reverse=True,
         ),
         "volume_por_grupo": sorted(

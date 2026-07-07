@@ -4,7 +4,9 @@ import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRig
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
-import { alunoApi, type ExSessao, type SessaoAtiva, type SessaoFinalizada, type PostGlobal } from '../api/alunoApp'
+import { alunoApi, type ExSessao, type SessaoAtiva, type SessaoFinalizada, type PostGlobal, type FinishPayload, type ScoreBlocoInput } from '../api/alunoApp'
+import { ScoreWodModal } from '../components/aluno/ScoreWodModal'
+import { fmtScoreValor } from '../utils/wod'
 import { usePushNotification } from '../hooks/usePushNotification'
 import { SeriesPrescritasCompact } from '../components/exercicios/SeriesPrescritasEditor'
 import { AlunoSessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
@@ -1119,11 +1121,13 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
   const abrirCrono = (seconds?: number, label?: string) => crono.abrir(seconds, label)
   const ses = useQuery({ queryKey: ['aluno-sessao-exs'], queryFn: alunoApi.sessaoExercicios, retry: false })
   const [finalizada, setFinalizada] = useState<SessaoFinalizada | null>(null)
+  const [scoreModal, setScoreModal] = useState(false)
+  const [feitosSemRegistro, setFeitosSemRegistro] = useState<string[]>([])
   const finish = useMutation({
-    mutationFn: () => alunoApi.finish(),
+    mutationFn: (payload?: FinishPayload) => alunoApi.finish(payload),
     // Mantém a sessão montada e abre a tela de check-in; só invalida (transiciona a UI)
     // quando o aluno fecha o check-in — assim os destaques continuam visíveis no overlay.
-    onSuccess: (data) => setFinalizada(data),
+    onSuccess: (data) => { setScoreModal(false); setFinalizada(data) },
   })
   const fecharCheckin = () => {
     setFinalizada(null)
@@ -1149,8 +1153,38 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
 
   if (ses.isLoading || !ses.data) return <Spinner />
   const exs = ses.data.exercicios
-  const feitos = exs.filter((e) => e.registrado?.length).length
+  const exFeito = (e: ExSessao) => !!e.registrado?.length || feitosSemRegistro.includes(e.exercicio_id)
+  const feitos = exs.filter(exFeito).length
   const progresso = exs.length ? Math.round((feitos / exs.length) * 100) : 0
+  const blocosPontuaveis = (ses.data.blocos ?? []).filter((b) => b.formato !== 'LIVRE' && !b.aquecimento)
+
+  async function confirmarEFinalizar(scores: ScoreBlocoInput[]) {
+    const blocosComScore = new Set(scores.map((s) => s.bloco_id))
+    const pendentes = exs.filter((e) => !exFeito(e) && !(e.bloco_id && blocosComScore.has(e.bloco_id)))
+    const ok = await confirm({
+      title: 'Finalizar treino?',
+      message: pendentes.length > 0 ? (
+        <div className="space-y-2">
+          <p>
+            {pendentes.length} exercício{pendentes.length > 1 ? 's' : ''} ainda não
+            {pendentes.length > 1 ? ' foram executados' : ' foi executado'}:
+          </p>
+          <ul className="list-disc pl-4 space-y-0.5 text-text-muted">
+            {pendentes.map((e) => <li key={e.exercicio_id}>{e.nome}</li>)}
+          </ul>
+          <p>Deseja finalizar mesmo assim?</p>
+        </div>
+      ) : 'Confirma a finalização do treino?',
+      confirmLabel: 'Finalizar',
+      cancelLabel: 'Continuar treinando',
+    })
+    if (ok) {
+      finish.mutate({
+        scores_blocos: scores.length ? scores : undefined,
+        exercicios_feitos_sem_registro: feitosSemRegistro.length ? feitosSemRegistro : undefined,
+      })
+    }
+  }
 
   return (
     <div className="space-y-3">
@@ -1188,7 +1222,15 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
         const blocoIds = new Set(blocos.map((b) => b.id))
         const semBloco = exs.filter((e) => !e.bloco_id || !blocoIds.has(e.bloco_id))
         const card = (ex: ExSessao) => (
-          <ExercicioCard key={ex.exercicio_id} ex={ex} onVerFeed={onVerFeed} onAbrirCronometro={abrirCrono} />
+          <ExercicioCard
+            key={ex.exercicio_id} ex={ex} onVerFeed={onVerFeed} onAbrirCronometro={abrirCrono}
+            marcadoFeito={feitosSemRegistro.includes(ex.exercicio_id)}
+            onToggleFeito={ex.aquecimento && !ex.registrado?.length
+              ? () => setFeitosSemRegistro((ids) => ids.includes(ex.exercicio_id)
+                  ? ids.filter((i) => i !== ex.exercicio_id)
+                  : [...ids, ex.exercicio_id])
+              : undefined}
+          />
         )
         if (!blocos.length) return exs.map(card)
         return (
@@ -1220,30 +1262,21 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
         variant="energy"
         className="w-full"
         disabled={finish.isPending}
-        onClick={async () => {
-          const pendentes = exs.filter((e) => !e.registrado?.length)
-          const ok = await confirm({
-            title: 'Finalizar treino?',
-            message: pendentes.length > 0 ? (
-              <div className="space-y-2">
-                <p>
-                  {pendentes.length} exercício{pendentes.length > 1 ? 's' : ''} ainda não
-                  {pendentes.length > 1 ? ' foram executados' : ' foi executado'}:
-                </p>
-                <ul className="list-disc pl-4 space-y-0.5 text-text-muted">
-                  {pendentes.map((e) => <li key={e.exercicio_id}>{e.nome}</li>)}
-                </ul>
-                <p>Deseja finalizar mesmo assim?</p>
-              </div>
-            ) : 'Confirma a finalização do treino?',
-            confirmLabel: 'Finalizar',
-            cancelLabel: 'Continuar treinando',
-          })
-          if (ok) finish.mutate()
+        onClick={() => {
+          if (blocosPontuaveis.length) setScoreModal(true)
+          else void confirmarEFinalizar([])
         }}
       >
         {finish.isPending ? 'Finalizando…' : 'Finalizar treino'}
       </Button>
+      {scoreModal && (
+        <ScoreWodModal
+          blocos={blocosPontuaveis}
+          submitting={finish.isPending}
+          onConfirm={(scores) => void confirmarEFinalizar(scores)}
+          onClose={() => setScoreModal(false)}
+        />
+      )}
       <Button
         variant="outline" className="w-full" disabled={cancel.isPending}
         onClick={async () => {
@@ -1387,7 +1420,14 @@ function SubstitutosModal({
   )
 }
 
-function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onVerFeed: (exId: string) => void; onAbrirCronometro: (seconds?: number, label?: string) => void }) {
+function ExercicioCard({ ex, onVerFeed, onAbrirCronometro, marcadoFeito, onToggleFeito }: {
+  ex: ExSessao
+  onVerFeed: (exId: string) => void
+  onAbrirCronometro: (seconds?: number, label?: string) => void
+  /** Aquecimento: marcado "feito" sem registro de séries (spec CROSSFIT §3.4). */
+  marcadoFeito?: boolean
+  onToggleFeito?: () => void
+}) {
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
   const [recursosOpen, setRecursosOpen] = useState(false)
@@ -1490,8 +1530,21 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
               }
             </span>
           </span>
-          {feito ? <Check size={16} className="text-success shrink-0" /> : <ChevronRight size={16} className="text-text-muted shrink-0" />}
+          {(feito || marcadoFeito) ? <Check size={16} className="text-success shrink-0" /> : <ChevronRight size={16} className="text-text-muted shrink-0" />}
         </button>
+        {onToggleFeito && (
+          <button
+            onClick={onToggleFeito}
+            aria-label={marcadoFeito ? 'Desmarcar como feito' : 'Marcar como feito'}
+            className={`shrink-0 text-[10px] font-medium px-1.5 py-1 rounded-md border transition-colors ${
+              marcadoFeito
+                ? 'border-success/50 bg-success/15 text-success'
+                : 'border-border text-text-muted hover:border-border-strong'
+            }`}
+          >
+            Feito ✓
+          </button>
+        )}
         <button
           onClick={() => onAbrirCronometro(ex.intervalo_s, nomeAtivo)}
           aria-label="Cronômetro de descanso"
@@ -1723,6 +1776,11 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
   const exSel = exs.data?.find((e) => e.chave === exKey)
   const tipoEvo = normalizeTipoExercicio(evo.data?.tipo ?? exSel?.tipo_exercicio)
   const unidadePerf = exSel?.unidade_reps || ''
+  const isWod = !!exSel?.wod || exKey.startsWith('wod#')
+  // WOD: score guardado como número ordenável — formatar por formato (mm:ss, rounds+reps, min)
+  const fmtValor = (v: number) => isWod
+    ? fmtScoreValor(exSel?.formato, v)
+    : tipoEvo === 'PERFORMANCE' ? `${v} ${unidadePerf}`.trimEnd() : `${v} ${exSel?.unidade_carga ?? 'kg'}`
 
   const chartData = (evo.data?.serie ?? [])
     .filter((p) => (tipoEvo === 'PERFORMANCE' ? p.metrica_max != null : p.carga_max != null))
@@ -1816,16 +1874,16 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
                 <Card variant="elevated">
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-text-secondary">
-                      {tipoEvo === 'PERFORMANCE'
-                        ? `${unidadePerf || 'Métrica'} por sessão${evo.data?.direcao === 'MENOR' ? ' · menor é melhor' : ''}`
-                        : 'Carga por sessão'}
+                      {isWod
+                        ? `Score por execução${evo.data?.direcao === 'MENOR' ? ' · menor é melhor' : ''}`
+                        : tipoEvo === 'PERFORMANCE'
+                          ? `${unidadePerf || 'Métrica'} por sessão${evo.data?.direcao === 'MENOR' ? ' · menor é melhor' : ''}`
+                          : 'Carga por sessão'}
                     </span>
                     <Badge tone="warning">
                       <Trophy size={12} />
                       {' '}
-                      {evo.data?.pr?.carga != null
-                        ? tipoEvo === 'PERFORMANCE' ? `${evo.data.pr.carga} ${unidadePerf}`.trimEnd() : `${evo.data.pr.carga} ${exSel?.unidade_carga ?? 'kg'}`
-                        : '—'}
+                      {evo.data?.pr?.carga != null ? fmtValor(evo.data.pr.carga) : '—'}
                     </Badge>
                   </div>
                   <ResponsiveContainer width="100%" height={200}>
@@ -1845,8 +1903,8 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
                       <Tooltip
                         contentStyle={chartTip}
                         formatter={(v: number) => [
-                          tipoEvo === 'PERFORMANCE' ? `${v} ${unidadePerf}`.trimEnd() : `${v} ${exSel?.unidade_carga ?? 'kg'}`,
-                          tipoEvo === 'PERFORMANCE' ? (unidadePerf || 'Métrica') : (exSel?.unidade_carga ?? 'kg'),
+                          fmtValor(v),
+                          isWod ? 'Score' : tipoEvo === 'PERFORMANCE' ? (unidadePerf || 'Métrica') : (exSel?.unidade_carga ?? 'kg'),
                         ]}
                       />
                       <Area type="monotone" dataKey="carga" stroke="var(--color-energy)" strokeWidth={2.5}
@@ -1959,9 +2017,11 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
               {prsFiltrados.slice(0, prLimit).map((p) => {
                 const exPr = exs.data?.find((e) => (p.chave ? e.chave === p.chave : e.nome === p.exercicio))
                 const tipoPr = normalizeTipoExercicio(exPr?.tipo_exercicio)
-                const valorPr = tipoPr === 'PERFORMANCE'
-                  ? `${p.carga} ${exPr?.unidade_reps ?? ''}`.trimEnd()
-                  : `${p.carga} ${exPr?.unidade_carga ?? 'kg'}`
+                const valorPr = p.wod || p.chave?.startsWith('wod#')
+                  ? `${fmtScoreValor(p.formato ?? exPr?.formato, p.carga)}${p.rx === false ? ' (adaptado)' : ''}`
+                  : tipoPr === 'PERFORMANCE'
+                    ? `${p.carga} ${exPr?.unidade_reps ?? ''}`.trimEnd()
+                    : `${p.carga} ${exPr?.unidade_carga ?? 'kg'}`
                 return (
                   <Badge key={p.exercicio} tone="warning">{p.exercicio}: <b className="ml-1">{valorPr}</b><span className="ml-1 text-xs opacity-70">{new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span></Badge>
                 )

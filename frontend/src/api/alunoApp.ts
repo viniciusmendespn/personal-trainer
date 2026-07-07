@@ -59,6 +59,7 @@ export interface SessaoHistorico {
   }>
   /** True se a sessão já tem foto de check-in (só na listagem; evita presign na lista). */
   tem_checkin?: boolean
+  scores_blocos?: ScoreBlocoOut[]
 }
 
 export interface SerieInput {
@@ -71,8 +72,39 @@ export interface SerieInput {
 export interface NovoPR {
   exercicio_nome?: string
   carga: number
-  tipo?: string   // 'FORCA' | 'PERFORMANCE' (+ legados na leitura)
+  tipo?: string   // 'FORCA' | 'PERFORMANCE' | 'WOD' (+ legados na leitura)
   unidade?: string | null
+  formato?: string   // WOD: FOR_TIME | AMRAP | EMOM
+  rx?: boolean       // WOD
+}
+
+/** Score de um bloco de WOD informado na finalização (espelho de ScoreBloco no backend). */
+export interface ScoreBlocoInput {
+  bloco_id: string
+  formato: string                 // FOR_TIME | AMRAP | EMOM
+  tempo_s?: number                // FOR_TIME
+  cap_estourado?: boolean         // FOR_TIME
+  reps_restantes?: number         // FOR_TIME capado
+  rounds?: number                 // AMRAP
+  reps_extras?: number            // AMRAP
+  minutos_completos?: number      // EMOM
+  rx: boolean                     // false = adaptado/scaled
+}
+
+/** Score enriquecido pelo backend (persistido na sessão histórica). */
+export interface ScoreBlocoOut extends ScoreBlocoInput {
+  bloco_nome?: string
+  nome?: string                   // nome do WOD (chave de PR/evolução)
+  chave?: string                  // "wod#..."
+  score_valor?: number
+  direcao?: 'MAIOR' | 'MENOR'
+  unidade?: string
+  pr_novo?: boolean
+}
+
+export interface FinishPayload {
+  scores_blocos?: ScoreBlocoInput[]
+  exercicios_feitos_sem_registro?: string[]
 }
 
 /** Resposta de finalizar treino — destaques da sessão p/ a tela de check-in pós-treino. */
@@ -83,6 +115,7 @@ export interface SessaoFinalizada {
   volume_total?: number
   total_series?: number
   novos_prs?: NovoPR[]
+  scores_blocos?: ScoreBlocoOut[]
 }
 
 /** Uma sessão finalizada num dia do calendário (resumo leve). */
@@ -93,6 +126,7 @@ export interface DiaSessao {
   volume_total?: number
   total_series?: number
   novos_prs?: NovoPR[]
+  scores_blocos?: ScoreBlocoOut[] | null
   checkin_url?: string | null
 }
 
@@ -185,7 +219,8 @@ export const alunoApi = {
   sessaoExercicios: () => alunoClient.get<SessaoExercicios | null>('/v1/aluno/sessao/exercicios').then((r) => r.data),
   start: (treino_id: string) => alunoClient.post<SessaoAtiva>('/v1/aluno/sessao/start', { treino_id }).then((r) => r.data),
   advance: () => alunoClient.post('/v1/aluno/sessao/advance').then((r) => r.data),
-  finish: () => alunoClient.post<SessaoFinalizada>('/v1/aluno/sessao/finish').then((r) => r.data),
+  finish: (payload?: FinishPayload) =>
+    alunoClient.post<SessaoFinalizada>('/v1/aluno/sessao/finish', payload ?? {}).then((r) => r.data),
   checkinSessao: (sessaoId: string, s3Key: string) =>
     alunoClient.post(`/v1/aluno/sessao/${sessaoId}/checkin`, { s3_key: s3Key }).then((r) => r.data),
   cancel: () => alunoClient.post('/v1/aluno/sessao/cancel').then((r) => r.data),

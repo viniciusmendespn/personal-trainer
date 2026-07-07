@@ -11,6 +11,7 @@ import { useExerciciosAlunoHistorico, useEvolucaoPorChave, useResumo } from '../
 import { Card, Spinner, StatCard, Badge, EmptyState, Button, Input, SearchableSelect, useToast } from '../components/ui'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
 import { normalizeText } from '../utils/normalizeText'
+import { fmtScoreValor } from '../utils/wod'
 import { PostComposer } from '../components/exercicio/PostComposer'
 import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
 import { renderNodeToPdf } from '../utils/exportPdf'
@@ -109,6 +110,10 @@ export function AlunoEvolucaoPage() {
   const tipoEvo = normalizeTipoExercicio(evo?.tipo ?? exSel?.tipo_exercicio)
   const unidadePerf = exSel?.unidade_reps || ''
   const prescrita = exSel?.carga_prescrita ? Number(String(exSel.carga_prescrita).replace(',', '.')) : NaN
+  const isWod = !!exSel?.wod || exKey.startsWith('wod#')
+  const fmtValor = (v: number) => isWod
+    ? fmtScoreValor(exSel?.formato, v)
+    : tipoEvo === 'PERFORMANCE' ? `${v} ${unidadePerf}`.trimEnd() : `${v} ${exSel?.unidade_carga ?? 'kg'}`
 
 const chartData = (evo?.serie ?? [])
     .filter((p) => (tipoEvo === 'PERFORMANCE' ? p.metrica_max != null : p.carga_max != null))
@@ -210,16 +215,16 @@ const chartData = (evo?.serie ?? [])
                   <Card variant="elevated">
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-sm text-text-secondary">
-                        {tipoEvo === 'PERFORMANCE'
-                          ? `${unidadePerf || 'Métrica'} por sessão${evo?.direcao === 'MENOR' ? ' · menor é melhor' : ''}`
-                          : 'Carga máxima por sessão'}
+                        {isWod
+                          ? `Score por execução${evo?.direcao === 'MENOR' ? ' · menor é melhor' : ''}`
+                          : tipoEvo === 'PERFORMANCE'
+                            ? `${unidadePerf || 'Métrica'} por sessão${evo?.direcao === 'MENOR' ? ' · menor é melhor' : ''}`
+                            : 'Carga máxima por sessão'}
                       </p>
                       <Badge tone="warning">
                         <Trophy size={12} />
                         {' PR '}
-                        {evo?.pr?.carga != null
-                          ? tipoEvo === 'PERFORMANCE' ? `${evo.pr.carga} ${unidadePerf}`.trimEnd() : `${evo.pr.carga} ${exSel?.unidade_carga ?? 'kg'}`
-                          : '—'}
+                        {evo?.pr?.carga != null ? fmtValor(evo.pr.carga) : '—'}
                       </Badge>
                     </div>
                     <ResponsiveContainer width="100%" height={240}>
@@ -239,8 +244,8 @@ const chartData = (evo?.serie ?? [])
                         <Tooltip
                           contentStyle={chartTip}
                           formatter={(v: number) => [
-                            tipoEvo === 'PERFORMANCE' ? `${v} ${unidadePerf}`.trimEnd() : `${v} ${exSel?.unidade_carga ?? 'kg'}`,
-                            tipoEvo === 'PERFORMANCE' ? (unidadePerf || 'Métrica') : (exSel?.unidade_carga ?? 'kg'),
+                            fmtValor(v),
+                            isWod ? 'Score' : tipoEvo === 'PERFORMANCE' ? (unidadePerf || 'Métrica') : (exSel?.unidade_carga ?? 'kg'),
                           ]}
                         />
                         {tipoEvo === 'FORCA' && !isNaN(prescrita) && (
@@ -350,9 +355,11 @@ const chartData = (evo?.serie ?? [])
                   {prsFiltrados.slice(0, prLimit).map((p) => {
                     const exPr = exercicios?.find((e) => (p.chave ? e.chave === p.chave : e.nome === p.exercicio))
                     const tipoPr = normalizeTipoExercicio(exPr?.tipo_exercicio)
-                    const valorPr = tipoPr === 'PERFORMANCE'
-                      ? `${p.carga} ${exPr?.unidade_reps ?? ''}`.trimEnd()
-                      : `${p.carga} ${exPr?.unidade_carga ?? 'kg'}`
+                    const valorPr = p.wod || p.chave?.startsWith('wod#')
+                      ? `${fmtScoreValor(p.formato ?? exPr?.formato, p.carga)}${p.rx === false ? ' (adaptado)' : ''}`
+                      : tipoPr === 'PERFORMANCE'
+                        ? `${p.carga} ${exPr?.unidade_reps ?? ''}`.trimEnd()
+                        : `${p.carga} ${exPr?.unidade_carga ?? 'kg'}`
                     return (
                       <Badge key={p.exercicio} tone="warning">
                         {p.exercicio}: <b className="ml-1">{valorPr}</b>

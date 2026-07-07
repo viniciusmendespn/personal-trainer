@@ -1,8 +1,9 @@
-import { Trophy, Dumbbell, Clock, PartyPopper } from 'lucide-react'
+import { Trophy, Dumbbell, Clock, PartyPopper, Timer } from 'lucide-react'
 import { Modal } from '../ui'
 import { type SessaoFinalizada } from '../../api/alunoApp'
 import { CheckinUploadButton } from './CheckinUploadButton'
 import { formatDuracao } from '../../utils/datetime'
+import { fmtScoreWod, fmtScoreValor } from '../../utils/wod'
 
 function formatVolume(v?: number): string | null {
   if (!v || v <= 0) return null
@@ -17,6 +18,7 @@ export function CheckinPosTreino({ sessao, onClose }: { sessao: SessaoFinalizada
   const duracao = formatDuracao(sessao.duracao_segundos)
   const volume = formatVolume(sessao.volume_total)
   const prs = sessao.novos_prs ?? []
+  const scores = sessao.scores_blocos ?? []
 
   return (
     <Modal open onClose={onClose} title="">
@@ -47,13 +49,34 @@ export function CheckinPosTreino({ sessao, onClose }: { sessao: SessaoFinalizada
           )}
         </div>
 
+        {scores.length > 0 && (
+          <ul className="text-left text-xs text-text-secondary space-y-1 max-w-xs mx-auto">
+            {scores.map((sc, i) => (
+              <li key={i} className="flex items-center gap-1.5 rounded-lg bg-energy/10 border border-energy/30 px-2.5 py-1.5">
+                <Timer size={12} className="text-energy shrink-0" />
+                <span className="truncate">{sc.bloco_nome || sc.nome}</span>
+                <span className="ml-auto font-semibold text-text whitespace-nowrap">
+                  {fmtScoreWod(sc)}
+                  <span className={`ml-1.5 text-[10px] font-medium ${sc.rx ? 'text-energy' : 'text-text-muted'}`}>
+                    {sc.rx ? 'RX' : 'Adaptado'}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+
         {prs.length > 0 && (
           <ul className="text-left text-xs text-text-secondary space-y-0.5 max-w-xs mx-auto">
             {prs.slice(0, 4).map((pr, i) => (
               <li key={i} className="flex items-center gap-1.5">
                 <Trophy size={11} className="text-warning shrink-0" />
                 <span className="truncate">{pr.exercicio_nome}</span>
-                <span className="ml-auto font-medium text-text">{pr.carga}{pr.unidade ? ` ${pr.unidade}` : (pr.tipo === 'PERFORMANCE' ? '' : ' kg')}</span>
+                <span className="ml-auto font-medium text-text">
+                  {pr.tipo === 'WOD'
+                    ? fmtScoreValor(pr.formato, pr.carga)
+                    : <>{pr.carga}{pr.unidade ? ` ${pr.unidade}` : (pr.tipo === 'PERFORMANCE' ? '' : ' kg')}</>}
+                </span>
               </li>
             ))}
           </ul>

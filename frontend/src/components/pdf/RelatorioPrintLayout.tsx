@@ -1,4 +1,21 @@
-type Pr = { exercicio: string; carga: number }
+type Pr = { exercicio: string; carga: number; wod?: boolean; formato?: string; unidade?: string | null; chave?: string }
+
+/** Valor do PR legível: WOD por formato (mm:ss / rounds / min); exercício com unidade (default kg). */
+function fmtPrValor(p: Pr): string {
+  if (p.wod || p.chave?.startsWith('wod#')) {
+    if (p.formato === 'FOR_TIME') {
+      const m = Math.floor(p.carga / 60)
+      return `${m}:${String(Math.round(p.carga % 60)).padStart(2, '0')}`
+    }
+    if (p.formato === 'AMRAP') {
+      const rounds = Math.floor(p.carga / 1000)
+      const reps = Math.round(p.carga % 1000)
+      return `${rounds} rd${reps ? ` + ${reps}` : ''}`
+    }
+    return `${Math.round(p.carga)} min`
+  }
+  return `${p.carga} ${p.unidade || 'kg'}`
+}
 type Semana = { semana: string; volume: number }
 type AvaliacaoRow = { data: string; peso?: number; percentual_gordura?: number }
 type MetricaSerie = { nome: string; unidade?: string; pontos: { data: string; valor: number }[] }
@@ -153,7 +170,7 @@ export function RelatorioPrintLayout({
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {resumo.prs.map((p) => (
                   <span key={p.exercicio} style={{ fontSize: 11, background: '#f1f5f9', borderRadius: 999, padding: '4px 10px' }}>
-                    {p.exercicio}: <b>{p.carga} kg</b>
+                    {p.exercicio}: <b>{fmtPrValor(p)}</b>
                   </span>
                 ))}
               </div>

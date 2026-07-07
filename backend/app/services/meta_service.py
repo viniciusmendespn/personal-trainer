@@ -87,14 +87,25 @@ def _concluir(aluno_id: str, personal_id: str, meta: dict, valor_atingido: float
 
 
 def verificar_metas_carga(aluno_id: str, personal_id: str,
-                           exercicio_id: str, nova_carga: float) -> None:
-    """Chamado após novo PR. Verifica metas APROVADAS de tipo CARGA para esse exercício."""
+                           exercicio_id: str, nova_carga: float,
+                           chave: str | None = None) -> None:
+    """Chamado após novo PR. Verifica metas APROVADAS de tipo CARGA para esse exercício.
+    Casa por `exercicio_id` (metas antigas) OU por `chave` canônica (sobrevive à troca de
+    programa; WODs usam "wod#..."). A comparação respeita a direção da meta: MAIOR (default,
+    carga/reps) ou MENOR (tempo — ex.: "Fran abaixo de 8min")."""
     try:
         metas = listar(aluno_id, status="APROVADA")
         for m in metas:
-            if m.get("tipo") == "CARGA" and m.get("exercicio_id") == exercicio_id:
-                if nova_carga >= float(m.get("valor_alvo", 0)):
-                    _concluir(aluno_id, personal_id, m, nova_carga)
+            if m.get("tipo") != "CARGA":
+                continue
+            casa_id = bool(exercicio_id) and m.get("exercicio_id") == exercicio_id
+            casa_chave = bool(chave) and m.get("chave") == chave
+            if not (casa_id or casa_chave):
+                continue
+            alvo = float(m.get("valor_alvo", 0))
+            atingiu = nova_carga <= alvo if m.get("direcao") == "MENOR" else nova_carga >= alvo
+            if atingiu:
+                _concluir(aluno_id, personal_id, m, nova_carga)
     except Exception:
         logger.exception("[meta] verificar_metas_carga falhou: aluno=%s", aluno_id)
 

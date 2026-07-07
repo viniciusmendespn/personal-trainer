@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { History, Clock, ChevronDown, ChevronRight } from 'lucide-react'
 import { Card, Spinner, EmptyState, Button } from '../ui'
 import { CheckinUploadButton } from '../aluno/CheckinUploadButton'
+import { fmtScoreWod } from '../../utils/wod'
 
 /** Campos mínimos que a lista usa — atende tanto SessaoHistorico (aluno) quanto
  * SessaoHistoricoPersonal (portal). `tem_checkin` só existe na listagem do aluno. */
@@ -13,6 +14,12 @@ export interface SessaoLista {
   total_ex?: number
   exercicios_exec?: Array<{ series_exec?: unknown[] }>
   tem_checkin?: boolean
+  /** Scores de blocos de WOD informados na finalização (quando houver). */
+  scores_blocos?: Array<{
+    bloco_nome?: string; nome?: string; formato?: string; rx?: boolean
+    tempo_s?: number | null; cap_estourado?: boolean; reps_restantes?: number | null
+    rounds?: number | null; reps_extras?: number | null; minutos_completos?: number | null
+  }>
 }
 
 export function formatDuracao(s?: number): string | null {
@@ -96,6 +103,15 @@ export function HistoricoLista<T extends SessaoLista>({
                         {s.total_ex ? ` · ${s.total_ex} exercício${s.total_ex !== 1 ? 's' : ''}` : null}
                         {totalSeries ? ` · ${totalSeries} séries` : null}
                       </p>
+                      {(s.scores_blocos?.length ?? 0) > 0 && (
+                        <p className="text-xs mt-0.5">
+                          {s.scores_blocos!.map((sc, i) => (
+                            <span key={i} className="mr-2 text-energy font-medium">
+                              {sc.bloco_nome || sc.nome}: {fmtScoreWod(sc)}{sc.rx === false ? ' (adapt.)' : ''}
+                            </span>
+                          ))}
+                        </p>
+                      )}
                     </div>
                     {expanded ? <ChevronDown size={16} className="shrink-0 text-text-muted mt-0.5" /> : <ChevronRight size={16} className="shrink-0 text-text-muted mt-0.5" />}
                   </button>

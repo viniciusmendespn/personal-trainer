@@ -6,6 +6,7 @@ from pydantic import BaseModel, model_validator
 from app.dependencies import get_current_personal_id
 from app.models.enums import Ator, CanalOrigem
 from app.models.registro import SerieExec
+from app.models.sessao import FinishBody
 from app.repositories import dynamo_repo as repo, keys
 from app.models.postagem import MidiaRef, PostagemPersonalCreate
 from app.services import agent_service, alerta_service, anotif_service, authz, correcao_service, media_service, nota_service, notif_service, postagem_service, sessao_service
@@ -83,9 +84,10 @@ def advance(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
 
 
 @router.post("/sessao/finish")
-def finish(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
+def finish(aluno_id: str, body: FinishBody | None = None,
+           personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)
-    return repo.clean(sessao_service.finish(aluno_id))
+    return repo.clean(sessao_service.finish(aluno_id, body))
 
 
 @router.post("/registros", status_code=201)

@@ -10,6 +10,8 @@ import { ExercicioFeedCard } from '../exercicio/ExercicioFeedCard'
 import { PostComposer } from '../exercicio/PostComposer'
 import { Modal } from '../ui'
 import { normalizeTipoExercicio, type TipoExercicio } from '../../types'
+import { fmtScoreWod } from '../../utils/wod'
+import type { ScoreBlocoOut } from '../../api/alunoApp'
 
 function fmtDur(secs: number) {
   const h = Math.floor(secs / 3600)
@@ -180,9 +182,10 @@ function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
   )
 }
 
-function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: number; exercicios_exec?: ExecEx[] }; alunoId?: string }) {
+function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: number; exercicios_exec?: ExecEx[]; scores_blocos?: ScoreBlocoOut[] }; alunoId?: string }) {
   const exs = data.exercicios_exec ?? []
   const vol = totalVolume(exs)
+  const scores = data.scores_blocos ?? []
 
   return (
     <div className="mt-3 border-t border-border pt-3 space-y-1">
@@ -193,6 +196,19 @@ function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: n
           )}
           {vol && <span>Volume: {vol}</span>}
           {exs.length > 0 && <span>{exs.length} exercício{exs.length !== 1 ? 's' : ''}</span>}
+        </div>
+      )}
+
+      {scores.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {scores.map((sc, i) => (
+            <span key={i} className="inline-flex items-center gap-1.5 rounded-lg bg-energy/10 border border-energy/30 px-2 py-1 text-xs">
+              <span className="text-text-secondary">{sc.bloco_nome || sc.nome}</span>
+              <b className="text-text">{fmtScoreWod(sc)}</b>
+              <span className={sc.rx ? 'text-energy font-medium' : 'text-text-muted'}>{sc.rx ? 'RX' : 'Adaptado'}</span>
+              {sc.pr_novo && <span className="text-warning font-medium">PR!</span>}
+            </span>
+          ))}
         </div>
       )}
 

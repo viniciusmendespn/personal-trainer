@@ -10,6 +10,7 @@ from app import aluno_auth
 from app.dependencies import get_current_aluno
 from app.models.enums import Ator, CanalOrigem, Classificacao
 from app.models.registro import SerieExec
+from app.models.sessao import FinishBody
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.models.postagem import MidiaRef, PostagemCreate, PostagemTipo
@@ -307,8 +308,8 @@ def cancel(ctx: dict = Depends(get_current_aluno)):
 
 
 @router.post("/sessao/finish")
-def finish(ctx: dict = Depends(get_current_aluno)):
-    return repo.clean(sessao_service.finish(ctx["aluno_id"]))
+def finish(body: FinishBody | None = None, ctx: dict = Depends(get_current_aluno)):
+    return repo.clean(sessao_service.finish(ctx["aluno_id"], body))
 
 
 @router.post("/registros", status_code=201)
@@ -328,7 +329,8 @@ def registrar(body: RegistroBody, ctx: dict = Depends(get_current_aluno)):
         pontos_service.award(ctx["aluno_id"], "PR", ctx["personal_id"],
                              descricao=f"Novo recorde: {pr}", streak=streak)
         meta_service.verificar_metas_carga(
-            ctx["aluno_id"], ctx["personal_id"], body.exercicio_id or "", float(pr)
+            ctx["aluno_id"], ctx["personal_id"], body.exercicio_id or "", float(pr),
+            chave=sessao_service.chave_exercicio(out.get("exercicio_nome")),
         )
     # Só séries válidas pontuam — aquecimento (flag materializada em set_series) não conta
     if any(not s.get("aquecimento") for s in series):

@@ -15,6 +15,9 @@ export interface Meta {
   valor_alvo: number
   unidade: string
   exercicio_id?: string
+  exercicio_nome?: string
+  chave?: string
+  direcao?: 'MAIOR' | 'MENOR'
   campo_medida?: string
   data_limite?: string
   status: MetaStatus
@@ -31,6 +34,9 @@ export interface MetaCreate {
   valor_alvo: number
   unidade: string
   exercicio_id?: string
+  exercicio_nome?: string
+  chave?: string                 // alvo por chave canônica (exercício ou WOD "wod#...")
+  direcao?: 'MAIOR' | 'MENOR'    // MENOR = tempo ("Fran abaixo de 8min")
   campo_medida?: string
   data_limite?: string
 }

@@ -25,8 +25,10 @@ class MetaCreate(BaseModel):
     descricao: str | None = None
     valor_alvo: float
     unidade: str                           # "kg", "cm", "%", etc.
-    exercicio_id: str | None = None        # obrigatório se tipo=CARGA
+    exercicio_id: str | None = None        # obrigatório se tipo=CARGA (ou usar `chave`)
     exercicio_nome: str | None = None
+    chave: str | None = None               # CARGA: alvo por chave canônica (sobrevive à troca de programa; WODs usam "wod#...")
+    direcao: str = "MAIOR"                 # CARGA: "MAIOR" (carga/reps) | "MENOR" (tempo — ex.: Fran abaixo de 8min)
     campo_medida: str | None = None        # obrigatório se tipo=MEDIDA
     data_limite: str | None = None         # YYYY-MM-DD
 
@@ -38,6 +40,8 @@ class MetaUpdate(BaseModel):
     unidade: str | None = None
     exercicio_id: str | None = None
     exercicio_nome: str | None = None
+    chave: str | None = None
+    direcao: str | None = None
     campo_medida: str | None = None
     data_limite: str | None = None
 

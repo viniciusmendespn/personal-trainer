@@ -225,30 +225,44 @@ function MetaForm({
   const [descricao, setDescricao] = useState('')
   const [valorAlvo, setValorAlvo] = useState('')
   const [unidade, setUnidade] = useState('')
-  const [exercicioId, setExercicioId] = useState('')
+  const [exercicioChave, setExercicioChave] = useState('')
+  const [direcao, setDirecao] = useState<'MAIOR' | 'MENOR'>('MAIOR')
   const [campoMedida, setCampoMedida] = useState('')
   const [dataLimite, setDataLimite] = useState('')
 
+  // Catálogo por chave canônica: inclui exercícios do programa, histórico e WODs (wod#...) —
+  // a meta casa por chave, sobrevivendo à troca de programa (spec CROSSFIT §3.5).
   const { data: exercicios } = useQuery({
-    queryKey: ['exercicios-plano', alunoId],
-    queryFn: () => evolucaoApi.listExercicios(alunoId),
+    queryKey: ['exercicios-historico', alunoId],
+    queryFn: () => evolucaoApi.listExerciciosHistorico(alunoId),
     enabled: tipo === 'CARGA',
   })
 
   const exercicioOptions = (exercicios ?? []).map((ex) => ({
-    value: ex.exercicio_id,
-    label: ex.grupo ? `${ex.nome} (${ex.grupo})` : ex.nome,
+    value: ex.chave,
+    label: ex.wod ? `${ex.nome} (WOD)` : ex.grupo ? `${ex.nome} (${ex.grupo})` : ex.nome,
   }))
+
+  function selecionarExercicio(chave: string) {
+    setExercicioChave(chave)
+    const sel = exercicios?.find((e) => e.chave === chave)
+    // Direção sugerida pelo próprio exercício/WOD (ex.: For Time → menor é melhor)
+    setDirecao(sel?.metrica_direcao === 'MENOR' || sel?.formato === 'FOR_TIME' ? 'MENOR' : 'MAIOR')
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!titulo || !valorAlvo) return
-    if (tipo === 'CARGA' && !exercicioId) return
+    if (tipo === 'CARGA' && !exercicioChave) return
+    const sel = exercicios?.find((ex) => ex.chave === exercicioChave)
     onSubmit({
       tipo, titulo, descricao: descricao || undefined,
       valor_alvo: Number(valorAlvo.replace(',', '.')),
       unidade: unidade || (tipo === 'CARGA' ? 'kg' : tipo === 'PESO' ? 'kg' : ''),
-      exercicio_id: tipo === 'CARGA' ? exercicioId : undefined,
+      exercicio_id: tipo === 'CARGA' ? (sel?.exercicio_id ?? undefined) : undefined,
+      exercicio_nome: tipo === 'CARGA' ? sel?.nome : undefined,
+      chave: tipo === 'CARGA' ? exercicioChave : undefined,
+      direcao: tipo === 'CARGA' ? direcao : undefined,
       campo_medida: tipo === 'MEDIDA' ? campoMedida || undefined : undefined,
       data_limite: dataLimite || undefined,
     })
@@ -263,7 +277,7 @@ function MetaForm({
             <button
               key={t}
               type="button"
-              onClick={() => { setTipo(t); setExercicioId('') }}
+              onClick={() => { setTipo(t); setExercicioChave('') }}
               className={`px-3 py-1.5 text-xs font-medium rounded-full border transition ${
                 tipo === t ? 'bg-primary text-white border-primary' : 'border-border text-text-secondary hover:border-border-strong'
               }`}
@@ -280,22 +294,41 @@ function MetaForm({
         <Input label="Unidade" value={unidade} onChange={(e) => setUnidade(e.target.value)} placeholder={tipo === 'CARGA' ? 'kg' : tipo === 'PESO' ? 'kg' : 'cm'} />
       </div>
       {tipo === 'CARGA' && (
-        <div>
-          <p className="text-xs font-medium text-text-secondary mb-1.5">Exercício</p>
-          <SearchableSelect
-            options={exercicioOptions}
-            value={exercicioId}
-            onChange={setExercicioId}
-            placeholder={exercicios ? 'Buscar exercício…' : 'Carregando…'}
-          />
-        </div>
+        <>
+          <div>
+            <p className="text-xs font-medium text-text-secondary mb-1.5">Exercício ou WOD</p>
+            <SearchableSelect
+              options={exercicioOptions}
+              value={exercicioChave}
+              onChange={selecionarExercicio}
+              placeholder={exercicios ? 'Buscar exercício…' : 'Carregando…'}
+            />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-text-secondary mb-1.5">Atingir quando o valor for…</p>
+            <div className="flex gap-2">
+              {([['MAIOR', '↑ Maior ou igual ao alvo'], ['MENOR', '↓ Menor ou igual ao alvo (tempo)']] as const).map(([d, label]) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDirecao(d)}
+                  className={`flex-1 text-xs py-1.5 px-2 rounded-lg border transition-colors ${
+                    direcao === d ? 'border-accent bg-accent/10 text-accent-hover font-medium' : 'border-border text-text-muted hover:border-border-strong'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
       )}
       {tipo === 'MEDIDA' && (
         <Input label="Campo de medida (ex.: cintura)" value={campoMedida} onChange={(e) => setCampoMedida(e.target.value)} />
       )}
       <Input label="Data limite (opcional)" type="date" value={dataLimite} onChange={(e) => setDataLimite(e.target.value)} />
       <div className="flex gap-2 pt-1">
-        <Button type="submit" disabled={submitting || !titulo || !valorAlvo || (tipo === 'CARGA' && !exercicioId)}>
+        <Button type="submit" disabled={submitting || !titulo || !valorAlvo || (tipo === 'CARGA' && !exercicioChave)}>
           {submitting ? 'Salvando…' : 'Criar meta'}
         </Button>
         <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>

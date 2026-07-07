@@ -34,6 +34,8 @@ export interface ExercicioEvolucao {
   metrica_direcao?: 'MAIOR' | 'MENOR'
   rm_kg?: number
   carga_prescrita?: string
+  wod?: boolean                   // entrada de WOD (chave "wod#...") — score do bloco
+  formato?: string                // FOR_TIME | AMRAP | EMOM (quando wod)
 }
 
 export interface ResumoSemana {
@@ -49,7 +51,10 @@ export interface Resumo {
   ultimo_treino: string | null
   sessoes_semana: number
   semanas: ResumoSemana[]
-  prs: { exercicio: string; carga: number; data: string; chave?: string }[]
+  prs: {
+    exercicio: string; carga: number; data: string; chave?: string
+    direcao?: 'MAIOR' | 'MENOR'; formato?: string; wod?: boolean; unidade?: string | null; rx?: boolean
+  }[]
   streak_atual?: number
   streak_maximo?: number
   multiplicador_atual?: number
