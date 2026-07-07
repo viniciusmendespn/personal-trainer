@@ -1239,11 +1239,28 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
               const doBloco = exs.filter((e) => e.bloco_id === b.id)
               if (!doBloco.length) return null
               const label = formatoBlocoLabel(b)
+              const pontuavel = b.formato !== 'LIVRE' && !b.aquecimento
               return (
                 <div key={b.id} className={`space-y-3 ${b.aquecimento ? 'opacity-80' : ''}`}>
                   <div className="flex items-center gap-2 pt-1">
                     <span className="text-sm font-display font-semibold">{b.nome}</span>
                     {label && <Badge tone={b.aquecimento ? 'neutral' : 'accent'}>{label}</Badge>}
+                    {pontuavel && (
+                      <button
+                        onClick={() => crono.abrirWod({
+                          formato: b.formato as 'FOR_TIME' | 'AMRAP' | 'EMOM',
+                          blocoId: b.id,
+                          blocoNome: b.nome,
+                          timeCapS: b.params?.time_cap_s,
+                          duracaoS: b.params?.duracao_s,
+                          intervaloS: b.params?.intervalo_s,
+                          slots: doBloco.map((e) => e.nome),
+                        })}
+                        className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-energy border border-energy/40 bg-energy/10 rounded-lg px-2 py-1 active:scale-95 transition-transform"
+                      >
+                        <Timer size={12} /> Timer do WOD
+                      </button>
+                    )}
                   </div>
                   {doBloco.map(card)}
                 </div>
@@ -1272,6 +1289,10 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
       {scoreModal && (
         <ScoreWodModal
           blocos={blocosPontuaveis}
+          prefill={crono.wodResultado
+            ?? (crono.wod?.formato === 'AMRAP' && crono.wodRounds > 0
+              ? { blocoId: crono.wod.blocoId, rounds: crono.wodRounds }
+              : undefined)}
           submitting={finish.isPending}
           onConfirm={(scores) => void confirmarEFinalizar(scores)}
           onClose={() => setScoreModal(false)}

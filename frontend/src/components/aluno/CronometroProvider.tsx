@@ -7,6 +7,8 @@ import {
   CRONO_MAX_SECONDS,
   fmtCrono,
   type CronoModo,
+  type WodConfig,
+  type WodResultado,
 } from './cronometroContext'
 import { CronometroOverlay } from './CronometroOverlay'
 import { CronometroPill } from './CronometroPill'
@@ -23,6 +25,10 @@ interface Snapshot {
   label?: string
   anchorMs: number
   displayMs: number
+  // Camada de WOD (opcional — snapshots antigos sem esses campos restauram normalmente)
+  wod?: WodConfig
+  wodRounds?: number
+  wodResultado?: WodResultado
 }
 
 function resolveBase(seconds?: number): number {
@@ -46,12 +52,21 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
   const [label, setLabel] = useState<string | undefined>(undefined)
   const [open, setOpen] = useState(false)
   const [minimized, setMinimized] = useState(false)
+  const [wod, setWod] = useState<WodConfig | undefined>(undefined)
+  const [wodRounds, setWodRounds] = useState(0)
+  const [wodResultado, setWodResultado] = useState<WodResultado | undefined>(undefined)
 
   // regressivo: instante-alvo do fim; progressivo: instante de início (epoch ms)
   const anchorRef = useRef(0)
   const wakeRef = useRef<WakeLockSentinel | null>(null)
   const lastTickSecRef = useRef<number | null>(null)
   const runTotalMsRef = useRef(CRONO_DEFAULT_SECONDS * 1000)
+  const wodRef = useRef<WodConfig | undefined>(undefined)      // espelho p/ o tick (sem re-subscrever)
+  const wodRoundsRef = useRef(0)
+  const capAlertedRef = useRef(false)                          // FOR_TIME: alerta de cap disparado
+  const lastEmomSlotRef = useRef(0)                            // EMOM: última virada de intervalo beepada
+  wodRef.current = wod
+  wodRoundsRef.current = wodRounds
 
   const releaseWakeLock = useCallback(() => {
     try {
@@ -75,8 +90,16 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
   const getFrame = useCallback((): PiPFrame => {
     const alerta = displayMs <= 5000 && modo === 'regressivo' && running
     const fg = done ? '#a3e635' : alerta ? '#f59e0b' : '#e5e7eb'
-    return { big: fmtCrono(displayMs), small: label, fg, bg: '#0a0a0a' }
-  }, [displayMs, modo, running, done, label])
+    let small = label
+    if (wod?.formato === 'AMRAP') small = `${wodRounds} round${wodRounds === 1 ? '' : 's'}`
+    else if (wod?.formato === 'EMOM') {
+      const intervalo = wod.intervaloS || 60
+      const minAtual = Math.floor(displayMs / 1000 / intervalo) + 1
+      const total = wod.duracaoS ? Math.ceil(wod.duracaoS / intervalo) : null
+      small = total ? `min ${Math.min(minAtual, total)}/${total}` : `min ${minAtual}`
+    }
+    return { big: fmtCrono(displayMs), small, fg, bg: '#0a0a0a' }
+  }, [displayMs, modo, running, done, label, wod, wodRounds])
   const pip = useCronometroPiP(getFrame)
 
   // ── Tick principal — recalcula a partir de Date.now() (sem acumular drift) ──
@@ -94,6 +117,11 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
           stopKeepAlive()
           startAlarm()
           navigator.vibrate?.([200, 100, 200])
+          // AMRAP: fim do tempo captura os rounds como resultado (pré-preenche o score)
+          const w = wodRef.current
+          if (w?.formato === 'AMRAP') {
+            setWodResultado({ blocoId: w.blocoId, rounds: wodRoundsRef.current })
+          }
           return
         }
         setDisplayMs(rem)
@@ -103,7 +131,35 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
           tickBeep()
         }
       } else {
-        setDisplayMs(now - anchorRef.current)
+        const elapsed = now - anchorRef.current
+        const w = wodRef.current
+        if (w?.formato === 'EMOM') {
+          const intervaloMs = (w.intervaloS || 60) * 1000
+          // Fim do EMOM: para e alarma
+          if (w.duracaoS && elapsed >= w.duracaoS * 1000) {
+            setDisplayMs(w.duracaoS * 1000)
+            setRunning(false)
+            setDone(true)
+            releaseWakeLock()
+            stopKeepAlive()
+            startAlarm()
+            navigator.vibrate?.([200, 100, 200])
+            return
+          }
+          // Virada de intervalo: beep + vibração (próximo slot)
+          const slot = Math.floor(elapsed / intervaloMs)
+          if (slot > lastEmomSlotRef.current) {
+            lastEmomSlotRef.current = slot
+            tickBeep()
+            navigator.vibrate?.([120, 60, 120])
+          }
+        } else if (w?.formato === 'FOR_TIME' && w.timeCapS && !capAlertedRef.current && elapsed >= w.timeCapS * 1000) {
+          // Time cap atingido: alerta pontual, mas o relógio continua (registrar cap + reps)
+          capAlertedRef.current = true
+          tickBeep()
+          navigator.vibrate?.([300, 100, 300, 100, 300])
+        }
+        setDisplayMs(elapsed)
       }
     }, 200)
     return () => clearInterval(id)
@@ -143,7 +199,10 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem(STORAGE_KEY)
       return
     }
-    const snap: Snapshot = { open, minimized, modo, running, done, baseSeconds, label, anchorMs: anchorRef.current, displayMs }
+    const snap: Snapshot = {
+      open, minimized, modo, running, done, baseSeconds, label,
+      anchorMs: anchorRef.current, displayMs, wod, wodRounds, wodResultado,
+    }
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snap))
     } catch {
@@ -151,7 +210,7 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
     }
     // displayMs fora das deps de propósito: enquanto corre, restauramos pela âncora, não pelo valor.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, minimized, modo, running, done, baseSeconds, label])
+  }, [open, minimized, modo, running, done, baseSeconds, label, wod, wodRounds, wodResultado])
 
   // Restaura ao montar (sobrevive a reload da PWA).
   useEffect(() => {
@@ -168,6 +227,12 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
     setLabel(snap.label)
     setMinimized(snap.minimized)
     setOpen(true)
+    setWod(snap.wod)
+    setWodRounds(snap.wodRounds ?? 0)
+    setWodResultado(snap.wodResultado)
+    if (snap.wod?.formato === 'EMOM') {
+      lastEmomSlotRef.current = Math.floor(snap.displayMs / 1000 / (snap.wod.intervaloS || 60))
+    }
     runTotalMsRef.current = snap.baseSeconds * 1000
     if (snap.running) {
       const now = Date.now()
@@ -201,6 +266,8 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
     releaseWakeLock()
     lastTickSecRef.current = null
     runTotalMsRef.current = base * 1000
+    setWod(undefined)          // cronômetro clássico: sai do modo WOD
+    setWodRounds(0)
     setModo('regressivo')
     setRunning(false)
     setDone(false)
@@ -209,6 +276,55 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
     setLabel(label)
     setMinimized(false)
     setOpen(true)
+  }, [releaseWakeLock])
+
+  const abrirWod = useCallback((cfg: WodConfig) => {
+    stopAlarm()
+    stopKeepAlive()
+    releaseWakeLock()
+    lastTickSecRef.current = null
+    capAlertedRef.current = false
+    lastEmomSlotRef.current = 0
+    setWod(cfg)
+    setWodRounds(0)
+    setWodResultado(undefined)
+    if (cfg.formato === 'AMRAP') {
+      const base = cfg.duracaoS || CRONO_DEFAULT_SECONDS
+      runTotalMsRef.current = base * 1000
+      setModo('regressivo')
+      setDisplayMs(base * 1000)
+      setBaseSeconds(base)
+    } else {
+      // FOR_TIME e EMOM contam pra cima (cap/fim tratados no tick)
+      runTotalMsRef.current = 0
+      setModo('progressivo')
+      setDisplayMs(0)
+      setBaseSeconds(0)
+    }
+    setRunning(false)
+    setDone(false)
+    setLabel(cfg.blocoNome)
+    setMinimized(false)
+    setOpen(true)
+  }, [releaseWakeLock])
+
+  const addRound = useCallback(() => {
+    unlockAudio()
+    tickBeep()
+    navigator.vibrate?.(80)
+    setWodRounds((r) => r + 1)
+  }, [])
+
+  const terminarWod = useCallback(() => {
+    setRunning(false)
+    releaseWakeLock()
+    stopKeepAlive()
+    setDisplayMs((d) => {
+      const w = wodRef.current
+      if (w) setWodResultado({ blocoId: w.blocoId, tempoS: Math.round(d / 1000), rounds: wodRoundsRef.current || undefined })
+      return d
+    })
+    setDone(true)
   }, [releaseWakeLock])
 
   const iniciar = useCallback(() => {
@@ -308,8 +424,14 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
         displayMs,
         baseSeconds,
         label,
+        wod,
+        wodRounds,
+        wodResultado,
         runTotalMs: runTotalMsRef.current,
         abrir,
+        abrirWod,
+        addRound,
+        terminarWod,
         expandir,
         minimizar,
         fechar,

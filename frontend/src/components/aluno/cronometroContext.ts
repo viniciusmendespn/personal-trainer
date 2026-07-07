@@ -13,6 +13,26 @@ export function fmtCrono(ms: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
+/** Configuração do timer de WOD (spec CROSSFIT §3.3) — camada opcional sobre o engine
+ * regressivo/progressivo: FOR_TIME conta pra cima com time cap; AMRAP conta pra baixo com
+ * contador de rounds; EMOM conta pra cima com beep a cada intervalo e slot do minuto. */
+export interface WodConfig {
+  formato: 'FOR_TIME' | 'AMRAP' | 'EMOM'
+  blocoId: string
+  blocoNome?: string
+  timeCapS?: number      // FOR_TIME
+  duracaoS?: number      // AMRAP/EMOM: duração total
+  intervaloS?: number    // EMOM (default 60)
+  slots?: string[]       // EMOM: nomes dos exercícios por minuto (cicla)
+}
+
+/** Resultado capturado pelo timer — pré-preenche o modal de score na finalização. */
+export interface WodResultado {
+  blocoId: string
+  tempoS?: number        // FOR_TIME ("Terminei!")
+  rounds?: number        // AMRAP
+}
+
 export interface CronometroState {
   open: boolean
   minimized: boolean
@@ -22,11 +42,20 @@ export interface CronometroState {
   displayMs: number
   baseSeconds: number
   label?: string
+  wod?: WodConfig
+  wodRounds: number
+  wodResultado?: WodResultado
 }
 
 export interface CronometroContextValue extends CronometroState {
   /** Abre uma NOVA sessão de cronômetro (reseta), overlay expandido. */
   abrir: (seconds?: number, label?: string) => void
+  /** Abre o timer de WOD pré-configurado com os parâmetros do bloco. */
+  abrirWod: (cfg: WodConfig) => void
+  /** AMRAP: incrementa o contador de rounds. */
+  addRound: () => void
+  /** FOR_TIME: para o relógio e captura o tempo como resultado. */
+  terminarWod: () => void
   /** Expande o overlay a partir da pílula (sem resetar). */
   expandir: () => void
   /** Minimiza para a pílula (continua contando). */
