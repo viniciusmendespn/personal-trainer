@@ -120,7 +120,10 @@ const STATUS_FEEDBACK: Record<FeedbackAdmin['status'], { label: string; cls: str
 function FeedbacksTab() {
   const queryClient = useQueryClient()
   const toast = useToast()
+  const confirm = useConfirm()
   const [dias, setDias] = useState<Record<string, number>>({})
+  const [filtro, setFiltro] = useState<'TODAS' | FeedbackAdmin['status']>('NOVO')
+  const [aberto, setAberto] = useState<Record<string, boolean>>({})
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin-feedbacks'],
@@ -145,11 +148,30 @@ function FeedbacksTab() {
     onError: () => toast.show('Falha ao arquivar.', 'error'),
   })
 
+  async function confirmarBonificar(f: FeedbackAdmin) {
+    const d = dias[f.ref] || 30
+    const ok = await confirm({
+      title: 'Bonificar com dias grátis',
+      message: <>Conceder <strong>{d} dia{d > 1 ? 's' : ''}</strong> grátis de Gestão Pro para <strong>{f.name || f.email || 'este personal'}</strong>? A validade do plano será estendida e o personal será notificado.</>,
+      confirmLabel: 'Bonificar',
+    })
+    if (ok) bonificar.mutate(f)
+  }
+
   if (isLoading) return <p className="text-sm text-text-muted">Carregando...</p>
   if (error) return <p className="text-sm text-red-400">Erro ao carregar feedbacks.</p>
 
   const linhas = data?.feedbacks ?? []
   const novos = linhas.filter((f) => f.status === 'NOVO').length
+  const visiveis = filtro === 'TODAS' ? linhas : linhas.filter((f) => f.status === filtro)
+
+  const FILTROS: { key: 'TODAS' | FeedbackAdmin['status']; label: string }[] = [
+    { key: 'TODAS', label: 'Todas' },
+    { key: 'NOVO', label: 'Novas' },
+    { key: 'LIDO', label: 'Lidas' },
+    { key: 'BONIFICADO', label: 'Bonificadas' },
+    { key: 'ARQUIVADO', label: 'Arquivadas' },
+  ]
 
   return (
     <div className="space-y-3">
@@ -159,12 +181,31 @@ function FeedbacksTab() {
         {novos > 0 && <span className="text-accent-hover">· {novos} nova(s)</span>}
       </div>
 
+      <div className="flex flex-wrap gap-1.5">
+        {FILTROS.map((ff) => {
+          const count = ff.key === 'TODAS' ? linhas.length : linhas.filter((f) => f.status === ff.key).length
+          const ativo = filtro === ff.key
+          return (
+            <button
+              key={ff.key}
+              onClick={() => setFiltro(ff.key)}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${ativo ? 'bg-accent text-white' : 'bg-surface-elevated border border-border text-text-secondary hover:bg-white/5'}`}
+            >
+              {ff.label} <span className={ativo ? 'opacity-80' : 'text-text-muted'}>({count})</span>
+            </button>
+          )
+        })}
+      </div>
+
       {linhas.length === 0 && (
         <p className="text-sm text-text-muted">Nenhuma mensagem enviada ainda.</p>
       )}
+      {linhas.length > 0 && visiveis.length === 0 && (
+        <p className="text-sm text-text-muted">Nenhuma mensagem com esse status.</p>
+      )}
 
       <div className="space-y-2">
-        {linhas.map((f) => (
+        {visiveis.map((f) => (
           <div
             key={f.ref}
             className={`p-3 rounded-lg border ${f.status === 'NOVO' ? 'border-accent/40 bg-accent/[0.04]' : 'border-border bg-surface-elevated'}`}
@@ -180,7 +221,13 @@ function FeedbacksTab() {
               </span>
             </div>
 
-            <p className="mt-2 text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">{f.mensagem}</p>
+            <p
+              onClick={() => setAberto((a) => ({ ...a, [f.ref]: !a[f.ref] }))}
+              title={aberto[f.ref] ? 'Clique para recolher' : 'Clique para expandir'}
+              className={`mt-2 text-sm text-text-secondary whitespace-pre-wrap leading-relaxed cursor-pointer ${aberto[f.ref] ? '' : 'line-clamp-2'}`}
+            >
+              {f.mensagem}
+            </p>
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="text-[11px] text-text-muted mr-auto">
@@ -198,7 +245,7 @@ function FeedbacksTab() {
                     <span className="text-xs text-text-secondary">dias</span>
                   </div>
                   <button
-                    onClick={() => bonificar.mutate(f)}
+                    onClick={() => confirmarBonificar(f)}
                     disabled={bonificar.isPending}
                     className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium bg-emerald-500/15 text-emerald-400 rounded-lg hover:bg-emerald-500/25 disabled:opacity-50 transition-colors"
                   >
