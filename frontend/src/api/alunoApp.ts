@@ -1,5 +1,5 @@
 import { alunoClient } from './alunoClient'
-import type { Exercicio, ExercicioSubstituto, Treino } from '../types'
+import type { BlocoTreino, Exercicio, ExercicioSubstituto, Treino } from '../types'
 import type { Evolucao, ExercicioEvolucao, Resumo } from './evolucao'
 import type { FeedItem, MidiaExercicio, Relato } from './treinos'
 import { prepareMediaForUpload, MEDIA_CACHE_CONTROL } from '../utils/media'
@@ -65,6 +65,7 @@ export interface SerieInput {
   carga?: string
   reps?: number
   rpe?: number
+  aquecimento?: boolean   // série de aproximação — fora de PR/volume/pontos
 }
 
 export interface NovoPR {
@@ -110,13 +111,15 @@ export interface HistoricoMes {
 export interface ExSessao {
   exercicio_id: string
   nome: string
+  bloco_id?: string | null
+  aquecimento?: boolean
   tipo_exercicio?: string   // 'FORCA' | 'PERFORMANCE' (+ legados CARDIO/PESO_CORPORAL na leitura)
   unidade_carga?: string
   unidade_reps?: string
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
-  series_prescritas?: Array<{ series: number; reps: string; carga?: string }>
+  series_prescritas?: Array<{ series: number; reps: string; carga?: string; aquecimento?: boolean }>
   intervalo_s?: number
   video_url?: string
   observacoes?: string
@@ -129,6 +132,7 @@ export interface ExSessao {
 export interface SessaoExercicios {
   sessao_id: string
   treino_nome: string
+  blocos?: BlocoTreino[]
   exercicios: ExSessao[]
 }
 

@@ -98,6 +98,26 @@ export interface AlunoCreate {
   custom?: Custom
 }
 
+/** Formato de um bloco de treino (CrossFit/HIIT). LIVRE = comportamento clássico. */
+export type FormatoBloco = 'LIVRE' | 'FOR_TIME' | 'AMRAP' | 'EMOM'
+
+export interface BlocoParams {
+  rounds?: number            // FOR_TIME: "4 rounds de..."
+  time_cap_s?: number        // FOR_TIME: tempo limite
+  duracao_s?: number         // AMRAP/EMOM: duração total
+  intervalo_s?: number       // EMOM: 60/90/120s
+  descanso_rounds_s?: number // FOR_TIME: descanso entre rounds
+}
+
+export interface BlocoTreino {
+  id: string
+  nome: string
+  ordem: number
+  formato: FormatoBloco
+  params?: BlocoParams
+  aquecimento?: boolean      // bloco de warmup: sem formato/score, fora de PR/volume/pontos
+}
+
 export interface Treino {
   treino_id: string
   aluno_id: string
@@ -108,6 +128,7 @@ export interface Treino {
   ativo: boolean
   data_inicio?: string
   data_fim?: string
+  blocos?: BlocoTreino[]
   total_execucoes?: number
   // Agregados de tempo por treino (somados no finish); médias contam execuções a partir do deploy.
   soma_duracao_segundos?: number
@@ -126,6 +147,7 @@ export interface TreinoCreate {
   ativo?: boolean
   data_inicio?: string
   data_fim?: string
+  blocos?: BlocoTreino[]
   custom?: Custom
 }
 
@@ -195,6 +217,7 @@ export interface SeriePrescrita {
   series: number
   reps: string
   carga?: string
+  aquecimento?: boolean      // série de aproximação/ramp-up — fora de PR/volume/pontos
 }
 
 export interface Exercicio {
@@ -204,6 +227,8 @@ export interface Exercicio {
   nome: string
   grupo?: string
   ordem: number
+  bloco_id?: string
+  aquecimento?: boolean
   tipo_exercicio?: TipoExercicio
   unidade_carga?: string
   unidade_reps?: string
@@ -228,6 +253,8 @@ export interface ExercicioCreate {
   nome: string
   grupo?: string
   ordem?: number
+  bloco_id?: string
+  aquecimento?: boolean
   tipo_exercicio?: TipoExercicio
   unidade_carga?: string
   unidade_reps?: string
@@ -296,6 +323,8 @@ export interface AgendamentoCreate {
 export interface ExercicioTemplate {
   nome: string
   ordem?: number
+  bloco_id?: string
+  aquecimento?: boolean
   tipo_exercicio?: TipoExercicio
   grupo?: string
   rm_kg?: number
@@ -320,6 +349,7 @@ export interface TreinoTemplate {
   personal_id: string
   nome: string
   foco?: string
+  blocos?: BlocoTreino[]
   exercicios: ExercicioTemplate[]
   created_at: string
   pacote_id?: string
@@ -330,6 +360,7 @@ export interface TreinoTemplate {
 export interface TreinoTemplateCreate {
   nome: string
   foco?: string
+  blocos?: BlocoTreino[]
   exercicios?: ExercicioTemplate[]
 }
 
@@ -337,6 +368,7 @@ export interface TreinoRotina {
   nome: string
   foco?: string
   ordem?: number
+  blocos?: BlocoTreino[]
   exercicios: ExercicioTemplate[]
 }
 

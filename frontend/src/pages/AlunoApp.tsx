@@ -31,6 +31,7 @@ import { alunoFinanceiroApi } from '../api/financeiro'
 import { PixModal } from '../components/financeiro/PixModal'
 import type { Cobranca, ExercicioSubstituto, SeriePrescrita } from '../types'
 import { normalizeTipoExercicio } from '../types'
+import { formatoBlocoLabel } from '../components/exercicios/BlocosTreinoEditor'
 import { videoUrlComFallback } from '../utils/video'
 import { chaveExercicio, normalizeText } from '../utils/normalizeText'
 
@@ -893,6 +894,17 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
   if (previewId) {
     const nomeTreino = lista.find((t) => t.id === previewId)?.nome ?? 'Treino'
     const exs = previewExs.data ?? []
+    const blocosPreview = ((hoje.data?.treinos ?? []).find((t) => t.treino_id === previewId)?.blocos ?? [])
+      .slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+    const blocoDe = (bId?: string | null) => blocosPreview.find((b) => b.id === bId)
+    // Reordena a lista plana pela ordem dos blocos (exercícios sem bloco vão para o fim)
+    const exsOrdenados = blocosPreview.length
+      ? [...exs].sort((a, b) => {
+          const ba = blocosPreview.findIndex((bl) => bl.id === a.bloco_id)
+          const bb = blocosPreview.findIndex((bl) => bl.id === b.bloco_id)
+          return (ba === -1 ? 99 : ba) - (bb === -1 ? 99 : bb) || (a.ordem ?? 0) - (b.ordem ?? 0)
+        })
+      : exs
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2">
@@ -912,13 +924,29 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
           <div className="flex justify-center py-6"><Spinner /></div>
         ) : (
           <div className="space-y-2">
-            {exs.map((ex, i) => (
-              <Card key={ex.exercicio_id} variant="elevated" className="space-y-1">
+            {exsOrdenados.map((ex, i) => {
+              const bloco = blocoDe(ex.bloco_id)
+              const primeiroDoBloco = !!bloco && (i === 0 || exsOrdenados[i - 1].bloco_id !== ex.bloco_id)
+              const aquecido = ex.aquecimento || bloco?.aquecimento
+              return (
+              <React.Fragment key={ex.exercicio_id}>
+              {primeiroDoBloco && bloco && (
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="text-sm font-display font-semibold">{bloco.nome}</span>
+                  {formatoBlocoLabel(bloco) && (
+                    <Badge tone={bloco.aquecimento ? 'neutral' : 'accent'}>{formatoBlocoLabel(bloco)}</Badge>
+                  )}
+                </div>
+              )}
+              <Card variant="elevated" className={`space-y-1 ${aquecido ? 'opacity-80' : ''}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-2 min-w-0">
                     <span className="text-xs font-medium text-text-muted mt-0.5 shrink-0">{i + 1}.</span>
                     <div className="min-w-0">
-                      <p className="font-medium text-sm">{ex.nome}</p>
+                      <p className="font-medium text-sm">
+                        {ex.nome}
+                        {ex.aquecimento && !bloco?.aquecimento && <span className="ml-1.5 text-[10px] text-warning align-middle">aquecimento</span>}
+                      </p>
                       <p className="text-xs text-text-secondary mt-0.5">
                         {ex.series_prescritas?.length
                           ? <SeriesPrescritasCompact items={ex.series_prescritas} />
@@ -952,7 +980,9 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
                   </div>
                 </div>
               </Card>
-            ))}
+              </React.Fragment>
+              )
+            })}
           </div>
         )}
 
@@ -1153,7 +1183,39 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
         />
       </div>
       <p className="text-xs text-text-muted">Toque em um exercício para registrar — você pode começar por onde quiser e editar depois.</p>
-      {exs.map((ex) => <ExercicioCard key={ex.exercicio_id} ex={ex} onVerFeed={onVerFeed} onAbrirCronometro={abrirCrono} />)}
+      {(() => {
+        const blocos = (ses.data.blocos ?? []).slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+        const blocoIds = new Set(blocos.map((b) => b.id))
+        const semBloco = exs.filter((e) => !e.bloco_id || !blocoIds.has(e.bloco_id))
+        const card = (ex: ExSessao) => (
+          <ExercicioCard key={ex.exercicio_id} ex={ex} onVerFeed={onVerFeed} onAbrirCronometro={abrirCrono} />
+        )
+        if (!blocos.length) return exs.map(card)
+        return (
+          <>
+            {blocos.map((b) => {
+              const doBloco = exs.filter((e) => e.bloco_id === b.id)
+              if (!doBloco.length) return null
+              const label = formatoBlocoLabel(b)
+              return (
+                <div key={b.id} className={`space-y-3 ${b.aquecimento ? 'opacity-80' : ''}`}>
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-sm font-display font-semibold">{b.nome}</span>
+                    {label && <Badge tone={b.aquecimento ? 'neutral' : 'accent'}>{label}</Badge>}
+                  </div>
+                  {doBloco.map(card)}
+                </div>
+              )
+            })}
+            {semBloco.length > 0 && (
+              <div className="space-y-3">
+                <div className="pt-1"><span className="text-sm font-display font-semibold">Outros</span></div>
+                {semBloco.map(card)}
+              </div>
+            )}
+          </>
+        )
+      })()}
       <Button
         variant="energy"
         className="w-full"
@@ -1346,15 +1408,15 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
     const variantNome = v?.nome ?? null
     const registradoNome = ex.substituto_executado ?? null
     if (ex.registrado?.length && variantNome === registradoNome) {
-      return ex.registrado.map((s) => ({ carga: s.carga ?? '', reps: s.reps != null ? String(s.reps) : '', repsHint: '', cargaHint: '' }))
+      return ex.registrado.map((s) => ({ carga: s.carga ?? '', reps: s.reps != null ? String(s.reps) : '', repsHint: '', cargaHint: '', aquecimento: !!s.aquecimento }))
     }
     const prescritas = v?.series_prescritas?.length ? v.series_prescritas : ex.series_prescritas
     if (prescritas?.length) {
       return prescritas.flatMap((p) =>
-        Array.from({ length: p.series }, () => ({ carga: '', reps: '', repsHint: p.reps ? String(p.reps) : '', cargaHint: p.carga ? String(p.carga) : '' }))
+        Array.from({ length: p.series }, () => ({ carga: '', reps: '', repsHint: p.reps ? String(p.reps) : '', cargaHint: p.carga ? String(p.carga) : '', aquecimento: !!p.aquecimento }))
       )
     }
-    return Array.from({ length: ex.series ?? 1 }, () => ({ carga: '', reps: '', repsHint: '', cargaHint: ex.carga_prescrita ?? '' }))
+    return Array.from({ length: ex.series ?? 1 }, () => ({ carga: '', reps: '', repsHint: '', cargaHint: ex.carga_prescrita ?? '', aquecimento: false }))
   }
   const [rows, setRows] = useState(() => buildRows(variante))
   const upd = (i: number, f: 'carga' | 'reps', v: string) =>
@@ -1385,6 +1447,7 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
       const series = rows.map((r) => ({
         carga: tipo === 'PERFORMANCE' ? undefined : (normalizeCargaOut(r.carga) || undefined),
         reps: Number(r.reps),
+        aquecimento: r.aquecimento || undefined,
       }))
       return alunoApi.registrar(series, ex.exercicio_id, variante?.nome)
     },
@@ -1415,8 +1478,9 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
         <button className="flex-1 flex items-center justify-between text-left min-w-0"
           onClick={() => { if (!open) { setRows(buildRows(variante)); setPr(null) } setOpen((o) => !o) }}>
           <span className="min-w-0">
-            <span className="font-medium block truncate">
+            <span className={`font-medium block truncate ${ex.aquecimento ? 'text-text-secondary' : ''}`}>
               {nomeAtivo}
+              {ex.aquecimento && <span className="ml-1.5 text-[10px] text-warning align-middle">aquecimento</span>}
               {variante && <span className="ml-1.5 text-[10px] text-accent align-middle">substituto</span>}
             </span>
             <span className="block mt-0.5">
@@ -1520,9 +1584,10 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
           )}
 
           {rows.map((r, i) => (
-            <div key={i} className="flex gap-2 items-center">
+            <div key={i} className={`flex gap-2 items-center ${r.aquecimento ? 'opacity-70' : ''}`}>
               <span className="text-xs text-text-muted w-12">
                 {`Sér ${i + 1}`}
+                {r.aquecimento && <span className="block text-[9px] text-warning leading-none">aq.</span>}
               </span>
               {/* F3 — reps antes de carga */}
               <div className="relative flex-1">
@@ -1559,7 +1624,7 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro }: { ex: ExSessao; onV
             </div>
           ))}
           <button
-            onClick={() => setRows([...rows, { carga: '', reps: '', repsHint: '', cargaHint: '' }])}
+            onClick={() => setRows([...rows, { carga: '', reps: '', repsHint: '', cargaHint: '', aquecimento: false }])}
             className="text-xs text-accent-hover"
           >
             + série

@@ -27,12 +27,13 @@ import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas }
 import { LinksUteisSelector } from '../components/exercicios/LinksUteisSelector'
 import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
+import { BlocosTreinoEditor, formatoBlocoLabel } from '../components/exercicios/BlocosTreinoEditor'
 import { IntervaloInput } from '../components/exercicios/IntervaloInput'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import { CalendarioMes } from '../components/historico/CalendarioMes'
 import { HistoricoLista } from '../components/historico/HistoricoLista'
 import { usePersonalTimeline } from '../hooks/usePersonalTimeline'
-import type { Treino, Exercicio, ExercicioCreate, ExercicioSubstituto, SeriePrescrita, TipoExercicio, MetricaDirecao, AlunoExistenteConflict, Aluno, Rotina, AplicarRotinaModo } from '../types'
+import type { Treino, Exercicio, ExercicioCreate, ExercicioSubstituto, SeriePrescrita, TipoExercicio, MetricaDirecao, AlunoExistenteConflict, Aluno, Rotina, AplicarRotinaModo, BlocoTreino } from '../types'
 import { normalizeTipoExercicio } from '../types'
 import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
 import { MetasTab } from '../components/aluno/MetasTab'
@@ -105,6 +106,7 @@ export function AlunoDetailPage() {
   const [foco, setFoco] = useState('')
   const [dtIni, setDtIni] = useState('')
   const [dtFim, setDtFim] = useState('')
+  const [novoBlocos, setNovoBlocos] = useState<BlocoTreino[]>([])
   const [editing, setEditing] = useState(false)
   const [eNome, setENome] = useState('')
   const [eTel, setETel] = useState('')
@@ -226,9 +228,10 @@ export function AlunoDetailPage() {
     await createTreino.mutateAsync({
       nome, foco: foco || undefined,
       data_inicio: dtIni || undefined, data_fim: dtFim || undefined,
+      blocos: novoBlocos.filter((b) => b.nome.trim()),
       ordem: (treinos?.length ?? 0) + 1,
     })
-    setNome(''); setFoco(''); setDtIni(''); setDtFim('')
+    setNome(''); setFoco(''); setDtIni(''); setDtFim(''); setNovoBlocos([])
     setShowAddTreino(false)
   }
 
@@ -477,6 +480,7 @@ export function AlunoDetailPage() {
                 <Input label="Início" type="date" value={dtIni} onChange={(e) => setDtIni(e.target.value)} />
                 <Input label="Fim" type="date" value={dtFim} onChange={(e) => setDtFim(e.target.value)} />
               </div>
+              <BlocosTreinoEditor value={novoBlocos} onChange={setNovoBlocos} />
               <Button type="submit" className="w-full" disabled={createTreino.isPending}>
                 {createTreino.isPending ? 'Adicionando…' : 'Adicionar treino'}
               </Button>
@@ -535,7 +539,7 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
               body: {
                 nome: t.nome, foco: t.foco, observacoes: t.observacoes,
                 ativo: t.ativo, data_inicio: t.data_inicio, data_fim: t.data_fim,
-                custom: t.custom, ordem: idx,
+                blocos: t.blocos, custom: t.custom, ordem: idx,
               },
             })
           )
@@ -555,7 +559,8 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
       treinoId: t.treino_id,
       body: {
         nome: t.nome, ordem: t.ordem, foco: t.foco, observacoes: t.observacoes,
-        ativo: true, data_inicio: t.data_inicio, data_fim: novaDataFim || undefined, custom: t.custom,
+        ativo: true, data_inicio: t.data_inicio, data_fim: novaDataFim || undefined,
+        blocos: t.blocos, custom: t.custom,
       },
     })
     show('Vigência renovada.', 'success')
@@ -773,6 +778,7 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
   const [tFoco, setTFoco] = useState(treino.foco ?? '')
   const [tIni, setTIni] = useState(treino.data_inicio ?? '')
   const [tFim, setTFim] = useState(treino.data_fim ?? '')
+  const [tBlocos, setTBlocos] = useState<BlocoTreino[]>(treino.blocos ?? [])
 
   async function addEx(body: ExercicioCreate) {
     await createEx.mutateAsync({ ...body, ordem: (exs?.length ?? 0) + 1 })
@@ -811,7 +817,10 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
     e.preventDefault()
     await updTreino.mutateAsync({
       treinoId: treino.treino_id,
-      body: { nome: tNome, foco: tFoco || undefined, data_inicio: tIni || undefined, data_fim: tFim || undefined },
+      body: {
+        nome: tNome, foco: tFoco || undefined, data_inicio: tIni || undefined, data_fim: tFim || undefined,
+        blocos: tBlocos.filter((b) => b.nome.trim()),
+      },
     })
     setEditT(false)
   }
@@ -865,6 +874,7 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
             <Input label="Início" type="date" value={tIni} onChange={(e) => setTIni(e.target.value)} />
             <Input label="Fim" type="date" value={tFim} onChange={(e) => setTFim(e.target.value)} />
           </div>
+          <BlocosTreinoEditor value={tBlocos} onChange={setTBlocos} />
           <Button type="submit" className="w-full" disabled={updTreino.isPending}>
             {updTreino.isPending ? 'Salvando…' : 'Salvar'}
           </Button>
@@ -887,9 +897,39 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
               </div>
             )
           })()}
-          {(exs ?? []).sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)).map((ex) => (
-            <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} />
-          ))}
+          {(() => {
+            const ordenados = (exs ?? []).slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+            const blocos = (treino.blocos ?? []).slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+            const blocoIds = new Set(blocos.map((b) => b.id))
+            const semBloco = ordenados.filter((e) => !e.bloco_id || !blocoIds.has(e.bloco_id))
+            const row = (ex: Exercicio) => (
+              <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} blocos={treino.blocos} />
+            )
+            if (!blocos.length) return ordenados.map(row)
+            return (
+              <>
+                {blocos.map((b) => {
+                  const doBloco = ordenados.filter((e) => e.bloco_id === b.id)
+                  const label = formatoBlocoLabel(b)
+                  return (
+                    <div key={b.id} className={b.aquecimento ? 'opacity-70' : ''}>
+                      <div className="flex items-center gap-2 mt-2 mb-1">
+                        <span className="text-xs font-semibold text-text-secondary">{b.nome}</span>
+                        {label && <Badge tone={b.aquecimento ? 'neutral' : 'accent'}>{label}</Badge>}
+                      </div>
+                      {doBloco.length ? doBloco.map(row) : <p className="text-xs text-text-muted pl-2">Sem exercícios neste bloco.</p>}
+                    </div>
+                  )
+                })}
+                {semBloco.length > 0 && (
+                  <div>
+                    <div className="mt-2 mb-1"><span className="text-xs font-semibold text-text-secondary">Sem bloco</span></div>
+                    {semBloco.map(row)}
+                  </div>
+                )}
+              </>
+            )
+          })()}
           <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={() => setAddingEx(true)}>
             <span className="flex items-center gap-1"><Plus size={14} /> Exercício</span>
           </Button>
@@ -897,24 +937,27 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
       )}
 
       <Modal open={addingEx} onClose={() => setAddingEx(false)} title="Novo exercício" size="lg">
-        <ExercicioForm biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} submitLabel="Adicionar exercício" submitting={createEx.isPending} onSubmit={addEx} />
+        <ExercicioForm biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} blocos={treino.blocos} submitLabel="Adicionar exercício" submitting={createEx.isPending} onSubmit={addEx} />
       </Modal>
     </Card>
   )
 }
 
 function ExercicioForm({
-  initial, biblioteca, exerciciosAluno, onSubmit, submitting, submitLabel,
+  initial, biblioteca, exerciciosAluno, blocos, onSubmit, submitting, submitLabel,
 }: {
   initial?: Partial<Exercicio>
   biblioteca?: { exlib_id: string; nome: string; grupo?: string; video_url?: string; recomendacoes?: string; links_uteis?: string[]; substitutos?: ExercicioSubstituto[] }[]
   exerciciosAluno?: Exercicio[]
+  blocos?: BlocoTreino[]
   onSubmit: (body: ExercicioCreate) => Promise<void>
   submitting?: boolean
   submitLabel: string
 }) {
   const [nome, setNome] = useState(initial?.nome ?? '')
   const [grupo, setGrupo] = useState(initial?.grupo ?? '')
+  const [blocoId, setBlocoId] = useState(initial?.bloco_id ?? '')
+  const [aquecimento, setAquecimento] = useState(!!initial?.aquecimento)
   const [tipo, setTipo] = useState<TipoExercicio>(normalizeTipoExercicio(initial?.tipo_exercicio))
   const [seriesPrescritas, setSeriesPrescritas] = useState<SeriePrescrita[]>(() =>
     initSeriesPrescritas(initial?.series_prescritas, initial?.series, initial?.reps_prescritas, initial?.carga_prescrita)
@@ -979,6 +1022,8 @@ function ExercicioForm({
     await onSubmit({
       nome,
       grupo: grupo || undefined,
+      bloco_id: blocoId || undefined,
+      aquecimento,
       tipo_exercicio: tipo,
       unidade_carga: unidadeCarga || undefined,
       unidade_reps: unidadeReps || undefined,
@@ -1010,6 +1055,27 @@ function ExercicioForm({
             value={grupo} onChange={setGrupo}
             suggestions={grupos}
           />
+        </div>
+        <div className="flex items-end gap-3 mt-3">
+          {(blocos?.length ?? 0) > 0 && (
+            <div className="flex-1">
+              <label className="text-xs text-text-muted mb-1 block">Bloco</label>
+              <select
+                className="w-full px-3 py-2 rounded-lg bg-surface border border-border text-text text-sm focus:outline-none focus:border-accent"
+                value={blocoId}
+                onChange={(e) => setBlocoId(e.target.value)}
+              >
+                <option value="">Sem bloco</option>
+                {(blocos ?? []).map((b) => (
+                  <option key={b.id} value={b.id}>{b.nome}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          <label className="flex items-center gap-1.5 text-xs text-text-muted cursor-pointer select-none pb-2.5">
+            <input type="checkbox" checked={aquecimento} onChange={(e) => setAquecimento(e.target.checked)} />
+            Aquecimento <span className="opacity-70">(sem PR/volume/pontos)</span>
+          </label>
         </div>
       </div>
       <div>
@@ -1137,11 +1203,12 @@ function ExercicioForm({
 }
 
 function ExercicioRow({
-  alunoId, treinoId, ex, biblioteca, exerciciosAluno,
+  alunoId, treinoId, ex, biblioteca, exerciciosAluno, blocos,
 }: {
   alunoId: string; treinoId: string; ex: Exercicio
   biblioteca?: { exlib_id: string; nome: string; grupo?: string; video_url?: string; substitutos?: ExercicioSubstituto[] }[]
   exerciciosAluno?: Exercicio[]
+  blocos?: BlocoTreino[]
 }) {
   const [edit, setEdit] = useState(false)
   const [mediaOpen, setMediaOpen] = useState(false)
@@ -1165,9 +1232,10 @@ function ExercicioRow({
 
   return (
     <div className="border-b border-border pb-1.5">
-      <div className="flex items-center justify-between gap-2 text-sm">
+      <div className={`flex items-center justify-between gap-2 text-sm ${ex.aquecimento ? 'opacity-70' : ''}`}>
         <span className="min-w-0 truncate">
           {ex.nome}
+          {ex.aquecimento && <Badge tone="neutral" className="ml-1.5 align-middle">aq.</Badge>}
           <span className="ml-2">
             {ex.series_prescritas?.length
               ? <SeriesPrescritasCompact items={ex.series_prescritas} tipoExercicio={ex.tipo_exercicio} rm_kg={ex.rm_kg} />
@@ -1189,7 +1257,7 @@ function ExercicioRow({
       </div>
 
       <Modal open={edit} onClose={() => setEdit(false)} title="Editar exercício" size="lg">
-        <ExercicioForm initial={ex} biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} submitLabel="Salvar" submitting={upd.isPending} onSubmit={save} />
+        <ExercicioForm initial={ex} biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} blocos={blocos} submitLabel="Salvar" submitting={upd.isPending} onSubmit={save} />
       </Modal>
 
       <ExercicioMediaModal

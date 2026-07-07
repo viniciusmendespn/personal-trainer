@@ -28,6 +28,9 @@ export function SeriesPrescritasEditor({
   function update(i: number, field: keyof SeriePrescrita, v: string) {
     onChange(safeValue.map((r, j) => j === i ? { ...r, [field]: field === 'series' ? Number(v) || 1 : v } : r))
   }
+  function toggleAquecimento(i: number) {
+    onChange(safeValue.map((r, j) => j === i ? { ...r, aquecimento: !r.aquecimento || undefined } : r))
+  }
   function remove(i: number) {
     onChange(safeValue.filter((_, j) => j !== i))
     setPcts(p => p.filter((_, j) => j !== i))
@@ -89,6 +92,18 @@ export function SeriesPrescritasEditor({
               )}
             </>
           )}
+          <button
+            type="button"
+            onClick={() => toggleAquecimento(i)}
+            title="Série de aquecimento (não conta para PR/volume/pontos)"
+            className={`shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-md border transition-colors ${
+              row.aquecimento
+                ? 'border-warning/50 bg-warning/15 text-warning'
+                : 'border-border text-text-muted hover:border-border-strong'
+            }`}
+          >
+            aq.
+          </button>
           {safeValue.length > 1 && (
             <button type="button" onClick={() => remove(i)} className="text-text-muted hover:text-danger shrink-0">
               <X size={14} />
@@ -119,7 +134,10 @@ export function SeriesPrescritasCompact({ items, tipoExercicio, rm_kg }: { items
         return (
           <span key={i}>
             {i > 0 && <span className="mx-1 opacity-50">+</span>}
-            <span>{s.series}×{s.reps}{(!ocultarCarga && s.carga) ? ` · ${s.carga}${pct != null ? ` (${pct}%)` : ''}` : ''}</span>
+            <span className={s.aquecimento ? 'opacity-60' : ''}>
+              {s.series}×{s.reps}{(!ocultarCarga && s.carga) ? ` · ${s.carga}${pct != null ? ` (${pct}%)` : ''}` : ''}
+              {s.aquecimento ? <span className="ml-0.5 text-[10px] text-warning">aq.</span> : ''}
+            </span>
           </span>
         )
       })}

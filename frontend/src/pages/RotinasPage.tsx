@@ -252,7 +252,7 @@ function TreinoList({ treinos, onMove, onRemove }: {
 }
 
 function tplToTreino(tpl: TreinoTemplate, ordem: number): TreinoRotina {
-  return { nome: tpl.nome, foco: tpl.foco, ordem, exercicios: tpl.exercicios }
+  return { nome: tpl.nome, foco: tpl.foco, ordem, blocos: tpl.blocos, exercicios: tpl.exercicios }
 }
 
 function CreateForm({ onDone }: { onDone: () => void }) {

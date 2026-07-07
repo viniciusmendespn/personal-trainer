@@ -34,10 +34,12 @@ interface ExecEx {
   exercicio_id: string
   exercicio_nome: string
   tipo_exercicio?: string   // 'FORCA' | 'PERFORMANCE' (+ legados na leitura)
+  bloco_id?: string | null
+  aquecimento?: boolean
   unidade_carga?: string
   unidade_reps?: string
-  series_exec: Array<{ carga?: string; reps?: number; rpe?: number }>
-  series_prescritas?: Array<{ series: number; reps: string; carga?: string }>
+  series_exec: Array<{ carga?: string; reps?: number; rpe?: number; aquecimento?: boolean }>
+  series_prescritas?: Array<{ series: number; reps: string; carga?: string; aquecimento?: boolean }>
   series?: number
   reps_prescritas?: string
   carga_prescrita?: string
@@ -55,7 +57,9 @@ function totalVolume(exs: ExecEx[]) {
   let v = 0
   for (const ex of exs) {
     if (ex.tipo_exercicio && ex.tipo_exercicio !== 'FORCA') continue
+    if (ex.aquecimento) continue
     for (const s of ex.series_exec) {
+      if (s.aquecimento) continue
       const cg = parseFloat(String(s.carga ?? '').replace(',', '.'))
       if (!isNaN(cg) && s.reps) v += cg * s.reps
     }
@@ -101,9 +105,12 @@ function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
   const relatos = (ex.relatos ?? []).map((r) => ({ ...r, tipo: r.tipo as 'DOR' | 'DUVIDA' | 'CORRECAO' }))
 
   return (
-    <div className="space-y-2 pb-3 border-b border-border last:border-0 last:pb-0">
+    <div className={`space-y-2 pb-3 border-b border-border last:border-0 last:pb-0 ${ex.aquecimento ? 'opacity-70' : ''}`}>
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-text">{ex.exercicio_nome}</p>
+        <p className="text-sm font-semibold text-text">
+          {ex.exercicio_nome}
+          {ex.aquecimento && <span className="ml-1.5 text-[10px] font-normal text-warning align-middle">aquecimento</span>}
+        </p>
         {alunoId && (
           <button
             type="button"
@@ -130,11 +137,12 @@ function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
         <div className="space-y-0.5">
           <p className="text-xs text-text-muted font-medium">Executado</p>
           {ex.series_exec.map((s, i) => (
-            <div key={i} className="flex items-center gap-3 pl-2 text-xs">
+            <div key={i} className={`flex items-center gap-3 pl-2 text-xs ${s.aquecimento ? 'opacity-70' : ''}`}>
               <span className="text-text-muted w-12 shrink-0">Sér {i + 1}</span>
               <span className="text-text">
                 {execLabel(tipo, s, ex.unidade_carga, ex.unidade_reps)}
               </span>
+              {s.aquecimento && <span className="text-[10px] text-warning">aq.</span>}
               {s.rpe != null && (
                 <span className="text-text-muted">RPE {s.rpe}</span>
               )}

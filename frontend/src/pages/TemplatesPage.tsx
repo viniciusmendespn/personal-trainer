@@ -7,8 +7,9 @@ import { useBiblioteca } from '../hooks/useDominio'
 import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm, AutocompleteInput } from '../components/ui'
 import { SeriesPrescritasEditor, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
+import { BlocosTreinoEditor } from '../components/exercicios/BlocosTreinoEditor'
 import { IntervaloInput } from '../components/exercicios/IntervaloInput'
-import type { ExercicioTemplate, TreinoTemplate, SeriePrescrita, TipoExercicio, MetricaDirecao } from '../types'
+import type { ExercicioTemplate, TreinoTemplate, SeriePrescrita, TipoExercicio, MetricaDirecao, BlocoTreino } from '../types'
 import { normalizeTipoExercicio } from '../types'
 
 
@@ -166,6 +167,7 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
   const { data: biblioteca } = useBiblioteca()
   const [nome, setNome] = useState(template?.nome ?? '')
   const [foco, setFoco] = useState(template?.foco ?? '')
+  const [blocos, setBlocos] = useState<BlocoTreino[]>(template?.blocos ?? [])
   const [exercicios, setExercicios] = useState<ExercicioTemplate[]>(() =>
     (template?.exercicios ?? []).map((ex) => ({
       ...ex,
@@ -195,7 +197,11 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
   async function save(e: React.FormEvent) {
     e.preventDefault()
     if (!nome.trim()) return
-    const body = { nome, foco: foco || undefined, exercicios: exercicios.filter((ex) => ex.nome.trim()) }
+    const body = {
+      nome, foco: foco || undefined,
+      blocos: blocos.filter((b) => b.nome.trim()),
+      exercicios: exercicios.filter((ex) => ex.nome.trim()),
+    }
     if (template) {
       await upd.mutateAsync({ id: template.template_id, body })
       show('Template atualizado.', 'success')
@@ -212,6 +218,8 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
         <Input label="Nome" placeholder="ex: Treino A" value={nome} onChange={(e) => setNome(e.target.value)} required autoFocus />
         <Input label="Foco" placeholder="ex: Inferiores" value={foco} onChange={(e) => setFoco(e.target.value)} />
       </div>
+
+      <BlocosTreinoEditor value={blocos} onChange={setBlocos} />
 
       <div className="space-y-3">
         {exercicios.map((ex, i) => {
@@ -249,6 +257,27 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                       suggestions={gruposUnicos}
                       onChange={(v) => updateEx(i, { grupo: v || undefined })}
                     />
+                  </div>
+                  <div className="flex items-end gap-3 mt-3">
+                    {blocos.length > 0 && (
+                      <div className="flex-1">
+                        <label className="text-xs text-text-muted mb-1 block">Bloco</label>
+                        <select
+                          className="w-full px-3 py-2 rounded-lg bg-surface border border-border text-text text-sm focus:outline-none focus:border-accent"
+                          value={ex.bloco_id ?? ''}
+                          onChange={(e) => updateEx(i, { bloco_id: e.target.value || undefined })}
+                        >
+                          <option value="">Sem bloco</option>
+                          {blocos.map((b) => (
+                            <option key={b.id} value={b.id}>{b.nome}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <label className="flex items-center gap-1.5 text-xs text-text-muted cursor-pointer select-none pb-2.5">
+                      <input type="checkbox" checked={!!ex.aquecimento} onChange={(e) => updateEx(i, { aquecimento: e.target.checked || undefined })} />
+                      Aquecimento <span className="opacity-70">(sem PR/volume/pontos)</span>
+                    </label>
                   </div>
                 </div>
 
