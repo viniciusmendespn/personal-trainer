@@ -3,6 +3,10 @@
 > Documento de referência para replicar este padrão arquitetural em outros projetos.
 > Stack: **React 19 + FastAPI + DynamoDB + Cognito + AWS SAM**
 > Meta de custo: **< $5/mês** em uso pessoal/baixo volume (tipicamente $0–$1/mês no free tier permanente).
+>
+> **Para iniciar um projeto novo:** copiar este arquivo para `docs/ARCHITECTURE.md` do projeto,
+> seguir o **checklist do §11** e criar o `CLAUDE.md` na raiz a partir do **template do §14** —
+> ele garante que a IA siga todos os padrões de escalabilidade e custo daqui.
 
 ---
 
@@ -822,6 +826,53 @@ Outputs:
     Value: !Ref CloudFrontDistribution
 ```
 
+> O template acima está sem as tags de custo para ficar legível — em conta compartilhada
+> as tags do **§12** são obrigatórias em todos os recursos.
+
+### 6.1 Logs — retenção obrigatória
+
+CloudWatch Logs sem retenção definida ficam armazenados **para sempre** — custo que só cresce.
+Criar o LogGroup explícito para cada função Lambda:
+
+```yaml
+  ApiFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ApiFunction}"
+      RetentionInDays: 30   # ajustar conforme necessidade de auditoria
+```
+
+### 6.2 Alerta de custo (1x por conta)
+
+Criar um AWS Budget com alerta por e-mail: Console → Billing → **Budgets** → Cost budget
+(ex.: $10/mês, alerta em 80% do valor). Protege contra loop de Lambda, bot de tráfego e
+qualquer surpresa de fatura. Em conta compartilhada, um budget geral já resolve; o custo
+por app é acompanhado via tag `Project` (§12.6).
+
+### 6.3 Domínio próprio (opcional)
+
+- Certificado **ACM obrigatoriamente em `us-east-1`** (CloudFront só aceita certificados
+  dessa região), validação por DNS.
+- Na distribution: `Aliases: [app.dominio.com.br]` + `ViewerCertificate`
+  (`AcmCertificateArn`, `SslSupportMethod: sni-only`, `MinimumProtocolVersion: TLSv1.2_2021`).
+- No DNS (Route 53 ou externo): registro A/AAAA alias (ou CNAME) apontando para o domínio
+  `dXXXX.cloudfront.net` da distribution.
+
+### 6.4 Múltiplos frontends no mesmo produto (opcional)
+
+Padrão validado quando o produto tem mais de um app (portal, app do cliente, loja, painel...):
+**um único bucket S3** servido por **uma distribution CloudFront por app**, cada uma com:
+- seu `DefaultRootObject` (`index.html`, `aluno.html`, ...);
+- custom error pages 403/404 apontando para o HTML do próprio app (SPA routing);
+- CloudFront Function de SPA routing quando necessário.
+
+O build Vite/Rollup usa **multi-entry** — um HTML por app, cada um com seu próprio manifest
+e bundle JS. Regras:
+- **Nunca copiar um HTML sobre o outro** — o build já gera cada um correto.
+- Deploy via **script único** que sincroniza o bucket, aplica a cache policy por tipo de
+  arquivo (assets com hash = cache longo; HTML/manifest = sem cache) e **invalida todas as
+  distributions** — invalidar só uma deixa as demais com cache stale.
+
 ---
 
 ## 7. Frontend
@@ -1165,6 +1216,16 @@ export default defineConfig({
 
 ## 8. Comandos de Deploy
 
+### 8.0 Regras de fluxo (obrigatórias)
+
+1. **Commit antes do deploy** — o SAM builda a partir do disco local, não do git. Nunca
+   deployar com arquivos não commitados: `git status` → `git diff` → `git add <arquivos>`
+   → `git commit` → deploy.
+2. **Revisar changeset** — `sam deploy --no-execute-changeset` → revisar o que o
+   CloudFormation vai alterar → `execute-change-set`. Essencial quando a mudança toca o
+   `template.yaml` (evita replace/delete acidental de tabela, pool, distribution).
+3. **Nunca `git add -A`** em backend/infra sem revisar o diff.
+
 ### 8.1 Backend
 
 ```bash
@@ -1429,6 +1490,11 @@ Não implementar preventivamente — adicione apenas quando o custo aparecer:
 
 ## 11. Checklist — Novo Projeto
 
+### Base do projeto
+- [ ] Copiar este arquivo para `docs/ARCHITECTURE.md` do novo projeto
+- [ ] Criar `CLAUDE.md` na raiz a partir do **template do §14** (substituir os placeholders)
+- [ ] Definir nome único do projeto (`{projeto}`) — prefixo de stack, tabela, bucket, pool e tag de custo
+
 ### Infraestrutura
 - [ ] Copiar `template.yaml` e substituir `{ProjectName}`
 - [ ] Confirmar: `Type: AWS::Serverless::HttpApi` (não `::Api`)
@@ -1440,6 +1506,9 @@ Não implementar preventivamente — adicione apenas quando o custo aparecer:
 - [ ] GSI1 com `ALL` apenas se lê itens completos via índice; índice só-para-descobrir-PK com `KEYS_ONLY`
 - [ ] Habilitar TTL na tabela (`TimeToLiveSpecification`)
 - [ ] Indicadores definidos via **agregado pré-computado** (§5.5); habilitar `StreamSpecification` + agregadora se usar Nível B
+- [ ] LogGroups com `RetentionInDays` para toda Lambda (§6.1) — sem isso os logs crescem para sempre
+- [ ] Budget/alerta de custo criado na conta (§6.2)
+- [ ] Separação de custos aplicada (§12.7) — tags em todos os recursos + AppRegistry + cost allocation tag ativada
 - [ ] Rodar `sam deploy --guided` uma vez para gerar `samconfig.toml`
 - [ ] Anotar outputs: `ApiUrl`, `UserPoolId`, `UserPoolClientId`
 
@@ -1798,3 +1867,109 @@ Aparecer no Google (indexar) é diferente de aparecer bem (ranquear). O que dete
 | Mobile-friendly | Médio | TailwindCSS + viewport meta já cobre |
 | HTTPS | Obrigatório | CloudFront com ACM já cobre |
 | Dados estruturados | Baixo | JSON-LD (coberto no §13.2) |
+
+---
+
+## 14. Template de `CLAUDE.md` para Novo Projeto
+
+> Copiar o bloco abaixo para o `CLAUDE.md` na raiz do novo projeto, substituindo os
+> placeholders `{projeto}`, `{accountId}`, `{profile}` e a descrição. Ele condensa as regras
+> deste documento em formato de instrução — é o que garante que a IA siga os padrões de
+> escalabilidade e custo em todas as tarefas, sem precisar reler este arquivo inteiro.
+> Conforme o projeto evolui, adicionar regras específicas dele (deploy script, domínios,
+> integrações), mantendo as seções abaixo intactas.
+
+````markdown
+# CLAUDE.md — {NomeDoProjeto}
+
+## Projeto
+{Uma frase: o que o produto faz e para quem.}
+Arquitetura: **React 19 + FastAPI + DynamoDB + Cognito + AWS SAM** — padrão completo em
+`docs/ARCHITECTURE.md` (seguir sempre; questionar qualquer proposta que o viole).
+
+## AWS Account
+- Account ID: `{accountId}`
+- Region: `us-east-1`
+- **Profile AWS: `{profile}`** — todos os comandos `aws`/`sam` usam `--profile {profile}`
+- Stack: `{projeto}-prod`
+
+> ⚠️ Conta compartilhada com outros apps — nunca tocar recursos sem o prefixo `{projeto}-`.
+
+## Separação de custos (requisito do projeto)
+O custo deste app é rastreado de forma isolada via tag **`Project: {projeto}`** em todos os
+recursos + AppRegistry Application (ver `docs/ARCHITECTURE.md` §12). **Todo recurso novo no
+`template.yaml` recebe as tags** — sem exceção.
+
+## Convenção de nomes (evita colisão na conta compartilhada)
+| Recurso | Nome |
+|---|---|
+| Stack | `{projeto}-prod` |
+| DynamoDB | `{projeto}-{stage}` |
+| UserPool | `{projeto}-users-{stage}` |
+| Bucket frontend | `{projeto}-frontend-{stage}-{accountId}` |
+| Tag de custo | `Project = {projeto}` |
+
+## Deploy
+- **Commit antes do deploy** — o SAM builda do disco, não do git. Sempre:
+  `git status` → `git diff` → `git add <arquivos>` → `git commit` → deploy.
+- Backend: `sam build` → `sam deploy --no-execute-changeset` → **revisar o changeset** →
+  `execute-change-set`. Nunca executar changeset que substitua/apague tabela, pool ou distribution
+  sem confirmar com o usuário.
+- Frontend: `npm run build` → `aws s3 sync` → invalidar CloudFront **apenas os arquivos sem
+  hash** (`/index.html`, manifests) — nunca `/*` sem necessidade.
+- Nunca `git add -A` em backend/infra sem revisar o diff.
+
+## Regras obrigatórias
+- `user_id` sempre via JWT (`Depends(get_current_user_id)`) — nunca do body
+- Single-table DynamoDB: PK = `USER#{user_id}`, SK = `{TIPO}#{id}`
+- TTL em todos os itens temporários
+- Evitar `get_item` antes de `update_item` — usar `update_item_if_exists`
+- Lambda arm64, `MemorySize: 256`, `Timeout: 29`, HTTP API v2
+- Dinheiro: `Decimal` no backend, `string` no frontend — nunca float
+- Enums espelhados backend ↔ frontend
+- Comandos AWS sempre com `--profile {profile}`
+- Backend alterado → oferecer deploy
+
+## ⚠️ REGRA OBRIGATÓRIA — DynamoDB: performance, escala e custo
+
+Toda proposta de acesso ao DynamoDB deve seguir estes princípios **sem exceção**
+(detalhes e exemplos em `docs/ARCHITECTURE.md` §5 e §10). Questionar qualquer padrão
+que os viole antes de implementar.
+
+### Modelagem (acesso eficiente)
+- **Single-table design**: uma tabela por stage, todos os tipos de item juntos.
+- **Acesso por PK+SK sempre que possível** — `GetItem`/`UpdateItem` com chave completa.
+- **Query > Scan**: nunca usar `Scan` em produção. Se um acesso novo exige `Scan`,
+  criar GSI ou reformular o modelo.
+- **GSI só para access pattern real e frequente**; projeção `KEYS_ONLY` ou `INCLUDE`
+  mínimo — nunca `ALL` sem justificativa.
+- **SK composto** (`TIPO#2026-06-30#id`) para `begins_with`/`between` sem GSI extra.
+
+### Capacidade e custo
+- **Billing: PAY_PER_REQUEST** em todas as tabelas.
+- **Itens < 4 KB**; blobs/históricos/listas que crescem → itens separados ou S3 com referência.
+- **TTL obrigatório** em itens temporários (sessões, tokens, cache, quotas).
+
+### Escrita
+- **`UpdateItem` em vez de `PutItem`** para atualização parcial.
+- **`update_item_if_exists`** (ConditionExpression) — nunca `GetItem` → lógica → `PutItem`.
+- **Massa → `BatchWriteItem`** (25/req); nunca loop de `PutItem`.
+- **Evitar hot keys**: PK distribuída com prefixo de `user_id`, nunca PK fixa global.
+
+### Leitura
+- **`ProjectionExpression`** quando não precisa de todos os atributos.
+- **`ConsistentRead` só quando estritamente necessário** (custa 2×) — mas obrigatório em
+  hot path read-after-write.
+- **`BatchGetItem`** para N itens por chave; **sempre tratar `LastEvaluatedKey`** (paginação).
+
+### Indicadores e dashboards
+- Servidos por **agregado pré-computado** (1 GetItem/query curta), mantido no momento da
+  escrita — contador atômico transacional ou Lambda via DynamoDB Streams
+  (`docs/ARCHITECTURE.md` §5.5). **Nunca** somar N itens na leitura.
+
+## Ordem de prioridade (guardrail de decisão)
+**1º Viabilidade e correção → 2º Performance e escalabilidade → 3º Custo.**
+Otimização de custo só vale se não degrada as duas primeiras (`docs/ARCHITECTURE.md` §10.0):
+índice necessário recebe índice; read-after-write recebe leitura consistente; Lambda
+latency-sensitive pode receber mais memória — medir, não assumir.
+````
