@@ -1,0 +1,205 @@
+{
+  "version": "1",
+  "pacote": {
+    "id": "3f2a8c1e-9b4d-4e7a-a1c2-5d6e7f8a9b0c",
+    "nome": "Benchmarks CrossFit — The Girls & Hero WODs",
+    "descricao": "Os WODs de referência mais famosos do CrossFit (Fran, Cindy, Grace, Helen, Murph, Chelsea), prontos para aplicar: blocos com formato (For Time/AMRAP/EMOM), timer de WOD no app do aluno, score com RX/Adaptado e evolução automática do benchmark.",
+    "autor": "CoachPilot",
+    "versao": "1.0"
+  },
+  "exercicios": [
+    {
+      "ref": "ex_thruster",
+      "nome": "Thruster",
+      "grupo": "Pernas",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Front squat + push press num movimento contínuo, com barra.",
+      "recomendacoes": "Carga RX: 43kg (homens) / 30kg (mulheres). Mantenha o core firme e finalize com a barra sobre a cabeça.",
+      "substitutos": [
+        { "nome": "Thruster com halteres", "video_url": null, "observacao": "Alternativa com halteres para quem não tem barra.", "series_prescritas": null }
+      ]
+    },
+    {
+      "ref": "ex_pull_up",
+      "nome": "Pull-up",
+      "grupo": "Costas",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Barra fixa (kipping ou estrito, conforme o contexto do WOD).",
+      "recomendacoes": "Queixo acima da barra em todas as repetições.",
+      "substitutos": [
+        { "nome": "Pull-up com elástico", "video_url": null, "observacao": "Versão adaptada com banda.", "series_prescritas": null },
+        { "nome": "Ring Row", "video_url": null, "observacao": "Regressão horizontal.", "series_prescritas": null }
+      ]
+    },
+    {
+      "ref": "ex_push_up",
+      "nome": "Push-up",
+      "grupo": "Peito",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Flexão de braço com peito ao chão.",
+      "recomendacoes": "Corpo alinhado; escale nos joelhos se necessário.",
+      "substitutos": [
+        { "nome": "Push-up nos joelhos", "video_url": null, "observacao": "Versão adaptada.", "series_prescritas": null }
+      ]
+    },
+    {
+      "ref": "ex_air_squat",
+      "nome": "Air Squat",
+      "grupo": "Pernas",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Agachamento com o peso do corpo.",
+      "recomendacoes": "Quadril abaixo da linha do joelho e extensão completa em cima.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_clean_jerk",
+      "nome": "Clean & Jerk",
+      "grupo": "Costas",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Levantamento olímpico: clean até o ombro + jerk acima da cabeça.",
+      "recomendacoes": "Carga RX (Grace): 61kg (homens) / 43kg (mulheres). Priorize técnica sobre velocidade.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_kb_swing",
+      "nome": "Kettlebell Swing",
+      "grupo": "Posterior",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Balanço do kettlebell até a linha dos olhos (russo) ou overhead (americano).",
+      "recomendacoes": "RX (Helen): 24kg (homens) / 16kg (mulheres), americano.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_corrida",
+      "nome": "Corrida",
+      "grupo": "Cardio",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "m",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Corrida em metros (dentro de WODs, a distância é a prescrita no round).",
+      "recomendacoes": "Sem esteira? Substitua por remo na mesma distância.",
+      "substitutos": [
+        { "nome": "Remo", "video_url": null, "observacao": "Mesma distância no remo ergômetro.", "series_prescritas": null }
+      ]
+    },
+    {
+      "ref": "ex_round_cindy",
+      "nome": "Round Cindy (5-10-15)",
+      "grupo": "Cardio",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "rounds",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Um round do esquema Cindy: 5 Pull-ups + 10 Push-ups + 15 Air Squats.",
+      "recomendacoes": "Use este exercício quando o minuto/round pede o complexo completo (ex.: Chelsea).",
+      "substitutos": []
+    }
+  ],
+  "templates": [
+    {
+      "ref": "tmpl_fran",
+      "nome": "Fran",
+      "foco": "Metcon — benchmark",
+      "blocos": [
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": {}, "aquecimento": true },
+        { "id": "wod", "nome": "Fran", "ordem": 1, "formato": "FOR_TIME", "params": { "time_cap_s": 600 }, "aquecimento": false }
+      ],
+      "exercicios": [
+        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds leves + mobilidade de ombro" },
+        { "ex_ref": "ex_thruster", "ordem": 1, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "21-15-9", "carga": "43/30kg" } ], "intervalo_s": null, "observacoes": "21-15-9 alternando com pull-ups" },
+        { "ex_ref": "ex_pull_up", "ordem": 2, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "21-15-9", "carga": null } ], "intervalo_s": null, "observacoes": null }
+      ]
+    },
+    {
+      "ref": "tmpl_cindy",
+      "nome": "Cindy",
+      "foco": "Metcon — benchmark",
+      "blocos": [
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": {}, "aquecimento": true },
+        { "id": "wod", "nome": "Cindy", "ordem": 1, "formato": "AMRAP", "params": { "duracao_s": 1200 }, "aquecimento": false }
+      ],
+      "exercicios": [
+        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_pull_up", "ordem": 1, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "5", "carga": null } ], "intervalo_s": null, "observacoes": "5 por round" },
+        { "ex_ref": "ex_push_up", "ordem": 2, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": "10 por round" },
+        { "ex_ref": "ex_air_squat", "ordem": 3, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "15", "carga": null } ], "intervalo_s": null, "observacoes": "15 por round" }
+      ]
+    },
+    {
+      "ref": "tmpl_grace",
+      "nome": "Grace",
+      "foco": "Metcon — benchmark",
+      "blocos": [
+        { "id": "wod", "nome": "Grace", "ordem": 0, "formato": "FOR_TIME", "params": { "time_cap_s": 480 }, "aquecimento": false }
+      ],
+      "exercicios": [
+        { "ex_ref": "ex_clean_jerk", "ordem": 0, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "30", "carga": "61/43kg" } ], "intervalo_s": null, "observacoes": "30 repetições no menor tempo" }
+      ]
+    },
+    {
+      "ref": "tmpl_helen",
+      "nome": "Helen",
+      "foco": "Metcon — benchmark",
+      "blocos": [
+        { "id": "wod", "nome": "Helen", "ordem": 0, "formato": "FOR_TIME", "params": { "rounds": 3, "time_cap_s": 900 }, "aquecimento": false }
+      ],
+      "exercicios": [
+        { "ex_ref": "ex_corrida", "ordem": 0, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "400", "carga": null } ], "intervalo_s": null, "observacoes": "400m por round" },
+        { "ex_ref": "ex_kb_swing", "ordem": 1, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "21", "carga": "24/16kg" } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_pull_up", "ordem": 2, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": null }
+      ]
+    },
+    {
+      "ref": "tmpl_murph",
+      "nome": "Murph",
+      "foco": "Hero WOD",
+      "blocos": [
+        { "id": "wod", "nome": "Murph", "ordem": 0, "formato": "FOR_TIME", "params": { "time_cap_s": 3600 }, "aquecimento": false }
+      ],
+      "exercicios": [
+        { "ex_ref": "ex_corrida", "ordem": 0, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "1600", "carga": null } ], "intervalo_s": null, "observacoes": "1600m de abertura" },
+        { "ex_ref": "ex_pull_up", "ordem": 1, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "100", "carga": null } ], "intervalo_s": null, "observacoes": "Particione livremente (ex.: 20 rounds de 5-10-15)" },
+        { "ex_ref": "ex_push_up", "ordem": 2, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "200", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_air_squat", "ordem": 3, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "300", "carga": null } ], "intervalo_s": null, "observacoes": "Fecha com mais 1600m de corrida" }
+      ]
+    },
+    {
+      "ref": "tmpl_chelsea",
+      "nome": "Chelsea",
+      "foco": "Metcon — benchmark",
+      "blocos": [
+        { "id": "wod", "nome": "Chelsea", "ordem": 0, "formato": "EMOM", "params": { "intervalo_s": 60, "duracao_s": 1800 }, "aquecimento": false }
+      ],
+      "exercicios": [
+        { "ex_ref": "ex_round_cindy", "ordem": 0, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "1", "carga": null } ], "intervalo_s": null, "observacoes": "A cada minuto: 5 Pull-ups + 10 Push-ups + 15 Air Squats, por 30 minutos" }
+      ]
+    }
+  ],
+  "rotinas": [
+    {
+      "ref": "rot_benchmarks",
+      "nome": "Semana de Benchmarks",
+      "descricao": "Sequência clássica para testar (e retestar) as marcas do aluno: Fran, Cindy, Grace e Helen. Aplique com pelo menos 48h entre benchmarks.",
+      "treinos": ["tmpl_fran", "tmpl_cindy", "tmpl_grace", "tmpl_helen"]
+    }
+  ]
+}

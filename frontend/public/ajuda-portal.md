@@ -195,6 +195,24 @@ Exercícios com o mesmo nome em treinos diferentes têm a evolução de carga e 
 
 O aluno registra **um único número por série** nessa unidade. Esse valor alimenta o gráfico de evolução e o PR (recorde = melhor série, conforme a direção escolhida).
 
+**2ª medida (opcional, Performance):** se você preencher a "2ª medida" (ex.: `min`, `kcal`, `bpm`), o aluno registra também esse segundo valor por série — ele aparece no histórico como contexto, mas **só a métrica principal gera PR e gráfico**. Regra prática: a métrica principal é o resultado que varia; a dimensão fixa fica na prescrição ou na 2ª medida (corrida de 8min → principal = distância; remo de 500m → principal = tempo).
+
+#### Treinos de CrossFit/HIIT — blocos e formatos
+
+Para treinos por partes (Aquecimento → A) Força → C) Metcon), use **blocos**: ao criar/editar o treino, adicione blocos com nome e formato, e em cada exercício escolha o bloco a que ele pertence. Treino sem blocos continua funcionando exatamente como sempre.
+
+Formatos de bloco:
+- **Livre** — sem timer/score: força, skills e aquecimento (registro série a série, como musculação).
+- **For Time** — completar a tarefa no menor tempo. Parâmetros: rounds (ex.: "4 rounds de..."), time cap e descanso entre rounds.
+- **AMRAP** — máximo de rounds + reps dentro da duração (ex.: AMRAP 15min).
+- **EMOM** — uma tarefa por intervalo (a cada 1min / 1:30 / 2min) até a duração total. A **ordem dos exercícios do bloco define os slots do ciclo** (minuto ímpar/par etc., repetindo até o fim — um "minuto de descanso" pode ser um exercício chamado "Descanso").
+
+No app, o aluno vê o treino agrupado por bloco, usa o **timer do WOD** (contagem com cap no For Time, countdown com botão "+1 round" no AMRAP, beep por minuto no EMOM) e, ao finalizar, informa o **resultado de cada bloco** (tempo / rounds+reps / minutos, RX ou Adaptado). O resultado vira **PR e evolução do WOD** automaticamente — e pode ser alvo de meta (ex.: "Fran abaixo de 8min").
+
+#### Aquecimento (warmup)
+
+Você pode marcar como aquecimento: um **bloco** inteiro (checkbox no bloco), um **exercício** (checkbox no formulário) ou **séries individuais** (botão "aq." em cada linha da prescrição — séries de aproximação, ex.: 50%×10 antes do trabalho). O que está marcado como aquecimento **não gera PR, não conta volume nem pontos** — mas conta para o "treino completo". No app, o aluno pode marcar exercícios de aquecimento como "Feito ✓" sem registrar série a série.
+
 #### Unidades personalizáveis
 Você pode definir manualmente o sufixo de carga (Força) e a unidade da métrica (Performance) de qualquer exercício (ex.: carga em `%1RM`, métrica em `m`, `passos`, `cal`). As unidades definidas aparecem nos campos de prescrição, no registro do aluno e nos gráficos de evolução.
 
@@ -370,7 +388,10 @@ Ao ter 2 ou mais avaliações, o sistema gera automaticamente gráficos de evolu
 5. Ative a meta clicando em **"Aprovar"**
 
 #### Verificação automática de metas
-- Metas de **CARGA**: verificadas automaticamente quando o aluno bate um novo PR (personal record)
+- Metas de **CARGA**: verificadas automaticamente quando o aluno bate um novo PR (personal record).
+  O alvo pode ser um exercício **ou um WOD** (ex.: "Fran"), e você escolhe a direção:
+  **↑ Maior** (carga/reps — atinge quando o PR for maior ou igual ao alvo) ou **↓ Menor** (tempo —
+  atinge quando for menor ou igual, ex.: "Fran abaixo de 8min")
 - Metas de **PESO/MEDIDA**: verificadas automaticamente quando uma nova avaliação é cadastrada
 - Ao atingir a meta, o aluno ganha **+50 pontos** automaticamente
 
@@ -399,6 +420,8 @@ Na página do aluno há a aba **"Evolução"** (ou link para a página de evolu�
 **Gráfico de Volume:** volume semanal por grupo muscular (séries × reps × carga), visualizado como barras empilhadas. Ajuda a ver se o treino está balanceado.
 
 **Recordes (PRs):** melhor carga registrada em cada exercício, com data. Exercícios com o mesmo nome em treinos diferentes compartilham o mesmo PR.
+
+**WODs:** o resultado de blocos For Time/AMRAP/EMOM aparece no mesmo seletor de evolução (ex.: "Fran") com o gráfico formatado pelo formato (tempo mm:ss, rounds + reps, minutos). WODs com o mesmo nome de treino compartilham o histórico — inclusive quando vêm de pacotes ou templates diferentes.
 
 ---
 

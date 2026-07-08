@@ -111,6 +111,7 @@ Cada item é um treino (ex.: Treino A, Treino B). A ordem do array é a ordem do
   "ativo": true,
   "data_inicio": null,
   "data_fim": null,
+  "blocos": [],
   "exercicios": [ ... ]
 }
 ```
@@ -121,6 +122,51 @@ Cada item é um treino (ex.: Treino A, Treino B). A ordem do array é a ordem do
 - `observacoes`: observações do treino ou `null`.
 - `ativo`: `true` para treino vigente. Use `false` apenas se o personal pedir para desativar.
 - `data_inicio` / `data_fim`: período do programa em `YYYY-MM-DD` ou `null` (mantenha o que veio).
+- `blocos`: lista de blocos (CrossFit/HIIT) ou `[]`. **Musculação clássica: sempre `[]`** — só use
+  blocos quando o treino tem partes distintas (aquecimento, força, metcon). Ver seção abaixo.
+
+### Campo `blocos[]` (treinos de CrossFit/HIIT — opcional)
+
+Um treino de cross costuma ter partes: `Aquecimento → A) Força → B) Ginástica → C) Metcon`. Cada
+parte é um **bloco**; os exercícios apontam para o bloco via `bloco_id`.
+
+```json
+{
+  "id": "b1",
+  "nome": "C) Metcon",
+  "ordem": 2,
+  "formato": "AMRAP",
+  "params": { "rounds": null, "time_cap_s": null, "duracao_s": 900, "intervalo_s": null, "descanso_rounds_s": null },
+  "aquecimento": false
+}
+```
+
+- `id`: identificador curto e único dentro do treino (`b0`, `b1`, `aq`…). Os exercícios referenciam esse id.
+- `nome`: nome da parte (ex.: `"Aquecimento"`, `"A) Força"`, `"C) Metcon"`).
+- `ordem`: inteiro (0, 1, 2…) — ordem das partes.
+- `formato`: **um de** `"LIVRE"`, `"FOR_TIME"`, `"AMRAP"`, `"EMOM"`.
+  - `"LIVRE"`: sem timer/score — força, skills, aquecimento (registro série a série, como musculação).
+  - `"FOR_TIME"`: completar a tarefa no menor tempo. Params: `rounds` (ex.: `4` para "4 rounds de..."),
+    `time_cap_s` (tempo limite em segundos), `descanso_rounds_s` (descanso entre rounds, se prescrito).
+  - `"AMRAP"`: máximo de rounds+reps no tempo. Param: `duracao_s` (ex.: `900` para AMRAP 15min).
+  - `"EMOM"`: uma tarefa por intervalo. Params: `intervalo_s` (60/90/120…), `duracao_s` (duração total —
+    ex.: EMOM 24 = `1440`).
+- `aquecimento`: `true` marca o bloco inteiro como warmup (sem formato/score; não gera PR, volume nem pontos).
+
+**Regras de mapeamento do texto do coach:**
+- "5 Rounds For Time: 750m Remo, 30 kcal Bike" → bloco `FOR_TIME` com `params.rounds: 5` e os
+  movimentos como exercícios do bloco (a lista é UM round; os rounds ficam no bloco).
+- "15 minutos AMRAP: 12 Wall Balls, 9 Power Cleans…" → bloco `AMRAP` com `duracao_s: 900`.
+- "EMOM 10' — minuto ímpar: X / minuto par: Y" → bloco `EMOM` (`intervalo_s: 60`, `duracao_s: 600`)
+  com X e Y como exercícios **na ordem dos minutos** (a ordem dos exercícios define os slots do ciclo,
+  repetindo até o fim). "Minuto de descanso" pode ser um exercício chamado `"Descanso"`.
+- "Every 90s x 8 sets: complexo" → bloco `EMOM` com `intervalo_s: 90` e `duracao_s: 720`; se o complexo
+  tem vários movimentos por intervalo, use UM exercício (ex.: `"Complexo Snatch"`) com os movimentos
+  em `observacoes`.
+- "A) Força — Front Squat 5x5 75-80%" → bloco `LIVRE` chamado `"A) Força"`, com o exercício FORCA
+  normal (`series_prescritas` com `carga: "75-80%"` e `unidade_carga: "%1RM"`).
+- Aquecimento ("2 rounds: 10 Air Squats…") → bloco com `aquecimento: true` e os movimentos como
+  exercícios (`observacoes` do bloco/exercício para detalhes tipo "2 rounds").
 
 ### Campo `exercicios[]` (dentro de cada treino)
 
@@ -130,9 +176,11 @@ A ordem do array é a ordem de execução.
 {
   "nome": "Supino reto",
   "grupo": "Peito",
+  "bloco_id": null,
+  "aquecimento": false,
   "tipo_exercicio": "FORCA",
   "series_prescritas": [
-    { "series": 1, "reps": "6-8", "carga": "pesada" },
+    { "series": 1, "reps": "6-8", "carga": "50%", "aquecimento": true },
     { "series": 3, "reps": "8-12", "carga": null }
   ],
   "intervalo_s": 90,
@@ -168,6 +216,9 @@ Exemplo de exercício `PERFORMANCE` (corrida medida por tempo, onde **menor é m
 Campos:
 - `nome`: nome do exercício (obrigatório).
 - `grupo`: grupo muscular principal (ex.: Peito, Costas, Ombros, Pernas, Glúteos, Bíceps, Tríceps, Abdômen) ou `null`.
+- `bloco_id`: id do bloco a que o exercício pertence (deve existir em `blocos[]` do treino) ou `null`
+  (treino clássico sem blocos).
+- `aquecimento`: `true` marca o exercício como warmup — fora de PR/volume/pontos. Default `false`.
 - `tipo_exercicio`: **um de** `"FORCA"` ou `"PERFORMANCE"`.
   - `"FORCA"`: musculação tradicional (carga em kg/%/etc. + repetições).
   - `"PERFORMANCE"`: qualquer exercício medido por **uma métrica numérica livre** (cardio, tempo,
@@ -180,11 +231,17 @@ Campos:
   - `reps`: texto. Em `FORCA` são repetições (ex.: `"8-12"`, `"10"`, `"até a falha"`). Em `PERFORMANCE`
     é o alvo da métrica na unidade de `unidade_reps` (ex.: `"30"` para 30 min, `"5"` para 5 km).
   - `carga`: texto ou `null` (ex.: `"60%"`, `"20kg"`, `"moderada"`). Em `PERFORMANCE`, normalmente `null`.
-  - Para aquecimento + séries de trabalho, use dois blocos, ex.: `1 série pesada de 6-8` + `3 séries de 8-12`.
+  - `aquecimento`: `true` marca o bloco de séries como aproximação/ramp-up (ex.: `50%×10` antes do
+    trabalho) — essas séries não geram PR, volume nem pontos. Omita ou use `null` nas séries válidas.
+  - Para aquecimento + séries de trabalho, use dois blocos: `{ "series": 1, "reps": "10", "carga": "50%", "aquecimento": true }` + `3 séries de 8-12`.
 - `intervalo_s`: intervalo de descanso em **segundos** (inteiro) ou `null`. Ex.: `45`, `60`, `90`, `120`, `180`.
 - `video_url`: URL de vídeo ou `null` (mantenha o que veio; não invente links).
 - `observacoes`: dica/observação de execução ou `null`.
-- `unidade_carga`: sufixo da carga em `FORCA` (ex.: `"kg"`, `"%1RM"`) ou `null`.
+- `unidade_carga`: sufixo da carga em `FORCA` (ex.: `"kg"`, `"%1RM"`) ou `null`. Em `PERFORMANCE`,
+  preencher habilita uma **2ª medida contextual** por série (ex.: corrida com `unidade_reps: "m"`
+  como métrica principal e `unidade_carga: "min"` como tempo de contexto — só a métrica principal
+  gera PR/gráfico). Regra prática: a métrica principal é o resultado que varia; a dimensão fixa fica
+  na prescrição ou na 2ª medida.
 - `unidade_reps`: **unidade da métrica em `PERFORMANCE`** (≤7 chars). Em `FORCA`, normalmente `null`.
 - `substitutos`: lista de opções de troca (exercício alternativo). Cada um: `nome` (obrigatório),
   `video_url`, `observacao`, `series_prescritas` (use `null` para herdar a prescrição do exercício principal).
@@ -219,6 +276,10 @@ Campos:
 - [ ] `series` é inteiro; `reps` é texto; `carga` é texto ou `null`.
 - [ ] `tipo_exercicio` é `FORCA` ou `PERFORMANCE`. Em `PERFORMANCE`, `unidade_reps` está definida (≤7) e `metrica_direcao` é `MAIOR`/`MENOR`.
 - [ ] `intervalo_s` é inteiro (segundos) ou `null`.
+- [ ] Se usei `blocos`: todo `bloco_id` de exercício existe em `blocos[]` do MESMO treino; blocos de
+  formato ≠ LIVRE têm os params do formato (`duracao_s` no AMRAP/EMOM, `intervalo_s` no EMOM);
+  bloco de aquecimento tem `aquecimento: true` e formato `LIVRE`.
+- [ ] Musculação clássica: `blocos: []` e `bloco_id: null` em todos os exercícios.
 - [ ] Nada do que o personal não pediu (nem o contexto justificou) mudar foi perdido.
 - [ ] Escrevi o resumo curto do raciocínio ANTES do bloco JSON.
 - [ ] O JSON está completo e isolado em um único bloco de código (sem arquivo para download).
@@ -301,7 +362,55 @@ subindo (60 → 70kg nas últimas 8 sessões)."*
           "substitutos": []
         }
       ]
+    },
+    {
+      "ref": "t_c",
+      "nome": "Treino C — Cross",
+      "foco": "Força + Metcon",
+      "observacoes": null,
+      "ativo": true,
+      "data_inicio": null,
+      "data_fim": null,
+      "blocos": [
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": {}, "aquecimento": true },
+        { "id": "a", "nome": "A) Força", "ordem": 1, "formato": "LIVRE", "params": {}, "aquecimento": false },
+        { "id": "c", "nome": "C) Metcon", "ordem": 2, "formato": "AMRAP", "params": { "duracao_s": 900 }, "aquecimento": false }
+      ],
+      "exercicios": [
+        {
+          "nome": "Air Squat", "grupo": "Pernas", "bloco_id": "aq", "aquecimento": false,
+          "tipo_exercicio": "PERFORMANCE",
+          "series_prescritas": [ { "series": 2, "reps": "10", "carga": null } ],
+          "intervalo_s": null, "video_url": null, "observacoes": "2 rounds",
+          "unidade_carga": null, "unidade_reps": "reps", "metrica_direcao": "MAIOR", "substitutos": []
+        },
+        {
+          "nome": "Front Squat", "grupo": "Pernas", "bloco_id": "a", "aquecimento": false,
+          "tipo_exercicio": "FORCA",
+          "series_prescritas": [ { "series": 5, "reps": "5", "carga": "75-80%" } ],
+          "intervalo_s": 120, "video_url": null, "observacoes": null,
+          "unidade_carga": "%1RM", "unidade_reps": null, "metrica_direcao": null, "substitutos": []
+        },
+        {
+          "nome": "Wall Ball", "grupo": "Pernas", "bloco_id": "c", "aquecimento": false,
+          "tipo_exercicio": "PERFORMANCE",
+          "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ],
+          "intervalo_s": null, "video_url": null, "observacoes": "12 por round",
+          "unidade_carga": null, "unidade_reps": "reps", "metrica_direcao": "MAIOR", "substitutos": []
+        },
+        {
+          "nome": "Power Clean", "grupo": "Costas", "bloco_id": "c", "aquecimento": false,
+          "tipo_exercicio": "PERFORMANCE",
+          "series_prescritas": [ { "series": 1, "reps": "9", "carga": "60/40kg" } ],
+          "intervalo_s": null, "video_url": null, "observacoes": "9 por round (60/40kg)",
+          "unidade_carga": null, "unidade_reps": "reps", "metrica_direcao": "MAIOR", "substitutos": []
+        }
+      ]
     }
   ]
 }
 ```
+
+> No treino de cross acima, o app do aluno agrupa os exercícios por bloco, oferece o timer do
+> AMRAP e pergunta o resultado (rounds + reps, RX/Adaptado) na finalização — o score vira PR e
+> evolução do WOD automaticamente.

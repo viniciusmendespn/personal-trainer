@@ -1,7 +1,10 @@
 # Adaptação para CrossFit — Proposta de funcionalidades
 
-> **Status:** proposta (nada implementado). Objetivo: suportar treinos de CrossFit **sem perder
-> nada da musculação/performance atual e mudando o mínimo possível** de modelo e de UI.
+> **Status:** ✅ IMPLEMENTADO (2026-07-07) — todas as fases entregues em 8 ondas: blocos com
+> formato, score de WOD com PR/evolução, aquecimento em 3 níveis, 2ª métrica, timer de WOD
+> (For Time/AMRAP/EMOM), metas com direção MENOR, prompts de IA atualizados e pacote de
+> benchmarks (`coachpilot_benchmarks_crossfit.cpkg`). Objetivo: suportar treinos de CrossFit
+> **sem perder nada da musculação/performance atual e mudando o mínimo possível**.
 >
 > Insumos do personal parceiro (atua com cross):
 > - Formatos usados: **FOR TIME** (tarefa, às vezes 3–5 rounds), **SKILLS** (movimentos

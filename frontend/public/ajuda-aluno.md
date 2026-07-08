@@ -89,6 +89,12 @@ Quando você tem mais de um treino cadastrado (ex.: Treino A, Treino B), eles ap
    **Performance (cardio, tempo, distância, peso corporal, voltas…):**
    - **Um único valor por série** na unidade definida pelo seu personal (ex.: minutos, km, voltas, reps)
    - Aceita números com vírgula/ponto quando faz sentido (ex.: 5.2 km)
+   - Se o personal definiu uma **2ª medida** (ex.: minutos numa corrida medida em metros), aparece um
+     segundo campo — ele fica no seu histórico como contexto; o recorde é sempre da medida principal
+
+   **Aquecimento:** exercícios e séries marcados como aquecimento aparecem atenuados com o selo "aq."
+   — eles não geram recorde, volume nem pontos. Exercícios de aquecimento têm um botão **"Feito ✓"**
+   para marcar sem registrar série a série.
 
 3. Toque em **"Registrar"** para confirmar a série
 4. Repita para cada série do exercício
@@ -102,14 +108,24 @@ Quando você tem mais de um treino cadastrado (ex.: Treino A, Treino B), eles ap
 
 Preencher o RPE é opcional mas ajuda seu personal a ajustar as cargas.
 
+#### Treinos de CrossFit — blocos, timer e resultado do WOD
+Se o seu treino tem **blocos** (ex.: Aquecimento → A) Força → C) Metcon), o app mostra os exercícios agrupados por parte:
+
+- Blocos **For Time / AMRAP / EMOM** têm o botão **"Timer do WOD"** no cabeçalho:
+  - **For Time**: o relógio conta pra cima (avisa quando o time cap chega); toque em **"Terminei!"** para gravar seu tempo.
+  - **AMRAP**: contagem regressiva com um botão gigante **"+1 round"** — toque a cada round completado.
+  - **EMOM**: beep e vibração a cada intervalo, mostrando o minuto atual e o exercício da vez.
+- Dentro de um metcon você **não precisa registrar série a série** — ao finalizar o treino, o app pergunta o **resultado de cada bloco** (tempo / rounds + reps / minutos completos) e se foi **RX** (como prescrito) ou **Adaptado**. Se você usou o timer, o resultado já vem preenchido.
+- O resultado vira **recorde e evolução do WOD**: repita o mesmo treino (ex.: "Fran") e acompanhe seu tempo caindo no gráfico da aba Evolução.
+
 #### Como finalizar o treino
-Após registrar o último exercício, toque em **"Finalizar Treino"**. O app salva sua sessão, calcula pontos e verifica se você bateu algum recorde.
+Após registrar o último exercício, toque em **"Finalizar Treino"**. O app salva sua sessão, calcula pontos e verifica se você bateu algum recorde. Em treinos com blocos de WOD, antes de finalizar o app pergunta o resultado de cada bloco.
 
 #### Como cancelar o treino
 Se precisar interromper a sessão sem registrar nada, toque em **"Cancelar treino"** (ao lado de "Finalizar treino") e confirme. Nada do que foi feito naquela sessão é salvo — ela é descartada por completo.
 
 #### Novo Personal Record (PR)
-Quando você levanta uma carga maior do que já registrou em um exercício, o app exibe uma celebração de **"Novo Recorde!"** e você ganha 10 pontos extras.
+Quando você levanta uma carga maior do que já registrou em um exercício, o app exibe uma celebração de **"Novo Recorde!"** e você ganha 10 pontos extras. Em exercícios de performance com "menor é melhor" (ex.: tempo) e em WODs For Time, o recorde é o **menor** valor. Séries de aquecimento não contam para recorde.
 
 #### Recursos educacionais do exercício
 Quando seu personal vincula um material de apoio (texto, foto ou vídeo) a um exercício, aparece um ícone de **livro** ao lado dele, tanto na pré-visualização quanto na sessão ativa. Toque nele para abrir o conteúdo.

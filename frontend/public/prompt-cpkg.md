@@ -209,10 +209,13 @@ Cada template é um treino completo (ex.: Treino A, Treino B, Treino Upper):
   "ref": "tmpl_a",
   "nome": "Treino A — Peito e Tríceps",
   "foco": "Peito, Tríceps",
+  "blocos": [],
   "exercicios": [
     {
       "ex_ref": "ex_supino_reto",
       "ordem": 0,
+      "bloco_id": null,
+      "aquecimento": false,
       "series_prescritas": [
         {"series": 4, "reps": "8-12", "carga": null}
       ],
@@ -222,6 +225,29 @@ Cada template é um treino completo (ex.: Treino A, Treino B, Treino Upper):
   ]
 }
 ```
+
+#### Campo `blocos` — treinos de CrossFit/HIIT (opcional)
+
+Musculação clássica: **sempre `[]`**. Use blocos quando o treino tem partes distintas
+(Aquecimento → A) Força → C) Metcon). Cada bloco:
+
+```json
+{ "id": "c", "nome": "C) Metcon", "ordem": 2, "formato": "AMRAP",
+  "params": { "rounds": null, "time_cap_s": null, "duracao_s": 900, "intervalo_s": null, "descanso_rounds_s": null },
+  "aquecimento": false }
+```
+
+- `id`: identificador curto e único no template (`aq`, `a`, `b`, `c`…) — os exercícios apontam via `bloco_id`.
+- `formato`: `"LIVRE"` (força/skills/aquecimento — sem timer/score), `"FOR_TIME"` (params: `rounds`,
+  `time_cap_s`, `descanso_rounds_s`), `"AMRAP"` (param: `duracao_s`) ou `"EMOM"` (params: `intervalo_s`,
+  `duracao_s` — EMOM 24 = `1440`).
+- `aquecimento: true` marca o bloco como warmup (formato LIVRE; fora de PR/volume/pontos).
+- Nos exercícios do template: `bloco_id` referencia o `id` do bloco (ou `null` sem blocos) e
+  `aquecimento: true` marca exercício avulso de warmup. Em `series_prescritas`, cada objeto aceita
+  `"aquecimento": true` para séries de aproximação (ramp-up).
+- Mapeamentos comuns: "5 Rounds For Time" → FOR_TIME com `rounds: 5` (a lista de exercícios é UM
+  round); "EMOM alternado (min ímpar X / par Y)" → EMOM com X e Y na ordem dos minutos (a ordem
+  cicla); "Every 90s x 8" → EMOM `intervalo_s: 90`, `duracao_s: 720`.
 
 #### Regras do campo `ref` (templates)
 - **Sempre começa com `tmpl_`**
@@ -313,6 +339,9 @@ Array de strings com os `ref` dos templates **em ordem de execução**. Todos os
 - [ ] **Sem campos proibidos:** Não há `"token"` nem `"assinatura"` no JSON?
 - [ ] **Tipos corretos:** `series` e `ordem` são inteiros (não strings)?
 - [ ] **`version` presente:** O campo raiz `"version": "1"` está lá?
+- [ ] **Blocos consistentes:** Se usei `blocos`, todo `bloco_id` aponta para um `id` existente nos
+  `blocos` do MESMO template; AMRAP/EMOM têm `duracao_s`; bloco de aquecimento tem `aquecimento: true`.
+  Musculação clássica: `blocos: []` e `bloco_id: null`.
 
 ---
 
