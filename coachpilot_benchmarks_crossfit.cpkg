@@ -5,7 +5,7 @@
     "nome": "Benchmarks CrossFit — The Girls & Hero WODs",
     "descricao": "Os WODs de referência mais famosos do CrossFit (Fran, Cindy, Grace, Helen, Murph, Chelsea), prontos para aplicar: blocos com formato (For Time/AMRAP/EMOM), timer de WOD no app do aluno, score com RX/Adaptado e evolução automática do benchmark.",
     "autor": "CoachPilot",
-    "versao": "1.0"
+    "versao": "1.1"
   },
   "exercicios": [
     {
@@ -139,9 +139,9 @@
       ],
       "exercicios": [
         { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
-        { "ex_ref": "ex_pull_up", "ordem": 1, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "5", "carga": null } ], "intervalo_s": null, "observacoes": "5 por round" },
-        { "ex_ref": "ex_push_up", "ordem": 2, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": "10 por round" },
-        { "ex_ref": "ex_air_squat", "ordem": 3, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "15", "carga": null } ], "intervalo_s": null, "observacoes": "15 por round" }
+        { "ex_ref": "ex_pull_up", "ordem": 1, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "5", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_push_up", "ordem": 2, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_air_squat", "ordem": 3, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "15", "carga": null } ], "intervalo_s": null, "observacoes": null }
       ]
     },
     {
@@ -149,10 +149,13 @@
       "nome": "Grace",
       "foco": "Metcon — benchmark",
       "blocos": [
-        { "id": "wod", "nome": "Grace", "ordem": 0, "formato": "FOR_TIME", "params": { "time_cap_s": 480 }, "aquecimento": false }
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": { "rounds": 2 }, "aquecimento": true },
+        { "id": "wod", "nome": "Grace", "ordem": 1, "formato": "FOR_TIME", "params": { "time_cap_s": 480 }, "aquecimento": false }
       ],
       "exercicios": [
-        { "ex_ref": "ex_clean_jerk", "ordem": 0, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "30", "carga": "61/43kg" } ], "intervalo_s": null, "observacoes": "30 repetições no menor tempo" }
+        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": "Complete com passagens leves de clean & jerk com a barra vazia" },
+        { "ex_ref": "ex_push_up", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_clean_jerk", "ordem": 2, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "30", "carga": "61/43kg" } ], "intervalo_s": null, "observacoes": "30 repetições no menor tempo" }
       ]
     },
     {
@@ -160,12 +163,15 @@
       "nome": "Helen",
       "foco": "Metcon — benchmark",
       "blocos": [
-        { "id": "wod", "nome": "Helen", "ordem": 0, "formato": "FOR_TIME", "params": { "rounds": 3, "time_cap_s": 900 }, "aquecimento": false }
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": { "rounds": 2 }, "aquecimento": true },
+        { "id": "wod", "nome": "Helen", "ordem": 1, "formato": "FOR_TIME", "params": { "rounds": 3, "time_cap_s": 900 }, "aquecimento": false }
       ],
       "exercicios": [
-        { "ex_ref": "ex_corrida", "ordem": 0, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "400", "carga": null } ], "intervalo_s": null, "observacoes": "400m por round" },
-        { "ex_ref": "ex_kb_swing", "ordem": 1, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "21", "carga": "24/16kg" } ], "intervalo_s": null, "observacoes": null },
-        { "ex_ref": "ex_pull_up", "ordem": 2, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": null }
+        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_push_up", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_corrida", "ordem": 2, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "400", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_kb_swing", "ordem": 3, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "21", "carga": "24/16kg" } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_pull_up", "ordem": 4, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": null }
       ]
     },
     {
@@ -173,13 +179,16 @@
       "nome": "Murph",
       "foco": "Hero WOD",
       "blocos": [
-        { "id": "wod", "nome": "Murph", "ordem": 0, "formato": "FOR_TIME", "params": { "time_cap_s": 3600 }, "aquecimento": false }
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": { "rounds": 2 }, "aquecimento": true },
+        { "id": "wod", "nome": "Murph", "ordem": 1, "formato": "FOR_TIME", "params": { "time_cap_s": 3600 }, "aquecimento": false }
       ],
       "exercicios": [
-        { "ex_ref": "ex_corrida", "ordem": 0, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "1600", "carga": null } ], "intervalo_s": null, "observacoes": "1600m de abertura" },
-        { "ex_ref": "ex_pull_up", "ordem": 1, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "100", "carga": null } ], "intervalo_s": null, "observacoes": "Particione livremente (ex.: 20 rounds de 5-10-15)" },
-        { "ex_ref": "ex_push_up", "ordem": 2, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "200", "carga": null } ], "intervalo_s": null, "observacoes": null },
-        { "ex_ref": "ex_air_squat", "ordem": 3, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "300", "carga": null } ], "intervalo_s": null, "observacoes": "Fecha com mais 1600m de corrida" }
+        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_push_up", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_corrida", "ordem": 2, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "1600", "carga": null } ], "intervalo_s": null, "observacoes": "1600m de abertura" },
+        { "ex_ref": "ex_pull_up", "ordem": 3, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "100", "carga": null } ], "intervalo_s": null, "observacoes": "Particione livremente (ex.: 20 rounds de 5-10-15)" },
+        { "ex_ref": "ex_push_up", "ordem": 4, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "200", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_air_squat", "ordem": 5, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "300", "carga": null } ], "intervalo_s": null, "observacoes": "Fecha com mais 1600m de corrida" }
       ]
     },
     {
@@ -187,10 +196,13 @@
       "nome": "Chelsea",
       "foco": "Metcon — benchmark",
       "blocos": [
-        { "id": "wod", "nome": "Chelsea", "ordem": 0, "formato": "EMOM", "params": { "intervalo_s": 60, "duracao_s": 1800 }, "aquecimento": false }
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": { "rounds": 2 }, "aquecimento": true },
+        { "id": "wod", "nome": "Chelsea", "ordem": 1, "formato": "EMOM", "params": { "intervalo_s": 60, "duracao_s": 1800 }, "aquecimento": false }
       ],
       "exercicios": [
-        { "ex_ref": "ex_round_cindy", "ordem": 0, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "1", "carga": null } ], "intervalo_s": null, "observacoes": "A cada minuto: 5 Pull-ups + 10 Push-ups + 15 Air Squats, por 30 minutos" }
+        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_push_up", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_round_cindy", "ordem": 2, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "1", "carga": null } ], "intervalo_s": null, "observacoes": "A cada minuto: 5 Pull-ups + 10 Push-ups + 15 Air Squats, por 30 minutos" }
       ]
     }
   ],

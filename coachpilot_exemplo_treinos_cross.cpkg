@@ -5,7 +5,7 @@
     "nome": "Endurance + Força e Resistência — Semana 01",
     "descricao": "Programação real de CrossFit/endurance da Semana 01, em duas rotinas: Endurance (corrida em zonas + intervalado nos ergômetros) e Força e Resistência (força + potência + metcon). Blocos com formato (For Time/AMRAP/EMOM), timer de WOD no app e score com evolução automática.",
     "autor": "CoachPilot",
-    "versao": "1.0"
+    "versao": "1.1"
   },
   "exercicios": [
     {
@@ -340,13 +340,13 @@
         { "id": "final", "nome": "Final — EMOM alternado", "ordem": 2, "formato": "EMOM", "params": { "intervalo_s": 60, "duracao_s": 600 }, "aquecimento": false }
       ],
       "exercicios": [
-        { "ex_ref": "ex_remo", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "500", "carga": null } ], "intervalo_s": null, "observacoes": "500m por round" },
-        { "ex_ref": "ex_skierg", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "30s", "carga": null } ], "intervalo_s": null, "observacoes": "30s por round" },
-        { "ex_ref": "ex_bike", "ordem": 2, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "30s", "carga": null } ], "intervalo_s": null, "observacoes": "30s por round" },
+        { "ex_ref": "ex_remo", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "500", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_skierg", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "30s", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_bike", "ordem": 2, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "30s", "carga": null } ], "intervalo_s": null, "observacoes": null },
         { "ex_ref": "ex_air_squat", "ordem": 3, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
-        { "ex_ref": "ex_remo", "ordem": 4, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "750", "carga": null } ], "intervalo_s": null, "observacoes": "750m por round" },
-        { "ex_ref": "ex_bike", "ordem": 5, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "30", "carga": null } ], "intervalo_s": null, "observacoes": "30 kcal por round" },
-        { "ex_ref": "ex_skierg", "ordem": 6, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "500", "carga": null } ], "intervalo_s": null, "observacoes": "500m por round · descanso de 2min entre rounds" },
+        { "ex_ref": "ex_remo", "ordem": 4, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "750", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_bike", "ordem": 5, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "30", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_skierg", "ordem": 6, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "500", "carga": null } ], "intervalo_s": null, "observacoes": null },
         { "ex_ref": "ex_bike", "ordem": 7, "bloco_id": "final", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto ímpar: 12 kcal Bike" },
         { "ex_ref": "ex_remo", "ordem": 8, "bloco_id": "final", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "250", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto par: 250m Remo" }
       ]
@@ -356,17 +356,21 @@
       "nome": "Força T1",
       "foco": "Força + Potência + Metcon",
       "blocos": [
-        { "id": "a", "nome": "A) Força", "ordem": 0, "formato": "LIVRE", "params": {}, "aquecimento": false },
-        { "id": "b", "nome": "B) Potência", "ordem": 1, "formato": "LIVRE", "params": {}, "aquecimento": false },
-        { "id": "c", "nome": "C) Metcon", "ordem": 2, "formato": "AMRAP", "params": { "duracao_s": 900 }, "aquecimento": false }
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": { "rounds": 2 }, "aquecimento": true },
+        { "id": "a", "nome": "A) Força", "ordem": 1, "formato": "LIVRE", "params": {}, "aquecimento": false },
+        { "id": "b", "nome": "B) Potência", "ordem": 2, "formato": "LIVRE", "params": {}, "aquecimento": false },
+        { "id": "c", "nome": "C) Metcon", "ordem": 3, "formato": "AMRAP", "params": { "duracao_s": 900 }, "aquecimento": false }
       ],
       "exercicios": [
-        { "ex_ref": "ex_front_squat", "ordem": 0, "bloco_id": "a", "aquecimento": false, "series_prescritas": [ { "series": 5, "reps": "5", "carga": "75-80%" } ], "intervalo_s": 120, "observacoes": "5x5 a 75–80% do 1RM" },
-        { "ex_ref": "ex_hang_power_clean", "ordem": 1, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 5, "reps": "3", "carga": "70%" } ], "intervalo_s": 120, "observacoes": "5x3 a 70% do 1RM" },
-        { "ex_ref": "ex_wall_ball", "ordem": 2, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": "12 por round" },
-        { "ex_ref": "ex_power_clean", "ordem": 3, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "9", "carga": "60/40kg" } ], "intervalo_s": null, "observacoes": "9 por round (60/40kg)" },
-        { "ex_ref": "ex_toes_to_bar", "ordem": 4, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": "12 por round" },
-        { "ex_ref": "ex_corrida", "ordem": 5, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "200", "carga": null } ], "intervalo_s": null, "observacoes": "200m por round" }
+        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_afundo", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_skipping_alto", "ordem": 2, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "20", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_front_squat", "ordem": 3, "bloco_id": "a", "aquecimento": false, "series_prescritas": [ { "series": 5, "reps": "5", "carga": "75-80%" } ], "intervalo_s": 120, "observacoes": "5x5 a 75–80% do 1RM" },
+        { "ex_ref": "ex_hang_power_clean", "ordem": 4, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 5, "reps": "3", "carga": "70%" } ], "intervalo_s": 120, "observacoes": "5x3 a 70% do 1RM" },
+        { "ex_ref": "ex_wall_ball", "ordem": 5, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_power_clean", "ordem": 6, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "9", "carga": "60/40kg" } ], "intervalo_s": null, "observacoes": "60kg (homens) / 40kg (mulheres)" },
+        { "ex_ref": "ex_toes_to_bar", "ordem": 7, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_corrida", "ordem": 8, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "200", "carga": null } ], "intervalo_s": null, "observacoes": null }
       ]
     },
     {
@@ -374,18 +378,22 @@
       "nome": "Força T2",
       "foco": "Força + Ginástica + Metcon",
       "blocos": [
-        { "id": "a", "nome": "A) Força", "ordem": 0, "formato": "LIVRE", "params": {}, "aquecimento": false },
-        { "id": "b", "nome": "B) Ginástica", "ordem": 1, "formato": "EMOM", "params": { "intervalo_s": 60, "duracao_s": 600 }, "aquecimento": false },
-        { "id": "c", "nome": "C) Metcon", "ordem": 2, "formato": "FOR_TIME", "params": { "rounds": 4 }, "aquecimento": false }
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": { "rounds": 2 }, "aquecimento": true },
+        { "id": "a", "nome": "A) Força", "ordem": 1, "formato": "LIVRE", "params": {}, "aquecimento": false },
+        { "id": "b", "nome": "B) Ginástica", "ordem": 2, "formato": "EMOM", "params": { "intervalo_s": 60, "duracao_s": 600 }, "aquecimento": false },
+        { "id": "c", "nome": "C) Metcon", "ordem": 3, "formato": "FOR_TIME", "params": { "rounds": 4 }, "aquecimento": false }
       ],
       "exercicios": [
-        { "ex_ref": "ex_deadlift", "ordem": 0, "bloco_id": "a", "aquecimento": false, "series_prescritas": [ { "series": 5, "reps": "3", "carga": "82-87%" } ], "intervalo_s": 150, "observacoes": "5x3 a 82–87% do 1RM" },
-        { "ex_ref": "ex_pull_up_estrito", "ordem": 1, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "8", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto ímpar: 8 pull-ups estritos" },
-        { "ex_ref": "ex_push_up_deficit", "ordem": 2, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto par: 12 push-ups déficit" },
-        { "ex_ref": "ex_corrida", "ordem": 3, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "400", "carga": null } ], "intervalo_s": null, "observacoes": "400m por round" },
-        { "ex_ref": "ex_kb_swing", "ordem": 4, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "15", "carga": null } ], "intervalo_s": null, "observacoes": "15 por round" },
-        { "ex_ref": "ex_burpee_over_kb", "ordem": 5, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": "12 por round" },
-        { "ex_ref": "ex_box_jump_over", "ordem": 6, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "9", "carga": null } ], "intervalo_s": null, "observacoes": "9 por round" }
+        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_afundo", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_skipping_alto", "ordem": 2, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "20", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_deadlift", "ordem": 3, "bloco_id": "a", "aquecimento": false, "series_prescritas": [ { "series": 5, "reps": "3", "carga": "82-87%" } ], "intervalo_s": 150, "observacoes": "5x3 a 82–87% do 1RM" },
+        { "ex_ref": "ex_pull_up_estrito", "ordem": 4, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "8", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto ímpar: 8 pull-ups estritos" },
+        { "ex_ref": "ex_push_up_deficit", "ordem": 5, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto par: 12 push-ups déficit" },
+        { "ex_ref": "ex_corrida", "ordem": 6, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "400", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_kb_swing", "ordem": 7, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "15", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_burpee_over_kb", "ordem": 8, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_box_jump_over", "ordem": 9, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "9", "carga": null } ], "intervalo_s": null, "observacoes": null }
       ]
     },
     {
@@ -393,15 +401,19 @@
       "nome": "Força T3",
       "foco": "Potência + Metcon",
       "blocos": [
-        { "id": "a", "nome": "A) Potência", "ordem": 0, "formato": "EMOM", "params": { "intervalo_s": 90, "duracao_s": 720 }, "aquecimento": false },
-        { "id": "b", "nome": "B) Metcon Principal", "ordem": 1, "formato": "EMOM", "params": { "intervalo_s": 60, "duracao_s": 1440 }, "aquecimento": false }
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": { "rounds": 2 }, "aquecimento": true },
+        { "id": "a", "nome": "A) Potência — Every 90s x 8", "ordem": 1, "formato": "LIVRE", "params": {}, "aquecimento": false },
+        { "id": "b", "nome": "B) Metcon Principal", "ordem": 2, "formato": "EMOM", "params": { "intervalo_s": 60, "duracao_s": 1440 }, "aquecimento": false }
       ],
       "exercicios": [
-        { "ex_ref": "ex_complexo_snatch", "ordem": 0, "bloco_id": "a", "aquecimento": false, "series_prescritas": [ { "series": 8, "reps": "1+1+1", "carga": "70-75%" } ], "intervalo_s": null, "observacoes": "Every 90s x 8 sets: 1 Power Snatch + 1 Hang Snatch + 1 Overhead Squat, a 70–75%" },
-        { "ex_ref": "ex_remo_cal", "ordem": 1, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "15/12", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto 1: 15/12 Cal Row" },
-        { "ex_ref": "ex_thruster", "ordem": 2, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": "43/30kg" } ], "intervalo_s": null, "observacoes": "Minuto 2: 12 Thrusters (43/30kg)" },
-        { "ex_ref": "ex_chest_to_bar", "ordem": 3, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "15", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto 3: 15 Chest-to-Bar" },
-        { "ex_ref": "ex_descanso", "ordem": 4, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "1", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto 4: descanso. O ciclo de 4 minutos repete 6 vezes (EMOM 24)." }
+        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_afundo", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_skipping_alto", "ordem": 2, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "20", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_complexo_snatch", "ordem": 3, "bloco_id": "a", "aquecimento": false, "series_prescritas": [ { "series": 8, "reps": "1+1+1", "carga": "70-75%" } ], "intervalo_s": 90, "observacoes": "Every 90s x 8 sets: 1 Power Snatch + 1 Hang Snatch + 1 Overhead Squat, a 70–75%. Registre a carga de cada passagem; use o cronômetro de 1:30 como cadência." },
+        { "ex_ref": "ex_remo_cal", "ordem": 4, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "15/12", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto 1: 15/12 Cal Row" },
+        { "ex_ref": "ex_thruster", "ordem": 5, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": "43/30kg" } ], "intervalo_s": null, "observacoes": "Minuto 2: 12 Thrusters (43/30kg)" },
+        { "ex_ref": "ex_chest_to_bar", "ordem": 6, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "15", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto 3: 15 Chest-to-Bar" },
+        { "ex_ref": "ex_descanso", "ordem": 7, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "1", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto 4: descanso. O ciclo de 4 minutos repete 6 vezes (EMOM 24)." }
       ]
     }
   ],
