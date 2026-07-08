@@ -1820,11 +1820,14 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
     [exs.data]
   )
 
+  const appliedExRef = useRef<string | undefined>(undefined)
   useEffect(() => {
     if (!exs.data?.length) return
-    if (initialExRef) {
+    if (initialExRef && appliedExRef.current !== initialExRef) {
       // Deep link: pode vir a chave (notifs novas) ou um exercicio_id legado — resolve
       // pelos dois; se o exercício sumiu, cai no primeiro da lista (nunca fica em branco).
+      // Aplicado uma única vez por initialExRef para não sobrescrever a troca manual do select.
+      appliedExRef.current = initialExRef
       const hit = exs.data.find((e) => e.chave === initialExRef)
         ?? exs.data.find((e) => e.exercicio_ids?.includes(initialExRef))
       setExKey(hit?.chave ?? exs.data[0].chave)

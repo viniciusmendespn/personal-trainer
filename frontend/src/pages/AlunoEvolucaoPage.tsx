@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Trophy, TrendingUp, Activity, BarChart3, CalendarCheck, FileDown, Search, MessageSquareDot, MessageCircle, Zap } from 'lucide-react'
 import {
@@ -86,11 +86,14 @@ export function AlunoEvolucaoPage() {
     }
   }
 
+  const appliedHighlightRef = useRef<string | undefined>(undefined)
   useEffect(() => {
     if (!exerciciosOrdenados.length) return
-    if (highlightRef) {
+    if (highlightRef && appliedHighlightRef.current !== highlightRef) {
       // Resolve chave OU exercicio_id legado; se o exercício sumiu, cai no primeiro da
       // lista — o select nunca fica em branco.
+      // Aplicado uma única vez por highlightRef para não sobrescrever a troca manual do select.
+      appliedHighlightRef.current = highlightRef
       const hit = exerciciosOrdenados.find((e) => e.chave === highlightRef)
         ?? exerciciosOrdenados.find((e) => e.exercicio_ids?.includes(highlightRef))
       setExKey(hit?.chave ?? exerciciosOrdenados[0].chave)
