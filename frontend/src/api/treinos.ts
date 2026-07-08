@@ -152,6 +152,19 @@ export interface ExecExercicio {
   relatos?: Relato[]
 }
 
+/** Exercício PRESCRITO (snapshot do treino no momento da sessão) — existe mesmo quando o
+ * aluno não registrou nada (ex.: movimentos de um WOD, cujo resultado é o score do bloco). */
+export interface ExercicioPrescritoSessao {
+  exercicio_id: string
+  nome?: string
+  bloco_id?: string | null
+  aquecimento?: boolean
+  tipo_exercicio?: string
+  unidade_reps?: string
+  unidade_carga?: string
+  series_prescritas?: Array<{ series: number; reps: string; carga?: string }>
+}
+
 export interface SessaoHistoricoPersonal {
   sessao_id: string
   treino_id: string
@@ -161,6 +174,8 @@ export interface SessaoHistoricoPersonal {
   data_hora_fim?: string
   duracao_segundos?: number
   total_ex: number
+  /** Todos os exercícios prescritos no treino (independente de terem sido registrados). */
+  exercicios?: ExercicioPrescritoSessao[]
   exercicios_exec?: ExecExercicio[]
 }
 

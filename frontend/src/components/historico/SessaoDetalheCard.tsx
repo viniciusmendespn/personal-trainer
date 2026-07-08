@@ -12,7 +12,7 @@ import { Modal, Badge } from '../ui'
 import { normalizeTipoExercicio, type TipoExercicio, type BlocoTreino } from '../../types'
 import { fmtScoreWod } from '../../utils/wod'
 import { formatoBlocoLabel, sufixoPrescricaoBloco, fmtPrescricaoBloco } from '../exercicios/BlocosTreinoEditor'
-import type { ScoreBlocoOut } from '../../api/alunoApp'
+import type { ScoreBlocoOut, ExercicioPrescritoSessao } from '../../api/alunoApp'
 
 function fmtDur(secs: number) {
   const h = Math.floor(secs / 3600)
@@ -199,8 +199,24 @@ function ExercicioDetalhe({ ex, alunoId, bloco }: ExercicioDetalheProps) {
   )
 }
 
-function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: number; exercicios_exec?: ExecEx[]; scores_blocos?: ScoreBlocoOut[]; blocos?: BlocoTreino[] }; alunoId?: string }) {
+/** Movimento de um WOD sem registro próprio (o resultado é o score do bloco) — mostra a
+ * composição do treino mesmo quando nada foi digitado exercício a exercício (spec CROSSFIT §3.2). */
+function MovimentoBloco({ ex, bloco }: { ex: ExercicioPrescritoSessao; bloco: BlocoTreino }) {
+  const sufixo = sufixoPrescricaoBloco(bloco)
+  const prescrito = ex.series_prescritas?.length
+    ? `${fmtPrescricaoBloco(ex.series_prescritas, ex.unidade_reps)}${sufixo ? ` ${sufixo}` : ''}`
+    : null
+  return (
+    <div className="flex items-center justify-between gap-2 text-xs py-1">
+      <span className="text-text-secondary">{ex.nome}</span>
+      {prescrito && <span className="text-text-muted text-right">{prescrito}</span>}
+    </div>
+  )
+}
+
+function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: number; exercicios?: ExercicioPrescritoSessao[]; exercicios_exec?: ExecEx[]; scores_blocos?: ScoreBlocoOut[]; blocos?: BlocoTreino[] }; alunoId?: string }) {
   const exs = data.exercicios_exec ?? []
+  const prescritos = data.exercicios ?? []
   const vol = totalVolume(exs)
   const scores = data.scores_blocos ?? []
   // Agrupa por bloco (mesma estrutura da tela de execução); sessões antigas sem blocos → lista plana
@@ -241,7 +257,11 @@ function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: n
           <>
             {blocos.map((b) => {
               const doBloco = exs.filter((e) => e.bloco_id === b.id)
-              if (!doBloco.length) return null
+              const execIds = new Set(doBloco.map((e) => e.exercicio_id))
+              // Movimentos do bloco sem registro próprio (comum em WOD: o resultado é o score
+              // do bloco) — mostrados como referência, para a composição do treino não sumir.
+              const semExec = prescritos.filter((p) => p.bloco_id === b.id && !execIds.has(p.exercicio_id))
+              if (!doBloco.length && !semExec.length) return null
               const label = formatoBlocoLabel(b)
               return (
                 <div key={b.id} className={b.aquecimento ? 'opacity-80' : ''}>
@@ -253,6 +273,13 @@ function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: n
                     {doBloco.map((ex) => (
                       <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} bloco={b} />
                     ))}
+                    {semExec.length > 0 && (
+                      <div className={doBloco.length > 0 ? 'pt-1 border-t border-border/60' : undefined}>
+                        {semExec.map((ex) => (
+                          <MovimentoBloco key={ex.exercicio_id} ex={ex} bloco={b} />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )
