@@ -36,7 +36,6 @@ class ScoreBloco(BaseModel):
 class FinishBody(BaseModel):
     """Payload opcional do finish — ausente = comportamento clássico (musculação)."""
     scores_blocos: list[ScoreBloco] = []
-    exercicios_feitos_sem_registro: list[str] = []   # ids marcados "feito" sem série (ex.: aquecimento)
 
 
 class SessaoTreino(BaseModel):

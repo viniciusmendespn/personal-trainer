@@ -93,8 +93,8 @@ Quando você tem mais de um treino cadastrado (ex.: Treino A, Treino B), eles ap
      segundo campo — ele fica no seu histórico como contexto; o recorde é sempre da medida principal
 
    **Aquecimento:** exercícios e séries marcados como aquecimento aparecem atenuados com o selo "aq."
-   — eles não geram recorde, volume nem pontos. Exercícios de aquecimento têm um botão **"Feito ✓"**
-   para marcar sem registrar série a série.
+   — eles não geram recorde, volume nem pontos. Registre-os como qualquer exercício (em circuitos,
+   uma linha por round: Rd 1, Rd 2…).
 
 3. Toque em **"Registrar"** para confirmar a série
 4. Repita para cada série do exercício

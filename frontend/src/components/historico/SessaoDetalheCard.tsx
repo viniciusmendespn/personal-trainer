@@ -8,9 +8,10 @@ import { personalApi } from '../../api/personal'
 import { MediaTimeline, type MediaTimelineItem } from '../media/MediaTimeline'
 import { ExercicioFeedCard } from '../exercicio/ExercicioFeedCard'
 import { PostComposer } from '../exercicio/PostComposer'
-import { Modal } from '../ui'
-import { normalizeTipoExercicio, type TipoExercicio } from '../../types'
+import { Modal, Badge } from '../ui'
+import { normalizeTipoExercicio, type TipoExercicio, type BlocoTreino } from '../../types'
 import { fmtScoreWod } from '../../utils/wod'
+import { formatoBlocoLabel, sufixoPrescricaoBloco } from '../exercicios/BlocosTreinoEditor'
 import type { ScoreBlocoOut } from '../../api/alunoApp'
 
 function fmtDur(secs: number) {
@@ -53,6 +54,7 @@ interface ExecEx {
 interface ExercicioDetalheProps {
   ex: ExecEx
   alunoId?: string  // presente só no lado do personal
+  bloco?: BlocoTreino  // bloco a que o exercício pertencia (rótulos Rd N / "por round")
 }
 
 function totalVolume(exs: ExecEx[]) {
@@ -69,8 +71,15 @@ function totalVolume(exs: ExecEx[]) {
   return v > 0 ? `${Math.round(v)} kg` : null
 }
 
-function prescritoLabel(ex: ExecEx): string | null {
+function prescritoLabel(ex: ExecEx, bloco?: BlocoTreino): string | null {
   if (ex.series_prescritas?.length) {
+    // Bloco pontuável ou circuito com rounds: prescrição é POR round/minuto (igual à sessão)
+    const pontuavel = !!bloco && bloco.formato !== 'LIVRE' && !bloco.aquecimento
+    const sufixo = sufixoPrescricaoBloco(bloco)
+    if (pontuavel || sufixo) {
+      const base = ex.series_prescritas.map((s) => `${s.reps}${s.carga ? ` · ${s.carga}` : ''}`).join(' + ')
+      return sufixo ? `${base} ${sufixo}` : base
+    }
     return ex.series_prescritas.map((s) => `${s.series}×${s.reps}${s.carga ? ` · ${s.carga}` : ''}`).join(' + ')
   }
   if (ex.series || ex.reps_prescritas) {
@@ -97,9 +106,11 @@ function execLabel(tipo: TipoExercicio, s: { carga?: string; reps?: number; cont
   return `${s.reps != null ? `${s.reps} ${ur}` : '—'}${s.carga ? ` · ${s.carga} ${uc}` : ''}`
 }
 
-function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
+function ExercicioDetalhe({ ex, alunoId, bloco }: ExercicioDetalheProps) {
   const tipo = normalizeTipoExercicio(ex.tipo_exercicio)
-  const prescrito = prescritoLabel(ex)
+  const prescrito = prescritoLabel(ex, bloco)
+  // Circuito (LIVRE/aquecimento com rounds): cada série executada é um round → "Rd N"
+  const circuito = !!bloco && bloco.formato === 'LIVRE' && (bloco.params?.rounds ?? 0) > 1
   const [correcaoOpen, setCorrecaoOpen] = useState(false)
   const { data: aluno } = useQuery({ queryKey: ['aluno', alunoId], queryFn: () => alunosApi.get(alunoId!), enabled: !!alunoId })
   const { data: myProfile } = useQuery({ queryKey: ['personal-profile'], queryFn: personalApi.getProfile, enabled: !!alunoId })
@@ -146,7 +157,7 @@ function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
           <p className="text-xs text-text-muted font-medium">Executado</p>
           {ex.series_exec.map((s, i) => (
             <div key={i} className={`flex items-center gap-3 pl-2 text-xs ${s.aquecimento ? 'opacity-70' : ''}`}>
-              <span className="text-text-muted w-12 shrink-0">Sér {i + 1}</span>
+              <span className="text-text-muted w-12 shrink-0">{circuito ? `Rd ${i + 1}` : `Sér ${i + 1}`}</span>
               <span className="text-text">
                 {execLabel(tipo, s, ex.unidade_carga, ex.unidade_reps)}
               </span>
@@ -188,10 +199,14 @@ function ExercicioDetalhe({ ex, alunoId }: ExercicioDetalheProps) {
   )
 }
 
-function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: number; exercicios_exec?: ExecEx[]; scores_blocos?: ScoreBlocoOut[] }; alunoId?: string }) {
+function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: number; exercicios_exec?: ExecEx[]; scores_blocos?: ScoreBlocoOut[]; blocos?: BlocoTreino[] }; alunoId?: string }) {
   const exs = data.exercicios_exec ?? []
   const vol = totalVolume(exs)
   const scores = data.scores_blocos ?? []
+  // Agrupa por bloco (mesma estrutura da tela de execução); sessões antigas sem blocos → lista plana
+  const blocos = (data.blocos ?? []).slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+  const blocoIds = new Set(blocos.map((b) => b.id))
+  const semBloco = exs.filter((e) => !e.bloco_id || !blocoIds.has(e.bloco_id))
 
   return (
     <div className="mt-3 border-t border-border pt-3 space-y-1">
@@ -219,9 +234,41 @@ function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: n
       )}
 
       <div className="space-y-3">
-        {exs.map((ex) => (
+        {blocos.length === 0 && exs.map((ex) => (
           <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} />
         ))}
+        {blocos.length > 0 && (
+          <>
+            {blocos.map((b) => {
+              const doBloco = exs.filter((e) => e.bloco_id === b.id)
+              if (!doBloco.length) return null
+              const label = formatoBlocoLabel(b)
+              return (
+                <div key={b.id} className={b.aquecimento ? 'opacity-80' : ''}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-semibold text-text-secondary">{b.nome}</span>
+                    {label && <Badge tone={b.aquecimento ? 'neutral' : 'accent'}>{label}</Badge>}
+                  </div>
+                  <div className="space-y-3 pl-1">
+                    {doBloco.map((ex) => (
+                      <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} bloco={b} />
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+            {semBloco.length > 0 && (
+              <div>
+                <div className="mb-2"><span className="text-xs font-semibold text-text-secondary">Outros</span></div>
+                <div className="space-y-3 pl-1">
+                  {semBloco.map((ex) => (
+                    <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
         {exs.length === 0 && (
           <p className="text-xs text-text-muted">Nenhum exercício registrado.</p>
         )}

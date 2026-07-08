@@ -213,7 +213,7 @@ Dentro de blocos For Time/AMRAP/EMOM o aluno **não registra série a série** (
 
 #### Aquecimento (warmup)
 
-Você pode marcar como aquecimento: um **bloco** inteiro (checkbox no bloco), um **exercício** (checkbox no formulário) ou **séries individuais** (botão "aq." em cada linha da prescrição — séries de aproximação, ex.: 50%×10 antes do trabalho). O que está marcado como aquecimento **não gera PR, não conta volume nem pontos** — mas conta para o "treino completo". No app, o aluno pode marcar exercícios de aquecimento como "Feito ✓" sem registrar série a série.
+Você pode marcar como aquecimento: um **bloco** inteiro (checkbox no bloco), um **exercício** (checkbox no formulário) ou **séries individuais** (botão "aq." em cada linha da prescrição — séries de aproximação, ex.: 50%×10 antes do trabalho). O que está marcado como aquecimento **não gera PR, não conta volume nem pontos** — mas conta para o "treino completo". No app, o aluno registra o aquecimento como qualquer exercício (em circuitos, uma linha por round: Rd 1, Rd 2…), e ele aparece no histórico da sessão.
 
 #### Unidades personalizáveis
 Você pode definir manualmente o sufixo de carga (Força) e a unidade da métrica (Performance) de qualquer exercício (ex.: carga em `%1RM`, métrica em `m`, `passos`, `cal`). As unidades definidas aparecem nos campos de prescrição, no registro do aluno e nos gráficos de evolução.

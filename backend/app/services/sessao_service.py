@@ -300,14 +300,10 @@ def finish(aluno_id: str, body=None) -> dict:
     # `novos_prs` já vem acumulado no item ativo via _registrar_pr_sessao() durante os registros.
     s["volume_total"] = sum(_volume(r.get("series_exec")) for r in regs)
     s["total_series"] = sum(len(r.get("series_exec") or []) for r in regs)
-    # Score de WOD por bloco + "feito sem registro" (aquecimento) — spec CROSSFIT §3.2/§3.4
+    # Score de WOD por bloco — spec CROSSFIT §3.2
     ids_validos = {e.get("exercicio_id") for e in s.get("exercicios", [])}
     if body and getattr(body, "scores_blocos", None):
         s["scores_blocos"] = _processar_scores_wod(aluno_id, s, body.scores_blocos, fim_iso)
-    if body and getattr(body, "exercicios_feitos_sem_registro", None):
-        s["exercicios_feitos_sem_registro"] = [
-            i for i in body.exercicios_feitos_sem_registro if i in ids_validos
-        ]
     snap = {k: v for k, v in s.items() if k not in ("PK", "SK", "ttl")}
     ts = epoch_ms()
     sk_hist = keys.sk_sessao_hist(ts, sessao_id)
@@ -379,15 +375,14 @@ def finish(aluno_id: str, body=None) -> dict:
         repo.add_to_set(keys.pk_personal(personal_id), f"STATS#D#{hoje}",
                         "alunos_set", {aluno_id})
         # Gamificação: pontos por sessão finalizada (com multiplicador de streak).
-        # "Feito" = tem registro OU pertence a bloco de WOD com score informado OU foi
-        # marcado "feito sem registro" (aquecimento) — spec CROSSFIT §3.2 (decisão ii).
+        # "Feito" = tem registro OU pertence a bloco de WOD com score informado
+        # (spec CROSSFIT §3.2, decisão ii — aquecimento é registrado normalmente).
         total_ex = len(s.get("exercicios", []))
         feitos_ids = {e.get("exercicio_id") for e in snap.get("exercicios_exec", [])}
         blocos_com_score = {sc.get("bloco_id") for sc in s.get("scores_blocos") or []}
         if blocos_com_score:
             feitos_ids |= {e.get("exercicio_id") for e in s.get("exercicios", [])
                            if e.get("bloco_id") in blocos_com_score}
-        feitos_ids |= set(s.get("exercicios_feitos_sem_registro") or [])
         feitos_ex = len(feitos_ids & ids_validos)
         completo = total_ex > 0 and feitos_ex >= total_ex
         desc = "Sessão 100% completa" if completo else "Sessão finalizada"

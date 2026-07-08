@@ -1129,7 +1129,6 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
   const ses = useQuery({ queryKey: ['aluno-sessao-exs'], queryFn: alunoApi.sessaoExercicios, retry: false })
   const [finalizada, setFinalizada] = useState<SessaoFinalizada | null>(null)
   const [scoreModal, setScoreModal] = useState(false)
-  const [feitosSemRegistro, setFeitosSemRegistro] = useState<string[]>([])
   const finish = useMutation({
     mutationFn: (payload?: FinishPayload) => alunoApi.finish(payload),
     // Mantém a sessão montada e abre a tela de check-in; só invalida (transiciona a UI)
@@ -1160,7 +1159,7 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
 
   if (ses.isLoading || !ses.data) return <Spinner />
   const exs = ses.data.exercicios
-  const exFeito = (e: ExSessao) => !!e.registrado?.length || feitosSemRegistro.includes(e.exercicio_id)
+  const exFeito = (e: ExSessao) => !!e.registrado?.length
   const feitos = exs.filter(exFeito).length
   const progresso = exs.length ? Math.round((feitos / exs.length) * 100) : 0
   const blocosPontuaveis = (ses.data.blocos ?? []).filter((b) => b.formato !== 'LIVRE' && !b.aquecimento)
@@ -1186,10 +1185,7 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
       cancelLabel: 'Continuar treinando',
     })
     if (ok) {
-      finish.mutate({
-        scores_blocos: scores.length ? scores : undefined,
-        exercicios_feitos_sem_registro: feitosSemRegistro.length ? feitosSemRegistro : undefined,
-      })
+      finish.mutate({ scores_blocos: scores.length ? scores : undefined })
     }
   }
 
@@ -1229,15 +1225,7 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
         const blocoIds = new Set(blocos.map((b) => b.id))
         const semBloco = exs.filter((e) => !e.bloco_id || !blocoIds.has(e.bloco_id))
         const card = (ex: ExSessao, bloco?: BlocoTreino) => (
-          <ExercicioCard
-            key={ex.exercicio_id} ex={ex} bloco={bloco} onVerFeed={onVerFeed} onAbrirCronometro={abrirCrono}
-            marcadoFeito={feitosSemRegistro.includes(ex.exercicio_id)}
-            onToggleFeito={ex.aquecimento && !ex.registrado?.length
-              ? () => setFeitosSemRegistro((ids) => ids.includes(ex.exercicio_id)
-                  ? ids.filter((i) => i !== ex.exercicio_id)
-                  : [...ids, ex.exercicio_id])
-              : undefined}
-          />
+          <ExercicioCard key={ex.exercicio_id} ex={ex} bloco={bloco} onVerFeed={onVerFeed} onAbrirCronometro={abrirCrono} />
         )
         if (!blocos.length) return exs.map((e) => card(e))
         return (
@@ -1448,15 +1436,12 @@ function SubstitutosModal({
   )
 }
 
-function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro, marcadoFeito, onToggleFeito }: {
+function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
   ex: ExSessao
   /** Bloco a que o exercício pertence (formato/rounds mudam a exibição e o registro). */
   bloco?: BlocoTreino
   onVerFeed: (exId: string) => void
   onAbrirCronometro: (seconds?: number, label?: string) => void
-  /** Aquecimento: marcado "feito" sem registro de séries (spec CROSSFIT §3.4). */
-  marcadoFeito?: boolean
-  onToggleFeito?: () => void
 }) {
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
@@ -1591,21 +1576,8 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro, marcadoFeito, 
               }
             </span>
           </span>
-          {(feito || marcadoFeito) ? <Check size={16} className="text-success shrink-0" /> : <ChevronRight size={16} className="text-text-muted shrink-0" />}
+          {feito ? <Check size={16} className="text-success shrink-0" /> : <ChevronRight size={16} className="text-text-muted shrink-0" />}
         </button>
-        {onToggleFeito && (
-          <button
-            onClick={onToggleFeito}
-            aria-label={marcadoFeito ? 'Desmarcar como feito' : 'Marcar como feito'}
-            className={`shrink-0 text-[10px] font-medium px-1.5 py-1 rounded-md border transition-colors ${
-              marcadoFeito
-                ? 'border-success/50 bg-success/15 text-success'
-                : 'border-border text-text-muted hover:border-border-strong'
-            }`}
-          >
-            Feito ✓
-          </button>
-        )}
         <button
           onClick={() => onAbrirCronometro(ex.intervalo_s, nomeAtivo)}
           aria-label="Cronômetro de descanso"

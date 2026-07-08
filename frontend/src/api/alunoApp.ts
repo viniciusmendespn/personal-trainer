@@ -105,7 +105,6 @@ export interface ScoreBlocoOut extends ScoreBlocoInput {
 
 export interface FinishPayload {
   scores_blocos?: ScoreBlocoInput[]
-  exercicios_feitos_sem_registro?: string[]
 }
 
 /** Resposta de finalizar treino — destaques da sessão p/ a tela de check-in pós-treino. */
