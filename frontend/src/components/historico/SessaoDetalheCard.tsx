@@ -11,7 +11,7 @@ import { PostComposer } from '../exercicio/PostComposer'
 import { Modal, Badge } from '../ui'
 import { normalizeTipoExercicio, type TipoExercicio, type BlocoTreino } from '../../types'
 import { fmtScoreWod } from '../../utils/wod'
-import { formatoBlocoLabel, sufixoPrescricaoBloco } from '../exercicios/BlocosTreinoEditor'
+import { formatoBlocoLabel, sufixoPrescricaoBloco, fmtPrescricaoBloco } from '../exercicios/BlocosTreinoEditor'
 import type { ScoreBlocoOut } from '../../api/alunoApp'
 
 function fmtDur(secs: number) {
@@ -77,7 +77,7 @@ function prescritoLabel(ex: ExecEx, bloco?: BlocoTreino): string | null {
     const pontuavel = !!bloco && bloco.formato !== 'LIVRE' && !bloco.aquecimento
     const sufixo = sufixoPrescricaoBloco(bloco)
     if (pontuavel || sufixo) {
-      const base = ex.series_prescritas.map((s) => `${s.reps}${s.carga ? ` · ${s.carga}` : ''}`).join(' + ')
+      const base = fmtPrescricaoBloco(ex.series_prescritas, ex.unidade_reps)
       return sufixo ? `${base} ${sufixo}` : base
     }
     return ex.series_prescritas.map((s) => `${s.series}×${s.reps}${s.carga ? ` · ${s.carga}` : ''}`).join(' + ')

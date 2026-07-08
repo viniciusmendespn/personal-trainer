@@ -27,7 +27,7 @@ import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas }
 import { LinksUteisSelector } from '../components/exercicios/LinksUteisSelector'
 import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
-import { BlocosTreinoEditor, formatoBlocoLabel, sufixoPrescricaoBloco } from '../components/exercicios/BlocosTreinoEditor'
+import { BlocosTreinoEditor, formatoBlocoLabel, sufixoPrescricaoBloco, fmtPrescricaoBloco } from '../components/exercicios/BlocosTreinoEditor'
 import { IntervaloInput } from '../components/exercicios/IntervaloInput'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import { CalendarioMes } from '../components/historico/CalendarioMes'
@@ -1260,7 +1260,7 @@ function ExercicioRow({
               if (ex.series_prescritas?.length && (pontuavel || sufixo)) {
                 return (
                   <span className="text-xs text-text-muted">
-                    {ex.series_prescritas.map((s) => `${s.reps}${s.carga ? ` · ${s.carga}` : ''}`).join(' + ')}
+                    {fmtPrescricaoBloco(ex.series_prescritas, ex.unidade_reps)}
                     {sufixo && <span className="opacity-70"> {sufixo}</span>}
                   </span>
                 )

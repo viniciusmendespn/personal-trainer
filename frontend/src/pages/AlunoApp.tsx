@@ -33,7 +33,7 @@ import { alunoFinanceiroApi } from '../api/financeiro'
 import { PixModal } from '../components/financeiro/PixModal'
 import type { BlocoTreino, Cobranca, ExercicioSubstituto, SeriePrescrita } from '../types'
 import { normalizeTipoExercicio } from '../types'
-import { formatoBlocoLabel, sufixoPrescricaoBloco } from '../components/exercicios/BlocosTreinoEditor'
+import { formatoBlocoLabel, sufixoPrescricaoBloco, fmtPrescricaoBloco } from '../components/exercicios/BlocosTreinoEditor'
 import { videoUrlComFallback } from '../utils/video'
 import { chaveExercicio, normalizeText } from '../utils/normalizeText'
 
@@ -954,7 +954,7 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
                       <p className="text-xs text-text-secondary mt-0.5">
                         {ex.series_prescritas?.length && (pontuavelPrev || sufixoPrev)
                           ? <>
-                              {ex.series_prescritas.map((s) => `${s.reps}${s.carga ? ` · ${s.carga}` : ''}`).join(' + ')}
+                              {fmtPrescricaoBloco(ex.series_prescritas, ex.unidade_reps)}
                               {sufixoPrev && <span className="opacity-70"> {sufixoPrev}</span>}
                             </>
                           : ex.series_prescritas?.length
@@ -1567,7 +1567,7 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
             <span className="block mt-0.5">
               {seriesAtivas?.length && (pontuavel || sufixoBloco)
                 ? <span className="text-xs text-text-muted">
-                    {seriesAtivas.map((s) => `${s.reps}${s.carga ? ` · ${s.carga}` : ''}`).join(' + ')}
+                    {fmtPrescricaoBloco(seriesAtivas, ex.unidade_reps)}
                     {sufixoBloco && <span className="opacity-70"> {sufixoBloco}</span>}
                   </span>
                 : seriesAtivas?.length

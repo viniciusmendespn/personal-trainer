@@ -57,6 +57,16 @@ export function sufixoPrescricaoBloco(b?: BlocoTreino | null): string | null {
   return null
 }
 
+/** Formata a prescrição "por round/minuto" incluindo a unidade da métrica (ex.: "30 cal",
+ * "500 m") — sem isso, exercícios PERFORMANCE ficavam sem a unidade nesse modo de exibição. */
+export function fmtPrescricaoBloco(
+  items: { reps: string; carga?: string | null }[],
+  unidadeReps?: string | null,
+): string {
+  const un = unidadeReps ? ` ${unidadeReps}` : ''
+  return items.map((s) => `${s.reps}${un}${s.carga ? ` · ${s.carga}` : ''}`).join(' + ')
+}
+
 function fmtMS(s: number): string {
   const m = Math.floor(s / 60)
   return `${m}:${String(s % 60).padStart(2, '0')}`
