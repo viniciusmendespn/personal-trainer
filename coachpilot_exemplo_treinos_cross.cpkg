@@ -1,0 +1,422 @@
+{
+  "version": "1",
+  "pacote": {
+    "id": "7c9d4b2a-1e3f-4a8b-9c5d-2e6f8a0b1c3d",
+    "nome": "Endurance + Força e Resistência — Semana 01",
+    "descricao": "Programação real de CrossFit/endurance da Semana 01, em duas rotinas: Endurance (corrida em zonas + intervalado nos ergômetros) e Força e Resistência (força + potência + metcon). Blocos com formato (For Time/AMRAP/EMOM), timer de WOD no app e score com evolução automática.",
+    "autor": "CoachPilot",
+    "versao": "1.0"
+  },
+  "exercicios": [
+    {
+      "ref": "ex_air_squat",
+      "nome": "Air Squat",
+      "grupo": "Pernas",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Agachamento com o peso do corpo.",
+      "recomendacoes": "Quadril abaixo da linha do joelho e extensão completa em cima.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_afundo",
+      "nome": "Afundo",
+      "grupo": "Pernas",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Afundo alternado com o peso do corpo.",
+      "recomendacoes": "Joelho de trás quase tocando o chão; tronco ereto.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_skipping_alto",
+      "nome": "Skipping Alto",
+      "grupo": "Cardio",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Corrida estacionária elevando os joelhos até a linha do quadril.",
+      "recomendacoes": "Cadência rápida, core firme.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_butt_kick",
+      "nome": "Butt Kick",
+      "grupo": "Cardio",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Corrida estacionária levando o calcanhar ao glúteo.",
+      "recomendacoes": "Movimento leve e rápido, aquecendo posterior de coxa.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_corrida",
+      "nome": "Corrida",
+      "grupo": "Cardio",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "m",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Corrida medida em metros. Nos tiros por tempo (ex.: 8min em Zona 3), registre a distância percorrida em cada tiro — evoluir é correr mais metros no mesmo tempo.",
+      "recomendacoes": "Zonas de FC: Z1 50–60% (recuperação) · Z2 60–70% (base aeróbia) · Z3 70–80% (tempo/endurance) · Z4 80–90% (limiar) · Z5 >90% (VO₂máx).",
+      "substitutos": [
+        { "nome": "Remo", "video_url": null, "observacao": "Sem pista/esteira: mesma duração no remo.", "series_prescritas": null }
+      ]
+    },
+    {
+      "ref": "ex_remo",
+      "nome": "Remo",
+      "grupo": "Cardio",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "m",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Remo ergômetro, medido em metros.",
+      "recomendacoes": "Drive com as pernas primeiro; braços relaxados na recuperação.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_remo_cal",
+      "nome": "Remo (calorias)",
+      "grupo": "Cardio",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "cal",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Remo ergômetro medido em calorias (ex.: 15/12 Cal Row).",
+      "recomendacoes": "Prescrição 15/12 = 15 cal homens / 12 cal mulheres.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_skierg",
+      "nome": "SkiErg",
+      "grupo": "Cardio",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "m",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Ergômetro de esqui, medido em metros.",
+      "recomendacoes": "Puxada com o corpo inteiro, flexionando quadril e joelhos.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_bike",
+      "nome": "Bike",
+      "grupo": "Cardio",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "cal",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Bike ergométrica (Assault/Echo), medida em calorias.",
+      "recomendacoes": "Use braços e pernas juntos para acumular calorias mais rápido.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_front_squat",
+      "nome": "Front Squat",
+      "grupo": "Pernas",
+      "tipo_exercicio": "FORCA",
+      "unidade_reps": null,
+      "metrica_direcao": null,
+      "video_url": null,
+      "descricao": "Agachamento frontal com barra no rack de ombros.",
+      "recomendacoes": "Cotovelos altos, tronco vertical. Percentuais sobre o 1RM do Front Squat.",
+      "substitutos": [
+        { "nome": "Goblet Squat", "video_url": null, "observacao": "Alternativa com kettlebell/halter.", "series_prescritas": null }
+      ]
+    },
+    {
+      "ref": "ex_hang_power_clean",
+      "nome": "Hang Power Clean",
+      "grupo": "Costas",
+      "tipo_exercicio": "FORCA",
+      "unidade_reps": null,
+      "metrica_direcao": null,
+      "video_url": null,
+      "descricao": "Clean a partir da posição hang (barra acima do joelho), recepção em power.",
+      "recomendacoes": "Extensão agressiva de quadril; recepção com cotovelos rápidos.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_deadlift",
+      "nome": "Deadlift",
+      "grupo": "Posterior",
+      "tipo_exercicio": "FORCA",
+      "unidade_reps": null,
+      "metrica_direcao": null,
+      "video_url": null,
+      "descricao": "Levantamento terra com barra.",
+      "recomendacoes": "Coluna neutra; barra próxima ao corpo do início ao fim.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_wall_ball",
+      "nome": "Wall Ball",
+      "grupo": "Pernas",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Agachamento + arremesso da medicine ball no alvo.",
+      "recomendacoes": "RX: 9/6kg no alvo de 3,0/2,7m.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_power_clean",
+      "nome": "Power Clean",
+      "grupo": "Costas",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Clean do chão com recepção em power (dentro de metcon, conta-se repetições).",
+      "recomendacoes": "Carga do metcon: 60kg (homens) / 40kg (mulheres).",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_toes_to_bar",
+      "nome": "Toes-to-Bar",
+      "grupo": "Abdômen",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Pendurado na barra, levar as pontas dos pés até a barra.",
+      "recomendacoes": "Escale para knees-to-elbow se necessário.",
+      "substitutos": [
+        { "nome": "Knees-to-Elbow", "video_url": null, "observacao": "Regressão: joelhos aos cotovelos.", "series_prescritas": null }
+      ]
+    },
+    {
+      "ref": "ex_pull_up_estrito",
+      "nome": "Pull-up Estrito",
+      "grupo": "Costas",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Barra fixa estrita (sem kipping).",
+      "recomendacoes": "Controle total, sem balanço. Escale com elástico se necessário.",
+      "substitutos": [
+        { "nome": "Pull-up com elástico", "video_url": null, "observacao": "Versão adaptada com banda.", "series_prescritas": null }
+      ]
+    },
+    {
+      "ref": "ex_push_up_deficit",
+      "nome": "Push-up Déficit",
+      "grupo": "Peito",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Flexão com as mãos elevadas (anilhas/paralelas), aumentando a amplitude.",
+      "recomendacoes": "Peito abaixo da linha das mãos em cada repetição.",
+      "substitutos": [
+        { "nome": "Push-up", "video_url": null, "observacao": "Sem déficit, no chão.", "series_prescritas": null }
+      ]
+    },
+    {
+      "ref": "ex_kb_swing",
+      "nome": "Kettlebell Swing",
+      "grupo": "Posterior",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Balanço do kettlebell impulsionado pelo quadril.",
+      "recomendacoes": "RX: 24/16kg.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_burpee_over_kb",
+      "nome": "Burpee Over KB",
+      "grupo": "Cardio",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Burpee saltando lateralmente por cima do kettlebell.",
+      "recomendacoes": "Salto com os dois pés; mantenha o ritmo constante.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_box_jump_over",
+      "nome": "Box Jump Over",
+      "grupo": "Pernas",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Salto por cima da caixa (sem necessidade de extensão em cima).",
+      "recomendacoes": "RX: caixa de 60/50cm.",
+      "substitutos": [
+        { "nome": "Step Over", "video_url": null, "observacao": "Subir e descer da caixa em passos.", "series_prescritas": null }
+      ]
+    },
+    {
+      "ref": "ex_complexo_snatch",
+      "nome": "Complexo Snatch",
+      "grupo": "Ombros",
+      "tipo_exercicio": "FORCA",
+      "unidade_reps": null,
+      "metrica_direcao": null,
+      "video_url": null,
+      "descricao": "Complexo: 1 Power Snatch + 1 Hang Snatch + 1 Overhead Squat, sem soltar a barra.",
+      "recomendacoes": "Percentual sobre o 1RM do Snatch. Priorize técnica — a barra só desce no fim do complexo.",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_thruster",
+      "nome": "Thruster",
+      "grupo": "Pernas",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Front squat + push press num movimento contínuo.",
+      "recomendacoes": "Carga do metcon: 43kg (homens) / 30kg (mulheres).",
+      "substitutos": []
+    },
+    {
+      "ref": "ex_chest_to_bar",
+      "nome": "Chest-to-Bar",
+      "grupo": "Costas",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "reps",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Pull-up com o peito tocando a barra.",
+      "recomendacoes": "Escale para pull-up comum se necessário.",
+      "substitutos": [
+        { "nome": "Pull-up", "video_url": null, "observacao": "Regressão: queixo acima da barra.", "series_prescritas": null }
+      ]
+    },
+    {
+      "ref": "ex_descanso",
+      "nome": "Descanso",
+      "grupo": "Cardio",
+      "tipo_exercicio": "PERFORMANCE",
+      "unidade_reps": "min",
+      "metrica_direcao": "MAIOR",
+      "video_url": null,
+      "descricao": "Minuto de descanso dentro do ciclo do EMOM.",
+      "recomendacoes": "Respire e prepare-se para o próximo minuto.",
+      "substitutos": []
+    }
+  ],
+  "templates": [
+    {
+      "ref": "tmpl_end_t1",
+      "nome": "Endurance T1 — Corrida em Zonas",
+      "foco": "Corrida — Zona 3",
+      "blocos": [
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": {}, "aquecimento": true },
+        { "id": "corrida", "nome": "Corrida — 4×8min Z3", "ordem": 1, "formato": "LIVRE", "params": {}, "aquecimento": false },
+        { "id": "final", "nome": "Final — 10min Z2", "ordem": 2, "formato": "LIVRE", "params": {}, "aquecimento": false }
+      ],
+      "exercicios": [
+        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds" },
+        { "ex_ref": "ex_afundo", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds" },
+        { "ex_ref": "ex_skipping_alto", "ordem": 2, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "20", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds" },
+        { "ex_ref": "ex_butt_kick", "ordem": 3, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "20", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds" },
+        { "ex_ref": "ex_corrida", "ordem": 4, "bloco_id": "corrida", "aquecimento": false, "series_prescritas": [ { "series": 4, "reps": "8min Z3", "carga": null } ], "intervalo_s": 120, "observacoes": "4 tiros de 8min em Zona 3 alta (75–82% FCmáx). Registre a distância (m) de cada tiro. Recuperação entre tiros: 2min caminhando ou trotando em Zona 1." },
+        { "ex_ref": "ex_corrida", "ordem": 5, "bloco_id": "final", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "10min Z2", "carga": null } ], "intervalo_s": null, "observacoes": "10 minutos de corrida contínua em Zona 2 (65–72% FCmáx). Registre a distância (m)." }
+      ]
+    },
+    {
+      "ref": "tmpl_end_t2",
+      "nome": "Endurance T2 — Ergômetros",
+      "foco": "Remo, Bike, SkiErg",
+      "blocos": [
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": {}, "aquecimento": true },
+        { "id": "wod", "nome": "5 Rounds For Time", "ordem": 1, "formato": "FOR_TIME", "params": { "rounds": 5, "descanso_rounds_s": 120 }, "aquecimento": false },
+        { "id": "final", "nome": "Final — EMOM alternado", "ordem": 2, "formato": "EMOM", "params": { "intervalo_s": 60, "duracao_s": 600 }, "aquecimento": false }
+      ],
+      "exercicios": [
+        { "ex_ref": "ex_remo", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "500", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds — 500m por round" },
+        { "ex_ref": "ex_skierg", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "30s", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds — 30s por round" },
+        { "ex_ref": "ex_bike", "ordem": 2, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "30s", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds — 30s por round" },
+        { "ex_ref": "ex_air_squat", "ordem": 3, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds" },
+        { "ex_ref": "ex_remo", "ordem": 4, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "750", "carga": null } ], "intervalo_s": null, "observacoes": "750m por round" },
+        { "ex_ref": "ex_bike", "ordem": 5, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "30", "carga": null } ], "intervalo_s": null, "observacoes": "30 kcal por round" },
+        { "ex_ref": "ex_skierg", "ordem": 6, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "500", "carga": null } ], "intervalo_s": null, "observacoes": "500m por round · descanso de 2min entre rounds" },
+        { "ex_ref": "ex_bike", "ordem": 7, "bloco_id": "final", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto ímpar: 12 kcal Bike" },
+        { "ex_ref": "ex_remo", "ordem": 8, "bloco_id": "final", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "250", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto par: 250m Remo" }
+      ]
+    },
+    {
+      "ref": "tmpl_forca_t1",
+      "nome": "Força T1",
+      "foco": "Força + Potência + Metcon",
+      "blocos": [
+        { "id": "a", "nome": "A) Força", "ordem": 0, "formato": "LIVRE", "params": {}, "aquecimento": false },
+        { "id": "b", "nome": "B) Potência", "ordem": 1, "formato": "LIVRE", "params": {}, "aquecimento": false },
+        { "id": "c", "nome": "C) Metcon", "ordem": 2, "formato": "AMRAP", "params": { "duracao_s": 900 }, "aquecimento": false }
+      ],
+      "exercicios": [
+        { "ex_ref": "ex_front_squat", "ordem": 0, "bloco_id": "a", "aquecimento": false, "series_prescritas": [ { "series": 5, "reps": "5", "carga": "75-80%" } ], "intervalo_s": 120, "observacoes": "5x5 a 75–80% do 1RM" },
+        { "ex_ref": "ex_hang_power_clean", "ordem": 1, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 5, "reps": "3", "carga": "70%" } ], "intervalo_s": 120, "observacoes": "5x3 a 70% do 1RM" },
+        { "ex_ref": "ex_wall_ball", "ordem": 2, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": "12 por round" },
+        { "ex_ref": "ex_power_clean", "ordem": 3, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "9", "carga": "60/40kg" } ], "intervalo_s": null, "observacoes": "9 por round (60/40kg)" },
+        { "ex_ref": "ex_toes_to_bar", "ordem": 4, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": "12 por round" },
+        { "ex_ref": "ex_corrida", "ordem": 5, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "200", "carga": null } ], "intervalo_s": null, "observacoes": "200m por round" }
+      ]
+    },
+    {
+      "ref": "tmpl_forca_t2",
+      "nome": "Força T2",
+      "foco": "Força + Ginástica + Metcon",
+      "blocos": [
+        { "id": "a", "nome": "A) Força", "ordem": 0, "formato": "LIVRE", "params": {}, "aquecimento": false },
+        { "id": "b", "nome": "B) Ginástica", "ordem": 1, "formato": "EMOM", "params": { "intervalo_s": 60, "duracao_s": 600 }, "aquecimento": false },
+        { "id": "c", "nome": "C) Metcon", "ordem": 2, "formato": "FOR_TIME", "params": { "rounds": 4 }, "aquecimento": false }
+      ],
+      "exercicios": [
+        { "ex_ref": "ex_deadlift", "ordem": 0, "bloco_id": "a", "aquecimento": false, "series_prescritas": [ { "series": 5, "reps": "3", "carga": "82-87%" } ], "intervalo_s": 150, "observacoes": "5x3 a 82–87% do 1RM" },
+        { "ex_ref": "ex_pull_up_estrito", "ordem": 1, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "8", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto ímpar: 8 pull-ups estritos" },
+        { "ex_ref": "ex_push_up_deficit", "ordem": 2, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto par: 12 push-ups déficit" },
+        { "ex_ref": "ex_corrida", "ordem": 3, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "400", "carga": null } ], "intervalo_s": null, "observacoes": "400m por round" },
+        { "ex_ref": "ex_kb_swing", "ordem": 4, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "15", "carga": null } ], "intervalo_s": null, "observacoes": "15 por round" },
+        { "ex_ref": "ex_burpee_over_kb", "ordem": 5, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": "12 por round" },
+        { "ex_ref": "ex_box_jump_over", "ordem": 6, "bloco_id": "c", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "9", "carga": null } ], "intervalo_s": null, "observacoes": "9 por round" }
+      ]
+    },
+    {
+      "ref": "tmpl_forca_t3",
+      "nome": "Força T3",
+      "foco": "Potência + Metcon",
+      "blocos": [
+        { "id": "a", "nome": "A) Potência", "ordem": 0, "formato": "EMOM", "params": { "intervalo_s": 90, "duracao_s": 720 }, "aquecimento": false },
+        { "id": "b", "nome": "B) Metcon Principal", "ordem": 1, "formato": "EMOM", "params": { "intervalo_s": 60, "duracao_s": 1440 }, "aquecimento": false }
+      ],
+      "exercicios": [
+        { "ex_ref": "ex_complexo_snatch", "ordem": 0, "bloco_id": "a", "aquecimento": false, "series_prescritas": [ { "series": 8, "reps": "1+1+1", "carga": "70-75%" } ], "intervalo_s": null, "observacoes": "Every 90s x 8 sets: 1 Power Snatch + 1 Hang Snatch + 1 Overhead Squat, a 70–75%" },
+        { "ex_ref": "ex_remo_cal", "ordem": 1, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "15/12", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto 1: 15/12 Cal Row" },
+        { "ex_ref": "ex_thruster", "ordem": 2, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "12", "carga": "43/30kg" } ], "intervalo_s": null, "observacoes": "Minuto 2: 12 Thrusters (43/30kg)" },
+        { "ex_ref": "ex_chest_to_bar", "ordem": 3, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "15", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto 3: 15 Chest-to-Bar" },
+        { "ex_ref": "ex_descanso", "ordem": 4, "bloco_id": "b", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "1", "carga": null } ], "intervalo_s": null, "observacoes": "Minuto 4: descanso. O ciclo de 4 minutos repete 6 vezes (EMOM 24)." }
+      ]
+    }
+  ],
+  "rotinas": [
+    {
+      "ref": "rot_endurance_s1",
+      "nome": "Endurance — Semana 01",
+      "descricao": "Semana 01 do bloco de endurance: T1 corrida em zonas (4×8min Z3 + 10min Z2) e T2 intervalado nos ergômetros (5 Rounds For Time + EMOM alternado). Equipamento: musculação com barra + ergômetros.",
+      "treinos": ["tmpl_end_t1", "tmpl_end_t2"]
+    },
+    {
+      "ref": "rot_forca_resistencia_s1",
+      "nome": "Força e Resistência — Semana 01",
+      "descricao": "Semana 01 do bloco de força e resistência: T1 (Front Squat + Hang Power Clean + AMRAP 15'), T2 (Deadlift + EMOM de ginástica + For Time 4 rounds) e T3 (complexo de Snatch Every 90s + EMOM 24).",
+      "treinos": ["tmpl_forca_t1", "tmpl_forca_t2", "tmpl_forca_t3"]
+    }
+  ]
+}
