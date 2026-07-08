@@ -202,12 +202,14 @@ O aluno registra **um único número por série** nessa unidade. Esse valor alim
 Para treinos por partes (Aquecimento → A) Força → C) Metcon), use **blocos**: ao criar/editar o treino, adicione blocos com nome e formato, e em cada exercício escolha o bloco a que ele pertence. Treino sem blocos continua funcionando exatamente como sempre.
 
 Formatos de bloco:
-- **Livre** — sem timer/score: força, skills e aquecimento (registro série a série, como musculação).
+- **Livre** — sem timer/score: força, skills e aquecimento (registro série a série, como musculação). Aceita **rounds de circuito** ("2 rounds de..."): prescreva cada exercício com 1 série com as reps do round — o app mostra "2 rounds" no bloco e o aluno registra round a round (Rd 1, Rd 2).
 - **For Time** — completar a tarefa no menor tempo. Parâmetros: rounds (ex.: "4 rounds de..."), time cap e descanso entre rounds.
 - **AMRAP** — máximo de rounds + reps dentro da duração (ex.: AMRAP 15min).
 - **EMOM** — uma tarefa por intervalo (a cada 1min / 1:30 / 2min) até a duração total. A **ordem dos exercícios do bloco define os slots do ciclo** (minuto ímpar/par etc., repetindo até o fim — um "minuto de descanso" pode ser um exercício chamado "Descanso").
 
 No app, o aluno vê o treino agrupado por bloco, usa o **timer do WOD** (contagem com cap no For Time, countdown com botão "+1 round" no AMRAP, beep por minuto no EMOM) e, ao finalizar, informa o **resultado de cada bloco** (tempo / rounds+reps / minutos, RX ou Adaptado). O resultado vira **PR e evolução do WOD** automaticamente — e pode ser alvo de meta (ex.: "Fran abaixo de 8min").
+
+Dentro de blocos For Time/AMRAP/EMOM o aluno **não registra série a série** (os rounds variam — o resultado oficial é o score do bloco): o card do movimento vira referência, com campo opcional de **"carga que usei"** — essa anotação aparece no histórico da sessão como contexto, sem gerar PR nem volume.
 
 #### Aquecimento (warmup)
 

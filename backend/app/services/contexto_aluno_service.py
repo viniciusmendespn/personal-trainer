@@ -232,7 +232,7 @@ def _evolucao_do_programa(sessoes: list[dict], prs: list[dict],
             if not ch or e.get("substituto_nome") or e.get("aquecimento"):
                 continue
             cargas = [c for c in (_num(x.get("carga")) for x in e.get("series_exec") or []
-                                  if not x.get("aquecimento")) if c is not None]
+                                  if not x.get("aquecimento") and not x.get("contexto")) if c is not None]
             if cargas:
                 cargas_por_chave.setdefault(ch, []).append(max(cargas))
     out: list[EvolucaoExercicioContexto] = []

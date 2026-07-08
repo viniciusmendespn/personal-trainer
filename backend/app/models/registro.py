@@ -11,6 +11,7 @@ class SerieExec(BaseModel):
     reps: Optional[float] = None               # repetições (FORCA) ou métrica livre (PERFORMANCE — aceita decimais: km, min…)
     rpe: Optional[float] = None                # percepção de esforço (0-10)
     aquecimento: Optional[bool] = None         # série de aquecimento — excluída de PR/volume/pontos
+    contexto: Optional[bool] = None            # anotação dentro de bloco de WOD (ex.: carga usada) — o resultado oficial é o score do bloco; fora de PR/volume/pontos
 
 
 class Registro(BaseModel):

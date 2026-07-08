@@ -146,6 +146,9 @@ parte é um **bloco**; os exercícios apontam para o bloco via `bloco_id`.
 - `ordem`: inteiro (0, 1, 2…) — ordem das partes.
 - `formato`: **um de** `"LIVRE"`, `"FOR_TIME"`, `"AMRAP"`, `"EMOM"`.
   - `"LIVRE"`: sem timer/score — força, skills, aquecimento (registro série a série, como musculação).
+    Aceita `params.rounds` para **circuitos** ("2 rounds de..."): o app mostra "2 rounds — complete o
+    circuito e repita" e o aluno registra round a round (Rd 1, Rd 2). Num circuito, prescreva cada
+    exercício com **1 série com as reps DO ROUND** (não multiplique pelas voltas).
   - `"FOR_TIME"`: completar a tarefa no menor tempo. Params: `rounds` (ex.: `4` para "4 rounds de..."),
     `time_cap_s` (tempo limite em segundos), `descanso_rounds_s` (descanso entre rounds, se prescrito).
   - `"AMRAP"`: máximo de rounds+reps no tempo. Param: `duracao_s` (ex.: `900` para AMRAP 15min).
@@ -165,8 +168,11 @@ parte é um **bloco**; os exercícios apontam para o bloco via `bloco_id`.
   em `observacoes`.
 - "A) Força — Front Squat 5x5 75-80%" → bloco `LIVRE` chamado `"A) Força"`, com o exercício FORCA
   normal (`series_prescritas` com `carga: "75-80%"` e `unidade_carga: "%1RM"`).
-- Aquecimento ("2 rounds: 10 Air Squats…") → bloco com `aquecimento: true` e os movimentos como
-  exercícios (`observacoes` do bloco/exercício para detalhes tipo "2 rounds").
+- Aquecimento em circuito ("2 rounds: 10 Air Squats, 12 Afundos…") → bloco com `aquecimento: true`
+  e `params.rounds: 2`; cada movimento com **1 série** com as reps do round (ex.: `{"series": 1,
+  "reps": "10"}`). NÃO use `series: 2` para representar os rounds — rounds ficam no bloco.
+- Dentro de blocos FOR_TIME/AMRAP/EMOM, o aluno **não registra série a série** — o resultado é o
+  score do bloco na finalização. Prescreva cada movimento com 1 série com as reps por round/minuto.
 
 ### Campo `exercicios[]` (dentro de cada treino)
 

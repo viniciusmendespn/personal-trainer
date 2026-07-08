@@ -20,11 +20,12 @@ const FORMATOS: { value: FormatoBloco; label: string }[] = [
   { value: 'EMOM', label: 'EMOM' },
 ]
 
-/** "AMRAP 15min", "For Time · 4 rounds · cap 20:00", "EMOM 24min · a cada 1:30" */
+/** "AMRAP 15min", "For Time · 4 rounds · cap 20:00", "EMOM 24min · a cada 1:30",
+ * "2 rounds" (circuito livre), "Aquecimento · 2 rounds" */
 export function formatoBlocoLabel(b: BlocoTreino): string | null {
-  if (b.aquecimento) return 'Aquecimento'
   const p = b.params ?? {}
   const min = (s?: number) => (s ? (s % 60 === 0 ? `${s / 60}min` : fmtMS(s)) : '')
+  if (b.aquecimento) return p.rounds && p.rounds > 1 ? `Aquecimento · ${p.rounds} rounds` : 'Aquecimento'
   switch (b.formato) {
     case 'FOR_TIME': {
       const parts = ['For Time']
@@ -42,8 +43,18 @@ export function formatoBlocoLabel(b: BlocoTreino): string | null {
       return parts.join(' · ')
     }
     default:
-      return null
+      // Circuito livre: complete o bloco inteiro e repita
+      return p.rounds && p.rounds > 1 ? `${p.rounds} rounds` : null
   }
+}
+
+/** Sufixo da prescrição por unidade de repetição do bloco ("por round" / "por minuto"). */
+export function sufixoPrescricaoBloco(b?: BlocoTreino | null): string | null {
+  if (!b) return null
+  const rounds = b.params?.rounds ?? 0
+  if (b.formato === 'EMOM') return 'por minuto'
+  if (b.formato === 'AMRAP' || rounds > 1) return 'por round'
+  return null
 }
 
 function fmtMS(s: number): string {
@@ -107,6 +118,16 @@ export function BlocosTreinoEditor({ value, onChange }: {
                 <X size={14} />
               </button>
             </div>
+            {b.aquecimento && (
+              <label className="text-xs text-text-muted block">
+                Rounds do circuito <span className="opacity-70">(opcional — ex.: 2 = faça tudo e repita)</span>
+                <Input
+                  inputMode="numeric" placeholder="ex.: 2" className="mt-1 w-24"
+                  value={b.params?.rounds ?? ''}
+                  onChange={(e) => updateParams(i, { rounds: parseInt(e.target.value, 10) || undefined })}
+                />
+              </label>
+            )}
             {!b.aquecimento && (
               <>
                 <div className="flex gap-1.5">
@@ -125,6 +146,16 @@ export function BlocosTreinoEditor({ value, onChange }: {
                     </button>
                   ))}
                 </div>
+                {b.formato === 'LIVRE' && (
+                  <label className="text-xs text-text-muted block">
+                    Rounds do circuito <span className="opacity-70">(opcional — ex.: 2 = faça o bloco inteiro e repita)</span>
+                    <Input
+                      inputMode="numeric" placeholder="ex.: 2" className="mt-1 w-24"
+                      value={b.params?.rounds ?? ''}
+                      onChange={(e) => updateParams(i, { rounds: parseInt(e.target.value, 10) || undefined })}
+                    />
+                  </label>
+                )}
                 {b.formato === 'FOR_TIME' && (
                   <div className="grid grid-cols-3 gap-2">
                     <label className="text-xs text-text-muted">

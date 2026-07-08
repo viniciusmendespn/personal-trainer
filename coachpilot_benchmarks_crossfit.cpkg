@@ -120,11 +120,11 @@
       "nome": "Fran",
       "foco": "Metcon — benchmark",
       "blocos": [
-        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": {}, "aquecimento": true },
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": { "rounds": 2 }, "aquecimento": true },
         { "id": "wod", "nome": "Fran", "ordem": 1, "formato": "FOR_TIME", "params": { "time_cap_s": 600 }, "aquecimento": false }
       ],
       "exercicios": [
-        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds leves + mobilidade de ombro" },
+        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": "Rounds leves + mobilidade de ombro" },
         { "ex_ref": "ex_thruster", "ordem": 1, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "21-15-9", "carga": "43/30kg" } ], "intervalo_s": null, "observacoes": "21-15-9 alternando com pull-ups" },
         { "ex_ref": "ex_pull_up", "ordem": 2, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "21-15-9", "carga": null } ], "intervalo_s": null, "observacoes": null }
       ]
@@ -134,11 +134,11 @@
       "nome": "Cindy",
       "foco": "Metcon — benchmark",
       "blocos": [
-        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": {}, "aquecimento": true },
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": { "rounds": 2 }, "aquecimento": true },
         { "id": "wod", "nome": "Cindy", "ordem": 1, "formato": "AMRAP", "params": { "duracao_s": 1200 }, "aquecimento": false }
       ],
       "exercicios": [
-        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
         { "ex_ref": "ex_pull_up", "ordem": 1, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "5", "carga": null } ], "intervalo_s": null, "observacoes": "5 por round" },
         { "ex_ref": "ex_push_up", "ordem": 2, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": "10 por round" },
         { "ex_ref": "ex_air_squat", "ordem": 3, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "15", "carga": null } ], "intervalo_s": null, "observacoes": "15 por round" }

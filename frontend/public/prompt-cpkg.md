@@ -238,10 +238,12 @@ Musculação clássica: **sempre `[]`**. Use blocos quando o treino tem partes d
 ```
 
 - `id`: identificador curto e único no template (`aq`, `a`, `b`, `c`…) — os exercícios apontam via `bloco_id`.
-- `formato`: `"LIVRE"` (força/skills/aquecimento — sem timer/score), `"FOR_TIME"` (params: `rounds`,
-  `time_cap_s`, `descanso_rounds_s`), `"AMRAP"` (param: `duracao_s`) ou `"EMOM"` (params: `intervalo_s`,
-  `duracao_s` — EMOM 24 = `1440`).
-- `aquecimento: true` marca o bloco como warmup (formato LIVRE; fora de PR/volume/pontos).
+- `formato`: `"LIVRE"` (força/skills/aquecimento — sem timer/score; aceita `params.rounds` para
+  circuitos "2 rounds de..."), `"FOR_TIME"` (params: `rounds`, `time_cap_s`, `descanso_rounds_s`),
+  `"AMRAP"` (param: `duracao_s`) ou `"EMOM"` (params: `intervalo_s`, `duracao_s` — EMOM 24 = `1440`).
+- `aquecimento: true` marca o bloco como warmup (formato LIVRE; fora de PR/volume/pontos). Aquecimento
+  em circuito ("2 rounds") → `params.rounds: 2` no bloco e **1 série por exercício** com as reps do
+  round (NÃO use `series: 2` para representar rounds).
 - Nos exercícios do template: `bloco_id` referencia o `id` do bloco (ou `null` sem blocos) e
   `aquecimento: true` marca exercício avulso de warmup. Em `series_prescritas`, cada objeto aceita
   `"aquecimento": true` para séries de aproximação (ramp-up).

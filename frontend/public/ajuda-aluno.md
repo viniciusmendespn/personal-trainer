@@ -115,7 +115,8 @@ Se o seu treino tem **blocos** (ex.: Aquecimento → A) Força → C) Metcon), o
   - **For Time**: o relógio conta pra cima (avisa quando o time cap chega); toque em **"Terminei!"** para gravar seu tempo.
   - **AMRAP**: contagem regressiva com um botão gigante **"+1 round"** — toque a cada round completado.
   - **EMOM**: beep e vibração a cada intervalo, mostrando o minuto atual e o exercício da vez.
-- Dentro de um metcon você **não precisa registrar série a série** — ao finalizar o treino, o app pergunta o **resultado de cada bloco** (tempo / rounds + reps / minutos completos) e se foi **RX** (como prescrito) ou **Adaptado**. Se você usou o timer, o resultado já vem preenchido.
+- Dentro de um metcon você **não registra série a série** — o card do movimento é uma referência (reps por round, vídeo, substitutos) com um campo opcional para **anotar a carga que você usou** (ex.: thruster com 35kg em vez de 43). Ao finalizar o treino, o app pergunta o **resultado de cada bloco** (tempo / rounds + reps / minutos completos) e se foi **RX** (como prescrito) ou **Adaptado**. Se você usou o timer, o resultado já vem preenchido.
+- Blocos com **rounds de circuito** (ex.: aquecimento "2 rounds") mostram a prescrição **por round** e o registro por rounds (Rd 1, Rd 2) — complete o circuito inteiro e repita.
 - O resultado vira **recorde e evolução do WOD**: repita o mesmo treino (ex.: "Fran") e acompanhe seu tempo caindo no gráfico da aba Evolução.
 
 #### Como finalizar o treino

@@ -317,15 +317,15 @@
       "nome": "Endurance T1 — Corrida em Zonas",
       "foco": "Corrida — Zona 3",
       "blocos": [
-        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": {}, "aquecimento": true },
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": { "rounds": 2 }, "aquecimento": true },
         { "id": "corrida", "nome": "Corrida — 4×8min Z3", "ordem": 1, "formato": "LIVRE", "params": {}, "aquecimento": false },
         { "id": "final", "nome": "Final — 10min Z2", "ordem": 2, "formato": "LIVRE", "params": {}, "aquecimento": false }
       ],
       "exercicios": [
-        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds" },
-        { "ex_ref": "ex_afundo", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds" },
-        { "ex_ref": "ex_skipping_alto", "ordem": 2, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "20", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds" },
-        { "ex_ref": "ex_butt_kick", "ordem": 3, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "20", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds" },
+        { "ex_ref": "ex_air_squat", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_afundo", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_skipping_alto", "ordem": 2, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "20", "carga": null } ], "intervalo_s": null, "observacoes": null },
+        { "ex_ref": "ex_butt_kick", "ordem": 3, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "20", "carga": null } ], "intervalo_s": null, "observacoes": null },
         { "ex_ref": "ex_corrida", "ordem": 4, "bloco_id": "corrida", "aquecimento": false, "series_prescritas": [ { "series": 4, "reps": "8min Z3", "carga": null } ], "intervalo_s": 120, "observacoes": "4 tiros de 8min em Zona 3 alta (75–82% FCmáx). Registre a distância (m) de cada tiro. Recuperação entre tiros: 2min caminhando ou trotando em Zona 1." },
         { "ex_ref": "ex_corrida", "ordem": 5, "bloco_id": "final", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "10min Z2", "carga": null } ], "intervalo_s": null, "observacoes": "10 minutos de corrida contínua em Zona 2 (65–72% FCmáx). Registre a distância (m)." }
       ]
@@ -335,15 +335,15 @@
       "nome": "Endurance T2 — Ergômetros",
       "foco": "Remo, Bike, SkiErg",
       "blocos": [
-        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": {}, "aquecimento": true },
+        { "id": "aq", "nome": "Aquecimento", "ordem": 0, "formato": "LIVRE", "params": { "rounds": 2 }, "aquecimento": true },
         { "id": "wod", "nome": "5 Rounds For Time", "ordem": 1, "formato": "FOR_TIME", "params": { "rounds": 5, "descanso_rounds_s": 120 }, "aquecimento": false },
         { "id": "final", "nome": "Final — EMOM alternado", "ordem": 2, "formato": "EMOM", "params": { "intervalo_s": 60, "duracao_s": 600 }, "aquecimento": false }
       ],
       "exercicios": [
-        { "ex_ref": "ex_remo", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "500", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds — 500m por round" },
-        { "ex_ref": "ex_skierg", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "30s", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds — 30s por round" },
-        { "ex_ref": "ex_bike", "ordem": 2, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "30s", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds — 30s por round" },
-        { "ex_ref": "ex_air_squat", "ordem": 3, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 2, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": "2 rounds" },
+        { "ex_ref": "ex_remo", "ordem": 0, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "500", "carga": null } ], "intervalo_s": null, "observacoes": "500m por round" },
+        { "ex_ref": "ex_skierg", "ordem": 1, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "30s", "carga": null } ], "intervalo_s": null, "observacoes": "30s por round" },
+        { "ex_ref": "ex_bike", "ordem": 2, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "30s", "carga": null } ], "intervalo_s": null, "observacoes": "30s por round" },
+        { "ex_ref": "ex_air_squat", "ordem": 3, "bloco_id": "aq", "aquecimento": true, "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ], "intervalo_s": null, "observacoes": null },
         { "ex_ref": "ex_remo", "ordem": 4, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "750", "carga": null } ], "intervalo_s": null, "observacoes": "750m por round" },
         { "ex_ref": "ex_bike", "ordem": 5, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "30", "carga": null } ], "intervalo_s": null, "observacoes": "30 kcal por round" },
         { "ex_ref": "ex_skierg", "ordem": 6, "bloco_id": "wod", "aquecimento": false, "series_prescritas": [ { "series": 1, "reps": "500", "carga": null } ], "intervalo_s": null, "observacoes": "500m por round · descanso de 2min entre rounds" },

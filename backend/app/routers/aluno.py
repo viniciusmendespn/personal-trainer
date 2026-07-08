@@ -332,8 +332,9 @@ def registrar(body: RegistroBody, ctx: dict = Depends(get_current_aluno)):
             ctx["aluno_id"], ctx["personal_id"], body.exercicio_id or "", float(pr),
             chave=sessao_service.chave_exercicio(out.get("exercicio_nome")),
         )
-    # Só séries válidas pontuam — aquecimento (flag materializada em set_series) não conta
-    if any(not s.get("aquecimento") for s in series):
+    # Só séries válidas pontuam — aquecimento e anotações de metcon (flags materializadas
+    # em set_series) não contam
+    if any(not s.get("aquecimento") and not s.get("contexto") for s in series):
         pontos_service.award(ctx["aluno_id"], "SERIE", ctx["personal_id"],
                             descricao="Série registrada", streak=streak)
     return out

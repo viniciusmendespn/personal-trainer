@@ -31,9 +31,9 @@ import { CalendarioMes } from '../components/historico/CalendarioMes'
 import { HistoricoLista } from '../components/historico/HistoricoLista'
 import { alunoFinanceiroApi } from '../api/financeiro'
 import { PixModal } from '../components/financeiro/PixModal'
-import type { Cobranca, ExercicioSubstituto, SeriePrescrita } from '../types'
+import type { BlocoTreino, Cobranca, ExercicioSubstituto, SeriePrescrita } from '../types'
 import { normalizeTipoExercicio } from '../types'
-import { formatoBlocoLabel } from '../components/exercicios/BlocosTreinoEditor'
+import { formatoBlocoLabel, sufixoPrescricaoBloco } from '../components/exercicios/BlocosTreinoEditor'
 import { videoUrlComFallback } from '../utils/video'
 import { chaveExercicio, normalizeText } from '../utils/normalizeText'
 
@@ -1221,9 +1221,9 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
         const blocos = (ses.data.blocos ?? []).slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
         const blocoIds = new Set(blocos.map((b) => b.id))
         const semBloco = exs.filter((e) => !e.bloco_id || !blocoIds.has(e.bloco_id))
-        const card = (ex: ExSessao) => (
+        const card = (ex: ExSessao, bloco?: BlocoTreino) => (
           <ExercicioCard
-            key={ex.exercicio_id} ex={ex} onVerFeed={onVerFeed} onAbrirCronometro={abrirCrono}
+            key={ex.exercicio_id} ex={ex} bloco={bloco} onVerFeed={onVerFeed} onAbrirCronometro={abrirCrono}
             marcadoFeito={feitosSemRegistro.includes(ex.exercicio_id)}
             onToggleFeito={ex.aquecimento && !ex.registrado?.length
               ? () => setFeitosSemRegistro((ids) => ids.includes(ex.exercicio_id)
@@ -1232,7 +1232,7 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
               : undefined}
           />
         )
-        if (!blocos.length) return exs.map(card)
+        if (!blocos.length) return exs.map((e) => card(e))
         return (
           <>
             {blocos.map((b) => {
@@ -1262,14 +1262,14 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
                       </button>
                     )}
                   </div>
-                  {doBloco.map(card)}
+                  {doBloco.map((e) => card(e, b))}
                 </div>
               )
             })}
             {semBloco.length > 0 && (
               <div className="space-y-3">
                 <div className="pt-1"><span className="text-sm font-display font-semibold">Outros</span></div>
-                {semBloco.map(card)}
+                {semBloco.map((e) => card(e))}
               </div>
             )}
           </>
@@ -1441,8 +1441,10 @@ function SubstitutosModal({
   )
 }
 
-function ExercicioCard({ ex, onVerFeed, onAbrirCronometro, marcadoFeito, onToggleFeito }: {
+function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro, marcadoFeito, onToggleFeito }: {
   ex: ExSessao
+  /** Bloco a que o exercício pertence (formato/rounds mudam a exibição e o registro). */
+  bloco?: BlocoTreino
   onVerFeed: (exId: string) => void
   onAbrirCronometro: (seconds?: number, label?: string) => void
   /** Aquecimento: marcado "feito" sem registro de séries (spec CROSSFIT §3.4). */
@@ -1464,6 +1466,12 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro, marcadoFeito, onToggl
   const videoAtivo = videoUrlComFallback(nomeAtivo, variante?.video_url ?? ex.video_url)
   const obsAtiva = variante?.observacao ?? ex.observacoes
   const seriesAtivas = variante?.series_prescritas?.length ? variante.series_prescritas : ex.series_prescritas
+  // Bloco pontuável (For Time/AMRAP/EMOM): o resultado oficial é o SCORE do bloco na
+  // finalização — o card vira referência do movimento, com anotação opcional de carga.
+  const pontuavel = !!bloco && bloco.formato !== 'LIVRE' && !bloco.aquecimento && !ex.aquecimento
+  // Circuito livre com rounds (ex.: aquecimento "2 rounds"): 1 linha de registro por round.
+  const circuitoRounds = !pontuavel && (bloco?.params?.rounds ?? 0) > 1 ? bloco!.params!.rounds! : undefined
+  const sufixoBloco = sufixoPrescricaoBloco(bloco)
 
   const buildRows = (v: ExercicioSubstituto | null) => {
     const variantNome = v?.nome ?? null
@@ -1472,6 +1480,13 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro, marcadoFeito, onToggl
       return ex.registrado.map((s) => ({ carga: s.carga ?? '', reps: s.reps != null ? String(s.reps) : '', repsHint: '', cargaHint: '', aquecimento: !!s.aquecimento }))
     }
     const prescritas = v?.series_prescritas?.length ? v.series_prescritas : ex.series_prescritas
+    if (circuitoRounds) {
+      // Circuito: a prescrição é POR ROUND — uma linha de registro por round (Rd 1, Rd 2…)
+      const p = prescritas?.[0]
+      return Array.from({ length: circuitoRounds }, () => ({
+        carga: '', reps: '', repsHint: p?.reps ? String(p.reps) : '', cargaHint: p?.carga ? String(p.carga) : '', aquecimento: !!p?.aquecimento,
+      }))
+    }
     if (prescritas?.length) {
       return prescritas.flatMap((p) =>
         Array.from({ length: p.series }, () => ({ carga: '', reps: '', repsHint: p.reps ? String(p.reps) : '', cargaHint: p.carga ? String(p.carga) : '', aquecimento: !!p.aquecimento }))
@@ -1496,16 +1511,25 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro, marcadoFeito, onToggl
   // aluno registra também esse campo (contextual: histórico/última vez; PR segue na métrica).
   const temSegundaMetrica = tipo === 'PERFORMANCE' && !!ex.unidade_carga
   const mostraCarga = tipo !== 'PERFORMANCE' || temSegundaMetrica
+  const [cargaAnotada, setCargaAnotada] = useState(() => ex.registrado?.[0]?.carga ?? '')
 
   const ultimaExec = useQuery({
     queryKey: ['aluno-hist-ex', ex.nome],
     queryFn: () => alunoApi.historicoExercicio(ex.nome),
-    enabled: open,
+    enabled: open && !pontuavel,
     staleTime: 10 * 60_000,
   })
 
   const save = useMutation({
     mutationFn: () => {
+      if (pontuavel) {
+        // Metcon: o resultado oficial é o score do bloco — aqui só a anotação de carga usada
+        if (!cargaAnotada.trim()) throw new Error('Informe a carga que você usou.')
+        return alunoApi.registrar(
+          [{ carga: normalizeCargaOut(cargaAnotada) || undefined }],
+          ex.exercicio_id, variante?.nome,
+        )
+      }
       if (rows.some((r) => !r.reps)) {
         throw new Error(tipo === 'PERFORMANCE' ? 'Preencha a métrica de todas as séries.' : 'Preencha as repetições de todas as séries.')
       }
@@ -1549,9 +1573,13 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro, marcadoFeito, onToggl
               {variante && <span className="ml-1.5 text-[10px] text-accent align-middle">substituto</span>}
             </span>
             <span className="block mt-0.5">
-              {seriesAtivas?.length
-                ? <SeriesPrescritasCompact items={seriesAtivas} tipoExercicio={normalizeTipoExercicio(ex.tipo_exercicio)} />
-                : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
+              {seriesAtivas?.length && sufixoBloco
+                ? <span className="text-xs text-text-muted">
+                    {seriesAtivas.map((s) => `${s.reps}${s.carga ? ` · ${s.carga}` : ''}`).join(' + ')} <span className="opacity-70">{sufixoBloco}</span>
+                  </span>
+                : seriesAtivas?.length
+                  ? <SeriesPrescritasCompact items={seriesAtivas} tipoExercicio={normalizeTipoExercicio(ex.tipo_exercicio)} />
+                  : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
               }
             </span>
           </span>
@@ -1621,7 +1649,9 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro, marcadoFeito, onToggl
         <div className="flex flex-wrap gap-1.5 mt-1">
           {ex.registrado!.map((s, i) => {
             let label: string
-            if (tipo === 'PERFORMANCE') {
+            if (pontuavel) {
+              label = s.carga ? `Carga usada: ${s.carga}` : '✓'
+            } else if (tipo === 'PERFORMANCE') {
               const extra = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? ''}`.trimEnd() : ''
               label = `${s.reps ?? '-'} ${ex.unidade_reps ?? ''}`.trimEnd() + extra
             } else {
@@ -1637,7 +1667,32 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro, marcadoFeito, onToggl
         </div>
       )}
 
-      {open && (
+      {open && pontuavel && (
+        <div className="mt-3 space-y-2">
+          <p className="text-xs text-text-secondary bg-energy/10 border border-energy/30 rounded-lg px-2.5 py-2">
+            Este movimento faz parte do WOD — o resultado (tempo/rounds) é registrado ao{' '}
+            <b>finalizar o treino</b>. Se quiser, anote abaixo a carga que você usou.
+          </p>
+          <div className="relative">
+            <Input
+              inputMode="decimal"
+              placeholder="Carga que usei (opcional) — ex.: 35"
+              value={cargaAnotada}
+              onChange={(e) => setCargaAnotada(sanitizeCarga(e.target.value))}
+              className="pr-8"
+            />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted pointer-events-none">
+              {ex.unidade_carga ?? 'kg'}
+            </span>
+          </div>
+          <Button variant="outline" className="w-full" onClick={() => save.mutate()} disabled={save.isPending || !cargaAnotada.trim()}>
+            {save.isPending ? 'Salvando…' : 'Salvar anotação'}
+          </Button>
+          <PostComposer exercicioId={ex.exercicio_id} exercicioNome={nomeAtivo} viewerAtor="ALUNO" />
+        </div>
+      )}
+
+      {open && !pontuavel && (
         <div className="mt-3 space-y-2">
           {/* F1 — última execução histórica como referência */}
           {ultimaExec.data?.[0] && (
@@ -1668,7 +1723,7 @@ function ExercicioCard({ ex, onVerFeed, onAbrirCronometro, marcadoFeito, onToggl
           {rows.map((r, i) => (
             <div key={i} className={`flex gap-2 items-center ${r.aquecimento ? 'opacity-70' : ''}`}>
               <span className="text-xs text-text-muted w-12">
-                {`Sér ${i + 1}`}
+                {circuitoRounds ? `Rd ${i + 1}` : `Sér ${i + 1}`}
                 {r.aquecimento && <span className="block text-[9px] text-warning leading-none">aq.</span>}
               </span>
               {/* F3 — reps antes de carga */}

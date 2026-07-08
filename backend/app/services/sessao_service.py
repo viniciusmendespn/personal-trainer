@@ -33,9 +33,10 @@ def _semana_anterior(semana: str) -> str:
 
 
 def _serie_valida(s: dict) -> bool:
-    """Série que conta para PR/volume/pontos — exclui séries de aquecimento (ramp-up),
-    materializadas com `aquecimento=True` no registro (spec CROSSFIT §3.4)."""
-    return not s.get("aquecimento")
+    """Série que conta para PR/volume/pontos — exclui séries de aquecimento (ramp-up) e
+    anotações de contexto dentro de bloco de WOD (o resultado oficial do metcon é o score
+    do bloco), ambas materializadas na gravação (spec CROSSFIT §3.2/§3.4)."""
+    return not s.get("aquecimento") and not s.get("contexto")
 
 
 def _snapshot(ex: dict, blocos_by_id: dict | None = None) -> dict:
@@ -47,6 +48,10 @@ def _snapshot(ex: dict, blocos_by_id: dict | None = None) -> dict:
         "bloco_id": ex.get("bloco_id"),
         # Resolvido aqui (único ponto): exercício herda warmup do bloco (spec CROSSFIT §3.4)
         "aquecimento": bool(ex.get("aquecimento") or bloco.get("aquecimento")),
+        # Bloco pontuável (For Time/AMRAP/EMOM): registro por série vira anotação de contexto
+        "bloco_pontuavel": bool(
+            (bloco.get("formato") or "LIVRE") != "LIVRE" and not bloco.get("aquecimento")
+        ),
         "tipo_exercicio": ex.get("tipo_exercicio"),
         "series": ex.get("series"),
         "reps_prescritas": ex.get("reps_prescritas"),
@@ -484,13 +489,18 @@ def _volume(series: list | None) -> float:
 
 
 def _marcar_aquecimento(series: list, ex_snap: dict) -> None:
-    """Materializa a flag de aquecimento nas séries que serão gravadas: exercício de
-    warmup (direto ou herdado do bloco, já resolvido no snapshot) marca todas; séries
-    individuais podem chegar flagadas do app (série de aproximação). Único ponto de
-    escrita — todos os cálculos filtram por `_serie_valida`."""
+    """Materializa as flags nas séries que serão gravadas: exercício de warmup (direto ou
+    herdado do bloco, já resolvido no snapshot) marca todas como `aquecimento`; exercício
+    de bloco pontuável (For Time/AMRAP/EMOM) marca todas como `contexto` — anotação (ex.:
+    carga usada no metcon), pois o resultado oficial é o score do bloco. Séries individuais
+    podem chegar flagadas do app (série de aproximação). Único ponto de escrita — todos os
+    cálculos filtram por `_serie_valida`."""
     if ex_snap.get("aquecimento"):
         for it in series:
             it["aquecimento"] = True
+    elif ex_snap.get("bloco_pontuavel"):
+        for it in series:
+            it["contexto"] = True
 
 
 def _registrar_pr_sessao(aluno_id: str, ex_nome: str | None, carga: float, tipo: str | None,
