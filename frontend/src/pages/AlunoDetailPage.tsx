@@ -27,7 +27,7 @@ import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas }
 import { LinksUteisSelector } from '../components/exercicios/LinksUteisSelector'
 import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
-import { BlocosTreinoEditor, formatoBlocoLabel } from '../components/exercicios/BlocosTreinoEditor'
+import { BlocosTreinoEditor, formatoBlocoLabel, sufixoPrescricaoBloco } from '../components/exercicios/BlocosTreinoEditor'
 import { IntervaloInput } from '../components/exercicios/IntervaloInput'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import { CalendarioMes } from '../components/historico/CalendarioMes'
@@ -902,10 +902,10 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
             const blocos = (treino.blocos ?? []).slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
             const blocoIds = new Set(blocos.map((b) => b.id))
             const semBloco = ordenados.filter((e) => !e.bloco_id || !blocoIds.has(e.bloco_id))
-            const row = (ex: Exercicio) => (
-              <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} blocos={treino.blocos} />
+            const row = (ex: Exercicio, bloco?: BlocoTreino) => (
+              <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} blocos={treino.blocos} bloco={bloco} />
             )
-            if (!blocos.length) return ordenados.map(row)
+            if (!blocos.length) return ordenados.map((e) => row(e))
             return (
               <>
                 {blocos.map((b) => {
@@ -917,14 +917,14 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
                         <span className="text-xs font-semibold text-text-secondary">{b.nome}</span>
                         {label && <Badge tone={b.aquecimento ? 'neutral' : 'accent'}>{label}</Badge>}
                       </div>
-                      {doBloco.length ? doBloco.map(row) : <p className="text-xs text-text-muted pl-2">Sem exercícios neste bloco.</p>}
+                      {doBloco.length ? doBloco.map((e) => row(e, b)) : <p className="text-xs text-text-muted pl-2">Sem exercícios neste bloco.</p>}
                     </div>
                   )
                 })}
                 {semBloco.length > 0 && (
                   <div>
                     <div className="mt-2 mb-1"><span className="text-xs font-semibold text-text-secondary">Sem bloco</span></div>
-                    {semBloco.map(row)}
+                    {semBloco.map((e) => row(e))}
                   </div>
                 )}
               </>
@@ -1218,12 +1218,14 @@ function ExercicioForm({
 }
 
 function ExercicioRow({
-  alunoId, treinoId, ex, biblioteca, exerciciosAluno, blocos,
+  alunoId, treinoId, ex, biblioteca, exerciciosAluno, blocos, bloco,
 }: {
   alunoId: string; treinoId: string; ex: Exercicio
   biblioteca?: { exlib_id: string; nome: string; grupo?: string; video_url?: string; substitutos?: ExercicioSubstituto[] }[]
   exerciciosAluno?: Exercicio[]
   blocos?: BlocoTreino[]
+  /** Bloco a que a linha pertence — muda a exibição da prescrição ("12 por round"). */
+  bloco?: BlocoTreino
 }) {
   const [edit, setEdit] = useState(false)
   const [mediaOpen, setMediaOpen] = useState(false)
@@ -1252,10 +1254,21 @@ function ExercicioRow({
           {ex.nome}
           {ex.aquecimento && <Badge tone="neutral" className="ml-1.5 align-middle">aq.</Badge>}
           <span className="ml-2">
-            {ex.series_prescritas?.length
-              ? <SeriesPrescritasCompact items={ex.series_prescritas} tipoExercicio={ex.tipo_exercicio} rm_kg={ex.rm_kg} />
-              : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
-            }
+            {(() => {
+              const pontuavel = !!bloco && bloco.formato !== 'LIVRE' && !bloco.aquecimento
+              const sufixo = sufixoPrescricaoBloco(bloco)
+              if (ex.series_prescritas?.length && (pontuavel || sufixo)) {
+                return (
+                  <span className="text-xs text-text-muted">
+                    {ex.series_prescritas.map((s) => `${s.reps}${s.carga ? ` · ${s.carga}` : ''}`).join(' + ')}
+                    {sufixo && <span className="opacity-70"> {sufixo}</span>}
+                  </span>
+                )
+              }
+              return ex.series_prescritas?.length
+                ? <SeriesPrescritasCompact items={ex.series_prescritas} tipoExercicio={ex.tipo_exercicio} rm_kg={ex.rm_kg} />
+                : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
+            })()}
           </span>
           <a href={videoUrlComFallback(ex.nome, ex.video_url)} target="_blank" rel="noreferrer" className="text-accent-hover ml-2 text-xs hover:underline">vídeo</a>
           {ex.observacoes && (

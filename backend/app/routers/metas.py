@@ -28,8 +28,9 @@ def list_metas_portal(aluno_id: str, status: str | None = None,
 def create_meta_portal(aluno_id: str, body: MetaCreate,
                        personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)
-    if body.tipo == "CARGA" and not body.exercicio_id:
-        raise HTTPException(400, "exercicio_id obrigatório para metas do tipo CARGA")
+    # CARGA aceita alvo por exercicio_id OU por chave canônica (exercício/WOD "wod#...")
+    if body.tipo == "CARGA" and not (body.exercicio_id or body.chave):
+        raise HTTPException(400, "exercicio_id ou chave obrigatórios para metas do tipo CARGA")
     if body.tipo == "MEDIDA" and not body.campo_medida:
         raise HTTPException(400, "campo_medida obrigatório para metas do tipo MEDIDA")
     return meta_service.criar(aluno_id, personal_id, body.model_dump(), criado_por="PERSONAL")

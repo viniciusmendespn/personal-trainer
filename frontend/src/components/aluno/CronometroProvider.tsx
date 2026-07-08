@@ -356,6 +356,11 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
     releaseWakeLock()
     stopKeepAlive()
     lastTickSecRef.current = null
+    // WOD: zera os marcadores do tick (senão o 1º ciclo do EMOM ficaria sem beep e o
+    // alerta de cap do For Time não dispararia de novo após o reset)
+    capAlertedRef.current = false
+    lastEmomSlotRef.current = 0
+    setWodRounds(0)
     setDisplayMs(modo === 'regressivo' ? baseSeconds * 1000 : 0)
   }, [modo, baseSeconds, releaseWakeLock])
 

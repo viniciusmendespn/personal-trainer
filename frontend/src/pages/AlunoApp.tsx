@@ -930,6 +930,8 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
               const bloco = blocoDe(ex.bloco_id)
               const primeiroDoBloco = !!bloco && (i === 0 || exsOrdenados[i - 1].bloco_id !== ex.bloco_id)
               const aquecido = ex.aquecimento || bloco?.aquecimento
+              const pontuavelPrev = !!bloco && bloco.formato !== 'LIVRE' && !bloco.aquecimento
+              const sufixoPrev = sufixoPrescricaoBloco(bloco)
               return (
               <React.Fragment key={ex.exercicio_id}>
               {primeiroDoBloco && bloco && (
@@ -950,9 +952,14 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
                         {ex.aquecimento && !bloco?.aquecimento && <span className="ml-1.5 text-[10px] text-warning align-middle">aquecimento</span>}
                       </p>
                       <p className="text-xs text-text-secondary mt-0.5">
-                        {ex.series_prescritas?.length
-                          ? <SeriesPrescritasCompact items={ex.series_prescritas} />
-                          : <>{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</>
+                        {ex.series_prescritas?.length && (pontuavelPrev || sufixoPrev)
+                          ? <>
+                              {ex.series_prescritas.map((s) => `${s.reps}${s.carga ? ` · ${s.carga}` : ''}`).join(' + ')}
+                              {sufixoPrev && <span className="opacity-70"> {sufixoPrev}</span>}
+                            </>
+                          : ex.series_prescritas?.length
+                            ? <SeriesPrescritasCompact items={ex.series_prescritas} />
+                            : <>{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</>
                         }
                       </p>
                       {ex.observacoes && (
@@ -1573,9 +1580,10 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro, marcadoFeito, 
               {variante && <span className="ml-1.5 text-[10px] text-accent align-middle">substituto</span>}
             </span>
             <span className="block mt-0.5">
-              {seriesAtivas?.length && sufixoBloco
+              {seriesAtivas?.length && (pontuavel || sufixoBloco)
                 ? <span className="text-xs text-text-muted">
-                    {seriesAtivas.map((s) => `${s.reps}${s.carga ? ` · ${s.carga}` : ''}`).join(' + ')} <span className="opacity-70">{sufixoBloco}</span>
+                    {seriesAtivas.map((s) => `${s.reps}${s.carga ? ` · ${s.carga}` : ''}`).join(' + ')}
+                    {sufixoBloco && <span className="opacity-70"> {sufixoBloco}</span>}
                   </span>
                 : seriesAtivas?.length
                   ? <SeriesPrescritasCompact items={seriesAtivas} tipoExercicio={normalizeTipoExercicio(ex.tipo_exercicio)} />
@@ -1701,7 +1709,7 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro, marcadoFeito, 
                 Última vez ({new Date(ultimaExec.data[0].data_hora).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })})
               </p>
               <div className="flex flex-wrap gap-1.5">
-                {ultimaExec.data[0].series_exec.map((s, i) => {
+                {ultimaExec.data[0].series_exec.filter((s) => !s.contexto).map((s, i) => {
                   let label: string
                   if (tipo === 'PERFORMANCE') {
                     const extra = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? ''}`.trimEnd() : ''

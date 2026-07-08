@@ -67,6 +67,7 @@ export interface SerieInput {
   reps?: number
   rpe?: number
   aquecimento?: boolean   // série de aproximação — fora de PR/volume/pontos
+  contexto?: boolean      // anotação dentro de bloco de WOD (carga usada) — fora de PR/volume/pontos
 }
 
 export interface NovoPR {

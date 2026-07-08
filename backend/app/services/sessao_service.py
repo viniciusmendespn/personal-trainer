@@ -758,6 +758,8 @@ def _evolucao_serie(aluno_id: str, chave: str, info: dict, limit: int) -> dict:
     for it in items:
         c = repo.clean(it)
         series_exec = [s for s in (c.get("series_exec") or []) if _serie_valida(s)]
+        if not series_exec:
+            continue   # só aquecimento/anotação de contexto — não vira ponto de evolução
         ponto: dict = {"data": c.get("data_hora")}
 
         if tipo == "PERFORMANCE":
