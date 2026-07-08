@@ -17,7 +17,7 @@
       "metrica_direcao": "MAIOR",
       "video_url": null,
       "descricao": "Front squat + push press num movimento contínuo, com barra.",
-      "recomendacoes": "Carga RX: 43kg (homens) / 30kg (mulheres). Mantenha o core firme e finalize com a barra sobre a cabeça.",
+      "recomendacoes": "Carga RX: 43kg (homens) / 30kg (mulheres). Mantenha o core firme e finalize com a barra sobre a cabeça. Dentro do WOD (Fran), as repetições fazem parte do resultado do bloco — não precisa registrar série a série; anote a carga usada se quiser.",
       "substitutos": [
         { "nome": "Thruster com halteres", "video_url": null, "observacao": "Alternativa com halteres para quem não tem barra.", "series_prescritas": null }
       ]
@@ -31,7 +31,7 @@
       "metrica_direcao": "MAIOR",
       "video_url": null,
       "descricao": "Barra fixa (kipping ou estrito, conforme o contexto do WOD).",
-      "recomendacoes": "Queixo acima da barra em todas as repetições.",
+      "recomendacoes": "Queixo acima da barra em todas as repetições. Dentro de um WOD com timer, as repetições fazem parte do resultado do bloco — não precisa registrar série a série. Usado como aquecimento, registre o número de repetições completas.",
       "substitutos": [
         { "nome": "Pull-up com elástico", "video_url": null, "observacao": "Versão adaptada com banda.", "series_prescritas": null },
         { "nome": "Ring Row", "video_url": null, "observacao": "Regressão horizontal.", "series_prescritas": null }
@@ -46,7 +46,7 @@
       "metrica_direcao": "MAIOR",
       "video_url": null,
       "descricao": "Flexão de braço com peito ao chão.",
-      "recomendacoes": "Corpo alinhado; escale nos joelhos se necessário.",
+      "recomendacoes": "Corpo alinhado; escale nos joelhos se necessário. Dentro de um WOD com timer, as repetições fazem parte do resultado do bloco — não precisa registrar série a série. Usado como aquecimento, registre o número de repetições completas.",
       "substitutos": [
         { "nome": "Push-up nos joelhos", "video_url": null, "observacao": "Versão adaptada.", "series_prescritas": null }
       ]
@@ -60,7 +60,7 @@
       "metrica_direcao": "MAIOR",
       "video_url": null,
       "descricao": "Agachamento com o peso do corpo.",
-      "recomendacoes": "Quadril abaixo da linha do joelho e extensão completa em cima.",
+      "recomendacoes": "Quadril abaixo da linha do joelho e extensão completa em cima. Dentro de um WOD com timer, as repetições fazem parte do resultado do bloco. Usado como aquecimento, registre o número de repetições completas.",
       "substitutos": []
     },
     {
@@ -72,7 +72,7 @@
       "metrica_direcao": "MAIOR",
       "video_url": null,
       "descricao": "Levantamento olímpico: clean até o ombro + jerk acima da cabeça.",
-      "recomendacoes": "Carga RX (Grace): 61kg (homens) / 43kg (mulheres). Priorize técnica sobre velocidade.",
+      "recomendacoes": "Carga RX (Grace): 61kg (homens) / 43kg (mulheres). Priorize técnica sobre velocidade. Dentro do WOD (Grace), as repetições fazem parte do resultado do bloco — não precisa registrar série a série; anote a carga usada se quiser.",
       "substitutos": []
     },
     {
@@ -84,7 +84,7 @@
       "metrica_direcao": "MAIOR",
       "video_url": null,
       "descricao": "Balanço do kettlebell até a linha dos olhos (russo) ou overhead (americano).",
-      "recomendacoes": "RX (Helen): 24kg (homens) / 16kg (mulheres), americano.",
+      "recomendacoes": "RX (Helen): 24kg (homens) / 16kg (mulheres), americano. Dentro do WOD (Helen), as repetições fazem parte do resultado do bloco — não precisa registrar série a série; anote a carga usada se quiser.",
       "substitutos": []
     },
     {
@@ -96,7 +96,7 @@
       "metrica_direcao": "MAIOR",
       "video_url": null,
       "descricao": "Corrida em metros (dentro de WODs, a distância é a prescrita no round).",
-      "recomendacoes": "Sem esteira? Substitua por remo na mesma distância.",
+      "recomendacoes": "Sem esteira? Substitua por remo na mesma distância. Dentro do WOD (Helen/Murph), a distância faz parte do resultado do bloco — não precisa registrar; se pedido fora de um WOD, registre a distância percorrida em metros (m).",
       "substitutos": [
         { "nome": "Remo", "video_url": null, "observacao": "Mesma distância no remo ergômetro.", "series_prescritas": null }
       ]
@@ -110,7 +110,7 @@
       "metrica_direcao": "MAIOR",
       "video_url": null,
       "descricao": "Um round do esquema Cindy: 5 Pull-ups + 10 Push-ups + 15 Air Squats.",
-      "recomendacoes": "Use este exercício quando o minuto/round pede o complexo completo (ex.: Chelsea).",
+      "recomendacoes": "Use este exercício quando o minuto/round pede o complexo completo (ex.: Chelsea) — é referência dentro do EMOM, o resultado do bloco inteiro é dado ao finalizar o treino.",
       "substitutos": []
     }
   ],

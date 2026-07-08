@@ -250,6 +250,14 @@ Musculação clássica: **sempre `[]`**. Use blocos quando o treino tem partes d
 - Mapeamentos comuns: "5 Rounds For Time" → FOR_TIME com `rounds: 5` (a lista de exercícios é UM
   round); "EMOM alternado (min ímpar X / par Y)" → EMOM com X e Y na ordem dos minutos (a ordem
   cicla); "Every 90s x 8" → EMOM `intervalo_s: 90`, `duracao_s: 720`.
+- **Unidade da prescrição = unidade do exercício.** `reps` nunca deve embutir uma unidade diferente
+  de `unidade_reps` do exercício (ex.: `reps:"30s"` num exercício com `unidade_reps:"cal"` mostra
+  "30s cal" no app, sem sentido). Se o mesmo equipamento é prescrito ora por tempo (aquecimento)
+  ora por distância/calorias (metcon), crie exercícios separados na biblioteca — um com
+  `unidade_reps:"s"`, outro com `"m"`/`"cal"` — e explique a diferença em `descricao`.
+- `recomendacoes` de exercícios PERFORMANCE deve terminar dizendo **o que registrar** (ex.:
+  "Registre a distância em metros (m)."). Movimentos dentro de blocos pontuáveis (FOR_TIME/AMRAP/
+  EMOM não-aquecimento) devem avisar que o resultado é o score do bloco, sem registro série a série.
 
 #### Regras do campo `ref` (templates)
 - **Sempre começa com `tmpl_`**

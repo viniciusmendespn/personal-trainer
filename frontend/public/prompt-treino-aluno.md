@@ -173,6 +173,19 @@ parte é um **bloco**; os exercícios apontam para o bloco via `bloco_id`.
   "reps": "10"}`). NÃO use `series: 2` para representar os rounds — rounds ficam no bloco.
 - Dentro de blocos FOR_TIME/AMRAP/EMOM, o aluno **não registra série a série** — o resultado é o
   score do bloco na finalização. Prescreva cada movimento com 1 série com as reps por round/minuto.
+- **Unidade da prescrição = unidade do exercício, sempre.** `reps` é sempre lido junto com o
+  `unidade_reps` do exercício (ex.: `reps:"30"` + `unidade_reps:"cal"` → "30 cal"). **Nunca** escreva
+  a unidade dentro de `reps` (ex.: `"30s"`, `"8min"`) se o exercício já tem `unidade_reps` diferente —
+  isso produz um texto sem sentido no app (ex.: um Bike medido em calorias com `reps:"30s"` mostraria
+  "30s cal"). Se o mesmo equipamento é usado ora por TEMPO (aquecimento: "30s de bike") ora por
+  DISTÂNCIA/CALORIAS (metcon: "30 kcal Bike"), crie **dois exercícios distintos** — um com
+  `unidade_reps:"s"` só para o uso cronometrado, outro com `unidade_reps:"m"`/`"cal"` para o WOD — e
+  deixe isso explícito no campo `descricao` de cada um, para o personal saber qual usar.
+- Toda `recomendacoes` de exercício PERFORMANCE deve terminar com uma frase objetiva de **como
+  registrar** (ex.: "Registre a distância percorrida em metros (m)." / "Registre as calorias
+  acumuladas no monitor — não o tempo."). Dentro de blocos pontuáveis (FOR_TIME/AMRAP/EMOM não-
+  aquecimento), diga que a repetição faz parte do score do bloco e não precisa ser registrada série
+  a série.
 
 ### Campo `exercicios[]` (dentro de cada treino)
 
