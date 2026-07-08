@@ -184,7 +184,7 @@ export function DashboardPage() {
       {isLoading ? (
         <div className="space-y-4">
           {/* Row 1: KPIs */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[0, 1].map((i) => (
               <Card key={i} variant="elevated" className="flex items-start gap-3 h-full">
                 <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
