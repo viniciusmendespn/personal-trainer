@@ -224,7 +224,7 @@ const PAGES: Record<PageKey, SeoPage> = {
     sections: [
       { title: 'Missão', body: 'Ajudar personal trainers a entregar uma experiência mais organizada e profissional para seus alunos.' },
       { title: 'Posicionamento', body: 'Gestão vem primeiro. IA e WhatsApp entram como add-ons opcionais para ampliar a operação quando fizer sentido.' },
-      { title: 'Contato', body: 'O contato público de suporte e vendas é o WhatsApp +55 13 99183-0305.' },
+      { title: 'Contato', body: 'O contato público de suporte e vendas é o WhatsApp +55 13 98808-8204.' },
     ],
     faqs: [
       { q: 'O CoachPilot atende o Brasil?', a: 'Sim. A comunicação e os preços são voltados ao mercado brasileiro.' },

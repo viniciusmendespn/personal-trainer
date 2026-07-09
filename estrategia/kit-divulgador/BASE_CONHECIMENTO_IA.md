@@ -4,7 +4,7 @@
 > sobre o CoachPilot ou o programa de divulgadores. Sugestão de instrução inicial: *"Você é meu
 > assistente de divulgação do CoachPilot. Responda com base EXCLUSIVAMENTE neste documento. Se a
 > resposta não estiver aqui, diga que não sabe e sugira perguntar no WhatsApp oficial
-> (13) 99183-0305. Nunca invente funcionalidades, números ou preços."*
+> (13) 98808-8204. Nunca invente funcionalidades, números ou preços."*
 >
 > Documento externo e público, sem informações internas. Atualizado em jul/2026 — os preços
 > vigentes são sempre os do site coachpilot.com.br.
@@ -117,7 +117,7 @@ confiável, gráficos reais e alertas automáticos (ex.: dor).
 - **Proibido:** auto-indicação (usar o próprio cupom), spam em grupos de terceiros, prometer o
   que não existe, anunciar preços diferentes dos oficiais, anúncios pagos com a marca sem
   autorização.
-- Entrada no programa e dúvidas: WhatsApp oficial (13) 99183-0305 · Página:
+- Entrada no programa e dúvidas: WhatsApp oficial (13) 98808-8204 · Página:
   coachpilot.com.br/divulgadores.
 
 ## 7. Perguntas frequentes (respostas oficiais)

@@ -2,7 +2,7 @@
 
 > Bem-vindo(a) ao time! Este guia tem tudo que você precisa para divulgar o CoachPilot e ganhar
 > comissão recorrente. **Documento externo — pode ser compartilhado com divulgadores.**
-> Dúvidas: WhatsApp oficial (13) 99183-0305 · Dica: suba o arquivo `BASE_CONHECIMENTO_IA.md` no
+> Dúvidas: WhatsApp oficial (13) 98808-8204 · Dica: suba o arquivo `BASE_CONHECIMENTO_IA.md` no
 > seu ChatGPT/Claude/Gemini e pergunte qualquer coisa sobre o produto e o programa.
 
 ---
@@ -116,4 +116,4 @@ a novidades. Divulgadores com boa performance são convidados.
 - Loja de pacotes de treino: https://loja.coachpilot.com.br
 - Página do programa: https://coachpilot.com.br/divulgadores
 - Instagram: @coachpilotoficial
-- WhatsApp oficial (dúvidas e suporte ao divulgador): (13) 99183-0305
+- WhatsApp oficial (dúvidas e suporte ao divulgador): (13) 98808-8204

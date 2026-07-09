@@ -10,7 +10,7 @@ export function PainelExclusivo() {
         sobre cada assinatura Gestão Pro indicada. A entrada é feita pela nossa equipe.
       </p>
       <a
-        href="https://wa.me/5513991830305?text=Oi%2C%20quero%20entrar%20no%20programa%20de%20divulgadores%20do%20CoachPilot"
+        href="https://wa.me/5513988088204?text=Oi%2C%20quero%20entrar%20no%20programa%20de%20divulgadores%20do%20CoachPilot"
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover transition-colors"
