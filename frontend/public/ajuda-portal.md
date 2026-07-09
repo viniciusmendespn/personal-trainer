@@ -52,6 +52,7 @@ O portal possui um **menu lateral (sidebar)** com as seguintes seções, agrupad
 **Alunos**
 - **Alunos** — lista e gestão de todos os alunos
 - **Agenda** — agendamento de sessões
+- **Financeiro** — painel financeiro consolidado (recebido, a receber, vencido, recorrente)
 - **Ranking** — gamificação e ranking de frequência
 
 **Treinos**
@@ -59,6 +60,7 @@ O portal possui um **menu lateral (sidebar)** com as seguintes seções, agrupad
 - **Templates** — treinos modelo para aplicar a vários alunos
 - **Biblioteca** — upload de materiais para os alunos
 - **Pacotes** — pacotes de treino .cpkg com exercícios, templates e rotinas
+- **Loja** — venda de pacotes licenciados para outros personais (anúncios e vendas)
 - **Base de IA** — arquivos de conhecimento para o agente de IA
 
 **Conta**
@@ -350,6 +352,24 @@ Crie um pacote a partir dos templates e rotinas que você já tem:
 
 Pacotes licenciados geram um arquivo `.cpkg` que você distribui para outros personais. Cada importação consome um uso do token. Itens de pacotes licenciados não podem ser selecionados para compor novos pacotes.
 
+#### Loja — vender pacotes para outros personais
+
+Acesse **Loja** no menu lateral. É onde você anuncia seus pacotes licenciados no marketplace do CoachPilot (**loja.coachpilot.com.br**) e gerencia as vendas. A página tem duas abas:
+
+**Aba Meus anúncios:**
+1. Antes de anunciar, gere um **pacote licenciado** em **Pacotes → aba Criar** (ative o modo Licenciado)
+2. Na Loja, clique em **"Anunciar pacote"** e selecione o pacote licenciado gerado
+3. Preencha: título do anúncio, descrição completa (com formatação), imagem de capa e **preço em R$** — ou marque **"Pacote gratuito"** para permitir resgate sem pagamento
+4. Clique em **"Publicar anúncio"**
+
+Em cada anúncio você pode **editar**, **pausar/publicar** e **ver na loja** (abre a página pública do anúncio).
+
+**Aba Vendas:**
+Lista os pedidos dos seus anúncios, com comprador, valor, data e forma de pagamento:
+- **Resgate gratuito** — pacote gratuito, entrega imediata
+- **PIX automático** — quando você tem o Mercado Pago configurado (Configurações → Pagamentos), o comprador paga via Pix e o pacote é liberado automaticamente
+- **Pagamento por fora** — sem Mercado Pago configurado, o comprador combina o pagamento diretamente com você; o pedido fica **"aguardando"** até você clicar em **"Confirmar recebimento"** (libera o pacote ao comprador na hora) ou **"Cancelar"**
+
 ---
 
 ### 7. AVALIAÇÕES FÍSICAS
@@ -559,6 +579,17 @@ Os alunos podem desbloquear 8 badges automaticamente:
 ### 18. FINANCEIRO DOS ALUNOS (MENSALIDADES E COBRANÇAS)
 
 Controle as mensalidades e cobranças de cada aluno. Acesse a página do aluno → aba **"Financeiro"**.
+
+#### Painel financeiro (menu Financeiro)
+
+Além do financeiro individual por aluno, o menu **Financeiro** abre o painel consolidado de toda a carteira:
+
+- **KPIs do mês** (navegue entre meses pelas setas): **Recebido no mês**, **A receber**, **Vencido** e **Receita recorrente** (soma das mensalidades ativas). Com o Mercado Pago configurado, aparecem também **Líquido recebido** (após as taxas) e **Taxas do mês**
+- **Gráfico de faturamento** dos últimos 12 meses
+- **Recebíveis** — todas as cobranças em aberto de todos os alunos, com filtros **Todos / Pendentes / Vencidos** e botão para **registrar o pagamento** direto da lista
+- **Pagamentos recentes** — últimos pagamentos confirmados
+
+Quando o Mercado Pago não está configurado, um banner sugere ativar o Pix automático (leva a Configurações → Pagamentos). Os valores exibidos são brutos; o líquido exato aparece quando o Mercado Pago informa a taxa de cada pagamento.
 
 **Configurar faturamento recorrente:**
 1. Clique em **"Configurar"** (ou **"Editar"**, se já configurado)
@@ -848,6 +879,12 @@ R: Você tem um código de indicação exclusivo na página Plano. Compartilhe c
 
 **P: Como mudo o tema do portal para claro?**
 R: Clique no ícone de sol/lua/sistema no rodapé do menu lateral para alternar entre escuro, claro e automático.
+
+**P: Onde vejo tudo que tenho a receber dos meus alunos?**
+R: No menu **Financeiro** (painel consolidado): recebido no mês, a receber, vencido, receita recorrente, gráfico de 12 meses e a lista de todas as cobranças em aberto de todos os alunos. O detalhe de cada aluno continua na aba Financeiro da página dele.
+
+**P: Como vendo meus pacotes de treino para outros personais?**
+R: Gere um pacote licenciado em **Pacotes → Criar**, depois anuncie no menu **Loja** com título, descrição e preço (ou gratuito). O anúncio fica público em loja.coachpilot.com.br. Com Mercado Pago configurado, o comprador paga via Pix e o pacote é liberado automaticamente; sem, você confirma o recebimento manualmente na aba Vendas.
 
 **P: Qual a diferença entre um pacote livre e um pacote licenciado?**
 R: Pacotes livres são gerados via JSON (com ajuda de IA) e podem ser exportados e editados. Pacotes licenciados são arquivos .cpkg com token de uso único — não podem ser exportados e o token é consumido na importação. Use pacotes licenciados para distribuir conteúdo protegido para outros personais.
