@@ -7,10 +7,9 @@ class BlocoParams(BaseModel):
     """Parâmetros do formato do bloco — só os que fazem sentido para o formato são usados."""
     rounds: Optional[int] = None               # quantas vezes repetir o bloco (todos os formatos)
     time_cap_s: Optional[int] = None           # FOR_TIME: tempo limite
-    duracao_s: Optional[int] = None            # AMRAP: duração total | EMOM: duração total
+    duracao_s: Optional[int] = None            # AMRAP/EMOM: duração total | DESCANSO: duração do descanso
     intervalo_s: Optional[int] = None          # EMOM: 60/90/120s ("Every 90s")
     descanso_rounds_s: Optional[int] = None    # descanso entre rounds do bloco
-    descanso_apos_s: Optional[int] = None      # descanso entre este bloco e o próximo
 
 
 class BlocoTreino(BaseModel):
@@ -22,6 +21,7 @@ class BlocoTreino(BaseModel):
     formato: str = "LIVRE"                     # FormatoBloco: LIVRE|FOR_TIME|AMRAP|EMOM
     params: BlocoParams = Field(default_factory=BlocoParams)
     aquecimento: bool = False                  # bloco de warmup: sem formato/score, fora de PR/volume/pontos
+    descanso: bool = False                     # bloco de descanso entre blocos (sem exercícios; duração em params.duracao_s)
 
 
 class TreinoCreate(BaseModel):

@@ -104,10 +104,9 @@ export type FormatoBloco = 'LIVRE' | 'FOR_TIME' | 'AMRAP' | 'EMOM'
 export interface BlocoParams {
   rounds?: number            // quantas vezes repetir o bloco (todos os formatos)
   time_cap_s?: number        // FOR_TIME: tempo limite
-  duracao_s?: number         // AMRAP/EMOM: duração total
+  duracao_s?: number         // AMRAP/EMOM: duração total | DESCANSO: duração do descanso
   intervalo_s?: number       // EMOM: 60/90/120s
   descanso_rounds_s?: number // descanso entre rounds do bloco
-  descanso_apos_s?: number   // descanso entre este bloco e o próximo
 }
 
 export interface BlocoTreino {
@@ -117,6 +116,7 @@ export interface BlocoTreino {
   formato: FormatoBloco
   params?: BlocoParams
   aquecimento?: boolean      // bloco de warmup: sem formato/score, fora de PR/volume/pontos
+  descanso?: boolean         // bloco de descanso entre blocos (sem exercícios; duração em params.duracao_s)
 }
 
 export interface Treino {

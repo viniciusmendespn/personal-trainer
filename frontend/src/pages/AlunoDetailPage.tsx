@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList, CalendarDays, List, Video, Clock } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList, CalendarDays, List, Video, Clock, AlarmClock } from 'lucide-react'
 import { useAluno, useAlunos, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { useToggleAgenteHabilitado } from '../hooks/usePersonalChat'
 import { usePlanoStatus } from '../hooks/usePlano'
@@ -946,6 +946,12 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
               )
             }
             return groups.map((g) => (
+              g.bloco?.descanso ? (
+                <div key={g.key} className="flex items-center gap-2 my-2">
+                  <AlarmClock size={12} className="text-accent shrink-0" />
+                  <span className="text-xs font-medium text-text-secondary">{formatoBlocoLabel(g.bloco) ?? 'Descanso'}</span>
+                </div>
+              ) : (
               <div key={g.key} className={g.bloco?.aquecimento ? 'opacity-70' : ''}>
                 {g.bloco ? (
                   <div className="flex items-center gap-2 mt-2 mb-1">
@@ -963,6 +969,7 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
                   <p className="text-xs text-text-muted pl-2">Sem exercícios neste bloco.</p>
                 )}
               </div>
+              )
             ))
           })()}
           <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={() => setAddingEx(true)}>
@@ -1101,7 +1108,7 @@ function ExercicioForm({
                 onChange={(e) => setBlocoId(e.target.value)}
               >
                 <option value="">Sem bloco</option>
-                {(blocos ?? []).map((b) => (
+                {(blocos ?? []).filter((b) => !b.descanso).map((b) => (
                   <option key={b.id} value={b.id}>{b.nome}</option>
                 ))}
               </select>

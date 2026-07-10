@@ -1264,14 +1264,30 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
         return (
           <>
             {blocos.map((b) => {
+              // Bloco de descanso entre blocos: linha própria com cronômetro pré-carregado.
+              if (b.descanso) {
+                const s = b.params?.duracao_s
+                return (
+                  <div key={b.id} className="flex items-center gap-2 py-1">
+                    <span className="h-px flex-1 bg-border" />
+                    <button
+                      onClick={() => s && abrirCrono(s, b.nome || 'Descanso')}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-accent border border-accent/40 bg-accent/10 rounded-full px-3 py-1 active:scale-95 transition-transform"
+                    >
+                      <AlarmClock size={12} /> {formatoBlocoLabel(b) ?? 'Descanso'}
+                    </button>
+                    <span className="h-px flex-1 bg-border" />
+                  </div>
+                )
+              }
               const doBloco = exs.filter((e) => e.bloco_id === b.id)
               if (!doBloco.length) return null
               const label = formatoBlocoLabel(b)
               const pontuavel = b.formato !== 'LIVRE' && !b.aquecimento
-              // Descanso do bloco: entre rounds (se repetir) senão ao terminar o bloco.
-              const descansoBlocoS = (b.params?.rounds && b.params.rounds > 1 && b.params?.descanso_rounds_s)
-                ? b.params.descanso_rounds_s
-                : b.params?.descanso_apos_s
+              // Descanso entre rounds do bloco (quando repete): pré-carrega o cronômetro.
+              const descansoBlocoS = (b.params?.rounds && b.params.rounds > 1)
+                ? b.params?.descanso_rounds_s
+                : undefined
               return (
                 <div key={b.id} className={`space-y-3 ${b.aquecimento ? 'opacity-80' : ''}`}>
                   <div className="flex items-center gap-2 pt-1">
