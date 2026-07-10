@@ -377,6 +377,14 @@ def historico_exercicio_aluno(exercicio_nome: str, limit: int = 1, ctx: dict = D
     return repo.clean_all(repo.query_gsi1_last(keys.gsi1_registro(ctx["aluno_id"], chave), limit))
 
 
+@router.get("/exercicios/pr")
+def pr_exercicio_aluno(exercicio_nome: str, ctx: dict = Depends(get_current_aluno)):
+    """PR (recorde) de um exercício — 1 GetItem. Fonte: STATS#PR#{chave}."""
+    chave = sessao_service.chave_exercicio(exercicio_nome)
+    item = repo.get_item(keys.pk_aluno(ctx["aluno_id"]), keys.sk_stats_pr(chave))
+    return repo.clean(item) if item else None
+
+
 @router.get("/exercicios/{exercicio_id}/midia")
 def midia_exercicio_aluno(exercicio_id: str, ctx: dict = Depends(get_current_aluno)):
     """Vídeos/fotos (execução do aluno + correção do personal) anexados nesse exercício."""

@@ -1268,11 +1268,23 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
               if (!doBloco.length) return null
               const label = formatoBlocoLabel(b)
               const pontuavel = b.formato !== 'LIVRE' && !b.aquecimento
+              // Descanso do bloco: entre sets (se houver >1 set) senão ao terminar o bloco.
+              const descansoBlocoS = (b.params?.sets && b.params.sets > 1 && b.params?.descanso_sets_s)
+                ? b.params.descanso_sets_s
+                : b.params?.descanso_apos_s
               return (
                 <div key={b.id} className={`space-y-3 ${b.aquecimento ? 'opacity-80' : ''}`}>
                   <div className="flex items-center gap-2 pt-1">
                     <span className="text-sm font-display font-semibold">{b.nome}</span>
                     {label && <Badge tone={b.aquecimento ? 'neutral' : 'accent'}>{label}</Badge>}
+                    {descansoBlocoS && (
+                      <button
+                        onClick={() => abrirCrono(descansoBlocoS, b.nome)}
+                        className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-accent border border-accent/40 bg-accent/10 rounded-lg px-2 py-1 active:scale-95 transition-transform"
+                      >
+                        <AlarmClock size={12} /> Descanso
+                      </button>
+                    )}
                     {pontuavel && (
                       <button
                         onClick={() => crono.abrirWod({
@@ -1545,6 +1557,13 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
     staleTime: 10 * 60_000,
   })
 
+  const prEx = useQuery({
+    queryKey: ['aluno-pr-ex', ex.nome],
+    queryFn: () => alunoApi.prExercicio(ex.nome),
+    enabled: open && !pontuavel,
+    staleTime: 10 * 60_000,
+  })
+
   const save = useMutation({
     mutationFn: () => {
       if (pontuavel) {
@@ -1570,6 +1589,8 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
       if (r.pr_novo) setPr(r.pr_novo)
       qc.invalidateQueries({ queryKey: ['aluno-sessao-exs'] })
       qc.invalidateQueries({ queryKey: ['aluno-resumo'] })
+      qc.invalidateQueries({ queryKey: ['aluno-pr-ex', ex.nome] })
+      qc.invalidateQueries({ queryKey: ['aluno-hist-ex', ex.nome] })
       setOpen(false)
     },
   })
@@ -1730,6 +1751,19 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
                   )
                 })}
               </div>
+            </div>
+          )}
+
+          {/* Recorde pessoal (PR) — referência ao lado da última vez */}
+          {prEx.data && prEx.data.carga != null && (
+            <div className="flex items-center gap-1.5">
+              <Trophy size={12} className="text-warning shrink-0" />
+              <span className="text-xs text-text-muted">
+                PR: <span className="font-medium text-text-secondary">
+                  {formatPr(prEx.data.carga, tipo, tipo === 'PERFORMANCE' ? ex.unidade_reps : ex.unidade_carga)}
+                </span>
+                {prEx.data.data && ` (${new Date(prEx.data.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })})`}
+              </span>
             </div>
           )}
 

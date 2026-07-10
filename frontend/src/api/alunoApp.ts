@@ -248,6 +248,8 @@ export const alunoApi = {
     alunoClient.get<ExercicioEvolucao[]>('/v1/aluno/exercicios', { params: { historico: 1 } }).then((r) => r.data),
   historicoExercicio: (exercicioNome: string) =>
     alunoClient.get<Array<{ data_hora: string; series_exec: SerieInput[] }>>('/v1/aluno/exercicios/historico', { params: { exercicio_nome: exercicioNome, limit: 1 } }).then((r) => r.data),
+  prExercicio: (exercicioNome: string) =>
+    alunoClient.get<{ carga: number; data?: string } | null>('/v1/aluno/exercicios/pr', { params: { exercicio_nome: exercicioNome } }).then((r) => r.data),
   evolucao: (id: string) => alunoClient.get<Evolucao>(`/v1/aluno/exercicios/${id}/evolucao`).then((r) => r.data),
   evolucaoPorChave: (chave: string) =>
     alunoClient.get<Evolucao>('/v1/aluno/exercicios/evolucao', { params: { chave } }).then((r) => r.data),

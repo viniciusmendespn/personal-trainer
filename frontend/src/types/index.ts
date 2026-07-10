@@ -102,11 +102,14 @@ export interface AlunoCreate {
 export type FormatoBloco = 'LIVRE' | 'FOR_TIME' | 'AMRAP' | 'EMOM'
 
 export interface BlocoParams {
-  rounds?: number            // FOR_TIME: "4 rounds de..."
+  rounds?: number            // FOR_TIME: "4 rounds de..." | LIVRE: rounds do circuito
   time_cap_s?: number        // FOR_TIME: tempo limite
   duracao_s?: number         // AMRAP/EMOM: duração total
   intervalo_s?: number       // EMOM: 60/90/120s
   descanso_rounds_s?: number // FOR_TIME: descanso entre rounds
+  sets?: number              // nº de vezes que o bloco inteiro é repetido (ex.: 5 sets do AMRAP)
+  descanso_sets_s?: number   // descanso entre sets do bloco
+  descanso_apos_s?: number   // descanso ao terminar o bloco, antes do próximo
 }
 
 export interface BlocoTreino {

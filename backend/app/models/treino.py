@@ -5,11 +5,14 @@ from pydantic import BaseModel, Field
 
 class BlocoParams(BaseModel):
     """Parâmetros do formato do bloco — só os que fazem sentido para o formato são usados."""
-    rounds: Optional[int] = None               # FOR_TIME: "4 rounds de..."
+    rounds: Optional[int] = None               # FOR_TIME: "4 rounds de..." | LIVRE: rounds do circuito
     time_cap_s: Optional[int] = None           # FOR_TIME: tempo limite
     duracao_s: Optional[int] = None            # AMRAP: duração total | EMOM: duração total
     intervalo_s: Optional[int] = None          # EMOM: 60/90/120s ("Every 90s")
     descanso_rounds_s: Optional[int] = None    # FOR_TIME: descanso entre rounds
+    sets: Optional[int] = None                 # nº de vezes que o bloco inteiro é repetido (ex.: 5 sets do AMRAP)
+    descanso_sets_s: Optional[int] = None      # descanso entre sets do bloco
+    descanso_apos_s: Optional[int] = None      # descanso ao terminar o bloco, antes do próximo
 
 
 class BlocoTreino(BaseModel):
