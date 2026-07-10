@@ -889,20 +889,16 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
             })()}
           </span>
         </button>
-        <div className="flex items-center gap-1 shrink-0">
-          <Button
-            variant="ghost" size="sm" iconOnly aria-label="Salvar como template"
-            onClick={salvarComoTemplate}
-            disabled={saveAsTemplate.isPending}
-          >
-            <LayoutTemplate size={15} />
-          </Button>
-          {expired
-            ? <Button variant="ghost" size="sm" iconOnly aria-label="Renovar vigência" onClick={onRenovar}><RefreshCw size={15} /></Button>
-            : <Button variant="ghost" size="sm" iconOnly aria-label="Editar treino" onClick={() => setEditT(true)}><Pencil size={15} /></Button>
-          }
-          <Button variant="ghost" size="sm" iconOnly aria-label="Excluir treino" onClick={removerTreino} className="hover:text-danger"><Trash2 size={16} /></Button>
-        </div>
+        <OverflowMenu
+          ariaLabel="Ações do treino"
+          items={[
+            { icon: <LayoutTemplate size={14} />, label: 'Salvar como template', onClick: salvarComoTemplate, disabled: saveAsTemplate.isPending },
+            expired
+              ? { icon: <RefreshCw size={14} />, label: 'Renovar vigência', onClick: () => onRenovar?.() }
+              : { icon: <Pencil size={14} />, label: 'Editar treino', onClick: () => setEditT(true) },
+            { icon: <Trash2 size={14} />, label: 'Excluir treino', tone: 'danger', onClick: removerTreino },
+          ]}
+        />
       </div>
 
       <Modal open={editT} onClose={() => setEditT(false)} title="Editar treino" size="lg">
