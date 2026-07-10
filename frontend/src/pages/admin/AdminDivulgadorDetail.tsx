@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Check, UserPlus, Users, Wallet } from 'lucide-react'
+import { ArrowLeft, Check, Copy, UserPlus, Users, Wallet } from 'lucide-react'
+import { useState } from 'react'
 import { adminApi, type DivulgadorAdmin } from '../../api/admin'
 import { Card, useToast } from '../../components/ui'
 import { BarrasMeses, DivStatCard, TabelaMeses, brl, mesLabel, pct } from '../../divulgador/historico'
@@ -51,6 +52,14 @@ export function AdminDivulgadorDetail({ d, onBack, onRepasse }: {
 
   const p = painel.data
 
+  const linkCupom = `https://coachpilot.com.br/signup?cupom=${d.codigo}`
+  const [copiado, setCopiado] = useState(false)
+  async function copiarLink() {
+    await navigator.clipboard.writeText(linkCupom)
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2000)
+  }
+
   return (
     <div className="space-y-5">
       <button onClick={onBack} className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text transition-colors">
@@ -79,6 +88,23 @@ export function AdminDivulgadorDetail({ d, onBack, onRepasse }: {
           <Check size={12} /> Marcar repasse
         </button>
       </div>
+
+      {/* Cupom e link de indicação — copiável */}
+      <Card className="p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-1">Cupom e link de indicação</p>
+            <p className="text-lg font-bold text-accent">{d.codigo}</p>
+            <p className="text-xs text-text-muted break-all">{linkCupom}</p>
+          </div>
+          <button
+            onClick={copiarLink}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-hover transition-colors shrink-0"
+          >
+            {copiado ? <><Check size={15} /> Copiado!</> : <><Copy size={15} /> Copiar link</>}
+          </button>
+        </div>
+      </Card>
 
       {painel.isLoading && <p className="text-sm text-text-muted">Carregando painel…</p>}
       {painel.error && <p className="text-sm text-red-400">Erro ao carregar o painel deste divulgador.</p>}
