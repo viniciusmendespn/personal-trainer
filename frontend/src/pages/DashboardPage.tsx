@@ -14,7 +14,7 @@ import { useAlunos } from '../hooks/useAlunos'
 import { useBiblioteca } from '../hooks/useDominio'
 import { useTemplates } from '../hooks/useTemplates'
 import { wapiApi } from '../api/wapi'
-import { Card, StatCard, Skeleton, SkeletonLine, EmptyState, Avatar, Badge } from '../components/ui'
+import { Card, StatCard, Skeleton, SkeletonLine, EmptyState, Avatar, Badge, ExpandableText } from '../components/ui'
 import { tempoRelativo } from '../utils/datetime'
 import { formatBRL } from '../utils/currency'
 
@@ -552,12 +552,12 @@ export function DashboardPage() {
                             {a.status === 'EM_ANDAMENTO' ? 'Treinando agora' : a.status === 'ABANDONADA' ? 'Não finalizado' : 'Concluído'}
                           </Badge>
                         </div>
-                        <p className="text-xs text-text-muted truncate">
+                        <ExpandableText as="p" text={a.treino_nome ?? undefined} className="text-xs text-text-muted">
                           {a.treino_nome}
                           {a.status === 'EM_ANDAMENTO' && a.exercicio_atual && (
                             <> — {a.exercicio_atual} ({(a.ordem_atual ?? 0) + 1}/{a.total_ex})</>
                           )}
-                        </p>
+                        </ExpandableText>
                       </div>
                       <span className="text-xs text-text-muted shrink-0">{tempoRelativo(a.atualizado_em)}</span>
                     </div>

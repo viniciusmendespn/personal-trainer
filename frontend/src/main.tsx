@@ -6,8 +6,8 @@ import App from './App'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 
 // O manifest correto já está no <head> do HTML servido pelo CloudFront:
-// aluno.html → manifest-aluno.webmanifest (verde, "Meus Treinos")
-// index.html  → manifest.webmanifest (escuro, "CoachPilot")
+// aluno.html → aluno.webmanifest (verde, "Treinos — CoachPilot")
+// index.html  → manifest.webmanifest (escuro, "CoachPilot — Portal")
 // Apenas atualiza o título da aba para a rota do aluno.
 if (window.location.pathname.startsWith('/aluno')) {
   document.title = 'Meus Treinos — CoachPilot'

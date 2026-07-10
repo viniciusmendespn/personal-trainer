@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Plus, ChevronLeft, ChevronRight, Calendar, Check, X, Trash2, Pencil, Dumbbell, CalendarDays } from 'lucide-react'
 import { useAlunos } from '../hooks/useAlunos'
 import { useAgenda, useCreateAgendamento, useUpdateAgendamento, useSetAgendamentoStatus, useDeleteAgendamento } from '../hooks/useAgenda'
-import { Button, Card, Input, Select, Modal, Badge, EmptyState, Spinner, useConfirm } from '../components/ui'
+import { Button, Card, Input, Select, Modal, Badge, EmptyState, Spinner, useConfirm, ExpandableText } from '../components/ui'
 import type { Agendamento, AgendamentoCreate, AgendamentoStatus } from '../types'
 
 const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
@@ -173,7 +173,7 @@ function AgendamentoRow({ a, alunoNome }: { a: Agendamento; alunoNome?: string }
             {alunoNome ?? a.aluno_id} <Dumbbell size={11} />
           </Link>
         </p>
-        {a.observacao && <p className="text-xs text-text-muted truncate">{a.observacao}</p>}
+        {a.observacao && <ExpandableText as="p" className="text-xs text-text-muted">{a.observacao}</ExpandableText>}
       </div>
       <div className="flex items-center gap-1.5 shrink-0">
         <Badge tone={statusTone[statusEfetivo]}>{statusEfetivo}</Badge>

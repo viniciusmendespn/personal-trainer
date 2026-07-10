@@ -21,7 +21,7 @@ import { ChatThread } from '../components/chat/ChatThread'
 import { ChatInputBar } from '../components/chat/ChatInputBar'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
 import { PostComposer } from '../components/exercicio/PostComposer'
-import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSelect, SocialLinks, useToast, useConfirm, Modal, RichTextContent } from '../components/ui'
+import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSelect, SocialLinks, useToast, useConfirm, Modal, RichTextContent, ExpandableText } from '../components/ui'
 import { renderMarkdownLite } from '../components/chat/markdownLite'
 import { AlunoPerfilModal } from '../components/aluno/AlunoPerfilModal'
 import { CronometroProvider } from '../components/aluno/CronometroProvider'
@@ -341,6 +341,23 @@ export function AlunoApp() {
   const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
   const isAndroid = /Android/i.test(navigator.userAgent)
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+  // No iPhone, "Adicionar à Tela de Início" só existe no Safari — Chrome iOS (CriOS) não instala.
+  const isCriOS = /CriOS|FxiOS|EdgiOS/i.test(navigator.userAgent)
+  const [linkCopiado, setLinkCopiado] = useState(false)
+  async function copiarLinkApp() {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      setLinkCopiado(true)
+      setTimeout(() => setLinkCopiado(false), 2500)
+    } catch { /* clipboard indisponível — usuário copia manualmente */ }
+  }
+  const [iosHintDismissed, setIosHintDismissed] = useState(() => {
+    try { return localStorage.getItem('ios_install_hint_dismissed') === '1' } catch { return false }
+  })
+  function dismissIosHint() {
+    setIosHintDismissed(true)
+    try { localStorage.setItem('ios_install_hint_dismissed', '1') } catch { /* ok */ }
+  }
   // Botão para ativar notificações: iOS (exige gesto + app instalado) e Android como fallback
   const podeAtivarNotif =
     'Notification' in window && permission === 'default' && !isSubscribed && (!isIos || isStandalone)
@@ -457,7 +474,7 @@ export function AlunoApp() {
           )}
         </button>
         <div className="flex flex-col min-w-0 flex-1">
-          <h1 className="font-display text-lg font-bold text-text truncate leading-tight">Olá, {me.data?.nome ?? 'aluno'}</h1>
+          <ExpandableText as="h1" text={`Olá, ${me.data?.nome ?? 'aluno'}`} className="font-display text-lg font-bold text-text leading-tight">Olá, {me.data?.nome ?? 'aluno'}</ExpandableText>
           <p className="text-xs text-text-muted capitalize leading-tight">
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
@@ -502,6 +519,17 @@ export function AlunoApp() {
           <NotifBell onNavigate={handleNotifNavigate} onOpenChat={() => setChatOpen(true)} onFinanceiro={() => setTab('personal')} />
         </div>
       </header>
+      {isIos && !isStandalone && !iosHintDismissed && (
+        <div className="mx-4 mb-2 flex items-center gap-2 rounded-lg bg-accent/10 border border-accent/30 px-3 py-2">
+          <Download size={16} className="text-accent-hover shrink-0" />
+          <button onClick={() => setShowIosModal(true)} className="text-xs text-text-secondary text-left flex-1">
+            {isCriOS
+              ? <>Instale o app na tela inicial — no iPhone, <strong className="text-text">abra no Safari</strong>. Toque para ver como.</>
+              : <>Instale o app na sua tela inicial pelo Safari. <strong className="text-accent-hover">Ver como</strong></>}
+          </button>
+          <button onClick={dismissIosHint} aria-label="Dispensar" className="p-1 text-text-muted hover:text-text shrink-0"><X size={14} /></button>
+        </div>
+      )}
       {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
       {tab === 'historico' ? (
         <main className="px-4 flex-1"><HistoricoTab /></main>
@@ -545,7 +573,10 @@ export function AlunoApp() {
 
       {/* Chat drawer */}
       {chatOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-surface" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="fixed inset-0 z-50 flex flex-col bg-surface" style={{
+          paddingTop: isStandalone && isAndroid ? 'max(env(safe-area-inset-top), 24px)' : 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}>
           <header className="shrink-0 h-14 flex items-center px-4 gap-3 border-b border-border bg-surface-elevated">
             <button onClick={() => setChatOpen(false)} className="text-text-secondary hover:text-text"><X size={20} /></button>
             <span className="text-sm font-medium text-text">Chat com o agente</span>
@@ -593,27 +624,29 @@ export function AlunoApp() {
             </button>
           </div>
           <p className="text-xs bg-yellow-500/10 text-yellow-400 rounded-lg px-3 py-2">
-            Abra esta página no <strong>Safari</strong> (não Chrome) para instalar
+            {isCriOS
+              ? <>Você está no <strong>Chrome</strong>. No iPhone, instalar o app só funciona pelo <strong>Safari</strong>. Copie o link abaixo e abra no Safari.</>
+              : <>Use o <strong>Safari</strong> — o Chrome no iPhone não instala apps.</>}
           </p>
+          {isCriOS && (
+            <button
+              onClick={copiarLinkApp}
+              className="w-full py-2 rounded-lg bg-accent/20 text-accent-hover text-sm font-medium hover:bg-accent/30 transition-colors"
+            >
+              {linkCopiado ? '✓ Link copiado — abra no Safari' : 'Copiar link do app'}
+            </button>
+          )}
           <ol className="space-y-4">
             <li className="flex gap-3 items-start">
               <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
-              <span className="text-sm text-text-secondary">Toque em <strong className="text-text">⋯</strong> (três pontos) na barra de endereço do Safari</span>
+              <span className="text-sm text-text-secondary">No <strong className="text-text">Safari</strong>, toque no botão <strong className="text-text">Compartilhar</strong> (ícone de quadrado com uma seta para cima) na barra inferior</span>
             </li>
             <li className="flex gap-3 items-start">
               <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
-              <span className="text-sm text-text-secondary">Toque em <strong className="text-text">"Compartilhar"</strong></span>
+              <span className="text-sm text-text-secondary">Role a lista e toque em <strong className="text-text">"Adicionar à Tela de Início"</strong></span>
             </li>
             <li className="flex gap-3 items-start">
               <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-              <span className="text-sm text-text-secondary">Role a lista e toque em <strong className="text-text">"Ver Mais"</strong></span>
-            </li>
-            <li className="flex gap-3 items-start">
-              <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
-              <span className="text-sm text-text-secondary">Selecione <strong className="text-text">"Adicionar à Tela de Início"</strong></span>
-            </li>
-            <li className="flex gap-3 items-start">
-              <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">5</span>
               <span className="text-sm text-text-secondary">Toque em <strong className="text-text">Adicionar</strong> para confirmar</span>
             </li>
           </ol>
@@ -1559,11 +1592,11 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
         <button className="flex-1 flex items-center justify-between text-left min-w-0"
           onClick={() => { if (!open) { setRows(buildRows(variante)); setPr(null) } setOpen((o) => !o) }}>
           <span className="min-w-0">
-            <span className={`font-medium block truncate ${ex.aquecimento ? 'text-text-secondary' : ''}`}>
+            <ExpandableText text={nomeAtivo} className={`font-medium block ${ex.aquecimento ? 'text-text-secondary' : ''}`}>
               {nomeAtivo}
               {ex.aquecimento && <span className="ml-1.5 text-[10px] text-warning align-middle">aquecimento</span>}
               {variante && <span className="ml-1.5 text-[10px] text-accent align-middle">substituto</span>}
-            </span>
+            </ExpandableText>
             <span className="block mt-0.5">
               {seriesAtivas?.length && (pontuavel || sufixoBloco)
                 ? <span className="text-xs text-text-muted">

@@ -4,7 +4,7 @@ import { useAlunos } from '../../hooks/useAlunos'
 import { normalizeText } from '../../utils/normalizeText'
 import { useExerciciosAluno } from '../../hooks/useEvolucao'
 import { usePersonalChat, useSendPersonalChat, useEnviarCorrecao } from '../../hooks/usePersonalChat'
-import { Avatar, Spinner, Modal, Select, Button } from '../ui'
+import { Avatar, Spinner, Modal, Select, Button, ExpandableText } from '../ui'
 import { ChatThread } from './ChatThread'
 import { ChatInputBar } from './ChatInputBar'
 import { useChatContext } from '../../context/ChatContext'
@@ -42,9 +42,9 @@ export function ChatWidget() {
             <ChevronLeft size={18} />
           </button>
         )}
-        <h3 className="font-display font-semibold text-text flex-1 truncate">
+        <ExpandableText as="h3" text={aluno ? aluno.nome : 'Conversas'} className="font-display font-semibold text-text flex-1">
           {aluno ? aluno.nome : 'Conversas'}
-        </h3>
+        </ExpandableText>
         <button onClick={() => setOpen(false)} aria-label="Fechar" className="p-1 text-text-secondary hover:text-text">
           <X size={18} />
         </button>
@@ -140,7 +140,7 @@ function CorrecaoForm({
 
   return (
     <form onSubmit={submit} className="space-y-3">
-      <p className="text-xs text-text-muted truncate">Arquivo: {file.name}</p>
+      <ExpandableText as="p" text={`Arquivo: ${file.name}`} className="text-xs text-text-muted">Arquivo: {file.name}</ExpandableText>
       <Select label="Exercício" value={exId} onChange={(e) => setExId(e.target.value)} required>
         <option value="">Selecione…</option>
         {exercicios.map((ex) => <option key={ex.exercicio_id} value={ex.exercicio_id}>{ex.nome}</option>)}

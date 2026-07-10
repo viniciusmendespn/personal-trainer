@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList, CalendarDays, List } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList, CalendarDays, List, GripVertical, Video, Clock } from 'lucide-react'
+import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useAluno, useAlunos, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { useToggleAgenteHabilitado } from '../hooks/usePersonalChat'
 import { usePlanoStatus } from '../hooks/usePlano'
@@ -12,13 +15,13 @@ import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
-import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar, ObjetivosPicker, AutocompleteInput } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar, ObjetivosPicker, AutocompleteInput, StatChip, OverflowMenu, ExpandableText } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { MontarTreinoIaCallout } from '../components/MontarTreinoIaCallout'
 import { AtualizarTreinoIAModal } from '../components/AtualizarTreinoIAModal'
 import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
-import { useExerciciosAluno } from '../hooks/useEvolucao'
+import { useExerciciosAluno, useEvolucao } from '../hooks/useEvolucao'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
 import { useCreateRotinaFromAluno, useRotinas, useAplicarRotina } from '../hooks/useRotinas'
 import { useNotas, useCreateNota } from '../hooks/useNotas'
@@ -761,12 +764,30 @@ function NotasTimeline({ alunoId }: { alunoId: string }) {
   )
 }
 
+/** Reconstrói o corpo `ExercicioCreate` a partir de um `Exercicio` existente (para reordenar). */
+function toExercicioCreate(ex: Exercicio): ExercicioCreate {
+  return {
+    nome: ex.nome, grupo: ex.grupo, ordem: ex.ordem, bloco_id: ex.bloco_id,
+    aquecimento: ex.aquecimento, tipo_exercicio: ex.tipo_exercicio,
+    unidade_carga: ex.unidade_carga, unidade_reps: ex.unidade_reps,
+    metrica_direcao: ex.metrica_direcao, series: ex.series,
+    reps_prescritas: ex.reps_prescritas, carga_prescrita: ex.carga_prescrita,
+    series_prescritas: ex.series_prescritas, intervalo_s: ex.intervalo_s,
+    video_url: ex.video_url, observacoes: ex.observacoes, rm_kg: ex.rm_kg,
+    links_uteis: ex.links_uteis, links_uteis_excluidos: ex.links_uteis_excluidos,
+    substitutos: ex.substitutos, substitutos_excluidos: ex.substitutos_excluidos,
+    custom: ex.custom,
+  }
+}
+
 function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; treino: Treino; expired?: boolean; onRenovar?: () => void }) {
   const [open, setOpen] = useState(false)
   const [editT, setEditT] = useState(false)
   const [addingEx, setAddingEx] = useState(false)
+  const [reordering, setReordering] = useState(false)
   const delTreino = useDeleteTreino(alunoId)
   const updTreino = useUpdateTreino(alunoId)
+  const updEx = useUpdateExercicio(alunoId, treino.treino_id)
   const saveAsTemplate = useCreateTemplateFromTreino()
   const { show } = useToast()
   const confirm = useConfirm()
@@ -774,6 +795,58 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
   const { data: biblioteca } = useBiblioteca()
   const { data: exerciciosAluno } = useExerciciosAluno(alunoId)
   const createEx = useCreateExercicio(alunoId, treino.treino_id)
+
+  // Cópia local dos exercícios para reordenação otimista (evita "pulo" enquanto persiste).
+  const [exsLocal, setExsLocal] = useState<Exercicio[]>([])
+  useEffect(() => { if (exs) setExsLocal(exs) }, [exs])
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
+  )
+
+  // Grupos exibidos (por bloco, mais "Sem bloco"); usado no render e no reorder.
+  const { ordenados, blocosSorted, groups } = useMemo(() => {
+    const ord = [...exsLocal].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+    const bs = (treino.blocos ?? []).slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+    const blocoIds = new Set(bs.map((b) => b.id))
+    const semBloco = ord.filter((e) => !e.bloco_id || !blocoIds.has(e.bloco_id))
+    const gs = bs.length
+      ? [
+          ...bs.map((b) => ({ key: b.id, bloco: b as BlocoTreino | undefined, items: ord.filter((e) => e.bloco_id === b.id) })),
+          ...(semBloco.length ? [{ key: '__sem__', bloco: undefined as BlocoTreino | undefined, items: semBloco }] : []),
+        ]
+      : [{ key: '__all__', bloco: undefined as BlocoTreino | undefined, items: ord }]
+    return { ordenados: ord, blocosSorted: bs, groups: gs }
+  }, [exsLocal, treino.blocos])
+
+  async function reordenarExercicios(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const activeId = String(active.id)
+    const overId = String(over.id)
+    const groupOf = (id: string) => groups.find((g) => g.items.some((e) => e.exercicio_id === id))
+    const ga = groupOf(activeId)
+    const gb = groupOf(overId)
+    if (!ga || !gb || ga.key !== gb.key) return // reorder só dentro do mesmo bloco
+    const oldIndex = ga.items.findIndex((e) => e.exercicio_id === activeId)
+    const newIndex = ga.items.findIndex((e) => e.exercicio_id === overId)
+    if (oldIndex < 0 || newIndex < 0) return
+    const newItems = arrayMove(ga.items, oldIndex, newIndex)
+    const flat = groups.flatMap((g) => (g.key === ga.key ? newItems : g.items))
+    const updated = flat.map((e, idx) => ({ ...e, ordem: idx }))
+    setExsLocal(updated) // otimista
+    setReordering(true)
+    try {
+      await Promise.all(
+        updated
+          .filter((e) => (ordenados.find((o) => o.exercicio_id === e.exercicio_id)?.ordem ?? 0) !== e.ordem)
+          .map((e) => updEx.mutateAsync({ exercicioId: e.exercicio_id, body: { ...toExercicioCreate(e), ordem: e.ordem } })),
+      )
+    } finally {
+      setReordering(false)
+    }
+  }
   const [tNome, setTNome] = useState(treino.nome)
   const [tFoco, setTFoco] = useState(treino.foco ?? '')
   const [tIni, setTIni] = useState(treino.data_inicio ?? '')
@@ -831,7 +904,7 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
         <button className="flex-1 min-w-0 overflow-hidden flex items-center gap-2 text-left" onClick={() => setOpen((v) => !v)}>
           {open ? <ChevronDown size={16} className="shrink-0" /> : <ChevronRight size={16} className="shrink-0" />}
           <span className="min-w-0 overflow-hidden">
-            <span className="font-medium truncate block">{treino.nome}</span>
+            <ExpandableText as="span" text={treino.nome} className="font-medium block">{treino.nome}</ExpandableText>
             {(() => {
               const parts: string[] = []
               if (treino.foco) parts.push(treino.foco)
@@ -891,45 +964,45 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
             const secSerie = somaSeries > 0 ? treino.soma_duracao_segundos / somaSeries : 0
             const tSerie = secSerie > 0 ? (secSerie < 60 ? `${Math.round(secSerie)}s` : `${(secSerie / 60).toFixed(1).replace('.', ',')}min`) : null
             return (
-              <div className="flex flex-wrap gap-2 pb-1 text-xs text-text-muted">
-                {tMedio && <span className="inline-flex items-center gap-1 rounded-md bg-surface-elevated border border-border px-2 py-1">⏱ ~{tMedio} por execução</span>}
-                {tSerie && <span className="inline-flex items-center gap-1 rounded-md bg-surface-elevated border border-border px-2 py-1">~{tSerie}/série <span className="opacity-70">(estim.)</span></span>}
+              <div className="flex flex-wrap gap-2 pb-1">
+                {tMedio && <StatChip>⏱ ~{tMedio} por execução</StatChip>}
+                {tSerie && <StatChip>~{tSerie}/série <span className="opacity-70">(estim.)</span></StatChip>}
               </div>
             )
           })()}
-          {(() => {
-            const ordenados = (exs ?? []).slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
-            const blocos = (treino.blocos ?? []).slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
-            const blocoIds = new Set(blocos.map((b) => b.id))
-            const semBloco = ordenados.filter((e) => !e.bloco_id || !blocoIds.has(e.bloco_id))
-            const row = (ex: Exercicio, bloco?: BlocoTreino) => (
-              <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} blocos={treino.blocos} bloco={bloco} />
-            )
-            if (!blocos.length) return ordenados.map((e) => row(e))
-            return (
-              <>
-                {blocos.map((b) => {
-                  const doBloco = ordenados.filter((e) => e.bloco_id === b.id)
-                  const label = formatoBlocoLabel(b)
-                  return (
-                    <div key={b.id} className={b.aquecimento ? 'opacity-70' : ''}>
-                      <div className="flex items-center gap-2 mt-2 mb-1">
-                        <span className="text-xs font-semibold text-text-secondary">{b.nome}</span>
-                        {label && <Badge tone={b.aquecimento ? 'neutral' : 'accent'}>{label}</Badge>}
-                      </div>
-                      {doBloco.length ? doBloco.map((e) => row(e, b)) : <p className="text-xs text-text-muted pl-2">Sem exercícios neste bloco.</p>}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reordenarExercicios}>
+            {(() => {
+              const row = (ex: Exercicio, index: number, bloco?: BlocoTreino) => (
+                <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} index={index} biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} blocos={treino.blocos} bloco={bloco} reordering={reordering} />
+              )
+              if (!blocosSorted.length) {
+                return (
+                  <SortableContext items={ordenados.map((e) => e.exercicio_id)} strategy={verticalListSortingStrategy}>
+                    {ordenados.map((e, i) => row(e, i + 1))}
+                  </SortableContext>
+                )
+              }
+              return groups.map((g) => (
+                <div key={g.key} className={g.bloco?.aquecimento ? 'opacity-70' : ''}>
+                  {g.bloco ? (
+                    <div className="flex items-center gap-2 mt-2 mb-1">
+                      <span className="text-xs font-semibold text-text-secondary">{g.bloco.nome}</span>
+                      {formatoBlocoLabel(g.bloco) && <Badge tone={g.bloco.aquecimento ? 'neutral' : 'accent'}>{formatoBlocoLabel(g.bloco)}</Badge>}
                     </div>
-                  )
-                })}
-                {semBloco.length > 0 && (
-                  <div>
+                  ) : (
                     <div className="mt-2 mb-1"><span className="text-xs font-semibold text-text-secondary">Sem bloco</span></div>
-                    {semBloco.map((e) => row(e))}
-                  </div>
-                )}
-              </>
-            )
-          })()}
+                  )}
+                  {g.items.length ? (
+                    <SortableContext items={g.items.map((e) => e.exercicio_id)} strategy={verticalListSortingStrategy}>
+                      {g.items.map((e, i) => row(e, i + 1, g.bloco))}
+                    </SortableContext>
+                  ) : (
+                    <p className="text-xs text-text-muted pl-2">Sem exercícios neste bloco.</p>
+                  )}
+                </div>
+              ))
+            })()}
+          </DndContext>
           <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={() => setAddingEx(true)}>
             <span className="flex items-center gap-1"><Plus size={14} /> Exercício</span>
           </Button>
@@ -1217,21 +1290,44 @@ function ExercicioForm({
   )
 }
 
+/** Painel de estatísticas de execução — carrega sob demanda (só quando expandido). */
+function ExecucaoStats({ alunoId, exercicioId, unidadeCarga }: { alunoId: string; exercicioId: string; unidadeCarga?: string }) {
+  const { data, isLoading } = useEvolucao(alunoId, exercicioId)
+  if (isLoading) return <div className="mt-1.5 text-xs text-text-muted">Carregando histórico…</div>
+  if (!data) return null
+  const uni = unidadeCarga || 'kg'
+  const ult = data.serie?.[data.serie.length - 1]
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-1.5">
+      <StatChip icon={<TrendingUp size={12} />} tone="accent">
+        {data.total_sessoes} {data.total_sessoes === 1 ? 'execução' : 'execuções'}
+      </StatChip>
+      {ult?.carga_max != null && <StatChip title="Última carga executada">Última: {ult.carga_max}{uni}</StatChip>}
+      {data.pr && <StatChip tone="success" title={`PR em ${fmtDateFull(data.pr.data)}`}>PR {data.pr.carga}{uni}</StatChip>}
+      {data.total_sessoes === 0 && <span className="text-xs text-text-muted">Ainda não executado.</span>}
+    </div>
+  )
+}
+
 function ExercicioRow({
-  alunoId, treinoId, ex, biblioteca, exerciciosAluno, blocos, bloco,
+  alunoId, treinoId, ex, index, biblioteca, exerciciosAluno, blocos, bloco, reordering,
 }: {
-  alunoId: string; treinoId: string; ex: Exercicio
+  alunoId: string; treinoId: string; ex: Exercicio; index: number
   biblioteca?: { exlib_id: string; nome: string; grupo?: string; video_url?: string; substitutos?: ExercicioSubstituto[] }[]
   exerciciosAluno?: Exercicio[]
   blocos?: BlocoTreino[]
   /** Bloco a que a linha pertence — muda a exibição da prescrição ("12 por round"). */
   bloco?: BlocoTreino
+  reordering?: boolean
 }) {
   const [edit, setEdit] = useState(false)
   const [mediaOpen, setMediaOpen] = useState(false)
+  const [statsOpen, setStatsOpen] = useState(false)
   const upd = useUpdateExercicio(alunoId, treinoId)
   const del = useDeleteExercicio(alunoId, treinoId)
   const confirm = useConfirm()
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: ex.exercicio_id })
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
 
   async function save(body: ExercicioCreate) {
     await upd.mutateAsync({ exercicioId: ex.exercicio_id, body: { ...body, ordem: ex.ordem } })
@@ -1247,41 +1343,67 @@ function ExercicioRow({
     if (ok) del.mutate(ex.exercicio_id)
   }
 
+  const temPrescricao = !!(ex.series_prescritas?.length || ex.series || ex.reps_prescritas || ex.carga_prescrita)
+  const pontuavel = !!bloco && bloco.formato !== 'LIVRE' && !bloco.aquecimento
+  const sufixo = sufixoPrescricaoBloco(bloco)
+
   return (
-    <div className="border-b border-border pb-1.5">
-      <div className={`flex items-center justify-between gap-2 text-sm ${ex.aquecimento ? 'opacity-70' : ''}`}>
-        <span className="min-w-0 truncate">
-          {ex.nome}
-          {ex.aquecimento && <Badge tone="neutral" className="ml-1.5 align-middle">aq.</Badge>}
-          <span className="ml-2">
-            {(() => {
-              const pontuavel = !!bloco && bloco.formato !== 'LIVRE' && !bloco.aquecimento
-              const sufixo = sufixoPrescricaoBloco(bloco)
-              if (ex.series_prescritas?.length && (pontuavel || sufixo)) {
-                return (
-                  <span className="text-xs text-text-muted">
+    <div ref={setNodeRef} style={style} className="border-b border-border py-1.5">
+      <div className={`flex items-start gap-2 text-sm ${ex.aquecimento ? 'opacity-70' : ''}`}>
+        {/* Handle de arraste + número */}
+        <div className="flex items-center gap-0.5 shrink-0 pt-0.5">
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            disabled={reordering}
+            aria-label="Arrastar para reordenar"
+            className="touch-none cursor-grab active:cursor-grabbing text-text-muted hover:text-text disabled:opacity-40 p-0.5"
+          >
+            <GripVertical size={14} />
+          </button>
+          <span className="text-[10px] font-mono text-text-muted w-4 text-center select-none leading-none">{index}</span>
+        </div>
+
+        {/* Nome + chips */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <ExpandableText text={ex.nome} className="font-medium">{ex.nome}</ExpandableText>
+            {ex.aquecimento && <Badge tone="neutral">aq.</Badge>}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 mt-1">
+            {temPrescricao && (
+              <StatChip>
+                {ex.series_prescritas?.length && (pontuavel || sufixo) ? (
+                  <>
                     {fmtPrescricaoBloco(ex.series_prescritas, ex.unidade_reps)}
                     {sufixo && <span className="opacity-70"> {sufixo}</span>}
-                  </span>
-                )
-              }
-              return ex.series_prescritas?.length
-                ? <SeriesPrescritasCompact items={ex.series_prescritas} tipoExercicio={ex.tipo_exercicio} rm_kg={ex.rm_kg} />
-                : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
-            })()}
-          </span>
-          <a href={videoUrlComFallback(ex.nome, ex.video_url)} target="_blank" rel="noreferrer" className="text-accent-hover ml-2 text-xs hover:underline">vídeo</a>
-          {ex.observacoes && (
-            <span title={ex.observacoes} className="inline-block ml-2 align-text-bottom">
-              <StickyNote size={12} className="text-warning" />
-            </span>
-          )}
-        </span>
-        <span className="flex gap-1 shrink-0">
-          <Button variant="ghost" size="sm" iconOnly aria-label="Fotos e vídeos" onClick={() => setMediaOpen(true)}><Camera size={13} /></Button>
-          <Button variant="ghost" size="sm" iconOnly aria-label="Editar exercício" onClick={() => setEdit(true)}><Pencil size={13} /></Button>
-          <Button variant="ghost" size="sm" iconOnly aria-label="Excluir exercício" onClick={remove} className="hover:text-danger"><Trash2 size={14} /></Button>
-        </span>
+                  </>
+                ) : ex.series_prescritas?.length ? (
+                  <SeriesPrescritasCompact items={ex.series_prescritas} tipoExercicio={ex.tipo_exercicio} rm_kg={ex.rm_kg} />
+                ) : (
+                  <>{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</>
+                )}
+              </StatChip>
+            )}
+            <StatChip href={videoUrlComFallback(ex.nome, ex.video_url)} icon={<Video size={12} />} tone="accent" title="Ver vídeo do exercício">Vídeo</StatChip>
+            {ex.rm_kg ? <StatChip title="1RM estimado">RM {ex.rm_kg}{ex.unidade_carga || 'kg'}</StatChip> : null}
+            {ex.intervalo_s ? <StatChip icon={<Clock size={12} />} title="Intervalo de descanso">{ex.intervalo_s}s</StatChip> : null}
+            {ex.observacoes ? <StatChip icon={<StickyNote size={12} />} tone="warning" title={ex.observacoes}>Obs.</StatChip> : null}
+            <StatChip icon={<TrendingUp size={12} />} onClick={() => setStatsOpen((v) => !v)} title="Ver histórico de execução">Execuções</StatChip>
+          </div>
+          {statsOpen && <ExecucaoStats alunoId={alunoId} exercicioId={ex.exercicio_id} unidadeCarga={ex.unidade_carga} />}
+        </div>
+
+        {/* Ações */}
+        <OverflowMenu
+          ariaLabel="Ações do exercício"
+          items={[
+            { icon: <Camera size={14} />, label: 'Fotos e vídeos', onClick: () => setMediaOpen(true) },
+            { icon: <Pencil size={14} />, label: 'Editar', onClick: () => setEdit(true) },
+            { icon: <Trash2 size={14} />, label: 'Excluir', tone: 'danger', onClick: remove },
+          ]}
+        />
       </div>
 
       <Modal open={edit} onClose={() => setEdit(false)} title="Editar exercício" size="lg">

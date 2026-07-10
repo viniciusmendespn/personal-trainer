@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Plus, Trash2, Video, Pencil, BookOpen, Search, Upload } from 'lucide-react'
 import { useBiblioteca, useCreateExLib, useUpdateExLib, useDeleteExLib } from '../hooks/useDominio'
-import { Button, Card, Input, Textarea, Spinner, EmptyState, Modal, useConfirm, AutocompleteInput } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, EmptyState, Modal, useConfirm, AutocompleteInput, ExpandableText } from '../components/ui'
 import { ImportarExerciciosModal } from '../components/ImportarExerciciosModal'
 import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
 import { SubstitutosBibliotecaEditor } from '../components/exercicios/SubstitutosBibliotecaEditor'
@@ -139,7 +139,7 @@ function ExLibRow({ ex, grupos, biblioteca }: { ex: ExLib; grupos: string[]; bib
   return (
     <Card variant="elevated" className="flex items-start justify-between">
       <div className="min-w-0">
-        <p className="font-medium truncate">{ex.nome} {ex.grupo && <span className="text-xs text-text-muted">· {ex.grupo}</span>}</p>
+        <ExpandableText as="p" className="font-medium" text={ex.grupo ? `${ex.nome} · ${ex.grupo}` : ex.nome}>{ex.nome} {ex.grupo && <span className="text-xs text-text-muted">· {ex.grupo}</span>}</ExpandableText>
         <a href={videoUrlComFallback(ex.nome, ex.video_url)} target="_blank" rel="noreferrer" className="text-xs text-accent-hover inline-flex items-center gap-1 hover:underline">
           <Video size={12} /> vídeo
         </a>

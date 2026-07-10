@@ -7,7 +7,7 @@ import {
   useRotinas, useDeleteRotina, useAplicarRotina, useCreateRotinaFromTemplates, useUpdateRotina,
 } from '../hooks/useRotinas'
 import { useTemplates } from '../hooks/useTemplates'
-import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm, ExpandableText } from '../components/ui'
 import type { Rotina, TreinoRotina, AplicarRotinaModo, TreinoTemplate } from '../types'
 
 function contaExercicios(r: Rotina): number {
@@ -81,7 +81,7 @@ function RotinaCard({ rotina, onApply, onEdit }: { rotina: Rotina; onApply: () =
     <Card variant="elevated">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="font-medium truncate">{rotina.nome}</p>
+          <ExpandableText as="p" className="font-medium">{rotina.nome}</ExpandableText>
           {rotina.descricao && <p className="text-xs text-text-muted">{rotina.descricao}</p>}
         </div>
         <div className="flex items-center gap-1 shrink-0">
@@ -214,7 +214,7 @@ function TemplatePicker({ onAdd }: { onAdd: (tpl: TreinoTemplate) => void }) {
               onClick={() => onAdd(t)}
               className="w-full flex items-center justify-between gap-2 text-left px-2.5 py-1.5 rounded-lg border border-border hover:border-accent hover:bg-accent/5 transition-colors"
             >
-              <span className="text-sm truncate">{t.nome}</span>
+              <span className="text-sm">{t.nome}</span>
               <Badge tone="neutral"><Dumbbell size={10} /> {t.exercicios.length}</Badge>
             </button>
           ))}
@@ -236,8 +236,8 @@ function TreinoList({ treinos, onMove, onRemove }: {
         <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-border">
           <span className="text-xs text-text-muted w-5 shrink-0">{String.fromCharCode(65 + i)}</span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm truncate">{t.nome}</p>
-            {t.foco && <p className="text-[11px] text-text-muted truncate">{t.foco}</p>}
+            <ExpandableText as="p" className="text-sm">{t.nome}</ExpandableText>
+            {t.foco && <ExpandableText as="p" className="text-[11px] text-text-muted">{t.foco}</ExpandableText>}
           </div>
           <Badge tone="neutral"><Dumbbell size={10} /> {t.exercicios.length}</Badge>
           <div className="flex items-center shrink-0">

@@ -4,7 +4,7 @@ import { useAlunos } from '../hooks/useAlunos'
 import { normalizeText } from '../utils/normalizeText'
 import { useTemplates, useCreateTemplate, useDeleteTemplate, useUpdateTemplate, useAplicarTemplate } from '../hooks/useTemplates'
 import { useBiblioteca } from '../hooks/useDominio'
-import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm, AutocompleteInput } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm, AutocompleteInput, ExpandableText } from '../components/ui'
 import { SeriesPrescritasEditor, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
 import { BlocosTreinoEditor } from '../components/exercicios/BlocosTreinoEditor'
@@ -79,7 +79,7 @@ function TemplateCard({ template, onApply, onEdit }: { template: TreinoTemplate;
     <Card variant="elevated">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="font-medium truncate">{template.nome}</p>
+          <ExpandableText as="p" className="font-medium">{template.nome}</ExpandableText>
           {template.foco && <p className="text-xs text-text-muted">{template.foco}</p>}
         </div>
         <div className="flex items-center gap-1 shrink-0">
