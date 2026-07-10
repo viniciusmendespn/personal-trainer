@@ -12,6 +12,9 @@ Allow: /coachpilot-vs-planilhas
 Allow: /precos
 Allow: /faq
 Allow: /sobre
+Allow: /termos
+Allow: /privacidade
+Allow: /blog
 Disallow: /dashboard
 Disallow: /dashboard/
 Disallow: /aluno

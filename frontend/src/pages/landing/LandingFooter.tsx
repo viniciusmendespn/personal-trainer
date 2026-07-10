@@ -11,6 +11,7 @@ const NAV_LINKS = [
 ]
 
 const RESOURCE_LINKS = [
+  { label: 'Blog', to: '/blog' },
   { label: 'Software para personal', to: '/software-para-personal-trainer' },
   { label: 'App para personal', to: '/app-para-personal-trainer' },
   { label: 'Gestão de alunos', to: '/gestao-de-alunos-personal-trainer' },
@@ -144,6 +145,10 @@ export default function LandingFooter() {
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 24, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>
             © {new Date().getFullYear()} CoachPilot. Todos os direitos reservados.
+            {' · '}
+            <Link to="/termos" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Termos de Uso</Link>
+            {' · '}
+            <Link to="/privacidade" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Privacidade</Link>
           </span>
           <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>
             Feito com 💪 para personal trainers brasileiros

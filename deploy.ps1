@@ -133,6 +133,13 @@ function Deploy-Frontend {
         --exclude "*" --include "sw.js" --include "workbox-*.js" --include "registerSW.js" `
         --cache-control "no-cache, no-store, must-revalidate" `
         --region $Region --profile $Profile
+    # Páginas públicas prerenderizadas (dist/<rota>/index.html, incl. blog): sem cache,
+    # como os demais HTML — o conteúdo muda a cada build (SEO)
+    aws s3 sync dist/ "s3://$Bucket/" --delete `
+        --exclude "*" --include "*/index.html" `
+        --cache-control "no-cache, no-store, must-revalidate" `
+        --content-type "text/html; charset=utf-8" `
+        --region $Region --profile $Profile
     # Bundle com hash no nome (dist/assets/*): cache de 1 ano, nome muda a cada build
     aws s3 sync dist/assets/ "s3://$Bucket/assets/" --delete `
         --cache-control "public, max-age=31536000, immutable" `
@@ -142,7 +149,7 @@ function Deploy-Frontend {
     aws s3 sync dist/ "s3://$Bucket/" --delete `
         --exclude "index.html" --exclude "aluno.html" --exclude "loja.html" --exclude "divulgador.html" --exclude "*.webmanifest" `
         --exclude "sw.js" --exclude "workbox-*.js" --exclude "registerSW.js" `
-        --exclude "assets/*" `
+        --exclude "assets/*" --exclude "*/index.html" `
         --cache-control "public, max-age=3600" `
         --region $Region --profile $Profile
 

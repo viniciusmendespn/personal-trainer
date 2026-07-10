@@ -40,6 +40,8 @@ const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default:
 const CadastroPage = lazy(() => import('./pages/CadastroPage').then((m) => ({ default: m.CadastroPage })))
 const AjudaPage = lazy(() => import('./pages/AjudaPage').then((m) => ({ default: m.AjudaPage })))
 const DivulgadoresPage = lazy(() => import('./pages/landing/DivulgadoresPage').then((m) => ({ default: m.DivulgadoresPage })))
+const BlogIndexPage = lazy(() => import('./pages/landing/BlogPages').then((m) => ({ default: m.BlogIndexPage })))
+const BlogPostPage = lazy(() => import('./pages/landing/BlogPages').then((m) => ({ default: m.BlogPostPage })))
 const PlanoPage = lazy(() => import('./pages/PlanoPage').then((m) => ({ default: m.PlanoPage })))
 const PacotesPage = lazy(() => import('./pages/PacotesPage').then((m) => ({ default: m.PacotesPage })))
 const LojaVendedorPage = lazy(() => import('./pages/LojaVendedorPage').then((m) => ({ default: m.LojaVendedorPage })))
@@ -84,6 +86,10 @@ const router = createBrowserRouter([
       { path: '/precos', element: <PublicSeoPage pageKey="precos" /> },
       { path: '/faq', element: <PublicSeoPage pageKey="faq" /> },
       { path: '/sobre', element: <PublicSeoPage pageKey="sobre" /> },
+      { path: '/termos', element: <PublicSeoPage pageKey="termos" /> },
+      { path: '/privacidade', element: <PublicSeoPage pageKey="privacidade" /> },
+      { path: '/blog', element: lazyPage(<BlogIndexPage />) },
+      { path: '/blog/:slug', element: lazyPage(<BlogPostPage />) },
       { path: '/aluno', element: lazyPage(<AlunoApp />) },     // dev only — prod served by aluno.html bundle
       { path: '/cadastro', element: lazyPage(<CadastroPage />) },  // auto-cadastro via link de anamnese
           { path: '/login', element: <LoginPage /> },

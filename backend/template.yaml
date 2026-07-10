@@ -425,30 +425,52 @@ Resources:
       Name: !Sub "${ProjectName}-spa-router-${Stage}"
       AutoPublish: true
       FunctionConfig:
-        Comment: "Redireciona /aluno* para app.coachpilot.com.br; demais rotas SPA → index.html"
+        Comment: "301 www->apex e /aluno*//loja* p/ subdominios; rotas prerenderizadas -> /<rota>/index.html; demais SPA -> index.html"
         Runtime: cloudfront-js-2.0
       FunctionCode: |
+        function buildQs(request) {
+          var parts = [];
+          var qs = request.querystring;
+          for (var k in qs) {
+            if (Object.prototype.hasOwnProperty.call(qs, k)) {
+              var mv = qs[k].multiValue;
+              if (mv) {
+                for (var i = 0; i < mv.length; i++) parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(mv[i].value));
+              } else {
+                parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(qs[k].value));
+              }
+            }
+          }
+          return parts.length ? '?' + parts.join('&') : '';
+        }
+        // Rotas com HTML prerenderizado no S3 (dist/<rota>/index.html) — manter em
+        // sincronia com frontend/scripts/prerender-public-pages.mjs. Sem esta lista,
+        // o crawler recebe o shell da home em todas as URLs (SEO quebrado).
+        var PRERENDERED = {
+          '/divulgadores': 1, '/software-para-personal-trainer': 1, '/app-para-personal-trainer': 1,
+          '/gestao-de-alunos-personal-trainer': 1, '/app-de-treino-para-alunos': 1,
+          '/avaliacao-fisica-digital': 1, '/agenda-para-personal-trainer': 1,
+          '/whatsapp-para-personal-trainer': 1, '/coachpilot-vs-planilhas': 1,
+          '/precos': 1, '/faq': 1, '/sobre': 1, '/termos': 1, '/privacidade': 1, '/blog': 1
+        };
         function handler(event) {
           var request = event.request;
           var uri = request.uri;
+          var host = request.headers.host && request.headers.host.value;
+          if (host === 'www.coachpilot.com.br') {
+            return { statusCode: 301, headers: { location: { value: 'https://coachpilot.com.br' + uri + buildQs(request) }, 'cache-control': { value: 'max-age=86400' } } };
+          }
           if (uri === '/loja' || uri.indexOf('/loja/') === 0 || uri.indexOf('/loja?') === 0) {
             return { statusCode: 301, headers: { location: { value: 'https://loja.coachpilot.com.br' }, 'cache-control': { value: 'no-store' } } };
           }
           if (uri === '/aluno' || uri.indexOf('/aluno/') === 0 || uri.indexOf('/aluno?') === 0) {
-            var parts = [];
-            var qs = request.querystring;
-            for (var k in qs) {
-              if (Object.prototype.hasOwnProperty.call(qs, k)) {
-                var mv = qs[k].multiValue;
-                if (mv) {
-                  for (var i = 0; i < mv.length; i++) parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(mv[i].value));
-                } else {
-                  parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(qs[k].value));
-                }
-              }
-            }
-            var loc = 'https://app.coachpilot.com.br' + uri + (parts.length ? '?' + parts.join('&') : '');
+            var loc = 'https://app.coachpilot.com.br' + uri + buildQs(request);
             return { statusCode: 301, headers: { location: { value: loc }, 'cache-control': { value: 'no-store' } } };
+          }
+          var path = uri.length > 1 && uri[uri.length - 1] === '/' ? uri.slice(0, -1) : uri;
+          if (path.indexOf('.') === -1 && (PRERENDERED[path] === 1 || path.indexOf('/blog/') === 0)) {
+            request.uri = path + '/index.html';
+            return request;
           }
           if (uri.indexOf('.') === -1) {
             request.uri = '/index.html';
