@@ -20,41 +20,38 @@ const FORMATOS: { value: FormatoBloco; label: string }[] = [
   { value: 'EMOM', label: 'EMOM' },
 ]
 
-/** "AMRAP 15min", "For Time · 4 rounds · cap 20:00", "EMOM 24min · a cada 1:30",
- * "2 rounds" (circuito livre), "Aquecimento · 2 rounds". Anexa "· N sets · desc. sets m:ss ·
- * desc. após m:ss" quando prescritos. */
+/** "AMRAP 15min · 5 rounds · desc. round 2:00", "For Time · 4 rounds · cap 20:00",
+ * "EMOM 24min · a cada 1:30", "3 rounds" (circuito livre), "Aquecimento · 2 rounds".
+ * Rounds/descansos são comuns a todos os formatos. */
 export function formatoBlocoLabel(b: BlocoTreino): string | null {
   const p = b.params ?? {}
   const min = (s?: number) => (s ? (s % 60 === 0 ? `${s / 60}min` : fmtMS(s)) : '')
-  // Sufixo de sets/descansos comum a todos os formatos (repetir o bloco inteiro com descanso).
-  const extra = (base: string | null): string | null => {
-    const parts: string[] = []
-    if (p.sets && p.sets > 1) parts.push(`${p.sets} sets`)
-    if (p.descanso_sets_s) parts.push(`desc. sets ${min(p.descanso_sets_s)}`)
-    if (p.descanso_apos_s) parts.push(`desc. após ${min(p.descanso_apos_s)}`)
-    if (!parts.length) return base
-    return [base, ...parts].filter(Boolean).join(' · ')
-  }
-  if (b.aquecimento) return extra(p.rounds && p.rounds > 1 ? `Aquecimento · ${p.rounds} rounds` : 'Aquecimento')
+  // Sufixos comuns a todos os formatos: repetições (rounds) e os dois descansos.
+  const rep: string[] = []
+  if (p.rounds && p.rounds > 1) rep.push(`${p.rounds} rounds`)
+  if (p.descanso_rounds_s) rep.push(`desc. round ${min(p.descanso_rounds_s)}`)
+  if (p.descanso_apos_s) rep.push(`desc. bloco ${min(p.descanso_apos_s)}`)
+  const join = (base: string | null): string | null =>
+    ([base, ...rep].filter(Boolean).join(' · ')) || null
+
+  if (b.aquecimento) return join('Aquecimento')
   switch (b.formato) {
     case 'FOR_TIME': {
       const parts = ['For Time']
-      if (p.rounds) parts.push(`${p.rounds} rounds`)
       if (p.time_cap_s) parts.push(`cap ${min(p.time_cap_s)}`)
-      if (p.descanso_rounds_s) parts.push(`desc. ${min(p.descanso_rounds_s)}`)
-      return extra(parts.join(' · '))
+      return join(parts.join(' · '))
     }
     case 'AMRAP':
-      return extra(`AMRAP${p.duracao_s ? ` ${min(p.duracao_s)}` : ''}`)
+      return join(`AMRAP${p.duracao_s ? ` ${min(p.duracao_s)}` : ''}`)
     case 'EMOM': {
       const parts = ['EMOM']
       if (p.duracao_s) parts.push(min(p.duracao_s))
       if (p.intervalo_s && p.intervalo_s !== 60) parts.push(`a cada ${min(p.intervalo_s)}`)
-      return extra(parts.join(' · '))
+      return join(parts.join(' · '))
     }
     default:
-      // Circuito livre: complete o bloco inteiro e repita
-      return extra(p.rounds && p.rounds > 1 ? `${p.rounds} rounds` : null)
+      // Circuito livre: só os sufixos comuns (ex.: "3 rounds · desc. round 1:00")
+      return join(null)
   }
 }
 
@@ -114,6 +111,39 @@ export function BlocosTreinoEditor({ value, onChange }: {
     }])
   }
 
+  /** Linha comum a todos os formatos: quantas vezes repetir o bloco (rounds) + os dois
+   * descansos (entre rounds do próprio bloco e entre este bloco e o próximo). */
+  const repeticaoRow = (b: BlocoTreino, i: number) => (
+    <div className="grid grid-cols-3 gap-2">
+      <label className="text-xs text-text-muted">
+        Rounds <span className="opacity-70">(repetir)</span>
+        <Input
+          inputMode="numeric" placeholder="ex.: 5" className="mt-1"
+          value={b.params?.rounds ?? ''}
+          onChange={(e) => updateParams(i, { rounds: parseInt(e.target.value, 10) || undefined })}
+        />
+      </label>
+      <label className="text-xs text-text-muted">
+        Desc. entre rounds
+        <DurationInput
+          value={b.params?.descanso_rounds_s}
+          onChange={(v) => updateParams(i, { descanso_rounds_s: v })}
+          inputClassName={DUR_FIELD}
+          ariaLabel="Descanso entre rounds (m:ss)"
+        />
+      </label>
+      <label className="text-xs text-text-muted">
+        Desc. entre blocos
+        <DurationInput
+          value={b.params?.descanso_apos_s}
+          onChange={(v) => updateParams(i, { descanso_apos_s: v })}
+          inputClassName={DUR_FIELD}
+          ariaLabel="Descanso entre blocos (m:ss)"
+        />
+      </label>
+    </div>
+  )
+
   return (
     <div>
       <p className="text-xs font-medium text-text-secondary mb-2">
@@ -143,16 +173,7 @@ export function BlocosTreinoEditor({ value, onChange }: {
                 <X size={14} />
               </button>
             </div>
-            {b.aquecimento && (
-              <label className="text-xs text-text-muted block">
-                Rounds do circuito <span className="opacity-70">(opcional — ex.: 2 = faça tudo e repita)</span>
-                <Input
-                  inputMode="numeric" placeholder="ex.: 2" className="mt-1 w-24"
-                  value={b.params?.rounds ?? ''}
-                  onChange={(e) => updateParams(i, { rounds: parseInt(e.target.value, 10) || undefined })}
-                />
-              </label>
-            )}
+            {b.aquecimento && repeticaoRow(b, i)}
             {!b.aquecimento && (
               <>
                 <div className="flex gap-1.5">
@@ -171,45 +192,16 @@ export function BlocosTreinoEditor({ value, onChange }: {
                     </button>
                   ))}
                 </div>
-                {b.formato === 'LIVRE' && (
+                {b.formato === 'FOR_TIME' && (
                   <label className="text-xs text-text-muted block">
-                    Rounds do circuito <span className="opacity-70">(opcional — ex.: 2 = faça o bloco inteiro e repita)</span>
-                    <Input
-                      inputMode="numeric" placeholder="ex.: 2" className="mt-1 w-24"
-                      value={b.params?.rounds ?? ''}
-                      onChange={(e) => updateParams(i, { rounds: parseInt(e.target.value, 10) || undefined })}
+                    Time cap
+                    <DurationInput
+                      value={b.params?.time_cap_s}
+                      onChange={(v) => updateParams(i, { time_cap_s: v })}
+                      inputClassName={DUR_FIELD}
+                      ariaLabel="Time cap (m:ss)"
                     />
                   </label>
-                )}
-                {b.formato === 'FOR_TIME' && (
-                  <div className="grid grid-cols-3 gap-2">
-                    <label className="text-xs text-text-muted">
-                      Rounds
-                      <Input
-                        inputMode="numeric" placeholder="ex.: 4" className="mt-1"
-                        value={b.params?.rounds ?? ''}
-                        onChange={(e) => updateParams(i, { rounds: parseInt(e.target.value, 10) || undefined })}
-                      />
-                    </label>
-                    <label className="text-xs text-text-muted">
-                      Time cap
-                      <DurationInput
-                        value={b.params?.time_cap_s}
-                        onChange={(v) => updateParams(i, { time_cap_s: v })}
-                        inputClassName={DUR_FIELD}
-                        ariaLabel="Time cap (m:ss)"
-                      />
-                    </label>
-                    <label className="text-xs text-text-muted">
-                      Desc./round
-                      <DurationInput
-                        value={b.params?.descanso_rounds_s}
-                        onChange={(v) => updateParams(i, { descanso_rounds_s: v })}
-                        inputClassName={DUR_FIELD}
-                        ariaLabel="Descanso entre rounds (m:ss)"
-                      />
-                    </label>
-                  </div>
                 )}
                 {b.formato === 'AMRAP' && (
                   <label className="text-xs text-text-muted block">
@@ -244,40 +236,13 @@ export function BlocosTreinoEditor({ value, onChange }: {
                     </label>
                   </div>
                 )}
-                {/* Sets do bloco: repetir o bloco INTEIRO N vezes com descanso entre repetições
-                    (diferente de "rounds", que repete os movimentos dentro do bloco, sem parar). */}
-                <div className="grid grid-cols-3 gap-2 pt-1 border-t border-border/60">
-                  <label className="text-xs text-text-muted">
-                    Sets do bloco
-                    <Input
-                      inputMode="numeric" placeholder="ex.: 5" className="mt-1"
-                      value={b.params?.sets ?? ''}
-                      onChange={(e) => updateParams(i, { sets: parseInt(e.target.value, 10) || undefined })}
-                    />
-                  </label>
-                  <label className="text-xs text-text-muted">
-                    Desc. entre sets
-                    <DurationInput
-                      value={b.params?.descanso_sets_s}
-                      onChange={(v) => updateParams(i, { descanso_sets_s: v })}
-                      inputClassName={DUR_FIELD}
-                      ariaLabel="Descanso entre sets do bloco (m:ss)"
-                    />
-                  </label>
-                  <label className="text-xs text-text-muted">
-                    Desc. após bloco
-                    <DurationInput
-                      value={b.params?.descanso_apos_s}
-                      onChange={(v) => updateParams(i, { descanso_apos_s: v })}
-                      inputClassName={DUR_FIELD}
-                      ariaLabel="Descanso após o bloco, antes do próximo (m:ss)"
-                    />
-                  </label>
+                <div className="pt-1 border-t border-border/60 space-y-1">
+                  {repeticaoRow(b, i)}
+                  <p className="text-[11px] text-text-muted leading-snug">
+                    <b>Rounds</b> = quantas vezes repetir o bloco (ex.: AMRAP 3:00 com 5 rounds e
+                    2:00 de descanso entre rounds). <b>Desc. entre blocos</b> = pausa antes do próximo bloco.
+                  </p>
                 </div>
-                <p className="text-[11px] text-text-muted leading-snug">
-                  <b>Sets</b> repete o bloco inteiro com descanso entre repetições (ex.: 5 sets de AMRAP 3:00, descansando 2:00).
-                  Já <b>rounds</b> repete os movimentos dentro do bloco, sem parar.
-                </p>
               </>
             )}
           </div>

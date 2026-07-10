@@ -1268,9 +1268,9 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
               if (!doBloco.length) return null
               const label = formatoBlocoLabel(b)
               const pontuavel = b.formato !== 'LIVRE' && !b.aquecimento
-              // Descanso do bloco: entre sets (se houver >1 set) senão ao terminar o bloco.
-              const descansoBlocoS = (b.params?.sets && b.params.sets > 1 && b.params?.descanso_sets_s)
-                ? b.params.descanso_sets_s
+              // Descanso do bloco: entre rounds (se repetir) senão ao terminar o bloco.
+              const descansoBlocoS = (b.params?.rounds && b.params.rounds > 1 && b.params?.descanso_rounds_s)
+                ? b.params.descanso_rounds_s
                 : b.params?.descanso_apos_s
               return (
                 <div key={b.id} className={`space-y-3 ${b.aquecimento ? 'opacity-80' : ''}`}>
