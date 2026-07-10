@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, ChevronUp, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList, CalendarDays, List, GripVertical, Video, Clock } from 'lucide-react'
-import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList, CalendarDays, List, Video, Clock } from 'lucide-react'
 import { useAluno, useAlunos, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { useToggleAgenteHabilitado } from '../hooks/usePersonalChat'
 import { usePlanoStatus } from '../hooks/usePlano'
@@ -15,7 +12,7 @@ import {
   useTreinos, useCreateTreino, useUpdateTreino, useDeleteTreino,
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
-import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar, ObjetivosPicker, AutocompleteInput, StatChip, OverflowMenu, ExpandableText } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar, ObjetivosPicker, AutocompleteInput, StatChip, OverflowMenu, ExpandableText, SortableList, type SortableRenderProps } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { MontarTreinoIaCallout } from '../components/MontarTreinoIaCallout'
 import { AtualizarTreinoIAModal } from '../components/AtualizarTreinoIAModal'
@@ -512,8 +509,10 @@ const fmtDate = (d?: string) => (d ? d.split('-').reverse().slice(0, 2).join('/'
 const fmtDateFull = (d?: string) => (d ? d.split('-').reverse().join('/') : '')
 function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[] }) {
   const hoje = new Date().toISOString().slice(0, 10)
-  const vigentes = treinos.filter((t) => t.ativo !== false && (!t.data_fim || t.data_fim >= hoje))
-  const expirados = treinos.filter((t) => t.ativo === false || (t.data_fim && t.data_fim < hoje))
+  const isVigente = (t: Treino) => t.ativo !== false && (!t.data_fim || t.data_fim >= hoje)
+  const expirados = treinos.filter((t) => !isVigente(t))
+  const [vigentes, setVigentes] = useState<Treino[]>(() => treinos.filter(isVigente))
+  useEffect(() => { setVigentes(treinos.filter(isVigente)) }, [treinos]) // eslint-disable-line react-hooks/exhaustive-deps
   const [showExpirados, setShowExpirados] = useState(false)
   const [reordering, setReordering] = useState(false)
   const updTreino = useUpdateTreino(alunoId)
@@ -527,10 +526,9 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
     return d.toISOString().slice(0, 10)
   }
 
-  async function reordenar(fromIdx: number, toIdx: number) {
+  async function reordenarTreinos(newList: Treino[]) {
+    setVigentes(newList) // otimista
     setReordering(true)
-    const newList = [...vigentes]
-    ;[newList[fromIdx], newList[toIdx]] = [newList[toIdx], newList[fromIdx]]
     try {
       await Promise.all(
         newList
@@ -572,32 +570,19 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
 
   return (
     <div className="space-y-3">
-      {vigentes.map((t, idx) => (
-        <div key={t.treino_id} className="flex items-start gap-1">
-          <div className="flex flex-col items-center gap-0.5 pt-1.5 shrink-0 w-5">
-            <button
-              disabled={idx === 0 || reordering}
-              onClick={() => reordenar(idx, idx - 1)}
-              className="p-0.5 text-text-muted hover:text-text disabled:opacity-25 transition-opacity"
-              aria-label="Mover para cima"
-            >
-              <ChevronUp size={13} />
-            </button>
-            <span className="text-[10px] font-mono text-text-muted leading-none select-none">{idx + 1}</span>
-            <button
-              disabled={idx === vigentes.length - 1 || reordering}
-              onClick={() => reordenar(idx, idx + 1)}
-              className="p-0.5 text-text-muted hover:text-text disabled:opacity-25 transition-opacity"
-              aria-label="Mover para baixo"
-            >
-              <ChevronDown size={13} />
-            </button>
+      <SortableList items={vigentes} getId={(t) => t.treino_id} onReorder={reordenarTreinos} disabled={reordering}>
+        {(t, idx, p) => (
+          <div ref={p.setNodeRef} style={p.style} className="flex items-start gap-1 mb-3">
+            <div className="flex items-center gap-1 shrink-0 pt-2">
+              {p.handle}
+              <span className="text-[10px] font-mono text-text-muted w-4 text-center select-none">{idx + 1}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <TreinoCard alunoId={alunoId} treino={t} />
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <TreinoCard alunoId={alunoId} treino={t} />
-          </div>
-        </div>
-      ))}
+        )}
+      </SortableList>
 
       {expirados.length > 0 && (
         <div>
@@ -800,11 +785,6 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
   const [exsLocal, setExsLocal] = useState<Exercicio[]>([])
   useEffect(() => { if (exs) setExsLocal(exs) }, [exs])
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
-  )
-
   // Grupos exibidos (por bloco, mais "Sem bloco"); usado no render e no reorder.
   const { ordenados, blocosSorted, groups } = useMemo(() => {
     const ord = [...exsLocal].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
@@ -820,21 +800,8 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
     return { ordenados: ord, blocosSorted: bs, groups: gs }
   }, [exsLocal, treino.blocos])
 
-  async function reordenarExercicios(event: DragEndEvent) {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-    const activeId = String(active.id)
-    const overId = String(over.id)
-    const groupOf = (id: string) => groups.find((g) => g.items.some((e) => e.exercicio_id === id))
-    const ga = groupOf(activeId)
-    const gb = groupOf(overId)
-    if (!ga || !gb || ga.key !== gb.key) return // reorder só dentro do mesmo bloco
-    const oldIndex = ga.items.findIndex((e) => e.exercicio_id === activeId)
-    const newIndex = ga.items.findIndex((e) => e.exercicio_id === overId)
-    if (oldIndex < 0 || newIndex < 0) return
-    const newItems = arrayMove(ga.items, oldIndex, newIndex)
-    const flat = groups.flatMap((g) => (g.key === ga.key ? newItems : g.items))
-    const updated = flat.map((e, idx) => ({ ...e, ordem: idx }))
+  async function persistOrdemExercicios(newFlat: Exercicio[]) {
+    const updated = newFlat.map((e, idx) => ({ ...e, ordem: idx }))
     setExsLocal(updated) // otimista
     setReordering(true)
     try {
@@ -846,6 +813,10 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
     } finally {
       setReordering(false)
     }
+  }
+  /** Reordena dentro de um grupo (bloco) e recompõe a ordem global achatada. */
+  function reordenarExerciciosGrupo(groupKey: string, newItems: Exercicio[]) {
+    persistOrdemExercicios(groups.flatMap((g) => (g.key === groupKey ? newItems : g.items)))
   }
   const [tNome, setTNome] = useState(treino.nome)
   const [tFoco, setTFoco] = useState(treino.foco ?? '')
@@ -912,11 +883,6 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
               if (treino.data_inicio) dateParts.push(`de ${fmtDate(treino.data_inicio)}`)
               if (treino.data_fim) dateParts.push(`até ${fmtDate(treino.data_fim)}`)
               if (dateParts.length) parts.push(dateParts.join(' '))
-              if (treino.total_execucoes) parts.push(`${treino.total_execucoes}× executado`)
-              const nMet = treino.sessoes_com_metrica ?? 0
-              const tMedio = nMet > 0 && treino.soma_duracao_segundos
-                ? formatDuracao(Math.round(treino.soma_duracao_segundos / nMet)) : null
-              if (tMedio) parts.push(`~${tMedio}/treino`)
               return parts.length > 0
                 ? <span className="text-xs text-text-muted truncate block">{parts.join(' · ')}</span>
                 : null
@@ -958,51 +924,51 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
         <div className="mt-3 pl-2 sm:pl-6 space-y-1">
           {(() => {
             const nMet = treino.sessoes_com_metrica ?? 0
-            if (nMet <= 0 || !treino.soma_duracao_segundos) return null
-            const tMedio = formatDuracao(Math.round(treino.soma_duracao_segundos / nMet))
+            const tMedio = nMet > 0 && treino.soma_duracao_segundos ? formatDuracao(Math.round(treino.soma_duracao_segundos / nMet)) : null
             const somaSeries = treino.soma_total_series ?? 0
-            const secSerie = somaSeries > 0 ? treino.soma_duracao_segundos / somaSeries : 0
+            const secSerie = nMet > 0 && somaSeries > 0 && treino.soma_duracao_segundos ? treino.soma_duracao_segundos / somaSeries : 0
             const tSerie = secSerie > 0 ? (secSerie < 60 ? `${Math.round(secSerie)}s` : `${(secSerie / 60).toFixed(1).replace('.', ',')}min`) : null
+            const nExec = treino.total_execucoes ?? 0
+            if (!nExec && !tMedio && !tSerie) return null
             return (
               <div className="flex flex-wrap gap-2 pb-1">
+                {nExec > 0 && <StatChip icon={<TrendingUp size={12} />} tone="accent">{nExec}× executado</StatChip>}
                 {tMedio && <StatChip>⏱ ~{tMedio} por execução</StatChip>}
                 {tSerie && <StatChip>~{tSerie}/série <span className="opacity-70">(estim.)</span></StatChip>}
               </div>
             )
           })()}
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reordenarExercicios}>
-            {(() => {
-              const row = (ex: Exercicio, index: number, bloco?: BlocoTreino) => (
-                <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} index={index} biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} blocos={treino.blocos} bloco={bloco} reordering={reordering} />
+          {(() => {
+            const row = (ex: Exercicio, index: number, p: SortableRenderProps, bloco?: BlocoTreino) => (
+              <ExercicioRow key={ex.exercicio_id} alunoId={alunoId} treinoId={treino.treino_id} ex={ex} index={index} biblioteca={biblioteca} exerciciosAluno={exerciciosAluno} blocos={treino.blocos} bloco={bloco} sortable={p} />
+            )
+            if (!blocosSorted.length) {
+              return (
+                <SortableList items={ordenados} getId={(e) => e.exercicio_id} onReorder={persistOrdemExercicios} disabled={reordering}>
+                  {(ex, i, p) => row(ex, i + 1, p)}
+                </SortableList>
               )
-              if (!blocosSorted.length) {
-                return (
-                  <SortableContext items={ordenados.map((e) => e.exercicio_id)} strategy={verticalListSortingStrategy}>
-                    {ordenados.map((e, i) => row(e, i + 1))}
-                  </SortableContext>
-                )
-              }
-              return groups.map((g) => (
-                <div key={g.key} className={g.bloco?.aquecimento ? 'opacity-70' : ''}>
-                  {g.bloco ? (
-                    <div className="flex items-center gap-2 mt-2 mb-1">
-                      <span className="text-xs font-semibold text-text-secondary">{g.bloco.nome}</span>
-                      {formatoBlocoLabel(g.bloco) && <Badge tone={g.bloco.aquecimento ? 'neutral' : 'accent'}>{formatoBlocoLabel(g.bloco)}</Badge>}
-                    </div>
-                  ) : (
-                    <div className="mt-2 mb-1"><span className="text-xs font-semibold text-text-secondary">Sem bloco</span></div>
-                  )}
-                  {g.items.length ? (
-                    <SortableContext items={g.items.map((e) => e.exercicio_id)} strategy={verticalListSortingStrategy}>
-                      {g.items.map((e, i) => row(e, i + 1, g.bloco))}
-                    </SortableContext>
-                  ) : (
-                    <p className="text-xs text-text-muted pl-2">Sem exercícios neste bloco.</p>
-                  )}
-                </div>
-              ))
-            })()}
-          </DndContext>
+            }
+            return groups.map((g) => (
+              <div key={g.key} className={g.bloco?.aquecimento ? 'opacity-70' : ''}>
+                {g.bloco ? (
+                  <div className="flex items-center gap-2 mt-2 mb-1">
+                    <span className="text-xs font-semibold text-text-secondary">{g.bloco.nome}</span>
+                    {formatoBlocoLabel(g.bloco) && <Badge tone={g.bloco.aquecimento ? 'neutral' : 'accent'}>{formatoBlocoLabel(g.bloco)}</Badge>}
+                  </div>
+                ) : (
+                  <div className="mt-2 mb-1"><span className="text-xs font-semibold text-text-secondary">Sem bloco</span></div>
+                )}
+                {g.items.length ? (
+                  <SortableList items={g.items} getId={(e) => e.exercicio_id} onReorder={(ni) => reordenarExerciciosGrupo(g.key, ni)} disabled={reordering}>
+                    {(ex, i, p) => row(ex, i + 1, p, g.bloco)}
+                  </SortableList>
+                ) : (
+                  <p className="text-xs text-text-muted pl-2">Sem exercícios neste bloco.</p>
+                )}
+              </div>
+            ))
+          })()}
           <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={() => setAddingEx(true)}>
             <span className="flex items-center gap-1"><Plus size={14} /> Exercício</span>
           </Button>
@@ -1290,27 +1256,25 @@ function ExercicioForm({
   )
 }
 
-/** Painel de estatísticas de execução — carrega sob demanda (só quando expandido). */
+/** Histórico de execução — carrega sob demanda (só quando expandido), texto inline discreto. */
 function ExecucaoStats({ alunoId, exercicioId, unidadeCarga }: { alunoId: string; exercicioId: string; unidadeCarga?: string }) {
   const { data, isLoading } = useEvolucao(alunoId, exercicioId)
-  if (isLoading) return <div className="mt-1.5 text-xs text-text-muted">Carregando histórico…</div>
+  if (isLoading) return <div className="mt-1 text-xs text-text-muted">carregando histórico…</div>
   if (!data) return null
   const uni = unidadeCarga || 'kg'
   const ult = data.serie?.[data.serie.length - 1]
+  if (data.total_sessoes === 0) return <div className="mt-1 text-xs text-text-muted">ainda não executado</div>
   return (
-    <div className="flex flex-wrap gap-1.5 mt-1.5">
-      <StatChip icon={<TrendingUp size={12} />} tone="accent">
-        {data.total_sessoes} {data.total_sessoes === 1 ? 'execução' : 'execuções'}
-      </StatChip>
-      {ult?.carga_max != null && <StatChip title="Última carga executada">Última: {ult.carga_max}{uni}</StatChip>}
-      {data.pr && <StatChip tone="success" title={`PR em ${fmtDateFull(data.pr.data)}`}>PR {data.pr.carga}{uni}</StatChip>}
-      {data.total_sessoes === 0 && <span className="text-xs text-text-muted">Ainda não executado.</span>}
+    <div className="mt-1 text-xs flex flex-wrap items-center gap-x-3 gap-y-0.5">
+      <span className="text-accent-hover font-medium">{data.total_sessoes} {data.total_sessoes === 1 ? 'execução' : 'execuções'}</span>
+      {ult?.carga_max != null && <span className="text-text-muted">última {ult.carga_max}{uni}</span>}
+      {data.pr && <span className="text-success" title={`PR em ${fmtDateFull(data.pr.data)}`}>PR {data.pr.carga}{uni}</span>}
     </div>
   )
 }
 
 function ExercicioRow({
-  alunoId, treinoId, ex, index, biblioteca, exerciciosAluno, blocos, bloco, reordering,
+  alunoId, treinoId, ex, index, biblioteca, exerciciosAluno, blocos, bloco, sortable,
 }: {
   alunoId: string; treinoId: string; ex: Exercicio; index: number
   biblioteca?: { exlib_id: string; nome: string; grupo?: string; video_url?: string; substitutos?: ExercicioSubstituto[] }[]
@@ -1318,7 +1282,7 @@ function ExercicioRow({
   blocos?: BlocoTreino[]
   /** Bloco a que a linha pertence — muda a exibição da prescrição ("12 por round"). */
   bloco?: BlocoTreino
-  reordering?: boolean
+  sortable: SortableRenderProps
 }) {
   const [edit, setEdit] = useState(false)
   const [mediaOpen, setMediaOpen] = useState(false)
@@ -1326,8 +1290,6 @@ function ExercicioRow({
   const upd = useUpdateExercicio(alunoId, treinoId)
   const del = useDeleteExercicio(alunoId, treinoId)
   const confirm = useConfirm()
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: ex.exercicio_id })
-  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
 
   async function save(body: ExercicioCreate) {
     await upd.mutateAsync({ exercicioId: ex.exercicio_id, body: { ...body, ordem: ex.ordem } })
@@ -1348,32 +1310,23 @@ function ExercicioRow({
   const sufixo = sufixoPrescricaoBloco(bloco)
 
   return (
-    <div ref={setNodeRef} style={style} className="border-b border-border py-1.5">
-      <div className={`flex items-start gap-2 text-sm ${ex.aquecimento ? 'opacity-70' : ''}`}>
-        {/* Handle de arraste + número */}
-        <div className="flex items-center gap-0.5 shrink-0 pt-0.5">
-          <button
-            type="button"
-            {...attributes}
-            {...listeners}
-            disabled={reordering}
-            aria-label="Arrastar para reordenar"
-            className="touch-none cursor-grab active:cursor-grabbing text-text-muted hover:text-text disabled:opacity-40 p-0.5"
-          >
-            <GripVertical size={14} />
-          </button>
-          <span className="text-[10px] font-mono text-text-muted w-4 text-center select-none leading-none">{index}</span>
+    <div ref={sortable.setNodeRef} style={sortable.style} className="border-b border-border py-1.5">
+      <div className={`flex items-start gap-2 ${ex.aquecimento ? 'opacity-70' : ''}`}>
+        {/* Alça de arraste + número */}
+        <div className="flex items-center gap-1 shrink-0 pt-0.5">
+          {sortable.handle}
+          <span className="text-[10px] font-mono text-text-muted w-4 text-center select-none">{index}</span>
         </div>
 
-        {/* Nome + chips */}
+        {/* Nome + info inline */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap text-sm">
             <ExpandableText text={ex.nome} className="font-medium">{ex.nome}</ExpandableText>
             {ex.aquecimento && <Badge tone="neutral">aq.</Badge>}
           </div>
-          <div className="flex flex-wrap items-center gap-1.5 mt-1">
+          <div className="text-xs text-text-muted flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
             {temPrescricao && (
-              <StatChip>
+              <span>
                 {ex.series_prescritas?.length && (pontuavel || sufixo) ? (
                   <>
                     {fmtPrescricaoBloco(ex.series_prescritas, ex.unidade_reps)}
@@ -1384,13 +1337,13 @@ function ExercicioRow({
                 ) : (
                   <>{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</>
                 )}
-              </StatChip>
+              </span>
             )}
-            <StatChip href={videoUrlComFallback(ex.nome, ex.video_url)} icon={<Video size={12} />} tone="accent" title="Ver vídeo do exercício">Vídeo</StatChip>
-            {ex.rm_kg ? <StatChip title="1RM estimado">RM {ex.rm_kg}{ex.unidade_carga || 'kg'}</StatChip> : null}
-            {ex.intervalo_s ? <StatChip icon={<Clock size={12} />} title="Intervalo de descanso">{ex.intervalo_s}s</StatChip> : null}
-            {ex.observacoes ? <StatChip icon={<StickyNote size={12} />} tone="warning" title={ex.observacoes}>Obs.</StatChip> : null}
-            <StatChip icon={<TrendingUp size={12} />} onClick={() => setStatsOpen((v) => !v)} title="Ver histórico de execução">Execuções</StatChip>
+            {ex.rm_kg ? <span title="1RM estimado">RM {ex.rm_kg}{ex.unidade_carga || 'kg'}</span> : null}
+            {ex.intervalo_s ? <span className="inline-flex items-center gap-0.5" title="Intervalo de descanso"><Clock size={11} />{ex.intervalo_s}s</span> : null}
+            <a href={videoUrlComFallback(ex.nome, ex.video_url)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-accent-hover hover:underline"><Video size={12} />vídeo</a>
+            {ex.observacoes ? <span className="inline-flex items-center gap-0.5 text-warning" title={ex.observacoes}><StickyNote size={11} />obs.</span> : null}
+            <button type="button" onClick={() => setStatsOpen((v) => !v)} className="inline-flex items-center gap-0.5 hover:text-text transition-colors" title="Ver histórico de execução"><TrendingUp size={11} />histórico</button>
           </div>
           {statsOpen && <ExecucaoStats alunoId={alunoId} exercicioId={ex.exercicio_id} unidadeCarga={ex.unidade_carga} />}
         </div>

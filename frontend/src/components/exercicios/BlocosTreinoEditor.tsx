@@ -1,5 +1,5 @@
 import { X, Plus, Flame } from 'lucide-react'
-import { Input } from '../ui'
+import { Input, SortableList } from '../ui'
 import { DurationInput } from '../ui/DurationInput'
 import type { BlocoTreino, FormatoBloco } from '../../types'
 
@@ -93,6 +93,9 @@ export function BlocosTreinoEditor({ value, onChange }: {
   function remove(i: number) {
     onChange(blocos.filter((_, j) => j !== i).map((b, j) => ({ ...b, ordem: j })))
   }
+  function reordenar(newBlocos: BlocoTreino[]) {
+    onChange(newBlocos.map((b, j) => ({ ...b, ordem: j })))
+  }
   function add() {
     const letra = String.fromCharCode(65 + blocos.length) // A, B, C…
     onChange([...blocos, {
@@ -107,9 +110,11 @@ export function BlocosTreinoEditor({ value, onChange }: {
         Blocos <span className="font-normal text-text-muted">(opcional — para treinos por partes: aquecimento, força, metcon…)</span>
       </p>
       <div className="space-y-2">
-        {blocos.map((b, i) => (
-          <div key={b.id} className="rounded-lg border border-border bg-white/5 p-2.5 space-y-2">
+        <SortableList items={blocos} getId={(b) => b.id} onReorder={reordenar}>
+          {(b, i, p) => (
+          <div ref={p.setNodeRef} style={p.style} className="rounded-lg border border-border bg-white/5 p-2.5 space-y-2 mb-2">
             <div className="flex items-center gap-2">
+              {p.handle}
               <Input
                 className="flex-1"
                 placeholder={`ex.: ${i === 0 ? 'Aquecimento' : 'C) Metcon'}`}
@@ -232,7 +237,8 @@ export function BlocosTreinoEditor({ value, onChange }: {
               </>
             )}
           </div>
-        ))}
+          )}
+        </SortableList>
         <button
           type="button"
           onClick={add}
