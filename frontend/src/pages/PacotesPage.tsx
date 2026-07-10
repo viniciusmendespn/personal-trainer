@@ -40,7 +40,7 @@ function ImportarIASection() {
   return (
     <>
       <Card variant="elevated" className="p-6 border border-accent/30 bg-gradient-to-br from-accent/10 to-transparent">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="rounded-xl bg-accent/15 p-2 shrink-0">
               <Bot size={24} className="text-accent-hover" />
