@@ -1,11 +1,13 @@
 import { useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { QRCodeCanvas } from 'qrcode.react'
-import { Bot, Calendar, Check, Copy, CreditCard, Download, ExternalLink, Gift, Link2, MessageCircle, QrCode, Receipt, Sparkles, Ticket, Users } from 'lucide-react'
+import { Bot, Calendar, Check, Copy, CreditCard, Download, ExternalLink, Gift, Link2, Megaphone, MessageCircle, QrCode, Receipt, Sparkles, Ticket, Users } from 'lucide-react'
 import { Badge, Button, Card, Input, useToast } from '../components/ui'
 import { PixPaymentModal } from '../components/billing/PixPaymentModal'
 import { FinPilotBenefitCard } from '../components/billing/FinPilotBenefitCard'
 import { usePagamentos, usePlanoStatus } from '../hooks/usePlano'
 import { useCupomIndicacao, useResgatarCupom } from '../hooks/useCupom'
+import { divulgadorApi } from '../api/divulgador'
 
 const CUPOM_ERROS: Record<string, string> = {
   CUPOM_INVALIDO: 'Código inválido ou expirado.',
@@ -98,6 +100,9 @@ export function PlanoPage() {
   const { data, isLoading } = usePlanoStatus()
   const { data: pagamentos } = usePagamentos()
   const { data: cupom } = useCupomIndicacao()
+  const divStatus = useQuery({ queryKey: ['div-status'], queryFn: divulgadorApi.status, staleTime: 600_000 })
+  const isDivulgador = divStatus.data?.is_divulgador ?? false
+  const divPainel = useQuery({ queryKey: ['div-painel'], queryFn: divulgadorApi.painel, enabled: isDivulgador, staleTime: 600_000 })
   const resgatarCupom = useResgatarCupom()
   const { show } = useToast()
   const [pixOpen, setPixOpen] = useState(false)
@@ -108,7 +113,15 @@ export function PlanoPage() {
   const [promoInput, setPromoInput] = useState('')
   const qrRef = useRef<HTMLCanvasElement>(null)
 
-  const refLink = cupom?.codigo ? `${window.location.origin}/signup?ref=${cupom.codigo}` : ''
+  // Divulgador com cupom próprio promove o cupom dele (comissão recorrente),
+  // não o cupom de indicação padrão (que dá apenas meses grátis).
+  const usaDivulgador = isDivulgador && !!divPainel.data?.cupom_codigo
+  const codigoAtivo = usaDivulgador ? divPainel.data!.cupom_codigo : cupom?.codigo
+  const refLink = codigoAtivo
+    ? usaDivulgador
+      ? `${window.location.origin}/signup?cupom=${codigoAtivo}`
+      : `${window.location.origin}/signup?ref=${codigoAtivo}`
+    : ''
 
   function copyCode(code: string) {
     navigator.clipboard.writeText(code).then(() => {
@@ -130,7 +143,7 @@ export function PlanoPage() {
     if (!canvas) return
     const a = document.createElement('a')
     a.href = canvas.toDataURL('image/png')
-    a.download = `coachpilot-indicacao-${cupom?.codigo ?? 'qr'}.png`
+    a.download = `coachpilot-${usaDivulgador ? 'divulgador' : 'indicacao'}-${codigoAtivo ?? 'qr'}.png`
     a.click()
   }
 
@@ -227,26 +240,41 @@ export function PlanoPage() {
       <Card variant="elevated" className="p-6">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
-            <Sparkles size={20} className="text-accent shrink-0" />
-            <h3 className="font-display text-base font-bold text-text">Indique e Ganhe</h3>
+            {usaDivulgador ? (
+              <Megaphone size={20} className="text-accent shrink-0" />
+            ) : (
+              <Sparkles size={20} className="text-accent shrink-0" />
+            )}
+            <h3 className="font-display text-base font-bold text-text">
+              {usaDivulgador ? 'Divulgue e Ganhe' : 'Indique e Ganhe'}
+            </h3>
           </div>
           <Gift size={24} className="text-accent shrink-0" />
         </div>
         <p className="text-sm text-text-secondary mb-4">
-          Compartilhe seu código com outros personais. Eles ganham 30 dias grátis no CoachPilot Pro
-          e, quando virarem assinantes, você também ganha 30 dias grátis.
+          {usaDivulgador ? (
+            <>
+              Compartilhe seu cupom de divulgador. Quem assina pelo seu link ganha 30 dias grátis no
+              CoachPilot Pro — e você ganha comissão recorrente enquanto ele for assinante.
+            </>
+          ) : (
+            <>
+              Compartilhe seu código com outros personais. Eles ganham 30 dias grátis no CoachPilot Pro
+              e, quando virarem assinantes, você também ganha 30 dias grátis.
+            </>
+          )}
         </p>
 
         <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-surface mb-4">
           <span className="font-mono text-lg font-bold text-text tracking-wider">
-            {cupom?.codigo ?? '—'}
+            {codigoAtivo ?? '—'}
           </span>
           <button
-            onClick={() => cupom?.codigo && copyCode(cupom.codigo)}
-            disabled={!cupom?.codigo}
+            onClick={() => codigoAtivo && copyCode(codigoAtivo)}
+            disabled={!codigoAtivo}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border hover:bg-surface-secondary transition-colors text-sm text-text-secondary disabled:opacity-50"
           >
-            {copiedCode === cupom?.codigo ? (
+            {copiedCode === codigoAtivo ? (
               <><Check size={14} className="text-success" /> Copiado</>
             ) : (
               <><Copy size={14} /> Copiar</>
@@ -254,8 +282,8 @@ export function PlanoPage() {
           </button>
         </div>
 
-        {/* Link de cadastro com indicação embutida + QR Code para compartilhar */}
-        {cupom?.codigo && (
+        {/* Link de cadastro com o cupom embutido + QR Code para compartilhar */}
+        {codigoAtivo && (
           <div className="mb-4 space-y-3">
             <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-surface">
               <div className="flex items-center gap-2 min-w-0">
@@ -290,20 +318,31 @@ export function PlanoPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Users size={16} className="text-text-muted shrink-0" />
-            <span className="text-text-secondary">
-              <strong className="text-text">{cupom?.indicacoes_total ?? 0}</strong> indicações
-            </span>
+        {usaDivulgador ? (
+          <a
+            href="https://divulgador.coachpilot.com.br"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-1.5 text-sm text-accent hover:text-accent-hover transition-colors"
+          >
+            <ExternalLink size={16} /> Ver comissões no painel do divulgador
+          </a>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2 text-sm">
+              <Users size={16} className="text-text-muted shrink-0" />
+              <span className="text-text-secondary">
+                <strong className="text-text">{cupom?.indicacoes_total ?? 0}</strong> indicações
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Gift size={16} className="text-text-muted shrink-0" />
+              <span className="text-text-secondary">
+                <strong className="text-text">{cupom?.meses_ganhos ?? 0}</strong> meses grátis ganhos
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Gift size={16} className="text-text-muted shrink-0" />
-            <span className="text-text-secondary">
-              <strong className="text-text">{cupom?.meses_ganhos ?? 0}</strong> meses grátis ganhos
-            </span>
-          </div>
-        </div>
+        )}
       </Card>
 
       {!isPro && (
