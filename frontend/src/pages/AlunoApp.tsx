@@ -940,6 +940,27 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
           return (ba === -1 ? 99 : ba) - (bb === -1 ? 99 : bb) || (a.ordem ?? 0) - (b.ordem ?? 0)
         })
       : exs
+    // Blocos de descanso não têm exercícios: mapeia quais aparecem ANTES de cada bloco real
+    // (mais os que vêm depois do último) para intercalá-los no preview orientado a exercícios.
+    const descAntes = new Map<string, BlocoTreino[]>()
+    let descTrailing: BlocoTreino[] = []
+    {
+      let pend: BlocoTreino[] = []
+      for (const b of blocosPreview) {
+        if (b.descanso) { pend.push(b); continue }
+        if (pend.length) { descAntes.set(b.id, pend); pend = [] }
+      }
+      descTrailing = pend
+    }
+    const descansoDivider = (b: BlocoTreino) => (
+      <div key={b.id} className="flex items-center gap-2 py-1">
+        <span className="h-px flex-1 bg-border" />
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-accent">
+          <AlarmClock size={12} /> {formatoBlocoLabel(b) ?? 'Descanso'}
+        </span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
+    )
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2">
@@ -967,6 +988,7 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
               const sufixoPrev = sufixoPrescricaoBloco(bloco)
               return (
               <React.Fragment key={ex.exercicio_id}>
+              {primeiroDoBloco && bloco && descAntes.get(bloco.id)?.map((d) => descansoDivider(d))}
               {primeiroDoBloco && bloco && (
                 <div className="flex items-center gap-2 pt-1">
                   <span className="text-sm font-display font-semibold">{bloco.nome}</span>
@@ -1025,6 +1047,7 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
               </React.Fragment>
               )
             })}
+            {descTrailing.map((d) => descansoDivider(d))}
           </div>
         )}
 
