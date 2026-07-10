@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Card } from './Card'
+import { ExpandableText } from './ExpandableText'
 
 export function StatCard({
   icon,
@@ -38,7 +39,12 @@ export function StatCard({
       {icon && <div className={`p-2 rounded-lg ${toneStyles} [&>svg]:w-5 [&>svg]:h-5`}>{icon}</div>}
       <div className="min-w-0">
         <p className="text-xs text-text-secondary">{label}</p>
-        <p className={`font-display ${valueClassName} font-bold text-text mt-0.5 truncate`}>{value}</p>
+        {(typeof value === 'string' || typeof value === 'number') && !to ? (
+          // Toca para ver o valor completo quando trunca (ex.: tempo médio em card estreito).
+          <ExpandableText text={String(value)} className={`font-display ${valueClassName} font-bold text-text mt-0.5 block`}>{value}</ExpandableText>
+        ) : (
+          <p className={`font-display ${valueClassName} font-bold text-text mt-0.5 truncate`}>{value}</p>
+        )}
         {hint && <p className="text-[11px] text-text-muted mt-0.5">{hint}</p>}
       </div>
     </Card>

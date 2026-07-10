@@ -884,7 +884,7 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
               if (treino.data_fim) dateParts.push(`até ${fmtDate(treino.data_fim)}`)
               if (dateParts.length) parts.push(dateParts.join(' '))
               return parts.length > 0
-                ? <span className="text-xs text-text-muted truncate block">{parts.join(' · ')}</span>
+                ? <ExpandableText text={parts.join(' · ')} className="text-xs text-text-muted block">{parts.join(' · ')}</ExpandableText>
                 : null
             })()}
           </span>
@@ -892,7 +892,7 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
         <OverflowMenu
           ariaLabel="Ações do treino"
           items={[
-            { icon: <LayoutTemplate size={14} />, label: 'Salvar como template', onClick: salvarComoTemplate, disabled: saveAsTemplate.isPending },
+            { icon: <LayoutTemplate size={14} />, label: 'Salvar template', onClick: salvarComoTemplate, disabled: saveAsTemplate.isPending },
             expired
               ? { icon: <RefreshCw size={14} />, label: 'Renovar vigência', onClick: () => onRenovar?.() }
               : { icon: <Pencil size={14} />, label: 'Editar treino', onClick: () => setEditT(true) },

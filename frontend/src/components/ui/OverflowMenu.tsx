@@ -66,7 +66,7 @@ export function OverflowMenu({
               role="menuitem"
               disabled={item.disabled}
               onClick={(e) => { e.stopPropagation(); setOpen(false); item.onClick() }}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors disabled:opacity-40 ${
+              className={`w-full flex items-center gap-2 px-3 py-2 text-sm whitespace-nowrap transition-colors disabled:opacity-40 ${
                 item.tone === 'danger'
                   ? 'text-red-400 hover:bg-red-500/10'
                   : 'text-text-secondary hover:bg-white/5 hover:text-text'
