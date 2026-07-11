@@ -335,7 +335,7 @@ def gerar_series(carga: float | None, reps_lo: int, reps_hi: int, n: int) -> lis
     out = []
     for i in range(n):
         reps = rng.randint(reps_lo, reps_hi) - (1 if i == n - 1 else 0)
-        out.append(SerieExec(carga=(str(carga) if carga else None), reps=max(reps, 1), rpe=round(rng.uniform(6.5, 9.5), 1)))
+        out.append(SerieExec(carga=(str(carga) if carga else None), reps=max(reps, 1)))
     return out
 
 
@@ -370,7 +370,7 @@ def registrar_sessao_historica(aluno_id: str, treino: dict, dt: datetime) -> tup
         repo.put_item(pk, keys.sk_registro(sessao_id, ex["exercicio_id"]), item)
         exercicios_exec.append({
             "exercicio_id": ex["exercicio_id"], "exercicio_nome": ex["nome"],
-            "series_exec": [{"carga": s.carga, "reps": s.reps, "rpe": s.rpe} for s in series],
+            "series_exec": [{"carga": s.carga, "reps": s.reps} for s in series],
             "series_prescritas": ex.get("series_prescritas"),
         })
 

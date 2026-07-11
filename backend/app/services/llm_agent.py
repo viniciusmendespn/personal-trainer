@@ -126,8 +126,7 @@ _TOOLS = [
         "description": "Registra as séries executadas no exercício atual (ou no exercicio_id informado).",
         "parameters": {"type": "object", "properties": {
             "series": {"type": "array", "items": {"type": "object", "properties": {
-                "carga": {"type": "string"}, "reps": {"type": "integer"},
-                "rpe": {"type": "number"}}}},
+                "carga": {"type": "string"}, "reps": {"type": "integer"}}}},
             "exercicio_id": {"type": "string"}},
             "required": ["series"]}}},
     {"type": "function", "function": {

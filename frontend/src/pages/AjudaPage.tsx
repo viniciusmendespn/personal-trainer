@@ -75,7 +75,7 @@ const FAQ_PORTAL: FaqItem[] = [
     a: 'Na página do aluno, clique em "Exportar PDF" (ícone de impressora). O relatório inclui avaliações com gráficos, badges conquistados e histórico de sessões recentes.',
   },
   {
-    q: 'O que é o Assistente IA do aluno e como ativá-lo por aluno?',
+    q: 'O que é o Assistente IA do aluno?',
     a: 'O Assistente IA do aluno (add-on pago, +R$4,90/aluno/mês) responde automaticamente às mensagens do aluno no WhatsApp, registra séries, responde dúvidas e alerta o personal quando necessário. Ainda não está disponível para contratação — aparece como "Em breve" na página Plano. É diferente do cadastro por IA do personal (grátis).',
   },
   {

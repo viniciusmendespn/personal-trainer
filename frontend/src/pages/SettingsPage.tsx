@@ -103,7 +103,7 @@ function WhatsAppTab() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-text-secondary">
-        Conecte seu número para que seus alunos conversem com o assistente.
+        Conecte seu número para enviar lembretes automáticos e receber as mensagens dos seus alunos.
       </p>
 
       {!addonAtivo && (
@@ -345,7 +345,7 @@ function WhatsAppTab() {
             )}
           </div>
           <p className="text-xs text-text-secondary">
-            Seus alunos já podem enviar mensagens para o assistente.
+            Seus alunos já podem enviar mensagens para este número — você será notificado de cada mensagem.
           </p>
         </Card>
       )}

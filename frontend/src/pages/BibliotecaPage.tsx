@@ -43,7 +43,7 @@ export function BibliotecaPage() {
           <Button onClick={() => setShowAdd(true)}><span className="flex items-center gap-1"><Plus size={16} /> Adicionar</span></Button>
         </div>
       </div>
-      <p className="text-sm text-text-secondary mb-4">Catálogo reutilizável com vídeo e recomendações (o agente usa nas respostas).</p>
+      <p className="text-sm text-text-secondary mb-4">Catálogo reutilizável com vídeo, substitutos e links úteis — usado como sugestão nos treinos e no app do aluno.</p>
 
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Novo exercício" size="lg">
         <ExLibForm grupos={grupos} biblioteca={exs ?? []} submitLabel="Adicionar" submitting={create.isPending} onSubmit={addExLib} />
