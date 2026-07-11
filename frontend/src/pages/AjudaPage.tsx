@@ -28,7 +28,7 @@ const FAQ_PORTAL: FaqItem[] = [
   },
   {
     q: 'Qual a diferença entre o cadastro por IA (grátis) e o Assistente IA do aluno (add-on)?',
-    a: 'São coisas diferentes. O cadastro por IA é uma ferramenta do PERSONAL: você usa o seu próprio ChatGPT para montar treinos, criar pacotes e importar alunos por linguagem natural — está incluído e é grátis. Já o Assistente IA do aluno é um add-on pago (+R$4,90/aluno/mês): é o chat de IA que o próprio ALUNO usa no WhatsApp/app para tirar dúvidas e registrar treino, ativado por aluno.',
+    a: 'São coisas diferentes. O cadastro por IA é uma ferramenta do PERSONAL: você usa o seu próprio ChatGPT para montar treinos, criar pacotes e importar alunos por linguagem natural — está incluído e é grátis. Já o Assistente IA do aluno é um add-on pago (+R$4,90/aluno/mês, "Em breve" na página Plano): é o agente que responde o ALUNO automaticamente no WhatsApp para tirar dúvidas e registrar treino. O chat do app do aluno é sempre direto com você, sem IA.',
   },
   {
     q: 'Como gerar o link de acesso do aluno ao app?',
@@ -56,11 +56,11 @@ const FAQ_PORTAL: FaqItem[] = [
   },
   {
     q: 'Como configurar a integração com o WhatsApp?',
-    a: 'Acesse Configurações → aba "WhatsApp" → insira o ID da instância e o token da W-API → clique em Conectar → escaneie o QR Code com o celular do WhatsApp que será o assistente.',
+    a: 'Acesse Configurações → aba "WhatsApp" → insira o ID da instância e o token da W-API → clique em Conectar → escaneie o QR Code com o celular do número que ficará conectado. Esse número envia os lembretes automáticos e recebe as mensagens dos seus alunos — você é notificado de cada mensagem.',
   },
   {
     q: 'Como usar a Base de IA (Conhecimento)?',
-    a: 'Acesse "Base de IA" no menu e faça upload de arquivos (PDFs, protocolos, orientações). Esses arquivos são usados pelo agente de IA como contexto nas conversas do WhatsApp com os alunos.',
+    a: 'Acesse "Base de IA" no menu e faça upload de arquivos (PDFs, protocolos, orientações). Esses arquivos são usados como contexto pelo Assistente IA do aluno nas conversas do WhatsApp (add-on, quando ativo na sua conta).',
   },
   {
     q: 'Como funciona a anamnese (ficha de saúde)?',
@@ -76,7 +76,7 @@ const FAQ_PORTAL: FaqItem[] = [
   },
   {
     q: 'O que é o Assistente IA do aluno e como ativá-lo por aluno?',
-    a: 'O Assistente IA do aluno (add-on pago, +R$4,90/aluno/mês) responde automaticamente às mensagens do aluno no WhatsApp, registra séries, responde dúvidas e alerta o personal quando necessário. Na página do aluno, há um botão para ativar ou desativar individualmente. É diferente do cadastro por IA do personal (grátis).',
+    a: 'O Assistente IA do aluno (add-on pago, +R$4,90/aluno/mês) responde automaticamente às mensagens do aluno no WhatsApp, registra séries, responde dúvidas e alerta o personal quando necessário. Ainda não está disponível para contratação — aparece como "Em breve" na página Plano. É diferente do cadastro por IA do personal (grátis).',
   },
   {
     q: 'O aluno precisa instalar algum aplicativo?',

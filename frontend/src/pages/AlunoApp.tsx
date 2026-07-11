@@ -240,7 +240,6 @@ function NotifDrawer({ onClose, onNavigate, onOpenChat, onFinanceiro }: {
 const FAQ_ALUNO = [
   { q: 'Como inicio meu treino do dia?', a: 'Na aba Treino, você verá a lista de exercícios prescritos. Toque em "Iniciar Treino" para começar a sessão.' },
   { q: 'Como registro o peso e as repetições?', a: 'Com a sessão ativa, toque no exercício atual, preencha carga (kg) e repetições para cada série e toque em "Registrar". Repita para cada série.' },
-  { q: 'O que é RPE e preciso preencher?', a: 'RPE é o índice de esforço percebido (0–10). 0–3 = muito fácil, 7–8 = difícil, 9–10 = máximo. É opcional, mas ajuda seu personal a ajustar as cargas.' },
   { q: 'Como vejo meu histórico de treinos?', a: 'Acesse a aba "Histórico" na barra inferior. Lá estão todas as suas sessões finalizadas com data, exercícios e séries.' },
   { q: 'Como funcionam os pontos?', a: 'Você ganha pontos por série (1pt), sessão finalizada (8pt), sessão 100% completa (+7pt), novo recorde/PR (10pt), post no feed (3pt) e meta atingida (50pt).' },
   { q: 'O que é o streak e o multiplicador?', a: 'Streak é o número de semanas seguidas em que você treinou. Com 3–8 semanas seus pontos dobram (2x); com 9+ semanas triplicam (3x). Se pular uma semana, o streak zera.' },
@@ -249,7 +248,7 @@ const FAQ_ALUNO = [
   { q: 'Como vejo minha evolução de cargas?', a: 'Acesse Evolução → aba "Carga", busque pelo nome do exercício. O gráfico mostra o peso levantado ao longo do tempo.' },
   { q: 'Como desbloquear badges (conquistas)?', a: 'As badges são automáticas: finalize sessões (1ª, 10ª, 25ª, 50ª, 100ª) ou mantenha streak (3, 8 e 12 semanas seguidas). Veja suas conquistas em Evolução → Conquistas.' },
   { q: 'Como ativo as notificações do app?', a: 'Quando o app perguntar "Deseja receber notificações?", toque em Permitir. Se não aparecer, acesse as configurações do seu navegador e permita notificações para o site.' },
-  { q: 'Como falo com o assistente de IA?', a: 'Toque no ícone de chat (balão flutuante). Você pode perguntar sobre seu treino, registrar cargas pela conversa ou reportar dores. Para falar direto com o personal, toque em "Falar com personal".' },
+  { q: 'Como falo com meu personal pelo app?', a: 'Toque no ícone de chat (balão flutuante). O chat é direto com seu personal: ele recebe uma notificação da sua mensagem e você é avisado quando ele responder. Para dor durante o treino, prefira o botão "Relatar Dor" — ele gera um alerta prioritário.' },
 ]
 
 function HelpModal({ onClose }: { onClose: () => void }) {
@@ -579,7 +578,7 @@ export function AlunoApp() {
         }}>
           <header className="shrink-0 h-14 flex items-center px-4 gap-3 border-b border-border bg-surface-elevated">
             <button onClick={() => setChatOpen(false)} className="text-text-secondary hover:text-text"><X size={20} /></button>
-            <span className="text-sm font-medium text-text">Chat com o agente</span>
+            <span className="text-sm font-medium text-text">Chat com o personal</span>
           </header>
           <ChatTab />
         </div>
