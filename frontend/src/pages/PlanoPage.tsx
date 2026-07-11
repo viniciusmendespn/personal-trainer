@@ -227,7 +227,7 @@ export function PlanoPage() {
               value={promoInput}
               onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
               onKeyDown={(e) => { if (e.key === 'Enter') handleResgatar() }}
-              placeholder="CP-XXXXXX"
+              placeholder="Digite seu código"
               className="font-mono"
             />
           </div>
