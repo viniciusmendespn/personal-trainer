@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList, CalendarDays, List, Video, Clock, AlarmClock } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList, CalendarDays, List, Video, Clock, AlarmClock, MessageCircle } from 'lucide-react'
 import { useAluno, useAlunos, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { useToggleAgenteHabilitado } from '../hooks/usePersonalChat'
 import { usePlanoStatus } from '../hooks/usePlano'
@@ -1290,6 +1290,7 @@ function ExercicioRow({
   const [edit, setEdit] = useState(false)
   const [mediaOpen, setMediaOpen] = useState(false)
   const [statsOpen, setStatsOpen] = useState(false)
+  const navigate = useNavigate()
   const upd = useUpdateExercicio(alunoId, treinoId)
   const del = useDeleteExercicio(alunoId, treinoId)
   const confirm = useConfirm()
@@ -1355,6 +1356,7 @@ function ExercicioRow({
         <OverflowMenu
           ariaLabel="Ações do exercício"
           items={[
+            { icon: <MessageCircle size={14} />, label: 'Feed do exercício', onClick: () => navigate(`/alunos/${alunoId}/evolucao?highlight=${ex.exercicio_id}`) },
             { icon: <Camera size={14} />, label: 'Fotos e vídeos', onClick: () => setMediaOpen(true) },
             { icon: <Pencil size={14} />, label: 'Editar', onClick: () => setEdit(true) },
             { icon: <Trash2 size={14} />, label: 'Excluir', tone: 'danger', onClick: remove },

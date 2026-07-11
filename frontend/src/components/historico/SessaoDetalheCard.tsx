@@ -71,7 +71,9 @@ function totalVolume(exs: ExecEx[]) {
   return v > 0 ? `${Math.round(v)} kg` : null
 }
 
-function prescritoLabel(ex: ExecEx, bloco?: BlocoTreino): string | null {
+type PrescricaoShape = Pick<ExecEx, 'series_prescritas' | 'unidade_reps' | 'series' | 'reps_prescritas' | 'carga_prescrita'>
+
+function prescritoLabel(ex: PrescricaoShape, bloco?: BlocoTreino): string | null {
   if (ex.series_prescritas?.length) {
     // Bloco pontuável ou circuito com rounds: prescrição é POR round/minuto (igual à sessão)
     const pontuavel = !!bloco && bloco.formato !== 'LIVRE' && !bloco.aquecimento
@@ -214,6 +216,32 @@ function MovimentoBloco({ ex, bloco }: { ex: ExercicioPrescritoSessao; bloco: Bl
   )
 }
 
+/** Exercício prescrito que o aluno NÃO executou naquele dia (sem registro e fora de bloco
+ * pontuável com score) — aparece atenuado, com a prescrição, para o histórico deixar claro que
+ * estava no treino mas foi pulado. Aquecimentos pulados são omitidos (decisão de UX). */
+function ExercicioNaoExecutado({ ex, bloco }: { ex: ExercicioPrescritoSessao; bloco?: BlocoTreino }) {
+  const prescrito = prescritoLabel(ex, bloco)
+  return (
+    <div className="space-y-1 pb-3 border-b border-border last:border-0 last:pb-0 opacity-60">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-medium text-text-secondary">{ex.nome}</p>
+        <Badge tone="neutral">não executado</Badge>
+      </div>
+      {prescrito && (
+        <div className="flex gap-2 text-xs">
+          <span className="text-text-muted w-20 shrink-0">Prescrito</span>
+          <span className="text-text-muted">{prescrito}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Prescritos não executados de uma lista (sem registro, sem score de bloco), omitindo aquecimento. */
+function pulados(prescritos: ExercicioPrescritoSessao[], execIds: Set<string>): ExercicioPrescritoSessao[] {
+  return prescritos.filter((p) => !execIds.has(p.exercicio_id) && !p.aquecimento)
+}
+
 function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: number; exercicios?: ExercicioPrescritoSessao[]; exercicios_exec?: ExecEx[]; scores_blocos?: ScoreBlocoOut[]; blocos?: BlocoTreino[] }; alunoId?: string }) {
   const exs = data.exercicios_exec ?? []
   const prescritos = data.exercicios ?? []
@@ -223,6 +251,10 @@ function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: n
   const blocos = (data.blocos ?? []).slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
   const blocoIds = new Set(blocos.map((b) => b.id))
   const semBloco = exs.filter((e) => !e.bloco_id || !blocoIds.has(e.bloco_id))
+  // Blocos pontuáveis que receberam score: seus movimentos sem registro são referência do WOD
+  // (não "pulados"). Fora deles, prescrito sem registro = não executado (espelha o "feito" do backend).
+  const scoreBlocoIds = new Set(scores.map((sc) => sc.bloco_id))
+  const execIdsGlobal = new Set(exs.map((e) => e.exercicio_id))
 
   return (
     <div className="mt-3 border-t border-border pt-3 space-y-1">
@@ -250,18 +282,28 @@ function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: n
       )}
 
       <div className="space-y-3">
-        {blocos.length === 0 && exs.map((ex) => (
-          <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} />
-        ))}
+        {blocos.length === 0 && (
+          <>
+            {exs.map((ex) => (
+              <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} />
+            ))}
+            {pulados(prescritos, execIdsGlobal).map((ex) => (
+              <ExercicioNaoExecutado key={ex.exercicio_id} ex={ex} />
+            ))}
+          </>
+        )}
         {blocos.length > 0 && (
           <>
             {blocos.map((b) => {
               const doBloco = exs.filter((e) => e.bloco_id === b.id)
               const execIds = new Set(doBloco.map((e) => e.exercicio_id))
-              // Movimentos do bloco sem registro próprio (comum em WOD: o resultado é o score
-              // do bloco) — mostrados como referência, para a composição do treino não sumir.
               const semExec = prescritos.filter((p) => p.bloco_id === b.id && !execIds.has(p.exercicio_id))
-              if (!doBloco.length && !semExec.length) return null
+              // Bloco pontuável com score: movimentos sem registro são referência do WOD (o
+              // resultado é o score do bloco). Caso contrário, prescrito sem registro = não executado.
+              const temScore = scoreBlocoIds.has(b.id)
+              const referencias = temScore ? semExec : []
+              const naoExec = temScore ? [] : pulados(semExec, execIds).filter(() => !b.aquecimento)
+              if (!doBloco.length && !referencias.length && !naoExec.length) return null
               const label = formatoBlocoLabel(b)
               return (
                 <div key={b.id} className={b.aquecimento ? 'opacity-80' : ''}>
@@ -273,30 +315,41 @@ function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: n
                     {doBloco.map((ex) => (
                       <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} bloco={b} />
                     ))}
-                    {semExec.length > 0 && (
+                    {referencias.length > 0 && (
                       <div className={doBloco.length > 0 ? 'pt-1 border-t border-border/60' : undefined}>
-                        {semExec.map((ex) => (
+                        {referencias.map((ex) => (
                           <MovimentoBloco key={ex.exercicio_id} ex={ex} bloco={b} />
                         ))}
                       </div>
                     )}
+                    {naoExec.map((ex) => (
+                      <ExercicioNaoExecutado key={ex.exercicio_id} ex={ex} bloco={b} />
+                    ))}
                   </div>
                 </div>
               )
             })}
-            {semBloco.length > 0 && (
-              <div>
-                <div className="mb-2"><span className="text-xs font-semibold text-text-secondary">Outros</span></div>
-                <div className="space-y-3 pl-1">
-                  {semBloco.map((ex) => (
-                    <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} />
-                  ))}
+            {(() => {
+              const prescritosSemBloco = prescritos.filter((p) => !p.bloco_id || !blocoIds.has(p.bloco_id))
+              const naoExecSemBloco = pulados(prescritosSemBloco, execIdsGlobal)
+              if (!semBloco.length && !naoExecSemBloco.length) return null
+              return (
+                <div>
+                  <div className="mb-2"><span className="text-xs font-semibold text-text-secondary">Outros</span></div>
+                  <div className="space-y-3 pl-1">
+                    {semBloco.map((ex) => (
+                      <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} />
+                    ))}
+                    {naoExecSemBloco.map((ex) => (
+                      <ExercicioNaoExecutado key={ex.exercicio_id} ex={ex} />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
           </>
         )}
-        {exs.length === 0 && (
+        {exs.length === 0 && prescritos.length === 0 && (
           <p className="text-xs text-text-muted">Nenhum exercício registrado.</p>
         )}
       </div>

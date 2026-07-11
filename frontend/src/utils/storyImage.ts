@@ -58,22 +58,22 @@ export async function buildStoryPng(
   nome?: string,
   opts?: { heroUrl?: string | null; heroPosition?: string },
 ): Promise<Blob> {
-  // 1. Pré-baixa fotos de check-in p/ dataURL (Satori embute; evita asset externo).
+  // 1. Pré-baixa TODAS as fotos de check-in do mês p/ dataURL (Satori embute; evita asset
+  //    externo). Alimentam as miniaturas por dia no calendário do story — inclusive quando o
+  //    usuário escolhe uma capa manual (antes só a capa era baixada e os demais dias ficavam sem foto).
   const photoMap: Record<string, string> = {}
-  let heroOverride: string | null | undefined = undefined
+  const urls = new Set<string>()
+  for (const sessoes of Object.values(data.dias)) {
+    for (const s of sessoes) if (s.checkin_url) urls.add(s.checkin_url)
+  }
+  const pares = await Promise.all([...urls].map(async (u) => [u, await toDataUrl(u)] as const))
+  for (const [u, d] of pares) if (d) photoMap[u] = d
 
+  // Capa (hero): usa a foto escolhida manualmente, reaproveitando o dataURL já baixado.
+  // null = forçar gradiente; undefined = auto (o card usa a 1ª foto do mês).
+  let heroOverride: string | null | undefined = undefined
   if (opts?.heroUrl !== undefined) {
-    // Modo manual: baixar só a foto escolhida (null = gradiente, sem download)
-    heroOverride = opts.heroUrl === null ? null : await toDataUrl(opts.heroUrl) ?? null
-    if (opts.heroUrl !== null && heroOverride) photoMap[opts.heroUrl] = heroOverride
-  } else {
-    // Modo auto: baixar todas as fotos do mês
-    const urls = new Set<string>()
-    for (const sessoes of Object.values(data.dias)) {
-      for (const s of sessoes) if (s.checkin_url) urls.add(s.checkin_url)
-    }
-    const pares = await Promise.all([...urls].map(async (u) => [u, await toDataUrl(u)] as const))
-    for (const [u, d] of pares) if (d) photoMap[u] = d
+    heroOverride = opts.heroUrl === null ? null : (photoMap[opts.heroUrl] ?? (await toDataUrl(opts.heroUrl)) ?? null)
   }
 
   // 2. Fontes + wasm.
