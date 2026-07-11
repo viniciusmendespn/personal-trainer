@@ -175,7 +175,7 @@ export function DashboardPage() {
             <MessageCircle size={18} />
             <span>
               Seu WhatsApp não está conectado.{' '}
-              <Link to="/config?tab=whatsapp" className="underline font-medium">Conectar agora</Link> para ativar o assistente.
+              <Link to="/config?tab=whatsapp" className="underline font-medium">Conectar agora</Link>.
             </span>
           </div>
         </Card>
