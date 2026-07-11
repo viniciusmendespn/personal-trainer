@@ -654,23 +654,22 @@ def chat_history(limit: int = 50, cursor: str | None = None, ctx: dict = Depends
 
 @router.post("/chat")
 def chat_send(body: ChatBody, ctx: dict = Depends(get_current_aluno)):
-    if not agent_service.is_agente_habilitado(ctx["aluno_id"]):
-        agent_service.log_direct(ctx["personal_id"], ctx["aluno_id"],
-                                 body.text, Ator.ALUNO, CanalOrigem.PORTAL)
-        return {"reply": "Seu personal irá responder em breve.", "habilitado": False}
-    reply = agent_service.handle_chat_turn(ctx["personal_id"], ctx["aluno_id"], body.text, Ator.ALUNO)
-    return {"reply": reply}
+    """Chat direto com o personal — não passa pelo agente. Registra a mensagem na thread
+    e notifica o personal (dedup de 1h, igual ao canal WhatsApp)."""
+    agent_service.log_direct(ctx["personal_id"], ctx["aluno_id"],
+                             body.text, Ator.ALUNO, CanalOrigem.PORTAL)
+    if notif_service.deve_notificar_msg_direta(ctx["personal_id"], ctx["aluno_id"]):
+        notif_service.criar(
+            ctx["personal_id"], "MSG_ALUNO_DIRETO", "Mensagem do aluno",
+            body.text[:80], aluno_id=ctx["aluno_id"],
+        )
+    return {"ok": 1}
 
 
 @router.post("/chat/personal", status_code=201)
 def chat_send_personal(body: ChatBody, ctx: dict = Depends(get_current_aluno)):
-    """Pergunta direta ao personal — não passa pelo agente, gera notificação."""
-    agent_service.log_direct(ctx["personal_id"], ctx["aluno_id"], body.text, Ator.ALUNO, CanalOrigem.PORTAL)
-    notif_service.criar(
-        ctx["personal_id"], "PERGUNTA_DIRETA", "Pergunta direta do aluno",
-        body.text, aluno_id=ctx["aluno_id"],
-    )
-    return {"ok": 1}
+    """Compat: caminho antigo de pergunta direta. O chat inteiro já é direto (ver /chat)."""
+    return chat_send(body, ctx)
 
 
 # ── Feed global do personal ─────────────────────────────────────────────────

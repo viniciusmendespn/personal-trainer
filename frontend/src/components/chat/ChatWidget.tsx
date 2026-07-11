@@ -93,7 +93,6 @@ export function ChatWidget() {
             isLoading={history.isLoading}
             viewerRole="PERSONAL"
             alunoNome={aluno?.nome}
-            agenteHabilitado={history.agenteHabilitado}
             onLoadMore={() => history.fetchNextPage()}
             hasMore={history.hasNextPage}
             isLoadingMore={history.isFetchingNextPage}

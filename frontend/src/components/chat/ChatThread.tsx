@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
-import { Bot, User, UserCog, Pin, BotOff, UserCheck } from 'lucide-react'
+import { Bot, User, UserCog, Pin, UserCheck } from 'lucide-react'
 import { Spinner } from '../ui'
 import { renderMarkdownLite } from './markdownLite'
 import type { Ator, ChatMensagem } from '../../types'
@@ -10,7 +10,6 @@ interface ChatThreadProps {
   isSending?: boolean
   viewerRole: Ator
   alunoNome?: string
-  agenteHabilitado?: boolean
   onLoadMore?: () => void
   hasMore?: boolean
   isLoadingMore?: boolean
@@ -75,7 +74,7 @@ function Bubble({ msg, viewerRole, alunoNome }: { msg: ChatMensagem; viewerRole:
 }
 
 export function ChatThread({
-  messages, isLoading, isSending, viewerRole, alunoNome, agenteHabilitado, onLoadMore, hasMore, isLoadingMore,
+  messages, isLoading, isSending, viewerRole, alunoNome, onLoadMore, hasMore, isLoadingMore,
 }: ChatThreadProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -112,18 +111,12 @@ export function ChatThread({
 
   return (
     <>
-      {!agenteHabilitado && viewerRole === 'PERSONAL' && (
-        <div className="bg-warning/10 border-b border-warning/30 px-4 py-2 text-xs text-warning flex items-center gap-1.5 shrink-0">
-          <BotOff size={12} />
-          Agente desabilitado — este aluno não receberá respostas do assistente
-        </div>
-      )}
-      {!agenteHabilitado && viewerRole === 'ALUNO' && (
-        <div className="bg-info/10 border-b border-info/30 px-4 py-2 text-xs text-info flex items-center gap-1.5 shrink-0">
-          <UserCheck size={12} />
-          Seu personal irá responder diretamente
-        </div>
-      )}
+      <div className="bg-info/10 border-b border-info/30 px-4 py-2 text-xs text-info flex items-center gap-1.5 shrink-0">
+        <UserCheck size={12} />
+        {viewerRole === 'ALUNO'
+          ? 'Este chat é direto com seu personal — ele será notificado das suas mensagens.'
+          : 'Chat direto com o aluno.'}
+      </div>
     <div ref={containerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
       {isLoadingMore && (
         <div className="flex justify-center py-1"><Spinner className="w-4 h-4" /></div>
@@ -134,7 +127,7 @@ export function ChatThread({
       {messages.map((m) => <Bubble key={m.mensagem_id} msg={m} viewerRole={viewerRole} alunoNome={alunoNome} />)}
       {isSending && (
         <div className="flex items-center gap-2 text-text-muted text-xs px-1">
-          <Bot size={14} /> digitando…
+          <Spinner className="w-3.5 h-3.5" /> Enviando…
         </div>
       )}
       <div ref={bottomRef} />

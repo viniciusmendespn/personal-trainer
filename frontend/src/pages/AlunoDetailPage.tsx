@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList, CalendarDays, List, Video, Clock, AlarmClock, MessageCircle } from 'lucide-react'
 import { useAluno, useAlunos, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
-import { useToggleAgenteHabilitado } from '../hooks/usePersonalChat'
-import { usePlanoStatus } from '../hooks/usePlano'
 import { alunosApi } from '../api/alunos'
 import { wapiApi } from '../api/wapi'
 import { anamneseApi } from '../api/anamnese'
@@ -41,6 +39,9 @@ import { FinanceiroTab } from '../components/financeiro/FinanceiroTab'
 import { videoUrlComFallback } from '../utils/video'
 import { formatDuracao } from '../utils/datetime'
 
+const TAB_KEYS = ['treinos', 'historico', 'frequencia', 'metas', 'financeiro', 'perfil'] as const
+type TabKey = typeof TAB_KEYS[number]
+
 export function AlunoDetailPage() {
   const { alunoId = '' } = useParams()
   const navigate = useNavigate()
@@ -66,23 +67,12 @@ export function AlunoDetailPage() {
   const createTreino = useCreateTreino(alunoId)
   const updateAluno = useUpdateAluno(alunoId)
   const deleteAluno = useDeleteAluno()
-  const toggleAgente = useToggleAgenteHabilitado(alunoId)
-  const { data: plano } = usePlanoStatus()
-  const addonIaAtivo = plano?.addon_ia_ativo ?? false
-
-  function handleToggleAgente(habilitado: boolean) {
-    toggleAgente.mutate(habilitado, {
-      onError: (err: any) => {
-        if (err?.response?.data?.detail?.code === 'ADDON_REQUIRED') {
-          show('Assistente IA é um add-on opcional — em breve disponível para contratação.', 'error')
-        } else {
-          show('Erro ao atualizar o agente.', 'error')
-        }
-      },
-    })
-  }
   const confirm = useConfirm()
-  const [tab, setTab] = useState<'perfil' | 'treinos' | 'historico' | 'frequencia' | 'metas' | 'financeiro'>('treinos')
+  // Aba ativa derivada da URL (?tab=…) — permite deep-link, ex.: /alunos/:id?tab=financeiro
+  const [searchParams, setSearchParams] = useSearchParams()
+  const raw = searchParams.get('tab') as TabKey | null
+  const tab: TabKey = TAB_KEYS.includes(raw as TabKey) ? (raw as TabKey) : 'treinos'
+  const setTab = (k: TabKey) => setSearchParams({ tab: k }, { replace: true })
   const [showAddTreino, setShowAddTreino] = useState(false)
   const [showAplicarRotina, setShowAplicarRotina] = useState(false)
   const [showAtualizarIA, setShowAtualizarIA] = useState(false)
@@ -284,19 +274,6 @@ export function AlunoDetailPage() {
             >
               {aluno.status === 'ATIVO' ? <PowerOff size={13} className="shrink-0" /> : <Power size={13} className="shrink-0" />}
               <span className="text-left">{aluno.status === 'ATIVO' ? <>Desativar<br/>acesso</> : <>Ativar<br/>acesso</>}</span>
-            </Button>
-          )}
-          {aluno && (
-            <Button
-              variant={aluno.agente_habilitado ? 'outline' : 'primary'}
-              size="sm"
-              onClick={() => handleToggleAgente(!aluno.agente_habilitado)}
-              disabled={toggleAgente.isPending || (!aluno.agente_habilitado && !addonIaAtivo)}
-              title={!aluno.agente_habilitado && !addonIaAtivo ? 'Assistente IA é um add-on em breve' : undefined}
-              className="gap-1.5 px-2.5 py-1.5 h-auto text-[9px] leading-tight items-center"
-            >
-              <Bot size={13} className="shrink-0" />
-              <span className="text-left">{aluno.agente_habilitado ? <>Desabilitar<br/>agente</> : <>Habilitar<br/>agente</>}</span>
             </Button>
           )}
         </div>
@@ -952,7 +929,7 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
                   <span className="text-xs font-medium text-text-secondary">{formatoBlocoLabel(g.bloco) ?? 'Descanso'}</span>
                 </div>
               ) : (
-              <div key={g.key} className={g.bloco?.aquecimento ? 'opacity-70' : ''}>
+              <div key={g.key}>
                 {g.bloco ? (
                   <div className="flex items-center gap-2 mt-2 mb-1">
                     <span className="text-xs font-semibold text-text-secondary">{g.bloco.nome}</span>
@@ -1315,7 +1292,7 @@ function ExercicioRow({
 
   return (
     <div ref={sortable.setNodeRef} style={sortable.style} className="border-b border-border py-1.5">
-      <div className={`flex items-start gap-2 ${ex.aquecimento ? 'opacity-70' : ''}`}>
+      <div className="flex items-start gap-2">
         {/* Alça de arraste + número */}
         <div className="flex items-center gap-1 shrink-0 pt-0.5">
           {sortable.handle}

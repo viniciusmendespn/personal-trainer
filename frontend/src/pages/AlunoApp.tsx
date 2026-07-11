@@ -14,7 +14,7 @@ import { alunoClient } from '../api/alunoClient'
 import { FeedGlobalTab } from '../components/feed/FeedGlobalTab'
 import { PontosWidget } from '../components/gamificacao/PontosWidget'
 import { RankingList } from '../components/gamificacao/RankingList'
-import { useAlunoChat, useSendAlunoChat, useSendDiretoAlunoChat } from '../hooks/useAlunoChat'
+import { useAlunoChat, useSendAlunoChat } from '../hooks/useAlunoChat'
 import { SplashScreen } from '../components/ui/SplashScreen'
 import { useAlunoTimeline } from '../hooks/useAlunoTimeline'
 import { ChatThread } from '../components/chat/ChatThread'
@@ -689,9 +689,8 @@ export function AlunoApp() {
 }
 
 function ChatTab() {
-  const { messages, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, agenteHabilitado } = useAlunoChat()
+  const { messages, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useAlunoChat()
   const send = useSendAlunoChat()
-  const sendDireto = useSendDiretoAlunoChat()
   const { show } = useToast()
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -700,15 +699,13 @@ function ChatTab() {
         isLoading={isLoading}
         isSending={send.isPending}
         viewerRole="ALUNO"
-        agenteHabilitado={agenteHabilitado}
         onLoadMore={() => fetchNextPage()}
         hasMore={hasNextPage}
         isLoadingMore={isFetchingNextPage}
       />
       <ChatInputBar
-        onSend={(text) => send.mutate(text)}
-        onSendDireto={(text) => sendDireto.mutate(text, { onSuccess: () => show('Enviado direto pro seu personal.', 'success') })}
-        disabled={send.isPending || sendDireto.isPending}
+        onSend={(text) => send.mutate(text, { onSuccess: () => show('Enviado pro seu personal.', 'success') })}
+        disabled={send.isPending}
       />
     </div>
   )
@@ -983,7 +980,6 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
             {exsOrdenados.map((ex, i) => {
               const bloco = blocoDe(ex.bloco_id)
               const primeiroDoBloco = !!bloco && (i === 0 || exsOrdenados[i - 1].bloco_id !== ex.bloco_id)
-              const aquecido = ex.aquecimento || bloco?.aquecimento
               const pontuavelPrev = !!bloco && bloco.formato !== 'LIVRE' && !bloco.aquecimento
               const sufixoPrev = sufixoPrescricaoBloco(bloco)
               return (
@@ -997,7 +993,7 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
                   )}
                 </div>
               )}
-              <Card variant="elevated" className={`space-y-1 ${aquecido ? 'opacity-80' : ''}`}>
+              <Card variant="elevated" className="space-y-1">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-2 min-w-0">
                     <span className="text-xs font-medium text-text-muted mt-0.5 shrink-0">{i + 1}.</span>
@@ -1312,7 +1308,7 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
                 ? b.params?.descanso_rounds_s
                 : undefined
               return (
-                <div key={b.id} className={`space-y-3 ${b.aquecimento ? 'opacity-80' : ''}`}>
+                <div key={b.id} className="space-y-3">
                   <div className="flex items-center gap-2 pt-1">
                     <span className="text-sm font-display font-semibold">{b.nome}</span>
                     {label && <Badge tone={b.aquecimento ? 'neutral' : 'accent'}>{label}</Badge>}
@@ -1807,7 +1803,7 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
           )}
 
           {rows.map((r, i) => (
-            <div key={i} className={`flex gap-2 items-center ${r.aquecimento ? 'opacity-70' : ''}`}>
+            <div key={i} className="flex gap-2 items-center">
               <span className="text-xs text-text-muted w-12">
                 {circuitoRounds ? `Rd ${i + 1}` : `Sér ${i + 1}`}
                 {r.aquecimento && <span className="block text-[9px] text-warning leading-none">aq.</span>}

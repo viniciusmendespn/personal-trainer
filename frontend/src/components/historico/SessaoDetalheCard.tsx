@@ -126,7 +126,7 @@ function ExercicioDetalhe({ ex, alunoId, bloco }: ExercicioDetalheProps) {
   const relatos = (ex.relatos ?? []).map((r) => ({ ...r, tipo: r.tipo as 'DOR' | 'DUVIDA' | 'CORRECAO' }))
 
   return (
-    <div className={`space-y-2 pb-3 border-b border-border last:border-0 last:pb-0 ${ex.aquecimento ? 'opacity-70' : ''}`}>
+    <div className="space-y-2 pb-3 border-b border-border last:border-0 last:pb-0">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-text">
           {ex.exercicio_nome}
@@ -158,7 +158,7 @@ function ExercicioDetalhe({ ex, alunoId, bloco }: ExercicioDetalheProps) {
         <div className="space-y-0.5">
           <p className="text-xs text-text-muted font-medium">Executado</p>
           {ex.series_exec.map((s, i) => (
-            <div key={i} className={`flex items-center gap-3 pl-2 text-xs ${s.aquecimento ? 'opacity-70' : ''}`}>
+            <div key={i} className="flex items-center gap-3 pl-2 text-xs">
               <span className="text-text-muted w-12 shrink-0">{circuito ? `Rd ${i + 1}` : `Sér ${i + 1}`}</span>
               <span className="text-text">
                 {execLabel(tipo, s, ex.unidade_carga, ex.unidade_reps)}
@@ -306,7 +306,7 @@ function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: n
               if (!doBloco.length && !referencias.length && !naoExec.length) return null
               const label = formatoBlocoLabel(b)
               return (
-                <div key={b.id} className={b.aquecimento ? 'opacity-80' : ''}>
+                <div key={b.id}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-semibold text-text-secondary">{b.nome}</span>
                     {label && <Badge tone={b.aquecimento ? 'neutral' : 'accent'}>{label}</Badge>}
