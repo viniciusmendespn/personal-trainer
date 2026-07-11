@@ -81,7 +81,7 @@ CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, nã
 - **Assistente IA do aluno 24h no WhatsApp (add-on)**: o aluno tira dúvida de treino e recebe
   orientação a qualquer hora, sem depender do personal estar disponível. É um add-on pago por aluno
   — não confundir com a operação por IA do personal (grátis), citada acima.
-- **Rastreabilidade total**: cada registro do aluno (carga, repetição, RPE, foto, vídeo, relato de
+- **Rastreabilidade total**: cada registro do aluno (carga, repetição, foto, vídeo, relato de
   dor) fica vinculado a um treino e exercício específico — nada fica "solto"; relato de dor gera
   alerta imediato para o personal.
 - **Perfil público do personal**: página de perfil com bio, formação, experiência e redes sociais
@@ -107,13 +107,13 @@ CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, nã
 | Pacotes de treino (.cpkg) | Pacotes prontos com exercícios, templates e rotinas empacotados num arquivo .cpkg — importáveis com um clique, criados com ajuda de IA ou editados manualmente; suporte a pacotes licenciados com token de uso único |
 | Sessão ativa de treino | O aluno "inicia" o treino e o sistema acompanha exercício atual, registros e status em tempo real |
 | Exercícios substitutos | O personal cadastra alternativas para cada exercício; o aluno escolhe qual executar durante a sessão sem precisar consultar o personal |
-| Tipos de exercício | Força (kg/lb + repetições), Cardio (RPE + minutos ou km), Peso Corporal (só repetições). Unidades de carga e repetição totalmente personalizáveis |
+| Tipos de exercício | Força (carga + repetições, com 1RM/%1RM) e Performance (métrica numérica livre — tempo, km, voltas, reps — com direção de evolução "maior é melhor" ou "menor é melhor"). Unidades de carga e métrica totalmente personalizáveis |
 | % 1RM e IRM | Cadastro do 1RM do aluno, prescrição por percentual (carga calculada automaticamente) e gráfico de Intensidade Relativa Média por sessão |
 | Avaliações físicas | Medidas corporais + fotos comparativas + gráficos de evolução automáticos |
 | Agenda | Agendamento de sessões com lembretes automáticos via WhatsApp |
 | App do aluno (PWA) | Instalável no celular sem loja de apps; treino do dia, evolução, notificações push |
 | Ranking e gamificação | Ranking de frequência/desempenho + badges/conquistas (sessões e streaks) |
-| Assistente IA do aluno (add-on, via chat/WhatsApp) | Agente conversacional usado pelo **aluno**: entende contexto (treino/exercício atual), desambigua perguntas, registra carga/reps/RPE, recebe fotos e vídeos, prioriza relatos de dor com alerta automático ao personal. Add-on pago por aluno habilitado — distinto da operação por IA do personal |
+| Assistente IA do aluno (add-on, via WhatsApp) | Agente conversacional usado pelo **aluno** no WhatsApp: entende contexto (treino/exercício atual), desambigua perguntas, registra carga/reps, recebe fotos e vídeos, prioriza relatos de dor com alerta automático ao personal. Add-on pago por aluno habilitado — distinto da operação por IA do personal. (O chat interno do app do aluno é direto com o personal, sem IA) |
 | Feed / postagens | Feed de exercícios e posts com mídia (foto/vídeo) vinculados a treino/exercício |
 | Recursos educacionais | Materiais de apoio (texto, foto, vídeo) vinculados a exercícios — o aluno acessa tocando no ícone de livro durante o treino |
 | Notificações automáticas | Lembrete de treino, avaliação e renovação, via push/WhatsApp |

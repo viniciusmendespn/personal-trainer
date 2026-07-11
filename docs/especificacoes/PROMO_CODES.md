@@ -1,6 +1,12 @@
-# Promo Codes e Indicações — Necessidade
+# Promo Codes e Indicações — Especificação
 
-Quero implementar no CoachPilot um sistema de promo codes para campanha de lançamento e crescimento por indicação.
+> **Status: ✅ IMPLEMENTADO.** O sistema de promo codes e o Indique e Ganhe estão em produção
+> (página Plano do portal; cupons de divulgador incluídos). Este documento permanece como
+> **registro das regras de negócio** (1 código por campanha, código próprio de indicação,
+> recompensa após 1º pagamento do indicado etc.) — a implementação no código é a fonte de verdade
+> para detalhes.
+
+Sistema de promo codes para campanha de lançamento e crescimento por indicação.
 
 ## Objetivo
 

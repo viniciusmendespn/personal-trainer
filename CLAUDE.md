@@ -7,12 +7,12 @@ Arquitetura: **React 19 + FastAPI + DynamoDB + Cognito + AWS SAM**. Ver `docs/AR
 
 ## Organização da documentação
 - `docs/` — documentação técnica (ARCHITECTURE, ESPEC_TECNICA, FUNCIONAL, PERFORMANCE_ESCALA) e
-  `docs/especificacoes/` (specs de features: PIX, promo codes, financeiro, pendências de push)
+  `docs/especificacoes/` (specs de features implementadas: PIX/Mercado Pago, promo codes, CrossFit)
 - `estrategia/` — negócio (CUSTO_ESCALA, CONTEXTO_MARKETING, planos, pitches, programa de
   divulgadores, `juridico/` com minutas, `comercial/` com kit do time, `kit-divulgador/` com
   material externo do divulgador)
 - `frontend/public/*.md` — **arquivos do sistema servidos ao usuário** (ajuda-portal, ajuda-aluno,
-  prompt-cpkg) — não mover nem renomear
+  prompt-cpkg, prompt-treino-aluno) — não mover nem renomear
 
 ## AWS Account
 - **Mesma conta** do `gerenciador-financeiro` (conta pessoal).
@@ -125,7 +125,10 @@ Toda proposta de acesso ao DynamoDB deve seguir estes princípios **sem exceçã
 ## Estado atual
 **Produto completo em produção** (coachpilot.com.br), em fase de aquisição dos primeiros clientes
 pagantes. Módulos no ar: portal do personal, app do aluno (PWA), loja/marketplace de pacotes
-(.cpkg), agente IA no WhatsApp, financeiro PIX (Mercado Pago), gamificação, push notifications,
-landing com SEO. Estratégia de negócio e go-to-market em `estrategia/` (ver README de lá).
-Pendências técnicas conhecidas: lifecycle S3 (antes de 100 personais), itens de push em
-`docs/especificacoes/PUSH_PENDENCIAS.md`, painel do divulgador (roadmap).
+(.cpkg), painel do divulgador, financeiro PIX (Mercado Pago), gamificação, push notifications,
+landing com SEO. O chat do app do aluno é **direto com o personal** (2026-07); o agente IA de
+WhatsApp existe no backend mas é add-on por aluno, hoje "em breve" no plano (toggle escondido no
+portal). **RPE não é mais registrado** (campo legado, só exibição de histórico antigo).
+Estratégia de negócio e go-to-market em `estrategia/` (ver README de lá).
+Pendências técnicas conhecidas: lifecycle S3 (antes de 100 personais) e Lambda separada para o
+webhook/agente (item 7 de `docs/PERFORMANCE_ESCALA.md`, adiado por decisão).

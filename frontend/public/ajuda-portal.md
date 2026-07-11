@@ -27,7 +27,7 @@ O portal é o painel de controle do personal. Tudo começa aqui.
 
 O maior diferencial do CoachPilot é poder operar a parte braçal por **linguagem natural**, em vez de digitar série a série. Você conversa — **por texto ou voz** — com o **seu próprio ChatGPT, Claude ou Gemini** (não precisa ser uma IA da plataforma), usando os **prompts prontos** que o CoachPilot fornece. A IA entende o formato do CoachPilot e devolve um conteúdo pronto que você **importa com 1 clique**. Você sempre **revisa antes de importar**.
 
-> ⚠️ Importante: isso é **grátis e já incluído** em todos os planos — você usa a IA que já tem. É **diferente** do **Assistente IA do aluno** (add-on pago por aluno), que é o chat que o próprio aluno usa no WhatsApp/app. A "operação por IA" é uma ferramenta do **personal**; o "Assistente IA do aluno" é um recurso do **aluno**.
+> ⚠️ Importante: isso é **grátis e já incluído** em todos os planos — você usa a IA que já tem. É **diferente** do **Assistente IA do aluno** (add-on pago por aluno), o agente que responde o aluno automaticamente no WhatsApp. A "operação por IA" é uma ferramenta do **personal**; o "Assistente IA do aluno" é um recurso do **aluno**.
 
 São **três fluxos** operados por IA (cada um detalhado na sua seção):
 
@@ -61,7 +61,7 @@ O portal possui um **menu lateral (sidebar)** com as seguintes seções, agrupad
 - **Biblioteca** — upload de materiais para os alunos
 - **Pacotes** — pacotes de treino .cpkg com exercícios, templates e rotinas
 - **Loja** — venda de pacotes licenciados para outros personais (anúncios e vendas)
-- **Base de IA** — arquivos de conhecimento para o agente de IA
+- **Base de IA** — arquivos de conhecimento para o Assistente IA do aluno
 
 **Conta**
 - **Plano** — assinatura da plataforma (Trial grátis × Gestão Pro)
@@ -135,7 +135,7 @@ Ao final, o sistema mostra quantos foram **importados**, **pulados** (telefone d
 #### Visualizar perfil do aluno
 Clique no aluno na lista. A página de detalhe tem as abas:
 - **Treinos** — treinos e exercícios do aluno
-- **Perfil** — dados pessoais, link de acesso e configurações do agente IA
+- **Perfil** — dados pessoais, link de acesso e anamnese
 - **Histórico** — sessões realizadas com detalhes de séries e cargas
 - **Frequência** — estatísticas de frequência, streak e badges
 - **Metas** — metas ativas e histórico
@@ -153,8 +153,8 @@ No topo da página **Alunos**, use os botões **"Ativos"**, **"Inativos"** ou **
 #### Notas internas
 Na página do aluno há um campo de **notas** para registrar observações internas (visível só para o personal, não para o aluno).
 
-#### Assistente IA do aluno (agente no WhatsApp) por aluno
-Na aba **Perfil** do aluno, você pode **ativar ou desativar o Assistente IA do aluno** individualmente. Quando desativado, as mensagens chegam diretamente ao personal sem processamento pela IA. Este é o add-on pago por aluno — não confundir com a **operação por IA** do personal (grátis), descrita no início deste guia.
+#### Mensagens do aluno (chat do app e WhatsApp)
+As mensagens que o aluno envia pelo chat do app (e pelo WhatsApp, quando conectado) chegam **diretamente a você**: geram uma notificação e ficam registradas na conversa do aluno. O **Assistente IA do aluno** — agente que responde o aluno automaticamente no WhatsApp — é um add-on pago por aluno, ainda não disponível para contratação ("Em breve" na página Plano). Não confundir com a **operação por IA** do personal (grátis), descrita no início deste guia.
 
 ---
 
@@ -467,7 +467,7 @@ Acesse **Notificações** no menu. A central lista todos os eventos que precisam
 - **Mídia enviada** — aluno enviou foto ou vídeo de execução
 - **Meta atingida** — aluno alcançou uma meta definida
 - **Treino vencendo** — treino de um aluno está próximo do vencimento
-- **Pergunta direta** — aluno fez pergunta que não passou pelo agente de IA
+- **Mensagem direta** — aluno enviou mensagem pelo chat do app ou pelo WhatsApp
 
 **Ações disponíveis:**
 - Marcar como lida (individual ou todas de uma vez)
@@ -644,7 +644,7 @@ Na Biblioteca você também configura **exercícios da biblioteca**: adicione ex
 
 ### 20. BASE DE IA (CONHECIMENTO)
 
-Acesse **Base de IA** no menu. Aqui você faz upload de arquivos que serão usados como contexto pelo agente de IA no WhatsApp do aluno.
+Acesse **Base de IA** no menu. Aqui você faz upload de arquivos que serão usados como contexto pelo Assistente IA do aluno no WhatsApp (add-on, quando ativo na sua conta).
 
 Exemplos de arquivos úteis: protocolos de treino, explicações de exercícios, orientações nutricionais, FAQs personalizadas.
 
@@ -695,9 +695,7 @@ Acesse **Configurações** → aba **"WhatsApp"**.
    - **Código de pareamento** — informe o número do celular e use o código exibido no WhatsApp
 4. Aguarde o status mudar para **"Conectado"**
 
-Após conectar, os alunos podem enviar mensagens ao número cadastrado e o agente de IA responderá automaticamente.
-
-**Agente de IA por aluno:** Na página do aluno (aba Perfil) é possível ativar/desativar o agente individualmente.
+Após conectar, o número passa a ser usado para os **lembretes automáticos** (agenda, treino) e os alunos podem enviar mensagens a ele — você é notificado de cada mensagem recebida. O **Assistente IA do aluno** (respostas automáticas com contexto do treino) é um add-on por aluno, ainda não disponível para contratação ("Em breve" na página Plano).
 
 ---
 
@@ -820,8 +818,8 @@ R: Na página do aluno (aba Perfil), clique em "Enviar via WhatsApp" ou "Copiar 
 **P: O aluno precisa instalar algo?**
 R: Não. O app do aluno é um PWA. Ele abre direto no navegador do celular. Opcionalmente, o aluno pode instalar na tela inicial pelo ícone de download.
 
-**P: Como funciona o agente de IA no WhatsApp?**
-R: Após configurar a integração W-API, o aluno pode enviar mensagens ao número do WhatsApp cadastrado. O agente entende contexto de treino, registra séries, responde dúvidas e alerta o personal quando necessário.
+**P: Como funciona o WhatsApp conectado? E o agente de IA?**
+R: Com a integração W-API configurada, o número envia os lembretes automáticos e recebe mensagens dos alunos — cada mensagem gera uma notificação para você. O Assistente IA do aluno (agente que responde automaticamente com contexto do treino) é um add-on por aluno, ainda não disponível para contratação ("Em breve" na página Plano).
 
 **P: O aluno pode ter mais de um treino ativo?**
 R: Sim. Você pode criar vários treinos para o mesmo aluno com datas de início/fim diferentes. O treino "ativo" é o que está dentro da vigência.

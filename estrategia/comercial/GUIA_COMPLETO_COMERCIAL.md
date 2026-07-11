@@ -82,7 +82,7 @@ aluno é reter renda.
 | | **Operação por IA (do personal)** | **Assistente IA (do aluno)** |
 |---|---|---|
 | Quem usa | O personal | O aluno |
-| Onde | No ChatGPT/Claude/Gemini **do próprio personal**, com prompts prontos | No WhatsApp (ou chat do app) |
+| Onde | No ChatGPT/Claude/Gemini **do próprio personal**, com prompts prontos | No WhatsApp (o chat do app é direto com o personal, sem IA) |
 | Faz o quê | Gera treinos, pacotes, migrações → personal **revisa** e importa com 1 clique | Responde dúvidas 24h, registra execução, alerta dor |
 | Custo | **GRÁTIS** (usa a IA que o personal já tem) | **R$ 4,90/aluno/mês** (add-on, por aluno habilitado) |
 
@@ -205,7 +205,7 @@ comissionam. Página: coachpilot.com.br/divulgadores.
 
 **PWA** — app que instala pelo navegador, sem loja. · **.cpkg** — arquivo de pacote de treino do
 CoachPilot. · **Split/rotina ABC** — divisão de treino por dias. · **1RM** — carga máxima para 1
-repetição; base da prescrição por percentual. · **RPE** — escala de percepção de esforço. ·
+repetição; base da prescrição por percentual. ·
 **Anamnese** — questionário inicial de saúde. · **CREF** — registro profissional do personal. ·
 **MRR** — receita recorrente mensal. · **Churn** — cancelamento. · **CAC** — custo de adquirir
 um cliente. · **Trial** — nosso plano grátis de 3 alunos (sem prazo!).

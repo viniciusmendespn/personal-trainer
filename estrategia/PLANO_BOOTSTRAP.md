@@ -78,9 +78,10 @@ R$ 200/mês de impulsionamento de Reels que performaram organicamente (exceção
 
 **Objetivo: tirar o fundador do loop de cada venda.**
 
-- **M6 — Construir o painel do divulgador** (link rastreável, dashboard de clientes ativos,
-  comissões calculadas — pagamento ainda manual via PIX). Meta: dobrar para 10–15 divulgadores,
-  agora recrutando fora do círculo (personais influentes de outras cidades — DM com proposta).
+- **M6 — Painel do divulgador** ✅ *antecipado — já no ar (divulgador.coachpilot.com.br): cupom/
+  link próprio, clientes ativos, comissões calculadas; pagamento manual via PIX pelo admin.*
+  Meta do mês passa a ser só a expansão: dobrar para 10–15 divulgadores, recrutando fora do
+  círculo (personais influentes de outras cidades — DM com proposta).
 - **M6–M7 — Assinatura anual com desconto** (R$ 399/ano ≈ 2 meses grátis, já parametrizado no
   catálogo de planos): reduz churn e antecipa caixa — no bootstrap, caixa antecipado é oxigênio.
 - **M7 — Primeira mídia paga (teste controlado):** R$ 500/mês em Meta Ads sobre os 2 Reels de

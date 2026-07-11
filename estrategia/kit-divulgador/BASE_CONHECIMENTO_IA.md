@@ -44,9 +44,10 @@ grátis do FinPilot (gerenciador financeiro pessoal com IA, produto irmão).
    direto no sistema — é geração + importação assistida. Sem custo extra (usa a IA que o personal
    já tem).
 2. **Assistente IA do aluno (add-on pago, R$ 4,90/aluno/mês).** Agente que atende o ALUNO via
-   WhatsApp ou chat do app: tira dúvidas 24h sabendo qual treino/exercício o aluno está fazendo,
-   registra carga/repetições/RPE por conversa, recebe fotos e vídeos, e prioriza relatos de dor
-   com alerta automático ao personal. Responde curto e direto, uma pergunta por vez.
+   WhatsApp: tira dúvidas 24h sabendo qual treino/exercício o aluno está fazendo,
+   registra carga/repetições por conversa, recebe fotos e vídeos, e prioriza relatos de dor
+   com alerta automático ao personal. Responde curto e direto, uma pergunta por vez. (O chat
+   interno do app do aluno é direto com o personal, sem IA.)
 
 ## 4. Funcionalidades (lista completa)
 

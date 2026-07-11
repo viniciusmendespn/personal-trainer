@@ -1,7 +1,13 @@
 # Mercado Pago — PIX (guia de implementação)
 
+> **Status: ✅ EM PRODUÇÃO.** Este padrão está implementado em três fluxos do CoachPilot:
+> **(1) Financeiro dos alunos** — mensalidades/cobranças com PIX na conta MP do próprio personal
+> (Access Token configurado em Configurações → Pagamentos); **(2) Assinatura do Gestão Pro**
+> (`backend/app/services/mp_assinatura_service.py`); **(3) Loja** — venda de pacotes com PIX
+> automático. O documento permanece como referência do padrão (REST sem SDK, webhook reconsultando
+> o pagamento, idempotência por `MP_LOCK#`).
+
 Baseado na integração já em produção no `smart-afiliados` (`backend/functions/afiliados-recebedor-pagamento/lambda_function.py`).
-Resumo simples para replicar aqui no `personal-trainer`, caso o app venha a cobrar dos alunos (ex: planos, sessões avulsas).
 
 ## O que é necessário
 

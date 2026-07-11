@@ -46,7 +46,7 @@ O app possui **5 abas** na parte inferior da tela:
 
 No topo da tela há o **ícone de notificações** (sino) e o **ícone de ajuda** (?).
 
-O ícone de **chat** (balão de mensagem) fica flutuando na tela — toque para conversar com o assistente de IA do seu personal.
+O ícone de **chat** (balão de mensagem) fica flutuando na tela — toque para enviar mensagens diretamente ao seu personal.
 
 ---
 
@@ -99,14 +99,6 @@ Quando você tem mais de um treino cadastrado (ex.: Treino A, Treino B), eles ap
 3. Toque em **"Registrar"** para confirmar a série
 4. Repita para cada série do exercício
 5. Toque em **"Próximo Exercício"** para avançar
-
-**O que é RPE?** É a escala de esforço percebido:
-- 0–3: muito fácil
-- 4–6: moderado
-- 7–8: difícil
-- 9–10: máximo esforço
-
-Preencher o RPE é opcional mas ajuda seu personal a ajustar as cargas.
 
 #### Treinos de CrossFit — blocos, timer e resultado do WOD
 Se o seu treino tem **blocos** (ex.: Aquecimento → A) Força → C) Metcon), o app mostra os exercícios agrupados por parte:
@@ -340,21 +332,17 @@ Seu personal receberá uma notificação.
 
 ---
 
-### 14. CHAT COM O ASSISTENTE DE IA
+### 14. CHAT COM O PERSONAL
 
-Toque no **ícone de chat** (balão flutuante) para conversar com o assistente do seu personal.
+Toque no **ícone de chat** (balão flutuante) para conversar diretamente com seu personal. O chat é direto: sua mensagem é registrada e seu personal recebe uma notificação na hora. Ele responde pelo portal e você é avisado por notificação.
 
-**O que você pode perguntar:**
-- "Qual meu treino hoje?"
-- "Quanto peguei no supino na semana passada?"
-- "Fiz 30kg nas remadas — pode registrar?"
-- "Tem vídeo desse exercício?"
-- "Senti dor no joelho no agachamento"
+**Exemplos de uso:**
+- Tirar uma dúvida sobre o treino
+- Avisar que vai faltar ou remarcar
+- Contar como foi a sessão
+- Relatar um desconforto (para dor durante o treino, prefira o botão "Relatar Dor" — ele vincula a dor ao exercício e gera alerta prioritário)
 
-**Pergunta para o personal:**
-Se quiser falar diretamente com seu personal (sem passar pelo assistente), toque em **"Falar com personal"** dentro do chat. Isso envia uma mensagem diretamente a ele.
-
-O assistente também está disponível pelo **WhatsApp** — você pode enviar mensagens direto pelo WhatsApp para o número do seu personal.
+Você também pode falar com seu personal pelo **WhatsApp**, no número dele. Se o seu personal tiver o assistente de IA habilitado para você, o assistente pode responder suas mensagens de WhatsApp automaticamente com base no seu treino.
 
 ---
 

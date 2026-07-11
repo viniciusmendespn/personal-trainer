@@ -192,6 +192,6 @@ Checklist mensal:
 - [ ] Verificar churn 90d das carteiras (alerta >30%)
 
 > **Dependências:** (1) atualizar a página `/divulgadores` para a v3 antes de divulgar;
-> (2) painel do divulgador deve nascer com: faixa base, acelerador em tempo real ("+1 venda para
-> desbloquear seus +5% este mês"), extrato, marcos, métricas do §4 e checklist de conteúdo do
-> Embaixador.
+> (2) painel do divulgador — **já no ar** (divulgador.coachpilot.com.br) com faixa, carteira e
+> comissões; evoluções desejadas: acelerador em tempo real ("+1 venda para desbloquear seus +5%
+> este mês"), marcos, métricas do §4 e checklist de conteúdo do Embaixador.

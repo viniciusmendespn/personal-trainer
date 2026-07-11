@@ -125,7 +125,7 @@ O retorno de marca vem de ritmo e repetição no nicho certo:
 | Spam de cupom em grupo (queima o nicho) | Regra escrita: proibido posts não solicitados em grupos de terceiros; divulgação é no canal PRÓPRIO do parceiro |
 | 35% vitalício pesar no futuro | Cap de 50 fundadores; todos os seguintes entram na régua normal; add-ons continuam sem comissão |
 | Parceiros mortos ocupando vaga/status | Régua de desativação 45/90 dias com reciclagem de vaga |
-| Operação manual não aguentar 50 parceiros | Planilha de comissões + pagamento em dia fixo aguenta 50; painel do divulgador continua sendo o item nº 1 do roadmap antes de passar disso |
+| Operação manual não aguentar 50 parceiros | Painel do divulgador já está no ar (divulgador.coachpilot.com.br) com carteira e comissões calculadas; resta manter o pagamento em dia fixo via PIX |
 | Auto-indicação para virar desconto | Proibida em regra escrita (aceite no onboarding) |
 
 ## 8. Decisões que este documento assume (confirmar antes de lançar)

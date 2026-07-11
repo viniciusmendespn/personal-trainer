@@ -12,9 +12,9 @@
 
 | Campo | Valor |
 |---|---|
-| Versão | 0.2 (diretrizes) |
-| Status | Decisões estruturais propostas; confirmar itens do §8 |
-| Última atualização | 2026-06-15 |
+| Versão | 1.0 (diretrizes) |
+| Status | **Produto em produção** — decisões estruturais confirmadas e implementadas (§8) |
+| Última atualização | 2026-07-11 |
 
 ---
 
@@ -49,18 +49,21 @@ leitura **consistente** no read-after-write quente; Lambda no caminho do usuári
 O **personal** é o único usuário autenticado (Cognito). O **aluno** não tem login: é entidade do
 personal, identificado internamente por `aluno_id` (UUID) e externamente pelo WhatsApp.
 
-**Por quê:** o canal real do aluno é WhatsApp sem login (Cognito seria peso morto e custo de MAU à
-toa); o webhook não traz JWT, então `telefone → aluno` é a identificação natural; e "o personal libera
-acesso" é nativo — ele **é** dono dos dados. *(Confirmar no §8 — é a fundação do modelo de dados.)*
+**Por quê:** o canal real do aluno é WhatsApp/link sem login (Cognito seria peso morto e custo de
+MAU à toa); o webhook não traz JWT, então `telefone → aluno` é a identificação natural; e "o
+personal libera acesso" é nativo — ele **é** dono dos dados. *(Confirmado — é a fundação do modelo
+de dados em produção.)*
 
-### 1.2 Caminhos de autenticação
+### 1.2 Caminhos de autenticação (implementados)
 
 - **Portal do personal:** Cognito JWT → `personal_id` (do `sub`). Padrão de `ARCHITECTURE.md` §4.3.
 - **Webhook W-API:** único endpoint público; autenticado por **token opaco na URL** (a W-API não
   assina o payload). `instanceId → personal_id` e telefone do remetente → `aluno_id` (§7). Identidade
   **nunca** vem do payload.
-- **Portal do aluno `[FUTURO]`:** JWT escopado (magic-link via WhatsApp), acesso só ao próprio
-  `aluno_id`. Fora do MVP.
+- **App do aluno (app.coachpilot.com.br):** token escopado no link enviado pelo personal — acesso
+  só ao próprio `aluno_id`; o personal pode renovar o link (invalida o anterior).
+- **Loja e painel do divulgador:** mesma conta Cognito do portal; o backend libera o painel do
+  divulgador só para contas registradas como divulgador.
 
 ### 1.3 Personal como administrador ("atuar como aluno")
 
@@ -217,14 +220,17 @@ criar o necessário, §2.3).
 
 ---
 
-## 8. Decisões em aberto (precisam de você)
+## 8. Decisões tomadas (registro)
 
-1. **Confirmar Tenant = Personal** (§1.1) — libera o scaffold.
-2. **MVP agente-first ou portal-first** (`FUNCIONAL.md` §6) — ordem de construção.
-3. **Provisionamento das instâncias W-API** (§7) — você cria e entrega ao personal, ou autoatendimento?
-   Onde guardar o `token` (DynamoDB cifrado vs Secrets Manager)?
-4. **Aluno desconhecido no webhook** (§7) — telefone não cadastrado: boas-vindas, ignorar ou pendência?
-5. ~~Atributos das entidades~~ — **direção decidida** (§2.4): base + `custom`. Models básicos em
-   `backend/app/models/`; refinar campos conforme o uso.
-6. **Lista de indicadores** (§3.1) — quais métricas, e quais síncronas vs via Streams.
-7. **Portal do aluno** (§1.2) — confirmar que fica para `[FUTURO]`.
+Todas as decisões estruturais foram resolvidas na implementação — o código é a fonte de verdade:
+
+1. **Tenant = Personal** (§1.1) — confirmado e implementado (`PT#`/`AL#`).
+2. **Ordem de construção** — portal-first, agente WhatsApp em seguida. Hoje o agente é add-on
+   habilitável por aluno (backend intacto; chat do app é direto com o personal — ver
+   `FUNCIONAL.md` §6).
+3. **Instâncias W-API** — autoatendimento: o personal informa `instanceId` + `token` em
+   Configurações → WhatsApp e conecta via QR/pairing-code. Token salvo na partição `PT#`.
+4. **Atributos das entidades** — base + `custom` (§2.4), models em `backend/app/models/`.
+5. **Indicadores** — agregados pré-computados na escrita (contadores atômicos); status por item
+   em `PERFORMANCE_ESCALA.md`. Streams/agregadora assíncrona ainda não foi necessária.
+6. **App do aluno** — implementado como PWA com token escopado no link (§1.2), sem Cognito.
