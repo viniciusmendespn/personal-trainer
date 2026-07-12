@@ -1,9 +1,10 @@
 # Plano de Escala SEM Investimento (Bootstrap) — CoachPilot
 
 > Roadmap de execução para crescer com caixa próprio, aproveitando que o negócio tem break-even
-> com **4 clientes Pro** e custo fixo de ~R$ 120/mês. Princípio: **cada real de lucro volta para
-> aquisição**; o tempo do fundador é o principal capital. Horizonte: 18 meses.
-> Meta final: **100+ assinantes Pro, MRR ≥ R$ 6,5 mil, lucro ≥ R$ 3 mil/mês** — e, como efeito
+> com **4 clientes Pro diretos (5 via divulgador)** e custo fixo de ~R$ 120/mês. Princípio:
+> **cada real de lucro volta para aquisição**; o tempo do fundador é o principal capital.
+> Horizonte: 18 meses.
+> Meta final: **100+ assinantes Pro, MRR ≥ R$ 6,5 mil, lucro ≥ R$ 2,5 mil/mês** — e, como efeito
 > colateral, as métricas de tração que destravam um aporte em condições muito melhores.
 
 ---
@@ -46,7 +47,8 @@ Semana a semana:
   já existe — criar visão semanal).
 
 **KPI de saída da fase:** 10 Pro · 5 depoimentos reais · funil instrumentado.
-**Caixa:** ~R$ 400/mês de MRR — cobre os custos fixos com folga. Lucro ≈ R$ 280/mês.
+**Caixa:** ~R$ 400/mês de MRR — cobre os custos fixos com folga. Lucro ≈ R$ 200–260/mês
+(vendas diretas do fundador, sem comissão; margens de `CUSTO_ESCALA.md` §2).
 
 ---
 
@@ -69,7 +71,8 @@ Semana a semana:
 
 **KPI de saída:** 30 Pro · 5 divulgadores ativos (≥1 venda/mês cada) · ≥30% dos novos Pro vindos
 de divulgador/indicação.
-**Caixa:** MRR ~R$ 1,5–2 mil · lucro ~R$ 1–1,4 mil/mês → reinvestir em: câmera/microfone melhores,
+**Caixa:** MRR ~R$ 1,5–2 mil · lucro ~R$ 0,8–1,1 mil/mês (já descontando ~30% da base
+comissionada) → reinvestir em: câmera/microfone melhores,
 R$ 200/mês de impulsionamento de Reels que performaram organicamente (exceção controlada à regra 1).
 
 ---
@@ -94,7 +97,7 @@ R$ 200/mês de impulsionamento de Reels que performaram organicamente (exceção
   automático "seu mês no CoachPilot" (alunos ativos, sessões, evolução) — lembra o valor pago.
 
 **KPI de saída:** 60 Pro · churn ≤ 4%/mês · ≥50% das vendas sem participação direta do fundador.
-**Caixa:** MRR ~R$ 4 mil · lucro ~R$ 2,5 mil/mês.
+**Caixa:** MRR ~R$ 4 mil · lucro ~R$ 1,5–2 mil/mês (≥50% da base comissionada).
 
 ---
 
@@ -105,15 +108,15 @@ R$ 200/mês de impulsionamento de Reels que performaram organicamente (exceção
 - **M10–M12 — Add-ons como expansão de receita:** campanha interna para base Pro: demo do
   assistente WhatsApp no relatório mensal + 30 dias de teste do add-on. Meta: 35% de adoção
   (leva ARPU de R$ 39,90 → R$ 65). Expandir MRR **sem** novo cliente é o crescimento mais barato.
-- **M12 — Contratar o primeiro apoio** (quando lucro ≥ R$ 3 mil/mês sustentado): suporte/CS
+- **M12 — Contratar o primeiro apoio** (quando lucro ≥ R$ 2,5 mil/mês sustentado): suporte/CS
   part-time ou social media — liberar o fundador para produto e parcerias.
 - **M12–M18 — Rodar o ciclo**: mais divulgadores (meta 30 ativos), mais parcerias (5 escolas),
   eventos regionais de fitness (stand compartilhado com parceiro), biblioteca de vídeos ampliada.
 - **Gatilho de decisão no M12:** com 60–100 Pro e crescimento >10%/mês documentado, decidir entre
-  (a) seguir bootstrap rumo a 500 Pro (lucro R$ 12–14 mil/mês) ou (b) levantar o aporte do
+  (a) seguir bootstrap rumo a 500 Pro (lucro R$ 10–12 mil/mês) ou (b) levantar o aporte do
   `PITCH_INVESTIDORES.md` **com tração** — o valuation muda de patamar com ARR real.
 
-**KPI de saída (M18):** 100–200 Pro · MRR R$ 6,5–13 mil · lucro R$ 3–6 mil/mês · 30 divulgadores.
+**KPI de saída (M18):** 100–200 Pro · MRR R$ 6,5–13 mil · lucro R$ 2,5–5 mil/mês · 30 divulgadores.
 
 ---
 

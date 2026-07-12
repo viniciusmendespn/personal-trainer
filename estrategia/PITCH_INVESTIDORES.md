@@ -82,11 +82,12 @@ PIX, landing com SEO. Não é protótipo — **o aporte não compra desenvolvime
 
 - Freemium: grátis até 3 alunos → **Gestão Pro R$ 39,90/mês** (ilimitado) → add-ons: Canal
   WhatsApp +R$ 29,90/mês · Assistente IA +R$ 4,90/aluno/mês.
-- **ARPU R$ 65,37 · margem de contribuição 61% · break-even com 4 clientes.**
-- Infra serverless com custo marginal de **R$ 0,70/cliente/mês** — de 25 para 500 clientes, a
-  receita cresce 20x e a infra apenas 11x (sobre uma base ínfima); escala validada em arquitetura
-  até 1.000+ personais.
-- LTV (18 meses) R$ 1.176 · CAC via divulgadores ~R$ 194 (18m) · **LTV/CAC > 3** já no modelo atual.
+- **ARPU R$ 65,37 (com add-ons) · margem de contribuição sobre o Gestão Pro de 66% (cliente
+  via divulgador a 30%) a 96% (direto) · break-even com 4–5 clientes.**
+- Infra serverless com custo marginal de **~R$ 1,00/cliente/mês** (premissa pessimista de uso
+  intenso) — menos de 3% da receita do plano; escala validada em arquitetura até 1.000+ personais.
+- LTV (18 meses) R$ 718 só no Gestão Pro (R$ 1.176 com add-ons) · CAC via divulgadores ~R$ 215
+  (18m) · **LTV/CAC ≥ 3** já no modelo atual.
 - Canal proprietário: **programa de divulgadores com comissão recorrente (20–35%)** — personais
   vendendo para pares, CAC 100% variável, sem queima de caixa antecipada.
 
@@ -114,7 +115,7 @@ CAC misto ≤ R$ 250 · adoção de add-ons conforme `CUSTO_ESCALA.md` (WA 45–
 | Resultado operacional | −R$ 12 mil/mês (investindo) | ~neutro | +R$ 20 mil/mês | +R$ 35–50 mil/mês |
 
 - O negócio **atinge o break-even operacional ~M12** mesmo mantendo o investimento em aquisição —
-  a queima é decisão, não necessidade (margem de 61% desde o 1º cliente).
+  a queima é decisão, não necessidade (margem de 66–96% sobre o plano desde o 1º cliente).
 - **M24 → gatilho da rodada seed:** ARR R$ 1,2–1,6 mi × múltiplo 5–8x (benchmark SaaS BR early:
   SaaS Capital 4,8–5,3x privado; seed BR R$ 10–30 mi) = **valuation R$ 6–13 mi** — step-up de
   1,2–2,6x sobre o post-money desta rodada, com opção de seguir lucrativo sem nova rodada
@@ -147,7 +148,7 @@ Aceitável também equity direto: 10% post-money.
 
 ### O que o investidor leva
 
-- 10% de um SaaS com margem de 61%, break-even estrutural em 4 clientes e **dois caminhos de
+- 10% de um SaaS com margem de contribuição de 66–96%, break-even estrutural em 4–5 clientes e **dois caminhos de
   retorno**: (a) rodada seed em 24 meses com step-up, ou (b) empresa lucrativa distribuindo
   resultados (isentos de IR no Simples).
 - Comparáveis de saída no setor: W12/EVO adquirida pela ABC Financial (2019); Tecnofit (seed
@@ -168,7 +169,8 @@ Aceitável também equity direto: 10% post-money.
 
 > "O MFIT provou que 200 mil personais pagam R$ 39,90 por gestão. Nós construímos a plataforma
 > que faz o que a deles não faz — IA que elimina a digitação, aluno atendido no WhatsApp,
-> gamificação que segura o aluno — com margem de 61% e custo de infraestrutura de centavos.
+> gamificação que segura o aluno — com margem acima de 60% mesmo pagando 30% de comissão, e
+> custo de infraestrutura de centavos.
 > Com R$ 500 mil, em 24 meses transformamos isso em R$ 1,5 milhão de ARR ou em uma empresa
 > lucrativa que não precisa de mais ninguém. Os dois cenários pagam a aposta."
 

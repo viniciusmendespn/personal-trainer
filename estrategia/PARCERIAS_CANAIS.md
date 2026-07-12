@@ -142,7 +142,7 @@ realocar. Medir cada parceria por cupom próprio (rastreio já suportado pelo si
 
 ## 10. Princípios de parceria (não negociáveis)
 
-1. **Comissão só sobre Gestão Pro** — add-ons nunca comissionam (regra do `CUSTO_ESCALA.md` §6).
+1. **Comissão só sobre Gestão Pro** — add-ons nunca comissionam (regra do `CUSTO_ESCALA.md` §1).
 2. Toda parceria tem **cupom rastreável** — sem atribuição, sem acordo.
 3. Pagamento de comissão **pontual, todo mês, via PIX** — a reputação do programa é o produto.
 4. Nunca exclusividade de canal no estágio atual.

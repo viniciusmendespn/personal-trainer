@@ -12,7 +12,7 @@ Implementados — ver `plans/zany-twirling-oasis.md` para o plano executado:
 - ✅ **#1** Agregado de não-lidas + TTL em toda notificação (§1.1)
 - ✅ **#2** Rate limiting do agente (10 msg/aluno/min) + dedup pós-resposta (§1.4)
 - ✅ **#3** `SYSTEM#SCHED` particionado por dia + paginação no scheduler (§1.2)
-- ✅ **#4** Logging de `cached_tokens` para confirmar prompt caching (`CUSTO_ESCALA.md` §5.4)
+- ✅ **#4** Logging de `cached_tokens` para confirmar prompt caching (`CUSTO_ESCALA.md`, notas herdadas)
 - ✅ **#5** Cache `instanceId→personal`/`telefone→aluno` no webhook + `foto_s3_key` denormalizada no ranking (§2.5, §2.6)
 - ✅ **#6** Code-splitting do frontend + lazy loading de mídia (§3) — **paginação do ranking não foi implementada** (decisão: ordenação por pontos torna paginação cursor-based contraproducente; o N+1 real já foi resolvido pelo item #5)
 - ✅ **#8** `deletar_post` direto por SK + contador agregado de alunos no dashboard (§2.2, §2.3)
@@ -23,7 +23,7 @@ Implementados — ver `plans/zany-twirling-oasis.md` para o plano executado:
   deste documento ("correção não preventiva — fazer quando o volume justificar").
 
 Achados de baixa severidade não cobertos por nenhum item de §5 (mencionados em §3, sem ação):
-S3 sem `LifecycleConfiguration` (armazenamento cresce sem limite — ver `CUSTO_ESCALA.md` §4.5).
+S3 sem `LifecycleConfiguration` (armazenamento cresce sem limite — ver `CUSTO_ESCALA.md` §5).
 
 ---
 
@@ -375,7 +375,7 @@ Para não gerar trabalho desnecessário em cima do que já segue o padrão certo
 | 1 | Agregado pré-computado de não-lidas + TTL em toda notificação na criação | Baixo | Alto (cresce sozinho com o tempo) | §1.1 | ✅ Implementado |
 | 2 | Rate limiting por aluno no agente + mover dedup para depois da resposta | Baixo-Médio | Alto (maior vetor de custo descontrolado + bug de mensagem perdida) | §1.4 | ✅ Implementado |
 | 3 | Particionar `SYSTEM#SCHED` por dia + paginar `scheduler.py` | Médio | Alto (hot partition + risco de timeout) | §1.2 | ✅ Implementado |
-| 4 | Verificar/ativar prompt caching no provider LLM ativo | Baixo (investigação) | Alto (~25-30% do maior custo do sistema) | `CUSTO_ESCALA.md` §5.4 | ✅ Logging adicionado (confirmação de uso real pendente) |
+| 4 | Verificar/ativar prompt caching no provider LLM ativo | Baixo (investigação) | Alto (~25-30% do maior custo do sistema) | `CUSTO_ESCALA.md` (notas herdadas) | ✅ Logging adicionado (confirmação de uso real pendente) |
 | 5 | Cache de `instanceId→personal`/`telefone→aluno` no webhook; denormalizar `foto_s3_key` no ranking | Baixo | Médio (2 GetItems evitáveis por mensagem; N+1 do ranking) | §2.5, §2.6 | ✅ Implementado |
 | 6 | Code-splitting do bundle frontend (separar `/aluno` do portal) + paginar ranking + lazy loading de mídia | Médio | Médio (UX do aluno, não custo direto) | §3 | ✅ Code-splitting + lazy loading; paginação do ranking descartada (decisão deliberada) |
 | 7 | Lambda separada para webhook/agente | Médio-Alto | Médio (só relevante com tráfego concorrente real) | §1.3 | ⬜ Adiado (fora de escopo, por decisão do usuário) |

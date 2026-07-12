@@ -35,12 +35,13 @@
 
 1. **O mercado comporta o modelo freemium do CoachPilot**: 40% dos personais têm ≤5 alunos
    (usariam o plano grátis de 3 alunos como porta de entrada), e o personal "de agenda cheia"
-   (20–30 alunos) é exatamente a persona do Gestão Pro (premissa de 25 alunos do `CUSTO_ESCALA.md`).
+   (20–30 alunos) é exatamente a persona do Gestão Pro (premissa pessimista de 30 alunos do `CUSTO_ESCALA.md`).
 2. **R$ 39,90/mês é <0,5% da renda média do personal com clientela** e equivale a menos de meia
    sessão avulsa. O argumento "1 aluno retido paga 3 meses de plataforma" é matematicamente forte.
 3. **WhatsApp é o sistema operacional do brasileiro** — o add-on de canal WhatsApp + assistente IA
    ataca o canal onde aluno e personal já vivem. Nenhum concorrente faz isso (ver §3.4).
-4. **TAM bottom-up (segmento personal):** 100 mil personais × ARPU R$ 65,37 × 12 = **R$ 78 mi/ano**.
+4. **TAM bottom-up (segmento personal):** 100 mil personais × ARPU R$ 65,37 × 12 = **R$ 78 mi/ano**
+   (ARPU com add-ons; piso só-Gestão Pro: ~R$ 48 mi/ano).
    Com os ~690 mil profissionais CREF como teto de expansão (estúdios, professores de academia),
    o mercado endereçável total supera **R$ 500 mi/ano**.
 
@@ -190,7 +191,8 @@ deveria ganhar mais só porque você trabalhou mais."
 **Forças:** único com IA do aluno no WhatsApp; operação por IA mais profunda do mercado (migração
 em massa = destrava troca de software); gamificação completa; marketplace de conteúdo licenciado
 único; alunos ilimitados a R$ 39,90; PIX direto sem taxa de plataforma nem IAP; custo de infra
-marginal ~R$ 0,70/personal (margem 61%+, escala sem gargalo); financeiro do aluno integrado.
+marginal ~R$ 1,00/personal mesmo em uso intenso (margem de contribuição 66–96% sobre o plano,
+escala sem gargalo); financeiro do aluno integrado.
 
 **Fraquezas:** marca desconhecida vs 146 mil avaliações do MFIT; sem app nas lojas (PWA exige
 educação do usuário — Tecnofit/MFIT usam a presença na loja como canal de aquisição); biblioteca

@@ -20,12 +20,15 @@ clique) e **assistente de IA do aluno via WhatsApp** com contexto do treino real
 
 - **Modelo:** freemium (grátis até 3 alunos) → **Gestão Pro R$ 39,90/mês** (alunos ilimitados) →
   add-ons Canal WhatsApp (+R$ 29,90/mês) e Assistente IA (+R$ 4,90/aluno/mês). ARPU projetado
-  **R$ 65,37/mês**; margem de contribuição **61%**.
+  **R$ 65,37/mês** com add-ons (que são ~neutros no lucro); margem de contribuição sobre o
+  Gestão Pro: **96% no cliente direto, 66% no cliente via divulgador (comissão 30%)**.
 - **Mercado:** ~100 mil personal trainers ativos no Brasil (+33% a.a.), dentro de um setor fitness
   de R$ 8,6 bi que tem no país o 2º maior parque de academias do mundo. TAM bottom-up do segmento:
   ~R$ 78 mi/ano.
-- **Economics:** break-even com **4 clientes Pro**; custo de infra marginal de ~R$ 0,70/personal/mês
-  (serverless AWS); lucro líquido projetado de ~R$ 14 mil/mês com 500 assinantes Pro.
+- **Economics:** break-even com **4 clientes diretos ou 5 via divulgador**; custo de infra marginal
+  de ~R$ 1,00/personal/mês (serverless AWS, premissa pessimista de uso intenso com 30 alunos);
+  lucro líquido projetado de **R$ 10–12 mil/mês com 500 assinantes Pro** mesmo com a carteira
+  majoritariamente comissionada (piso pessimista: 100% via divulgadores → R$ 10,3 mil/mês).
 - **Estágio:** produto completo em produção (portal, app do aluno PWA, loja de pacotes, agente
   WhatsApp, financeiro PIX), primeiros usuários conhecidos, zero clientes pagantes — pré-receita.
 - **Caminhos de crescimento:** orgânico/bootstrap (caixa positivo desde ~o mês 2, meta 100 Pro em
@@ -89,7 +92,7 @@ Uma plataforma única onde:
 2. **Biblioteca de vídeos de exercícios ampliada** — maior gap objetivo vs MFIT (1.800 vídeos);
    caminho: parceria de conteúdo ou geração assistida + biblioteca gratuita já existente.
 3. **Assinatura recorrente automática** (hoje renovação = novo PIX) — reduz churn involuntário.
-4. **Lifecycle S3** (obrigatório antes de 100 personais — risco de custo, ver CUSTO_ESCALA §A.4.5).
+4. **Lifecycle S3** (obrigatório antes de 100 personais — risco de custo, ver `CUSTO_ESCALA.md` §5).
 5. Onboarding guiado in-app (wizard primeiro-aluno-em-5-minutos) — hoje a ativação depende de
    acompanhamento manual.
 
@@ -99,7 +102,8 @@ Uma plataforma única onde:
 
 Resumo (análise completa em `ANALISE_MERCADO_CONCORRENTES.md`):
 
-- **TAM** (personais BR): 100 mil × R$ 65,37 × 12 ≈ **R$ 78 mi/ano** — teto de expansão para
+- **TAM** (personais BR): 100 mil × R$ 65,37 × 12 ≈ **R$ 78 mi/ano** (ARPU com add-ons; piso
+  só-Gestão Pro: ~R$ 48 mi/ano) — teto de expansão para
   ~690 mil profissionais CREF (estúdios/professores) > R$ 500 mi/ano.
 - **SAM** (personais digitalizáveis, com 5+ alunos e presença digital): ~40–50 mil → R$ 31–39 mi/ano.
 - **SOM 36 meses:** 2.000–5.000 Pro (2–5% do SAM) → **R$ 1,6–3,9 mi/ano** de receita.
@@ -117,14 +121,16 @@ Resumo (análise completa em `ANALISE_MERCADO_CONCORRENTES.md`):
 
 | Métrica | Valor |
 |---|---|
-| ARPU (Pro + adoção parcial de add-ons) | **R$ 65,37/mês** |
-| Custo variável/personal | ~R$ 25,50/mês (LLM + W-API + AWS + pagamento) |
-| Margem de contribuição | **R$ 39,87/mês (61%)** |
-| Lucro líquido por escala | 25 Pro ≈ R$ 750/mês · 100 Pro ≈ R$ 3.100/mês · 500 Pro ≈ R$ 12–14 mil/mês |
-| Break-even | **4 clientes Pro** (custos fixos ~R$ 120/mês) |
-| LTV (18 meses de vida média) | **R$ 1.176** · LTV líquido via divulgador R$ 982 |
-| CAC alvo | Divulgador: R$ 10,77/mês recorrente (≈R$ 194 em 18m) · Mídia paga: R$ 150–500 único |
-| LTV/CAC | **> 3** em ambos os canais (saudável para SaaS SMB) |
+| Receita por assinante (Gestão Pro) | **R$ 39,90/mês** — única linha comissionável; add-ons elevam o faturamento (ARPU ~R$ 65) mas são ~neutros no lucro |
+| Custo variável/personal (sem add-ons) | ~R$ 1,60/mês (infra AWS pessimista R$ 1,00 + pagamento R$ 0,60) |
+| Margem de contribuição — cliente direto | **R$ 38,30/mês (96%)** |
+| Margem de contribuição — via divulgador (30%) | **R$ 26,33/mês (66%)** |
+| Lucro líquido por escala (conservador: 80% via divulgadores) | 25 Pro ≈ R$ 530/mês · 100 Pro ≈ R$ 2.480/mês · 500 Pro ≈ R$ 11.500/mês |
+| Piso pessimista (100% via divulgadores a 30%) | 25 Pro ≈ R$ 470 · 100 Pro ≈ R$ 2.240 · 500 Pro ≈ R$ 10.320/mês |
+| Break-even | **4 clientes diretos ou 5 via divulgador** (custos fixos ~R$ 120/mês) |
+| LTV (18 meses de vida média, só Gestão Pro) | **R$ 718** de receita · contribuição líquida via divulgador ≈ R$ 474 (com add-ons o LTV de faturamento sobe a ~R$ 1.176) |
+| CAC | Divulgador: R$ 11,97/mês recorrente (≈R$ 215 em 18m) · Mídia paga: R$ 150–500 único |
+| LTV/CAC | **≥ 3** no canal divulgador (718/215 ≈ 3,3); mídia paga exige CAC ≤ R$ 240 para manter 3 na visão só-Pro |
 | Churn de referência (benchmark SaaS SMB) | 3–5%/mês — premissa de planejamento: 4%/mês, mitigado por gamificação do aluno (o app do aluno cria custo de troca para o personal) |
 
 **Lógica central do modelo:** o lucro vem do Gestão Pro; os add-ons (WhatsApp/IA) são
@@ -138,7 +144,8 @@ que governa tudo é o número de assinantes Pro ativos.**
 ### 6.1 Canais (por ordem de prioridade)
 
 1. **Divulgadores (comissão recorrente 20–35%, v3)** — canal principal. Personais influentes,
-   professores e donos de estúdio vendendo para os pares. CAC recorrente ~R$ 10,77/mês, sem caixa
+   professores e donos de estúdio vendendo para os pares. CAC recorrente ≤ R$ 11,97/mês (teto
+   de 30% da escada normal), sem caixa
    antecipado — ideal para bootstrap. Requisito: construir o painel do divulgador.
 2. **Indique e Ganhe (viral loop)** — 30 dias grátis para os dois lados; já implementado.
 3. **Conteúdo orgânico + SEO** — Instagram (@coachpilotoficial) com demonstrações da IA em vídeo

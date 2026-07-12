@@ -4,7 +4,7 @@
 > performance; 35% exclusivo do programa Embaixador da Marca (por convite)**, com regras claras
 > de divulgação, produção de conteúdo e direcionamento de novos usuários.
 > Contrato-base: `juridico/MINUTA_CONTRATO_DIVULGADOR.md` · Aditivo do Embaixador:
-> `juridico/MINUTA_ADITIVO_EMBAIXADOR.md` · Análise financeira: `CUSTO_ESCALA.md` §6.
+> `juridico/MINUTA_ADITIVO_EMBAIXADOR.md` · Análise financeira: `CUSTO_ESCALA.md` §2–§4.
 >
 > ✅ A página pública `/divulgadores` já exibe o modelo v3 (atualizada em jul/2026).
 
@@ -41,8 +41,8 @@
 - "Venda nova" = cliente Gestão Pro pago inédito vindo do cupom. Plano anual conta como venda
   nova e comissiona de uma vez sobre o valor recebido.
 - O acelerador vale para o mês de competência inteiro, zera no mês seguinte e se reconquista com
-  novas vendas. **Teto absoluto: 35% (Embaixador)** — pior caso da plataforma segue em 62% de
-  margem por cliente (R$ 24,63).
+  novas vendas. **Teto absoluto: 35% (Embaixador)** — pior caso da plataforma segue em 61% de
+  margem por cliente (R$ 24,34, com a premissa pessimista de infra de jul/2026).
 - Comissão só sobre o Gestão Pro (R$ 39,90). Add-ons e plano grátis nunca comissionam.
 
 ### 2.3 Bônus de marco (pagos uma única vez)
@@ -177,7 +177,8 @@ pagamento via PIX em dia fixo com extrato.
 
 - Teto de 35% restrito a poucos Embaixadores → custo médio de comissão da base cai vs. modelo
   antigo (carteiras paradas pagam 20–30%; topo por performance só nos meses vendidos).
-- Pior caso por cliente (Embaixador a 35%): margem de **62%** (R$ 24,63 sobre R$ 39,90) — inalterado.
+- Pior caso por cliente (Embaixador a 35%): margem de **61%** (R$ 24,34 sobre R$ 39,90, já com
+  infra pessimista de R$ 1,00/personal — jul/2026). Caso típico (30%): **66%** (R$ 26,33).
 - Custos pontuais e limitados: marcos (máx. R$ 350/divulgador, 1x) e alta performance (R$ 100 só
   em mês de 4+ vendas — autofinanciado pela receita nova).
 
