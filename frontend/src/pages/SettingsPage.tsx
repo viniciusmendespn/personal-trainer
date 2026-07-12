@@ -512,7 +512,7 @@ function PagamentosTab() {
         <p className="font-medium text-text-secondary mb-1">Sobre as taxas do Mercado Pago</p>
         <p>
           Pagamentos via Pix pelo Mercado Pago podem ter taxa de processamento cobrada pelo próprio Mercado Pago.
-          A taxa divulgada atualmente para Pix com QR Code é de aproximadamente 0,49% por transação, mas esse
+          A taxa divulgada atualmente para Pix com QR Code é de aproximadamente 0,99% por transação, mas esse
           valor pode variar conforme sua conta, condições comerciais ou regras vigentes do Mercado Pago.
           Consulte sua conta Mercado Pago para confirmar as taxas aplicáveis.
         </p>
