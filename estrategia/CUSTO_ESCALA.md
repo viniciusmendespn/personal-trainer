@@ -28,18 +28,19 @@
 
 ## 2. Margem por personal — o caso base
 
-**Personal bem ativo (30 alunos, uso intenso do portal e do app), adquirido via divulgador
-a 30% de comissão:**
+**Personal bem ativo (30 alunos, uso intenso do portal e do app)** — comparativo entre
+cliente adquirido **via divulgador (30%)** e cliente **direto** (landing/SEO/indicação
+orgânica, sem comissão):
 
-| Item | Valor/mês |
-|---|---|
-| Receita Gestão Pro | R$39,90 |
-| Comissão divulgador (30%) | −R$11,97 |
-| Infra AWS (uso intenso, 30 alunos)¹ | −R$1,00 |
-| Processamento de pagamento (1,5%) | −R$0,60 |
-| **Margem de contribuição** | **R$26,33/mês (66,0%)** |
-| Imposto rateado (Simples ~6% da receita) | −R$2,39 |
-| **Margem líquida por personal** | **≈ R$23,94/mês (60,0%)** |
+| Item | Via divulgador (30%) | Direto (sem comissão) |
+|---|---|---|
+| Receita Gestão Pro | R$39,90 | R$39,90 |
+| Comissão divulgador | −R$11,97 | — |
+| Infra AWS (uso intenso, 30 alunos)¹ | −R$1,00 | −R$1,00 |
+| Processamento de pagamento (1,5%) | −R$0,60 | −R$0,60 |
+| **Margem de contribuição** | **R$26,33/mês (66,0%)** | **R$38,30/mês (96,0%)** |
+| Imposto rateado (Simples ~6% da receita) | −R$2,39 | −R$2,39 |
+| **Margem líquida por personal** | **≈ R$23,94/mês (60,0%)** | **≈ R$35,91/mês (90,0%)** |
 
 ¹ Estimativa **pessimista**: a v2 estimava R$0,60–0,75/personal (25 alunos, incluindo tráfego
 do agente IA). Aqui, sem agente mas com 30 alunos em uso intenso (4–5 sessões/semana/aluno,
@@ -51,8 +52,9 @@ R$39,90 − R$13,97 − R$1,00 − R$0,60 = **R$24,34/mês (61,0%)** antes de im
 
 > **Resumo:** mesmo pagando o teto normal de 30% e assumindo o personal mais "caro" possível
 > em infra, **cada assinante via divulgador deixa ~R$26/mês líquidos de custos variáveis**
-> (~R$24 após imposto). Um cliente direto (sem comissão) deixa R$38,30 — a diferença de
-> R$11,97 é o custo de aquisição recorrente do canal.
+> (~R$24 após imposto), contra **~R$38 (~R$36 após imposto) do cliente direto**. A diferença
+> de R$11,97 é o custo de aquisição recorrente do canal — o divulgador "custa" 30% da
+> margem, mas traz o cliente sem CAC de mídia paga.
 
 ---
 
