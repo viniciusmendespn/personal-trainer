@@ -41,6 +41,7 @@ e [CONTEXTO_MARKETING.md](CONTEXTO_MARKETING.md) (produto, personas, identidade 
 |---|---|
 | [kit-divulgador/KIT_DIVULGADOR.md](kit-divulgador/KIT_DIVULGADOR.md) | Guia do divulgador: produto, preços, como divulgar, scripts, comissões v3, primeiros passos e regras |
 | [kit-divulgador/BASE_CONHECIMENTO_IA.md](kit-divulgador/BASE_CONHECIMENTO_IA.md) | Base de conhecimento única para o divulgador subir no ChatGPT/Claude/Gemini e tirar dúvidas — sem informação interna |
+| [kit-divulgador/CRIADOR_CONTEUDO_IA.md](kit-divulgador/CRIADOR_CONTEUDO_IA.md) | Arquivo + prompt de ativação que transforma o ChatGPT do divulgador em criador de posts/Reels/legendas/artes — exige o cupom/link do divulgador antes de gerar qualquer conteúdo e o insere em tudo |
 
 ## Decisão central
 

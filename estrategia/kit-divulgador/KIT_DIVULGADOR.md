@@ -2,8 +2,10 @@
 
 > Bem-vindo(a) ao time! Este guia tem tudo que você precisa para divulgar o CoachPilot e ganhar
 > comissão recorrente. **Documento externo — pode ser compartilhado com divulgadores.**
-> Dúvidas: WhatsApp oficial (13) 98808-8204 · Dica: suba o arquivo `BASE_CONHECIMENTO_IA.md` no
-> seu ChatGPT/Claude/Gemini e pergunte qualquer coisa sobre o produto e o programa.
+> Dúvidas: WhatsApp oficial (13) 98808-8204 · Dica: o kit inclui dois arquivos para usar com IA —
+> `BASE_CONHECIMENTO_IA.md` (suba no seu ChatGPT/Claude/Gemini e pergunte qualquer coisa sobre o
+> produto e o programa) e `CRIADOR_CONTEUDO_IA.md` (transforma sua IA numa criadora de posts,
+> Reels, legendas e artes, sempre com o SEU cupom).
 
 ---
 
@@ -59,6 +61,8 @@ a novidades. Divulgadores com boa performance são convidados.
 - [ ] Receba seu **cupom exclusivo** pelo WhatsApp oficial
 - [ ] **Use a plataforma**: crie sua conta grátis e importe um aluno de teste com a IA — quem usa,
   vende 10x melhor
+- [ ] Suba o `CRIADOR_CONTEUDO_IA.md` no seu ChatGPT e cole o prompt de ativação — ele passa a
+  criar posts, Reels e legendas prontos com o seu cupom
 - [ ] Salve os 3 vídeos de demonstração do kit no seu celular
 - [ ] Faça sua **primeira lista de 10 colegas** que ainda usam planilha
 - [ ] Mande a primeira mensagem (script abaixo) para 3 deles
@@ -73,6 +77,10 @@ a novidades. Divulgadores com boa performance são convidados.
 - **Presencial (academia, evento):** demo de 30 segundos no celular + "te mando o link com 30
   dias grátis, me passa teu WhatsApp".
 - **Colegas diretos:** mensagem pessoal com contexto (nunca em massa).
+
+**Sem tempo/criatividade para criar conteúdo?** Use o `CRIADOR_CONTEUDO_IA.md` do kit: suba no
+seu ChatGPT, cole o prompt de ativação, informe seu cupom — e peça legendas, roteiros de Reels,
+carrosséis, artes e calendário de conteúdo da semana, tudo já com o seu link.
 
 **Script de WhatsApp (adapte ao seu tom):**
 > Oi [nome]! Quanto tempo você gasta por semana digitando treino de aluno? 😅 Comecei a usar uma
