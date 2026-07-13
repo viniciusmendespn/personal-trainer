@@ -6,6 +6,8 @@ import { useRotinas } from '../hooks/useRotinas'
 import { useBiblioteca } from '../hooks/useDominio'
 import { Button, Card, Spinner, EmptyState, Modal, Badge, Tabs, useToast, useConfirm } from '../components/ui'
 import { downloadJson } from '../api/pacotes'
+import { bibliotecaApi } from '../api/biblioteca'
+import { downloadText, fetchPromptMd, montarArquivoIA, slimBiblioteca } from '../utils/arquivoIa'
 import type { ExLib, ImportarPacoteResponse, PacoteInstalado } from '../types'
 import { normalizeText } from '../utils/normalizeText'
 
@@ -14,8 +16,40 @@ import { normalizeText } from '../utils/normalizeText'
 function ImportarIASection() {
   const [json, setJson] = useState('')
   const [result, setResult] = useState<ImportarPacoteResponse | null>(null)
+  const [baixando, setBaixando] = useState(false)
   const importarRascunho = useImportarRascunho()
   const { show: toast } = useToast()
+
+  async function handleBaixarArquivo() {
+    setBaixando(true)
+    try {
+      const [prompt, lib] = await Promise.all([
+        fetchPromptMd('/prompt-cpkg.md'),
+        bibliotecaApi.list(),
+      ])
+      const slim = slimBiblioteca(lib)
+      const secoes = slim.length
+        ? [{
+            titulo: '📦 BIBLIOTECA DO PERSONAL (gerado automaticamente — não edite)',
+            nota:
+              '> Exercícios que o personal já tem cadastrados, com o **nome exato** e o **vídeo** de cada um. ' +
+              'Ao montar o array `exercicios` (Etapa 3), reutilize estes exercícios sempre que couberem: ' +
+              'use o mesmo `nome` (idêntico ao daqui) e copie o `video_url` da biblioteca. Crie exercício ' +
+              'novo (com `video_url: null`) só quando não houver equivalente nesta lista.',
+            json: slim,
+          }]
+        : []
+      const md = montarArquivoIA(prompt, secoes)
+      downloadText(md, 'prompt-pacote-coachpilot.md')
+      if (!slim.length) {
+        toast('Sua biblioteca está vazia — baixei só o prompt. Cadastre exercícios para a IA reaproveitar seus vídeos.', 'info')
+      }
+    } catch {
+      toast('Erro ao gerar o arquivo. Tente novamente.', 'error')
+    } finally {
+      setBaixando(false)
+    }
+  }
 
   async function handleImportarIA() {
     if (!json.trim()) return
@@ -52,21 +86,17 @@ function ImportarIASection() {
               </p>
             </div>
           </div>
-          <a
-            href="/prompt-cpkg.md"
-            download="prompt-cpkg.md"
-            className="shrink-0"
-          >
-            <Button variant="energy" size="sm">
-              <span className="flex items-center gap-1.5"><Download size={15} /> Baixar prompt</span>
-            </Button>
-          </a>
+          <Button variant="energy" size="sm" className="shrink-0" onClick={handleBaixarArquivo} disabled={baixando}>
+            <span className="flex items-center gap-1.5">
+              {baixando ? <Spinner className="w-4 h-4" /> : <Download size={15} />} Baixar prompt + biblioteca
+            </span>
+          </Button>
         </div>
 
         <ol className="mt-5 mb-4 space-y-2.5">
           {[
-            'Baixe o prompt e cole em qualquer IA (ChatGPT, Claude, Gemini).',
-            'Descreva o treino que você quer prescrever — a IA organiza no formato do CoachPilot.',
+            'Baixe o arquivo (prompt + sua biblioteca de exercícios) e anexe em qualquer IA (ChatGPT, Claude, Gemini).',
+            'Descreva o treino que você quer prescrever — a IA organiza no formato do CoachPilot, reaproveitando seus exercícios e vídeos.',
             'Cole o JSON aqui embaixo: o CoachPilot cadastra tudo automaticamente.',
           ].map((txt, i) => (
             <li key={i} className="flex items-start gap-3 text-sm">

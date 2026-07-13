@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Download, ExternalLink, Check, Sparkles, FileUp } from 'lucide-react'
+import { Download, ExternalLink, Check, FileUp } from 'lucide-react'
 import { Modal, Button, Textarea, Spinner, useToast, useConfirm } from './ui'
 import { useExportarPrograma, useImportarPrograma } from '../hooks/useTreinos'
-import { downloadJson } from '../api/pacotes'
+import { bibliotecaApi } from '../api/biblioteca'
+import { downloadText, fetchPromptMd, montarArquivoIA, slimBiblioteca } from '../utils/arquivoIa'
 import type { ImportarProgramaResponse } from '../api/treinos'
 
 interface Props {
@@ -20,19 +21,38 @@ const ERROS: Record<string, string> = {
 export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Props) {
   const [json, setJson] = useState('')
   const [result, setResult] = useState<ImportarProgramaResponse | null>(null)
-  const [baixouPrompt, setBaixouPrompt] = useState(false)
+  const [baixando, setBaixando] = useState(false)
   const exportar = useExportarPrograma()
   const importar = useImportarPrograma(alunoId)
   const confirm = useConfirm()
   const { show } = useToast()
 
-  async function handleBaixarTreino() {
+  async function handleBaixarArquivo() {
+    setBaixando(true)
     try {
-      const data = await exportar.mutateAsync(alunoId)
+      const [programa, prompt, lib] = await Promise.all([
+        exportar.mutateAsync(alunoId),
+        fetchPromptMd('/prompt-treino-aluno.md'),
+        bibliotecaApi.list(),
+      ])
+      const data = { ...(programa as object), biblioteca: slimBiblioteca(lib) }
+      const md = montarArquivoIA(prompt, [
+        {
+          titulo: '📦 DADOS DO ALUNO (gerado automaticamente — não edite)',
+          nota:
+            '> O JSON abaixo tem tudo o que você precisa: o programa atual (`treinos`), o perfil e ' +
+            'histórico completos do aluno (`contexto_aluno`) e a biblioteca de exercícios do personal ' +
+            '(`biblioteca`, com o nome exato e o vídeo de cada exercício já cadastrado). Use tudo isso ' +
+            'seguindo as instruções acima.',
+          json: data,
+        },
+      ])
       const nome = (alunoNome || 'aluno').replace(/[\\/:*?"<>|]/g, '').trim()
-      downloadJson(data, `${nome} - treino.json`)
+      downloadText(md, `${nome} - treino IA.md`)
     } catch {
-      show('Erro ao baixar o treino do aluno.', 'error')
+      show('Erro ao gerar o arquivo do aluno.', 'error')
+    } finally {
+      setBaixando(false)
     }
   }
 
@@ -60,7 +80,6 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
   function handleClose() {
     setJson('')
     setResult(null)
-    setBaixouPrompt(false)
     onClose()
   }
 
@@ -81,27 +100,21 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
       ) : (
         <div className="space-y-5">
           <p className="text-sm text-text-secondary">
-            Baixe o arquivo do aluno — treino atual + perfil completo (histórico de sessões, frequência,
-            dores, dúvidas, avaliações, metas e anamnese) — e o prompt, cole os dois numa IA (ChatGPT,
-            Claude, Gemini) e peça o ajuste que quiser. A IA analisa o histórico do aluno antes de mexer
-            no treino e devolve o JSON do programa atualizado; cole abaixo para sobrescrever.
+            Baixe <span className="text-text-primary font-medium">um único arquivo</span> — instruções + treino
+            atual + perfil completo do aluno (histórico de sessões, frequência, dores, dúvidas, avaliações,
+            metas e anamnese) + sua biblioteca de exercícios (com os vídeos já cadastrados). Anexe esse arquivo
+            numa IA (ChatGPT, Claude, Gemini) e peça o ajuste. A IA analisa o histórico, reaproveita seus
+            exercícios e devolve o JSON do programa atualizado; cole abaixo para sobrescrever.
           </p>
 
           <div>
-            <p className="text-sm font-medium mb-2">1. Baixe o treino + contexto e o prompt</p>
+            <p className="text-sm font-medium mb-2">1. Baixe o arquivo do aluno</p>
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={handleBaixarTreino} disabled={exportar.isPending}>
+              <Button variant="outline" size="sm" onClick={handleBaixarArquivo} disabled={baixando}>
                 <span className="flex items-center gap-1.5">
-                  {exportar.isPending ? <Spinner className="w-4 h-4" /> : <Download size={15} />} Baixar treino + contexto do aluno
+                  {baixando ? <Spinner className="w-4 h-4" /> : <Download size={15} />} Baixar arquivo para a IA
                 </span>
               </Button>
-              <a href="/prompt-treino-aluno.md" download="prompt-treino-aluno.md" onClick={() => setBaixouPrompt(true)}>
-                <Button variant="outline" size="sm">
-                  <span className="flex items-center gap-1.5">
-                    {baixouPrompt ? <Check size={15} /> : <Sparkles size={15} />} Baixar prompt
-                  </span>
-                </Button>
-              </a>
               <Button variant="ghost" size="sm" onClick={() => window.open('https://chatgpt.com', '_blank')}>
                 <span className="flex items-center gap-1.5"><ExternalLink size={15} /> Abrir ChatGPT</span>
               </Button>
@@ -111,9 +124,10 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
           <div>
             <p className="text-sm font-medium mb-1">2. Peça o ajuste à IA</p>
             <p className="text-xs text-text-secondary">
-              Envie o prompt + o arquivo e descreva a mudança em linguagem natural — ou peça "atualize o
-              treino com base no histórico". A IA analisa o perfil e o histórico completos do aluno e
-              devolve o programa COMPLETO atualizado, apenas com o bloco de treinos.
+              Anexe o arquivo baixado e descreva a mudança em linguagem natural — ou peça "atualize o
+              treino com base no histórico". A IA analisa o perfil e o histórico completos do aluno,
+              reaproveita os exercícios da sua biblioteca (com os vídeos certos) e devolve o programa
+              COMPLETO atualizado, apenas com o bloco de treinos.
             </p>
           </div>
 

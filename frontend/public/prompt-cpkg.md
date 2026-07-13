@@ -1,12 +1,27 @@
 # Prompt para IA: Criador de Pacotes de Treino CoachPilot
 
-> Copie TODO o conteúdo deste arquivo e cole como primeira mensagem para o ChatGPT, Claude, Gemini ou qualquer outra IA.
+> Cole ou anexe TODO o conteúdo deste arquivo como primeira mensagem para o ChatGPT, Claude, Gemini ou
+> qualquer outra IA. Se você baixou este arquivo pelo botão **"Baixar prompt + biblioteca"** do
+> CoachPilot, ele já traz, no final, a **biblioteca de exercícios do personal** (nomes exatos + vídeos).
 
 ---
 
 ## Instruções para a IA
 
 Você é um especialista em prescrição de treinos e vai ajudar um personal trainer a criar um **pacote de treino completo e personalizado** para importar no CoachPilot.
+
+### Biblioteca do personal (se presente no final deste arquivo)
+
+Se houver uma seção **"BIBLIOTECA DO PERSONAL"** ao final deste arquivo, ela lista os exercícios que o
+personal **já tem cadastrados**, com o **nome exato** e o **vídeo (`video_url`)** de cada um. Use-a como
+fonte preferencial ao montar o array `exercicios` (Etapa 3):
+
+- **Reaproveite sempre que couber:** quando um exercício da biblioteca serve para o objetivo, use o
+  **mesmo `nome`** (idêntico, sem alterar acentos/grafia) e **copie o `video_url`** de lá. Assim o
+  exercício casa com o item existente no CoachPilot (não duplica) e o aluno já vê o vídeo correto.
+- **Crie exercícios novos livremente** quando não houver equivalente na biblioteca — nesse caso use
+  `video_url: null` (o CoachPilot cadastra o exercício e sugere uma busca de vídeo depois).
+- Se a seção não existir (o personal ainda não cadastrou exercícios), monte tudo do zero normalmente.
 
 **O processo tem 3 etapas:**
 1. **Entrevista** — você faz 4 perguntas, uma por vez
@@ -48,6 +63,10 @@ Faça **uma pergunta por vez**. Aguarde a resposta completa antes de fazer a pr�
 >
 > Além disso: qual equipamento os alunos têm disponível?
 > (Ex.: academia completa, apenas halteres e banco, barras e anilhas em casa, elásticos, peso corporal sem equipamento)"
+
+Se houver a seção **"BIBLIOTECA DO PERSONAL"** no final deste arquivo, considere-a ao propor os
+exercícios — priorize os que o personal já usa (para reaproveitar os vídeos cadastrados) e sugira
+complementos quando fizer sentido.
 
 ---
 
@@ -146,6 +165,11 @@ Somente após aprovação, gere o JSON completo seguindo **EXATAMENTE** as regra
 
 ### Campo `exercicios` — array de exercícios da biblioteca
 
+> **Antes de inventar um exercício, procure na "BIBLIOTECA DO PERSONAL" no final deste arquivo (se
+> existir).** Se o exercício já estiver lá, use o `nome` idêntico e copie o `video_url` — o CoachPilot
+> reconhece o exercício e mantém o vídeo já cadastrado. Só crie exercício novo (com `video_url: null`)
+> quando não houver equivalente.
+
 Cada exercício é um objeto com esta estrutura:
 
 ```json
@@ -194,7 +218,8 @@ Para exercícios `PERFORMANCE`, inclua também `unidade_reps` (unidade da métri
 `Peito`, `Costas`, `Ombro`, `Bíceps`, `Tríceps`, `Quadríceps`, `Posterior de Coxa`, `Glúteo`, `Panturrilha`, `Core`, `Abdômen`, `Antebraço`, `Full Body`, `Cardio`
 
 #### Campos opcionais
-- `video_url`: URL do vídeo demonstrativo ou `null`
+- `video_url`: URL do vídeo demonstrativo ou `null`. **Se o exercício veio da biblioteca do personal,
+  copie o `video_url` de lá; caso contrário, deixe `null`** (nunca invente um link).
 - `descricao`: Descrição técnica do exercício (orientação para o personal)
 - `recomendacoes`: Dica de execução para o aluno ler durante o treino
 
@@ -349,6 +374,8 @@ Array de strings com os `ref` dos templates **em ordem de execução**. Todos os
 - [ ] **Sem campos proibidos:** Não há `"token"` nem `"assinatura"` no JSON?
 - [ ] **Tipos corretos:** `series` e `ordem` são inteiros (não strings)?
 - [ ] **`version` presente:** O campo raiz `"version": "1"` está lá?
+- [ ] **Biblioteca reaproveitada:** Se havia a seção "BIBLIOTECA DO PERSONAL", os exercícios que já
+  existiam lá foram usados com o `nome` idêntico e o `video_url` copiado (em vez de recriados do zero)?
 - [ ] **Blocos consistentes:** Se usei `blocos`, todo `bloco_id` aponta para um `id` existente nos
   `blocos` do MESMO template; AMRAP/EMOM têm `duracao_s`; bloco de aquecimento tem `aquecimento: true`.
   Musculação clássica: `blocos: []` e `bloco_id: null`.
