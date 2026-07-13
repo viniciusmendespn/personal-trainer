@@ -46,7 +46,7 @@ const FILTROS: { label: string; tipo?: string }[] = [
   { label: 'Dor', tipo: 'DOR' },
   { label: 'Dúvida', tipo: 'DUVIDA' },
   { label: 'Execução', tipo: 'EXECUCAO' },
-  { label: 'Mídia pendente', tipo: 'MIDIA_PENDENTE' },
+  { label: 'Férias/ausência', tipo: 'FERIAS_ALUNO' },
   { label: 'Treino', tipo: 'TREINO_FIM' },
   { label: 'Mensagem', tipo: 'MSG_ALUNO_DIRETO' },
 ]
