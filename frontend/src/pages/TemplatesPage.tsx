@@ -248,6 +248,8 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                         updateEx(i, {
                           nome: v,
                           ...(lib?.grupo && !ex.grupo ? { grupo: lib.grupo } : {}),
+                          ...(lib?.video_url && !ex.video_url ? { video_url: lib.video_url } : {}),
+                          ...(lib?.recomendacoes && !ex.observacoes ? { observacoes: lib.recomendacoes } : {}),
                         })
                       }}
                     />
