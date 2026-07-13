@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Bot, Download, Sparkles } from 'lucide-react'
+import { Bot, Sparkles } from 'lucide-react'
 import { Button } from './ui'
 
 /**
@@ -27,11 +27,6 @@ export function MontarTreinoIaCallout({ compact = false }: { compact?: boolean }
             <span className="flex items-center gap-2"><Bot size={16} /> Cadastrar treino com IA</span>
           </Button>
         </Link>
-        <a href="/prompt-cpkg.md" download="prompt-cpkg.md">
-          <Button variant="outline">
-            <span className="flex items-center gap-2"><Download size={15} /> Baixar prompt</span>
-          </Button>
-        </a>
       </div>
       {!compact && (
         <p className="text-xs text-text-muted mt-3">
