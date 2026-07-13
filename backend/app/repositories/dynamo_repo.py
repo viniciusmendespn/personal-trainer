@@ -94,20 +94,54 @@ def _decode_cursor(cursor: str) -> dict:
 
 
 def query_pk_page(
-    pk: str, sk_prefix: str, limit: int, cursor: str | None = None, forward: bool = True
+    pk: str, sk_prefix: str, limit: int, cursor: str | None = None, forward: bool = True,
+    filters: dict | None = None, max_scans: int = 8,
 ) -> tuple[list[dict], str | None]:
     """Paginação cursor-based — usar em coleções que crescem sem limite por usuário
     (séries temporais como chat/notificações, ou listas que escalam com a carteira do
-    personal). `cursor` é opaco (carrega o LastEvaluatedKey codificado); coleções pequenas/
-    limitadas por aluno ou personal continuam usando `query_pk` sem paginação."""
+    personal). `cursor` é opaco (carrega a chave do último item retornado); coleções pequenas/
+    limitadas por aluno ou personal continuam usando `query_pk` sem paginação.
+
+    `filters` (dict de igualdades attr->valor) vira `FilterExpression` — filtragem SEMPRE no
+    servidor, nunca no cliente após paginar. Como o `FilterExpression` é aplicado DEPOIS do
+    `Limit`, uma única query pode devolver menos itens que `limit` mesmo havendo mais adiante;
+    por isso encadeamos até `max_scans` páginas para preencher a página lógica (limita o RCU
+    de pior caso: filtro raríssimo numa partição enorme não varre a coleção inteira de uma vez —
+    devolve página parcial + cursor para continuar)."""
     cond = Key("PK").eq(pk) & Key("SK").begins_with(sk_prefix)
+    fexpr = None
+    for k, v in (filters or {}).items():
+        c = Attr(k).eq(v)
+        fexpr = c if fexpr is None else fexpr & c
+
     kwargs: dict = {"KeyConditionExpression": cond, "ScanIndexForward": forward, "Limit": limit}
+    if fexpr is not None:
+        kwargs["FilterExpression"] = fexpr
     if cursor:
         kwargs["ExclusiveStartKey"] = _decode_cursor(cursor)
-    resp = _get_table().query(**kwargs)
-    last_key = resp.get("LastEvaluatedKey")
-    next_cursor = _encode_cursor(last_key) if last_key else None
-    return resp.get("Items", []), next_cursor
+
+    items: list[dict] = []
+    last_key = None
+    for _ in range(max_scans):
+        resp = _get_table().query(**kwargs)
+        items.extend(resp.get("Items", []))
+        last_key = resp.get("LastEvaluatedKey")
+        if len(items) >= limit or not last_key:
+            break
+        kwargs["ExclusiveStartKey"] = last_key
+
+    if len(items) >= limit:
+        # Preenchemos a página. Retomar após o último item INCLUÍDO (não o LastEvaluatedKey da
+        # query, que aponta para além dos itens filtrados e pularia matches no meio).
+        items = items[:limit]
+        last = items[-1]
+        next_cursor = _encode_cursor({"PK": last["PK"], "SK": last["SK"]})
+    elif last_key:
+        # Parou em max_scans com página parcial — continuar varrendo a partir da posição atual.
+        next_cursor = _encode_cursor(last_key)
+    else:
+        next_cursor = None
+    return items, next_cursor
 
 
 def batch_get_items(keys_list: list[tuple[str, str]]) -> dict[tuple[str, str], dict]:

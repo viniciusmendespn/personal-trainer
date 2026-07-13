@@ -190,7 +190,7 @@ function NotifCard({ item, alunos, markRead, onVincular }: {
 
 export function PendenciasPage() {
   const [tipoFiltro, setTipoFiltro] = useState<string | undefined>(undefined)
-  const { data: items, isLoading } = useNotificacoes(tipoFiltro)
+  const { data: items, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useNotificacoes(tipoFiltro)
   const markRead = useMarkRead()
   const markAll = useMarkAllRead()
   const alunos = useAlunos()
@@ -236,6 +236,18 @@ export function PendenciasPage() {
               onVincular={setVincularItem}
             />
           ))}
+          {hasNextPage && (
+            <div className="pt-2 flex justify-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? 'Carregando…' : 'Carregar mais'}
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

@@ -58,11 +58,10 @@ def _disparar_push_personal(personal_id: str, titulo: str, mensagem: str, tipo: 
 def listar(personal_id: str, limit: int = 50, cursor: str | None = None,
            tipo: str | None = None) -> tuple[list[dict], str | None]:
     items, next_cursor = repo.query_pk_page(
-        keys.pk_personal(personal_id), keys.NOTIF_PREFIX, limit, cursor, forward=False
+        keys.pk_personal(personal_id), keys.NOTIF_PREFIX, limit, cursor, forward=False,
+        filters={"tipo": tipo} if tipo else None,
     )
     result = [{**repo.clean(i), "ref": i["SK"]} for i in items]
-    if tipo:
-        result = [r for r in result if r.get("tipo") == tipo]
     return result, next_cursor
 
 

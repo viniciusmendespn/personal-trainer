@@ -410,6 +410,13 @@ class Item(ItemCreate):
 
 ### 4.7 Paginação cursor-based — coleções que escalam
 
+> **REGRA OBRIGATÓRIA — toda lista que cresce sem limite é paginada de ponta a ponta.**
+> Cursor no backend (`query_pk_page`) **e** consumo com `useInfiniteQuery` + "carregar mais"/
+> scroll infinito no frontend (§7.4.1). Nunca devolver uma coleção ilimitada inteira, nem parar
+> na 1ª página sem fiar `fetchNextPage`/`hasNextPage` na tela — isso trava o usuário nas N mais
+> recentes e mascara sobrecarga de front. Se há paginação no backend, a tela **tem** que puxar
+> as páginas seguintes.
+
 Usar quando a coleção cresce sem limite por usuário (séries temporais como chat/notificações,
 ou listas que escalam com a carteira do personal — ex.: alunos). Coleções pequenas/limitadas
 por aluno ou por personal (treinos, exercícios, avaliações, agenda, templates, biblioteca)
@@ -418,10 +425,20 @@ continuam usando `query_pk` sem paginação — não vale a complexidade.
 `dynamo_repo.py`:
 ```python
 def query_pk_page(
-    pk: str, sk_prefix: str, limit: int, cursor: str | None = None, forward: bool = True
+    pk: str, sk_prefix: str, limit: int, cursor: str | None = None, forward: bool = True,
+    filters: dict | None = None, max_scans: int = 8,
 ) -> tuple[list[dict], str | None]:
-    """Cursor opaco (LastEvaluatedKey codificado em base64). Retorna (items, next_cursor)."""
+    """Cursor opaco (chave do último item retornado, base64). Retorna (items, next_cursor)."""
 ```
+
+**Filtro é SEMPRE no servidor, nunca no cliente depois de paginar.** Filtrar em memória após
+`query_pk_page` (`[r for r in result if r.tipo == x]`) é bug: uma página de N pode voltar quase
+vazia porque o filtro corta itens que vieram na página, escondendo matches que estão adiante —
+e o "carregar mais" fica furado. Passe as igualdades em `filters`, que viram `FilterExpression`.
+Como o `FilterExpression` é aplicado **depois** do `Limit`, `query_pk_page` encadeia até
+`max_scans` páginas para preencher a página lógica; o cursor retorna a chave do último item
+**incluído** (não o `LastEvaluatedKey` cru, que pularia matches). `max_scans` limita o RCU de
+pior caso — filtro raro numa partição enorme devolve página parcial + cursor, sem varrer tudo.
 
 O router devolve `{"items": [...], "next_cursor": str | None}` (sem `response_model`
 genérico — mantém o padrão do resto do projeto, que não tipa a maioria das respostas de
@@ -1067,9 +1084,26 @@ const query = useInfiniteQuery({
 const data = query.data?.pages.flatMap((p) => p.items)
 ```
 
-UX de "carregar mais": botão (listas verticais simples, ex. Alunos) ou scroll infinito
-(threads de chat — disparar `fetchNextPage` ao rolar perto do topo, preservando a posição de
-scroll ao prepender). Se o mesmo dado também alimenta um seletor/picker que precisa do roster
+**A tela consumidora é obrigada a fiar `fetchNextPage`/`hasNextPage`** — destructar só `data` de
+um `useInfiniteQuery` renderiza apenas a 1ª página e deixa o resto inacessível (bug silencioso: a
+paginação existe no backend mas o usuário nunca passa das N mais recentes):
+```typescript
+const { data: items, fetchNextPage, hasNextPage, isFetchingNextPage } = useNotificacoes(filtro)
+// ...após a lista:
+{hasNextPage && (
+  <Button variant="ghost" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+    {isFetchingNextPage ? 'Carregando…' : 'Carregar mais'}
+  </Button>
+)}
+```
+
+**Filtros vão para o backend como parâmetro da query** (entram na `queryKey` e na chamada da API),
+nunca `.filter()` sobre `data` já paginado — senão a página filtrada some e o "carregar mais"
+quebra (mesma armadilha do §4.7 no servidor).
+
+UX de "carregar mais": botão (listas verticais simples, ex. Alunos, Notificações) ou scroll
+infinito (threads de chat — disparar `fetchNextPage` ao rolar perto do topo, preservando a posição
+de scroll ao prepender). Se o mesmo dado também alimenta um seletor/picker que precisa do roster
 completo (ex.: lista de alunos usada em Agenda/Templates), usar uma `queryKey` separada que
 encadeia `fetchNextPage` automaticamente até `hasNextPage` ser `false` — mantém a tela
 principal paginada e os seletores com a lista completa, sem duplicar lógica de fetch.
