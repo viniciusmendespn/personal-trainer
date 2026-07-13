@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Share2, Flame, Trophy, Dumbbell, CalendarDays, Loader2, Download, MoveVertical, ImageOff } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Share2, Flame, Trophy, Dumbbell, CalendarDays, Loader2, Download, MoveVertical, ImageOff, Plane } from 'lucide-react'
 import { alunoApi, type HistoricoMes } from '../../api/alunoApp'
 import { Card, Spinner, Modal, Button, EmptyState, useToast } from '../ui'
 import { AlunoSessaoDetalheCard } from './SessaoDetalheCard'
@@ -183,6 +183,7 @@ export function CalendarioMes({
 
   const fotos = data ? extrairFotos(data.dias) : []
   const dias = data?.dias ?? {}
+  const feriasSet = new Set(data?.dias_ferias ?? [])
   const diasNoMes = new Date(ano, mes, 0).getDate()
   const primeiroDiaSemana = new Date(ano, mes - 1, 1).getDay()
   const cells: (number | null)[] = []
@@ -231,33 +232,47 @@ export function CalendarioMes({
             <div className="grid grid-cols-7 gap-1.5">
               {cells.map((d, i) => {
                 if (d === null) return <div key={i} className="aspect-square" />
-                const sessoes = dias[keyDia(d)]
+                const key = keyDia(d)
+                const sessoes = dias[key]
                 const foi = !!sessoes?.length
+                const ehFerias = feriasSet.has(key)
                 const foto = mostrarFotos ? sessoes?.find((s) => s.checkin_url)?.checkin_url : undefined
+                // borda/fundo: treino > férias > vazio
+                const borda = foi ? 'border-energy/60' : ehFerias ? 'border-accent/40' : 'border-border'
+                const fundo = foto ? '' : foi ? 'bg-energy/15' : ehFerias ? 'bg-accent/10' : 'bg-surface'
                 return (
                   <button
                     key={i}
-                    onClick={() => foi && setDiaSel(keyDia(d))}
-                    disabled={!foi}
-                    className={`relative aspect-square rounded-lg flex items-center justify-center overflow-hidden border transition-colors ${
-                      foi ? 'border-energy/60' : 'border-border'
-                    } ${foto ? '' : foi ? 'bg-energy/15' : 'bg-surface'}`}
+                    onClick={() => (foi || ehFerias) && setDiaSel(key)}
+                    disabled={!foi && !ehFerias}
+                    className={`relative aspect-square rounded-lg flex items-center justify-center overflow-hidden border transition-colors ${borda} ${fundo}`}
                   >
                     {foto && (
                       <img src={foto} crossOrigin="anonymous" alt="" className="absolute inset-0 w-full h-full object-cover" />
                     )}
                     <span
-                      className={`relative text-xs ${foi ? 'font-bold' : 'text-text-muted'}`}
-                      style={foto ? { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.85)' } : foi ? { color: 'var(--color-energy)' } : undefined}
+                      className={`relative text-xs ${foi || ehFerias ? 'font-bold' : 'text-text-muted'}`}
+                      style={foto ? { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.85)' } : foi ? { color: 'var(--color-energy)' } : ehFerias ? { color: 'var(--color-accent)' } : undefined}
                     >
                       {d}
                     </span>
                     {foi && !foto && (
                       <span className="absolute bottom-1 w-1 h-1 rounded-full bg-energy" />
                     )}
+                    {ehFerias && !foi && (
+                      <Plane size={9} className="absolute bottom-0.5 right-0.5 text-accent" />
+                    )}
                   </button>
                 )
               })}
+            </div>
+            <div className="flex items-center justify-center gap-4 pt-1 text-[10px] text-text-muted">
+              <span className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-sm bg-energy/15 border border-energy/60" /> treino
+              </span>
+              <span className="flex items-center gap-1">
+                <Plane size={11} className="text-accent" /> férias
+              </span>
             </div>
           </Card>
 
@@ -358,6 +373,12 @@ export function CalendarioMes({
       {/* Detalhe do dia */}
       <Modal open={!!diaSel} onClose={() => setDiaSel(null)} title={diaSel ? new Date(diaSel + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) : ''} size="lg">
         <div className="space-y-3">
+          {diaSel && feriasSet.has(diaSel) && (
+            <div className="flex items-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-3 py-2.5 text-sm text-accent">
+              <Plane size={16} className="shrink-0" />
+              <span>Período de férias / ausência</span>
+            </div>
+          )}
           {(diaSel ? dias[diaSel] ?? [] : []).map((s) => (
             <Card key={s.sessao_id} variant="flat">
               <p className="font-medium mb-1">{s.treino_nome}</p>

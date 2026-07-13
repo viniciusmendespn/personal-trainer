@@ -9,12 +9,13 @@ from pydantic import BaseModel, model_validator
 from app import aluno_auth
 from app.dependencies import get_current_aluno
 from app.models.enums import Ator, CanalOrigem, Classificacao
+from app.models.ferias import FeriasCreate
 from app.models.registro import SerieExec
 from app.models.sessao import FinishBody
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.models.postagem import MidiaRef, PostagemCreate, PostagemTipo
-from app.services import agent_service, alerta_service, anotif_service, badge_service, conhecimento_service, correcao_service, feed_global_service, financeiro_service, media_service, meta_service, notif_service, pontos_service, postagem_service, sessao_service
+from app.services import agent_service, alerta_service, anotif_service, badge_service, conhecimento_service, correcao_service, feed_global_service, ferias_service, financeiro_service, media_service, meta_service, notif_service, pontos_service, postagem_service, sessao_service
 from app.utils import init_series_prescritas, new_id, now_iso
 
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
@@ -754,6 +755,29 @@ def listar_metas_aluno(ctx: dict = Depends(get_current_aluno)):
 def propor_meta_aluno(body: MetaPropostaBody, ctx: dict = Depends(get_current_aluno)):
     return meta_service.criar(ctx["aluno_id"], ctx["personal_id"],
                               body.model_dump(), criado_por="ALUNO")
+
+
+# ── Férias / ausências (o aluno registra os próprios períodos) ────────────────
+@router.get("/ferias")
+def listar_ferias_aluno(ctx: dict = Depends(get_current_aluno)):
+    return ferias_service.listar(ctx["aluno_id"])
+
+
+@router.post("/ferias", status_code=201)
+def registrar_ferias_aluno(body: FeriasCreate, ctx: dict = Depends(get_current_aluno)):
+    if body.data_fim < body.data_inicio:
+        raise HTTPException(400, "data_fim não pode ser anterior a data_inicio")
+    return ferias_service.criar(ctx["aluno_id"], ctx["personal_id"],
+                                body.model_dump(), criado_por="ALUNO")
+
+
+@router.delete("/ferias/{ts_id}", status_code=204)
+def cancelar_ferias_aluno(ts_id: str, ctx: dict = Depends(get_current_aluno)):
+    parts = ts_id.split("#", 1)
+    if len(parts) != 2:
+        raise HTTPException(400, "ts_id inválido")
+    if not ferias_service.excluir(ctx["aluno_id"], parts[0], parts[1]):
+        raise HTTPException(404, "Período de férias não encontrado")
 
 
 @router.get("/financeiro")

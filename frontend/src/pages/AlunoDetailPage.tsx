@@ -29,8 +29,11 @@ import { BlocosTreinoEditor, formatoBlocoLabel, sufixoPrescricaoBloco, fmtPrescr
 import { IntervaloInput } from '../components/exercicios/IntervaloInput'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import { CalendarioMes } from '../components/historico/CalendarioMes'
+import { FeriasPanel } from '../components/historico/FeriasPanel'
 import { HistoricoLista } from '../components/historico/HistoricoLista'
 import { usePersonalTimeline } from '../hooks/usePersonalTimeline'
+import { feriasApi } from '../api/ferias'
+import { feriasSobrepostas, formatDiaMes } from '../utils/ferias'
 import type { Treino, Exercicio, ExercicioCreate, ExercicioSubstituto, SeriePrescrita, TipoExercicio, MetricaDirecao, AlunoExistenteConflict, Aluno, Rotina, AplicarRotinaModo, BlocoTreino } from '../types'
 import { normalizeTipoExercicio } from '../types'
 import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
@@ -41,6 +44,24 @@ import { formatDuracao } from '../utils/datetime'
 
 const TAB_KEYS = ['treinos', 'historico', 'frequencia', 'metas', 'financeiro', 'perfil'] as const
 type TabKey = typeof TAB_KEYS[number]
+
+/** Aviso informativo (não bloqueia) quando a vigência do treino cai num período de férias. */
+function AvisoFeriasVigencia({ alunoId, dataInicio, dataFim }: { alunoId: string; dataInicio?: string; dataFim?: string }) {
+  const { data: ferias = [] } = useQuery({
+    queryKey: ['ferias', alunoId],
+    queryFn: () => feriasApi.list(alunoId),
+    staleTime: 60_000,
+  })
+  const conflitos = feriasSobrepostas(dataInicio, dataFim, ferias)
+  if (conflitos.length === 0) return null
+  const periodos = conflitos.map((f) => `${formatDiaMes(f.data_inicio)}–${formatDiaMes(f.data_fim)}`).join(', ')
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-warning/50 bg-warning/10 px-3 py-2 text-sm text-warning">
+      <AlertCircle size={16} className="shrink-0 mt-0.5" />
+      <span>A vigência deste treino cai em um período de férias/ausência do aluno ({periodos}). Apenas um aviso — você pode salvar mesmo assim.</span>
+    </div>
+  )
+}
 
 export function AlunoDetailPage() {
   const { alunoId = '' } = useParams()
@@ -457,6 +478,7 @@ export function AlunoDetailPage() {
                 <Input label="Início" type="date" value={dtIni} onChange={(e) => setDtIni(e.target.value)} />
                 <Input label="Fim" type="date" value={dtFim} onChange={(e) => setDtFim(e.target.value)} />
               </div>
+              <AvisoFeriasVigencia alunoId={alunoId} dataInicio={dtIni} dataFim={dtFim} />
               <BlocosTreinoEditor value={novoBlocos} onChange={setNovoBlocos} />
               <Button type="submit" className="w-full" disabled={createTreino.isPending}>
                 {createTreino.isPending ? 'Adicionando…' : 'Adicionar treino'}
@@ -886,6 +908,7 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
             <Input label="Início" type="date" value={tIni} onChange={(e) => setTIni(e.target.value)} />
             <Input label="Fim" type="date" value={tFim} onChange={(e) => setTFim(e.target.value)} />
           </div>
+          <AvisoFeriasVigencia alunoId={alunoId} dataInicio={tIni} dataFim={tFim} />
           <BlocosTreinoEditor value={tBlocos} onChange={setTBlocos} />
           <Button type="submit" className="w-full" disabled={updTreino.isPending}>
             {updTreino.isPending ? 'Salvando…' : 'Salvar'}
@@ -1359,8 +1382,16 @@ function HistoricoPersonal({ alunoId }: { alunoId: string }) {
   // Mesmo toggle Mês/Lista do app do aluno. O calendário vai SEM fotos de check-in e sem o botão
   // de compartilhar story (privacidade do aluno); a lista é read-only (sem envio de foto).
   const [view, setView] = useState<'mes' | 'lista'>('mes')
+  const qc = useQueryClient()
   return (
     <div className="space-y-4 pb-4">
+      <FeriasPanel
+        queryKey={['ferias', alunoId]}
+        list={() => feriasApi.list(alunoId)}
+        create={(body) => feriasApi.create(alunoId, body)}
+        remove={(tsId) => feriasApi.remove(alunoId, tsId)}
+        onChanged={() => qc.invalidateQueries({ queryKey: [`personal-historico-mes-${alunoId}`] })}
+      />
       <div className="flex gap-1 p-1 rounded-xl bg-surface-elevated border border-border">
         {([['mes', 'Mês', <CalendarDays size={14} />], ['lista', 'Lista', <List size={14} />]] as const).map(([key, label, icon]) => (
           <button

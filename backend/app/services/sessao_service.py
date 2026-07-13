@@ -13,7 +13,7 @@ from fastapi import HTTPException
 from app.models.enums import Ator, CanalOrigem, Classificacao, SessaoStatus, normalizar_tipo_exercicio
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import badge_service, media_service, pontos_service
+from app.services import badge_service, ferias_service, media_service, pontos_service
 from app.utils import epoch_ms, new_id, now_iso, treino_vigente
 
 SESSION_TTL_S = 6 * 3600  # sessão abandonada cai sozinha (ESPEC §3)
@@ -948,6 +948,7 @@ def historico_mes(aluno_id: str, ano: int, mes: int, incluir_fotos: bool = True)
         "prs_total": prs_total,
         "streak_atual": st.get("streak_atual", 0),
         "streak_maximo": st.get("streak_maximo", 0),
+        "dias_ferias": ferias_service.periodos_no_mes(aluno_id, ano, mes),
     }
 
 

@@ -155,6 +155,8 @@ export interface HistoricoMes {
   prs_total: number
   streak_atual: number
   streak_maximo: number
+  /** Dias ISO (YYYY-MM-DD) do mês cobertos por algum período de férias/ausência do aluno. */
+  dias_ferias?: string[]
 }
 
 export interface ExSessao {

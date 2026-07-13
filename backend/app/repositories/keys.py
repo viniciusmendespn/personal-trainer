@@ -295,6 +295,14 @@ def sk_meta(ts: str, meta_id: str) -> str:
     return f"META#{ts}#{meta_id}"
 
 
+# ── Férias / ausências do aluno (partição AL#) ───────────────────────────────
+FERIAS_PREFIX = "FERIAS#"
+
+
+def sk_ferias(ts: str, ferias_id: str) -> str:
+    return f"FERIAS#{ts}#{ferias_id}"
+
+
 # ── Anamnese (ficha de saúde) ─────────────────────────────────────────────────
 SK_ANAMNESE_TEMPLATE = "CONFIG#ANAMNESE"   # PT#{personal_id}
 SK_ANAMNESE_ALUNO = "ANAMNESE#"            # AL#{aluno_id}

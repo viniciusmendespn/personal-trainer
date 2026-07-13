@@ -4,7 +4,7 @@ from mangum import Mangum
 
 from app.config import settings
 from app.routers import (admin, agenda, aluno, alunos, anamnese, avaliacoes, biblioteca, conhecimento, config, cupom, dashboard, divulgador,
-                         feedback, feed_global, financeiro, loja, loja_public, metas, notificacoes, pacotes, personal, personal_chat, plano, preview, push, rotinas, sessoes, telemetry, templates, treinos, wapi, webhook)
+                         feedback, feed_global, ferias, financeiro, loja, loja_public, metas, notificacoes, pacotes, personal, personal_chat, plano, preview, push, rotinas, sessoes, telemetry, templates, treinos, wapi, webhook)
 
 app = FastAPI(
     title="Personal Trainer",
@@ -47,6 +47,7 @@ app.include_router(personal.router)      # /v1/personal/me (perfil do personal)
 app.include_router(financeiro.router)     # /v1/alunos/{id}/financeiro
 app.include_router(financeiro.painel_router)  # /v1/financeiro (painel de carteira do personal)
 app.include_router(metas.router)          # /v1/alunos/{id}/metas
+app.include_router(ferias.router)         # /v1/alunos/{id}/ferias (períodos de ausência do aluno)
 app.include_router(anamnese.router)       # /v1/anamnese/... + /v1/public/anamnese
 app.include_router(conhecimento.router)   # /v1/conhecimento (base de conhecimento para IA)
 app.include_router(pacotes.router)        # /v1/pacotes (importar, listar, toggle, remover)

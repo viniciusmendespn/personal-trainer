@@ -28,7 +28,9 @@ import { CronometroProvider } from '../components/aluno/CronometroProvider'
 import { useCronometro } from '../components/aluno/cronometroContext'
 import { CheckinPosTreino } from '../components/aluno/CheckinPosTreino'
 import { CalendarioMes } from '../components/historico/CalendarioMes'
+import { FeriasPanel } from '../components/historico/FeriasPanel'
 import { HistoricoLista } from '../components/historico/HistoricoLista'
+import { alunoFeriasApi } from '../api/ferias'
 import { alunoFinanceiroApi } from '../api/financeiro'
 import { PixModal } from '../components/financeiro/PixModal'
 import type { BlocoTreino, Cobranca, ExercicioSubstituto, SeriePrescrita } from '../types'
@@ -1865,8 +1867,16 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
 
 function HistoricoTab() {
   const [view, setView] = useState<'mes' | 'lista'>('mes')
+  const qc = useQueryClient()
   return (
     <div className="space-y-4 pb-4">
+      <FeriasPanel
+        queryKey={['aluno-ferias']}
+        list={alunoFeriasApi.list}
+        create={alunoFeriasApi.create}
+        remove={alunoFeriasApi.remove}
+        onChanged={() => qc.invalidateQueries({ queryKey: ['aluno-historico-mes'] })}
+      />
       <div className="flex gap-1 p-1 rounded-xl bg-surface-elevated border border-border">
         {([['mes', 'Mês', <CalendarDays size={14} />], ['lista', 'Lista', <List size={14} />]] as const).map(([key, label, icon]) => (
           <button
