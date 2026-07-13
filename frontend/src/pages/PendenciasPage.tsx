@@ -22,6 +22,7 @@ const TIPO_ICON: Record<string, React.ReactNode> = {
   COBRANCA_VENCER: <DollarSign size={16} className="text-warning" />,
   COBRANCA_VENCIDA: <DollarSign size={16} className="text-danger" />,
   COBRANCA_PAGA: <DollarSign size={16} className="text-success" />,
+  FERIAS_ALUNO: <CalendarClock size={16} className="text-accent" />,
 }
 const TIPO_TONE: Record<string, 'danger' | 'warning' | 'info' | 'neutral'> = {
   DOR: 'danger',
@@ -37,6 +38,7 @@ const TIPO_TONE: Record<string, 'danger' | 'warning' | 'info' | 'neutral'> = {
   COBRANCA_VENCER: 'warning',
   COBRANCA_VENCIDA: 'danger',
   COBRANCA_PAGA: 'neutral',
+  FERIAS_ALUNO: 'info',
 }
 
 const FILTROS: { label: string; tipo?: string }[] = [
@@ -114,6 +116,13 @@ function useQuickAction(item: Notificacao, markRead: ReturnType<typeof useMarkRe
       label: 'Ver financeiro',
       icon: <DollarSign size={15} />,
       fn: doAndRead(() => navigate(`/alunos/${item.aluno_id}?tab=financeiro`)),
+    }
+  }
+  if (item.tipo === 'FERIAS_ALUNO') {
+    return {
+      label: 'Ver histórico',
+      icon: <CalendarClock size={15} />,
+      fn: doAndRead(() => navigate(`/alunos/${item.aluno_id}?tab=historico`)),
     }
   }
 

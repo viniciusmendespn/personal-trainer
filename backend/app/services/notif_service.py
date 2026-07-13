@@ -38,14 +38,18 @@ def criar(personal_id: str, tipo: str, titulo: str, mensagem: str,
     }
     repo.put_item(keys.pk_personal(personal_id), keys.sk_notif(epoch_ms(), nid), item)
     repo.increment_counter(keys.pk_personal(personal_id), keys.SK_STATS_NOTIF, "nao_lidas", 1)
-    _disparar_push_personal(personal_id, titulo, mensagem, tipo)
+    _disparar_push_personal(personal_id, titulo, mensagem, tipo, aluno_id)
     return nid
 
 
-def _disparar_push_personal(personal_id: str, titulo: str, mensagem: str, tipo: str) -> None:
+def _disparar_push_personal(personal_id: str, titulo: str, mensagem: str, tipo: str,
+                            aluno_id: str | None = None) -> None:
     try:
         from app.services import push_service   # import tardio — evita ciclo
         url = _URL_MAP_PERSONAL.get(tipo, "/dashboard")
+        # Férias do aluno: leva direto ao histórico (calendário) do aluno.
+        if tipo == "FERIAS_ALUNO" and aluno_id:
+            url = f"/alunos/{aluno_id}?tab=historico"
         push_service.send_push_personal(personal_id, titulo, mensagem, url=url, tag=tipo)
     except Exception as exc:
         logger.warning("[notif] push falhou para personal %s: %s", personal_id, exc)
