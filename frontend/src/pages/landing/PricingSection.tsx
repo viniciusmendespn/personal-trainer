@@ -4,6 +4,7 @@ import { Check, X, MessageCircle, Sparkles } from 'lucide-react'
 const FREE_INCLUDES = [
   'Até 3 alunos cadastrados',
   'Treinos e templates',
+  'Cadastro por IA (linguagem natural)',
   'Avaliações físicas',
   'Agenda',
   'App do aluno (PWA)',
@@ -22,6 +23,7 @@ const FREE_EXCLUDES = [
 const PRO_INCLUDES = [
   'Alunos ilimitados',
   'Treinos e templates ilimitados',
+  'Cadastro por IA incluído e ilimitado',
   'Avaliações físicas com evolução',
   'Agenda',
   'App do aluno (PWA)',
@@ -62,16 +64,17 @@ export default function PricingSection() {
             <span style={{ color: '#0d9488', fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Planos e Preços</span>
           </div>
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', marginBottom: 12 }}>
-            Planos simples para crescer{' '}
+            Um plano.{' '}
             <span style={{ background: 'linear-gradient(135deg, #14b8a6, #10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              junto com você
+              Alunos ilimitados
             </span>
+            {' '}. Sem pegadinha.
           </h2>
           <p style={{ color: '#475569', fontSize: 16, maxWidth: 520, margin: '0 auto 8px' }}>
-            Comece grátis com até 3 alunos. Quando precisar de mais, desbloqueie alunos ilimitados por apenas R$39,90/mês (de R$69,90).
+            Comece grátis com até 3 alunos. Quando precisar de mais, desbloqueie alunos ilimitados por apenas R$39,90/mês (de R$69,90) — o preço não sobe conforme você cresce.
           </p>
           <p style={{ color: '#64748b', fontSize: 14, maxWidth: 480, margin: '0 auto' }}>
-            O CoachPilot separa gestão, WhatsApp e IA para você pagar apenas pelo que realmente usa.
+            Tudo o que importa está incluso, inclusive o cadastro por IA. WhatsApp e assistente IA do aluno ficam como add-ons opcionais — você só ativa se quiser.
           </p>
         </div>
 

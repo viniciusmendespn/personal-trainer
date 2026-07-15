@@ -7,6 +7,14 @@ const FAQS = [
     a: 'Sim. O plano gratuito permite gerenciar até 3 alunos com todas as funcionalidades essenciais: cadastro de treinos, avaliações físicas, agenda, app do aluno e dashboard. Para alunos ilimitados, o Gestão Pro custa R$39,90/mês (preço de lançamento).',
   },
   {
+    q: 'O preço sobe conforme eu tenho mais alunos?',
+    a: 'Não. No Gestão Pro os alunos são ilimitados pelo mesmo preço — R$39,90/mês, tenha você 10 ou 200 alunos. É diferente de concorrentes que cobram por faixa de alunos e ficam mais caros conforme você cresce. Seu software não deveria custar mais só porque você trabalhou mais.',
+  },
+  {
+    q: 'Tem pegadinha ou limite escondido?',
+    a: 'Não. É um plano único: alunos ilimitados, treinos e templates ilimitados, e o cadastro por IA (montar treinos e importar alunos conversando com o ChatGPT) já incluso e sem custo extra. Os únicos itens à parte são add-ons claramente opcionais — o Canal WhatsApp e o Assistente IA do aluno — que você só ativa, e só paga, se quiser.',
+  },
+  {
     q: 'Preciso instalar algum aplicativo?',
     a: 'Não. O CoachPilot é uma plataforma web (PWA). Você gerencia tudo pelo navegador, e seu aluno acessa os treinos direto pelo celular via link enviado no WhatsApp — sem instalar nada da loja de aplicativos.',
   },

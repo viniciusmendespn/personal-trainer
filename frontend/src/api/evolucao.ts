@@ -20,6 +20,20 @@ export interface Evolucao {
   chave?: string
 }
 
+/** Série executada de uma sessão do histórico (mesmo shape que series_exec do app do aluno). */
+export interface SerieHistorico {
+  carga?: string
+  reps?: number
+  aquecimento?: boolean
+  contexto?: boolean
+}
+
+/** Uma sessão do histórico de execução de um exercício. */
+export interface SessaoHistorico {
+  data_hora: string
+  series_exec: SerieHistorico[]
+}
+
 /** Item do seletor de evolução (historico=1): identidade por nome canônico (chave). */
 export interface ExercicioEvolucao {
   chave: string
@@ -73,6 +87,11 @@ export const evolucaoApi = {
     api.get<ExercicioEvolucao[]>(`/v1/alunos/${alunoId}/exercicios`, { params: { historico: 1 } }).then((r) => r.data),
   get: (alunoId: string, exercicioId: string) =>
     api.get<Evolucao>(`/v1/alunos/${alunoId}/exercicios/${exercicioId}/evolucao`).then((r) => r.data),
+  /** Últimas sessões executadas (com séries/reps/carga) — para exibir a "última vez" na prescrição. */
+  historico: (alunoId: string, exercicioId: string, limit = 1) =>
+    api
+      .get<SessaoHistorico[]>(`/v1/alunos/${alunoId}/exercicios/${exercicioId}/historico`, { params: { limit } })
+      .then((r) => r.data),
   /** Evolução pelo nome canônico — funciona p/ exercício fora do programa atual. */
   getPorChave: (alunoId: string, chave: string) =>
     api.get<Evolucao>(`/v1/alunos/${alunoId}/exercicios/evolucao`, { params: { chave } }).then((r) => r.data),

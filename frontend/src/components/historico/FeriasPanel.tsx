@@ -117,9 +117,9 @@ export function FeriasPanel({ queryKey, list, create, remove, onChanged }: Feria
 
       <Modal open={open} onClose={() => setOpen(false)} title="Registrar férias / ausência" size="md">
         <div className="space-y-3">
-          <div className="flex gap-2">
-            <Input label="Início" type="date" value={ini} onChange={(e) => setIni(e.target.value)} className="flex-1" />
-            <Input label="Fim" type="date" value={fim} min={ini || undefined} onChange={(e) => setFim(e.target.value)} className="flex-1" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input label="Início" type="date" value={ini} onChange={(e) => setIni(e.target.value)} />
+            <Input label="Fim" type="date" value={fim} min={ini || undefined} onChange={(e) => setFim(e.target.value)} />
           </div>
           {ini && fim && fim < ini && (
             <p className="text-xs text-danger">A data final não pode ser anterior à inicial.</p>

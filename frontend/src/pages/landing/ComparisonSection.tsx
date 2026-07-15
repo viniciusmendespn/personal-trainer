@@ -1,17 +1,14 @@
 import { Check, X } from 'lucide-react'
 
 const ROWS: { feature: string; cp: boolean | string; manual: boolean | string }[] = [
-  { feature: 'Plano grátis para começar', cp: true, manual: false },
-  { feature: 'Histórico de alunos centralizado', cp: true, manual: false },
-  { feature: 'App do aluno incluso', cp: true, manual: false },
-  { feature: 'Avaliações físicas com gráficos automáticos', cp: true, manual: false },
-  { feature: 'Agenda com lembretes automáticos', cp: true, manual: false },
-  { feature: 'Templates de treino reutilizáveis', cp: true, manual: false },
-  { feature: 'Ranking e gamificação para engajamento', cp: true, manual: false },
-  { feature: 'Dashboard com visão geral do negócio', cp: true, manual: false },
-  { feature: 'Cadastro por linguagem natural (IA)', cp: true, manual: false },
-  { feature: 'Assistente IA do aluno (opcional)', cp: true, manual: false },
-  { feature: 'WhatsApp opcional integrado', cp: true, manual: 'Manual' },
+  { feature: 'Alunos ilimitados no preço único', cp: true, manual: 'Por faixa' },
+  { feature: 'Preço não sobe conforme você cresce', cp: true, manual: false },
+  { feature: 'Treinos e templates ilimitados', cp: true, manual: 'Limitado' },
+  { feature: 'Cadastro por IA (linguagem natural) incluso', cp: true, manual: 'Add-on' },
+  { feature: 'App do aluno incluso', cp: true, manual: 'Às vezes' },
+  { feature: 'Avaliações, agenda e dashboard inclusos', cp: true, manual: 'Limitado' },
+  { feature: 'Sem fidelidade · cancele quando quiser', cp: true, manual: 'Varia' },
+  { feature: 'Tudo o que importa em 1 plano só', cp: true, manual: false },
 ]
 
 export default function ComparisonSection() {
@@ -28,10 +25,10 @@ export default function ComparisonSection() {
             <span style={{ color: '#0d9488', fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Diferenciais</span>
           </div>
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', marginBottom: 12 }}>
-            Por que usar CoachPilot?
+            1 plano. Sem pegadinha.
           </h2>
-          <p style={{ color: '#475569', fontSize: 16, maxWidth: 480, margin: '0 auto' }}>
-            Compare o que você ganha usando nossa plataforma versus planilhas e WhatsApp manual.
+          <p style={{ color: '#475569', fontSize: 16, maxWidth: 520, margin: '0 auto' }}>
+            A maioria dos concorrentes atrai com plano barato e esconde limites de alunos, de IA e de recursos. No CoachPilot é um preço único, com tudo o que importa incluso.
           </p>
         </div>
 
@@ -55,7 +52,7 @@ export default function ComparisonSection() {
               <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>CoachPilot</span>
             </div>
             <div style={{ padding: '16px 24px', background: '#f8fefd', borderBottom: '2px solid rgba(20,184,166,0.15)', textAlign: 'center' }}>
-              <span style={{ color: '#475569', fontSize: 13, fontWeight: 600 }}>Concorrentes</span>
+              <span style={{ color: '#475569', fontSize: 13, fontWeight: 600 }}>Outros apps</span>
             </div>
           </div>
 

@@ -26,6 +26,16 @@ export function useEvolucao(alunoId: string, exercicioId: string) {
   })
 }
 
+/** Últimas sessões executadas (séries/reps/carga) — para a "última vez" na prescrição do portal. */
+export function useHistoricoExercicio(alunoId: string, exercicioId: string, limit = 1) {
+  return useQuery({
+    queryKey: ['hist-ex', alunoId, exercicioId, limit],
+    queryFn: () => evolucaoApi.historico(alunoId, exercicioId, limit),
+    enabled: !!alunoId && !!exercicioId,
+    staleTime: 10 * 60_000,
+  })
+}
+
 export function useEvolucaoPorChave(alunoId: string, chave: string) {
   return useQuery({
     queryKey: ['evolucao-chave', alunoId, chave],

@@ -16,7 +16,7 @@ import { MontarTreinoIaCallout } from '../components/MontarTreinoIaCallout'
 import { AtualizarTreinoIAModal } from '../components/AtualizarTreinoIAModal'
 import { MediaTimeline } from '../components/media/MediaTimeline'
 import { useBiblioteca } from '../hooks/useDominio'
-import { useExerciciosAluno, useEvolucao } from '../hooks/useEvolucao'
+import { useExerciciosAluno, useEvolucao, useHistoricoExercicio } from '../hooks/useEvolucao'
 import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
 import { useCreateRotinaFromAluno, useRotinas, useAplicarRotina } from '../hooks/useRotinas'
 import { useNotas, useCreateNota } from '../hooks/useNotas'
@@ -1260,18 +1260,50 @@ function ExercicioForm({
 }
 
 /** Histórico de execução — carrega sob demanda (só quando expandido), texto inline discreto. */
-function ExecucaoStats({ alunoId, exercicioId, unidadeCarga }: { alunoId: string; exercicioId: string; unidadeCarga?: string }) {
+function ExecucaoStats({
+  alunoId, exercicioId, unidadeCarga, unidadeReps, tipoExercicio,
+}: {
+  alunoId: string; exercicioId: string; unidadeCarga?: string; unidadeReps?: string; tipoExercicio?: string
+}) {
   const { data, isLoading } = useEvolucao(alunoId, exercicioId)
+  const { data: hist } = useHistoricoExercicio(alunoId, exercicioId)
   if (isLoading) return <div className="mt-1 text-xs text-text-muted">carregando histórico…</div>
   if (!data) return null
   const uni = unidadeCarga || 'kg'
-  const ult = data.serie?.[data.serie.length - 1]
   if (data.total_sessoes === 0) return <div className="mt-1 text-xs text-text-muted">ainda não executado</div>
+
+  const isPerf = tipoExercicio === 'PERFORMANCE'
+  const ultima = hist?.[0]
+  const seriesUltima = ultima?.series_exec.filter((s) => !s.contexto) ?? []
+
   return (
-    <div className="mt-1 text-xs flex flex-wrap items-center gap-x-3 gap-y-0.5">
-      <span className="text-accent-hover font-medium">{data.total_sessoes} {data.total_sessoes === 1 ? 'execução' : 'execuções'}</span>
-      {ult?.carga_max != null && <span className="text-text-muted">última {ult.carga_max}{uni}</span>}
-      {data.pr && <span className="text-success" title={`PR em ${fmtDateFull(data.pr.data)}`}>PR {data.pr.carga}{uni}</span>}
+    <div className="mt-1 text-xs space-y-1">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
+        <span className="text-accent-hover font-medium">{data.total_sessoes} {data.total_sessoes === 1 ? 'execução' : 'execuções'}</span>
+        {data.pr && <span className="text-success" title={`PR em ${fmtDateFull(data.pr.data)}`}>PR {data.pr.carga}{uni}</span>}
+      </div>
+      {seriesUltima.length > 0 && (
+        <div>
+          <span className="text-text-muted">
+            Última vez ({new Date(ultima!.data_hora).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })})
+          </span>
+          <div className="mt-0.5 flex flex-wrap gap-1">
+            {seriesUltima.map((s, i) => {
+              let label: string
+              if (isPerf) {
+                const extra = s.carga ? ` · ${s.carga} ${unidadeCarga ?? ''}`.trimEnd() : ''
+                label = `${s.reps ?? '-'} ${unidadeReps ?? ''}`.trimEnd() + extra
+              } else {
+                const cargaLabel = s.carga ? ` · ${s.carga} ${unidadeCarga ?? 'kg'}` : ''
+                label = `${s.reps ?? '-'} ${unidadeReps ?? 'reps'}${cargaLabel}`
+              }
+              return (
+                <span key={i} className="text-text-secondary bg-white/5 rounded-md px-2 py-0.5">{label}</span>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1349,7 +1381,7 @@ function ExercicioRow({
             {ex.observacoes ? <span className="inline-flex items-center gap-0.5 text-warning" title={ex.observacoes}><StickyNote size={11} />obs.</span> : null}
             <button type="button" onClick={() => setStatsOpen((v) => !v)} className="inline-flex items-center gap-0.5 hover:text-text transition-colors" title="Ver histórico de execução"><TrendingUp size={11} />histórico</button>
           </div>
-          {statsOpen && <ExecucaoStats alunoId={alunoId} exercicioId={ex.exercicio_id} unidadeCarga={ex.unidade_carga} />}
+          {statsOpen && <ExecucaoStats alunoId={alunoId} exercicioId={ex.exercicio_id} unidadeCarga={ex.unidade_carga} unidadeReps={ex.unidade_reps} tipoExercicio={ex.tipo_exercicio} />}
         </div>
 
         {/* Ações */}

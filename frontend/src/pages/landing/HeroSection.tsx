@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Users, Smartphone, Sparkles } from 'lucide-react'
 
 const STATS = [
-  { icon: <Users size={16} />, label: 'Grátis para até 3 alunos' },
-  { icon: <Smartphone size={16} />, label: 'Gestão Pro R$39,90/mês (promo lançamento)' },
-  { icon: <Sparkles size={16} />, label: 'Cadastre treinos conversando com a IA' },
+  { icon: <Users size={16} />, label: 'Alunos ilimitados no plano pago' },
+  { icon: <Sparkles size={16} />, label: 'Cadastro por IA incluso e ilimitado' },
+  { icon: <Smartphone size={16} />, label: 'Sem fidelidade · cancele quando quiser' },
 ]
 
 export default function HeroSection() {
@@ -45,19 +45,19 @@ export default function HeroSection() {
               borderRadius: 20, padding: '6px 14px', marginBottom: 24,
             }}>
               <span style={{ fontSize: 16 }}>✅</span>
-              <span style={{ color: '#14b8a6', fontSize: 13, fontWeight: 600 }}>Grátis para até 3 alunos · Gestão Pro R$39,90/mês</span>
+              <span style={{ color: '#14b8a6', fontSize: 13, fontWeight: 600 }}>1 plano · alunos ilimitados · sem pegadinha</span>
             </div>
 
             <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 20, letterSpacing: '-1px' }}>
-              Organize seus{' '}
+              Gerencie{' '}
               <span style={{ background: 'linear-gradient(135deg, #14b8a6, #10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                alunos, treinos e evolução
+                alunos ilimitados
               </span>
-              {' '}em uma plataforma profissional
+              {' '}por um preço único — sem pegadinha
             </h1>
 
             <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, marginBottom: 36, maxWidth: 520 }}>
-              Comece grátis com até 3 alunos. Cadastre treinos, avaliações, agenda e acompanhe a evolução em um app moderno feito para personal trainers — e cadastre treinos e alunos conversando com o ChatGPT, sem digitar série a série.
+              Um plano só, com tudo o que importa incluso: treinos, avaliações, agenda, app do aluno e evolução — para quantos alunos você quiser. Ainda cadastra treinos e alunos conversando com o ChatGPT, sem digitar série a série. Sem plano capado, sem limite de alunos escondido.
             </p>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 48 }}>
