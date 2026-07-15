@@ -89,6 +89,7 @@ class RegistroBody(BaseModel):
     series: list[SerieExec]
     exercicio_id: str | None = None
     substituto_nome: str | None = None
+    pse: float | None = None   # percepção subjetiva de esforço (0-10); None = "não sei dizer"
 
 
 @router.get("/me")
@@ -320,7 +321,7 @@ def registrar(body: RegistroBody, ctx: dict = Depends(get_current_aluno)):
     registro, pr = sessao_service.set_series(
         ctx["aluno_id"], body.exercicio_id, series,
         canal=CanalOrigem.PORTAL, classificacao=Classificacao.AUTO, ator=Ator.ALUNO,
-        substituto_nome=body.substituto_nome)
+        substituto_nome=body.substituto_nome, pse=body.pse)
     out = repo.clean(registro)
     # Streak atual para aplicar multiplicador (1 GetItem, compartilhado entre os awards)
     st = repo.get_item(keys.pk_aluno(ctx["aluno_id"]), keys.SK_STATS_ALUNO) or {}

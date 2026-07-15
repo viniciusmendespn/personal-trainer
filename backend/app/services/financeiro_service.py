@@ -345,6 +345,7 @@ def registrar_pagamento(personal_id: str, aluno_id: str, cobranca_id: str, body:
     updated = repo.update_item_if_exists(keys.pk_aluno(aluno_id), sk, fields)
     if updated and not ja_paga:
         valor = float(atual.get("valor", 0))
+        _cancelar_agendamentos_billing(aluno_id, cobranca_id, atual.get("vencimento"))
         _remover_de_aberto(personal_id, atual.get("status"), valor)
         add = {"recebido_valor": valor, "pago_count": 1}
         # Só Pix via MP entra na conta de certeza da taxa. mp_pix_count = todos os Pix
@@ -409,7 +410,10 @@ def _marcar_vencida(aluno_id: str, cobranca_id: str, vencimento_str: str, person
         return
     ano_mes = vencimento_str[:7]
     sk = keys.sk_cobranca(ano_mes, cobranca_id)
-    item = repo.get_item(keys.pk_aluno(aluno_id), sk)
+    # Leitura consistente: o pagamento (PIX/MP) pode ter marcado PAGA segundos antes
+    # desta varredura — um read eventual poderia ver PENDENTE stale e notificar vencida
+    # numa cobrança já paga.
+    item = repo.get_item(keys.pk_aluno(aluno_id), sk, consistent=True)
     if not item or item.get("status") != "PENDENTE":
         return  # já paga ou inexistente
     repo.update_item_if_exists(keys.pk_aluno(aluno_id), sk,
@@ -438,7 +442,8 @@ def _lembrar_vencida(aluno_id: str, cobranca_id: str, personal_id: str, dias: in
     sk = _lookup_sk(aluno_id, cobranca_id)
     if not sk:
         return  # cobrança cancelada (idx removido)
-    item = repo.get_item(keys.pk_aluno(aluno_id), sk)
+    # Leitura consistente: silencia lembrete se o pagamento acabou de marcar PAGA.
+    item = repo.get_item(keys.pk_aluno(aluno_id), sk, consistent=True)
     if not item or item.get("status") != "VENCIDA" or item.get("personal_id") != personal_id:
         return
     valor = float(item.get("valor", 0))
@@ -534,7 +539,8 @@ def _agendar_aviso_dia(aluno_id: str, cobranca_id: str, personal_id: str, vencim
 def _avisar_dia_pagamento(aluno_id: str, cobranca_id: str, vencimento_str: str, personal_id: str) -> None:
     """Chamado pelo scheduler ao disparar BILLING_AVISO# (D-0). Só avisa o aluno; silencia se já paga."""
     sk = keys.sk_cobranca(vencimento_str[:7], cobranca_id)
-    item = repo.get_item(keys.pk_aluno(aluno_id), sk)
+    # Leitura consistente: silencia o aviso se o pagamento acabou de marcar PAGA.
+    item = repo.get_item(keys.pk_aluno(aluno_id), sk, consistent=True)
     if not item or item.get("status") != "PENDENTE":
         return  # já paga, cancelada ou inexistente
     valor = float(item.get("valor", 0))
@@ -561,6 +567,26 @@ def _agendar_lembretes_vencida(aluno_id: str, cobranca_id: str, personal_id: str
                 "ttl": int(time.time()) + _SCHED_TTL_S,
             },
         )
+
+
+def _cancelar_agendamentos_billing(aluno_id: str, cobranca_id: str, vencimento_str: str | None) -> None:
+    """Ao pagar, remove as entradas SCHED# pendentes da cobrança (aviso D-0, vencer D+1,
+    lembretes D+5/D+10) para que o scheduler nem chegue a processá-las. Defesa em
+    profundidade além do read consistente nos guards. As chaves são determinísticas a
+    partir do vencimento; delete_item é no-op se a entrada já foi consumida/expirada (TTL)."""
+    if not vencimento_str:
+        return
+    try:
+        vencimento = date.fromisoformat(vencimento_str)
+    except (ValueError, TypeError):
+        return
+    repo.delete_item(keys.pk_sched(vencimento.isoformat()),
+                     keys.sk_sched_billing_aviso(aluno_id, cobranca_id))
+    repo.delete_item(keys.pk_sched((vencimento + timedelta(days=1)).isoformat()),
+                     keys.sk_sched_billing_vencer(aluno_id, cobranca_id))
+    for dias in _LEMBRETES_POS_VENCIMENTO:
+        repo.delete_item(keys.pk_sched((vencimento + timedelta(days=dias)).isoformat()),
+                         keys.sk_sched_billing_lembrete(aluno_id, cobranca_id))
 
 
 def _agendar_proxima_geracao(aluno_id: str, personal_id: str, dia: int,

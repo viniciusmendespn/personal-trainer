@@ -6,6 +6,7 @@ import {
 } from 'recharts'
 import { alunoApi, type ExSessao, type SessaoAtiva, type SessaoFinalizada, type PostGlobal, type FinishPayload, type ScoreBlocoInput } from '../api/alunoApp'
 import { ScoreWodModal } from '../components/aluno/ScoreWodModal'
+import { PseModal } from '../components/aluno/PseModal'
 import { fmtScoreValor } from '../utils/wod'
 import { usePushNotification } from '../hooks/usePushNotification'
 import { SeriesPrescritasCompact } from '../components/exercicios/SeriesPrescritasEditor'
@@ -1528,6 +1529,7 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
   const [open, setOpen] = useState(false)
   const [recursosOpen, setRecursosOpen] = useState(false)
   const [substitutosOpen, setSubstitutosOpen] = useState(false)
+  const [pseOpen, setPseOpen] = useState(false)
   const [pr, setPr] = useState<number | null>(null)
   const [variante, setVariante] = useState<ExercicioSubstituto | null>(
     () => ex.substitutos_efetivos?.find((s) => s.nome === ex.substituto_executado) ?? null
@@ -1601,7 +1603,7 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
   })
 
   const save = useMutation({
-    mutationFn: () => {
+    mutationFn: (pse?: number) => {
       if (pontuavel) {
         // Metcon: o resultado oficial é o score do bloco — aqui só a anotação de carga usada
         if (!cargaAnotada.trim()) throw new Error('Informe a carga que você usou.')
@@ -1618,7 +1620,7 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
         reps: Number(r.reps),
         aquecimento: r.aquecimento || undefined,
       }))
-      return alunoApi.registrar(series, ex.exercicio_id, variante?.nome)
+      return alunoApi.registrar(series, ex.exercicio_id, variante?.nome, pse)
     },
     onError: (e: Error) => show(e.message, 'error'),
     onSuccess: (r) => {
@@ -1627,9 +1629,21 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
       qc.invalidateQueries({ queryKey: ['aluno-resumo'] })
       qc.invalidateQueries({ queryKey: ['aluno-pr-ex', ex.nome] })
       qc.invalidateQueries({ queryKey: ['aluno-hist-ex', ex.nome] })
+      setPseOpen(false)
       setOpen(false)
     },
   })
+
+  // Exercício de trabalho: pede PSE antes de registrar (força o aluno a informar o esforço).
+  // Aquecimento e blocos pontuáveis (metcon/WOD) registram direto — sem PSE.
+  function handleRegistrar() {
+    if (pontuavel || ex.aquecimento) { save.mutate(undefined); return }
+    if (rows.some((r) => !r.reps)) {
+      show(tipo === 'PERFORMANCE' ? 'Preencha a métrica de todas as séries.' : 'Preencha as repetições de todas as séries.', 'error')
+      return
+    }
+    setPseOpen(true)
+  }
 
   return (
     <Card variant="elevated">
@@ -1643,6 +1657,14 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
           ativo={variante?.nome ?? null}
           onEscolher={escolherVariante}
           onClose={() => setSubstitutosOpen(false)}
+        />
+      )}
+      {pseOpen && (
+        <PseModal
+          exercicioNome={nomeAtivo}
+          submitting={save.isPending}
+          onConfirm={(pse) => save.mutate(pse)}
+          onClose={() => setPseOpen(false)}
         />
       )}
       <div className="flex items-center gap-1">
@@ -1755,7 +1777,7 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
               {ex.unidade_carga ?? 'kg'}
             </span>
           </div>
-          <Button variant="outline" className="w-full" onClick={() => save.mutate()} disabled={save.isPending || !cargaAnotada.trim()}>
+          <Button variant="outline" className="w-full" onClick={() => save.mutate(undefined)} disabled={save.isPending || !cargaAnotada.trim()}>
             {save.isPending ? 'Salvando…' : 'Salvar anotação'}
           </Button>
           <PostComposer exercicioId={ex.exercicio_id} exercicioNome={nomeAtivo} viewerAtor="ALUNO" />
@@ -1854,7 +1876,7 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
               <Trophy size={12} /> Novo recorde: {formatPr(pr, tipo, tipo === 'PERFORMANCE' ? ex.unidade_reps : ex.unidade_carga)}!
             </Badge>
           )}
-          <Button variant="energy" className="w-full" onClick={() => save.mutate()} disabled={save.isPending}>
+          <Button variant="energy" className="w-full" onClick={handleRegistrar} disabled={save.isPending}>
             {save.isPending ? 'Salvando…' : feito ? 'Atualizar' : 'Registrar'}
           </Button>
 

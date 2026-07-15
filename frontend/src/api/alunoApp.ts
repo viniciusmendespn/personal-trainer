@@ -241,8 +241,8 @@ export const alunoApi = {
   checkinSessao: (sessaoId: string, s3Key: string) =>
     alunoClient.post(`/v1/aluno/sessao/${sessaoId}/checkin`, { s3_key: s3Key }).then((r) => r.data),
   cancel: () => alunoClient.post('/v1/aluno/sessao/cancel').then((r) => r.data),
-  registrar: (series: SerieInput[], exercicio_id?: string, substituto_nome?: string) =>
-    alunoClient.post<{ pr_novo?: number }>('/v1/aluno/registros', { series, exercicio_id, substituto_nome }).then((r) => r.data),
+  registrar: (series: SerieInput[], exercicio_id?: string, substituto_nome?: string, pse?: number) =>
+    alunoClient.post<{ pr_novo?: number }>('/v1/aluno/registros', { series, exercicio_id, substituto_nome, pse }).then((r) => r.data),
   resumo: () => alunoClient.get<Resumo>('/v1/aluno/resumo').then((r) => r.data),
   listExercicios: () => alunoClient.get<Exercicio[]>('/v1/aluno/exercicios').then((r) => r.data),
   /** Todos os exercícios já feitos (programa atual + histórico), em ordem alfabética. */

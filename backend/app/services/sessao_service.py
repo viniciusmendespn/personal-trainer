@@ -274,6 +274,7 @@ def finish(aluno_id: str, body=None) -> dict:
             "exercicio_id": r.get("exercicio_id"),
             "exercicio_nome": r.get("exercicio_nome"),
             "series_exec": r.get("series_exec", []),
+            "pse": r.get("pse"),
             "tipo_exercicio": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("tipo_exercicio"),
             "unidade_carga": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("unidade_carga"),
             "unidade_reps": snap_by_ex.get(r.get("exercicio_id", ""), {}).get("unidade_reps"),
@@ -509,7 +510,8 @@ def _registrar_pr_sessao(aluno_id: str, ex_nome: str | None, carga: float, tipo:
 
 def set_series(aluno_id: str, exercicio_id: str | None, series: list,
                canal: CanalOrigem = CanalOrigem.PORTAL, classificacao: Classificacao = Classificacao.AUTO,
-               ator: Ator = Ator.ALUNO, substituto_nome: str | None = None) -> tuple[dict, float | None]:
+               ator: Ator = Ator.ALUNO, substituto_nome: str | None = None,
+               pse: float | None = None) -> tuple[dict, float | None]:
     """Substitui as séries de um exercício na sessão (permite editar após registrar).
     Ajusta os agregados pela diferença de volume. Retorna (registro, novo_PR | None).
     `substituto_nome`: se o aluno executou um substituto em vez do exercício prescrito —
@@ -541,7 +543,8 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
         "GSI1PK": keys.gsi1_registro(aluno_id, chave), "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
         "ttl": int(time.time()) + SESSION_TTL_S,   # expira junto com a sessão se abandonada
     }
-    updated = repo.put_series(pk, sk, series, on_insert, set_always={"substituto_nome": substituto_nome})
+    updated = repo.put_series(pk, sk, series, on_insert,
+                              set_always={"substituto_nome": substituto_nome, "pse": pse})
     delta = _volume(series) - old_vol
     if delta:
         wk = _isoweek()

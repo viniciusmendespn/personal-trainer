@@ -71,6 +71,7 @@ class ExercicioSessaoContexto(BaseModel):
     nome: str | None = None
     series_realizadas: str = ""                    # compacto: "20kg x 10 | 22kg x 8 @RPE8"
     substituto_executado: str | None = None        # nome do substituto, se o aluno trocou
+    pse: float | None = None                       # percepção de esforço do exercício (0-10); None = não informado
 
 
 class SessaoContexto(BaseModel):

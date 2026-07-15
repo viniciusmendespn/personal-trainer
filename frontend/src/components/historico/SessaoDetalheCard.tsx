@@ -42,6 +42,7 @@ interface ExecEx {
   unidade_carga?: string
   unidade_reps?: string
   series_exec: Array<{ carga?: string; reps?: number; rpe?: number; aquecimento?: boolean; contexto?: boolean }>
+  pse?: number   // percepção de esforço do exercício (0-10)
   series_prescritas?: Array<{ series: number; reps: string; carga?: string; aquecimento?: boolean }>
   series?: number
   reps_prescritas?: string
@@ -145,6 +146,12 @@ function ExercicioDetalhe({ ex, alunoId, bloco }: ExercicioDetalheProps) {
 
       {ex.substituto_nome && (
         <p className="text-xs text-accent">↔ Substituído por: {ex.substituto_nome}</p>
+      )}
+
+      {ex.pse != null && (
+        <span className="inline-flex items-center gap-1 rounded-full bg-energy/10 px-2 py-0.5 text-[11px] font-medium text-energy">
+          Esforço (PSE) {ex.pse}/10
+        </span>
       )}
 
       {prescrito && (

@@ -202,6 +202,7 @@ def _compactar_sessao(s: dict) -> SessaoContexto:
                     if not x.get("aquecimento")   # séries de warmup não entram na análise
                 ),
                 substituto_executado=e.get("substituto_nome"),
+                pse=_num(e.get("pse")),
             )
             for e in s.get("exercicios_exec") or []
             if not e.get("aquecimento")           # exercícios de warmup não entram na análise

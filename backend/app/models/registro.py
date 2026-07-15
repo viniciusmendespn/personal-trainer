@@ -20,6 +20,7 @@ class Registro(BaseModel):
     exercicio_nome: str                        # denorm p/ histórico/agente sem 2º get
     aluno_id: str
     series_exec: list[SerieExec] = Field(default_factory=list)
+    pse: Optional[float] = None                # percepção subjetiva de esforço do exercício (0-10); None = "não sei dizer"
     rm: Optional[str] = None                   # repetição máxima, se informado
     substituto_nome: Optional[str] = None       # nome do substituto executado, se houver
     data_hora: str

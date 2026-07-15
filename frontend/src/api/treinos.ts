@@ -144,6 +144,7 @@ export interface ExecExercicio {
   exercicio_nome: string
   tipo_exercicio?: string   // 'FORCA' | 'PERFORMANCE' (+ legados na leitura)
   series_exec: Array<{ carga?: string; reps?: number; rpe?: number }>
+  pse?: number   // percepção de esforço do exercício (0-10)
   series_prescritas?: Array<{ series: number; reps: string; carga?: string }>
   series?: number
   reps_prescritas?: string

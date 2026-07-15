@@ -183,11 +183,24 @@ export function PostComposer({ exercicioId, exercicioNome, viewerAtor, alunoId, 
   return (
     <div className="relative rounded-lg border border-border bg-surface p-3 space-y-3">
       {loading && (
-        <div className="absolute inset-0 z-10 rounded-lg bg-surface/80 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2">
-          <span className="inline-block h-5 w-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+        <div className="absolute inset-0 z-10 rounded-lg bg-surface/80 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2 px-6">
           <span className="text-xs text-text-muted">
             {`Enviando…${pct != null ? ` ${pct}%` : ''}`}
           </span>
+          {pct != null ? (
+            <div className="w-full max-w-[180px] h-2 rounded-full bg-surface-elevated border border-border overflow-hidden">
+              <div
+                className="h-full bg-accent transition-all duration-300"
+                style={{ width: `${pct}%` }}
+                role="progressbar"
+                aria-valuenow={pct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              />
+            </div>
+          ) : (
+            <span className="inline-block h-5 w-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+          )}
         </div>
       )}
       {/* Seletor de tipo */}
