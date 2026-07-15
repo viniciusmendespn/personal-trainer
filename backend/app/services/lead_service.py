@@ -13,16 +13,17 @@ from app.utils import epoch_ms, new_id, now_iso
 
 
 def criar_lead(personal_id: str, nome: str, telefone: str,
-               objetivo: str | None = None, mensagem: str | None = None,
+               objetivos: list[str] | None = None, mensagem: str | None = None,
                fonte: str | None = None) -> dict:
     """Cria o lead (status NOVO) e dispara notificação para o personal contatar."""
+    objetivos = objetivos or []
     lead_id = new_id()
     sk = keys.sk_lead(epoch_ms(), lead_id)
     item = {
         "lead_id": lead_id,
         "nome": nome,
         "telefone": telefone,
-        "objetivo": objetivo,
+        "objetivos": objetivos,
         "mensagem": mensagem,
         "fonte": fonte or "direto",
         "status": LeadStatus.NOVO.value,
@@ -32,7 +33,7 @@ def criar_lead(personal_id: str, nome: str, telefone: str,
     notif_service.criar(
         personal_id, "LEAD_NOVO",
         f"Novo lead: {nome}",
-        f"{objetivo or 'Sem objetivo definido'} · via {fonte or 'direto'}",
+        f"{', '.join(objetivos) or 'Sem objetivo definido'} · via {fonte or 'direto'}",
         ref_extra={"telefone": telefone, "fonte": fonte or "direto", "lead_ref": sk},
     )
     return {**item, "ref": sk}

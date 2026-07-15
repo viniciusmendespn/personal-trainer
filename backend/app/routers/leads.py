@@ -46,11 +46,10 @@ def converter(body: ConverterBody, personal_id: str = Depends(get_current_person
     if not lead:
         raise HTTPException(404, "Lead não encontrado")
 
-    objetivo = lead.get("objetivo")
     novo = AlunoCreate(
         nome=lead["nome"],
         telefone=lead["telefone"],
-        objetivos=[objetivo] if objetivo else [],
+        objetivos=lead.get("objetivos") or [],
         observacoes=lead.get("mensagem") or None,
     )
     try:

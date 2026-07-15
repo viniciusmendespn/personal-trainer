@@ -118,7 +118,9 @@ export function CaptacaoPage() {
                     <Badge tone="accent">{lead.fonte}</Badge>
                     <Badge tone={STATUS_TONE[lead.status]}>{STATUS_LABEL[lead.status]}</Badge>
                   </p>
-                  {lead.objetivo && <p className="text-xs text-text-secondary mt-0.5">Objetivo: {lead.objetivo}</p>}
+                  {lead.objetivos && lead.objetivos.length > 0 && (
+                    <p className="text-xs text-text-secondary mt-0.5">Objetivo: {lead.objetivos.join(', ')}</p>
+                  )}
                   {lead.mensagem && <p className="text-xs text-text-secondary mt-0.5 italic">"{lead.mensagem}"</p>}
                   <p className="text-[11px] text-text-muted mt-0.5">{lead.telefone} · {tempoRelativo(lead.created_at)}</p>
                 </div>

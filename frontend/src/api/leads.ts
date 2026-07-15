@@ -8,7 +8,7 @@ export interface Lead {
   lead_id: string
   nome: string
   telefone: string
-  objetivo?: string
+  objetivos?: string[]
   mensagem?: string
   fonte: string
   status: LeadStatus

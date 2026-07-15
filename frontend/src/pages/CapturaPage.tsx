@@ -37,7 +37,7 @@ export function CapturaPage() {
 function CapturaFlow({ slug, perfil, fonte }: { slug: string; perfil: CapturaPerfil; fonte: string }) {
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
-  const [objetivo, setObjetivo] = useState('')
+  const [objetivos, setObjetivos] = useState<string[]>([])
   const [mensagem, setMensagem] = useState('')
   const [enviado, setEnviado] = useState(false)
 
@@ -46,12 +46,16 @@ function CapturaFlow({ slug, perfil, fonte }: { slug: string; perfil: CapturaPer
       capturaApi.enviarLead(slug, {
         nome,
         telefone,
-        objetivo: objetivo || undefined,
+        objetivos: objetivos.length ? objetivos : undefined,
         mensagem: mensagem || undefined,
         fonte: fonte || undefined,
       }),
     onSuccess: () => setEnviado(true),
   })
+
+  function toggleObjetivo(o: string) {
+    setObjetivos((cur) => (cur.includes(o) ? cur.filter((x) => x !== o) : [...cur, o]))
+  }
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -103,15 +107,15 @@ function CapturaFlow({ slug, perfil, fonte }: { slug: string; perfil: CapturaPer
             <Input label="Nome completo *" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Seu nome" required />
             <PhoneInput label="WhatsApp" value={telefone} onChange={setTelefone} required />
             <div>
-              <span className="block text-xs font-medium text-text-secondary mb-1.5">Objetivo (opcional)</span>
+              <span className="block text-xs font-medium text-text-secondary mb-1.5">Objetivos (opcional)</span>
               <div className="flex flex-wrap gap-2">
                 {OBJETIVOS.map((o) => (
                   <button
                     key={o}
                     type="button"
-                    onClick={() => setObjetivo((cur) => (cur === o ? '' : o))}
+                    onClick={() => toggleObjetivo(o)}
                     className={`px-3 py-1.5 text-sm rounded-lg border transition ${
-                      objetivo === o
+                      objetivos.includes(o)
                         ? 'bg-accent text-white border-accent'
                         : 'border-border text-text-secondary hover:border-border-strong'
                     }`}

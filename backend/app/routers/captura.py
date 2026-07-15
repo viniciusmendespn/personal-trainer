@@ -23,7 +23,7 @@ _SOCIAL_FIELDS = (
 class LeadBody(BaseModel):
     nome: str
     telefone: str
-    objetivo: str | None = None
+    objetivos: list[str] = []
     mensagem: str | None = None
     fonte: str | None = None
 
@@ -61,7 +61,7 @@ def enviar_lead(body: LeadBody, slug: str):
         personal_id,
         nome=body.nome.strip(),
         telefone=telefone,
-        objetivo=body.objetivo,
+        objetivos=[o for o in body.objetivos if o and o.strip()],
         mensagem=body.mensagem,
         fonte=(body.fonte or "").strip() or None,
     )

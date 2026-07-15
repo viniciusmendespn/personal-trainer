@@ -21,7 +21,7 @@ export interface CapturaPerfil {
 export interface LeadInput {
   nome: string
   telefone: string
-  objetivo?: string
+  objetivos?: string[]
   mensagem?: string
   fonte?: string
 }
