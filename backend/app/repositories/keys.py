@@ -308,6 +308,21 @@ SK_ANAMNESE_TEMPLATE = "CONFIG#ANAMNESE"   # PT#{personal_id}
 SK_ANAMNESE_ALUNO = "ANAMNESE#"            # AL#{aluno_id}
 
 
+# ── Captação / leads (funil comercial de entrada, partição PT#) ──────────────
+# Lead = prospect que preencheu a página pública /@slug. Fica FORA de STATS#ALUNOS
+# e do limite do plano (só vira aluno na conversão). Lookup do slug é global O(1)
+# (mesmo padrão de CADASTRO#/TOKEN#/PHONE# — sem GSI).
+def pk_slug(slug: str) -> str:
+    return f"SLUG#{slug}"
+
+
+LEAD_PREFIX = "LEAD#"
+
+
+def sk_lead(ts: str, lead_id: str) -> str:
+    return f"LEAD#{ts}#{lead_id}"
+
+
 # ── Base de conhecimento para IA (arquivos do personal, partição PT#) ────────
 KB_PREFIX = "KB#"
 SK_KB_BUNDLE = "KB_BUNDLE"   # metadado do zip cacheado: s3_key, built_at, file_count, total_size

@@ -38,6 +38,8 @@ const RankingPage = lazy(() => import('./pages/RankingPage').then((m) => ({ defa
 const PersonalProfilePage = lazy(() => import('./pages/PersonalProfilePage').then((m) => ({ default: m.PersonalProfilePage })))
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })))
 const CadastroPage = lazy(() => import('./pages/CadastroPage').then((m) => ({ default: m.CadastroPage })))
+const CapturaPage = lazy(() => import('./pages/CapturaPage').then((m) => ({ default: m.CapturaPage })))
+const CaptacaoPage = lazy(() => import('./pages/CaptacaoPage').then((m) => ({ default: m.CaptacaoPage })))
 const AjudaPage = lazy(() => import('./pages/AjudaPage').then((m) => ({ default: m.AjudaPage })))
 const DivulgadoresPage = lazy(() => import('./pages/landing/DivulgadoresPage').then((m) => ({ default: m.DivulgadoresPage })))
 const BlogIndexPage = lazy(() => import('./pages/landing/BlogPages').then((m) => ({ default: m.BlogIndexPage })))
@@ -110,6 +112,7 @@ const router = createBrowserRouter([
                 children: [
                   { path: 'dashboard', element: lazyPage(<DashboardPage />) },
                   { path: 'alunos', element: lazyPage(<AlunosPage />) },
+                  { path: 'captacao', element: lazyPage(<CaptacaoPage />) },
                   { path: 'agenda', element: lazyPage(<AgendaPage />) },
                   { path: 'templates', element: lazyPage(<TemplatesPage />) },
                   { path: 'rotinas', element: lazyPage(<RotinasPage />) },
@@ -133,6 +136,9 @@ const router = createBrowserRouter([
               },
             ],
           },
+      // Página pública de captação: coachpilot.com.br/@slug. Catch-all de 1 segmento —
+      // rotas estáticas acima têm precedência; a página só trata handles iniciados por '@'.
+      { path: ':handle', element: lazyPage(<CapturaPage />) },
       { path: '*', element: <ErrorPage /> },
     ],
   },

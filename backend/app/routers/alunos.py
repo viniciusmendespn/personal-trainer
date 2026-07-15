@@ -95,8 +95,9 @@ def _persistir_aluno(personal_id: str, aluno: Aluno) -> None:
                          add={keys.normalize_objetivo(obj): 1})
 
 
-@router.post("", response_model=Aluno, status_code=201)
-def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_personal_id)):
+def criar_aluno_core(personal_id: str, body: AlunoCreate) -> Aluno:
+    """Cria um aluno ATIVO (limite do plano + foto do WhatsApp + telefone único + persistência).
+    Reutilizado pela criação avulsa e pela conversão de lead (lead_service → captação)."""
     assinatura_service.verificar_limite_alunos(personal_id)
     aluno_id = new_id()
     now = now_iso()
@@ -118,6 +119,11 @@ def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_perso
     _persistir_aluno(personal_id, aluno)
     assinatura_service.invalidate_alunos_bloqueados(personal_id)
     return aluno
+
+
+@router.post("", response_model=Aluno, status_code=201)
+def create_aluno(body: AlunoCreate, personal_id: str = Depends(get_current_personal_id)):
+    return criar_aluno_core(personal_id, body)
 
 
 @router.post("/importar", response_model=ImportarResult, status_code=200)

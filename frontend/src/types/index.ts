@@ -1,6 +1,7 @@
 // Espelho dos enums/modelos do backend (app/models). Manter em sincronia.
 
 export type AlunoStatus = 'ATIVO' | 'INATIVO'
+export type LeadStatus = 'NOVO' | 'EM_CONTATO' | 'CONVERTIDO' | 'PERDIDO'
 export type CustomFieldType = 'TEXT' | 'NUMBER' | 'BOOL' | 'SELECT' | 'DATE'
 
 export interface Custom {

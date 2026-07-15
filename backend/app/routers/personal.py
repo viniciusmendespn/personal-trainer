@@ -1,4 +1,5 @@
 """Perfil do personal trainer: foto, nome, descrição e campos biográficos."""
+import re
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,6 +12,16 @@ from app.services import media_service
 from app.utils import now_iso
 
 router = APIRouter(prefix="/v1/personal", tags=["personal"])
+
+# Slugs reservados: espelham as rotas top-level do portal + termos de sistema, para que
+# um personal não escolha um slug que colidiria com uma rota real (coachpilot.com.br/<rota>).
+SLUG_RESERVADOS = {
+    "dashboard", "alunos", "aluno", "agenda", "plano", "planos", "perfil", "captacao",
+    "cadastro", "loja", "divulgador", "token", "blog", "api", "v1", "admin", "ajuda",
+    "notificacoes", "pacotes", "loja-vendas", "financeiro", "configuracoes", "settings",
+    "login", "logout", "sobre", "app", "www", "suporte", "contato", "termos", "privacidade",
+}
+_SLUG_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$")
 
 
 class PersonalProfileUpdate(BaseModel):
@@ -32,6 +43,10 @@ class PersonalProfileUpdate(BaseModel):
 class AvatarUploadUrlBody(BaseModel):
     filename: str
     content_type: str
+
+
+class SlugBody(BaseModel):
+    slug: str
 
 
 def _add_foto_url(profile: dict) -> dict:
@@ -58,6 +73,36 @@ def update_profile(body: PersonalProfileUpdate, personal_id: str = Depends(get_c
     fields["updated_at"] = now_iso()
     updated = repo.update_item(keys.pk_personal(personal_id), keys.SK_PROFILE, fields, return_values=True)
     return _add_foto_url(repo.clean(updated))
+
+
+@router.post("/me/slug")
+def set_slug(body: SlugBody, personal_id: str = Depends(get_current_personal_id)):
+    """Define/atualiza o slug público do personal (coachpilot.com.br/@slug) para a página
+    de captação. Slug é único globalmente (reserva SLUG#{slug} via put condicional)."""
+    slug = body.slug.strip().lower()
+    if not _SLUG_RE.match(slug):
+        raise HTTPException(422, {
+            "code": "SLUG_INVALIDO",
+            "message": "Use 3 a 30 letras minúsculas, números ou hífen (sem começar/terminar com hífen).",
+        })
+    if slug in SLUG_RESERVADOS:
+        raise HTTPException(409, {"code": "SLUG_RESERVADO", "message": "Este nome é reservado. Escolha outro."})
+
+    perfil = repo.get_item(keys.pk_personal(personal_id), keys.SK_PROFILE) or {}
+    old_slug = perfil.get("slug")
+    if old_slug == slug:
+        return {"slug": slug}
+
+    if not repo.put_item_if_absent(keys.pk_slug(slug), "META", {"personal_id": personal_id}):
+        dono = repo.get_item(keys.pk_slug(slug), "META")
+        if not dono or dono.get("personal_id") != personal_id:
+            raise HTTPException(409, {"code": "SLUG_TAKEN", "message": "Este nome já está em uso."})
+
+    if old_slug and old_slug != slug:
+        repo.delete_item(keys.pk_slug(old_slug), "META")
+    repo.update_item(keys.pk_personal(personal_id), keys.SK_PROFILE,
+                     {"slug": slug, "updated_at": now_iso()})
+    return {"slug": slug}
 
 
 @router.post("/me/avatar/upload-url")

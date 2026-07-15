@@ -52,6 +52,14 @@ class AlunoStatus(str, Enum):
     INATIVO = "INATIVO"
 
 
+class LeadStatus(str, Enum):
+    """Funil de captação — prospect que preencheu a página pública /@slug."""
+    NOVO = "NOVO"
+    EM_CONTATO = "EM_CONTATO"
+    CONVERTIDO = "CONVERTIDO"
+    PERDIDO = "PERDIDO"
+
+
 class AgendamentoStatus(str, Enum):
     AGENDADO = "AGENDADO"
     CONFIRMADO = "CONFIRMADO"

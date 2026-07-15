@@ -18,6 +18,10 @@ export interface Notificacao {
   /** Nome canônico do exercício — identidade estável p/ deep link (id muda a cada semana). */
   chave?: string
   exercicio_nome?: string
+  /** LEAD_NOVO (captação): telefone do prospect, fonte do link e ref do lead. */
+  telefone?: string
+  fonte?: string
+  lead_ref?: string
 }
 
 export interface Comentario {

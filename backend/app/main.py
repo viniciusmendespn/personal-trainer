@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
 from app.config import settings
-from app.routers import (admin, agenda, aluno, alunos, anamnese, avaliacoes, biblioteca, conhecimento, config, cupom, dashboard, divulgador,
-                         feedback, feed_global, ferias, financeiro, loja, loja_public, metas, notificacoes, pacotes, personal, personal_chat, plano, preview, push, rotinas, sessoes, telemetry, templates, treinos, wapi, webhook)
+from app.routers import (admin, agenda, aluno, alunos, anamnese, avaliacoes, biblioteca, captura, conhecimento, config, cupom, dashboard, divulgador,
+                         feedback, feed_global, ferias, financeiro, leads, loja, loja_public, metas, notificacoes, pacotes, personal, personal_chat, plano, preview, push, rotinas, sessoes, telemetry, templates, treinos, wapi, webhook)
 
 app = FastAPI(
     title="Personal Trainer",
@@ -49,6 +49,8 @@ app.include_router(financeiro.painel_router)  # /v1/financeiro (painel de cartei
 app.include_router(metas.router)          # /v1/alunos/{id}/metas
 app.include_router(ferias.router)         # /v1/alunos/{id}/ferias (períodos de ausência do aluno)
 app.include_router(anamnese.router)       # /v1/anamnese/... + /v1/public/anamnese
+app.include_router(captura.router)        # /v1/public/captura (página pública de captação, sem auth)
+app.include_router(leads.router)          # /v1/leads (funil de captação — JWT do personal)
 app.include_router(conhecimento.router)   # /v1/conhecimento (base de conhecimento para IA)
 app.include_router(pacotes.router)        # /v1/pacotes (importar, listar, toggle, remover)
 app.include_router(push.router)           # /v1/aluno/push (Web Push subscriptions)

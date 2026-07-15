@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link2, Copy, Check } from 'lucide-react'
 import { personalApi, type PersonalProfile } from '../api/personal'
 import { AvatarUpload, Button, Card, Input, RichTextContent, RichTextEditor, SocialLinks, Spinner, useToast } from '../components/ui'
 
@@ -118,6 +119,8 @@ export function PersonalProfilePage() {
         )}
       </Card>
 
+      {!editing && <LinkCaptacaoCard slug={profile?.slug} />}
+
       {editing && (
         <Card variant="elevated">
           <form onSubmit={handleSave} className="space-y-4">
@@ -189,5 +192,120 @@ export function PersonalProfilePage() {
         </div>
       )}
     </div>
+  )
+}
+
+function CopyButton({ text, label = 'Copiar' }: { text: string; label?: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => {
+        navigator.clipboard?.writeText(text)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+      }}
+    >
+      {copied ? <Check size={14} /> : <Copy size={14} />}
+      {copied ? 'Copiado' : label}
+    </Button>
+  )
+}
+
+function LinkCaptacaoCard({ slug }: { slug?: string }) {
+  const qc = useQueryClient()
+  const { show } = useToast()
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://coachpilot.com.br'
+
+  const [editando, setEditando] = useState(!slug)
+  const [valor, setValor] = useState(slug ?? '')
+  const [fonte, setFonte] = useState('')
+
+  const salvar = useMutation({
+    mutationFn: (s: string) => personalApi.setSlug(s),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['personal-profile'] })
+      setEditando(false)
+      show('Link de captação salvo!', 'success')
+    },
+    onError: (e: unknown) => {
+      const err = e as { response?: { data?: { detail?: { message?: string } | string } } }
+      const detail = err.response?.data?.detail
+      const msg = typeof detail === 'string' ? detail : detail?.message
+      show(msg || 'Não foi possível salvar o link.', 'error')
+    },
+  })
+
+  const link = slug ? `${origin}/@${slug}` : ''
+  const linkComFonte = slug && fonte.trim()
+    ? `${link}?fonte=${encodeURIComponent(fonte.trim().toLowerCase().replace(/\s+/g, '-'))}`
+    : ''
+
+  return (
+    <Card variant="elevated" className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Link2 size={16} className="text-accent-hover" />
+        <p className="font-semibold text-text">Seu link de captação</p>
+      </div>
+      <p className="text-xs text-text-secondary">
+        Divulgue este link (bio do Instagram, anúncios, WhatsApp). Quem preencher vira um lead
+        na aba <span className="text-text">Captação</span> e você recebe uma notificação.
+      </p>
+
+      {editando ? (
+        <form
+          onSubmit={(e) => { e.preventDefault(); if (valor.trim()) salvar.mutate(valor.trim().toLowerCase()) }}
+          className="space-y-2"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-text-muted shrink-0">{origin}/@</span>
+            <div className="flex-1">
+              <Input
+                value={valor}
+                onChange={(e) => setValor(e.target.value.toLowerCase())}
+                placeholder="seunome"
+              />
+            </div>
+          </div>
+          <p className="text-[11px] text-text-muted">3 a 30 letras minúsculas, números ou hífen.</p>
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" disabled={!valor.trim() || salvar.isPending}>
+              {salvar.isPending ? 'Salvando…' : 'Salvar link'}
+            </Button>
+            {slug && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => { setValor(slug); setEditando(false) }}>
+                Cancelar
+              </Button>
+            )}
+          </div>
+        </form>
+      ) : (
+        <>
+          <div className="flex items-center gap-2 flex-wrap">
+            <code className="text-sm text-accent-hover bg-accent/10 rounded px-2 py-1 break-all">{link}</code>
+            <CopyButton text={link} />
+            <Button variant="ghost" size="sm" onClick={() => setEditando(true)}>Editar</Button>
+          </div>
+
+          <div className="pt-2 border-t border-border">
+            <p className="text-xs font-medium text-text-secondary mb-1.5">Gerar link com rastreamento de origem</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex-1 min-w-[160px]">
+                <Input
+                  value={fonte}
+                  onChange={(e) => setFonte(e.target.value)}
+                  placeholder="ex.: instagram, bio, anuncio-fb"
+                />
+              </div>
+              {linkComFonte && <CopyButton text={linkComFonte} label="Copiar com fonte" />}
+            </div>
+            {linkComFonte && (
+              <code className="block mt-2 text-xs text-text-muted break-all">{linkComFonte}</code>
+            )}
+          </div>
+        </>
+      )}
+    </Card>
   )
 }

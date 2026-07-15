@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, AlertTriangle, CalendarClock, Clock, Image, Camera, HelpCircle, Pin, MailOpen, Link2, UserRound, Dumbbell, PlaySquare, MessageSquareDot, MessageCircle, DollarSign } from 'lucide-react'
+import { Bell, AlertTriangle, CalendarClock, Clock, Image, Camera, HelpCircle, Pin, MailOpen, Link2, UserRound, Dumbbell, PlaySquare, MessageSquareDot, MessageCircle, DollarSign, UserPlus } from 'lucide-react'
 import { useNotificacoes, useMarkRead, useMarkAllRead, useVincularMidia } from '../hooks/useNotificacoes'
 import { useAlunos } from '../hooks/useAlunos'
 import { useExerciciosAluno } from '../hooks/useEvolucao'
@@ -23,6 +23,7 @@ const TIPO_ICON: Record<string, React.ReactNode> = {
   COBRANCA_VENCIDA: <DollarSign size={16} className="text-danger" />,
   COBRANCA_PAGA: <DollarSign size={16} className="text-success" />,
   FERIAS_ALUNO: <CalendarClock size={16} className="text-accent" />,
+  LEAD_NOVO: <UserPlus size={16} className="text-energy" />,
 }
 const TIPO_TONE: Record<string, 'danger' | 'warning' | 'info' | 'neutral'> = {
   DOR: 'danger',
@@ -39,6 +40,7 @@ const TIPO_TONE: Record<string, 'danger' | 'warning' | 'info' | 'neutral'> = {
   COBRANCA_VENCIDA: 'danger',
   COBRANCA_PAGA: 'neutral',
   FERIAS_ALUNO: 'info',
+  LEAD_NOVO: 'warning',
 }
 
 const FILTROS: { label: string; tipo?: string }[] = [
@@ -49,6 +51,7 @@ const FILTROS: { label: string; tipo?: string }[] = [
   { label: 'Férias/ausência', tipo: 'FERIAS_ALUNO' },
   { label: 'Treino', tipo: 'TREINO_FIM' },
   { label: 'Mensagem', tipo: 'MSG_ALUNO_DIRETO' },
+  { label: 'Lead', tipo: 'LEAD_NOVO' },
 ]
 
 interface QuickAction {
@@ -60,6 +63,27 @@ interface QuickAction {
 function useQuickAction(item: Notificacao, markRead: ReturnType<typeof useMarkRead>): QuickAction | null {
   const navigate = useNavigate()
   const { openChat } = useChatContext()
+
+  const doAndReadBase = (fn: () => void) => () => {
+    fn()
+    if (!item.lida) markRead.mutate(item.ref)
+  }
+
+  // Lead de captação: sem aluno_id (ainda não é aluno). Ação primária = falar no WhatsApp.
+  if (item.tipo === 'LEAD_NOVO') {
+    if (item.telefone) {
+      return {
+        label: 'Falar no WhatsApp',
+        icon: <MessageCircle size={15} />,
+        fn: doAndReadBase(() => window.open(`https://wa.me/${item.telefone}`, '_blank', 'noopener')),
+      }
+    }
+    return {
+      label: 'Ver captação',
+      icon: <UserPlus size={15} />,
+      fn: doAndReadBase(() => navigate('/captacao')),
+    }
+  }
 
   if (!item.aluno_id) return null
 

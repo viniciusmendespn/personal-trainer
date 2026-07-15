@@ -15,6 +15,7 @@ _URL_MAP_PERSONAL: dict[str, str] = {
     "MSG_ALUNO":     "/notificacoes",
     "MSG_ALUNO_DIRETO": "/notificacoes",
     "PERGUNTA_DIRETA":  "/notificacoes",
+    "LEAD_NOVO":     "/captacao",
     "LEMBRETE_AULA": "/agenda",
     "ASSINATURA_PAGA":      "/plano",
     "INDICACAO_RECOMPENSA": "/plano",
