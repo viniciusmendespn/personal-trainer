@@ -4,7 +4,6 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { capturaApi, type CapturaPerfil } from '../api/captura'
 import { Button, Input, Spinner, SocialLinks } from '../components/ui'
-import { RichTextContent } from '../components/ui/RichTextContent'
 import { PhoneInput } from '../components/PhoneInput'
 
 const OBJETIVOS = [
@@ -83,9 +82,6 @@ function CapturaFlow({ slug, perfil, fonte }: { slug: string; perfil: CapturaPer
             xUrl={perfil.x_url}
             siteUrl={perfil.site_url}
           />
-          {perfil.biografia && (
-            <RichTextContent html={perfil.biografia} className="text-sm text-text-secondary text-left mt-1" />
-          )}
         </div>
 
         {enviado ? (
