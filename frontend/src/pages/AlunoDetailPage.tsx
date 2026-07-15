@@ -1287,6 +1287,11 @@ function ExecucaoStats({
           <span className="text-text-muted">
             Última vez ({new Date(ultima!.data_hora).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })})
           </span>
+          {ultima?.pse != null && (
+            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-energy/10 px-2 py-0.5 text-[11px] font-medium text-energy align-middle">
+              Esforço (PSE) {ultima.pse}/10
+            </span>
+          )}
           <div className="mt-0.5 flex flex-wrap gap-1">
             {seriesUltima.map((s, i) => {
               let label: string

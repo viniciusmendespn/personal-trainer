@@ -32,6 +32,7 @@ export interface SerieHistorico {
 export interface SessaoHistorico {
   data_hora: string
   series_exec: SerieHistorico[]
+  pse?: number   // percepção de esforço do exercício naquela execução (0-10)
 }
 
 /** Item do seletor de evolução (historico=1): identidade por nome canônico (chave). */
