@@ -12,6 +12,7 @@ import { Modal, Badge } from '../ui'
 import { normalizeTipoExercicio, type TipoExercicio, type BlocoTreino } from '../../types'
 import { fmtScoreWod } from '../../utils/wod'
 import { formatoBlocoLabel, sufixoPrescricaoBloco, fmtPrescricaoBloco } from '../exercicios/BlocosTreinoEditor'
+import { fmtSerieCompacta } from '../exercicios/SeriesPrescritasEditor'
 import type { ScoreBlocoOut, ExercicioPrescritoSessao } from '../../api/alunoApp'
 
 function fmtDur(secs: number) {
@@ -72,9 +73,9 @@ function totalVolume(exs: ExecEx[]) {
   return v > 0 ? `${Math.round(v)} kg` : null
 }
 
-type PrescricaoShape = Pick<ExecEx, 'series_prescritas' | 'unidade_reps' | 'series' | 'reps_prescritas' | 'carga_prescrita'>
+type PrescricaoShape = Pick<ExecEx, 'series_prescritas' | 'unidade_reps' | 'unidade_carga' | 'series' | 'reps_prescritas' | 'carga_prescrita'>
 
-function prescritoLabel(ex: PrescricaoShape, bloco?: BlocoTreino): string | null {
+function prescritoLabel(ex: PrescricaoShape, tipo: TipoExercicio, bloco?: BlocoTreino): string | null {
   if (ex.series_prescritas?.length) {
     // Bloco pontuável ou circuito com rounds: prescrição é POR round/minuto (igual à sessão)
     const pontuavel = !!bloco && bloco.formato !== 'LIVRE' && !bloco.aquecimento
@@ -83,11 +84,17 @@ function prescritoLabel(ex: PrescricaoShape, bloco?: BlocoTreino): string | null
       const base = fmtPrescricaoBloco(ex.series_prescritas, ex.unidade_reps)
       return sufixo ? `${base} ${sufixo}` : base
     }
-    return ex.series_prescritas.map((s) => `${s.series}×${s.reps}${s.carga ? ` · ${s.carga}` : ''}`).join(' + ')
+    // Prescrição clássica: mesma unidade do app do aluno (FORCA → kg / PERFORMANCE → unidade_reps).
+    return ex.series_prescritas
+      .map((s) => fmtSerieCompacta(s, { tipo, unidadeCarga: ex.unidade_carga, unidadeReps: ex.unidade_reps }))
+      .join(' + ')
   }
   if (ex.series || ex.reps_prescritas) {
-    const p = [ex.series ? `${ex.series}x` : '', ex.reps_prescritas ?? ''].join('').trim()
-    return [p, ex.carga_prescrita].filter(Boolean).join(' · ') || null
+    const perf = tipo === 'PERFORMANCE'
+    const p = `${ex.series ? `${ex.series}x` : ''}${ex.reps_prescritas ?? ''}${perf && ex.unidade_reps ? ` ${ex.unidade_reps}` : ''}`.trim()
+    const uc = perf ? (ex.unidade_carga || '') : (tipo === 'FORCA' ? (ex.unidade_carga || 'kg') : '')
+    const carga = ex.carga_prescrita ? `${ex.carga_prescrita}${uc ? ` ${uc}` : ''}` : ''
+    return [p, carga].filter(Boolean).join(' · ') || null
   }
   return null
 }
@@ -111,7 +118,7 @@ function execLabel(tipo: TipoExercicio, s: { carga?: string; reps?: number; cont
 
 function ExercicioDetalhe({ ex, alunoId, bloco }: ExercicioDetalheProps) {
   const tipo = normalizeTipoExercicio(ex.tipo_exercicio)
-  const prescrito = prescritoLabel(ex, bloco)
+  const prescrito = prescritoLabel(ex, tipo, bloco)
   // Circuito (LIVRE/aquecimento com rounds): cada série executada é um round → "Rd N"
   const circuito = !!bloco && bloco.formato === 'LIVRE' && (bloco.params?.rounds ?? 0) > 1
   const [correcaoOpen, setCorrecaoOpen] = useState(false)
@@ -227,7 +234,7 @@ function MovimentoBloco({ ex, bloco }: { ex: ExercicioPrescritoSessao; bloco: Bl
  * pontuável com score) — aparece atenuado, com a prescrição, para o histórico deixar claro que
  * estava no treino mas foi pulado. Aquecimentos pulados são omitidos (decisão de UX). */
 function ExercicioNaoExecutado({ ex, bloco }: { ex: ExercicioPrescritoSessao; bloco?: BlocoTreino }) {
-  const prescrito = prescritoLabel(ex, bloco)
+  const prescrito = prescritoLabel(ex, normalizeTipoExercicio(ex.tipo_exercicio), bloco)
   return (
     <div className="space-y-1 pb-3 border-b border-border last:border-0 last:pb-0 opacity-60">
       <div className="flex items-center justify-between gap-2">

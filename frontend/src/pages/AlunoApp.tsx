@@ -9,7 +9,7 @@ import { ScoreWodModal } from '../components/aluno/ScoreWodModal'
 import { PseModal } from '../components/aluno/PseModal'
 import { fmtScoreValor } from '../utils/wod'
 import { usePushNotification } from '../hooks/usePushNotification'
-import { SeriesPrescritasCompact } from '../components/exercicios/SeriesPrescritasEditor'
+import { SeriesPrescritasCompact, fmtPrescricaoFlat } from '../components/exercicios/SeriesPrescritasEditor'
 import { AlunoSessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import { alunoClient } from '../api/alunoClient'
 import { FeedGlobalTab } from '../components/feed/FeedGlobalTab'
@@ -1011,8 +1011,8 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
                               {sufixoPrev && <span className="opacity-70"> {sufixoPrev}</span>}
                             </>
                           : ex.series_prescritas?.length
-                            ? <SeriesPrescritasCompact items={ex.series_prescritas} />
-                            : <>{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</>
+                            ? <SeriesPrescritasCompact items={ex.series_prescritas} tipoExercicio={normalizeTipoExercicio(ex.tipo_exercicio)} unidadeCarga={ex.unidade_carga} unidadeReps={ex.unidade_reps} />
+                            : <>{fmtPrescricaoFlat(ex, { tipo: normalizeTipoExercicio(ex.tipo_exercicio), unidadeCarga: ex.unidade_carga, unidadeReps: ex.unidade_reps })}</>
                         }
                       </p>
                       {ex.observacoes && (
@@ -1683,8 +1683,8 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
                     {sufixoBloco && <span className="opacity-70"> {sufixoBloco}</span>}
                   </span>
                 : seriesAtivas?.length
-                  ? <SeriesPrescritasCompact items={seriesAtivas} tipoExercicio={normalizeTipoExercicio(ex.tipo_exercicio)} />
-                  : <span className="text-xs text-text-muted">{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</span>
+                  ? <SeriesPrescritasCompact items={seriesAtivas} tipoExercicio={normalizeTipoExercicio(ex.tipo_exercicio)} unidadeCarga={ex.unidade_carga} unidadeReps={ex.unidade_reps} />
+                  : <span className="text-xs text-text-muted">{fmtPrescricaoFlat(ex, { tipo: normalizeTipoExercicio(ex.tipo_exercicio), unidadeCarga: ex.unidade_carga, unidadeReps: ex.unidade_reps })}</span>
               }
             </span>
           </span>

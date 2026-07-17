@@ -124,11 +124,47 @@ export function SeriesPrescritasEditor({
   )
 }
 
-/** Resumo compacto para exibição: "2×10 · 132 (88%) + 1×6 · 140 (93%)" */
-export function SeriesPrescritasCompact({ items, tipoExercicio, rm_kg }: { items: SeriePrescrita[]; tipoExercicio?: TipoExercicio; rm_kg?: number }) {
+/** Formata UMA série prescrita já com a unidade, conforme o tipo do exercício
+ * (mesma convenção de `execLabel`):
+ * - FORCA: `reps` é contagem (sem unidade); `carga` recebe `unidadeCarga || 'kg'`.
+ * - PERFORMANCE: `reps` é a métrica (unidadeReps); `carga` é contexto (unidadeCarga, se houver).
+ * - tipo indefinido: sem unidade (comportamento legado preservado).
+ * Não inclui o separador "+" nem o estilo de aquecimento — isso fica a cargo de quem mapeia. */
+export function fmtSerieCompacta(
+  s: SeriePrescrita,
+  { tipo, unidadeCarga, unidadeReps, pct }: {
+    tipo?: TipoExercicio; unidadeCarga?: string | null; unidadeReps?: string | null; pct?: number | null
+  } = {},
+): string {
+  const perf = tipo === 'PERFORMANCE'
+  const base = `${s.series}×${s.reps}${perf && unidadeReps ? ` ${unidadeReps}` : ''}`
+  if (!s.carga) return base
+  // `||` cobre null/undefined/'' — FORCA implica kg; PERFORMANCE só mostra unidade se definida.
+  const uc = perf ? (unidadeCarga || '') : (tipo === 'FORCA' ? (unidadeCarga || 'kg') : '')
+  const pctStr = pct != null ? ` (${pct}%)` : ''
+  return `${base} · ${s.carga}${uc ? ` ${uc}` : ''}${pctStr}`
+}
+
+/** Versão da formatação com unidade para os campos flat legados
+ * (series / reps_prescritas / carga_prescrita) — itens antigos sem `series_prescritas`. */
+export function fmtPrescricaoFlat(
+  ex: { series?: number | null; reps_prescritas?: string | null; carga_prescrita?: string | null },
+  { tipo, unidadeCarga, unidadeReps }: {
+    tipo?: TipoExercicio; unidadeCarga?: string | null; unidadeReps?: string | null
+  } = {},
+): string {
+  const perf = tipo === 'PERFORMANCE'
+  const reps = `${ex.series ? `${ex.series}x` : ''}${ex.reps_prescritas ?? ''}${perf && unidadeReps ? ` ${unidadeReps}` : ''}`.trim()
+  if (!ex.carga_prescrita) return reps
+  const uc = perf ? (unidadeCarga || '') : (tipo === 'FORCA' ? (unidadeCarga || 'kg') : '')
+  return [reps, `${ex.carga_prescrita}${uc ? ` ${uc}` : ''}`].filter(Boolean).join(' · ')
+}
+
+/** Resumo compacto para exibição: "2×10 · 132 kg (88%) + 1×6 · 140 kg (93%)" */
+export function SeriesPrescritasCompact({ items, tipoExercicio, unidadeCarga, unidadeReps, rm_kg }: {
+  items: SeriePrescrita[]; tipoExercicio?: TipoExercicio; unidadeCarga?: string | null; unidadeReps?: string | null; rm_kg?: number
+}) {
   if (!items.length) return null
-  // PERFORMANCE: oculta carga só quando não prescrita (2ª medida pode preenchê-la)
-  const ocultarCarga = tipoExercicio === 'PERFORMANCE' && !items.some((s) => s.carga)
   return (
     <span className="text-xs text-text-muted">
       {items.map((s, i) => {
@@ -138,7 +174,7 @@ export function SeriesPrescritasCompact({ items, tipoExercicio, rm_kg }: { items
           <span key={i}>
             {i > 0 && <span className="mx-1 opacity-50">+</span>}
             <span className={s.aquecimento ? 'opacity-60' : ''}>
-              {s.series}×{s.reps}{(!ocultarCarga && s.carga) ? ` · ${s.carga}${pct != null ? ` (${pct}%)` : ''}` : ''}
+              {fmtSerieCompacta(s, { tipo: tipoExercicio, unidadeCarga, unidadeReps, pct })}
               {s.aquecimento ? <span className="ml-0.5 text-[10px] text-warning">aq.</span> : ''}
             </span>
           </span>

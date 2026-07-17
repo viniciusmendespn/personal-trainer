@@ -21,7 +21,7 @@ import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
 import { useCreateRotinaFromAluno, useRotinas, useAplicarRotina } from '../hooks/useRotinas'
 import { useNotas, useCreateNota } from '../hooks/useNotas'
 import { treinosApi } from '../api/treinos'
-import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
+import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas, fmtPrescricaoFlat } from '../components/exercicios/SeriesPrescritasEditor'
 import { LinksUteisSelector } from '../components/exercicios/LinksUteisSelector'
 import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
@@ -1374,9 +1374,9 @@ function ExercicioRow({
                     {sufixo && <span className="opacity-70"> {sufixo}</span>}
                   </>
                 ) : ex.series_prescritas?.length ? (
-                  <SeriesPrescritasCompact items={ex.series_prescritas} tipoExercicio={ex.tipo_exercicio} rm_kg={ex.rm_kg} />
+                  <SeriesPrescritasCompact items={ex.series_prescritas} tipoExercicio={normalizeTipoExercicio(ex.tipo_exercicio)} unidadeCarga={ex.unidade_carga} unidadeReps={ex.unidade_reps} rm_kg={ex.rm_kg} />
                 ) : (
-                  <>{ex.series ? `${ex.series}x` : ''}{ex.reps_prescritas ?? ''}{ex.carga_prescrita ? ` · ${ex.carga_prescrita}` : ''}</>
+                  <>{fmtPrescricaoFlat(ex, { tipo: normalizeTipoExercicio(ex.tipo_exercicio), unidadeCarga: ex.unidade_carga, unidadeReps: ex.unidade_reps })}</>
                 )}
               </span>
             )}
