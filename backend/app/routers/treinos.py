@@ -148,6 +148,8 @@ def importar_programa(aluno_id: str, body: ImportarProgramaRequest,
         raise HTTPException(400, detail={"code": "ESTRUTURA_INVALIDA", "detail": str(exc)})
 
     pk = keys.pk_aluno(aluno_id)
+    # Vídeo já cadastrado na biblioteca do personal tem prioridade sobre o do JSON — uma Query só.
+    videos_lib = biblioteca_service.mapa_videos(personal_id)
 
     # 1) Apagar o programa atual (treinos + exercícios + agenda de vencimento)
     old_treinos = repo.query_pk(pk, sk_prefix=keys.SK_TREINO_PREFIX)
@@ -185,7 +187,8 @@ def importar_programa(aluno_id: str, body: ImportarProgramaRequest,
             dados = ExercicioCreate(
                 nome=ef.nome, grupo=ef.grupo, ordem=ordem_e, tipo_exercicio=ef.tipo_exercicio,
                 series_prescritas=ef.series_prescritas, intervalo_s=ef.intervalo_s,
-                video_url=ef.video_url, observacoes=ef.observacoes,
+                video_url=biblioteca_service.resolver_video(ef.nome, ef.video_url, videos_lib),
+                observacoes=ef.observacoes,
                 unidade_carga=ef.unidade_carga, unidade_reps=ef.unidade_reps,
                 metrica_direcao=ef.metrica_direcao,
                 substitutos=ef.substitutos,

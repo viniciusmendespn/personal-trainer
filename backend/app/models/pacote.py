@@ -96,6 +96,7 @@ class ImportarPacoteResponse(BaseModel):
     exercicios_importados: int
     templates_importados: int
     rotinas_importadas: int
+    videos_da_biblioteca: int = 0          # exercícios que herdaram o vídeo já cadastrado
 
 
 class PacoteInstalado(BaseModel):

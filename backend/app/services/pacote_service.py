@@ -21,6 +21,7 @@ from fastapi import HTTPException
 from app.models.pacote import ImportarPacoteResponse, PacoteFile, PacoteRefFile
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
+from app.services import biblioteca_service
 from app.utils import det_id, new_id, now_iso
 
 logger = logging.getLogger(__name__)
@@ -282,6 +283,12 @@ def _instalar(
     pk_pt = keys.pk_personal(personal_id)
     now = now_iso()
 
+    # Vídeo já cadastrado na biblioteca do personal tem prioridade sobre o do arquivo — uma única
+    # Query, reaproveitada por todos os exercícios. Em pacote licenciado o vídeo curado do autor
+    # faz parte do produto, então a prioridade não se aplica.
+    videos_lib = {} if licenciado else biblioteca_service.mapa_videos(personal_id)
+    n_videos_lib = 0
+
     # 1. Exercícios — exlib_id = det_id(pacote_id, chave_nome) → dedup por nome no pacote
     ref_to_exlib: dict[str, str] = {}
     ref_to_grupo: dict[str, str] = {}
@@ -295,17 +302,21 @@ def _instalar(
 
     for ex_pkg in pacote_file.exercicios:
         nome = ex_pkg.nome.strip()
-        exlib_id = det_id(pacote_id, _chave_exercicio(nome))
+        chave = _chave_exercicio(nome)
+        video_url = biblioteca_service.resolver_video(nome, ex_pkg.video_url, videos_lib)
+        exlib_id = det_id(pacote_id, chave)
         ref_to_exlib[ex_pkg.ref] = exlib_id
         ref_to_grupo[ex_pkg.ref] = ex_pkg.grupo or ""
         ref_to_tipo[ex_pkg.ref] = ex_pkg.tipo_exercicio.value
         ref_to_unidade[ex_pkg.ref] = ex_pkg.unidade_reps
         ref_to_direcao[ex_pkg.ref] = ex_pkg.metrica_direcao or "MAIOR"
-        ref_to_video[ex_pkg.ref] = ex_pkg.video_url
+        ref_to_video[ex_pkg.ref] = video_url
         exlib_id_to_nome[exlib_id] = nome
         if exlib_id in seen_exlib:
             continue
         seen_exlib.add(exlib_id)
+        if chave in videos_lib:
+            n_videos_lib += 1
         exlib_puts.append({
             "PK": pk_pt,
             "SK": keys.sk_exlib(exlib_id),
@@ -315,7 +326,7 @@ def _instalar(
             "tipo_exercicio": ex_pkg.tipo_exercicio.value,
             "unidade_reps": ex_pkg.unidade_reps,
             "metrica_direcao": ex_pkg.metrica_direcao or "MAIOR",
-            "video_url": ex_pkg.video_url,
+            "video_url": video_url,
             "descricao": ex_pkg.descricao,
             "recomendacoes": ex_pkg.recomendacoes,
             "links_uteis": [],
@@ -439,6 +450,7 @@ def _instalar(
         exercicios_importados=len(exlib_puts),
         templates_importados=len(template_puts),
         rotinas_importadas=len(rotina_puts),
+        videos_da_biblioteca=n_videos_lib,
     )
 
 

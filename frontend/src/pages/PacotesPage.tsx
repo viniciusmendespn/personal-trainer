@@ -7,7 +7,7 @@ import { useBiblioteca } from '../hooks/useDominio'
 import { Button, Card, Spinner, EmptyState, Modal, Badge, Tabs, useToast, useConfirm } from '../components/ui'
 import { downloadJson } from '../api/pacotes'
 import { bibliotecaApi } from '../api/biblioteca'
-import { downloadText, fetchPromptMd, montarArquivoIA, slimBiblioteca } from '../utils/arquivoIa'
+import { downloadText, fetchPromptMd, injetarBiblioteca, slimBiblioteca } from '../utils/arquivoIa'
 import type { ExLib, ImportarPacoteResponse, PacoteInstalado } from '../types'
 import { normalizeText } from '../utils/normalizeText'
 
@@ -28,18 +28,7 @@ function ImportarIASection() {
         bibliotecaApi.list(),
       ])
       const slim = slimBiblioteca(lib)
-      const secoes = slim.length
-        ? [{
-            titulo: '📦 BIBLIOTECA DO PERSONAL (gerado automaticamente — não edite)',
-            nota:
-              '> Exercícios que o personal já tem cadastrados, com o **nome exato** e o **vídeo** de cada um. ' +
-              'Ao montar o array `exercicios` (Etapa 3), reutilize estes exercícios sempre que couberem: ' +
-              'use o mesmo `nome` (idêntico ao daqui) e copie o `video_url` da biblioteca. Crie exercício ' +
-              'novo (com `video_url: null`) só quando não houver equivalente nesta lista.',
-            json: slim,
-          }]
-        : []
-      const md = montarArquivoIA(prompt, secoes)
+      const md = injetarBiblioteca(prompt, slim)
       downloadText(md, 'prompt-pacote-coachpilot.md')
       if (!slim.length) {
         toast('Sua biblioteca está vazia — baixei só o prompt. Cadastre exercícios para a IA reaproveitar seus vídeos.', 'info')
@@ -252,6 +241,11 @@ function SuccessModal({ result, onClose }: { result: ImportarPacoteResponse; onC
           <span>{result.exercicios_importados} exercício(s) adicionado(s) à biblioteca</span>
           <span>{result.templates_importados} template(s) criado(s)</span>
           <span>{result.rotinas_importadas} rotina(s) criada(s)</span>
+          {!!result.videos_da_biblioteca && (
+            <span className="text-accent-hover">
+              {result.videos_da_biblioteca} exercício(s) usaram o vídeo já cadastrado na sua biblioteca
+            </span>
+          )}
         </div>
         {result.licenciado && (
           <Badge tone="accent" className="mt-1">Pacote licenciado — token consumido</Badge>

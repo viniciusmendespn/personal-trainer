@@ -503,4 +503,5 @@ export interface ImportarPacoteResponse {
   exercicios_importados: number
   templates_importados: number
   rotinas_importadas: number
+  videos_da_biblioteca?: number   // exercícios que herdaram o vídeo já cadastrado na biblioteca
 }

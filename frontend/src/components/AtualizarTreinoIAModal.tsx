@@ -3,7 +3,7 @@ import { Download, ExternalLink, Check, FileUp } from 'lucide-react'
 import { Modal, Button, Textarea, Spinner, useToast, useConfirm } from './ui'
 import { useExportarPrograma, useImportarPrograma } from '../hooks/useTreinos'
 import { bibliotecaApi } from '../api/biblioteca'
-import { downloadText, fetchPromptMd, montarArquivoIA, slimBiblioteca } from '../utils/arquivoIa'
+import { downloadText, fetchPromptMd, injetarBiblioteca, montarArquivoIA, slimBiblioteca } from '../utils/arquivoIa'
 import type { ImportarProgramaResponse } from '../api/treinos'
 
 interface Props {
@@ -35,16 +35,14 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
         fetchPromptMd('/prompt-treino-aluno.md'),
         bibliotecaApi.list(),
       ])
-      const data = { ...(programa as object), biblioteca: slimBiblioteca(lib) }
-      const md = montarArquivoIA(prompt, [
+      const md = montarArquivoIA(injetarBiblioteca(prompt, slimBiblioteca(lib)), [
         {
           titulo: '📦 DADOS DO ALUNO (gerado automaticamente — não edite)',
           nota:
-            '> O JSON abaixo tem tudo o que você precisa: o programa atual (`treinos`), o perfil e ' +
-            'histórico completos do aluno (`contexto_aluno`) e a biblioteca de exercícios do personal ' +
-            '(`biblioteca`, com o nome exato e o vídeo de cada exercício já cadastrado). Use tudo isso ' +
-            'seguindo as instruções acima.',
-          json: data,
+            '> O JSON abaixo tem o programa atual (`treinos`) e o perfil e histórico completos do ' +
+            'aluno (`contexto_aluno`). A biblioteca de exercícios do personal está na seção acima. ' +
+            'Use tudo isso seguindo as instruções.',
+          json: programa,
         },
       ])
       const nome = (alunoNome || 'aluno').replace(/[\\/:*?"<>|]/g, '').trim()
