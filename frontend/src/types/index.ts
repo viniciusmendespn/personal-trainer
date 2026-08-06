@@ -132,6 +132,7 @@ export interface Treino {
   data_fim?: string
   blocos?: BlocoTreino[]
   total_execucoes?: number
+  ultima_execucao?: string   // ISO da última finalização — marca "feito nesta semana" no app do aluno
   // Agregados de tempo por treino (somados no finish); médias contam execuções a partir do deploy.
   soma_duracao_segundos?: number
   soma_total_series?: number

@@ -67,6 +67,22 @@ function formatDiaCompleto(iso: string) {
   return d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' })
 }
 
+/** Segunda-feira 00:00 no fuso do aparelho. O backend grava tudo em UTC, então o recorte da
+ * semana é feito aqui — senão um treino de domingo 21h (BRT) cairia na semana seguinte. */
+function inicioSemanaLocal() {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+  return d
+}
+
+/** "hoje" ou o dia da semana abreviado sem ponto ("seg", "qua"). */
+function labelDiaCurto(iso: string) {
+  const d = new Date(iso)
+  if (d.toDateString() === new Date().toDateString()) return 'hoje'
+  return d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')
+}
+
 function Centered({ children }: { children: React.ReactNode }) {
   return (
     <div
@@ -925,6 +941,17 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
   const ultimo = hoje.data?.ultimo
   const proximo = hoje.data?.proximo
 
+  // O aluno não precisa seguir a ordem da rotação, então "Próximo" não responde "o que já fiz
+  // essa semana?". `agendados` vem reprojetado (só id/nome) — o cruzamento pega `ultima_execucao`
+  // do treino completo, que já vem no mesmo payload.
+  const treinoPorId = new Map((hoje.data?.treinos ?? []).map((t) => [t.treino_id, t]))
+  const inicioSemana = inicioSemanaLocal()
+  const feitoEm = (id: string) => {
+    const ue = treinoPorId.get(id)?.ultima_execucao
+    return ue && new Date(ue) >= inicioSemana ? ue : null
+  }
+  const feitos = lista.filter((t) => feitoEm(t.id)).length
+
   if (previewId) {
     const nomeTreino = lista.find((t) => t.id === previewId)?.nome ?? 'Treino'
     const exs = previewExs.data ?? []
@@ -1063,37 +1090,44 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
 
   return (
     <div className="space-y-3">
-      {(ultimo || proximo) && (
-        <Card variant="elevated" className="space-y-1.5">
-          {ultimo && (
-            <p className="text-xs text-text-secondary">
-              <span className="text-text-muted">Último treino:</span>{' '}
-              <span className="font-medium text-text">{ultimo.treino_nome ?? '—'}</span>
-              {ultimo.data && <span className="text-text-muted"> · {formatDiaCompleto(ultimo.data)}</span>}
-            </p>
-          )}
-          {proximo && (
-            <p className="text-xs text-text-secondary">
-              <span className="text-text-muted">Próximo:</span>{' '}
-              <span className="font-medium text-energy">{proximo.nome ?? '—'}</span>
-            </p>
-          )}
-        </Card>
+      {/* Só faz sentido quando a semana ainda está zerada ("voltando de uma pausa") — havendo
+          treino feito, os checks da lista já dizem o que aconteceu, e melhor. */}
+      {feitos === 0 && ultimo && (
+        <p className="text-xs text-text-secondary">
+          <span className="text-text-muted">Último treino:</span>{' '}
+          <span className="font-medium text-text">{ultimo.treino_nome ?? '—'}</span>
+          {ultimo.data && <span className="text-text-muted"> · {formatDiaCompleto(ultimo.data)}</span>}
+        </p>
       )}
 
-      <h2 className="font-display font-semibold">{agendados.length ? 'Treino de hoje' : 'Escolha um treino'}</h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="font-display font-semibold">{agendados.length ? 'Treino de hoje' : 'Escolha um treino'}</h2>
+        {lista.length > 1 && (
+          feitos === lista.length
+            ? <Badge tone="success"><Check size={12} /> semana completa</Badge>
+            : <span className="text-xs text-text-muted shrink-0">{feitos} de {lista.length} nesta semana</span>
+        )}
+      </div>
       {!lista.length ? (
         <EmptyState icon={<Dumbbell />} title="Nenhum treino cadastrado ainda" />
       ) : (
-        lista.map((t, idx) => (
-          <Card key={t.id} variant="elevated" className="flex items-center justify-between">
-            <span className="font-medium">
-              <span className="text-text-muted">{idx + 1}. </span>
-              {t.nome}
-            </span>
-            <Button variant="energy" onClick={() => setPreviewId(t.id)}>Ver treino</Button>
-          </Card>
-        ))
+        lista.map((t, idx) => {
+          const feito = feitoEm(t.id)
+          return (
+            <Card key={t.id} variant="elevated" className="flex items-center justify-between gap-2">
+              <span className="font-medium min-w-0 truncate">
+                <span className="text-text-muted">{idx + 1}. </span>
+                {t.nome}
+              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                {feito
+                  ? <Badge tone="success"><Check size={12} /> {labelDiaCurto(feito)}</Badge>
+                  : t.id === proximo?.treino_id && <Badge tone="neutral">próximo</Badge>}
+                <Button variant="energy" onClick={() => setPreviewId(t.id)}>Ver treino</Button>
+              </div>
+            </Card>
+          )
+        })
       )}
     </div>
   )

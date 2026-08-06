@@ -320,6 +320,8 @@ def finish(aluno_id: str, body=None) -> dict:
     # Contador de execuções + tempo médio no próprio item do treino (informativo para o personal:
     # quanto aquele treino específico leva pra executar). Mesmas somas dos stats do aluno, mas por
     # treino — `sessoes_com_metrica` é o denominador (conta só execuções a partir desta mudança).
+    # `ultima_execucao` no mesmo write (custo zero): o app do aluno usa pra marcar, na lista de
+    # treinos, quais já foram feitos na semana corrente — o recorte da semana é do cliente (fuso).
     treino_id = s.get("treino_id")
     if treino_id:
         add_treino: dict = {"total_execucoes": 1}
@@ -328,7 +330,10 @@ def finish(aluno_id: str, body=None) -> dict:
             add_treino["soma_duracao_segundos"] = dur
             add_treino["soma_total_series"] = int(s.get("total_series") or 0)
             add_treino["sessoes_com_metrica"] = 1
-        repo.add_and_set(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id), add=add_treino)
+        repo.add_and_set(
+            keys.pk_aluno(aluno_id), keys.sk_treino(treino_id),
+            add=add_treino, set_={"ultima_execucao": fim_iso},
+        )
     # Agregação na escrita: conta a sessão (aluno + semana) — ESPEC §3.1
     pk = keys.pk_aluno(aluno_id)
     # Lê stats antes do update para calcular streak (1 GetItem extra, inevitável)
