@@ -251,6 +251,11 @@ def copiar_treino(aluno_id: str, body: CopiarBody, personal_id: str = Depends(ge
     new_tid = new_id()
     dest_pk = keys.pk_aluno(aluno_id)
     t = repo.clean(src)
+    # Agregados de execução são do aluno de origem — o treino copiado nasce zerado, senão o
+    # destino apareceria como "feito nesta semana" sem nunca ter treinado.
+    for campo in ("total_execucoes", "ultima_execucao", "soma_duracao_segundos",
+                  "soma_total_series", "sessoes_com_metrica"):
+        t.pop(campo, None)
     t.update({"treino_id": new_tid, "aluno_id": aluno_id, "created_at": now, "updated_at": now})
     puts = [{"PK": dest_pk, "SK": keys.sk_treino(new_tid), **t}]
     for e in exs:

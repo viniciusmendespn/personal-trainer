@@ -38,6 +38,7 @@ import type { BlocoTreino, Cobranca, ExercicioSubstituto, SeriePrescrita } from 
 import { normalizeTipoExercicio } from '../types'
 import { formatoBlocoLabel, sufixoPrescricaoBloco, fmtPrescricaoBloco } from '../components/exercicios/BlocosTreinoEditor'
 import { videoUrlComFallback } from '../utils/video'
+import { feitoNaSemana, labelDiaCurto } from '../utils/datetime'
 import { chaveExercicio, normalizeText } from '../utils/normalizeText'
 
 const chartTip = {
@@ -65,22 +66,6 @@ function formatDiaCompleto(iso: string) {
   if (d.toDateString() === hoje.toDateString()) return 'hoje'
   if (d.toDateString() === ontem.toDateString()) return 'ontem'
   return d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' })
-}
-
-/** Segunda-feira 00:00 no fuso do aparelho. O backend grava tudo em UTC, então o recorte da
- * semana é feito aqui — senão um treino de domingo 21h (BRT) cairia na semana seguinte. */
-function inicioSemanaLocal() {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
-  return d
-}
-
-/** "hoje" ou o dia da semana abreviado sem ponto ("seg", "qua"). */
-function labelDiaCurto(iso: string) {
-  const d = new Date(iso)
-  if (d.toDateString() === new Date().toDateString()) return 'hoje'
-  return d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')
 }
 
 function Centered({ children }: { children: React.ReactNode }) {
@@ -945,11 +930,7 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
   // essa semana?". `agendados` vem reprojetado (só id/nome) — o cruzamento pega `ultima_execucao`
   // do treino completo, que já vem no mesmo payload.
   const treinoPorId = new Map((hoje.data?.treinos ?? []).map((t) => [t.treino_id, t]))
-  const inicioSemana = inicioSemanaLocal()
-  const feitoEm = (id: string) => {
-    const ue = treinoPorId.get(id)?.ultima_execucao
-    return ue && new Date(ue) >= inicioSemana ? ue : null
-  }
+  const feitoEm = (id: string) => feitoNaSemana(treinoPorId.get(id)?.ultima_execucao)
   const feitos = lista.filter((t) => feitoEm(t.id)).length
 
   if (previewId) {

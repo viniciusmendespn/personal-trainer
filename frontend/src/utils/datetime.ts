@@ -7,6 +7,27 @@ export function formatDuracao(s?: number | null): string | null {
   return `${Math.round(s)}s`
 }
 
+/** Segunda-feira 00:00 no fuso do aparelho. O backend grava tudo em UTC, então o recorte da
+ * semana é feito no cliente — senão um treino de domingo 21h (BRT) cairia na semana seguinte. */
+export function inicioSemanaLocal(): Date {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+  return d
+}
+
+/** "hoje" ou o dia da semana abreviado sem ponto ("seg", "qua"). */
+export function labelDiaCurto(iso: string): string {
+  const d = new Date(iso)
+  if (d.toDateString() === new Date().toDateString()) return 'hoje'
+  return d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')
+}
+
+/** ISO da última execução do treino, se ela caiu na semana corrente (local). Senão, null. */
+export function feitoNaSemana(ultimaExecucao?: string | null): string | null {
+  return ultimaExecucao && new Date(ultimaExecucao) >= inicioSemanaLocal() ? ultimaExecucao : null
+}
+
 export function tempoRelativo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime()
   const min = Math.floor(diffMs / 60000)

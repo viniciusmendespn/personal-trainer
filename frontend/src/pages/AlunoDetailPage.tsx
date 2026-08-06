@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList, CalendarDays, List, Video, Clock, AlarmClock, MessageCircle } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Check, ChevronDown, ChevronRight, Pencil, TrendingUp, Scale, Send, Copy, Dumbbell, LayoutTemplate, ListChecks, StickyNote, Camera, RefreshCw, AlertCircle, Power, PowerOff, Bot, ClipboardList, CalendarDays, List, Video, Clock, AlarmClock, MessageCircle } from 'lucide-react'
 import { useAluno, useAlunos, useUpdateAluno, useDeleteAluno } from '../hooks/useAlunos'
 import { alunosApi } from '../api/alunos'
 import { wapiApi } from '../api/wapi'
@@ -40,7 +40,7 @@ import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
 import { MetasTab } from '../components/aluno/MetasTab'
 import { FinanceiroTab } from '../components/financeiro/FinanceiroTab'
 import { videoUrlComFallback } from '../utils/video'
-import { formatDuracao } from '../utils/datetime'
+import { formatDuracao, feitoNaSemana, labelDiaCurto } from '../utils/datetime'
 
 const TAB_KEYS = ['treinos', 'historico', 'frequencia', 'metas', 'financeiro', 'perfil'] as const
 type TabKey = typeof TAB_KEYS[number]
@@ -567,8 +567,17 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
     setRenovandoId(null)
   }
 
+  const feitosSemana = vigentes.filter((t) => feitoNaSemana(t.ultima_execucao)).length
+
   return (
     <div className="space-y-3">
+      {vigentes.length > 1 && (
+        <div className="flex items-center justify-end">
+          {feitosSemana === vigentes.length
+            ? <Badge tone="success"><Check size={12} /> semana completa</Badge>
+            : <span className="text-xs text-text-muted">{feitosSemana} de {vigentes.length} feitos nesta semana</span>}
+        </div>
+      )}
       <SortableList items={vigentes} getId={(t) => t.treino_id} onReorder={reordenarTreinos} disabled={reordering}>
         {(t, idx, p) => (
           <div ref={p.setNodeRef} style={p.style} className="flex items-start gap-1 mb-3">
@@ -779,6 +788,7 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
   const { data: biblioteca } = useBiblioteca()
   const { data: exerciciosAluno } = useExerciciosAluno(alunoId)
   const createEx = useCreateExercicio(alunoId, treino.treino_id)
+  const feitoSemana = feitoNaSemana(treino.ultima_execucao)
 
   // Cópia local dos exercícios para reordenação otimista (evita "pulo" enquanto persiste).
   const [exsLocal, setExsLocal] = useState<Exercicio[]>([])
@@ -888,6 +898,10 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
             })()}
           </span>
         </button>
+        {/* Aderência da semana no cabeçalho fechado — o personal varre a lista sem expandir */}
+        {feitoSemana && (
+          <Badge tone="success" className="shrink-0"><Check size={12} /> {labelDiaCurto(feitoSemana)}</Badge>
+        )}
         <OverflowMenu
           ariaLabel="Ações do treino"
           items={[
