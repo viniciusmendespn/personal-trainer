@@ -48,8 +48,8 @@ def _disparar_push_personal(personal_id: str, titulo: str, mensagem: str, tipo: 
     try:
         from app.services import push_service   # import tardio — evita ciclo
         url = _URL_MAP_PERSONAL.get(tipo, "/dashboard")
-        # Férias do aluno: leva direto ao histórico (calendário) do aluno.
-        if tipo == "FERIAS_ALUNO" and aluno_id:
+        # Férias e treino concluído: levam direto ao histórico (calendário) do aluno.
+        if tipo in ("FERIAS_ALUNO", "TREINO_CONCLUIDO") and aluno_id:
             url = f"/alunos/{aluno_id}?tab=historico"
         push_service.send_push_personal(personal_id, titulo, mensagem, url=url, tag=tipo)
     except Exception as exc:

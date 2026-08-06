@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, AlertTriangle, CalendarClock, Clock, Image, Camera, HelpCircle, Pin, MailOpen, Link2, UserRound, Dumbbell, PlaySquare, MessageSquareDot, MessageCircle, DollarSign, UserPlus } from 'lucide-react'
+import { Bell, AlertTriangle, CalendarClock, CheckCircle2, Clock, Image, Camera, HelpCircle, Pin, MailOpen, Link2, UserRound, Dumbbell, PlaySquare, MessageSquareDot, MessageCircle, DollarSign, UserPlus } from 'lucide-react'
 import { useNotificacoes, useMarkRead, useMarkAllRead, useVincularMidia } from '../hooks/useNotificacoes'
 import { useAlunos } from '../hooks/useAlunos'
 import { useExerciciosAluno } from '../hooks/useEvolucao'
@@ -24,6 +24,7 @@ const TIPO_ICON: Record<string, React.ReactNode> = {
   COBRANCA_PAGA: <DollarSign size={16} className="text-success" />,
   FERIAS_ALUNO: <CalendarClock size={16} className="text-accent" />,
   LEAD_NOVO: <UserPlus size={16} className="text-energy" />,
+  TREINO_CONCLUIDO: <CheckCircle2 size={16} className="text-success" />,
 }
 const TIPO_TONE: Record<string, 'danger' | 'warning' | 'info' | 'neutral'> = {
   DOR: 'danger',
@@ -41,6 +42,7 @@ const TIPO_TONE: Record<string, 'danger' | 'warning' | 'info' | 'neutral'> = {
   COBRANCA_PAGA: 'neutral',
   FERIAS_ALUNO: 'info',
   LEAD_NOVO: 'warning',
+  TREINO_CONCLUIDO: 'neutral',
 }
 
 const FILTROS: { label: string; tipo?: string }[] = [
@@ -48,6 +50,7 @@ const FILTROS: { label: string; tipo?: string }[] = [
   { label: 'Dor', tipo: 'DOR' },
   { label: 'Dúvida', tipo: 'DUVIDA' },
   { label: 'Execução', tipo: 'EXECUCAO' },
+  { label: 'Treino concluído', tipo: 'TREINO_CONCLUIDO' },
   { label: 'Férias/ausência', tipo: 'FERIAS_ALUNO' },
   { label: 'Treino', tipo: 'TREINO_FIM' },
   { label: 'Mensagem', tipo: 'MSG_ALUNO_DIRETO' },

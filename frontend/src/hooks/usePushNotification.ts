@@ -23,10 +23,21 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 }
 
 async function doSubscribe(vapidKey: string, reg: ServiceWorkerRegistration): Promise<void> {
-  const sub = await reg.pushManager.subscribe({
+  const opts: PushSubscriptionOptionsInit = {
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(vapidKey),
-  })
+  }
+  let sub: PushSubscription
+  try {
+    sub = await reg.pushManager.subscribe(opts)
+  } catch (e) {
+    // InvalidStateError = já existe subscription com outra applicationServerKey (rotação de
+    // VAPID). Sem descartar a antiga o usuário fica travado sem push para sempre.
+    if (!(e instanceof DOMException) || e.name !== 'InvalidStateError') throw e
+    const antiga = await reg.pushManager.getSubscription()
+    await antiga?.unsubscribe()
+    sub = await reg.pushManager.subscribe(opts)
+  }
   await pushApi.subscribe(sub.toJSON() as PushSubscriptionJSON)
   localStorage.setItem(LS_KEY, '1')
 }
@@ -48,24 +59,23 @@ export function usePushNotification() {
       const storedFlag = localStorage.getItem(LS_KEY) === '1'
       const permGranted = localStorage.getItem(LS_PERM_KEY) === '1'
 
-      if (sub && storedFlag) {
+      if (sub) {
+        // Reafirmar SEMPRE no backend, mesmo com a flag local setada. O backend remove a
+        // subscription quando o push service devolve 404/410, e antes disso o cliente nunca
+        // reenviava — o usuário via "notificações ativadas" e não recebia mais nada.
+        // PutItem idempotente (chave = hash do endpoint): 1 write por carga do app.
+        try {
+          await pushApi.subscribe(sub.toJSON() as PushSubscriptionJSON)
+          localStorage.setItem(LS_KEY, '1')
+        } catch { /* best-effort */ }
         setIsSubscribed(true)
         return
       }
-      if (sub && !storedFlag) {
-        // Subscription existe no browser mas não foi salva no backend — re-registrar
-        try {
-          const vapidKey = await pushApi.getVapidKey()
-          await doSubscribe(vapidKey, reg)
-          setIsSubscribed(true)
-        } catch { /* best-effort */ }
-        return
-      }
-      if (!sub && storedFlag) {
+      if (storedFlag) {
         localStorage.removeItem(LS_KEY)
       }
       // Se permissão já foi concedida mas subscription não existe, inscrever agora
-      if (!sub && permGranted && Notification.permission === 'granted') {
+      if (permGranted && Notification.permission === 'granted') {
         try {
           const vapidKey = await pushApi.getVapidKey()
           await doSubscribe(vapidKey, reg)

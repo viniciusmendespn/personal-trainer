@@ -17,6 +17,8 @@ export interface PersonalProfile {
   x_url?: string
   site_url?: string
   slug?: string
+  /** Avisar quando um aluno concluir um treino pelo app. Ausente = ligado. */
+  notif_treino_concluido?: boolean
   updated_at?: string
 }
 

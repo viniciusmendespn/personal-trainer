@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, LayoutTemplate, ListChecks, Bell, BookOpen, Brain, Package, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronUp, HelpCircle, CreditCard, Download, Smartphone, Sun, Moon, Monitor, Store, Wallet, Megaphone, UserPlus } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, LayoutTemplate, ListChecks, Bell, BellRing, BookOpen, Brain, Package, Settings, LogOut, Menu, X, Newspaper, Trophy, UserCircle, Shield, ChevronUp, HelpCircle, CreditCard, Download, Smartphone, Sun, Moon, Monitor, Store, Wallet, Megaphone, UserPlus } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
 import { useTheme, type ThemeChoice } from '../../context/ThemeContext'
@@ -245,18 +245,27 @@ export function AppLayout() {
   const [showIosModal, setShowIosModal] = useState(false)
   const [showAndroidModal, setShowAndroidModal] = useState(false)
   const location = useLocation()
-  const { requestAndSubscribe } = usePushPersonal()
+  const { isSubscribed, permission, requestAndSubscribe } = usePushPersonal()
 
   const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
   const showInstallBtn = !isStandalone
+  // Botão para ativar notificações: iOS exige gesto do usuário + app instalado na tela de
+  // início; fora do iOS serve de fallback para quem ignorou o prompt automático.
+  const podeAtivarNotif =
+    'Notification' in window && permission === 'default' && !isSubscribed && (!isIos || isStandalone)
 
   useEffect(() => {
     setDrawerOpen(false)
   }, [location.pathname])
 
   useEffect(() => {
-    requestAndSubscribe()
+    // No iOS, requestPermission() fora de gesto do usuário é rejeitado — lá o caminho é o
+    // botão BellRing do header. Fora do iOS, só pedir quando ainda não houve decisão:
+    // repetir o prompt para quem já negou não faz nada além de cair na quiet UI do Chrome.
+    if (!isIos && 'Notification' in window && Notification.permission === 'default') {
+      requestAndSubscribe().catch(() => {})
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleInstall() {
@@ -319,6 +328,17 @@ export function AppLayout() {
               </span>
             )}
           </NavLink>
+          {podeAtivarNotif && (
+            <button
+              onClick={() => { requestAndSubscribe().catch(() => {}) }}
+              aria-label="Ativar notificações"
+              title="Ativar notificações no celular"
+              className="relative p-1.5 rounded-lg text-text-secondary hover:bg-white/5 hover:text-text transition-colors"
+            >
+              <BellRing size={20} />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-energy animate-pulse" />
+            </button>
+          )}
           {showInstallBtn && (
             <button
               onClick={handleInstall}

@@ -38,6 +38,7 @@ class PersonalProfileUpdate(BaseModel):
     facebook_url: Optional[str] = None
     x_url: Optional[str] = None
     site_url: Optional[str] = None
+    notif_treino_concluido: Optional[bool] = None   # ausente no perfil = ligado
 
 
 class AvatarUploadUrlBody(BaseModel):

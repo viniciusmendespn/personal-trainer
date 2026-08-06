@@ -42,7 +42,9 @@ def _disparar_push(aluno_id: str, titulo: str, mensagem: str, tipo: str) -> None
     try:
         from app.services import push_service   # import tardio — evita ciclo
         url = _URL_MAP.get(tipo, "/aluno")
-        push_service.send_push(aluno_id, titulo, mensagem, url=url)
+        # tag=tipo: sem isso todas as notificações usam a tag default e se sobrescrevem
+        # na bandeja do aparelho (3 avisos viram 1). Espelha notif_service._disparar_push_personal.
+        push_service.send_push(aluno_id, titulo, mensagem, url=url, tag=tipo)
     except Exception as exc:
         logger.warning("[anotif] push falhou para aluno %s: %s", aluno_id, exc)
 

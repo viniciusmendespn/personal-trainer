@@ -4,6 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { QrCode, Phone, CheckCircle, AlertCircle, MessageCircle, WifiOff, RefreshCw, Copy, Smartphone, Banknote, Trash2, Info, Sun, Moon, Monitor } from 'lucide-react'
 import { wapiApi } from '../api/wapi'
 import { financeiroApi } from '../api/financeiro'
+import { personalApi } from '../api/personal'
+import { pushPersonalApi } from '../api/push'
+import { usePushPersonal } from '../hooks/usePushPersonal'
 import { Button, Card, ErrorText, Tabs, Modal } from '../components/ui'
 import { useToast } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
@@ -13,12 +16,13 @@ import { useTheme, type ThemeChoice } from '../context/ThemeContext'
 
 const SUPPORT_URL = `https://wa.me/5513988088204?text=${encodeURIComponent('Olá! Gostaria de configurar o WhatsApp no meu CoachPilot.')}`
 
-type TabId = 'whatsapp' | 'anamnese' | 'pagamentos' | 'aparencia'
+type TabId = 'whatsapp' | 'anamnese' | 'pagamentos' | 'notificacoes' | 'aparencia'
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'whatsapp', label: 'WhatsApp' },
   { id: 'anamnese', label: 'Anamnese' },
   { id: 'pagamentos', label: 'Pagamentos' },
+  { id: 'notificacoes', label: 'Notificações' },
   { id: 'aparencia', label: 'Aparência' },
 ]
 
@@ -386,6 +390,120 @@ function AparenciaTab() {
   )
 }
 
+function NotificacoesTab() {
+  const qc = useQueryClient()
+  const { show: toast } = useToast()
+  const { isSubscribed, permission, subs, refreshStatus, requestAndSubscribe, unsubscribe } = usePushPersonal()
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => { refreshStatus() }, [refreshStatus])
+
+  const perfil = useQuery({ queryKey: ['personal-me'], queryFn: personalApi.getProfile })
+  const salvarPref = useMutation({
+    mutationFn: (v: boolean) => personalApi.updateProfile({ notif_treino_concluido: v }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['personal-me'] }),
+    onError: () => toast('Não foi possível salvar a preferência.', 'error'),
+  })
+  const avisaTreino = perfil.data?.notif_treino_concluido !== false
+
+  const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+  const semSuporte = !('Notification' in window) || !('PushManager' in window)
+
+  async function acao(fn: () => Promise<void>) {
+    setBusy(true)
+    try { await fn(); await refreshStatus() } finally { setBusy(false) }
+  }
+
+  async function enviarTeste() {
+    setBusy(true)
+    try {
+      const r = await pushPersonalApi.test()
+      if (r.enviados > 0) toast(`Teste enviado para ${r.enviados} dispositivo(s).`, 'success')
+      else toast('Nenhum dispositivo registrado para receber o teste.', 'error')
+      await refreshStatus()
+    } catch {
+      toast('Falha ao enviar o teste.', 'error')
+    } finally { setBusy(false) }
+  }
+
+  const statusLabel =
+    semSuporte ? 'Este navegador não suporta notificações'
+      : permission === 'denied' ? 'Bloqueadas no navegador'
+      : subs === 0 ? 'Nenhum dispositivo registrado'
+      : subs === null ? 'Verificando…'
+      : `${subs} dispositivo${subs > 1 ? 's' : ''} registrado${subs > 1 ? 's' : ''}`
+
+  return (
+    <div className="space-y-4">
+      <Card variant="elevated" className="space-y-4">
+        <div>
+          <h3 className="font-medium text-text">Notificações neste dispositivo</h3>
+          <p className="text-sm text-text-secondary mt-1">
+            Avisos de dor, dúvida, mensagem, cobrança e treino concluído chegam no celular mesmo com
+            o portal fechado.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 text-sm">
+          {subs && subs > 0
+            ? <CheckCircle size={16} className="text-success shrink-0" />
+            : <AlertCircle size={16} className="text-warning shrink-0" />}
+          <span className="text-text-secondary">{statusLabel}</span>
+        </div>
+
+        {permission === 'denied' && (
+          <p className="text-xs text-text-muted leading-relaxed">
+            Você bloqueou as notificações para este site. Reative pelo cadeado ao lado do endereço
+            (ou em Ajustes → Notificações, no celular) e recarregue a página.
+          </p>
+        )}
+        {isIos && !isStandalone && (
+          <p className="text-xs text-text-muted leading-relaxed">
+            No iPhone/iPad, o Safari só entrega notificações quando o CoachPilot está instalado na
+            tela de início. Use Compartilhar → Adicionar à Tela de Início e abra o app por lá.
+          </p>
+        )}
+
+        <div className="flex flex-wrap gap-2">
+          {!isSubscribed && permission !== 'denied' && !semSuporte && (
+            <Button size="sm" disabled={busy} onClick={() => acao(requestAndSubscribe)}>
+              Ativar notificações
+            </Button>
+          )}
+          <Button size="sm" variant="outline" disabled={busy || !subs} onClick={enviarTeste}>
+            Enviar teste
+          </Button>
+          {isSubscribed && (
+            <Button size="sm" variant="ghost" disabled={busy} onClick={() => acao(unsubscribe)}>
+              Desativar neste dispositivo
+            </Button>
+          )}
+        </div>
+      </Card>
+
+      <Card variant="elevated">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            className="mt-1 accent-accent w-4 h-4"
+            checked={avisaTreino}
+            disabled={perfil.isLoading || salvarPref.isPending}
+            onChange={(e) => salvarPref.mutate(e.target.checked)}
+          />
+          <span>
+            <span className="text-sm font-medium text-text">Avisar quando um aluno concluir um treino</span>
+            <span className="block text-xs text-text-muted mt-0.5">
+              Uma notificação por sessão finalizada pelo aluno no app, com o treino, os exercícios
+              feitos e a duração. Sessões que você mesmo conduz pelo portal não geram aviso.
+            </span>
+          </span>
+        </label>
+      </Card>
+    </div>
+  )
+}
+
 function AnamneseTab() {
   return (
     <div className="space-y-4">
@@ -574,6 +692,7 @@ export function SettingsPage() {
       {activeTab === 'whatsapp' && <WhatsAppTab />}
       {activeTab === 'anamnese' && <AnamneseTab />}
       {activeTab === 'pagamentos' && <PagamentosTab />}
+      {activeTab === 'notificacoes' && <NotificacoesTab />}
       {activeTab === 'aparencia' && <AparenciaTab />}
     </div>
   )

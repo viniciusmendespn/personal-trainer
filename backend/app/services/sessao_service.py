@@ -4,6 +4,7 @@ Sessão ativa = 1 item denormalizado `SESSION#ACTIVE` que embute a sequência de
 (snapshots) + o exercício atual → o agente lê tudo em 1 GetItem. Registro = 1 item por
 (sessão, exercício) com séries acumuladas via list_append (1 write). Usado pelo portal e
 pelo agente."""
+import logging
 import time
 import unicodedata
 from datetime import date, datetime, timedelta, timezone
@@ -15,6 +16,8 @@ from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import badge_service, ferias_service, media_service, pontos_service
 from app.utils import epoch_ms, new_id, now_iso, treino_vigente
+
+logger = logging.getLogger(__name__)
 
 SESSION_TTL_S = 6 * 3600  # sessão abandonada cai sozinha (ESPEC §3)
 
@@ -92,6 +95,44 @@ def _touch_atividade(personal_id: str, aluno_id: str, *, status: str, treino_nom
     })
 
 
+def _fmt_duracao(segundos: int | None) -> str | None:
+    if not segundos or segundos < 60:
+        return None
+    h, m = divmod(int(segundos) // 60, 60)
+    return f"{h}h{m:02d}min" if h else f"{m}min"
+
+
+def _notificar_treino_concluido(personal_id: str, aluno_id: str, snap: dict,
+                                feitos_ex: int, total_ex: int) -> None:
+    """Avisa o personal que o aluno concluiu um treino pelo app. Só é chamada quando a
+    sessão foi iniciada pelo próprio aluno — sessão conduzida pelo personal no portal ou
+    pelo agente do WhatsApp não notifica. Best-effort: nunca quebra o finish."""
+    try:
+        from app.services import notif_service   # import tardio — evita ciclo
+        perfil = repo.get_item(keys.pk_personal(personal_id), keys.SK_PROFILE) or {}
+        if perfil.get("notif_treino_concluido") is False:   # ausente = ligado
+            return
+        ptr = repo.get_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id)) or {}
+        nome = ptr.get("nome") or "Seu aluno"
+        partes = [snap.get("treino_nome") or "Treino"]
+        if total_ex:
+            partes.append(f"{feitos_ex}/{total_ex} exercícios")
+        dur = _fmt_duracao(snap.get("duracao_segundos"))
+        if dur:
+            partes.append(dur)
+        prs = len(snap.get("novos_prs") or [])
+        if prs:
+            partes.append(f"{prs} novo{'s' if prs > 1 else ''} recorde{'s' if prs > 1 else ''}")
+        notif_service.criar(
+            personal_id, "TREINO_CONCLUIDO", f"{nome} concluiu um treino",
+            " · ".join(partes), aluno_id=aluno_id,
+            ref_extra={"sessao_id": snap.get("sessao_id")},
+        )
+    except Exception:
+        logger.warning("[sessao] notificação TREINO_CONCLUIDO falhou p/ personal %s", personal_id,
+                       exc_info=True)
+
+
 def start_session(personal_id: str, aluno_id: str, treino_id: str, iniciado_pelo_aluno: bool = False) -> dict:
     treino = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id))
     if not treino:
@@ -116,6 +157,9 @@ def start_session(personal_id: str, aluno_id: str, treino_id: str, iniciado_pelo
         "ordem_atual": 0,
         "total_ex": len(snaps),
         "data_hora_inicio": now_iso(),
+        # Persistido para o finish() saber quem conduziu a sessão: só sessão do aluno
+        # gera a notificação TREINO_CONCLUIDO para o personal.
+        "iniciado_pelo_aluno": iniciado_pelo_aluno,
         "ttl": int(time.time()) + SESSION_TTL_S,
     }
     repo.put_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE, item)
@@ -410,6 +454,8 @@ def finish(aluno_id: str, body=None) -> dict:
             personal_id, aluno_id, status=SessaoStatus.FINALIZADA.value, treino_nome=s.get("treino_nome"),
             exercicio_atual=None, ordem_atual=None, total_ex=s.get("total_ex"),
         )
+        if s.get("iniciado_pelo_aluno"):
+            _notificar_treino_concluido(personal_id, aluno_id, snap, feitos_ex, total_ex)
     return snap
 
 
