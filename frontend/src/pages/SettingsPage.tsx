@@ -11,18 +11,20 @@ import { Button, Card, ErrorText, Tabs, Modal } from '../components/ui'
 import { useToast } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { AnamneseEditor } from '../components/anamnese/AnamneseEditor'
+import { ConexoesTab } from '../components/settings/ConexoesTab'
 import { usePlanoStatus } from '../hooks/usePlano'
 import { useTheme, type ThemeChoice } from '../context/ThemeContext'
 
 const SUPPORT_URL = `https://wa.me/5513988088204?text=${encodeURIComponent('Olá! Gostaria de configurar o WhatsApp no meu CoachPilot.')}`
 
-type TabId = 'whatsapp' | 'anamnese' | 'pagamentos' | 'notificacoes' | 'aparencia'
+type TabId = 'whatsapp' | 'anamnese' | 'pagamentos' | 'notificacoes' | 'conexoes' | 'aparencia'
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'whatsapp', label: 'WhatsApp' },
   { id: 'anamnese', label: 'Anamnese' },
   { id: 'pagamentos', label: 'Pagamentos' },
   { id: 'notificacoes', label: 'Notificações' },
+  { id: 'conexoes', label: 'Conexões' },
   { id: 'aparencia', label: 'Aparência' },
 ]
 
@@ -693,6 +695,7 @@ export function SettingsPage() {
       {activeTab === 'anamnese' && <AnamneseTab />}
       {activeTab === 'pagamentos' && <PagamentosTab />}
       {activeTab === 'notificacoes' && <NotificacoesTab />}
+      {activeTab === 'conexoes' && <ConexoesTab />}
       {activeTab === 'aparencia' && <AparenciaTab />}
     </div>
   )

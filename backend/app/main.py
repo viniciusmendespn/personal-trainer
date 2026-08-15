@@ -4,7 +4,7 @@ from mangum import Mangum
 
 from app.config import settings
 from app.routers import (admin, agenda, aluno, alunos, anamnese, avaliacoes, biblioteca, captura, conhecimento, config, cupom, dashboard, divulgador,
-                         feedback, feed_global, ferias, financeiro, leads, loja, loja_public, metas, notificacoes, pacotes, personal, personal_chat, plano, preview, push, rotinas, sessoes, telemetry, templates, treinos, wapi, webhook)
+                         feedback, feed_global, ferias, financeiro, leads, loja, loja_public, mcp_portal, metas, notificacoes, pacotes, personal, personal_chat, plano, preview, push, rotinas, sessoes, telemetry, templates, treinos, wapi, webhook)
 
 app = FastAPI(
     title="Personal Trainer",
@@ -58,6 +58,7 @@ app.include_router(loja.router)           # /v1/loja (marketplace — vendedor/c
 app.include_router(loja_public.router)    # /v1/public/loja (catálogo público, sem auth)
 app.include_router(preview.router)        # /token/{token} (preview WhatsApp + redirect p/ app)
 app.include_router(telemetry.router)      # /v1/public/telemetry/media (beacon de compressão de mídia)
+app.include_router(mcp_portal.router)     # /v1/mcp/... (consentimento OAuth + conexões do MCP)
 
 
 @app.get("/v1/health")

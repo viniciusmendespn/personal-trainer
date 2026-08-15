@@ -34,8 +34,30 @@ São **três fluxos** operados por IA (cada um detalhado na sua seção):
 1. **Importar/migrar alunos em massa** — jogue sua planilha, PDF ou print de lista de alunos no ChatGPT com o prompt da plataforma; ele extrai os dados em CSV e você importa todos de uma vez. Ver **Gestão de Alunos → Importar alunos em massa via IA**.
 2. **Montar pacotes de treino completos** — peça um treino (ABC, ABCDE, foco específico) e a IA gera exercícios, templates e rotinas prontos para importar. Ver **Pacotes de Treino → Via JSON gerado por IA**.
 3. **Atualizar o treino de um aluno** — exporte o programa atual do aluno, peça o ajuste em linguagem natural (ex.: "aumenta o volume de pernas", "adapta para dor no ombro") e reimporte. Ver **Treinos → Atualizar o treino de um aluno via IA**.
+4. **Conectar o ChatGPT/Claude/Gemini ao CoachPilot** — em vez de exportar e reimportar arquivo, você conecta o aplicativo uma única vez e passa a conversar direto com os seus dados. Ver **Conectar o ChatGPT, Claude ou Gemini**.
 
-Em todos os casos, a IA gera o conteúdo (JSON ou CSV) e o CoachPilot faz a importação — a IA **não** escreve direto no sistema; você cola/anexa o resultado e confirma.
+Nos três primeiros, a IA gera o conteúdo (JSON ou CSV) e você cola/anexa o resultado e confirma — a IA não escreve no sistema. No quarto, ela lê e escreve pelas suas permissões, sempre com aviso e opção de desfazer.
+
+### Conectar o ChatGPT, Claude ou Gemini
+
+Em **Configurações → Conexões** você encontra o endereço do CoachPilot para colar como **conector** no aplicativo de IA que já usa. Feito isso, o chat passa a enxergar os seus dados e você pergunta direto: *"quem não treina há mais de 10 dias?"*, *"monta o treino B da Marina para esta semana respeitando a anamnese"*.
+
+Como funciona a autorização:
+
+- Ao conectar, o aplicativo abre o CoachPilot no navegador e você **autoriza com a sua conta** — nenhuma senha é compartilhada com a IA.
+- Você escolhe o que liberar: **só leitura** (ver alunos, treinos, avaliações, anamneses, sessões e agenda) ou **leitura e escrita de treino**.
+- A conexão só alcança **os seus alunos**. Nunca os de outro personal.
+
+Segurança e reversibilidade:
+
+- Toda vez que a IA altera um treino, você **recebe uma notificação** dizendo o que mudou.
+- Basta pedir **"desfaz"** no próprio chat para o programa voltar como estava (até 7 dias).
+- A IA **não apaga alunos**, não mexe em cobranças e não altera o seu plano.
+- Para cortar o acesso, use **Revogar** em Configurações → Conexões. Vale imediatamente.
+
+⚠️ Ao conectar, o conteúdo que você consultar — **incluindo anamnese e avaliações físicas dos seus alunos** — é enviado ao aplicativo de IA para responder às suas perguntas. Conecte apenas aplicativos em que você confia.
+
+Onde encontrar no aplicativo: no **Claude** e no **ChatGPT**, procure por *Conectores* nas configurações. No **Gemini**, o caminho hoje é pelo Gemini CLI (entrada `mcpServers`).
 
 ---
 

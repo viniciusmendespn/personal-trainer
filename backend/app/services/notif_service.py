@@ -51,6 +51,10 @@ def _disparar_push_personal(personal_id: str, titulo: str, mensagem: str, tipo: 
         # Férias e treino concluído: levam direto ao histórico (calendário) do aluno.
         if tipo in ("FERIAS_ALUNO", "TREINO_CONCLUIDO") and aluno_id:
             url = f"/alunos/{aluno_id}?tab=historico"
+        # Escrita via MCP (ChatGPT/Claude/Gemini): leva à aba de treinos do aluno alterado,
+        # para o personal conferir a mudança que a LLM aplicou.
+        if tipo == "MCP_ESCRITA" and aluno_id:
+            url = f"/alunos/{aluno_id}?tab=treinos"
         push_service.send_push_personal(personal_id, titulo, mensagem, url=url, tag=tipo)
     except Exception as exc:
         logger.warning("[notif] push falhou para personal %s: %s", personal_id, exc)

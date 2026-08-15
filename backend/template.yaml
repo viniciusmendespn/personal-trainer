@@ -102,6 +102,11 @@ Parameters:
     Default: ""
     NoEcho: true
     Description: "Segredo HMAC-SHA256 para assinar e validar arquivos .cpkg. Gerado com: openssl rand -hex 32."
+  McpTokenSecret:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: "Assina os access tokens OAuth do servidor MCP (HS256). Gerado com: openssl rand -hex 32."
 
 Conditions:
   CreateFrontendInfra: !Equals [!Ref DeployFrontendInfra, "true"]
@@ -142,6 +147,8 @@ Globals:
         ML_ACCESS_TOKEN: !Ref MlAccessToken
         PROMO_CODE_SECRET: !Ref PromoCodeSecret
         PACOTE_SECRET: !Ref PacoteSecret
+        MCP_TOKEN_SECRET: !Ref McpTokenSecret
+        MCP_SERVER_URL: !Sub "https://mcp.${DomainName}"
 
 Resources:
 
@@ -282,6 +289,75 @@ Resources:
             ApiId: !Ref ApiGateway
             Path: /{proxy+}
             Method: ANY
+
+  # ── Servidor MCP (mcp.coachpilot.com.br) ─────────────────────────────────────
+  # API e Lambda SEPARADAS do portal de propósito:
+  #  • o Bearer aqui é nosso (HS256), não do Cognito — a API principal tem
+  #    DefaultAuthorizer Cognito e um catch-all /{proxy+}, que atrapalhariam;
+  #  • o tráfego é rajada longa de leitura vinda de LLM, perfil oposto ao do portal;
+  #  • subdomínio próprio porque o OAuth exige /.well-known na RAIZ do issuer, e no
+  #    domínio principal a SpaRouterFunction manda qualquer path com ponto para o S3.
+  McpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default        # sem prefixo de stage no path — Mangum não precisa recortar
+      CorsConfiguration:
+        AllowOrigins: ["*"]
+        AllowMethods: [GET, POST, OPTIONS]
+        AllowHeaders: [Content-Type, Authorization, MCP-Protocol-Version]
+        ExposeHeaders: [WWW-Authenticate, MCP-Protocol-Version]
+      Tags:
+        Project: personal-trainer
+        ManagedBy: SAM
+
+  McpFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.mcp.asgi.handler
+      CodeUri: ./
+      Description: "Servidor MCP — ChatGPT/Claude/Gemini falam direto com os dados do personal"
+      Policies:
+        - DynamoDBCrudPolicy:      # sem S3 e sem Cognito: o MCP não precisa de nenhum dos dois
+            TableName: !Ref MainTable
+      Events:
+        McpProxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref McpApi
+            Path: /{proxy+}
+            Method: ANY
+
+  McpDomainName:
+    Type: AWS::ApiGatewayV2::DomainName
+    Condition: CreateFrontendInfra
+    Properties:
+      DomainName: !Sub "mcp.${DomainName}"
+      DomainNameConfigurations:
+        - CertificateArn: !Ref SiteCertificate    # o wildcard *.${DomainName} já cobre
+          EndpointType: REGIONAL
+          SecurityPolicy: TLS_1_2
+      Tags:
+        Project: personal-trainer
+        ManagedBy: SAM
+
+  McpApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Condition: CreateFrontendInfra
+    Properties:
+      ApiId: !Ref McpApi
+      DomainName: !Ref McpDomainName
+      Stage: $default
+
+  McpDnsRecordA:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateFrontendInfra
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub "mcp.${DomainName}"
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt McpDomainName.RegionalDomainName
+        HostedZoneId: !GetAtt McpDomainName.RegionalHostedZoneId
 
   # ── Scheduler (EventBridge diário — vencimentos de treino) ───────────────────
   SchedulerFunction:
@@ -931,6 +1007,12 @@ Resources:
 Outputs:
   ApiUrl:
     Value: !Sub "${ApiGateway.ApiEndpoint}/${Stage}"
+  McpServerUrl:
+    Description: "URL para colar no ChatGPT/Claude/Gemini ao adicionar o conector"
+    Value: !Sub "https://mcp.${DomainName}/mcp"
+  McpApiEndpoint:
+    Description: "Endpoint bruto do API Gateway do MCP (útil antes de o DNS propagar)"
+    Value: !Ref McpApi
   UserPoolId:
     Value: !Ref UserPool
   UserPoolClientId:

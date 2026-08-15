@@ -48,6 +48,7 @@ const PlanoPage = lazy(() => import('./pages/PlanoPage').then((m) => ({ default:
 const PacotesPage = lazy(() => import('./pages/PacotesPage').then((m) => ({ default: m.PacotesPage })))
 const LojaVendedorPage = lazy(() => import('./pages/LojaVendedorPage').then((m) => ({ default: m.LojaVendedorPage })))
 const FinanceiroPanelPage = lazy(() => import('./pages/FinanceiroPanelPage').then((m) => ({ default: m.FinanceiroPanelPage })))
+const OAuthConsentPage = lazy(() => import('./pages/OAuthConsentPage').then((m) => ({ default: m.OAuthConsentPage })))
 
 function PageFallback() {
   return <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" srcLight="/novo-logo-slogan-vertical-brancosemfundo.png" rounded={false} />
@@ -98,6 +99,12 @@ const router = createBrowserRouter([
           { path: '/signup', element: <SignUpPage /> },
           { path: '/forgot-password', element: <ForgotPasswordPage /> },
           { path: '/divulgadores', element: lazyPage(<DivulgadoresPage />) },
+          // Consentimento OAuth de um conector MCP (ChatGPT/Claude/Gemini). Exige login,
+          // mas fica FORA do AppLayout: é uma tela de decisão, sem sidebar nem topbar.
+          {
+            path: '/oauth/consent',
+            element: <ProtectedRoute>{lazyPage(<OAuthConsentPage />)}</ProtectedRoute>,
+          },
           {
             element: (
               <ProtectedRoute>

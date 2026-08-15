@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     promo_code_secret: str = ""            # PROMO_CODE_SECRET — segredo compartilhado com o FinPilot para gerar códigos
     pacote_secret: str = ""                # PACOTE_SECRET — assina/valida arquivos .cpkg (HMAC-SHA256)
 
+    # MCP server (ChatGPT/Claude/Gemini falam direto com o CoachPilot)
+    mcp_token_secret: str = ""             # assina os access tokens OAuth do MCP (HS256)
+    mcp_server_url: str = ""               # URL canônica do servidor — vira o `aud` do token (RFC 8707)
+
     class Config:
         env_file = (".env", ".env.local")
         extra = "ignore"

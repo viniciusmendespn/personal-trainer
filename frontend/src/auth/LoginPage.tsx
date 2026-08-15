@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { resendSignUpCode } from 'aws-amplify/auth'
 import { useAuth } from './AuthProvider'
@@ -18,11 +18,16 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
 
+  // Destino pedido antes do login (ex.: /oauth/consent?req=... de um conector MCP).
+  // Só caminho interno: `//` seria host externo e viraria redirect aberto.
+  const nextParam = new URLSearchParams(useLocation().search).get('next') || ''
+  const next = nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : ''
+
   const homeRoute = (adminEmail: string) =>
-    adminEmail === 'admin@coachpilot.com.br' ? '/admin' : '/dashboard'
+    next || (adminEmail === 'admin@coachpilot.com.br' ? '/admin' : '/dashboard')
 
   if (user) {
-    return <Navigate to={isAdmin ? '/admin' : '/dashboard'} replace />
+    return <Navigate to={next || (isAdmin ? '/admin' : '/dashboard')} replace />
   }
 
   async function handle(e: React.FormEvent) {

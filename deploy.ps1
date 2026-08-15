@@ -34,11 +34,13 @@ function Deploy-Backend {
     $VapidPrivate     = Get-EnvLocal "VAPID_PRIVATE_KEY"
     $MlAccessToken    = Get-EnvLocal "ML_ACCESS_TOKEN"
     $PromoCodeSecret  = Get-EnvLocal "PROMO_CODE_SECRET"
+    $McpTokenSecret   = Get-EnvLocal "MCP_TOKEN_SECRET"
     $ExtraOverrides = ""
     if ($AdminSecret)     { $ExtraOverrides += " AdminSecret=$AdminSecret" }
     if ($VapidPrivate)    { $ExtraOverrides += " VapidPrivateKey=$VapidPrivate" }
     if ($MlAccessToken)   { $ExtraOverrides += " MlAccessToken=$MlAccessToken" }
     if ($PromoCodeSecret) { $ExtraOverrides += " PromoCodeSecret=$PromoCodeSecret" }
+    if ($McpTokenSecret)  { $ExtraOverrides += " McpTokenSecret=$McpTokenSecret" }
 
     Set-Location backend
     sam build

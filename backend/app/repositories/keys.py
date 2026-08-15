@@ -609,3 +609,59 @@ def sk_loja_venda(criado_epoch_ms: str, pedido_id: str) -> str:
 
 def sk_loja_meu_anuncio(anuncio_id: str) -> str:
     return f"LOJAMEU#{anuncio_id}"
+
+
+# ── MCP server (integração com ChatGPT/Claude/Gemini — docs/especificacoes/MCP_SERVER.md) ──
+# Lookups globais por token/código (partições próprias, todas com TTL exceto o grant):
+def pk_mcp_client(client_id: str) -> str:
+    """Cliente OAuth registrado via DCR (SK=META). TTL enquanto nunca usado."""
+    return f"MCPCLIENT#{client_id}"
+
+
+def pk_mcp_authreq(req_id: str) -> str:
+    """Requisição de autorização pendente de consentimento (SK=META, TTL 10 min)."""
+    return f"MCPAUTHREQ#{req_id}"
+
+
+def pk_mcp_code(code_hash: str) -> str:
+    """Authorization code one-shot (SK=META, TTL 60s). Guarda o HASH, nunca o código."""
+    return f"MCPCODE#{code_hash}"
+
+
+def pk_mcp_refresh(token_hash: str) -> str:
+    """Refresh token rotativo (SK=META, TTL 30d). Guarda o HASH, nunca o token."""
+    return f"MCPREFRESH#{token_hash}"
+
+
+# SKs na partição PT# (tenant = personal):
+MCP_CONN_PREFIX = "MCPCONN#"
+MCP_AUDIT_PREFIX = "MCPAUDIT#"
+
+
+def sk_mcp_conn(conn_id: str) -> str:
+    """Conexão ativa (grant) do personal com um cliente de LLM."""
+    return f"MCPCONN#{conn_id}"
+
+
+def sk_mcp_audit(ts: str, jti: str) -> str:
+    """Log de escrita via MCP — ordenável por data, TTL 180d."""
+    return f"MCPAUDIT#{ts}#{jti}"
+
+
+def sk_mcp_quota(minuto: str) -> str:
+    """Contador de chamadas na janela de 1 min (TTL 120s). Molde: sk_quota_agente."""
+    return f"MCPQUOTA#{minuto}"
+
+
+# SK na partição AL# (aluno):
+MCP_SNAP_PREFIX = "MCPSNAP#"
+
+
+def sk_mcp_snap(ts: str) -> str:
+    """Snapshot do programa de treino antes de uma escrita via MCP (TTL 7d)."""
+    return f"MCPSNAP#{ts}"
+
+
+def pk_mcp_idem(payload_hash: str) -> str:
+    """Guarda o resultado de uma escrita para deduplicar repetição do LLM (SK=META, TTL curto)."""
+    return f"MCPIDEM#{payload_hash}"
