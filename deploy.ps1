@@ -35,12 +35,14 @@ function Deploy-Backend {
     $MlAccessToken    = Get-EnvLocal "ML_ACCESS_TOKEN"
     $PromoCodeSecret  = Get-EnvLocal "PROMO_CODE_SECRET"
     $McpTokenSecret   = Get-EnvLocal "MCP_TOKEN_SECRET"
+    $OpenaiChallenge  = Get-EnvLocal "OPENAI_APPS_CHALLENGE"
     $ExtraOverrides = ""
     if ($AdminSecret)     { $ExtraOverrides += " AdminSecret=$AdminSecret" }
     if ($VapidPrivate)    { $ExtraOverrides += " VapidPrivateKey=$VapidPrivate" }
     if ($MlAccessToken)   { $ExtraOverrides += " MlAccessToken=$MlAccessToken" }
     if ($PromoCodeSecret) { $ExtraOverrides += " PromoCodeSecret=$PromoCodeSecret" }
     if ($McpTokenSecret)  { $ExtraOverrides += " McpTokenSecret=$McpTokenSecret" }
+    if ($OpenaiChallenge) { $ExtraOverrides += " OpenaiAppsChallenge=$OpenaiChallenge" }
 
     Set-Location backend
     sam build

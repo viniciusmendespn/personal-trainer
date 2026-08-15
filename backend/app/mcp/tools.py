@@ -257,13 +257,20 @@ class HistoricoSessoesArgs(BaseModel):
     cursor: str | None = Field(None, description="Cursor da página anterior")
 
 
+# Campos que o item de sessão carrega e o LLM não deve ver: identificador interno da conta
+# (`personal_id`) e estado de navegação da sessão ao vivo, que não diz nada sobre o treino
+# executado e ainda gasta token. Ver docs/especificacoes/MCP_SERVER.md §"Higiene de resposta".
+_SESSAO_OMITIR = {"personal_id", "ex_atual", "ordem_atual", "tem_checkin"}
+
+
 @tool(nome="historico_sessoes", titulo="Histórico de sessões", args=HistoricoSessoesArgs,
       descricao="Sessões de treino já executadas pelo aluno, da mais recente para a mais "
                 "antiga, com cargas e repetições registradas.")
 def historico_sessoes(a: HistoricoSessoesArgs) -> dict:
     _guard(a.aluno_id)
     itens, cursor = sessao_service.list_sessoes(a.aluno_id, _limite(a.limit, 10), a.cursor)
-    return {"items": itens, "next_cursor": cursor}
+    limpos = [{k: v for k, v in i.items() if k not in _SESSAO_OMITIR} for i in itens]
+    return {"items": limpos, "next_cursor": cursor}
 
 
 class EvolucaoArgs(BaseModel):
@@ -340,14 +347,20 @@ class AgendaArgs(BaseModel):
     data_fim: str = Field(..., description="Data final inclusiva, YYYY-MM-DD")
 
 
+_AGENDA_OMITIR = {"personal_id", "created_at"}
+
+
 @tool(nome="agenda_periodo", titulo="Agenda do período", args=AgendaArgs,
       descricao="Compromissos agendados do personal num intervalo de datas.")
+
+
 def agenda_periodo(a: AgendaArgs) -> dict:
     t = tenant_atual()
     itens = repo.query_between(
         keys.pk_personal(t.personal_id), f"AGENDA#{a.data_inicio}", f"AGENDA#{a.data_fim}￿",
     )
-    return {"items": repo.clean_all(itens)}
+    return {"items": [{k: v for k, v in i.items() if k not in _AGENDA_OMITIR}
+                      for i in repo.clean_all(itens)]}
 
 
 # O schema real do programa, embutido no `inputSchema` das tools que o recebem. Sem isto o

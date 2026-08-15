@@ -27,6 +27,16 @@ SCOPE_READ = "read"
 SCOPE_TREINOS_WRITE = "treinos:write"
 SCOPES_SUPORTADOS = (SCOPE_READ, SCOPE_TREINOS_WRITE)
 
+# Escopos de identidade (OIDC). Não dão acesso a dado nenhum — só permitem ao cliente saber
+# de quem é a conexão pelo /userinfo. A submissão de app do ChatGPT exige que o AS anuncie
+# `openid` e `email` e devolva `email_verified`, para restrição de domínio em workspace.
+# São concedidos junto com a autorização e não aparecem como permissão na tela de consentimento.
+SCOPE_OPENID = "openid"
+SCOPE_EMAIL = "email"
+SCOPES_IDENTIDADE = (SCOPE_OPENID, SCOPE_EMAIL)
+
+SCOPES_ANUNCIADOS = SCOPES_SUPORTADOS + SCOPES_IDENTIDADE
+
 # Texto mostrado ao personal na tela de consentimento do portal.
 SCOPE_LABELS = {
     SCOPE_READ: "Ver seus alunos, treinos, avaliações, anamneses, sessões e agenda",

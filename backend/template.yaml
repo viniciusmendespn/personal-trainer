@@ -107,6 +107,10 @@ Parameters:
     Default: ""
     NoEcho: true
     Description: "Assina os access tokens OAuth do servidor MCP (HS256). Gerado com: openssl rand -hex 32."
+  OpenaiAppsChallenge:
+    Type: String
+    Default: ""
+    Description: "Token de verificacao de dominio da submissao de app do ChatGPT. Servido em texto puro em mcp.{dominio}/.well-known/openai-apps-challenge."
 
 Conditions:
   CreateFrontendInfra: !Equals [!Ref DeployFrontendInfra, "true"]
@@ -149,6 +153,7 @@ Globals:
         PACOTE_SECRET: !Ref PacoteSecret
         MCP_TOKEN_SECRET: !Ref McpTokenSecret
         MCP_SERVER_URL: !Sub "https://mcp.${DomainName}"
+        OPENAI_APPS_CHALLENGE: !Ref OpenaiAppsChallenge
 
 Resources:
 

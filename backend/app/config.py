@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     # MCP server (ChatGPT/Claude/Gemini falam direto com o CoachPilot)
     mcp_token_secret: str = ""             # assina os access tokens OAuth do MCP (HS256)
     mcp_server_url: str = ""               # URL canônica do servidor — vira o `aud` do token (RFC 8707)
+    openai_apps_challenge: str = ""        # token de verificação de domínio da submissão de app do ChatGPT
 
     class Config:
         env_file = (".env", ".env.local")

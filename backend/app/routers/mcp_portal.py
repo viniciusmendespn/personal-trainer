@@ -6,13 +6,24 @@ nem tocar em credencial. O `/authorize` do servidor MCP redireciona o navegador 
 `/oauth/consent` no portal, e é daqui que o authorization code sai.
 """
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import BaseModel
 
-from app.dependencies import get_current_personal_id
+from app.dependencies import _verify_token, get_current_personal_id, security
 from app.mcp import tokens as mcp_tokens
 from app.services import mcp_service
 
 router = APIRouter(prefix="/v1/mcp", tags=["mcp"])
+
+
+def _email_do_token(creds: HTTPAuthorizationCredentials = Depends(security)) -> str | None:
+    """E-mail do personal logado, do próprio JWT Cognito. Guardado no grant para o
+    `/userinfo` do servidor MCP — o ChatGPT exige `email`/`email_verified` na submissão.
+    Falha silenciosa: sem e-mail a conexão funciona igual, só não há claim de identidade."""
+    try:
+        return _verify_token(creds.credentials).get("email")
+    except Exception:
+        return None
 
 
 class AprovarBody(BaseModel):
@@ -34,10 +45,11 @@ def detalhar_request(req_id: str, personal_id: str = Depends(get_current_persona
 
 
 @router.post("/oauth/approve")
-def aprovar(body: AprovarBody, personal_id: str = Depends(get_current_personal_id)):
+def aprovar(body: AprovarBody, personal_id: str = Depends(get_current_personal_id),
+            email: str | None = Depends(_email_do_token)):
     """Cria a conexão e devolve a URL de retorno com o `code`. O front só redireciona."""
     try:
-        resultado = mcp_service.aprovar(body.req, personal_id, body.scopes)
+        resultado = mcp_service.aprovar(body.req, personal_id, body.scopes, email=email)
     except ValueError as exc:
         raise HTTPException(400, detail={"code": "AUTHREQ_INVALIDA", "detail": str(exc)})
 

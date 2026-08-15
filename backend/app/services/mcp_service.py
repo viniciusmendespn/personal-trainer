@@ -105,13 +105,16 @@ def descartar_authreq(req_id: str) -> None:
 # ---------------------------------------------------------------------------
 
 def _criar_conexao(personal_id: str, client_id: str, client_name: str,
-                   scopes: list[str]) -> str:
+                   scopes: list[str], email: str | None = None) -> str:
     conn_id = uuid.uuid4().hex
     repo.put_item(keys.pk_personal(personal_id), keys.sk_mcp_conn(conn_id), {
         "conn_id": conn_id,
         "client_id": client_id,
         "client_name": client_name,
         "scopes": scopes,
+        # E-mail do dono, capturado do JWT Cognito no consentimento — é o que o /userinfo
+        # devolve. Fica no grant, não no token: o access token não precisa carregar PII.
+        "email": email,
         "created_at": _iso(),
         "last_used_at": None,
     })
@@ -150,18 +153,26 @@ def touch_conexao(personal_id: str, conn_id: str) -> None:
 # Authorization code (one-shot, PKCE)
 # ---------------------------------------------------------------------------
 
-def aprovar(req_id: str, personal_id: str, scopes: list[str]) -> dict:
+def aprovar(req_id: str, personal_id: str, scopes: list[str],
+            email: str | None = None) -> dict:
     """Consome a authreq, cria a conexão e emite o authorization code.
     Retorna {redirect_uri, code, state}. Levanta ValueError se a req expirou."""
+    from app.mcp import tokens as _t   # import tardio — tokens importa config, não services
+
     req = get_authreq(req_id)
     if not req:
         raise ValueError("requisição de autorização expirada ou inexistente")
 
-    concedidos = [s for s in scopes if s in req.get("scopes", [])]
+    pedidos = req.get("scopes", [])
+    concedidos = [s for s in scopes if s in pedidos and s not in _t.SCOPES_IDENTIDADE]
     if not concedidos:
         raise ValueError("nenhum escopo válido concedido")
+    # Identidade (openid/email) acompanha a autorização: não dá acesso a dado, só permite
+    # ao cliente saber de quem é a conexão pelo /userinfo. Não vai à tela de consentimento.
+    concedidos += [s for s in pedidos if s in _t.SCOPES_IDENTIDADE]
 
-    conn_id = _criar_conexao(personal_id, req["client_id"], req["client_name"], concedidos)
+    conn_id = _criar_conexao(personal_id, req["client_id"], req["client_name"],
+                             concedidos, email=email)
     _fixar_cliente(req["client_id"])
 
     code = secrets.token_urlsafe(32)

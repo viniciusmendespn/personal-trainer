@@ -16,7 +16,7 @@ Endpoints (todos no subdomínio mcp.*, sem authorizer no gateway):
 from urllib.parse import parse_qs, urlencode, urlparse
 
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
 
 from app.config import settings
 from app.mcp import tokens as mcp_tokens
@@ -24,7 +24,8 @@ from app.services import mcp_service
 
 router = APIRouter()
 
-_SCOPES = list(mcp_tokens.SCOPES_SUPORTADOS)
+_SCOPES = list(mcp_tokens.SCOPES_ANUNCIADOS)          # dados + identidade
+_SCOPES_DADOS = list(mcp_tokens.SCOPES_SUPORTADOS)    # os que a tela de consentimento mostra
 
 
 def _erro(descricao: str, *, code: str = "invalid_request", status: int = 400) -> JSONResponse:
@@ -83,6 +84,12 @@ def _authorization_server_metadata() -> dict:
         "grant_types_supported": ["authorization_code", "refresh_token"],
         "code_challenge_methods_supported": ["S256"],
         "token_endpoint_auth_methods_supported": ["none"],
+        # Exigido pela submissão de app do ChatGPT (restrição de domínio em workspace):
+        # o AS precisa anunciar UserInfo e devolver `email` + `email_verified`.
+        "userinfo_endpoint": f"{base}/userinfo",
+        "subject_types_supported": ["public"],
+        "id_token_signing_alg_values_supported": ["HS256"],
+        "claims_supported": ["sub", "email", "email_verified"],
     }
 
 
@@ -90,6 +97,20 @@ for _path in _PROTECTED_RESOURCE_PATHS:
     router.add_api_route(_path, lambda: _protected_resource_metadata(), methods=["GET"])
 for _path in _AUTH_SERVER_PATHS:
     router.add_api_route(_path, lambda: _authorization_server_metadata(), methods=["GET"])
+
+
+@router.get("/.well-known/openai-apps-challenge", response_class=PlainTextResponse)
+def openai_apps_challenge():
+    """Verificação de posse do domínio na submissão de app do ChatGPT.
+
+    A OpenAI é explícita: "The challenge endpoint must return only that plugin's
+    verification token. Do not return JSON, a list of tokens, or multiple tokens." Por isso
+    texto puro, um único token, sem quebra de linha. 404 enquanto não houver token
+    configurado — melhor do que servir string vazia e a verificação passar por engano."""
+    token = (settings.openai_apps_challenge or "").strip()
+    if not token:
+        return PlainTextResponse("not found", status_code=404)
+    return PlainTextResponse(token, headers={"Cache-Control": "no-store"})
 
 
 # ---------------------------------------------------------------------------
@@ -158,10 +179,16 @@ def authorize(client_id: str = "", redirect_uri: str = "", response_type: str = 
     if code_challenge_method != "S256" or not code_challenge:
         return _volta_com_erro("invalid_request", "PKCE com S256 é obrigatório")
 
-    pedidos = (scope or " ".join(_SCOPES)).split()
-    escopos = [s for s in pedidos if s in _SCOPES]
-    if not escopos:
+    pedidos = (scope or " ".join(_SCOPES_DADOS)).split()
+    desconhecido = [s for s in pedidos if s not in _SCOPES]
+    if desconhecido:
         return _volta_com_erro("invalid_scope", f"escopos válidos: {', '.join(_SCOPES)}")
+    # Um cliente que pede só `openid email` (identidade) continua precisando de acesso a
+    # dado para as tools servirem para alguma coisa — nesse caso oferecemos tudo, e o
+    # personal decide o que conceder na tela de consentimento.
+    dados = [s for s in pedidos if s in _SCOPES_DADOS] or _SCOPES_DADOS
+    identidade = [s for s in pedidos if s in mcp_tokens.SCOPES_IDENTIDADE]
+    escopos = dados + identidade
 
     req_id = mcp_service.criar_authreq(
         client_id=client_id, client_name=cliente.get("client_name") or "Cliente MCP",
@@ -225,3 +252,38 @@ async def token(request: Request):
         },
         headers={"Cache-Control": "no-store", "Pragma": "no-cache"},
     )
+
+
+# ---------------------------------------------------------------------------
+# /userinfo — OIDC mínimo
+# ---------------------------------------------------------------------------
+
+@router.get("/userinfo")
+def userinfo(request: Request):
+    """Identidade do dono da conexão. Exigido pela submissão de app do ChatGPT para
+    restrição de domínio em workspace: precisa devolver `email` e `email_verified`.
+
+    Não expõe dado de aluno — só quem é o personal que autorizou. O e-mail vem do item
+    da conexão, gravado no consentimento a partir do JWT do Cognito (que já verifica
+    e-mail no cadastro, daí `email_verified: true`)."""
+    autorizacao = request.headers.get("authorization") or ""
+    if not autorizacao.lower().startswith("bearer "):
+        return JSONResponse(
+            {"error": "invalid_token"}, status_code=401,
+            headers={"WWW-Authenticate": 'Bearer error="invalid_token"'},
+        )
+    try:
+        tenant = mcp_service.resolver_tenant(autorizacao[7:].strip())
+    except mcp_tokens.TokenInvalido as exc:
+        return JSONResponse(
+            {"error": "invalid_token", "error_description": str(exc)}, status_code=401,
+            headers={"WWW-Authenticate": 'Bearer error="invalid_token"'},
+        )
+
+    conexao = mcp_service.get_conexao(tenant.personal_id, tenant.conn_id) or {}
+    corpo = {"sub": tenant.personal_id}
+    email = conexao.get("email")
+    if email:
+        corpo["email"] = email
+        corpo["email_verified"] = True
+    return JSONResponse(corpo, headers={"Cache-Control": "no-store"})
