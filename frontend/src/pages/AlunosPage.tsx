@@ -247,15 +247,6 @@ export function AlunosPage() {
                       {!a.bloqueado && a.agente_habilitado && (
                         <Bot size={12} className="text-success shrink-0" aria-label="Agente ativo" />
                       )}
-                      {/* Dentro de um <Link>: não aninhar outro link — intercepta e navega. */}
-                      <PendenciaBadge
-                        pendencias={a.pendencias ?? []}
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          navigate(`/alunos/${a.aluno_id}?tab=pendencias`)
-                        }}
-                      />
                     </div>
                     <p className="text-xs text-text-muted truncate">{a.telefone}</p>
                     <p className="flex items-center gap-1 text-[11px] text-text-muted mt-0.5">
@@ -263,17 +254,27 @@ export function AlunosPage() {
                     </p>
                   </div>
                   {!a.bloqueado && <ChevronRight size={18} className="text-text-muted shrink-0" />}
+                  {/* Ancorada no canto do card (Card é relative). Dentro de um <Link>:
+                      não aninhar outro link — intercepta o clique e navega na mão. */}
+                  <PendenciaBadge
+                    pendencias={a.pendencias ?? []}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      navigate(`/alunos/${a.aluno_id}?tab=pendencias`)
+                    }}
+                  />
                 </>
               )
               return a.bloqueado ? (
                 <div key={a.aluno_id} className="cursor-not-allowed opacity-60">
-                  <Card variant="elevated" className="flex items-center gap-3 h-full pointer-events-none">
+                  <Card variant="elevated" className="relative flex items-center gap-3 h-full pointer-events-none">
                     {cardContent}
                   </Card>
                 </div>
               ) : (
                 <Link key={a.aluno_id} to={`/alunos/${a.aluno_id}`}>
-                  <Card variant="elevated" className="flex items-center gap-3 hover:border-accent/50 transition-colors h-full">
+                  <Card variant="elevated" className="relative flex items-center gap-3 hover:border-accent/50 transition-colors h-full">
                     {cardContent}
                   </Card>
                 </Link>

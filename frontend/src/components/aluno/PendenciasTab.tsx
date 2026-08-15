@@ -69,27 +69,32 @@ export function PendenciasTab({ alunoId }: { alunoId: string }) {
   )
 }
 
-/** Ícone + contador usado no card da listagem de alunos. */
+/** Marca discreta no canto superior direito do card da listagem de alunos.
+ *  Absoluta de propósito: fora do fluxo, não disputa largura com o nome (que trunca).
+ *  O contador só aparece com 2+ — no caso comum fica só o triângulo. O padding é área
+ *  de toque (o ícone de 11px sozinho seria pequeno demais para o dedo). */
 export function PendenciaBadge({ pendencias, onClick }: {
   pendencias: { severidade: string; titulo: string }[]
   onClick: (e: React.MouseEvent) => void
 }) {
   if (!pendencias.length) return null
   const alta = pendencias.some((p) => p.severidade === 'alta')
+  const descricao = pendencias.map((p) => p.titulo).join(' • ')
   return (
     <span
       role="button"
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(e as unknown as React.MouseEvent) }}
-      title={pendencias.map((p) => p.titulo).join(' • ')}
-      aria-label={`${pendencias.length} pendência${pendencias.length > 1 ? 's' : ''}: ${pendencias.map((p) => p.titulo).join(', ')}`}
-      className={`inline-flex items-center gap-0.5 shrink-0 rounded-full px-1 text-[11px] leading-4 cursor-pointer hover:opacity-80 ${
+      title={`${descricao} — clique para ver`}
+      aria-label={`${pendencias.length} pendência${pendencias.length > 1 ? 's' : ''}: ${descricao}`}
+      className={`absolute top-1 right-1 z-10 inline-flex items-center gap-px p-1.5 leading-none
+        cursor-pointer opacity-60 hover:opacity-100 focus-visible:opacity-100 transition-opacity ${
         alta ? 'text-danger' : 'text-warning'
       }`}
     >
-      <AlertTriangle size={12} />
-      {pendencias.length}
+      <AlertTriangle size={11} />
+      {pendencias.length > 1 && <span className="text-[9px] font-medium">{pendencias.length}</span>}
     </span>
   )
 }
