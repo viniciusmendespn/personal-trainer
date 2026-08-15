@@ -52,6 +52,9 @@ do formulário. Requisitos técnicos do servidor estão em `MCP_SERVER.md`.
 | **Challenge host** | `mcp.coachpilot.com.br` |
 | **CSP** | Não se aplica — o plugin não traz componente de UI; só tools MCP |
 
+O formulário pede justificativa das 3 anotações de cada tool (39 campos). Textos prontos em
+**`MCP_JUSTIFICATIVAS_TOOLS.md`**.
+
 ### Verificação de domínio
 
 O endpoint já existe e devolve **texto puro, um único token, sem JSON**:
