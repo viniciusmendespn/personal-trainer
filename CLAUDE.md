@@ -91,6 +91,24 @@ genuinamente arriscada/destrutiva (ex.: troca de parâmetro que apague infraestr
 - Comandos AWS sempre com `--profile pessoal-hotmail`
 - Backend alterado → oferecer deploy
 
+## ⚠️ REGRA OBRIGATÓRIA — Servidor MCP
+
+Todo sistema novo **nasce com servidor MCP** — não é add-on nem fase 2, é base como auth.
+Aqui ele está no ar em `mcp.coachpilot.com.br` (`backend/app/mcp/`, spec em
+`docs/especificacoes/MCP_SERVER.md`, padrão reutilizável em `docs/ARCHITECTURE.md` §14).
+
+Inegociáveis ao mexer nele ou ao criar um novo:
+- **Nenhuma tool recebe `personal_id`/`tenant` como argumento** — vem só do token, via
+  `ContextVar`. Argumento de tool é preenchido pelo LLM, que lê conteúdo escrito por alunos:
+  se o tenant fosse parâmetro, prompt injection viraria acesso cross-tenant.
+- Todo `aluno_id` vindo do LLM passa por `authz.authorize_aluno` — o mesmo guard dos routers.
+- OAuth 2.1 com PKCE S256, DCR, code one-shot, refresh rotativo, `aud` = URL do recurso.
+- Consentimento roda no portal (`/oauth/consent`), reaproveitando o login Cognito.
+- Escrita: snapshot + desfazer + idempotência + auditoria + notificação. Nada em massa.
+- `/token` lê o corpo com `parse_qs` — `Form(...)` exige `python-multipart`, que não está no
+  `requirements.txt` e derruba o módulo inteiro no import da Lambda.
+- Toda tool nova precisa entrar em `tests/test_mcp_tenant.py` com o token do tenant errado.
+
 ## ⚠️ REGRA OBRIGATÓRIA — DynamoDB: performance, escala e custo
 
 Toda proposta de acesso ao DynamoDB deve seguir estes princípios **sem exceção**. Questionar qualquer padrão que os viole antes de implementar.
@@ -129,6 +147,9 @@ pagantes. Módulos no ar: portal do personal, app do aluno (PWA), loja/marketpla
 landing com SEO. O chat do app do aluno é **direto com o personal** (2026-07); o agente IA de
 WhatsApp existe no backend mas é add-on por aluno, hoje "em breve" no plano (toggle escondido no
 portal). **RPE não é mais registrado** (campo legado, só exibição de histórico antigo).
+**Servidor MCP no ar** (2026-08) em `mcp.coachpilot.com.br` — o personal conecta o ChatGPT,
+Claude ou Gemini que já paga e conversa direto com os próprios dados; gestão em
+Configurações → Conexões. Pendência: termos/privacidade cobrindo o envio de dado de saúde.
 Estratégia de negócio e go-to-market em `estrategia/` (ver README de lá).
 Pendências técnicas conhecidas: lifecycle S3 (antes de 100 personais) e Lambda separada para o
 webhook/agente (item 7 de `docs/PERFORMANCE_ESCALA.md`, adiado por decisão).

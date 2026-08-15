@@ -5,7 +5,7 @@
 > Meta de custo: **< $5/mês** em uso pessoal/baixo volume (tipicamente $0–$1/mês no free tier permanente).
 >
 > **Para iniciar um projeto novo:** copiar este arquivo para `docs/ARCHITECTURE.md` do projeto,
-> seguir o **checklist do §11** e criar o `CLAUDE.md` na raiz a partir do **template do §14** —
+> seguir o **checklist do §11** e criar o `CLAUDE.md` na raiz a partir do **template do §15** —
 > ele garante que a IA siga todos os padrões de escalabilidade e custo daqui.
 
 ---
@@ -1526,7 +1526,7 @@ Não implementar preventivamente — adicione apenas quando o custo aparecer:
 
 ### Base do projeto
 - [ ] Copiar este arquivo para `docs/ARCHITECTURE.md` do novo projeto
-- [ ] Criar `CLAUDE.md` na raiz a partir do **template do §14** (substituir os placeholders)
+- [ ] Criar `CLAUDE.md` na raiz a partir do **template do §15** (substituir os placeholders)
 - [ ] Definir nome único do projeto (`{projeto}`) — prefixo de stack, tabela, bucket, pool e tag de custo
 
 ### Infraestrutura
@@ -1568,6 +1568,19 @@ Não implementar preventivamente — adicione apenas quando o custo aparecer:
 - [ ] `QueryClient`: `refetchOnWindowFocus: false`, `staleTime: 60_000`
 - [ ] `auth/`: AuthProvider, LoginPage, SignUpPage, ProtectedRoute
 - [ ] `types/index.ts`: interfaces para todas as entidades
+
+### Servidor MCP (§14 — obrigatório, não é fase 2)
+- [ ] Subdomínio `mcp.{dominio}` via `ApiGatewayV2::DomainName` + `ApiMapping` (com `DependsOn` no stage) + `RecordSet`
+- [ ] `McpApi` (HttpApi **sem** authorizer) + `McpFunction` separadas do portal; IAM só DynamoDB
+- [ ] Segredo `MCP_TOKEN_SECRET` no `template.yaml` (NoEcho), no `.env.local` e no script de deploy
+- [ ] `.well-known` (RFC 9728 + 8414), `/register` (DCR), `/authorize` com PKCE S256, `/token` com refresh rotativo
+- [ ] `/token` lê o corpo com `parse_qs` — **nunca** `Form(...)`, que exige `python-multipart` (§14.4)
+- [ ] Rota `/oauth/consent` no portal + aba de Conexões com revogação
+- [ ] `ProtectedRoute` preserva o destino em `?next=` (§14.2)
+- [ ] Tenant só do token, via `ContextVar`; todo id do LLM passa pelo guard de autorização (§14.3)
+- [ ] Escrita com snapshot + desfazer + idempotência + auditoria + notificação (§14.6)
+- [ ] Teste que roda **cada tool** com o token do tenant errado
+- [ ] Termos e Política de Privacidade cobrem o envio de dado sensível à LLM (§14.7)
 
 ### SEO (páginas públicas)
 - [ ] `public/robots.txt` — bloquear `/dashboard/`, `/aluno/`, `/login`, etc.; apontar sitemap
@@ -1904,7 +1917,152 @@ Aparecer no Google (indexar) é diferente de aparecer bem (ranquear). O que dete
 
 ---
 
-## 14. Template de `CLAUDE.md` para Novo Projeto
+## 14. Servidor MCP — a LLM do usuário falando direto com o sistema
+
+> **Todo projeto novo nasce com servidor MCP.** Não é add-on nem fase 2: é parte da base,
+> como auth e single-table. O usuário já paga ChatGPT Plus, Claude Pro ou Gemini — o produto
+> que o deixa conversar com os próprios dados no cliente que ele já usa entrega automação sem
+> nos custar um token sequer. Implementação de referência: `personal-trainer`
+> (`backend/app/mcp/`, spec em `docs/especificacoes/MCP_SERVER.md`).
+
+### 14.1 Duas superfícies, propositalmente separadas
+
+| Superfície | Lambda | Auth no gateway | Conteúdo |
+|---|---|---|---|
+| `mcp.{dominio}` | `McpFunction` (HttpApi própria) | nenhuma | `/.well-known/*`, `/register`, `/authorize`, `/token`, `/mcp` |
+| `{dominio}/v1/mcp/*` | `ApiFunction` | Cognito | consentimento e gestão de conexões no portal |
+
+**Subdomínio próprio, sempre.** O OAuth exige `/.well-known/oauth-authorization-server` na
+*raiz* do issuer, e no domínio principal a CloudFront Function de SPA routing manda qualquer
+path com ponto para o S3 → 404. O certificado wildcard `*.{dominio}` já cobre o subdomínio;
+usar `AWS::ApiGatewayV2::DomainName` + `ApiMapping` + `RecordSet` — não outra distribuição
+CloudFront, que sairia mais cara sem ganho. O `ApiMapping` precisa de `DependsOn` explícito
+no stage: ele o referencia por nome, então o CloudFormation não infere a ordem e falha com
+"Invalid stage identifier".
+
+**API e Lambda separadas do portal.** O Bearer aqui é nosso, não do Cognito, então a API
+principal (com `DefaultAuthorizer` Cognito e catch-all `/{proxy+}`) atrapalharia. Além disso
+o tráfego de LLM é rajada longa de leitura — perfil oposto ao do portal — e o IAM do MCP é
+menor (só DynamoDB).
+
+### 14.2 Authorization server próprio (o Cognito não serve sozinho)
+
+O Cognito **não suporta Dynamic Client Registration** (RFC 7591), que os conectores
+hospedados do claude.ai e do ChatGPT esperam, e o padrão deste documento não cria hosted UI
+(login é SRP via Amplify). Logo o AS é nosso, em FastAPI — mas o Cognito **segue sendo a
+autoridade de identidade**: o consentimento roda numa rota do portal, autenticada pelo JWT
+que o front já injeta. Nunca vemos senha e não duplicamos login.
+
+```
+Cliente LLM → /.well-known → /register (DCR) → /authorize
+                                                   ↓ 302
+                       portal /oauth/consent?req=…  (sessão Cognito + escolha de escopos)
+                                                   ↓ code
+                                               /token → access 15 min + refresh rotativo
+```
+
+Obrigatório: **PKCE S256**; match **exato** de `redirect_uri` (nada de prefixo ou wildcard —
+é por aí que entra redirect aberto, e o erro de redirect inválido não pode voltar *pela*
+redirect_uri); authorization code **one-shot** com TTL de segundos; **refresh rotativo**
+(reapresentar o mesmo refresh falha — sinal clássico de token vazado); e `aud` = URL
+canônica do recurso (RFC 8707), que é o que impede *confused deputy*. Códigos e refresh
+tokens são gravados como **SHA-256**: tabela vazada não vira token utilizável.
+
+Revogação segue o padrão de sessão do projeto: o item do grant guarda `revoked_at`,
+comparado com o `iat` do token. Access token curto (15 min) mantém a janela pequena; o
+refresh é bloqueado na hora.
+
+O `ProtectedRoute` do frontend precisa **preservar o destino em `?next=`** — não em state do
+router, que não sobrevive à navegação dura do login. Sem isso, quem chega deslogado no
+consentimento perde a autorização em curso.
+
+### 14.3 Isolamento de tenant — a regra que não tem exceção
+
+> **Nenhuma tool aceita `user_id`/`tenant` como argumento. Ele vem só do token.**
+
+Argumento de tool é preenchido pelo LLM, e o LLM lê conteúdo escrito por terceiros
+(mensagens, formulários, textos de catálogo) — entrada não-confiável por definição. Se o
+tenant fosse parâmetro, prompt injection viraria acesso cross-tenant.
+
+- Tenant num `contextvars.ContextVar`, preenchido **só** pelo validador do Bearer; a função
+  que o lê **estoura** se chamada fora do contexto (melhor quebrar que servir dado alheio).
+- Todo id de entidade vindo do LLM passa pelo **mesmo guard de autorização dos routers**,
+  mesmo quando "só poderia" ter vindo de uma listagem anterior.
+- Atenção quando a entidade filha vive em partição própria (ex.: `AL#{aluno}`, não sob
+  `PT#{personal}`): checar prefixo de PK **não basta**.
+- Impersonação de admin **não existe** no caminho MCP.
+- Teste obrigatório: rodar **cada tool** com o token do tenant errado e afirmar que não lê,
+  não escreve e não altera nada.
+
+### 14.4 Transporte: JSON-RPC stateless, sem o SDK
+
+Escrever à mão (~200 linhas) em vez de usar o SDK `mcp`: o `StreamableHTTPSessionManager`
+exige task group vivo no lifespan ASGI, incompatível com `Mangum(lifespan="off")` em Lambda,
+e o SDK arrastaria `sse-starlette`/`uvicorn` para o pacote arm64. Responder
+`application/json` em vez de SSE também evita o teto de 29 s do HTTP API.
+
+- Métodos: `initialize`, `notifications/*` (202 sem corpo), `ping`, `tools/list`,
+  `tools/call`, `prompts/list`, `prompts/get`.
+- `GET`/`DELETE` em `/mcp` → **405** (sem sessão, sem stream server-initiated).
+- Sem token → **401 com `WWW-Authenticate: Bearer resource_metadata="…"`**. É por esse
+  header que o cliente descobre que deve iniciar o OAuth em vez de desistir.
+- Schemas das tools saem de `model_json_schema()` do Pydantic — **nenhuma dependência nova**.
+- ⚠️ `Form(...)` do FastAPI exige `python-multipart`, que **não** está no `requirements.txt`
+  padrão e é validado já na definição da rota — o módulo inteiro falha no import e todo
+  endpoint responde 500. O `/token` é sempre urlencoded: ler o corpo e usar `parse_qs`.
+  O teste que cobre isso recarrega os módulos com o pacote bloqueado em `sys.modules`.
+
+### 14.5 Design das tools
+
+Pensar em **acessos**, não em CRUD espelhado da API. 10–18 tools, não 60.
+
+- **Uma tool de dossiê** que devolve o contexto inteiro da entidade principal numa chamada
+  economiza rodadas do LLM — e normalmente já existe um service que monta isso.
+- **Projeção via modelo Pydantic de saída**, não `ProjectionExpression`: cada campo a mais é
+  token pago pelo usuário.
+- Toda listagem devolve `{"items": [...], "next_cursor": ...}`, com `limit` sob teto.
+  **Nenhum `Scan`.**
+- **Descrição de tool é prompt**: é onde se reencaixa a regra de negócio ("procure primeiro
+  na biblioteca do usuário", "restrições da anamnese são invioláveis"). Se já existe um
+  prompt escrito para o fluxo manual, servi-lo em `prompts/get` e manter os dois em sincronia
+  por teste.
+- **Erro de tool volta como resultado com `isError`**, não como erro JSON-RPC, e com texto
+  acionável (`"não encontrado; use listar_x"`) — gera auto-correção em vez de loop.
+- Conteúdo escrito por terceiros volta **marcado como dado, não instrução**.
+- Escopos separados de leitura e escrita; conexão só-leitura **nem enxerga** as tools de
+  escrita em `tools/list`.
+
+### 14.6 Escrita: salvaguardas obrigatórias
+
+- **Snapshot antes de escrever** (item com TTL curto) + tool de **desfazer**.
+- **Resumo da mudança obrigatório** como argumento — força o LLM a declarar o que faz, e
+  vira a linha de auditoria e o texto da notificação.
+- **Idempotência** por hash do payload com TTL de ~60 s: o LLM repete chamadas.
+- **Auditoria** com o nome do cliente OAuth e TTL longo.
+- **Notificação ao usuário** a cada escrita — a mudança nunca pode ser silenciosa.
+- **Nada de operação em massa** nem destrutiva além da coberta por snapshot; nunca expor
+  plano, cobrança ou permissões à escrita.
+- **Quota por minuto** (contador atômico com TTL) — é o controle de custo quando a feature
+  não tem gate de plano.
+
+### 14.7 Ponto jurídico
+
+Se as tools expõem dado pessoal sensível (saúde, financeiro) — sobretudo **de terceiros**,
+que não são o usuário contratante — a conexão transfere esse dado para operador estrangeiro.
+Termos e Política de Privacidade **precisam cobrir a hipótese**, e a tela de consentimento
+precisa dizê-lo em uma linha. Resolver isso *antes* de abrir a feature ao público.
+
+### 14.8 Como testar
+
+`npx @modelcontextprotocol/inspector` primeiro — é onde problema de protocolo aparece antes
+de envolver qualquer LLM. Depois `claude mcp add --transport http`, claude.ai (Settings →
+Connectors), ChatGPT (Connectors, modo desenvolvedor) e Gemini CLI (`mcpServers`). No app
+consumidor do Gemini o suporte a conector de terceiro ainda é limitado — o caminho suportado
+hoje é CLI/Vertex.
+
+---
+
+## 15. Template de `CLAUDE.md` para Novo Projeto
 
 > Copiar o bloco abaixo para o `CLAUDE.md` na raiz do novo projeto, substituindo os
 > placeholders `{projeto}`, `{accountId}`, `{profile}` e a descrição. Ele condensa as regras
@@ -1963,6 +2121,25 @@ recursos + AppRegistry Application (ver `docs/ARCHITECTURE.md` §12). **Todo rec
 - Enums espelhados backend ↔ frontend
 - Comandos AWS sempre com `--profile {profile}`
 - Backend alterado → oferecer deploy
+
+## ⚠️ REGRA OBRIGATÓRIA — Servidor MCP desde o início
+
+Este sistema **nasce com servidor MCP** (`mcp.{dominio}`) para o usuário conversar com os
+próprios dados no ChatGPT, Claude ou Gemini que ele já paga. Não é add-on nem fase 2 — é
+base, como auth. Detalhes completos em `docs/ARCHITECTURE.md` §14.
+
+Inegociáveis:
+- **Nenhuma tool recebe `user_id`/`tenant` como argumento** — vem só do token, via
+  `ContextVar`. Argumento de tool é preenchido pelo LLM, que lê conteúdo de terceiros:
+  se o tenant fosse parâmetro, prompt injection viraria acesso cross-tenant.
+- Todo id de entidade vindo do LLM passa pelo **mesmo guard de autorização dos routers**.
+- **OAuth 2.1 com PKCE S256**, DCR, code one-shot, refresh rotativo, `aud` = URL do recurso.
+  Nada de token colado em header como solução final: os conectores hospedados exigem OAuth.
+- Consentimento roda **no portal**, reaproveitando o login existente — nunca uma tela de
+  senha nova, nunca credencial entregue ao cliente de LLM.
+- Escrita: snapshot + desfazer + idempotência + auditoria + notificação. Sem operação em
+  massa, sem tocar em plano, cobrança ou permissões.
+- Teste obrigatório rodando **cada tool** com o token do tenant errado.
 
 ## ⚠️ REGRA OBRIGATÓRIA — DynamoDB: performance, escala e custo
 
