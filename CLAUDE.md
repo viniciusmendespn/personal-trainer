@@ -108,6 +108,17 @@ Inegociáveis ao mexer nele ou ao criar um novo:
 - `/token` lê o corpo com `parse_qs` — `Form(...)` exige `python-multipart`, que não está no
   `requirements.txt` e derruba o módulo inteiro no import da Lambda.
 - Toda tool nova precisa entrar em `tests/test_mcp_tenant.py` com o token do tenant errado.
+- **A inteligência de prescrição chega ao LLM por tool (`guia_de_prescricao`), não por
+  `prompts/get`** — o ChatGPT não consome o primitivo `prompts`. `prompts/get montar_treino`
+  é espelho e usa o mesmo renderizador. Nunca citar em `instructions` algo que não seja um
+  nome de tool: o LLM não consegue chamar prompt.
+- O corpo de `prompts/montar_treino.md` é byte-idêntico ao de
+  `frontend/public/prompt-treino-aluno.md` (`test_mcp_prompt_sync.py`). O que muda por canal
+  vive nos marcadores `{{ENTREGA}}` e `{{BIBLIOTECA}}`, interpolados em `montar_treino_texto()`
+  no backend e em `renderizarPromptIA()` no front — mexeu em um, mexa no outro.
+- Erro semântico de programa **bloqueia** a gravação (`app/mcp/validacao_programa.py`), e a
+  validação roda antes da chave de idempotência. Regra nova nasce como aviso até ter teste
+  provando que não reprova programa legítimo — `metrica_direcao` já nasce `"MAIOR"` no modelo.
 
 ## ⚠️ REGRA OBRIGATÓRIA — DynamoDB: performance, escala e custo
 

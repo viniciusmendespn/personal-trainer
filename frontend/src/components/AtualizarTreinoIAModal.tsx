@@ -3,7 +3,7 @@ import { Download, ExternalLink, Check, FileUp } from 'lucide-react'
 import { Modal, Button, Textarea, Spinner, useToast, useConfirm } from './ui'
 import { useExportarPrograma, useImportarPrograma } from '../hooks/useTreinos'
 import { bibliotecaApi } from '../api/biblioteca'
-import { downloadText, fetchPromptMd, injetarBiblioteca, montarArquivoIA, slimBiblioteca } from '../utils/arquivoIa'
+import { downloadText, fetchPromptMd, montarArquivoIA, renderizarPromptIA, slimBiblioteca } from '../utils/arquivoIa'
 import type { ImportarProgramaResponse } from '../api/treinos'
 
 interface Props {
@@ -35,7 +35,7 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
         fetchPromptMd('/prompt-treino-aluno.md'),
         bibliotecaApi.list(),
       ])
-      const md = montarArquivoIA(injetarBiblioteca(prompt, slimBiblioteca(lib)), [
+      const md = montarArquivoIA(renderizarPromptIA(prompt, slimBiblioteca(lib)), [
         {
           titulo: '📦 DADOS DO ALUNO (gerado automaticamente — não edite)',
           nota:

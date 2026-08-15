@@ -7,7 +7,7 @@ import { useBiblioteca } from '../hooks/useDominio'
 import { Button, Card, Spinner, EmptyState, Modal, Badge, Tabs, useToast, useConfirm } from '../components/ui'
 import { downloadJson } from '../api/pacotes'
 import { bibliotecaApi } from '../api/biblioteca'
-import { downloadText, fetchPromptMd, injetarBiblioteca, slimBiblioteca } from '../utils/arquivoIa'
+import { downloadText, fetchPromptMd, renderizarPromptIA, slimBiblioteca } from '../utils/arquivoIa'
 import type { ExLib, ImportarPacoteResponse, PacoteInstalado } from '../types'
 import { normalizeText } from '../utils/normalizeText'
 
@@ -28,7 +28,7 @@ function ImportarIASection() {
         bibliotecaApi.list(),
       ])
       const slim = slimBiblioteca(lib)
-      const md = injetarBiblioteca(prompt, slim)
+      const md = renderizarPromptIA(prompt, slim)
       downloadText(md, 'prompt-pacote-coachpilot.md')
       if (!slim.length) {
         toast('Sua biblioteca está vazia — baixei só o prompt. Cadastre exercícios para a IA reaproveitar seus vídeos.', 'info')

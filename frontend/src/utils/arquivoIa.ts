@@ -74,12 +74,29 @@ export interface SecaoDados {
  *  em vez de solta no fim do arquivo, longe de onde a IA precisa dela. */
 export const MARCADOR_BIBLIOTECA = '{{BIBLIOTECA}}'
 
+/** Marcador da regra de ouro nº 6, a única que muda conforme por onde a IA entrega o
+ *  resultado. O corpo do prompt é compartilhado com `backend/app/mcp/prompts/montar_treino.md`
+ *  (um teste garante que sejam idênticos); lá o servidor injeta "chame `aplicar_programa_treino`",
+ *  aqui injetamos o copia-e-cola, que é o fluxo deste arquivo. */
+export const MARCADOR_ENTREGA = '{{ENTREGA}}'
+
+export const ENTREGA_MANUAL =
+  '**Exiba o JSON no chat**, num bloco ` ```json `. **Não crie arquivo para download** — o ' +
+  'personal copia da tela e cola no CoachPilot.'
+
 /** Substitui o marcador pela biblioteca renderizada. Se o prompt não tiver o marcador
  *  (versão antiga em cache do CloudFront), anexa no fim — nunca perde a biblioteca. */
 export function injetarBiblioteca(prompt: string, slim: BibliotecaRefIA[]): string {
   const bloco = bibliotecaMarkdown(slim)
   if (prompt.includes(MARCADOR_BIBLIOTECA)) return prompt.split(MARCADOR_BIBLIOTECA).join(bloco)
   return `${prompt.trimEnd()}\n\n---\n\n## 📦 BIBLIOTECA DO PERSONAL\n\n${bloco}\n`
+}
+
+/** Prompt pronto para o personal: biblioteca no lugar do marcador e a instrução de entrega
+ *  deste fluxo. Um prompt antigo em cache não tem `{{ENTREGA}}` — aí o replace é no-op e o
+ *  texto que já estava escrito continua valendo, que é justamente o do fluxo manual. */
+export function renderizarPromptIA(prompt: string, slim: BibliotecaRefIA[]): string {
+  return injetarBiblioteca(prompt, slim).split(MARCADOR_ENTREGA).join(ENTREGA_MANUAL)
 }
 
 /** Monta um único arquivo .md = prompt (instruções) + seções de dados em blocos ```json```.

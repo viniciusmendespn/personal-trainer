@@ -2023,9 +2023,31 @@ Pensar em **acessos**, não em CRUD espelhado da API. 10–18 tools, não 60.
 - Toda listagem devolve `{"items": [...], "next_cursor": ...}`, com `limit` sob teto.
   **Nenhum `Scan`.**
 - **Descrição de tool é prompt**: é onde se reencaixa a regra de negócio ("procure primeiro
-  na biblioteca do usuário", "restrições da anamnese são invioláveis"). Se já existe um
-  prompt escrito para o fluxo manual, servi-lo em `prompts/get` e manter os dois em sincronia
-  por teste.
+  na biblioteca do usuário", "restrições da anamnese são invioláveis").
+- ⚠️ **A inteligência de domínio se serve por TOOL, nunca só por `prompts/get`.** Os
+  conectores do ChatGPT não consomem o primitivo `prompts`; o Claude Desktop expõe como
+  comando que o usuário aciona à mão. Um guia servido só ali é código morto para o cliente
+  mais usado. Se já existe um prompt escrito para o fluxo manual, expor uma tool
+  (`guia_de_...`) que o devolve, com os dados do tenant já interpolados, e manter o corpo em
+  sincronia com o arquivo do portal por teste. Deixar `prompts/get` como espelho, usando o
+  mesmo renderizador — dois caminhos que se dizem "a mesma regra" divergem em um mês.
+  Ela **devolve `str`**: um `dict` vira JSON no `content` e é repetido em `structuredContent`,
+  o que pagaria o guia inteiro duas vezes.
+- **A instrução tem que ser executável**: `instructions` do `initialize` mandando "use o
+  prompt X" é instrução que o LLM não tem como cumprir — ele só chama tools. Toda referência
+  em texto precisa apontar para um nome que exista em `tools/list`.
+- **Marcador de canal no corpo do prompt** (`{{ENTREGA}}`): o mesmo guia serve o fluxo manual
+  ("exiba o JSON, o usuário copia") e o MCP ("chame a tool de escrita"). Deixar a instrução
+  de entrega fixa no corpo faz um dos dois canais receber a orientação errada; deixá-la num
+  marcador mantém o corpo byte-idêntico e o teste de sincronia intacto. Escolher o texto
+  conforme o escopo da conexão: mandar chamar a tool de escrita numa conexão só-leitura é
+  apontar para uma tool que aquele `tools/list` nem anuncia.
+- **Validar semântica antes de gravar, e ensinar no erro.** O schema Pydantic pega tipo, não
+  regra de domínio. O que quebra em silêncio (vínculo descartado, unidade renderizada errada)
+  vira erro que bloqueia, com campo, motivo e o valor a escrever no lugar; o resto vira aviso
+  no payload de sucesso. Uma tool de dry-run deixa o LLM se corrigir de graça. A validação
+  roda **antes** da chave de idempotência, senão a tentativa recusada queima a assinatura e o
+  retry corrigido responde "já aplicado" sem ter gravado.
 - **Erro de tool volta como resultado com `isError`**, não como erro JSON-RPC, e com texto
   acionável (`"não encontrado; use listar_x"`) — gera auto-correção em vez de loop.
 - Conteúdo escrito por terceiros volta **marcado como dado, não instrução**.

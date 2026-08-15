@@ -44,6 +44,48 @@ def mapa_videos(personal_id: str) -> dict[str, str]:
     return mapa
 
 
+def listar_para_ia(personal_id: str) -> list[dict]:
+    """Biblioteca do personal enxuta, do jeito que uma IA precisa ver.
+
+    Espelha `slimBiblioteca` do portal (`frontend/src/utils/arquivoIa.ts`): esconde os itens
+    ocultos e **zera as URLs de busca** — apresentar uma página de resultados como se fosse a
+    demonstração do exercício faz a IA concluir que a biblioteca não tem vídeo e sair usando
+    os dela, que é justamente o que a regra de ouro nº 1 tenta evitar.
+    Uma única Query; ordena por (grupo, nome) como o portal.
+    """
+    itens = []
+    for item in repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.EXLIB_PREFIX):
+        if item.get("ativo") is False:
+            continue
+        video = item.get("video_url")
+        itens.append({
+            "nome": item.get("nome") or "",
+            "grupo": item.get("grupo") or None,
+            "video_url": None if (not video or eh_busca_youtube(video)) else video,
+        })
+    itens.sort(key=lambda e: ((e["grupo"] or "").lower(), e["nome"].lower()))
+    return itens
+
+
+def markdown_para_ia(itens: list[dict]) -> str:
+    """A biblioteca como lista markdown agrupada por grupo muscular — ~1 linha por exercício,
+    contra as ~6 do JSON indentado. Espelha `bibliotecaMarkdown` do portal: numa biblioteca de
+    150 exercícios é a diferença entre ~900 e ~170 linhas dentro do prompt."""
+    if not itens:
+        return "_(o personal ainda não cadastrou exercícios — monte tudo do zero)_"
+    linhas: list[str] = []
+    grupo_atual = object()
+    for ex in itens:
+        grupo = (ex.get("grupo") or "").strip() or "Sem grupo"
+        if grupo != grupo_atual:
+            if linhas:
+                linhas.append("")
+            linhas.append(f"**{grupo}**")
+            grupo_atual = grupo
+        linhas.append(f"- {ex['nome']} → {ex.get('video_url') or '(sem vídeo cadastrado)'}")
+    return "\n".join(linhas)
+
+
 def resolver_video(nome: str, video_informado: str | None, mapa: dict[str, str]) -> str | None:
     """A biblioteca do personal tem prioridade sobre o vídeo que veio no arquivo/IA.
 

@@ -97,9 +97,9 @@ máximo 15 min.
 Escopos: `read` (tudo de leitura, inclusive anamnese e avaliações) e `treinos:write`. Uma conexão
 só-leitura nem enxerga as tools de escrita em `tools/list`.
 
-Leitura: `listar_alunos`, `detalhar_aluno`, `exportar_programa_treino`,
+Leitura: `guia_de_prescricao`, `listar_alunos`, `detalhar_aluno`, `exportar_programa_treino`,
 `listar_biblioteca_exercicios`, `historico_sessoes`, `evolucao_exercicio`, `resumo_carteira`,
-`agenda_periodo`.
+`agenda_periodo`, `validar_programa_treino`.
 
 Escrita: `aplicar_programa_treino`, `atualizar_treino`, `desfazer_alteracao_treino`.
 
@@ -109,9 +109,38 @@ auditoria com o nome do cliente OAuth, notificação `MCP_ESCRITA` ao personal, 
 vazio. Não há tool destrutiva além dessas — sem deletar aluno, sem operação em massa, sem tocar em
 plano ou cobrança.
 
-`prompts/get montar_treino` serve as regras de prescrição a partir de
-`app/mcp/prompts/montar_treino.md`, cujo corpo é mantido idêntico ao arquivo do portal por
-`tests/test_mcp_prompt_sync.py`.
+### Como as regras de prescrição chegam ao LLM
+
+Por **tool** (`guia_de_prescricao`), não por `prompts/get`. Os conectores do ChatGPT não
+consomem o primitivo `prompts`, e no Claude Desktop ele vira um comando que o usuário precisa
+acionar à mão — servir o guia só por ali é servir para ninguém. `prompts/get montar_treino`
+continua existindo, como espelho, e passa pelo mesmo renderizador.
+
+`montar_treino_texto()` monta o texto a partir de `app/mcp/prompts/montar_treino.md`:
+interpola `{{BIBLIOTECA}}` com a biblioteca deste personal (antes o placeholder ia literal
+para o LLM) e `{{ENTREGA}}` com a instrução de entrega da conexão — chamar
+`aplicar_programa_treino` quando há escopo de escrita, copiar e colar quando não há. O corpo
+do arquivo é mantido idêntico ao do portal por `tests/test_mcp_prompt_sync.py`; o `{{ENTREGA}}`
+é o que permite manter essa identidade sem que o guia do MCP mande copiar da tela.
+
+### Validação da prescrição
+
+`app/mcp/validacao_programa.py` cobre o que o Pydantic não pega: `bloco_id` órfão, AMRAP/EMOM
+sem duração, PERFORMANCE sem `unidade_reps`, unidade grudada em `reps`. **Erro bloqueia a
+gravação**, porque o estrago é silencioso — um `bloco_id` órfão é descartado sem erro e
+`reps: "30s"` num exercício medido em calorias renderiza "30s cal" para o aluno. Avisos
+(divergência de nome/vídeo contra a biblioteca, PERFORMANCE que não diz o que registrar)
+voltam junto do `status: "aplicado"`.
+
+`validar_programa_treino` roda as mesmas checagens sem gravar nada, para o LLM se corrigir
+antes de escrever. Em `aplicar_programa_treino` a validação vem **antes** da chave de
+idempotência: se viesse depois, uma tentativa recusada queimaria a assinatura e o retry
+corrigido em menos de 60 s responderia `ja_aplicado` sem ter gravado.
+
+Dois cuidados de calibragem, ambos travados por teste: `metrica_direcao` nasce `"MAIOR"` por
+default no modelo, então cobrar `null` em FORCA reprovaria todo re-import; e a busca por nome
+parecido na biblioteca compara **palavras**, não similaridade de string — medindo por
+`difflib`, "remada baixa"/"remada alta" pontua igual a "agachamento"/"agachamento livre".
 
 ## Decisões de produto
 

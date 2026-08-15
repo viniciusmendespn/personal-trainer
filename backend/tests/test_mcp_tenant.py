@@ -54,6 +54,10 @@ CHAMADAS_COM_ALUNO = [
     ("aplicar_programa_treino", {"aluno_id": ALUNO_DE_A, "resumo_da_mudanca": "x",
                                  "programa": {"version": "1", "treinos": [
                                      {"nome": "T", "exercicios": []}]}}),
+    # Só passa se o `_guard` for a primeira instrução da tool — antes de qualquer parsing.
+    ("validar_programa_treino", {"aluno_id": ALUNO_DE_A,
+                                 "programa": {"version": "1", "treinos": [
+                                     {"nome": "T", "exercicios": []}]}}),
 ]
 
 
@@ -97,6 +101,33 @@ def test_biblioteca_so_traz_os_proprios_exercicios(carteiras):
     with usando_tenant(_tenant(PERSONAL_B)):
         r = mcp_tools.chamar_tool("listar_biblioteca_exercicios", {}, _tenant(PERSONAL_B))
     assert [e["nome"] for e in r["structuredContent"]["items"]] == ["Supino"]
+
+
+def test_guia_embute_so_a_biblioteca_do_proprio_personal(carteiras):
+    """O guia carrega a biblioteca do personal dentro do texto — é mais um lugar por onde
+    exercício de outra carteira poderia vazar."""
+    with usando_tenant(_tenant(PERSONAL_B)):
+        texto = mcp_tools.chamar_tool("guia_de_prescricao", {},
+                                      _tenant(PERSONAL_B))["content"][0]["text"]
+    # Só a seção da biblioteca: o corpo do guia cita nomes de exercício nos exemplos, e o
+    # cabeçalho menciona a seção pelo nome — daí ancorar no título com o emoji.
+    secao = texto.split("## \U0001f4e6 BIBLIOTECA DO PERSONAL", 1)[1].split("\n---", 1)[0]
+    assert "Supino" in secao
+    assert "Agachamento" not in secao
+    assert "https://video.a" not in texto
+
+
+def test_validacao_nao_consulta_a_biblioteca_alheia(carteiras):
+    """Validar um programa como B não pode casar com o "Agachamento" cadastrado por A."""
+    programa = {"version": "1", "treinos": [{"nome": "T", "exercicios": [
+        {"nome": "Agachamento", "series_prescritas": [{"series": 3, "reps": "10"}]}]}]}
+    with usando_tenant(_tenant(PERSONAL_B)):
+        r = mcp_tools.chamar_tool("validar_programa_treino",
+                                  {"aluno_id": ALUNO_DE_B, "programa": programa},
+                                  _tenant(PERSONAL_B))
+    codigos = {a["codigo"] for a in r["structuredContent"]["avisos"]}
+    assert "NOME_DIVERGE_BIBLIOTECA" not in codigos
+    assert "NOME_PARECIDO_BIBLIOTECA" not in codigos
 
 
 def test_resumo_carteira_nao_conta_alunos_alheios(carteiras):
