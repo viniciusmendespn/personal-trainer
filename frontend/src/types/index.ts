@@ -1,5 +1,7 @@
 // Espelho dos enums/modelos do backend (app/models). Manter em sincronia.
 
+import type { PendenciaResumo } from '../api/pendencias'
+
 export type AlunoStatus = 'ATIVO' | 'INATIVO'
 export type LeadStatus = 'NOVO' | 'EM_CONTATO' | 'CONVERTIDO' | 'PERDIDO'
 export type CustomFieldType = 'TEXT' | 'NUMBER' | 'BOOL' | 'SELECT' | 'DATE'
@@ -25,6 +27,8 @@ export interface Aluno {
   custom?: Custom
   agente_habilitado?: boolean
   bloqueado?: boolean
+  /** Só na listagem (GET /v1/alunos) — derivadas no backend, não persistidas. */
+  pendencias?: PendenciaResumo[]
   created_at: string
   updated_at: string
 }

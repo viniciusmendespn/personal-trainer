@@ -14,7 +14,10 @@ export function useCreateTreino(alunoId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: TreinoCreate) => treinosApi.create(alunoId, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['treinos', alunoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['treinos', alunoId] })
+      qc.invalidateQueries({ queryKey: ['pendencias', alunoId] }) // vigência mudou
+    },
   })
 }
 
@@ -23,7 +26,10 @@ export function useUpdateTreino(alunoId: string) {
   return useMutation({
     mutationFn: ({ treinoId, body }: { treinoId: string; body: TreinoCreate }) =>
       treinosApi.update(alunoId, treinoId, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['treinos', alunoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['treinos', alunoId] })
+      qc.invalidateQueries({ queryKey: ['pendencias', alunoId] }) // vigência mudou
+    },
   })
 }
 
@@ -31,7 +37,10 @@ export function useDeleteTreino(alunoId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (treinoId: string) => treinosApi.remove(alunoId, treinoId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['treinos', alunoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['treinos', alunoId] })
+      qc.invalidateQueries({ queryKey: ['pendencias', alunoId] }) // vigência mudou
+    },
   })
 }
 
@@ -51,6 +60,7 @@ export function useImportarPrograma(alunoId: string) {
       qc.invalidateQueries({ queryKey: ['exercicios'] })
       qc.invalidateQueries({ queryKey: ['exercicios-aluno', alunoId] })
       qc.invalidateQueries({ queryKey: ['biblioteca'] })
+      qc.invalidateQueries({ queryKey: ['pendencias', alunoId] }) // vigência mudou
     },
   })
 }

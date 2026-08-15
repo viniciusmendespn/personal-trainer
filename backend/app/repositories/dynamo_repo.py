@@ -71,11 +71,13 @@ def get_item(pk: str, sk: str, consistent: bool = False) -> dict | None:
     return resp.get("Item")
 
 
-def query_pk(pk: str, sk_prefix: str | None = None) -> list[dict]:
+def query_pk(pk: str, sk_prefix: str | None = None, consistent: bool = False) -> list[dict]:
+    """`consistent=True` (2× RCU) só quando a query roda logo após um write e não pode
+    enxergar o estado anterior — ex.: recalcular agregado derivado no mesmo request."""
     cond = Key("PK").eq(pk)
     if sk_prefix:
         cond &= Key("SK").begins_with(sk_prefix)
-    resp = _get_table().query(KeyConditionExpression=cond)
+    resp = _get_table().query(KeyConditionExpression=cond, ConsistentRead=consistent)
     return resp.get("Items", [])
 
 

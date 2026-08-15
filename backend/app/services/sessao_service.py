@@ -424,6 +424,11 @@ def finish(aluno_id: str, body=None) -> dict:
                          add={"sessoes": 1}, set_={"data": hoje})
         repo.add_to_set(keys.pk_personal(personal_id), f"STATS#D#{hoje}",
                         "alunos_set", {aluno_id})
+        # Última sessão finalizada no ponteiro do aluno — a listagem do portal precisa da
+        # pendência "sem treinar há N dias" sem ler STATS#ALUNO de cada aluno (N+1).
+        # Só `ultimo_treino_em`: `updated_at` do ponteiro significa "cadastro atualizado".
+        repo.update_item_if_exists(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id),
+                                   {"ultimo_treino_em": fim_iso})
         # Gamificação: pontos por sessão finalizada (com multiplicador de streak).
         # "Feito" = tem registro OU pertence a bloco de WOD com score informado
         # (spec CROSSFIT §3.2, decisão ii — aquecimento é registrado normalmente).

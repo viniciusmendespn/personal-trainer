@@ -11,7 +11,7 @@ from app.models.aluno import Aluno, AlunoCreate, AlunoUpdate, ImportarAlunosBody
 from app.models.enums import AlunoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import assinatura_service, authz, media_service
+from app.services import assinatura_service, authz, media_service, pendencia_service
 from app.services.wapi_service import WAPIClient
 from app.utils import new_id, now_iso
 
@@ -28,6 +28,9 @@ router = APIRouter(prefix="/v1/alunos", tags=["alunos"])
 
 
 def _pointer(aluno: dict) -> dict:
+    """Campos do perfil espelhados no ponteiro. Gravar SEMPRE com `update_item` (SET campo a
+    campo), nunca `put_item`: o ponteiro carrega também atributos denormalizados de outros
+    módulos (`tem_anamnese`, `vigencias`, `ultimo_treino_em`) que um put sobrescreveria."""
     return {
         "aluno_id": aluno["aluno_id"],
         "nome": aluno["nome"],
@@ -78,7 +81,26 @@ def _phone_conflict(dono_id: str | None) -> HTTPException:
 def list_alunos(limit: int = 50, cursor: str | None = None, personal_id: str = Depends(get_current_personal_id)):
     items, next_cursor = repo.query_pk_page(keys.pk_personal(personal_id), "ALUNO#", limit, cursor)
     bloqueados = assinatura_service.get_alunos_bloqueados(personal_id)
-    cleaned = [{**_add_foto_url(_inject_objetivos(repo.clean(i))), "bloqueado": i.get("aluno_id", "") in bloqueados} for i in items]
+    # Pendências vêm resolvidas no próprio payload: os insumos estão denormalizados na
+    # partição PT# (vigencias/ultimo_treino_em no ponteiro + vencidas no COBRANCA_ALUNO#),
+    # então basta 1 query extra na mesma partição — O(1) no número de alunos, sem fan-out.
+    vencidas = {p["aluno_id"]: int(p.get("vencidas", 0) or 0)
+                for p in repo.query_pk(keys.pk_personal(personal_id),
+                                       sk_prefix=keys.COBRANCA_ALUNO_PREFIX)
+                if p.get("aluno_id")}
+    hoje = pendencia_service.hoje_iso()
+    cleaned = []
+    for i in items:
+        aluno_id = i.get("aluno_id", "")
+        bloqueado = aluno_id in bloqueados
+        item = {**_add_foto_url(_inject_objetivos(repo.clean(i))), "bloqueado": bloqueado}
+        item["pendencias"] = pendencia_service.resumo(pendencia_service.avaliar(
+            status=item.get("status"), bloqueado=bloqueado, created_at=item.get("created_at"),
+            vigencias=item.get("vigencias"), ultimo_treino_em=item.get("ultimo_treino_em"),
+            vencidas=vencidas.get(aluno_id, 0), hoje=hoje,
+        ))
+        item.pop("vigencias", None)   # insumo interno, não trafega para o portal
+        cleaned.append(item)
     return {"items": cleaned, "next_cursor": next_cursor}
 
 
@@ -188,6 +210,18 @@ def get_aluno(aluno_id: str, personal_id: str = Depends(get_current_personal_id)
     return _add_foto_url(_inject_objetivos(repo.clean(item)))
 
 
+@router.get("/{aluno_id}/pendencias")
+def listar_pendencias(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
+    """Pendências do aluno (aba do cadastro) — derivadas, nunca persistidas. Versão exata:
+    recalcula da partição do aluno em vez de usar os campos denormalizados da listagem."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    item = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
+    if not item:
+        raise HTTPException(404, "Aluno não encontrado")
+    bloqueado = aluno_id in assinatura_service.get_alunos_bloqueados(personal_id)
+    return {"items": pendencia_service.do_aluno(personal_id, aluno_id, item, bloqueado)}
+
+
 @router.post("/{aluno_id}/avatar/upload-url")
 def avatar_upload_url(aluno_id: str, body: AvatarUploadUrlBody,
                       personal_id: str = Depends(get_current_personal_id)):
@@ -220,7 +254,7 @@ def sync_foto(aluno_id: str, personal_id: str = Depends(get_current_personal_id)
         keys.pk_aluno(aluno_id), keys.SK_PROFILE,
         {"foto_s3_key": foto_key, "updated_at": now_iso()}, return_values=True,
     )
-    repo.put_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(updated))
+    repo.update_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(updated))
     return {"foto_url": media_service.gerar_presigned_view_url(foto_key)}
 
 
@@ -249,7 +283,7 @@ def update_aluno(aluno_id: str, body: AlunoUpdate, personal_id: str = Depends(ge
 
     fields["updated_at"] = now_iso()
     updated = repo.update_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE, fields, return_values=True)
-    repo.put_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(updated))
+    repo.update_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), _pointer(updated))
     novo_status = fields.get("status")
     if novo_status and novo_status != current.get("status"):
         delta = 1 if novo_status == AlunoStatus.ATIVO else -1

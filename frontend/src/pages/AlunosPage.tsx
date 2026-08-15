@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
-import { Plus, ChevronRight, Search, Users, Bot, Settings, Copy, Clock, Upload } from 'lucide-react'
+import { Plus, ChevronRight, Search, Users, Bot, Settings, Copy, Clock, Upload, AlertTriangle } from 'lucide-react'
 import { useAlunosPaginated, useCreateAluno, useUpdateAluno } from '../hooks/useAlunos'
 import { normalizeText } from '../utils/normalizeText'
 import { usePlanoStatus } from '../hooks/usePlano'
 import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState, useToast, ObjetivosPicker } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { ImportarAlunosModal } from '../components/ImportarAlunosModal'
+import { PendenciaBadge } from '../components/aluno/PendenciasTab'
 import { anamneseApi } from '../api/anamnese'
 import { tempoRelativo } from '../utils/datetime'
 import type { AlunoExistenteConflict, PlanoLimitConflict } from '../types'
@@ -29,6 +30,7 @@ export function AlunosPage() {
   const [showImport, setShowImport] = useState(false)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ATIVO' | 'INATIVO' | 'TODOS'>('ATIVO')
+  const [soPendencias, setSoPendencias] = useState(false)
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
   const [email, setEmail] = useState('')
@@ -81,13 +83,20 @@ export function AlunosPage() {
     [alunos],
   )
 
+  // Pendências já vêm resolvidas em cada aluno pelo GET /v1/alunos — nenhuma request extra.
+  const totalComPendencia = useMemo(
+    () => (alunos ?? []).filter((a) => a.pendencias?.length).length,
+    [alunos],
+  )
+
   const filtered = useMemo(() => {
     if (!alunos) return alunos
     const q = normalizeText(query)
     let base = statusFilter !== 'TODOS' ? alunos.filter((a) => a.status === statusFilter) : alunos
+    if (soPendencias) base = base.filter((a) => a.pendencias?.length)
     if (q) base = base.filter((a) => normalizeText(a.nome).includes(q) || a.telefone.includes(q))
     return [...base].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-  }, [alunos, query, statusFilter])
+  }, [alunos, query, statusFilter, soPendencias])
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -137,6 +146,18 @@ export function AlunosPage() {
                 {s === 'ATIVO' ? 'Ativos' : s === 'INATIVO' ? 'Inativos' : 'Todos'}
               </Button>
             ))}
+            {totalComPendencia > 0 && (
+              <Button
+                variant={soPendencias ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => setSoPendencias((v) => !v)}
+                title="Mostrar só quem precisa de atenção"
+              >
+                <span className="flex items-center gap-1">
+                  <AlertTriangle size={14} /> Com pendências ({totalComPendencia})
+                </span>
+              </Button>
+            )}
           </div>
         </div>
       )}
@@ -226,6 +247,15 @@ export function AlunosPage() {
                       {!a.bloqueado && a.agente_habilitado && (
                         <Bot size={12} className="text-success shrink-0" aria-label="Agente ativo" />
                       )}
+                      {/* Dentro de um <Link>: não aninhar outro link — intercepta e navega. */}
+                      <PendenciaBadge
+                        pendencias={a.pendencias ?? []}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          navigate(`/alunos/${a.aluno_id}?tab=pendencias`)
+                        }}
+                      />
                     </div>
                     <p className="text-xs text-text-muted truncate">{a.telefone}</p>
                     <p className="flex items-center gap-1 text-[11px] text-text-muted mt-0.5">

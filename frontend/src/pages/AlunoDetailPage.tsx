@@ -38,11 +38,13 @@ import type { Treino, Exercicio, ExercicioCreate, ExercicioSubstituto, SeriePres
 import { normalizeTipoExercicio } from '../types'
 import { FrequenciaTab } from '../components/aluno/FrequenciaTab'
 import { MetasTab } from '../components/aluno/MetasTab'
+import { PendenciasTab } from '../components/aluno/PendenciasTab'
+import { usePendenciasAluno } from '../hooks/usePendencias'
 import { FinanceiroTab } from '../components/financeiro/FinanceiroTab'
 import { videoUrlComFallback } from '../utils/video'
 import { formatDuracao, feitoNaSemana, labelDiaCurto } from '../utils/datetime'
 
-const TAB_KEYS = ['treinos', 'historico', 'frequencia', 'metas', 'financeiro', 'perfil'] as const
+const TAB_KEYS = ['treinos', 'pendencias', 'historico', 'frequencia', 'metas', 'financeiro', 'perfil'] as const
 type TabKey = typeof TAB_KEYS[number]
 
 /** Aviso informativo (não bloqueia) quando a vigência do treino cai num período de férias. */
@@ -85,6 +87,8 @@ export function AlunoDetailPage() {
   )
 
   const { data: treinos, isLoading } = useTreinos(alunoId)
+  // Carregado no nível da página: alimenta o badge da aba e é reaproveitado pelo PendenciasTab.
+  const { data: pendencias } = usePendenciasAluno(alunoId)
   const createTreino = useCreateTreino(alunoId)
   const updateAluno = useUpdateAluno(alunoId)
   const deleteAluno = useDeleteAluno()
@@ -324,6 +328,7 @@ export function AlunoDetailPage() {
         className="mb-4"
         tabs={[
           { key: 'treinos', label: 'Treinos' },
+          { key: 'pendencias', label: 'Pendências', badge: pendencias?.length },
           { key: 'historico', label: 'Histórico' },
           { key: 'frequencia', label: 'Frequência' },
           { key: 'metas', label: 'Metas' },
@@ -496,6 +501,7 @@ export function AlunoDetailPage() {
         </>
       )}
 
+      {tab === 'pendencias' && <PendenciasTab alunoId={alunoId} />}
       {tab === 'historico' && <HistoricoPersonal alunoId={alunoId} />}
       {tab === 'frequencia' && <FrequenciaTab alunoId={alunoId} />}
       {tab === 'metas' && <MetasTab alunoId={alunoId} />}

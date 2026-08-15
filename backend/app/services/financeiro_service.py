@@ -34,10 +34,19 @@ def _bump_mes(personal_id: str, ano_mes: str, add: dict) -> None:
     repo.add_and_set(keys.pk_personal(personal_id), keys.sk_stats_fin_mes(ano_mes), add=add)
 
 
-def _remover_de_aberto(personal_id: str, status: str, valor: float) -> None:
+def _bump_vencidas_aluno(personal_id: str, aluno_id: str, delta: int) -> None:
+    """Espelha o balde `vencido` por aluno no ponteiro PT#/COBRANCA_ALUNO# — a listagem do
+    portal precisa saber *quem* está em atraso sem varrer as cobranças de cada aluno (N+1).
+    add_and_set faz upsert: cobre aluno sem config de faturamento."""
+    repo.add_and_set(keys.pk_personal(personal_id), keys.sk_cobranca_aluno(aluno_id),
+                     add={"vencidas": delta}, set_={"aluno_id": aluno_id})
+
+
+def _remover_de_aberto(personal_id: str, aluno_id: str, status: str, valor: float) -> None:
     """Estorna uma cobrança do snapshot de recebíveis, no balde certo (pendente vs vencido)."""
     if status == "VENCIDA":
         _bump_open(personal_id, {"vencido_valor": -valor, "vencido_count": -1})
+        _bump_vencidas_aluno(personal_id, aluno_id, -1)
     else:  # PENDENTE (ou qualquer estado não-pago)
         _bump_open(personal_id, {"pendente_valor": -valor, "pendente_count": -1})
 
@@ -68,7 +77,9 @@ def set_config(personal_id: str, aluno_id: str, body: dict) -> dict:
         "atualizado_em": now,
     }
     repo.put_item(keys.pk_aluno(aluno_id), keys.SK_COBRANCA_CFG, cfg)
-    repo.put_item(keys.pk_personal(personal_id), keys.sk_cobranca_aluno(aluno_id), {
+    # update_item (não put): o ponteiro carrega também `vencidas`, mantido por ADD nas
+    # transições de status — um put zeraria o contador a cada edição da config.
+    repo.update_item(keys.pk_personal(personal_id), keys.sk_cobranca_aluno(aluno_id), {
         "aluno_id": aluno_id, "ativo": cfg["ativo"], "valor": cfg["valor"],
         "recorrencia": cfg["recorrencia"], "atualizado_em": now,
     })
@@ -138,8 +149,9 @@ def mrr(personal_id: str) -> float:
     return round(total, 2)
 
 
-_STATS_FIN_VER = 2   # bump se o esquema do agregado mudar (força re-backfill)
+_STATS_FIN_VER = 3   # bump se o esquema do agregado mudar (força re-backfill)
                      # v2: passa a contar mp_pix_count / mp_taxa_count (certeza da taxa)
+                     # v3: passa a semear `vencidas` por aluno no ponteiro COBRANCA_ALUNO#
 
 
 def _backfill_stats(personal_id: str) -> dict:
@@ -149,10 +161,12 @@ def _backfill_stats(personal_id: str) -> dict:
     aberto = {"pendente_valor": 0.0, "pendente_count": 0, "vencido_valor": 0.0,
               "vencido_count": 0, "v": _STATS_FIN_VER}
     por_mes: dict[str, dict] = {}
+    vencidas_por_aluno: dict[str, int] = {}
     for ptr in _iter_ponteiros_alunos(personal_id):
         aluno_id = ptr.get("aluno_id")
         if not aluno_id:
             continue
+        vencidas_por_aluno[aluno_id] = 0
         for c in _cobrancas_do_aluno(aluno_id):
             if c.get("personal_id") != personal_id:
                 continue
@@ -164,6 +178,7 @@ def _backfill_stats(personal_id: str) -> dict:
             elif status == "VENCIDA":
                 aberto["vencido_valor"] += valor
                 aberto["vencido_count"] += 1
+                vencidas_por_aluno[aluno_id] += 1
             elif status == "PAGA" and c.get("data_pagamento"):
                 ym = str(c["data_pagamento"])[:7]
                 m = por_mes.setdefault(ym, {"recebido_valor": 0.0, "pago_count": 0,
@@ -181,6 +196,16 @@ def _backfill_stats(personal_id: str) -> dict:
     repo.put_item(keys.pk_personal(personal_id), keys.SK_STATS_FIN_OPEN, aberto)
     for ym, m in por_mes.items():
         repo.put_item(keys.pk_personal(personal_id), keys.sk_stats_fin_mes(ym), m)
+    # Semeia/corrige o contador por aluno na mesma varredura (a listagem de alunos lê daqui
+    # a pendência de pagamento em atraso). Só grava quem tem atraso ou já tem ponteiro —
+    # não cria item para aluno sem nenhuma cobrança.
+    for aluno_id, n in vencidas_por_aluno.items():
+        if n:
+            repo.update_item(keys.pk_personal(personal_id), keys.sk_cobranca_aluno(aluno_id),
+                             {"aluno_id": aluno_id, "vencidas": n})
+        else:
+            repo.update_item_if_exists(keys.pk_personal(personal_id),
+                                       keys.sk_cobranca_aluno(aluno_id), {"vencidas": 0})
     return aberto
 
 
@@ -346,7 +371,7 @@ def registrar_pagamento(personal_id: str, aluno_id: str, cobranca_id: str, body:
     if updated and not ja_paga:
         valor = float(atual.get("valor", 0))
         _cancelar_agendamentos_billing(aluno_id, cobranca_id, atual.get("vencimento"))
-        _remover_de_aberto(personal_id, atual.get("status"), valor)
+        _remover_de_aberto(personal_id, aluno_id, atual.get("status"), valor)
         add = {"recebido_valor": valor, "pago_count": 1}
         # Só Pix via MP entra na conta de certeza da taxa. mp_pix_count = todos os Pix
         # do mês; mp_taxa_count = os que trouxeram taxa real. Iguais ⇒ mês "certo".
@@ -380,7 +405,7 @@ def cancelar_cobranca(personal_id: str, aluno_id: str, cobranca_id: str) -> bool
         return False  # não cancela cobranças pagas
     repo.delete_item(keys.pk_aluno(aluno_id), sk)
     repo.delete_item(keys.pk_aluno(aluno_id), keys.sk_cobranca_idx(cobranca_id))
-    _remover_de_aberto(personal_id, item.get("status"), float(item.get("valor", 0)))
+    _remover_de_aberto(personal_id, aluno_id, item.get("status"), float(item.get("valor", 0)))
     return True
 
 
@@ -423,6 +448,7 @@ def _marcar_vencida(aluno_id: str, cobranca_id: str, vencimento_str: str, person
         "pendente_valor": -valor, "pendente_count": -1,
         "vencido_valor": valor, "vencido_count": 1,
     })
+    _bump_vencidas_aluno(personal_id, aluno_id, 1)
     aluno = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE) or {}
     venc_fmt = date.fromisoformat(vencimento_str).strftime("%d/%m/%Y")
     notif_service.criar(personal_id, "COBRANCA_VENCIDA",

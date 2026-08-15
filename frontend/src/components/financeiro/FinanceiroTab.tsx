@@ -73,6 +73,7 @@ export function FinanceiroTab({ alunoId }: { alunoId: string }) {
       financeiroApi.registrarPagamento(alunoId, cobrancaId, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cobranças', alunoId] })
+      qc.invalidateQueries({ queryKey: ['pendencias', alunoId] }) // pode zerar o atraso
       show('Pagamento registrado.', 'success')
     },
     onError: () => show('Erro ao registrar pagamento.', 'error'),
@@ -82,6 +83,7 @@ export function FinanceiroTab({ alunoId }: { alunoId: string }) {
     mutationFn: (cobrancaId: string) => financeiroApi.cancelarCobranca(alunoId, cobrancaId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cobranças', alunoId] })
+      qc.invalidateQueries({ queryKey: ['pendencias', alunoId] }) // pode zerar o atraso
       show('Cobrança cancelada.', 'success')
     },
     onError: () => show('Erro ao cancelar cobrança.', 'error'),

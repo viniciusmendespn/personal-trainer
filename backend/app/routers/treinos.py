@@ -68,10 +68,21 @@ def _guard(personal_id: str, aluno_id: str) -> None:
 
 
 def _touch_aluno_pointer(personal_id: str, aluno_id: str) -> None:
-    """Atualiza só o updated_at do ponteiro (PT#{personal}/ALUNO#{aluno}) — a tela de
-    Alunos lê o ponteiro pra mostrar 'última atualização' sem precisar varrer treinos."""
+    """Atualiza updated_at + o resumo de vigência do ponteiro (PT#{personal}/ALUNO#{aluno}) —
+    a tela de Alunos lê o ponteiro pra mostrar 'última atualização' e a pendência "sem treino
+    vigente" sem precisar varrer os treinos de cada aluno (seria N+1 na listagem).
+
+    Guarda as *janelas* dos treinos ativos, não um booleano: vigência depende da data de hoje,
+    um booleano congelado no write estaria errado no dia seguinte. Query consistente porque
+    roda logo após o write do treino — uma leitura eventual pode não enxergá-lo."""
+    treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX, consistent=True)
+    vigencias = [
+        {k: v for k, v in (("i", t.get("data_inicio")), ("f", t.get("data_fim"))) if v}
+        for t in treinos if t.get("ativo", True)
+    ]
     repo.update_item_if_exists(
-        keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), {"updated_at": now_iso()}
+        keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id),
+        {"updated_at": now_iso(), "vigencias": vigencias},
     )
 
 
