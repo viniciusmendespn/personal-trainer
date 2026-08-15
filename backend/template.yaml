@@ -343,6 +343,10 @@ Resources:
   McpApiMapping:
     Type: AWS::ApiGatewayV2::ApiMapping
     Condition: CreateFrontendInfra
+    # O stage é criado pelo SAM a partir de StageName acima; como só o referenciamos pelo
+    # nome (string, não !Ref), o CloudFormation não infere a ordem e tentaria mapear antes
+    # de ele existir → "Invalid stage identifier".
+    DependsOn: McpApiApiGatewayDefaultStage
     Properties:
       ApiId: !Ref McpApi
       DomainName: !Ref McpDomainName
