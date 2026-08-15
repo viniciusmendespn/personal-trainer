@@ -193,6 +193,89 @@ def test_authorize_recusa_redirect_nao_registrada(cliente):
     assert r.json()["error"] == "invalid_redirect_uri"
 
 
+def test_token_troca_code_por_access_e_refresh(cliente, mcp_env):
+    """Round trip HTTP completo. Cobre o /token de ponta a ponta: ele lê o corpo
+    urlencoded à mão (Form do FastAPI exigiria python-multipart, que não está no
+    requirements) — um teste só no service não pegaria isso."""
+    import base64
+    import hashlib
+
+    from app.services import mcp_service
+
+    verifier = "verificador-pkce-suficientemente-longo-para-a-spec"
+    challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(verifier.encode()).digest()).decode().rstrip("=")
+
+    client_id = cliente.post("/register", json={
+        "client_name": "Claude", "redirect_uris": ["https://claude.ai/cb"]}).json()["client_id"]
+    req_id = cliente.get("/authorize", params={
+        "client_id": client_id, "redirect_uri": "https://claude.ai/cb",
+        "code_challenge": challenge, "code_challenge_method": "S256", "state": "s1",
+        "scope": "read",
+    }, follow_redirects=False).headers["location"].split("req=")[1]
+
+    aprovado = mcp_service.aprovar(req_id, PERSONAL, ["read"])   # o portal faria isso
+
+    r = cliente.post("/token", data={
+        "grant_type": "authorization_code", "client_id": client_id,
+        "code": aprovado["code"], "redirect_uri": "https://claude.ai/cb",
+        "code_verifier": verifier,
+    })
+    assert r.status_code == 200, r.text
+    dados = r.json()
+    assert dados["token_type"] == "Bearer"
+    assert dados["scope"] == "read"
+    assert r.headers["cache-control"] == "no-store"
+
+    # O access token emitido pelo /token funciona de verdade no /mcp.
+    tools = cliente.post("/mcp", headers={"Authorization": f"Bearer {dados['access_token']}"},
+                         json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"}).json()
+    nomes = {t["name"] for t in tools["result"]["tools"]}
+    assert "listar_alunos" in nomes
+    assert "aplicar_programa_treino" not in nomes      # só pediu escopo de leitura
+
+    # E o refresh devolvido troca por um novo par.
+    r2 = cliente.post("/token", data={"grant_type": "refresh_token", "client_id": client_id,
+                                      "refresh_token": dados["refresh_token"]})
+    assert r2.status_code == 200
+    assert r2.json()["refresh_token"] != dados["refresh_token"]
+
+
+def test_app_importa_sem_python_multipart():
+    """Reproduz o ambiente da Lambda, onde `python-multipart` não existe.
+
+    Este é o bug que derrubou o primeiro deploy: `Form(...)` do FastAPI valida a dependência
+    já na definição da rota, então o módulo inteiro falhava no import e todo endpoint
+    devolvia 500 — inclusive os `.well-known`. Aqui o import roda com o pacote bloqueado.
+    """
+    import importlib
+    import sys
+    from unittest.mock import patch
+
+    bloqueado = {"multipart": None, "python_multipart": None,
+                 "multipart.multipart": None}
+    with patch.dict(sys.modules, bloqueado):
+        for modulo in ("app.mcp.oauth", "app.mcp.jsonrpc", "app.mcp.asgi"):
+            importlib.reload(importlib.import_module(modulo))
+
+    # Recarrega sem o bloqueio para não deixar os módulos remendados para os outros testes.
+    for modulo in ("app.mcp.oauth", "app.mcp.jsonrpc", "app.mcp.asgi"):
+        importlib.reload(importlib.import_module(modulo))
+
+
+def test_token_com_code_invalido(cliente):
+    r = cliente.post("/token", data={"grant_type": "authorization_code", "client_id": "x",
+                                     "code": "inexistente", "redirect_uri": "https://a.test/cb",
+                                     "code_verifier": "v"})
+    assert r.status_code == 400
+    assert r.json()["error"] == "invalid_grant"
+
+
+def test_token_com_grant_nao_suportado(cliente):
+    r = cliente.post("/token", data={"grant_type": "client_credentials"})
+    assert r.json()["error"] == "unsupported_grant_type"
+
+
 def test_authorize_exige_pkce_s256(cliente):
     client_id = cliente.post("/register", json={
         "client_name": "Claude", "redirect_uris": ["https://claude.ai/cb"]}).json()["client_id"]

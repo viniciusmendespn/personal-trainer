@@ -13,9 +13,9 @@ Endpoints (todos no subdomínio mcp.*, sem authorizer no gateway):
   GET  /authorize                                redireciona ao consentimento no portal
   POST /token                                    code + PKCE / refresh rotativo
 """
-from urllib.parse import urlencode, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.config import settings
@@ -178,9 +178,22 @@ def authorize(client_id: str = "", redirect_uri: str = "", response_type: str = 
 # ---------------------------------------------------------------------------
 
 @router.post("/token")
-def token(grant_type: str = Form(...), client_id: str = Form(""),
-          code: str = Form(""), redirect_uri: str = Form(""),
-          code_verifier: str = Form(""), refresh_token: str = Form("")):
+async def token(request: Request):
+    # Corpo lido e parseado à mão em vez de `Form(...)`: a declaração Form do FastAPI exige
+    # `python-multipart` já no import do módulo, e o /token do OAuth é sempre
+    # application/x-www-form-urlencoded — não vale uma dependência nova no pacote da Lambda.
+    corpo = parse_qs((await request.body()).decode("utf-8", "replace"), keep_blank_values=True)
+
+    def campo(nome: str) -> str:
+        return (corpo.get(nome) or [""])[0]
+
+    grant_type = campo("grant_type")
+    client_id = campo("client_id")
+    code = campo("code")
+    redirect_uri = campo("redirect_uri")
+    code_verifier = campo("code_verifier")
+    refresh_token = campo("refresh_token")
+
     if grant_type == "authorization_code":
         try:
             grant = mcp_service.resgatar_code(code, client_id, redirect_uri, code_verifier)
