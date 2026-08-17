@@ -111,6 +111,54 @@ export function montarArquivoIA(prompt: string, secoes: SecaoDados[]): string {
   return out
 }
 
+/** Resultado de `limparJsonColado`: ou o JSON limpo, ou o motivo em português. */
+export type JsonColado =
+  | { ok: true; json: string }
+  | { ok: false; erro: string }
+
+/**
+ * Limpa o que o personal colou antes de mandar ao servidor.
+ *
+ * A IA quase sempre imprime o JSON dentro de uma cerca ```json, e muitas vezes com uma frase
+ * antes ("Aqui está o programa atualizado:") — colar a tela inteira é o caminho natural, e
+ * qualquer um desses extras fazia o import falhar com "JSON inválido" sem dizer por quê.
+ * Aqui a cerca e a prosa em volta são removidas, e o parse local dá o erro posicionado
+ * imediatamente, sem ida ao servidor.
+ */
+export function limparJsonColado(texto: string): JsonColado {
+  let s = texto.trim()
+  if (!s) return { ok: false, erro: 'Cole o JSON gerado pela IA antes de continuar.' }
+
+  // Cerca de markdown, com ou sem a linguagem: ```json … ```
+  const cercado = s.match(/^```[a-zA-Z]*\s*\n?([\s\S]*?)\n?```$/)
+  if (cercado) s = cercado[1].trim()
+
+  // Prosa em volta: pega do primeiro { até o último } — a IA às vezes comenta antes/depois.
+  if (!s.startsWith('{')) {
+    const inicio = s.indexOf('{')
+    const fim = s.lastIndexOf('}')
+    if (inicio === -1 || fim <= inicio) {
+      return {
+        ok: false,
+        erro: 'Não encontrei um bloco JSON no texto colado. Copie o bloco que começa com { e '
+          + 'termina com }.',
+      }
+    }
+    s = s.slice(inicio, fim + 1)
+  }
+
+  try {
+    JSON.parse(s)
+  } catch (e) {
+    return {
+      ok: false,
+      erro: `O JSON colado está incompleto ou tem erro de sintaxe (${(e as Error).message}). `
+        + 'Copie o bloco inteiro, do { inicial ao } final.',
+    }
+  }
+  return { ok: true, json: s }
+}
+
 /** Baixa uma string como arquivo de texto (default: markdown). */
 export function downloadText(content: string, filename: string, mime = 'text/markdown') {
   const blob = new Blob([content], { type: `${mime};charset=utf-8` })

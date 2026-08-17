@@ -125,7 +125,7 @@ do arquivo é mantido idêntico ao do portal por `tests/test_mcp_prompt_sync.py`
 
 ### Validação da prescrição
 
-`app/mcp/validacao_programa.py` cobre o que o Pydantic não pega: `bloco_id` órfão, AMRAP/EMOM
+`app/services/validacao_programa.py` cobre o que o Pydantic não pega: `bloco_id` órfão, AMRAP/EMOM
 sem duração, PERFORMANCE sem `unidade_reps`, unidade grudada em `reps`. **Erro bloqueia a
 gravação**, porque o estrago é silencioso — um `bloco_id` órfão é descartado sem erro e
 `reps: "30s"` num exercício medido em calorias renderiza "30s cal" para o aluno. Avisos
@@ -141,6 +141,13 @@ Dois cuidados de calibragem, ambos travados por teste: `metrica_direcao` nasce `
 default no modelo, então cobrar `null` em FORCA reprovaria todo re-import; e a busca por nome
 parecido na biblioteca compara **palavras**, não similaridade de string — medindo por
 `difflib`, "remada baixa"/"remada alta" pontua igual a "agachamento"/"agachamento livre".
+
+O módulo vive em `services/` e **não** em `mcp/` porque o import de JSON pelo portal
+(`POST /v1/alunos/{id}/treinos/importar`, e `/validar` para conferir sem gravar) roda as mesmas
+regras. Antes só o MCP validava, e quem colava o JSON na tela recebia o `str()` do
+`ValidationError` do Pydantic — em inglês, sem dizer o campo. Regra nova vale para os dois
+canais. `app/services/import_erros.py` monta a resposta comum: `problemas[]` no formato do
+`Achado` e `relatorio_ia`, o texto que o personal cola de volta na conversa com a LLM.
 
 ## Decisões de produto
 

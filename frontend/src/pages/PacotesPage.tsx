@@ -1,13 +1,15 @@
 import { useMemo, useRef, useState } from 'react'
-import { Package, Upload, ChevronDown, ChevronRight, Trash2, ToggleLeft, ToggleRight, Bot, Download, Lock, Unlock, Search } from 'lucide-react'
+import { Package, Upload, ChevronDown, ChevronRight, Trash2, ToggleLeft, ToggleRight, Bot, Download, Lock, Unlock, Search, ListChecks } from 'lucide-react'
 import { usePacotes, useImportarPacote, useImportarRascunho, useTogglePacote, useToggleItem, useRemoverPacote, useExportarPacote, useGerarPacote, useGerarPacoteLicenciado } from '../hooks/usePacotes'
 import { useTemplates } from '../hooks/useTemplates'
 import { useRotinas } from '../hooks/useRotinas'
 import { useBiblioteca } from '../hooks/useDominio'
 import { Button, Card, Spinner, EmptyState, Modal, Badge, Tabs, useToast, useConfirm } from '../components/ui'
-import { downloadJson } from '../api/pacotes'
+import { downloadJson, pacotesApi } from '../api/pacotes'
 import { bibliotecaApi } from '../api/biblioteca'
-import { downloadText, fetchPromptMd, renderizarPromptIA, slimBiblioteca } from '../utils/arquivoIa'
+import { RelatorioImportIA } from '../components/RelatorioImportIA'
+import { downloadText, fetchPromptMd, limparJsonColado, renderizarPromptIA, slimBiblioteca } from '../utils/arquivoIa'
+import { extrairErroImport, mensagemDeErro, type ErroImport, type ProblemaImport } from '../utils/erroApi'
 import type { ExLib, ImportarPacoteResponse, PacoteInstalado } from '../types'
 import { normalizeText } from '../utils/normalizeText'
 
@@ -16,6 +18,9 @@ import { normalizeText } from '../utils/normalizeText'
 function ImportarIASection() {
   const [json, setJson] = useState('')
   const [result, setResult] = useState<ImportarPacoteResponse | null>(null)
+  const [erro, setErro] = useState<ErroImport | null>(null)
+  const [conferido, setConferido] = useState<{ avisos: ProblemaImport[]; relatorioIa?: string | null } | null>(null)
+  const [conferindo, setConferindo] = useState(false)
   const [baixando, setBaixando] = useState(false)
   const importarRascunho = useImportarRascunho()
   const { show: toast } = useToast()
@@ -40,23 +45,45 @@ function ImportarIASection() {
     }
   }
 
-  async function handleImportarIA() {
-    if (!json.trim()) return
+  /** Limpa cerca de markdown/prosa e valida o JSON localmente. `null` = já reportou o erro. */
+  function prepararJson(): string | null {
+    const limpo = limparJsonColado(json)
+    if (!limpo.ok) {
+      setConferido(null)
+      setErro({ code: 'ARQUIVO_INVALIDO', mensagem: limpo.erro, problemas: [], total: 0 })
+      return null
+    }
+    return limpo.json
+  }
+
+  async function handleConferir() {
+    const conteudo = prepararJson()
+    if (!conteudo) return
+    setErro(null)
+    setConferindo(true)
     try {
-      const res = await importarRascunho.mutateAsync(json.trim())
+      const res = await pacotesApi.validarRascunho(conteudo)
+      setConferido({ avisos: res.avisos ?? [], relatorioIa: res.relatorio_ia })
+    } catch (err) {
+      setConferido(null)
+      setErro(extrairErroImport(err, 'Não foi possível conferir o JSON. Tente novamente.'))
+    } finally {
+      setConferindo(false)
+    }
+  }
+
+  async function handleImportarIA() {
+    const conteudo = prepararJson()
+    if (!conteudo) return
+    setErro(null)
+    setConferido(null)
+    try {
+      const res = await importarRascunho.mutateAsync(conteudo)
       setResult(res)
       setJson('')
-    } catch (err: any) {
-      const code = err?.response?.data?.code
-      const msgs: Record<string, string> = {
-        ESTRUTURA_INVALIDA: 'O JSON gerado pela IA tem um erro de estrutura. Verifique se seguiu o prompt corretamente.',
-        ARQUIVO_INVALIDO: 'JSON inválido. Certifique-se de copiar apenas o bloco de código gerado pela IA.',
-        PACOTE_JA_IMPORTADO: 'Este pacote já foi importado na sua conta.',
-        PACOTE_SECRET_NAO_CONFIGURADO: 'Configuração do servidor incompleta. Contate o suporte.',
-      }
-      const detail = err?.response?.data?.detail
-      const suffix = detail ? ` (${detail})` : ''
-      toast((msgs[code] ?? 'Erro ao importar. Tente novamente.') + suffix, 'error')
+    } catch (err) {
+      // O JSON colado FICA no textarea: o personal corrige com a IA e reimporta.
+      setErro(extrairErroImport(err, 'Não foi possível importar. Tente novamente.'))
     }
   }
 
@@ -99,15 +126,56 @@ function ImportarIASection() {
 
         <textarea
           value={json}
-          onChange={(e) => setJson(e.target.value)}
+          onChange={(e) => {
+            setJson(e.target.value)
+            setErro(null)
+            setConferido(null)
+          }}
           placeholder='Cole aqui o JSON gerado pela IA (bloco { "version": "1", ... })'
           className="w-full h-36 rounded-lg border border-border bg-surface-secondary px-3 py-2 text-xs font-mono resize-none focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-text-secondary/60"
         />
 
-        <div className="mt-3 flex justify-end">
+        {erro && (
+          <div className="mt-3">
+            <RelatorioImportIA
+              mensagem={erro.mensagem}
+              problemas={erro.problemas}
+              total={erro.total}
+              relatorioIa={erro.relatorioIa}
+            />
+          </div>
+        )}
+
+        {conferido && (
+          <div className="mt-3">
+            <RelatorioImportIA
+              limpo
+              avisos={conferido.avisos}
+              relatorioIa={conferido.relatorioIa ?? undefined}
+              mensagem={
+                conferido.avisos.length
+                  ? `Pode importar, mas confira ${conferido.avisos.length} ponto${conferido.avisos.length !== 1 ? 's' : ''}.`
+                  : 'Nenhum problema encontrado — o JSON está pronto para importar.'
+              }
+            />
+          </div>
+        )}
+
+        <div className="mt-3 flex flex-col sm:flex-row sm:justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={handleConferir}
+            disabled={!json.trim() || conferindo || importarRascunho.isPending}
+          >
+            {conferindo ? (
+              <span className="flex items-center gap-2"><Spinner className="w-4 h-4" /> Conferindo...</span>
+            ) : (
+              <span className="flex items-center gap-2"><ListChecks size={16} /> Conferir sem importar</span>
+            )}
+          </Button>
           <Button
             onClick={handleImportarIA}
-            disabled={!json.trim() || importarRascunho.isPending}
+            disabled={!json.trim() || importarRascunho.isPending || conferindo}
           >
             {importarRascunho.isPending ? (
               <span className="flex items-center gap-2"><Spinner className="w-4 h-4" /> Importando...</span>
@@ -160,8 +228,10 @@ function ImportarArquivoTab() {
       const res = await importar.mutateAsync(text)
       setResult(res)
       setFile(null)
-    } catch (err: any) {
-      const code = err?.response?.data?.code
+    } catch (err) {
+      // O `code` vem em `detail.code` (o FastAPI aninha o dict) — ler `data.code` dava
+      // undefined e o personal sempre via a mensagem genérica.
+      const { code, mensagem } = extrairErroImport(err)
       const msgs: Record<string, string> = {
         ARQUIVO_INVALIDO: 'Arquivo inválido ou corrompido.',
         TOKEN_INVALIDO: 'Token de ativação inválido.',
@@ -170,7 +240,7 @@ function ImportarArquivoTab() {
         PACOTE_INDISPONIVEL: 'Pacote indisponível ou revogado pelo autor.',
         CONTEUDO_CORROMPIDO: 'Conteúdo do pacote corrompido. Contate o autor.',
       }
-      toast(msgs[code] ?? 'Erro ao importar o pacote. Tente novamente.', 'error')
+      toast(msgs[code ?? ''] ?? mensagem, 'error')
     }
   }
 
@@ -250,6 +320,12 @@ function SuccessModal({ result, onClose }: { result: ImportarPacoteResponse; onC
         {result.licenciado && (
           <Badge tone="accent" className="mt-1">Pacote licenciado — token consumido</Badge>
         )}
+        {!!result.avisos?.length && (
+          <RelatorioImportIA
+            avisos={result.avisos}
+            relatorioIa={result.relatorio_ia ?? undefined}
+          />
+        )}
         <div className="pt-2 flex justify-end">
           <Button onClick={onClose}>Fechar</Button>
         </div>
@@ -275,13 +351,13 @@ function PacoteCard({ pacote }: { pacote: PacoteInstalado }) {
     try {
       const data = await exportar.mutateAsync(pacote.pacote_id)
       downloadJson(data, `${pacote.nome}.json`)
-    } catch (err: any) {
-      const code = err?.response?.data?.code
+    } catch (err) {
+      const { code } = extrairErroImport(err)
       const msgs: Record<string, string> = {
         PACOTE_LICENCIADO_NAO_EXPORTAVEL: 'Pacotes licenciados não podem ser exportados.',
         PACOTE_MANUAL_NAO_EXPORTAVEL: 'O pacote manual não pode ser exportado.',
       }
-      toast(msgs[code] ?? 'Erro ao exportar pacote.', 'error')
+      toast(msgs[code ?? ''] ?? 'Erro ao exportar pacote.', 'error')
     }
   }
 
@@ -649,10 +725,9 @@ function CriarPacoteTab() {
         downloadJson(data, `${nome.trim()}.json`)
         toast('JSON gerado! Cole no ChatGPT para editar ou importe diretamente.', 'success')
       }
-    } catch (err: any) {
-      const code = err?.response?.data?.code
-      const detail = err?.response?.data?.detail
-      toast(errMsgs[code] ?? `Erro ao gerar pacote.${detail ? ` (${detail})` : ''}`, 'error')
+    } catch (err) {
+      const { code } = extrairErroImport(err)
+      toast(errMsgs[code ?? ''] ?? mensagemDeErro(err, 'Erro ao gerar pacote.'), 'error')
     }
   }
 

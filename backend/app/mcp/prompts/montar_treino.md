@@ -198,6 +198,22 @@ falha"`), `carga` (texto ou `null`) e, opcionalmente, `aquecimento: true` para s
 
 ---
 
+## Se o CoachPilot recusar o programa
+
+Ao recusar, o CoachPilot devolve um relatório de problemas, com uma linha por problema no formato
+`[CODIGO] campo (onde): o que está errado → o que escrever no lugar`. Ao receber esse relatório:
+
+1. Corrija **exatamente** os campos citados — `campo` é o caminho navegável dentro do programa
+   (ex.: `treinos[2].exercicios[0].unidade_reps`) e a seta diz o que escrever ali.
+2. Devolva o programa **COMPLETO** outra vez, com todos os treinos, inclusive os que não mudaram.
+   Devolver só o trecho corrigido apaga o resto do programa do aluno, porque o programa é
+   substituído por inteiro.
+3. Não mude nada além do que o relatório aponta.
+4. Relatório só com AVISOS significa que o programa já foi gravado: corrija o que fizer sentido e
+   diga ao personal o que mudou.
+
+---
+
 ## Exemplo completo do programa
 
 Explicação (exemplo): *"O aluno treina em média 2,3x/semana e relatou dor no ombro no desenvolvimento —

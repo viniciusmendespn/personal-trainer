@@ -18,10 +18,17 @@ from typing import Optional
 from botocore.exceptions import ClientError
 from fastapi import HTTPException
 
+from pydantic import ValidationError
+
 from app.models.pacote import ImportarPacoteResponse, PacoteFile, PacoteRefFile
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import biblioteca_service
+from app.services import (
+    biblioteca_service,
+    import_erros,
+    validacao_pacote,
+    validacao_programa,
+)
 from app.utils import det_id, new_id, now_iso
 
 logger = logging.getLogger(__name__)
@@ -215,7 +222,7 @@ def importar_pacote(personal_id: str, conteudo_str: str) -> ImportarPacoteRespon
     try:
         conteudo_dict = json.loads(conteudo_str)
     except json.JSONDecodeError as exc:
-        raise HTTPException(400, detail={"code": "ARQUIVO_INVALIDO", "detail": str(exc)})
+        raise import_erros.erro_de_json(exc)
 
     if isinstance(conteudo_dict, dict) and conteudo_dict.get("fmt") == REF_FMT:
         return _importar_licenciado(personal_id, conteudo_dict)
@@ -255,19 +262,33 @@ def _importar_licenciado(personal_id: str, conteudo_dict: dict) -> ImportarPacot
                      licenciado=True, origem_licenciada=True, token=ref.token)
 
 
-def _importar_livre(personal_id: str, conteudo_dict: dict) -> ImportarPacoteResponse:
-    """Draft JSON livre (IA): sem token/assinatura, origem_licenciada=False."""
+def _validar_livre(conteudo_dict: dict) -> tuple[PacoteFile, list]:
+    """Parse + Pydantic + checagens semânticas do draft livre. Levanta 400 com a lista de
+    problemas e o relatório colável na IA; devolve (pacote, avisos) quando passa."""
     if not isinstance(conteudo_dict, dict):
-        raise HTTPException(400, detail={"code": "ARQUIVO_INVALIDO"})
+        raise import_erros.erro_de_json(
+            TypeError(f"esperava um objeto JSON na raiz, recebi {type(conteudo_dict).__name__}"))
     conteudo_dict.pop("token", None)
     conteudo_dict.pop("assinatura", None)
     try:
         pacote_file = PacoteFile(**conteudo_dict)
-    except Exception as exc:
-        raise HTTPException(400, detail={"code": "ESTRUTURA_INVALIDA", "detail": str(exc)})
+    except ValidationError as exc:
+        raise import_erros.erro_de_formato(exc)
 
-    return _instalar(personal_id, pacote_file, pacote_file.pacote.id,
-                     licenciado=False, origem_licenciada=False, token=None)
+    erros, avisos = validacao_pacote.validar(pacote_file)
+    if erros:
+        raise import_erros.erro(import_erros.ESTRUTURA_INVALIDA, erros, avisos=avisos)
+    return pacote_file, avisos
+
+
+def _importar_livre(personal_id: str, conteudo_dict: dict) -> ImportarPacoteResponse:
+    """Draft JSON livre (IA): sem token/assinatura, origem_licenciada=False."""
+    pacote_file, avisos = _validar_livre(conteudo_dict)
+    resposta = _instalar(personal_id, pacote_file, pacote_file.pacote.id,
+                         licenciado=False, origem_licenciada=False, token=None)
+    resposta.avisos = validacao_programa.achados_json(avisos)
+    resposta.relatorio_ia = import_erros.relatorio_para_ia([], avisos) if avisos else None
+    return resposta
 
 
 def _instalar(
@@ -459,11 +480,31 @@ def _instalar(
 def importar_rascunho(personal_id: str, conteudo_str: str) -> ImportarPacoteResponse:
     """Aceita JSON de draft livre (gerado por LLM) e importa como pacote livre.
     Colar aqui um arquivo licenciado (fino) falha na validação de estrutura — sem brecha."""
+    return _importar_livre(personal_id, _carregar_json(conteudo_str))
+
+
+def validar_rascunho(conteudo_str: str) -> dict:
+    """Confere o draft SEM instalar nada — o "conferir antes de importar" da tela. Erro sai
+    como 400 igual ao do import, para a tela ter um caminho só de renderização."""
+    pacote_file, avisos = _validar_livre(_carregar_json(conteudo_str))
+    return {
+        "ok": True,
+        "contagem": {
+            "exercicios": len(pacote_file.exercicios),
+            "templates": len(pacote_file.templates),
+            "rotinas": len(pacote_file.rotinas),
+            "avisos": len(avisos),
+        },
+        "avisos": validacao_programa.achados_json(avisos),
+        "relatorio_ia": import_erros.relatorio_para_ia([], avisos) if avisos else None,
+    }
+
+
+def _carregar_json(conteudo_str: str):
     try:
-        conteudo_dict = json.loads(conteudo_str)
-    except json.JSONDecodeError as exc:
-        raise HTTPException(400, detail={"code": "ARQUIVO_INVALIDO", "detail": str(exc)})
-    return _importar_livre(personal_id, conteudo_dict)
+        return json.loads(conteudo_str)
+    except (json.JSONDecodeError, TypeError) as exc:
+        raise import_erros.erro_de_json(exc)
 
 
 # ── Pacote Manual ─────────────────────────────────────────────────────────────

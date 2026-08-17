@@ -4,7 +4,7 @@ import json
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from app.dependencies import get_current_personal_id
 from app.models.exercicio import Exercicio, ExercicioCreate
@@ -16,7 +16,13 @@ from app.models.treino_export import (
 )
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz, biblioteca_service, programa_service
+from app.services import (
+    authz,
+    biblioteca_service,
+    import_erros,
+    programa_service,
+    validacao_programa,
+)
 from app.services.sessao_service import chave_exercicio, list_exercicios_aluno, upsert_excat
 from app.utils import new_id, now_iso
 
@@ -50,25 +56,68 @@ def exportar_programa(aluno_id: str, personal_id: str = Depends(get_current_pers
     return programa_service.exportar(personal_id, aluno_id)
 
 
+def _validar_conteudo(personal_id: str, conteudo: str):
+    """Parse + Pydantic + checagens semânticas, na ordem em que o personal consegue corrigir.
+
+    Levanta 400 com a lista de problemas e o relatório colável na IA (`import_erros`). As
+    mesmas checagens do MCP (`validar_programa_treino`): quem cola o JSON na tela não tem
+    por que receber uma validação pior do que quem conecta o ChatGPT.
+    """
+    try:
+        data = json.loads(conteudo)
+    except (json.JSONDecodeError, TypeError) as exc:
+        raise import_erros.erro_de_json(exc)
+    if not isinstance(data, dict):
+        raise import_erros.erro_de_json(
+            TypeError(f"esperava um objeto JSON na raiz, recebi {type(data).__name__}"))
+    try:
+        # extra='ignore' (default Pydantic): `contexto_aluno` presente no JSON colado
+        # (arquivo do export colado de volta sem edição) é descartado sem erro.
+        programa = ProgramaTreinoFile(**data)
+    except ValidationError as exc:
+        raise import_erros.erro_de_formato(exc)
+    if not programa.treinos:
+        raise import_erros.erro_programa_vazio()
+
+    ctx = validacao_programa.carregar_contexto(personal_id)
+    erros, avisos = validacao_programa.validar(programa, ctx, bruto=data)
+    if erros:
+        raise import_erros.erro(import_erros.PRESCRICAO_INVALIDA, erros, avisos=avisos)
+    return programa, avisos
+
+
 @router.post("/importar", response_model=ImportarProgramaResponse, status_code=201)
 def importar_programa(aluno_id: str, body: ImportarProgramaRequest,
                       personal_id: str = Depends(get_current_personal_id)):
     """Substituição TOTAL: o JSON vira o programa do aluno. Apaga treinos/exercícios atuais
     (e a agenda de vencimento) e recria a partir do arquivo. Histórico de sessões é preservado
-    (vive em SK próprios). Mesmos códigos de erro do import de pacotes (front já trata)."""
+    (vive em SK próprios). Erro bloqueia; aviso volta junto do 201."""
     _guard(personal_id, aluno_id)
-    try:
-        data = json.loads(body.conteudo)
-    except (json.JSONDecodeError, TypeError) as exc:
-        raise HTTPException(400, detail={"code": "ARQUIVO_INVALIDO", "detail": str(exc)})
-    try:
-        # extra='ignore' (default Pydantic): `contexto_aluno` presente no JSON colado
-        # (arquivo do export colado de volta sem edição) é descartado sem erro.
-        programa = ProgramaTreinoFile(**data)
-    except Exception as exc:
-        raise HTTPException(400, detail={"code": "ESTRUTURA_INVALIDA", "detail": str(exc)})
+    programa, avisos = _validar_conteudo(personal_id, body.conteudo)
+    resultado = programa_service.aplicar(personal_id, aluno_id, programa)
+    resultado.avisos = validacao_programa.achados_json(avisos)
+    resultado.relatorio_ia = (import_erros.relatorio_para_ia([], avisos) if avisos else None)
+    return resultado
 
-    return programa_service.aplicar(personal_id, aluno_id, programa)
+
+@router.post("/validar", status_code=200)
+def validar_programa(aluno_id: str, body: ImportarProgramaRequest,
+                     personal_id: str = Depends(get_current_personal_id)):
+    """Confere o JSON SEM gravar nada — o "conferir antes de sobrescrever" da tela, e o
+    espelho da tool `validar_programa_treino` do MCP. Erro de conteúdo sai como 400 igual ao
+    do import, para a tela ter um caminho só de renderização."""
+    _guard(personal_id, aluno_id)
+    programa, avisos = _validar_conteudo(personal_id, body.conteudo)
+    return {
+        "ok": True,
+        "contagem": {
+            "treinos": len(programa.treinos),
+            "exercicios": sum(len(t.exercicios) for t in programa.treinos),
+            "avisos": len(avisos),
+        },
+        "avisos": validacao_programa.achados_json(avisos),
+        "relatorio_ia": import_erros.relatorio_para_ia([], avisos) if avisos else None,
+    }
 
 
 # ── Treinos ──────────────────────────────────────────────────────────────────

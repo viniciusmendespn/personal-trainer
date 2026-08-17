@@ -65,6 +65,13 @@ export function useImportarPrograma(alunoId: string) {
   })
 }
 
+/** Conferência sem gravar — não invalida cache nenhum, porque nada mudou no servidor. */
+export function useValidarPrograma(alunoId: string) {
+  return useMutation({
+    mutationFn: (conteudo: string) => treinosApi.validarPrograma(alunoId, conteudo),
+  })
+}
+
 export function useExercicios(alunoId: string, treinoId: string) {
   return useQuery({
     queryKey: ['exercicios', alunoId, treinoId],

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Copy, Check, ExternalLink, FileUp, AlertCircle } from 'lucide-react'
-import { Modal, Button, Textarea } from './ui'
+import { Modal, Button, Textarea, useToast } from './ui'
 import { parseCsvBiblioteca } from '../utils/parseCsv'
+import { mensagemDeErro } from '../utils/erroApi'
 import { useImportarExercicios } from '../hooks/useDominio'
 import type { ImportarResult } from '../api/biblioteca'
 
@@ -35,6 +36,7 @@ export function ImportarExerciciosModal({ open, onClose }: Props) {
   const [copied, setCopied] = useState(false)
   const [result, setResult] = useState<ImportarResult | null>(null)
   const importar = useImportarExercicios()
+  const { show } = useToast()
 
   const { valid, errors } = parseCsvBiblioteca(csv)
 
@@ -45,8 +47,13 @@ export function ImportarExerciciosModal({ open, onClose }: Props) {
   }
 
   async function handleImport() {
-    const res = await importar.mutateAsync(valid)
-    setResult(res)
+    try {
+      const res = await importar.mutateAsync(valid)
+      setResult(res)
+    } catch (err) {
+      // Sem este catch, falha de API virava rejeição não tratada: a tela não dizia nada.
+      show(mensagemDeErro(err, 'Não foi possível importar os exercícios.'), 'error')
+    }
   }
 
   function handleClose() {

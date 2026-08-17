@@ -31,6 +31,15 @@ def importar_rascunho(
     return pacote_service.importar_rascunho(personal_id, body.conteudo)
 
 
+@router.post("/validar-rascunho", status_code=200)
+def validar_rascunho(
+    body: ImportarPacoteRequest,
+    _personal_id: str = Depends(get_current_personal_id),
+):
+    """Confere o JSON do pacote sem instalar nada — o "conferir" da aba Gerar com IA."""
+    return pacote_service.validar_rascunho(body.conteudo)
+
+
 @router.post("/gerar", status_code=200)
 def gerar_pacote(
     body: GerarPacoteBody,

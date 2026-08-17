@@ -18,7 +18,6 @@ from typing import Any, Callable
 from fastapi import HTTPException
 from pydantic import BaseModel, Field, ValidationError
 
-from app.mcp import validacao_programa
 from app.mcp.tokens import (
     SCOPE_READ,
     SCOPE_TREINOS_WRITE,
@@ -37,6 +36,7 @@ from app.services import (
     pendencia_service,
     programa_service,
     sessao_service,
+    validacao_programa,
 )
 from app.utils import now_iso
 
@@ -442,8 +442,9 @@ def _relatorio(programa, erros, avisos) -> dict:
             "erros": len(erros),
             "avisos": len(avisos),
         },
-        "erros": [e.to_dict() for e in erros],
-        "avisos": [a.to_dict() for a in avisos],
+        # `validar` devolve tudo; o corte é aqui, para a contagem acima ser a real.
+        "erros": validacao_programa.achados_json(erros),
+        "avisos": validacao_programa.achados_json(avisos),
         "proximo_passo": proximo,
     }
 
@@ -535,7 +536,7 @@ def aplicar_programa_treino(a: AplicarProgramaArgs) -> dict:
     if avisos:
         # Não bloqueiam, mas o personal precisa ficar sabendo — e quem conta a ele é o LLM,
         # na mesma conversa.
-        saida["avisos"] = [av.to_dict() for av in avisos]
+        saida["avisos"] = validacao_programa.achados_json(avisos)
         saida["sobre_os_avisos"] = ("o programa foi gravado; conte estes pontos ao personal "
                                     "e ajuste se ele concordar")
     return saida

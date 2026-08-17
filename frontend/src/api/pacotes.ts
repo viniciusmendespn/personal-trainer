@@ -1,5 +1,13 @@
 import { api } from './client'
 import type { ImportarPacoteResponse, PacoteInstalado } from '../types'
+import type { ProblemaImport } from '../utils/erroApi'
+
+export interface ValidarRascunhoResponse {
+  ok: boolean
+  contagem: { exercicios: number; templates: number; rotinas: number; avisos: number }
+  avisos: ProblemaImport[]
+  relatorio_ia?: string | null
+}
 
 export interface GerarPacoteBody {
   nome: string
@@ -33,6 +41,10 @@ export const pacotesApi = {
 
   importarRascunho: (conteudo: string) =>
     api.post<ImportarPacoteResponse>('/v1/pacotes/importar-rascunho', { conteudo }).then((r) => r.data),
+
+  /** Confere o JSON do pacote sem instalar nada. Recusa vem como 400, igual ao import. */
+  validarRascunho: (conteudo: string) =>
+    api.post<ValidarRascunhoResponse>('/v1/pacotes/validar-rascunho', { conteudo }).then((r) => r.data),
 
   exportar: (pacoteId: string) =>
     api.get<object>(`/v1/pacotes/${pacoteId}/exportar`).then((r) => r.data),

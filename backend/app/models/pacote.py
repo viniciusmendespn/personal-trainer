@@ -97,6 +97,9 @@ class ImportarPacoteResponse(BaseModel):
     templates_importados: int
     rotinas_importadas: int
     videos_da_biblioteca: int = 0          # exercícios que herdaram o vídeo já cadastrado
+    # Achados que não impedem a instalação (ver validacao_pacote). Erro bloqueia e sai como 400.
+    avisos: list[dict] = Field(default_factory=list)
+    relatorio_ia: Optional[str] = None     # texto colável na IA quando há avisos
 
 
 class PacoteInstalado(BaseModel):

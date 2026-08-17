@@ -116,9 +116,13 @@ Inegociáveis ao mexer nele ou ao criar um novo:
   `frontend/public/prompt-treino-aluno.md` (`test_mcp_prompt_sync.py`). O que muda por canal
   vive nos marcadores `{{ENTREGA}}` e `{{BIBLIOTECA}}`, interpolados em `montar_treino_texto()`
   no backend e em `renderizarPromptIA()` no front — mexeu em um, mexa no outro.
-- Erro semântico de programa **bloqueia** a gravação (`app/mcp/validacao_programa.py`), e a
+- Erro semântico de programa **bloqueia** a gravação (`app/services/validacao_programa.py`), e a
   validação roda antes da chave de idempotência. Regra nova nasce como aviso até ter teste
   provando que não reprova programa legítimo — `metrica_direcao` já nasce `"MAIOR"` no modelo.
+- A validação **não é do MCP**: mora em `services/` porque o import de JSON pelo portal
+  (`POST /v1/alunos/{id}/treinos/importar`) roda exatamente as mesmas regras. Regra nova vale
+  para os dois canais, e `tests/test_import_http.py` cobre o lado HTTP. Idem
+  `validacao_pacote.py` para o `.cpkg`, que reusa as regras por-exercício daqui.
 
 ## ⚠️ REGRA OBRIGATÓRIA — DynamoDB: performance, escala e custo
 

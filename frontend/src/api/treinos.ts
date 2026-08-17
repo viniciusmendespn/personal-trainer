@@ -1,6 +1,7 @@
 import { api } from './client'
 import type { Exercicio, ExercicioCreate, Treino, TreinoCreate } from '../types'
 import type { HistoricoMes } from './alunoApp'
+import type { ProblemaImport } from '../utils/erroApi'
 
 export const treinosApi = {
   list: (alunoId: string) =>
@@ -17,6 +18,11 @@ export const treinosApi = {
   importarPrograma: (alunoId: string, conteudo: string) =>
     api
       .post<ImportarProgramaResponse>(`/v1/alunos/${alunoId}/treinos/importar`, { conteudo })
+      .then((r) => r.data),
+  /** Confere o JSON sem gravar nada. Recusa vem como 400, no mesmo formato do import. */
+  validarPrograma: (alunoId: string, conteudo: string) =>
+    api
+      .post<ValidarProgramaResponse>(`/v1/alunos/${alunoId}/treinos/validar`, { conteudo })
       .then((r) => r.data),
 
   listExercicios: (alunoId: string, treinoId: string) =>
@@ -98,6 +104,16 @@ export const treinosApi = {
 export interface ImportarProgramaResponse {
   treinos_importados: number
   exercicios_importados: number
+  /** Achados que não impediram a gravação (ver validacao_programa.py no backend). */
+  avisos?: ProblemaImport[]
+  relatorio_ia?: string | null
+}
+
+export interface ValidarProgramaResponse {
+  ok: boolean
+  contagem: { treinos: number; exercicios: number; avisos: number }
+  avisos: ProblemaImport[]
+  relatorio_ia?: string | null
 }
 
 export interface Relato {

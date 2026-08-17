@@ -1,6 +1,7 @@
 // Espelho dos enums/modelos do backend (app/models). Manter em sincronia.
 
 import type { PendenciaResumo } from '../api/pendencias'
+import type { ProblemaImport } from '../utils/erroApi'
 
 export type AlunoStatus = 'ATIVO' | 'INATIVO'
 export type LeadStatus = 'NOVO' | 'EM_CONTATO' | 'CONVERTIDO' | 'PERDIDO'
@@ -509,4 +510,7 @@ export interface ImportarPacoteResponse {
   templates_importados: number
   rotinas_importadas: number
   videos_da_biblioteca?: number   // exercícios que herdaram o vídeo já cadastrado na biblioteca
+  /** Achados que não impediram a instalação (ver validacao_pacote.py no backend). */
+  avisos?: ProblemaImport[]
+  relatorio_ia?: string | null
 }

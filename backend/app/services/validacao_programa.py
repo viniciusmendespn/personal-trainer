@@ -12,6 +12,11 @@ mesmo turno, corrige de graça — desde que a mensagem diga onde, por quê e o 
 
 Regra editorial: nenhum achado pode existir se o LLM não conseguir corrigi-lo lendo só a
 mensagem. Se for preciso reler o guia, a mensagem está incompleta.
+
+Dois canais consomem este módulo: o servidor MCP (`app/mcp/tools.py`) e o import de JSON pelo
+portal (`app/routers/treinos.py`). Por isso ele vive em `services/` e não em `mcp/` — mesma
+razão dos helpers compartilhados de `programa_service`. `validacao_pacote` reusa as regras
+por-exercício daqui para o formato ref-based do `.cpkg`.
 """
 import re
 from dataclasses import dataclass, field
@@ -22,8 +27,9 @@ from app.models.treino_export import ProgramaTreinoFile
 from app.services import biblioteca_service
 from app.services.sessao_service import chave_exercicio
 
-# Teto por balde: o retorno vai direto para o contexto do LLM, e 200 achados iguais não
-# ensinam mais que 20.
+# Teto de exibição: o retorno vai para o contexto do LLM (ou para uma lista na tela), e 200
+# achados iguais não ensinam mais que 20. Aplicado ao serializar, não em `validar` — assim a
+# contagem informada é a real e o consumidor pode dizer "e mais N".
 LIMITE_ACHADOS = 20
 
 MAX_UNIDADE_REPS = 7
@@ -85,8 +91,11 @@ def carregar_contexto(personal_id: str) -> Contexto:
 
 
 # ── Regras ──────────────────────────────────────────────────────────────────
+# As quatro funções por-bloco/por-série/por-exercício abaixo são públicas porque
+# `validacao_pacote` as reusa: no `.cpkg` os mesmos campos aparecem em outra árvore
+# (tipo_exercicio no catálogo, series_prescritas no template), então só a montagem difere.
 
-def _validar_blocos(treino, ct: str, erros: list, avisos: list) -> dict:
+def validar_blocos(treino, ct: str, erros: list, avisos: list) -> dict:
     """Confere os blocos do treino e devolve {id: bloco} para os exercícios apontarem."""
     por_id: dict[str, Any] = {}
     for ib, bloco in enumerate(treino.blocos or []):
@@ -134,7 +143,7 @@ def _validar_blocos(treino, ct: str, erros: list, avisos: list) -> dict:
     return por_id
 
 
-def _validar_serie(serie, cs: str, onde: str, erros: list) -> None:
+def validar_serie(serie, cs: str, onde: str, erros: list) -> None:
     if serie.series is None or serie.series <= 0:
         erros.append(Achado(
             "SERIES_INVALIDA", f"{cs}.series", onde,
@@ -143,7 +152,7 @@ def _validar_serie(serie, cs: str, onde: str, erros: list) -> None:
             '"reps": "8-12", "carga": null}'))
 
 
-def _validar_unidade_em_reps(serie, ex, cs: str, onde: str, erros: list) -> None:
+def validar_unidade_em_reps(serie, ex, cs: str, onde: str, erros: list) -> None:
     """`reps` carrega só o número; a unidade vive em `unidade_reps`. Escrever "30s" num
     exercício medido em calorias faz o app renderizar "30s cal"."""
     casou = _REPS_COM_SUFIXO.match(serie.reps or "")
@@ -201,20 +210,20 @@ def _validar_exercicio(ex, ce: str, treino, blocos_por_id: dict, ctx: Contexto,
     else:
         for i_s, serie in enumerate(ex.series_prescritas):
             cs = f"{ce}.series_prescritas[{i_s}]"
-            _validar_serie(serie, cs, onde, erros)
-            _validar_unidade_em_reps(serie, ex, cs, onde, erros)
+            validar_serie(serie, cs, onde, erros)
+            validar_unidade_em_reps(serie, ex, cs, onde, erros)
 
     # ── tipo / unidades
     tipo = normalizar_tipo_exercicio(ex.tipo_exercicio)
     if tipo == TipoExercicio.PERFORMANCE.value:
-        _validar_performance(ex, ce, onde, treino, blocos_por_id, erros, avisos)
+        validar_performance(ex, ce, onde, treino, blocos_por_id, erros, avisos)
     else:
-        _validar_forca(ex, ce, onde, avisos)
+        validar_forca(ex, ce, onde, avisos)
 
     _validar_contra_biblioteca(ex, ce, onde, ctx, avisos)
 
 
-def _validar_performance(ex, ce, onde, treino, blocos_por_id, erros, avisos) -> None:
+def validar_performance(ex, ce, onde, treino, blocos_por_id, erros, avisos) -> None:
     if not (ex.unidade_reps or "").strip():
         erros.append(Achado(
             "PERF_SEM_UNIDADE", f"{ce}.unidade_reps", onde,
@@ -254,7 +263,7 @@ def _validar_performance(ex, ce, onde, treino, blocos_por_id, erros, avisos) -> 
             f'percorrida em {ex.unidade_reps or "m"}."'))
 
 
-def _validar_forca(ex, ce, onde, avisos) -> None:
+def validar_forca(ex, ce, onde, avisos) -> None:
     if (ex.unidade_reps or "").strip():
         avisos.append(Achado(
             "FORCA_COM_UNIDADE_REPS", f"{ce}.unidade_reps", onde,
@@ -356,9 +365,12 @@ def _campos_inexistentes(bruto: dict, erros: list, avisos: list) -> None:
 
 def validar(programa: ProgramaTreinoFile, ctx: Contexto | None = None, *,
             bruto: dict | None = None) -> tuple[list[Achado], list[Achado]]:
-    """Devolve (erros, avisos). Erros impedem a gravação; avisos só informam.
+    """Devolve (erros, avisos) **completos**. Erros impedem a gravação; avisos só informam.
 
     `bruto` é o dict cru do LLM, usado para flagrar chaves que o Pydantic descartou.
+
+    Sem corte aqui: quem serializa aplica `LIMITE_ACHADOS` e diz quantos ficaram de fora.
+    Cortar aqui escondia o total — a tela dizia "3 problemas" quando havia 30.
     """
     ctx = ctx or Contexto.vazio()
     erros: list[Achado] = []
@@ -372,7 +384,7 @@ def validar(programa: ProgramaTreinoFile, ctx: Contexto | None = None, *,
                 "treino sem nome não é identificável pelo aluno.",
                 'preencha "nome". Ex.: "Treino A — Peito/Tríceps".'))
 
-        blocos_por_id = _validar_blocos(treino, ct, erros, avisos)
+        blocos_por_id = validar_blocos(treino, ct, erros, avisos)
         usados = {e.bloco_id for e in treino.exercicios if e.bloco_id}
         for bloco_id, bloco in blocos_por_id.items():
             # Bloco de descanso é o único que existe legitimamente sem exercício algum.
@@ -396,16 +408,24 @@ def validar(programa: ProgramaTreinoFile, ctx: Contexto | None = None, *,
                 'a raiz do programa tem só "version" e "treinos".'))
         _campos_inexistentes(bruto, erros, avisos)
 
-    return erros[:LIMITE_ACHADOS], avisos[:LIMITE_ACHADOS]
+    return erros, avisos
 
 
-# ── Formatação para o LLM ───────────────────────────────────────────────────
+# ── Formatação para o LLM e para a tela ─────────────────────────────────────
 
-def texto_dos_achados(achados: list[Achado]) -> str:
-    return "\n".join(
+def texto_dos_achados(achados: list[Achado], limite: int = LIMITE_ACHADOS) -> str:
+    linhas = [
         f"- [{a.codigo}] {a.campo} ({a.onde}): {a.mensagem} → {a.correcao}"
-        for a in achados
-    )
+        for a in achados[:limite]
+    ]
+    if len(achados) > limite:
+        linhas.append(f"- ...e mais {len(achados) - limite} achado(s) do mesmo tipo.")
+    return "\n".join(linhas)
+
+
+def achados_json(achados: list[Achado], limite: int = LIMITE_ACHADOS) -> list[dict]:
+    """Achados para consumo de UI/JSON. O total real vem separado, de `len(achados)`."""
+    return [a.to_dict() for a in achados[:limite]]
 
 
 def formatar_erros_pydantic(exc, limite: int = 5) -> str:
@@ -422,6 +442,38 @@ def formatar_erros_pydantic(exc, limite: int = 5) -> str:
     if len(todos) > limite:
         partes.append(f"- ...e mais {len(todos) - limite} erro(s)")
     return "\n".join(partes)
+
+
+def achados_de_pydantic(exc) -> list[Achado]:
+    """Erro de tipo do Pydantic no mesmo formato dos achados semânticos, para a tela do
+    personal e o relatório da IA não terem duas linguagens de erro diferentes.
+
+    `msg` fica em inglês (vem do Pydantic); o que orienta a correção é `campo` + o valor
+    recebido, e é isso que o LLM usa para se localizar.
+    """
+    achados = []
+    for e in exc.errors(include_url=False):
+        caminho = _caminho_pydantic(e.get("loc") or ()) or "(raiz)"
+        recebido = repr(e.get("input"))
+        if len(recebido) > 60:
+            recebido = recebido[:57] + "..."
+        achados.append(Achado(
+            "TIPO_INVALIDO", caminho, _onde_pydantic(caminho),
+            f"{e.get('msg')} (recebi {recebido}).",
+            "ajuste o valor deste campo para o tipo que o formato pede."))
+    return achados
+
+
+def _onde_pydantic(caminho: str) -> str:
+    """`treinos[2].exercicios[0].series_prescritas[1].series` → "treino 3 › exercício 1".
+    O índice do Pydantic é 0-based; o personal conta a partir de 1 ao olhar a tela."""
+    partes = []
+    for rotulo, chave in (("treino", "treinos"), ("exercício", "exercicios"),
+                          ("bloco", "blocos"), ("série", "series_prescritas")):
+        casou = re.search(rf"{chave}\[(\d+)\]", caminho)
+        if casou:
+            partes.append(f"{rotulo} {int(casou.group(1)) + 1}")
+    return " › ".join(partes) or "programa"
 
 
 def _caminho_pydantic(loc: tuple) -> str:

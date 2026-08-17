@@ -1,9 +1,18 @@
 import { useState } from 'react'
-import { Download, ExternalLink, Check, FileUp } from 'lucide-react'
+import { Download, ExternalLink, Check, FileUp, ListChecks } from 'lucide-react'
 import { Modal, Button, Textarea, Spinner, useToast, useConfirm } from './ui'
-import { useExportarPrograma, useImportarPrograma } from '../hooks/useTreinos'
+import { RelatorioImportIA } from './RelatorioImportIA'
+import { useExportarPrograma, useImportarPrograma, useValidarPrograma } from '../hooks/useTreinos'
 import { bibliotecaApi } from '../api/biblioteca'
-import { downloadText, fetchPromptMd, montarArquivoIA, renderizarPromptIA, slimBiblioteca } from '../utils/arquivoIa'
+import {
+  downloadText,
+  fetchPromptMd,
+  limparJsonColado,
+  montarArquivoIA,
+  renderizarPromptIA,
+  slimBiblioteca,
+} from '../utils/arquivoIa'
+import { extrairErroImport, type ErroImport, type ProblemaImport } from '../utils/erroApi'
 import type { ImportarProgramaResponse } from '../api/treinos'
 
 interface Props {
@@ -13,17 +22,21 @@ interface Props {
   alunoNome?: string
 }
 
-const ERROS: Record<string, string> = {
-  ESTRUTURA_INVALIDA: 'O JSON gerado pela IA tem um erro de estrutura. Verifique se seguiu o prompt corretamente.',
-  ARQUIVO_INVALIDO: 'JSON inválido. Certifique-se de copiar apenas o bloco de código gerado pela IA.',
+/** Conferência bem-sucedida: nada a corrigir, ou só avisos. */
+interface Conferido {
+  avisos: ProblemaImport[]
+  relatorioIa?: string | null
 }
 
 export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Props) {
   const [json, setJson] = useState('')
   const [result, setResult] = useState<ImportarProgramaResponse | null>(null)
+  const [erro, setErro] = useState<ErroImport | null>(null)
+  const [conferido, setConferido] = useState<Conferido | null>(null)
   const [baixando, setBaixando] = useState(false)
   const exportar = useExportarPrograma()
   const importar = useImportarPrograma(alunoId)
+  const validar = useValidarPrograma(alunoId)
   const confirm = useConfirm()
   const { show } = useToast()
 
@@ -54,8 +67,38 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
     }
   }
 
+  /** Limpa cerca de markdown/prosa e valida o JSON localmente. `null` = já reportou o erro. */
+  function prepararJson(): string | null {
+    const limpo = limparJsonColado(json)
+    if (!limpo.ok) {
+      setConferido(null)
+      setErro({
+        code: 'ARQUIVO_INVALIDO',
+        mensagem: limpo.erro,
+        problemas: [],
+        total: 0,
+      })
+      return null
+    }
+    return limpo.json
+  }
+
+  async function handleConferir() {
+    const conteudo = prepararJson()
+    if (!conteudo) return
+    setErro(null)
+    try {
+      const res = await validar.mutateAsync(conteudo)
+      setConferido({ avisos: res.avisos ?? [], relatorioIa: res.relatorio_ia })
+    } catch (err) {
+      setConferido(null)
+      setErro(extrairErroImport(err, 'Não foi possível conferir o JSON. Tente novamente.'))
+    }
+  }
+
   async function handleImportar() {
-    if (!json.trim()) return
+    const conteudo = prepararJson()
+    if (!conteudo) return
     const ok = await confirm({
       title: 'Sobrescrever treino',
       message: `Isso substitui TODOS os treinos atuais de ${alunoNome ?? 'este aluno'} pelo conteúdo do JSON. O histórico de sessões é preservado.`,
@@ -63,21 +106,23 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
       tone: 'danger',
     })
     if (!ok) return
+    setErro(null)
+    setConferido(null)
     try {
-      const res = await importar.mutateAsync(json.trim())
+      const res = await importar.mutateAsync(conteudo)
       setResult(res)
       setJson('')
-    } catch (err: any) {
-      const code = err?.response?.data?.code
-      const detail = err?.response?.data?.detail
-      const suffix = detail ? ` (${detail})` : ''
-      show((ERROS[code] ?? 'Erro ao importar. Tente novamente.') + suffix, 'error')
+    } catch (err) {
+      // O JSON colado FICA no textarea: o personal vai corrigi-lo com a IA e reimportar.
+      setErro(extrairErroImport(err, 'Não foi possível importar. Tente novamente.'))
     }
   }
 
   function handleClose() {
     setJson('')
     setResult(null)
+    setErro(null)
+    setConferido(null)
     onClose()
   }
 
@@ -93,6 +138,12 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
               {result.exercicios_importados !== 1 ? 's' : ''}.
             </p>
           </div>
+          {!!result.avisos?.length && (
+            <RelatorioImportIA
+              avisos={result.avisos}
+              relatorioIa={result.relatorio_ia ?? undefined}
+            />
+          )}
           <Button className="w-full" onClick={handleClose}>Fechar</Button>
         </div>
       ) : (
@@ -135,20 +186,59 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
               rows={6}
               placeholder={'Cole aqui o JSON gerado pela IA (bloco { "version": "1", "treinos": [ ... ] })'}
               value={json}
-              onChange={(e) => setJson(e.target.value)}
+              onChange={(e) => {
+                setJson(e.target.value)
+                setErro(null)
+                setConferido(null)
+              }}
             />
           </div>
 
-          <Button
-            className="w-full"
-            disabled={!json.trim() || importar.isPending}
-            onClick={handleImportar}
-          >
-            <span className="flex items-center gap-1.5">
-              {importar.isPending ? <Spinner className="w-4 h-4" /> : <FileUp size={16} />}
-              {importar.isPending ? 'Importando…' : 'Importar e sobrescrever treino'}
-            </span>
-          </Button>
+          {erro && (
+            <RelatorioImportIA
+              mensagem={erro.mensagem}
+              problemas={erro.problemas}
+              total={erro.total}
+              relatorioIa={erro.relatorioIa}
+            />
+          )}
+
+          {conferido && (
+            <RelatorioImportIA
+              limpo
+              avisos={conferido.avisos}
+              relatorioIa={conferido.relatorioIa ?? undefined}
+              mensagem={
+                conferido.avisos.length
+                  ? `Pode importar, mas confira ${conferido.avisos.length} ponto${conferido.avisos.length !== 1 ? 's' : ''}.`
+                  : 'Nenhum problema encontrado — o JSON está pronto para importar.'
+              }
+            />
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              className="sm:flex-1"
+              disabled={!json.trim() || validar.isPending || importar.isPending}
+              onClick={handleConferir}
+            >
+              <span className="flex items-center gap-1.5">
+                {validar.isPending ? <Spinner className="w-4 h-4" /> : <ListChecks size={16} />}
+                {validar.isPending ? 'Conferindo…' : 'Conferir sem importar'}
+              </span>
+            </Button>
+            <Button
+              className="sm:flex-1"
+              disabled={!json.trim() || importar.isPending || validar.isPending}
+              onClick={handleImportar}
+            >
+              <span className="flex items-center gap-1.5">
+                {importar.isPending ? <Spinner className="w-4 h-4" /> : <FileUp size={16} />}
+                {importar.isPending ? 'Importando…' : 'Importar e sobrescrever treino'}
+              </span>
+            </Button>
+          </div>
         </div>
       )}
     </Modal>

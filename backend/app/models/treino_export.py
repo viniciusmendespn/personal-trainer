@@ -62,3 +62,7 @@ class ProgramaTreinoExportFile(ProgramaTreinoFile):
 class ImportarProgramaResponse(BaseModel):
     treinos_importados: int
     exercicios_importados: int
+    # Achados que não impedem a gravação (campo inventado pela IA que foi descartado, nome que
+    # divergiu da biblioteca…). Erro bloqueia e sai como 400; aviso volta aqui, no 201.
+    avisos: list[dict] = Field(default_factory=list)
+    relatorio_ia: Optional[str] = None   # texto colável na IA quando há avisos

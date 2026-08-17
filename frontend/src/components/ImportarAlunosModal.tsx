@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Copy, Check, ExternalLink, FileUp, AlertCircle } from 'lucide-react'
-import { Modal, Button, Textarea } from './ui'
+import { Modal, Button, Textarea, useToast } from './ui'
 import { parseCsvAlunos } from '../utils/parseCsv'
+import { mensagemDeErro } from '../utils/erroApi'
 import { useImportarAlunos } from '../hooks/useAlunos'
 import type { ImportarAlunosResult } from '../api/alunos'
 
@@ -38,6 +39,7 @@ export function ImportarAlunosModal({ open, onClose }: Props) {
   const [copied, setCopied] = useState(false)
   const [result, setResult] = useState<ImportarAlunosResult | null>(null)
   const importar = useImportarAlunos()
+  const { show } = useToast()
 
   const { valid, errors } = parseCsvAlunos(csv)
 
@@ -48,8 +50,13 @@ export function ImportarAlunosModal({ open, onClose }: Props) {
   }
 
   async function handleImport() {
-    const res = await importar.mutateAsync(valid)
-    setResult(res)
+    try {
+      const res = await importar.mutateAsync(valid)
+      setResult(res)
+    } catch (err) {
+      // Sem este catch, falha de API virava rejeição não tratada: a tela não dizia nada.
+      show(mensagemDeErro(err, 'Não foi possível importar os alunos.'), 'error')
+    }
   }
 
   function handleClose() {

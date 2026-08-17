@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from app.mcp import validacao_programa as v
+from app.services import validacao_programa as v
 from app.models.treino_export import ProgramaTreinoFile
 from app.services.sessao_service import chave_exercicio
 

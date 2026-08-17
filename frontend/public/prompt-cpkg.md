@@ -304,6 +304,18 @@ Apresente o JSON num bloco de código e diga:
 > **Pacotes** do CoachPilot. Se quiser ajustar algo — exercícios, séries, uma nova rotina — é só pedir
 > antes de copiar."
 
+## Se o CoachPilot recusar o pacote
+
+Ao recusar, o CoachPilot devolve um relatório de problemas, com uma linha por problema no formato
+`[CODIGO] campo (onde): o que está errado → o que escrever no lugar`. Ao receber esse relatório:
+
+1. Corrija **exatamente** os campos citados — `campo` é o caminho navegável dentro do JSON
+   (ex.: `templates[0].exercicios[2].ex_ref`) e a seta diz o que escrever ali.
+2. Atenção aos caminhos: `unidade_reps` e `metrica_direcao` moram em `exercicios[]` (o catálogo),
+   e `series_prescritas` mora dentro do template. O relatório aponta o lugar certo — siga o `campo`.
+3. Devolva o pacote **COMPLETO** outra vez, não só o trecho corrigido.
+4. Não mude nada além do que o relatório aponta.
+
 ---
 
 # Apêndices — leia só se o treino usar isto
