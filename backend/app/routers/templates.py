@@ -12,11 +12,15 @@ from app.models.template import (
 from app.models.treino import Treino
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz, biblioteca_service
+from app.services import authz, biblioteca_service, programa_service
 from app.services.sessao_service import chave_exercicio, upsert_excat
 from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/templates", tags=["templates"])
+
+# Definição única em programa_service (mesma de treinos.py/rotinas.py): recalcula `vigencias`
+# no ponteiro, insumo da pendência "sem treino vigente" da listagem de alunos.
+_touch_aluno_pointer = programa_service.touch_aluno_pointer
 
 
 @router.get("")
@@ -139,6 +143,7 @@ def aplicar_template(
             if ch and ch not in vistos:
                 vistos.add(ch)
                 upsert_excat(aluno_id, et.nome, et.model_dump())
+        _touch_aluno_pointer(personal_id, aluno_id)
         aplicados.append({"aluno_id": aluno_id, "treino_id": treino_id})
 
     return {"aplicados": aplicados}

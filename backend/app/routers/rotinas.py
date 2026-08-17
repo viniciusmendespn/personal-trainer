@@ -13,17 +13,16 @@ from app.models.template import ExercicioTemplate, TreinoTemplate
 from app.models.treino import Treino
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz
+from app.services import authz, programa_service
 from app.services.sessao_service import chave_exercicio, upsert_excat
 from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/rotinas", tags=["rotinas"])
 
-
-def _touch_aluno_pointer(personal_id: str, aluno_id: str) -> None:
-    repo.update_item_if_exists(
-        keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id), {"updated_at": now_iso()}
-    )
+# Definição única em programa_service: além do `updated_at`, recalcula `vigencias` no ponteiro
+# — insumo da pendência "sem treino vigente" da listagem. Havia aqui uma cópia que só bumpava
+# `updated_at`, e o ponteiro ficava preso na vigência anterior à rotina (alarme falso/ausente).
+_touch_aluno_pointer = programa_service.touch_aluno_pointer
 
 
 @router.get("")

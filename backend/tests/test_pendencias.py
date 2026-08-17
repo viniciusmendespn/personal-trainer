@@ -63,14 +63,14 @@ def test_treinou_hoje_nao_gera_pendencia():
     assert SEM_TREINAR not in _tipos(_avaliar())
 
 
-def test_seis_dias_sem_treinar_ainda_nao_alarma():
-    assert SEM_TREINAR not in _tipos(_avaliar(ultimo_treino_em="2026-08-09T10:00:00+00:00"))
+def test_nove_dias_sem_treinar_ainda_nao_alarma():
+    assert SEM_TREINAR not in _tipos(_avaliar(ultimo_treino_em="2026-08-06T10:00:00+00:00"))
 
 
-def test_sete_dias_sem_treinar_alarma():
-    pend = _avaliar(ultimo_treino_em="2026-08-08T10:00:00+00:00")
+def test_dez_dias_sem_treinar_alarma():
+    pend = _avaliar(ultimo_treino_em="2026-08-05T10:00:00+00:00")
     assert SEM_TREINAR in _tipos(pend)
-    assert "7 dias" in next(p for p in pend if p["tipo"] == SEM_TREINAR)["detalhe"]
+    assert "10 dias" in next(p for p in pend if p["tipo"] == SEM_TREINAR)["detalhe"]
 
 
 def test_nunca_treinou_alarma():
@@ -80,8 +80,15 @@ def test_nunca_treinou_alarma():
 
 
 def test_aluno_novo_sem_treinar_nao_alarma():
-    """Cadastrado há 2 dias — não dá para estar 'parado há 7 dias'."""
+    """Cadastrado há 2 dias — não dá para estar 'parado há 10 dias'."""
     assert SEM_TREINAR not in _tipos(_avaliar(created_at="2026-08-13", ultimo_treino_em=None))
+
+
+def test_carencia_acompanha_o_limiar():
+    """Carência acoplada a DIAS_SEM_TREINAR: quem nunca treinou não pode alarmar ANTES de
+    quem treinou uma vez e parou. Na véspera do limiar, silêncio; no limiar, alarme."""
+    assert SEM_TREINAR not in _tipos(_avaliar(created_at="2026-08-07", ultimo_treino_em=None))
+    assert SEM_TREINAR in _tipos(_avaliar(created_at="2026-08-05", ultimo_treino_em=None))
 
 
 def test_aluno_novo_ainda_alarma_sem_treino_vigente():

@@ -20,8 +20,10 @@ from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.utils import treino_vigente
 
-DIAS_SEM_TREINAR = 7        # a partir de quantos dias sem sessão finalizada vira pendência
-GRACA_ALUNO_NOVO_DIAS = 7   # aluno recém-cadastrado não pode estar "sem treinar há 7 dias"
+DIAS_SEM_TREINAR = 10       # a partir de quantos dias sem sessão finalizada vira pendência
+# Aluno recém-cadastrado não pode estar "sem treinar há N dias". Acoplado ao limiar de propósito:
+# desacoplar faria quem nunca treinou alarmar antes de quem treinou uma vez e parou.
+GRACA_ALUNO_NOVO_DIAS = DIAS_SEM_TREINAR
 
 SEM_TREINO_VIGENTE = "SEM_TREINO_VIGENTE"
 SEM_TREINAR = "SEM_TREINAR"
