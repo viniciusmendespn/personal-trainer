@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 ANOTIF_TTL_S = 30 * 24 * 3600
 
 # Tipos: DOR_RESPONDIDA, DUVIDA_RESPONDIDA, MSG_PERSONAL, CORRECAO_EXERCICIO, NOVO_POST_FEED,
-#         COBRANCA_VENCER, COBRANCA_VENCIDA
+#         COBRANCA_VENCER, COBRANCA_VENCIDA, SESSAO_ABERTA, SESSAO_AUTOFINALIZADA
 
 _URL_MAP: dict[str, str] = {
     "MSG_PERSONAL":    "/aluno",
@@ -20,6 +20,10 @@ _URL_MAP: dict[str, str] = {
     "COBRANCA_VENCER": "/aluno",
     "COBRANCA_VENCIDA": "/aluno",
     "LEMBRETE_AULA":   "/aluno",
+    # /aluno já cai direto na sessão em andamento quando existe uma (AlunoApp renderiza
+    # SessaoTreino), então o aviso leva o aluno a um clique de finalizar.
+    "SESSAO_ABERTA":          "/aluno",
+    "SESSAO_AUTOFINALIZADA":  "/aluno",
 }
 
 

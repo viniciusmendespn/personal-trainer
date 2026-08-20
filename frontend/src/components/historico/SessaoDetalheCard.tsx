@@ -256,7 +256,7 @@ function pulados(prescritos: ExercicioPrescritoSessao[], execIds: Set<string>): 
   return prescritos.filter((p) => !execIds.has(p.exercicio_id) && !p.aquecimento)
 }
 
-function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: number; exercicios?: ExercicioPrescritoSessao[]; exercicios_exec?: ExecEx[]; scores_blocos?: ScoreBlocoOut[]; blocos?: BlocoTreino[] }; alunoId?: string }) {
+function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: number; encerrada_automaticamente?: boolean; exercicios?: ExercicioPrescritoSessao[]; exercicios_exec?: ExecEx[]; scores_blocos?: ScoreBlocoOut[]; blocos?: BlocoTreino[] }; alunoId?: string }) {
   const exs = data.exercicios_exec ?? []
   const prescritos = data.exercicios ?? []
   const vol = totalVolume(exs)
@@ -280,6 +280,15 @@ function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: n
           {vol && <span>Volume: {vol}</span>}
           {exs.length > 0 && <span>{exs.length} exercício{exs.length !== 1 ? 's' : ''}</span>}
         </div>
+      )}
+
+      {data.encerrada_automaticamente && (
+        // Explica a duração: o treino não foi finalizado, então o fim é o último registro.
+        <p className="mb-3 text-xs text-text-muted">
+          <Clock size={11} className="inline mb-0.5 mr-1" />
+          Finalizado automaticamente — o treino ficou aberto e foi salvo com o que já havia
+          sido registrado.
+        </p>
       )}
 
       {scores.length > 0 && (

@@ -277,9 +277,11 @@ def put_series(pk: str, sk: str, series: list, on_insert: dict, set_always: dict
     return resp.get("Attributes", {})
 
 
-def append_series(pk: str, sk: str, new_series: list, on_insert: dict) -> dict:
+def append_series(pk: str, sk: str, new_series: list, on_insert: dict,
+                  set_always: dict | None = None) -> dict:
     """Cria o registro (campos de `on_insert`) ou faz append em `series_exec` (ESPEC §3.2).
-    1 write, sem read prévio. `on_insert` só é aplicado na criação (if_not_exists)."""
+    1 write, sem read prévio. `on_insert` só é aplicado na criação (if_not_exists);
+    `set_always` sobrescreve a cada chamada (ex.: `atualizado_em`), como em `put_series`."""
     names = {"#se": "series_exec"}
     values = {":new": _san(new_series), ":empty": []}
     set_parts = ["#se = list_append(if_not_exists(#se, :empty), :new)"]
@@ -287,6 +289,10 @@ def append_series(pk: str, sk: str, new_series: list, on_insert: dict) -> dict:
         names[f"#k{i}"] = k
         values[f":v{i}"] = _san(v)
         set_parts.append(f"#k{i} = if_not_exists(#k{i}, :v{i})")
+    for i, (k, v) in enumerate((set_always or {}).items()):
+        names[f"#a{i}"] = k
+        values[f":a{i}"] = _san(v)
+        set_parts.append(f"#a{i} = :a{i}")
     resp = _get_table().update_item(
         Key={"PK": pk, "SK": sk},
         UpdateExpression="SET " + ", ".join(set_parts),

@@ -331,10 +331,16 @@ rotação de chave. Baixo risco prático (rotação é rara), mas é um bug late
   `components/chat/ChatThread.tsx:66-68`). Toda foto/vídeo de uma timeline ou feed carrega
   imediatamente ao montar, mesmo fora da viewport — soma banda ao CloudFront proporcional ao nº de
   itens de mídia, não ao que o usuário realmente rolou até ver.
-- **`REG#{sessao_id}#{ex_id}` sem TTL.** Se uma sessão ativa for abandonada sem `finalizar` (o item
-  `SESSION#ACTIVE` expira em 6h via TTL — `sessao_service.py`), os itens de registro já gravados
-  (`REG#...`) **não** têm TTL e ficam órfãos permanentemente na partição do aluno. Volume baixo por
-  aluno, mas é um pequeno gap na cobertura de TTL que o resto do projeto aplica consistentemente.
+- **Sessão esquecida aberta: resolvido (ago/2026).** Antes, `SESSION#ACTIVE` e os `REG#` nasciam
+  com o mesmo TTL de 6h e ninguém o renovava — quem registrava o treino inteiro e esquecia de
+  finalizar perdia tudo, sem nem virar sessão histórica (e por isso fora do alcance do
+  `backfill_reg_from_history`, que só lê sessões FINALIZADAS). Hoje o prazo é do **scheduler**
+  (`app/sessao_scheduler.py`, EventBridge 5 min): aviso por push em 4h e `finish(auto=True)` em 6h,
+  com a duração medida até o último registro para não inflar as médias de tempo. Sessão sem nenhum
+  registro é descartada, e não vira sessão vazia com streak e pontos. Os TTLs viraram só garbage
+  collection (`SESSION_TTL_S` 24h, `REG_TTL_S` 48h), bem acima do prazo — se o scheduler ficar fora
+  do ar por horas, nada se perde. As entradas do agendador ficam na partição `SCHED#{dia}` já
+  existente (`SESSAO_SCHED#{fire_iso}#{acao}#{aluno_id}`): 1 Query BETWEEN por dia, sem GSI novo.
 
 ---
 

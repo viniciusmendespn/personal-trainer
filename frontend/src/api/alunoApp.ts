@@ -57,6 +57,9 @@ export interface SessaoHistorico {
   data_hora_inicio: string
   data_hora_fim?: string
   duracao_segundos?: number
+  /** Sessão que o aluno esqueceu de finalizar e o sistema fechou sozinho 6h depois do início.
+   *  Nesse caso `data_hora_fim` é a hora do último registro, não a do fechamento. */
+  encerrada_automaticamente?: boolean
   total_ex: number
   /** Todos os exercícios prescritos no treino (independente de terem sido registrados). */
   exercicios?: ExercicioPrescritoSessao[]
@@ -143,6 +146,7 @@ export interface DiaSessao {
   novos_prs?: NovoPR[]
   scores_blocos?: ScoreBlocoOut[] | null
   checkin_url?: string | null
+  encerrada_automaticamente?: boolean | null
 }
 
 /** Resumo do mês para o calendário do histórico. */

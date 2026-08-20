@@ -49,7 +49,8 @@ def _disparar_push_personal(personal_id: str, titulo: str, mensagem: str, tipo: 
         from app.services import push_service   # import tardio — evita ciclo
         url = _URL_MAP_PERSONAL.get(tipo, "/dashboard")
         # Férias e treino concluído: levam direto ao histórico (calendário) do aluno.
-        if tipo in ("FERIAS_ALUNO", "TREINO_CONCLUIDO") and aluno_id:
+        # Sessão aberta demais: mesmo destino — é de lá que o personal acompanha o treino.
+        if tipo in ("FERIAS_ALUNO", "TREINO_CONCLUIDO", "SESSAO_ABERTA") and aluno_id:
             url = f"/alunos/{aluno_id}?tab=historico"
         # Escrita via MCP (ChatGPT/Claude/Gemini): leva à aba de treinos do aluno alterado,
         # para o personal conferir a mudança que a LLM aplicou.

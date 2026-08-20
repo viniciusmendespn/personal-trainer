@@ -5,6 +5,7 @@ Sessão ativa = 1 item denormalizado `SESSION#ACTIVE` que embute a sequência de
 (sessão, exercício) com séries acumuladas via list_append (1 write). Usado pelo portal e
 pelo agente."""
 import logging
+import os
 import time
 import unicodedata
 from datetime import date, datetime, timedelta, timezone
@@ -19,7 +20,15 @@ from app.utils import epoch_ms, new_id, now_iso, treino_vigente
 
 logger = logging.getLogger(__name__)
 
-SESSION_TTL_S = 6 * 3600  # sessão abandonada cai sozinha (ESPEC §3)
+# Prazos da sessão aberta. A regra de negócio é do scheduler (app/sessao_scheduler.py), NÃO
+# do TTL: uma sessão esquecida é finalizada com o que já foi registrado, em vez de o DynamoDB
+# apagá-la junto com os REG. Os TTLs abaixo viraram só rede de segurança (garbage collection)
+# e por isso são bem maiores que o prazo — se o scheduler falhar por horas, nada se perde.
+SESSAO_AVISO_S = 4 * 3600      # push "ainda está treinando?" (= 2h antes do fechamento)
+SESSAO_LIMITE_S = 6 * 3600     # finalização automática da sessão aberta
+SESSION_TTL_S = 24 * 3600      # GC do SESSION#ACTIVE
+REG_TTL_S = 48 * 3600          # GC do REG# — precisa sobreviver com folga ao fechamento
+SCHED_TTL_S = 7 * 24 * 3600    # GC das entradas do scheduler
 
 
 def _isoweek() -> str:
@@ -95,6 +104,39 @@ def _touch_atividade(personal_id: str, aluno_id: str, *, status: str, treino_nom
     })
 
 
+def _agendar_sessao(item: dict) -> list[dict]:
+    """Cria as entradas do scheduler (aviso + fechamento) na partição SCHED# do dia em que
+    cada uma dispara, e devolve as refs para guardar no próprio item da sessão — cancelar
+    depois vira delete direto, sem recalcular prazo (molde: agenda_notif_service.registrar)."""
+    inicio = datetime.fromisoformat(item["data_hora_inicio"].replace("Z", "+00:00"))
+    refs: list[dict] = []
+    for acao, offset in (("AVISO", SESSAO_AVISO_S), ("FECHAR", SESSAO_LIMITE_S)):
+        fire = inicio + timedelta(seconds=offset)
+        fire_iso = fire.strftime("%Y-%m-%dT%H:%M:%SZ")
+        pk = keys.pk_sched(fire_iso[:10])
+        sk = keys.sk_sessao_sched(fire_iso, acao, item["aluno_id"])
+        repo.put_item(pk, sk, {
+            "acao": acao,
+            "aluno_id": item["aluno_id"],
+            "personal_id": item.get("personal_id"),
+            "sessao_id": item["sessao_id"],
+            "data_hora_inicio": item["data_hora_inicio"],
+            "ttl": int(fire.timestamp()) + SCHED_TTL_S,
+        })
+        refs.append({"pk": pk, "sk": sk})
+    return refs
+
+
+def _limpar_sched(s: dict) -> None:
+    """Remove as entradas do scheduler de uma sessão que terminou (finalizada ou cancelada).
+    Best-effort: o scheduler revalida a sessão antes de agir, então uma sobra é inofensiva."""
+    for ref in s.get("sched_refs") or []:
+        try:
+            repo.delete_item_if_exists(ref["pk"], ref["sk"])
+        except Exception:
+            logger.warning("[sessao] falha ao limpar agendamento %s", ref, exc_info=True)
+
+
 def _fmt_duracao(segundos: int | None) -> str | None:
     if not segundos or segundos < 60:
         return None
@@ -123,6 +165,8 @@ def _notificar_treino_concluido(personal_id: str, aluno_id: str, snap: dict,
         prs = len(snap.get("novos_prs") or [])
         if prs:
             partes.append(f"{prs} novo{'s' if prs > 1 else ''} recorde{'s' if prs > 1 else ''}")
+        if snap.get("encerrada_automaticamente"):
+            partes.append("finalizado automaticamente")
         notif_service.criar(
             personal_id, "TREINO_CONCLUIDO", f"{nome} concluiu um treino",
             " · ".join(partes), aluno_id=aluno_id,
@@ -162,6 +206,7 @@ def start_session(personal_id: str, aluno_id: str, treino_id: str, iniciado_pelo
         "iniciado_pelo_aluno": iniciado_pelo_aluno,
         "ttl": int(time.time()) + SESSION_TTL_S,
     }
+    item["sched_refs"] = _agendar_sessao(item)
     repo.put_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE, item)
     _touch_atividade(
         personal_id, aluno_id, status=SessaoStatus.EM_ANDAMENTO.value, treino_nome=treino.get("nome"),
@@ -289,14 +334,30 @@ def _processar_scores_wod(aluno_id: str, s: dict, scores_blocos: list, fim_iso: 
     return out
 
 
-def finish(aluno_id: str, body=None) -> dict:
+def finish(aluno_id: str, body=None, auto: bool = False) -> dict:
     """Finaliza a sessão ativa. `body` (FinishBody) é opcional — ausente = fluxo clássico
-    (musculação), inclusive para o agente WhatsApp, que chama sem payload."""
+    (musculação), inclusive para o agente WhatsApp, que chama sem payload.
+
+    `auto=True`: fechamento pelo scheduler, para uma sessão que o aluno esqueceu de finalizar.
+    Muda só a marca do fim — o fim vira o horário do último registro, não a hora do
+    fechamento, senão as 6h de sessão esquecida entrariam em `soma_duracao_segundos` e
+    estragariam "tempo médio de treino" do aluno e do treino. Todo o resto do fluxo
+    (histórico, commit dos REG, streak, pontos, badges) é idêntico ao finish manual."""
     s = get_active(aluno_id, consistent=True)
     if not s:
         raise HTTPException(404, "Sem sessão ativa")
     s["status"] = SessaoStatus.FINALIZADA.value
+    # Denormaliza registros na sessão histórica (1 query extra, evita N+1 na timeline)
+    sessao_id = s["sessao_id"]
+    regs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=f"REG#{sessao_id}#")
     fim_iso = now_iso()
+    if auto:
+        # `atualizado_em` é reescrito a cada gravação de série; `data_hora` só existe desde a
+        # criação do REG (registros antigos) e serve de fallback.
+        marcas = [r.get("atualizado_em") or r.get("data_hora") for r in regs]
+        fim_iso = max([m for m in marcas if m] or [s["data_hora_inicio"]])
+        s["encerrada_automaticamente"] = True
+        s["data_hora_encerramento"] = now_iso()
     s["data_hora_fim"] = fim_iso
     try:
         inicio_dt = datetime.fromisoformat(s["data_hora_inicio"].replace("Z", "+00:00"))
@@ -304,9 +365,6 @@ def finish(aluno_id: str, body=None) -> dict:
         s["duracao_segundos"] = int((fim_dt - inicio_dt).total_seconds())
     except Exception:
         pass
-    # Denormaliza registros na sessão histórica (1 query extra, evita N+1 na timeline)
-    sessao_id = s["sessao_id"]
-    regs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=f"REG#{sessao_id}#")
     snap_by_ex = {e["exercicio_id"]: e for e in s.get("exercicios", [])}
     # A query vem ordenada por SK (REG#{sessao}#{exercicio_id}, alfabético). Reordena pela
     # ordem prescrita do treino (s["exercicios"] já está ordenado por `ordem` em start_session);
@@ -349,7 +407,7 @@ def finish(aluno_id: str, body=None) -> dict:
     ids_validos = {e.get("exercicio_id") for e in s.get("exercicios", [])}
     if body and getattr(body, "scores_blocos", None):
         s["scores_blocos"] = _processar_scores_wod(aluno_id, s, body.scores_blocos, fim_iso)
-    snap = {k: v for k, v in s.items() if k not in ("PK", "SK", "ttl")}
+    snap = {k: v for k, v in s.items() if k not in ("PK", "SK", "ttl", "sched_refs")}
     ts = epoch_ms()
     sk_hist = keys.sk_sessao_hist(ts, sessao_id)
     repo.put_item(keys.pk_aluno(aluno_id), sk_hist, snap)
@@ -361,6 +419,7 @@ def finish(aluno_id: str, body=None) -> dict:
     for r in regs:
         repo.update_item(keys.pk_aluno(aluno_id), r["SK"], {"ttl": None})
     repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE)
+    _limpar_sched(s)
     # Contador de execuções + tempo médio no próprio item do treino (informativo para o personal:
     # quanto aquele treino específico leva pra executar). Mesmas somas dos stats do aluno, mas por
     # treino — `sessoes_com_metrica` é o denominador (conta só execuções a partir desta mudança).
@@ -461,7 +520,26 @@ def finish(aluno_id: str, body=None) -> dict:
         )
         if s.get("iniciado_pelo_aluno"):
             _notificar_treino_concluido(personal_id, aluno_id, snap, feitos_ex, total_ex)
+    if auto:
+        _notificar_autofinalizacao(aluno_id, snap)
     return snap
+
+
+def _notificar_autofinalizacao(aluno_id: str, snap: dict) -> None:
+    """Avisa o aluno que o treino esquecido foi salvo sozinho — sem isso ele só descobre
+    abrindo o histórico, e o sumiço da sessão da tela vira o mesmo susto de antes."""
+    try:
+        from app.services import anotif_service   # import tardio — evita ciclo
+        n = len(snap.get("exercicios_exec") or [])
+        anotif_service.criar(
+            aluno_id, "SESSAO_AUTOFINALIZADA", "Treino salvo automaticamente",
+            f"Você não finalizou '{snap.get('treino_nome') or 'seu treino'}'. "
+            f"Salvamos {n} exercício{'s' if n != 1 else ''} que você registrou.",
+            ref_extra={"sessao_id": snap.get("sessao_id")},
+        )
+    except Exception:
+        logger.warning("[sessao] notificação SESSAO_AUTOFINALIZADA falhou p/ aluno %s",
+                       aluno_id, exc_info=True)
 
 
 def cancelar(aluno_id: str) -> None:
@@ -470,10 +548,80 @@ def cancelar(aluno_id: str) -> None:
     s = get_active(aluno_id, consistent=True)
     if not s:
         raise HTTPException(404, "Sem sessão ativa")
-    repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_SESSION_ACTIVE)
+    pk = keys.pk_aluno(aluno_id)
+    repo.delete_item(pk, keys.SK_SESSION_ACTIVE)
+    _limpar_sched(s)
+    # Registros da sessão descartada: expirariam pelo TTL, mas ele agora é longo (rede de
+    # segurança do fechamento automático) — apagar aqui evita lixo na partição do aluno.
+    regs = repo.query_pk(pk, sk_prefix=f"REG#{s['sessao_id']}#")
+    if regs:
+        repo.batch_write(deletes=[(pk, r["SK"]) for r in regs])
     personal_id = s.get("personal_id")
     if personal_id:
         repo.delete_item(keys.pk_personal(personal_id), keys.sk_atividade(aluno_id))
+
+
+def _sessao_do_agendamento(sched: dict, consistent: bool = False) -> dict | None:
+    """A entrada do scheduler é só um gatilho — a verdade está no SESSION#ACTIVE. Devolve a
+    sessão só se ela ainda for a mesma: já finalizada, cancelada ou substituída por outra
+    (aluno começou um treino novo), o disparo não vale mais."""
+    s = get_active(sched["aluno_id"], consistent=consistent)
+    if not s or s.get("sessao_id") != sched.get("sessao_id"):
+        return None
+    return s
+
+
+def avisar_sessao_aberta(sched: dict) -> str:
+    """Disparo de SESSAO_SCHED#...#AVISO: lembra que a sessão segue aberta e vai fechar em
+    breve. Vai para quem conduz o treino — o aluno (push no app) quando foi ele que iniciou,
+    senão o personal, que está com o portal aberto conduzindo."""
+    s = _sessao_do_agendamento(sched)
+    if not s:
+        return "ignorada"
+    from app.services import anotif_service, notif_service   # import tardio — evita ciclo
+    treino = s.get("treino_nome") or "seu treino"
+    hora = _hora_local(s.get("data_hora_inicio"))
+    restante = int((SESSAO_LIMITE_S - SESSAO_AVISO_S) / 3600)
+    if s.get("iniciado_pelo_aluno"):
+        anotif_service.criar(
+            sched["aluno_id"], "SESSAO_ABERTA", "Treino ainda aberto",
+            f"Você começou '{treino}' às {hora} e ainda não finalizou. Finalize para salvar "
+            f"seus registros — em {restante}h ele será finalizado automaticamente.",
+            ref_extra={"sessao_id": s.get("sessao_id")},
+        )
+    elif sched.get("personal_id"):
+        notif_service.criar(
+            sched["personal_id"], "SESSAO_ABERTA", "Sessão ainda aberta",
+            f"'{treino}', iniciado às {hora}, não foi finalizado. "
+            f"Em {restante}h ele será finalizado automaticamente com o que já foi registrado.",
+            aluno_id=sched["aluno_id"], ref_extra={"sessao_id": s.get("sessao_id")},
+        )
+    return "avisada"
+
+
+def encerrar_sessao_aberta(sched: dict) -> str:
+    """Disparo de SESSAO_SCHED#...#FECHAR. Sessão com registro é finalizada de verdade (vira
+    histórico, evolução e pontos); sessão sem nenhum registro é descartada — treino que não
+    aconteceu não pode virar sessão vazia com streak e pontos."""
+    s = _sessao_do_agendamento(sched, consistent=True)
+    if not s:
+        return "ignorada"
+    regs = repo.query_pk(keys.pk_aluno(sched["aluno_id"]), sk_prefix=f"REG#{s['sessao_id']}#")
+    if not any(r.get("series_exec") for r in regs):
+        cancelar(sched["aluno_id"])
+        return "descartada"
+    finish(sched["aluno_id"], auto=True)
+    return "finalizada"
+
+
+def _hora_local(iso: str | None) -> str:
+    """HH:MM no fuso do produto (mesmo TZ_OFFSET_HOURS de agenda_notif_service)."""
+    try:
+        offset = int(os.environ.get("TZ_OFFSET_HOURS", "-3"))
+        dt = datetime.fromisoformat((iso or "").replace("Z", "+00:00")) + timedelta(hours=offset)
+        return dt.strftime("%H:%M")
+    except (ValueError, AttributeError):
+        return "—"
 
 
 def record(aluno_id: str, series: list, exercicio_id: str | None = None,
@@ -498,9 +646,10 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
         "aluno_id": aluno_id, "data_hora": now_iso(),
         "canal_origem": canal.value, "classificacao": classificacao.value, "ator": ator.value,
         "GSI1PK": keys.gsi1_registro(aluno_id, chave), "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
-        "ttl": int(time.time()) + SESSION_TTL_S,   # expira junto com a sessão se abandonada
+        "ttl": int(time.time()) + REG_TTL_S,   # só GC: o finish (manual ou automático) remove
     }
-    updated = repo.append_series(pk, keys.sk_registro(s["sessao_id"], ex_id), series, on_insert)
+    updated = repo.append_series(pk, keys.sk_registro(s["sessao_id"], ex_id), series, on_insert,
+                                 set_always={"atualizado_em": now_iso()})
 
     # Agregação na escrita (ESPEC §3.1): volume desta gravação + recorde de carga.
     ex_snap = next((e for e in snaps if e.get("exercicio_id") == ex_id), None) or ex
@@ -597,10 +746,13 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
         "aluno_id": aluno_id, "data_hora": now_iso(),
         "canal_origem": canal.value, "classificacao": classificacao.value, "ator": ator.value,
         "GSI1PK": keys.gsi1_registro(aluno_id, chave), "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
-        "ttl": int(time.time()) + SESSION_TTL_S,   # expira junto com a sessão se abandonada
+        "ttl": int(time.time()) + REG_TTL_S,   # só GC: o finish (manual ou automático) remove
     }
+    # `atualizado_em` marca a última gravação (data_hora só existe desde a criação do REG):
+    # é dele que o fechamento automático tira a hora real do fim do treino.
     updated = repo.put_series(pk, sk, series, on_insert,
-                              set_always={"substituto_nome": substituto_nome, "pse": pse})
+                              set_always={"substituto_nome": substituto_nome, "pse": pse,
+                                          "atualizado_em": now_iso()})
     delta = _volume(series) - old_vol
     if delta:
         wk = _isoweek()
@@ -994,6 +1146,7 @@ def historico_mes(aluno_id: str, ano: int, mes: int, incluir_fotos: bool = True)
             "volume_total": vol,
             "total_series": s.get("total_series"),
             "novos_prs": novos_prs,
+            "encerrada_automaticamente": s.get("encerrada_automaticamente") or None,
             "scores_blocos": s.get("scores_blocos") or None,
             "checkin_url": (media_service.gerar_presigned_view_url(checkin_key) if checkin_key else None) if incluir_fotos else None,
         })

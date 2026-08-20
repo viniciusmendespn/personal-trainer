@@ -15,6 +15,8 @@ _FUNCOES = [
     "batch_get_items", "put_item", "put_item_if_absent", "update_item",
     "update_item_if_exists", "add_and_set", "increment_counter", "delete_item",
     "delete_item_if_exists", "batch_write", "clean", "clean_all",
+    "put_series", "append_series", "list_append_item", "add_to_set",
+    "update_if_greater", "update_if_less", "query_gsi1_last",
 ]
 
 

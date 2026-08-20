@@ -408,6 +408,28 @@ Resources:
             Name: !Sub "${ProjectName}-agenda-notif-${Stage}"
             Enabled: true
 
+  # ── Sessão Scheduler (EventBridge 5 min — sessão de treino esquecida aberta) ─
+  # Lambda separada do AgendaNotif de propósito: uma exceção varrendo sessões não pode
+  # derrubar os lembretes de aula, e vice-versa.
+  SessaoSchedFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.sessao_scheduler.handler
+      CodeUri: ./
+      Description: "Avisa em 4h e finaliza sozinha em 6h a sessão de treino deixada aberta"
+      Timeout: 60
+      MemorySize: 256
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MainTable
+      Events:
+        Every5Min:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
+            Name: !Sub "${ProjectName}-sessao-sched-${Stage}"
+            Enabled: true
+
   # ── DynamoDB (single-table — ESPEC §2) ───────────────────────────────────────
   # GSI1 = "registros por exercício no tempo" (ESPEC §2.3/§4.1).
   # Projection ALL por ora; refinar p/ INCLUDE quando os atributos congelarem.

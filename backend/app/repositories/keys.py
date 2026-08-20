@@ -97,6 +97,18 @@ def sk_agenda_notif(notif_iso: str, agendamento_id: str) -> str:
     return f"AGENDA_NOTIF#{notif_iso}#{agendamento_id}"
 
 
+# ── Sessão de treino aberta (scheduler a cada 5 min, partição SCHED#) ────────
+# Duas entradas por sessão iniciada: avisar o aluno que ela segue aberta e, depois,
+# finalizá-la sozinha com o que foi registrado. Prefixo único e `fire_iso` logo em
+# seguida → 1 Query BETWEEN por dia pega os dois eventos já em ordem de disparo.
+SESSAO_SCHED_PREFIX = "SESSAO_SCHED#"
+
+
+def sk_sessao_sched(fire_iso: str, acao: str, aluno_id: str) -> str:
+    """acao = AVISO | FECHAR (ver sessao_service.SESSAO_AVISO_S / SESSAO_LIMITE_S)."""
+    return f"SESSAO_SCHED#{fire_iso}#{acao}#{aluno_id}"
+
+
 # ── Templates de treino reutilizáveis (partição PT#) ─────────────────────────
 TEMPLATE_PREFIX = "TEMPLATE#"
 

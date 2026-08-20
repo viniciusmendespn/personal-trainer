@@ -1189,6 +1189,17 @@ function formatElapsed(secs: number) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
+// Espelho de sessao_service.SESSAO_AVISO_S / SESSAO_LIMITE_S — mexeu num, mexa no outro.
+// O backend avisa por push em 4h e finaliza sozinho em 6h; aqui é só o aviso na tela, para
+// quem está com o app aberto não depender da notificação.
+const SESSAO_AVISO_S = 4 * 3600
+const SESSAO_LIMITE_S = 6 * 3600
+
+function horaFechamentoAutomatico(inicioIso: string) {
+  const fim = new Date(new Date(inicioIso).getTime() + SESSAO_LIMITE_S * 1000)
+  return fim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}
+
 function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (exId: string) => void }) {
   const qc = useQueryClient()
   const confirm = useConfirm()
@@ -1278,6 +1289,13 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
       <div className="flex items-center justify-between text-xs text-text-muted">
         <span>{feitos}/{exs.length} exercícios feitos</span>
       </div>
+      {elapsed >= SESSAO_AVISO_S && (
+        <p className="rounded-lg border border-energy/40 bg-energy/10 px-3 py-2 text-xs text-text-secondary">
+          Este treino está aberto há um tempão. Finalize para salvar — se você esquecer, ele é
+          finalizado automaticamente às {horaFechamentoAutomatico(sessao.data_hora_inicio)} com o
+          que já foi registrado.
+        </p>
+      )}
       <div className="h-2 rounded-full bg-surface-elevated border border-border overflow-hidden">
         <div
           className="h-full bg-energy transition-all duration-300"

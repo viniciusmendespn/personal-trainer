@@ -100,6 +100,54 @@ class FakeRepo:
         for pk, sk in deletes or []:
             self.itens.pop((pk, sk), None)
 
+    # ── registros de série (ver dynamo_repo.put_series / append_series) ─────
+    def _series(self, pk, sk, on_insert, set_always, novas, append):
+        item = self.itens.get((pk, sk))
+        if item is None:
+            item = {**on_insert, "PK": pk, "SK": sk}
+            self.itens[(pk, sk)] = item
+        item.update(set_always or {})
+        atuais = item.get("series_exec", []) if append else []
+        item["series_exec"] = list(atuais) + list(novas)
+        return dict(item)
+
+    def put_series(self, pk, sk, series, on_insert, set_always=None):
+        return self._series(pk, sk, on_insert, set_always, series, append=False)
+
+    def append_series(self, pk, sk, new_series, on_insert, set_always=None):
+        return self._series(pk, sk, on_insert, set_always, new_series, append=True)
+
+    def list_append_item(self, pk, sk, field, item):
+        alvo = self.itens.get((pk, sk))
+        if alvo is None:
+            return None
+        alvo[field] = list(alvo.get(field, [])) + [item]
+        return dict(alvo)
+
+    def add_to_set(self, pk, sk, field, values):
+        alvo = self.itens.setdefault((pk, sk), {"PK": pk, "SK": sk})
+        alvo[field] = set(alvo.get(field, set())) | set(values)
+
+    def _update_if(self, pk, sk, field, value, extra, melhor):
+        item = self.itens.get((pk, sk))
+        if item is not None and not melhor(value, item.get(field)):
+            return False
+        self.update_item(pk, sk, {**(extra or {}), field: value})
+        return True
+
+    def update_if_greater(self, pk, sk, field, value, extra=None):
+        return self._update_if(pk, sk, field, value, extra,
+                               lambda novo, atual: atual is None or novo > atual)
+
+    def update_if_less(self, pk, sk, field, value, extra=None):
+        return self._update_if(pk, sk, field, value, extra,
+                               lambda novo, atual: atual is None or novo < atual)
+
+    def query_gsi1_last(self, gsi1pk, limit=1):
+        itens = [dict(v) for v in self.itens.values() if v.get("GSI1PK") == gsi1pk]
+        itens.sort(key=lambda i: i.get("GSI1SK", ""), reverse=True)
+        return itens[:limit]
+
     # ── serialização ───────────────────────────────────────────────────────
     def clean(self, item):
         if item is None:

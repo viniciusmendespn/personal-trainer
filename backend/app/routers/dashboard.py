@@ -9,7 +9,7 @@ from app.models.enums import SessaoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import financeiro_service, media_service, notif_service
-from app.services.sessao_service import SESSION_TTL_S
+from app.services.sessao_service import SESSAO_LIMITE_S
 
 router = APIRouter(prefix="/v1", tags=["dashboard"])
 
@@ -80,9 +80,9 @@ def dashboard(personal_id: str = Depends(get_current_personal_id)):
         for aid in {a["aluno_id"] for a in atividade_raw}
     }
 
-    # Status efetivo: ATIVIDADE# não tem TTL, então uma sessão abandonada fica presa em
-    # EM_ANDAMENTO mesmo após o SESSION#ACTIVE expirar. Deriva ABANDONADA quando a última
-    # atividade é mais antiga que o tempo de vida da sessão (6h) — sem GetItem/scan extra.
+    # Status efetivo: ATIVIDADE# não tem TTL. O scheduler fecha a sessão esquecida em 6h e
+    # marca FINALIZADA aqui, mas se ele falhar o ponteiro ficaria preso em EM_ANDAMENTO —
+    # deriva ABANDONADA passado o prazo da sessão, sem GetItem/scan extra.
     agora = datetime.now(timezone.utc)
 
     def _status_efetivo(a: dict) -> str | None:
@@ -90,7 +90,7 @@ def dashboard(personal_id: str = Depends(get_current_personal_id)):
         if st == SessaoStatus.EM_ANDAMENTO.value:
             try:
                 dt = datetime.fromisoformat((a.get("atualizado_em") or "").replace("Z", "+00:00"))
-                if (agora - dt).total_seconds() > SESSION_TTL_S:
+                if (agora - dt).total_seconds() > SESSAO_LIMITE_S:
                     return SessaoStatus.ABANDONADA.value
             except (ValueError, AttributeError):
                 pass
