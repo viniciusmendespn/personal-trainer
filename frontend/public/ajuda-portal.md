@@ -916,4 +916,10 @@ R: Em Configurações → WhatsApp, selecione a aba "Código de pareamento", inf
 
 ## SUPORTE
 
-Em caso de dúvidas não respondidas por este guia, entre em contato com o suporte via WhatsApp pelo link disponível na tela de configurações do portal.
+Em caso de dúvidas não respondidas por este guia, fale com o suporte no WhatsApp:
+**(13) 98808-8204** — https://wa.me/5513988088204
+
+O atendimento é pessoal, feito por uma pessoa só, então a resposta pode levar algumas horas.
+Antes de chamar, procure a resposta neste guia e nas perguntas frequentes da página Ajuda do
+portal: a grande maioria das dúvidas está respondida ali e se resolve na hora. Use o WhatsApp
+para o que o guia não resolve — bug, cobrança ou problema na conta.
