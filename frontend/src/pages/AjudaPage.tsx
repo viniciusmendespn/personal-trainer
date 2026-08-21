@@ -248,33 +248,18 @@ export function AjudaPage() {
         </p>
       </section>
 
-      {/* Suporte humano — último recurso, depois do FAQ e do guia */}
-      <section className="rounded-2xl border border-border bg-surface-elevated p-5 space-y-4">
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
-            <LifeBuoy size={18} className="text-accent-hover" />
-          </div>
-          <div>
-            <h2 className="font-semibold text-text text-sm">Ainda travado? Fale com o suporte</h2>
-            <p className="text-xs text-text-secondary mt-1 leading-relaxed">
-              O atendimento é pessoal, feito por uma pessoa só — então a resposta pode levar algumas
-              horas. Antes de chamar, confira as perguntas frequentes acima e o guia completo: a
-              grande maioria das dúvidas já está respondida ali e você resolve na hora. Use o
-              WhatsApp para o que o guia não resolve — bug, cobrança ou problema na conta.
-            </p>
-          </div>
-        </div>
-
+      {/* Suporte humano — discreto, no rodapé */}
+      <div className="pt-2 flex justify-center">
         <a
           href="https://wa.me/5513988088204?text=Ol%C3%A1!%20Preciso%20de%20ajuda%20com%20o%20CoachPilot"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#25D366] text-sm font-medium transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] text-text-muted hover:text-text-secondary hover:bg-white/5 transition-colors"
         >
-          <MessageSquare size={15} />
-          WhatsApp do suporte — (13) 98808-8204
+          <LifeBuoy size={13} />
+          Falar com o suporte no WhatsApp
         </a>
-      </section>
+      </div>
     </div>
   )
 }
