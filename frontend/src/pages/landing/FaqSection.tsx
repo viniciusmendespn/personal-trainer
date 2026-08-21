@@ -31,6 +31,14 @@ const FAQS = [
     a: 'O CoachPilot foi feito para você operar por linguagem natural. Você conversa — por texto ou voz — com o seu próprio ChatGPT, Claude ou Gemini usando os prompts prontos da plataforma, e ele devolve: a lista de alunos a importar, um pacote de treino completo (exercícios, séries, repetições, cargas e intervalos) ou o ajuste de um treino existente. Você revisa e importa com 1 clique. Isso está incluído e não tem custo extra — você usa a IA que já tem.',
   },
   {
+    q: 'O que é a conexão MCP do CoachPilot?',
+    a: 'MCP é o padrão que o ChatGPT, o Claude e o Gemini usam para se conectar a sistemas de fora — e o CoachPilot fala esse padrão. Você autoriza a conexão uma vez e, a partir daí, conversa com a sua IA sobre os seus dados reais: "quem está sem treinar há 10 dias", "me dá o resumo da Júlia antes da sessão", "como está a evolução do agachamento da Carla", "adapta o treino do Pedro pra dor no ombro e aplica". Sem copiar, sem colar, sem baixar arquivo. Está incluído nos dois planos, inclusive no grátis, e roda na assinatura de IA que você já paga.',
+  },
+  {
+    q: 'A IA vai ter acesso aos dados dos meus alunos? É seguro?',
+    a: 'A conexão só existe se você autorizar, e só alcança os seus alunos — nenhuma conexão enxerga dado de outro personal. Na hora de conectar você escolhe se a IA apenas consulta ou se também pode alterar treinos. Toda alteração feita pela IA gera aviso no portal e tem botão de desfazer, e você revoga o acesso quando quiser em Configurações → Conexões. Não existe apagar aluno nem operação em massa pela IA.',
+  },
+  {
     q: 'Posso migrar dados de outro software?',
     a: 'Sim. Você pode cadastrar seus alunos manualmente em poucos minutos ou, mais rápido, jogar sua planilha/lista no ChatGPT com o prompt da plataforma e importar todos de uma vez. Para bases maiores, a equipe auxilia na migração assistida sem custo adicional — fale pelo WhatsApp.',
   },

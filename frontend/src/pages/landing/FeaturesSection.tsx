@@ -1,4 +1,4 @@
-import { Users, Dumbbell, Activity, Calendar, Smartphone, Trophy, MessageCircle, BarChart2, Bell, Sparkles } from 'lucide-react'
+import { Users, Dumbbell, Activity, Calendar, Smartphone, Trophy, MessageCircle, BarChart2, Bell, Sparkles, Plug } from 'lucide-react'
 import { useState } from 'react'
 
 const FEATURES = [
@@ -7,6 +7,12 @@ const FEATURES = [
     title: 'Cadastro por IA (linguagem natural)',
     desc: 'Incluído e grátis: cadastre alunos, monte treinos completos e ajuste programas conversando — por texto ou voz — com o seu próprio ChatGPT. Importe tudo com 1 clique, sem digitar série a série.',
     color: '#10b981',
+  },
+  {
+    icon: <Plug size={28} />,
+    title: 'Conexão MCP (sua IA falando com seus dados)',
+    desc: 'Ligue o ChatGPT, Claude ou Gemini direto no CoachPilot e pergunte em português: quem está sem treinar, o resumo do aluno antes da sessão, a evolução de um exercício. Ela também aplica o treino que você pedir — com aviso e desfazer.',
+    color: '#14b8a6',
   },
   {
     icon: <Users size={28} />,

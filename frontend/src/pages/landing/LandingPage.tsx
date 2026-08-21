@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthProvider'
 import LandingNavbar from './LandingNavbar'
 import HeroSection from './HeroSection'
 import IaOperacaoSection from './IaOperacaoSection'
+import McpSection from './McpSection'
 import FeaturesSection from './FeaturesSection'
 import HowItWorksSection from './HowItWorksSection'
 import LojaSection from './LojaSection'
@@ -61,7 +62,7 @@ export default function LandingPage() {
   useEffect(() => {
     document.title = 'CoachPilot — Gestão para Personal Trainers'
     document.querySelector('meta[name="description"]')
-      ?.setAttribute('content', 'CoachPilot — Plataforma completa para personal trainers. Gerencie alunos, treinos, avaliações físicas e agenda em um só lugar. Experimente grátis.')
+      ?.setAttribute('content', 'Plataforma para personal trainers: alunos, treinos, avaliações e agenda. Conecte sua IA (ChatGPT, Claude, Gemini) aos seus dados via MCP. Comece grátis.')
     document.querySelector('link[rel="canonical"]')
       ?.setAttribute('href', 'https://coachpilot.com.br/')
   }, [])
@@ -113,6 +114,7 @@ export default function LandingPage() {
         <HeroSection />
         <FeaturesSection />
         <IaOperacaoSection />
+        <McpSection />
         <HowItWorksSection />
         <LojaSection />
         <ComparisonSection />

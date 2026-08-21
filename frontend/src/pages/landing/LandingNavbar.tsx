@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react'
 
 const NAV_LINKS = [
   { label: 'Funcionalidades', href: '#features' },
+  { label: 'IA + MCP', href: '#mcp' },
   { label: 'Como funciona', href: '#how' },
   { label: 'Loja', href: '#loja' },
   { label: 'Planos', href: '#pricing' },
