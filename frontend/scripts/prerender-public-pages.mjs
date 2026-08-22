@@ -14,7 +14,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { BASE_URL, PAGES } from '../src/pages/landing/publicSeoData.js'
+import { BASE_URL, PAGES, allPublicPaths } from '../src/pages/landing/publicSeoData.js'
 import { BLOG_POSTS, BLOG_BASE } from '../src/pages/landing/blogData.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -138,11 +138,17 @@ function renderHomeContent() {
         <li><a href="/app-de-treino-para-alunos">App do aluno</a> via PWA com gamificação: ranking, conquistas e streaks.</li>
         <li>Financeiro com cobrança via Pix direto na conta do personal, sem taxa da plataforma.</li>
         <li><a href="/whatsapp-para-personal-trainer">Canal WhatsApp e Assistente IA do aluno</a> como add-ons opcionais.</li>
+        <li><a href="/ia-para-personal-trainer">Conexão MCP com ChatGPT, Claude ou Gemini</a>: consulte alunos e aplique treinos conversando, incluído nos dois planos.</li>
       </ul>
     </section>
     <section>
+      <h2>Conecte a sua IA ao CoachPilot (servidor MCP)</h2>
+      <p>O CoachPilot publica um servidor MCP — o padrão que o ChatGPT, o Claude e o Gemini usam para se conectar a sistemas externos. Você autoriza uma vez e passa a gerenciar alunos e treinos conversando: pergunta quem não treina há mais de 10 dias, pede o resumo de um aluno antes da sessão, manda adaptar o treino para uma dor no ombro — e a IA aplica direto na plataforma, com aviso e desfazer. Sem copiar, sem colar, sem abrir o app. Gratuito nos dois planos.</p>
+      <p><a href="/ia-para-personal-trainer">IA para personal trainer</a> · <a href="/chatgpt-para-personal-trainer">ChatGPT para personal trainer</a> · <a href="/blog/gerenciar-alunos-e-treinos-pelo-chatgpt">O que dá para fazer pelo chat</a></p>
+    </section>
+    <section>
       <h2>Pare de digitar série a série — converse com a IA</h2>
-      <p>Monte pacotes de treino e migre a sua carteira inteira de alunos (planilha, PDF ou print) conversando com o ChatGPT, Claude ou Gemini que você já usa: a IA gera tudo no formato do CoachPilot e você importa com um clique, revisando antes de aplicar. Grátis em todos os planos.</p>
+      <p>Prefere não conectar nada? Monte pacotes de treino e migre a sua carteira inteira de alunos (planilha, PDF ou print) conversando com o ChatGPT, Claude ou Gemini que você já usa: a IA gera tudo no formato do CoachPilot e você importa com um clique, revisando antes de aplicar. Grátis em todos os planos.</p>
     </section>
     <section>
       <h2>Planos simples</h2>
@@ -292,6 +298,8 @@ function writeRoute(path, html) {
 const PRIORITY = {
   '/': { priority: '1.0', changefreq: 'weekly' },
   '/software-para-personal-trainer': { priority: '0.9', changefreq: 'monthly' },
+  '/ia-para-personal-trainer': { priority: '0.9', changefreq: 'monthly' },
+  '/chatgpt-para-personal-trainer': { priority: '0.9', changefreq: 'monthly' },
   '/app-para-personal-trainer': { priority: '0.85', changefreq: 'monthly' },
   '/gestao-de-alunos-personal-trainer': { priority: '0.85', changefreq: 'monthly' },
   '/precos': { priority: '0.85', changefreq: 'monthly' },
@@ -308,8 +316,18 @@ const PRIORITY = {
   '/privacidade': { priority: '0.3', changefreq: 'yearly' },
 }
 
+// A lista de rotas vem de allPublicPaths() (+ /blog, que não vive em PAGES): PRIORITY é só
+// o ajuste fino. Assim, página nova em publicSeoData.js entra no sitemap mesmo que ninguém
+// se lembre de mexer aqui — antes, a rota era prerenderizada e ficava fora do sitemap.
+const DEFAULT_PRIORITY = { priority: '0.7', changefreq: 'monthly' }
+
 function buildSitemap() {
-  const staticUrls = Object.entries(PRIORITY).map(([path, meta]) => ({ loc: `${BASE_URL}${path === '/' ? '/' : path}`, lastmod: buildDate, ...meta }))
+  const paths = [...new Set([...allPublicPaths(), '/blog', ...Object.keys(PRIORITY)])]
+  const staticUrls = paths.map((path) => ({
+    loc: `${BASE_URL}${path === '/' ? '/' : path}`,
+    lastmod: buildDate,
+    ...(PRIORITY[path] ?? DEFAULT_PRIORITY),
+  }))
   const postUrls = BLOG_POSTS.map((post) => ({
     loc: `${BASE_URL}/blog/${post.slug}`,
     lastmod: post.dateModified,

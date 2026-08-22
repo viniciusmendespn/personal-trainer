@@ -226,6 +226,17 @@ export default function McpSection() {
             Conectar minha IA <ArrowRight size={18} />
           </Link>
         </div>
+
+        <p style={{ textAlign: 'center', marginTop: 20, fontSize: 14.5, color: '#475569' }}>
+          Quer entender antes de criar a conta?{' '}
+          <Link to="/chatgpt-para-personal-trainer" style={{ color: '#0d9488', fontWeight: 700 }}>
+            Como funciona a conexão com ChatGPT, Claude ou Gemini
+          </Link>{' '}
+          ·{' '}
+          <Link to="/blog/gerenciar-alunos-e-treinos-pelo-chatgpt" style={{ color: '#0d9488', fontWeight: 700 }}>
+            tudo o que dá para pedir
+          </Link>
+        </p>
       </div>
     </section>
   )

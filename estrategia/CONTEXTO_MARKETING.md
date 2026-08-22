@@ -133,6 +133,17 @@ CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, nã
 
 ## 6. Diferencial central (mecanismo único de venda)
 
+> **Desde agosto/2026: "Conecte o ChatGPT, o Claude ou o Gemini que você já paga e gerencie
+> alunos e treinos conversando — sem abrir o app."**
+
+O CoachPilot publica um **servidor MCP** (`mcp.coachpilot.com.br`). O personal autoriza uma vez e a
+IA que ele já assina passa a ler os dados reais dele — alunos, anamnese, avaliações, sessões,
+evolução, agenda, pendências — e, se autorizada, a aplicar programas de treino direto na
+plataforma, com notificação, auditoria e desfazer por 7 dias. Nenhum concorrente nacional oferecia
+isso na verificação de agosto/2026, e o custo de IA fica na assinatura do personal, não na
+mensalidade. Detalhes e limites do que se pode afirmar: §14.
+
+> Diferencial anterior, que continua valendo para quem não quer conectar nada:
 > **"Pare de digitar série a série. Converse com a IA — ela cadastra por você."**
 
 O maior gargalo do personal é o trabalho braçal: montar e digitar, exercício por exercício, o
@@ -320,7 +331,13 @@ gerenciando seus alunos como um profissional."*
 
 ## 13. Ângulos de conteúdo sugeridos (para gerar posts/anúncios)
 
-- **Operação por IA (ângulo nº 1)**: "Pare de digitar série a série — fale com o ChatGPT e ele
+- **IA conectada (ângulo nº 1 desde agosto/2026)**: "Pergunte ao seu ChatGPT quem não treina há 10
+  dias." Demonstrar em tela: uma pergunta no celular, a resposta vindo da carteira real; depois
+  "adapta o treino do Pedro pra dor no ombro e aplica" e a notificação chegando no portal com o
+  botão de desfazer. É o conteúdo mais difícil de o concorrente copiar — ele precisaria construir o
+  produto. Sub-ângulos: "sem abrir o app", "a IA que você já paga", "não é plugin, é MCP",
+  "renovar o mesociclo de 30 alunos num pedido".
+- **Operação por IA sem conexão**: "Pare de digitar série a série — fale com o ChatGPT e ele
   cadastra." Demonstrar montar um ABCDE de um aluno em ~2 min conversando (texto ou voz) e importando
   com 1 clique; ou migrar a lista de alunos de uma planilha jogando o arquivo no ChatGPT.
 - **Dor → solução**: "Cansado de planilha de treino bagunçada? [funcionalidade] resolve isso."
@@ -350,11 +367,29 @@ gerenciando seus alunos como um profissional."*
   landing page (não confirmar como "+500 personal trainers" — é alunos gerenciados, não personals).
 - Preço promo lançamento (R$39,90/mês) pode ser alterado — verificar landing page antes de
   publicar conteúdo de preço.
-- **Sobre a operação por IA**: NÃO afirmar que é um "plugin", "GPT Action", "integração nativa com
-  a OpenAI" ou que a IA "escreve direto no sistema/banco sem revisão". O fluxo real é: prompt pronto
-  → a IA gera JSON/CSV → o personal cola/anexa e importa com 1 clique, revisando antes. Pode dizer
-  "o ChatGPT conhece o CoachPilot" no sentido de que os prompts ensinam o formato — não que há uma
-  conexão automática de API.
+- **Sobre a operação por IA — há DOIS canais, com regras diferentes** (atualizado em agosto/2026,
+  quando o servidor MCP entrou em produção). Não misturar os dois na mesma frase:
+  - *Canal por prompt* (sem conexão): prompt pronto → a IA gera JSON/CSV → o personal cola/anexa e
+    importa com 1 clique, revisando antes. Aqui vale a regra antiga: a IA **gera**, não escreve.
+  - *Canal MCP* (com conexão autorizada): a IA lê os dados reais e, com escopo de escrita, **grava
+    o programa direto na plataforma**. Isso pode e deve ser afirmado — é o diferencial. O controle
+    não é a revisão em tela, é: escopo escolhido na autorização (leitura ou leitura+escrita),
+    notificação ao personal a cada escrita, auditoria e desfazer por 7 dias.
+  - NÃO chamar de "plugin", "GPT Action" ou "integração nativa com a OpenAI". É **servidor MCP**
+    (Model Context Protocol), padrão aberto — a mesma conexão serve ChatGPT, Claude e Gemini.
+    "Plugin do ChatGPT" só entra em conteúdo como termo de busca, sempre corrigido no corpo.
+  - NÃO prometer escrita em massa pelo chat: `aplicar_programa_treino` é por aluno, com snapshot
+    individual, por decisão de projeto. Dizer "um pedido só, a IA aplica aluno por aluno".
+    O lote real (mesmo programa para vários alunos) é o template/rotina aplicado pelo portal.
+  - NÃO prometer cadastro de aluno, avaliação física ou agenda pelo chat — não existem tools de
+    escrita para isso. Só treino é gravável pela conexão.
+  - Requisito de plano de IA é de terceiro e muda: datar sempre. Em agosto/2026, Claude aceita
+    conector personalizado inclusive no plano grátis (limite de 1), ChatGPT exige Developer mode
+    (planos pagos) e no Gemini o caminho é CLI/Vertex.
+  - Ao falar de conexão, mencionar o lado LGPD: o escopo de leitura alcança anamnese, avaliações e
+    relatos de dor — dado sensível de saúde —, e consultar por IA externa é transferência
+    internacional que exige consentimento específico do aluno. Isso é diferencial de confiança,
+    não ressalva a esconder.
 - Não confundir as duas IAs: **operação por IA do personal = grátis**; **Assistente IA do aluno =
   add-on pago por aluno**. Nunca dizer que "a IA está inclusa no preço" sem qualificar a qual das
   duas se refere.

@@ -2,6 +2,8 @@
 
 export type PageKey =
   | 'software-personal-trainer'
+  | 'ia-personal-trainer'
+  | 'chatgpt-personal-trainer'
   | 'app-personal-trainer'
   | 'gestao-alunos'
   | 'app-treino-alunos'

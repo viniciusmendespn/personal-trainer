@@ -555,6 +555,7 @@ Resources:
         // o crawler recebe o shell da home em todas as URLs (SEO quebrado).
         var PRERENDERED = {
           '/divulgadores': 1, '/software-para-personal-trainer': 1, '/app-para-personal-trainer': 1,
+          '/ia-para-personal-trainer': 1, '/chatgpt-para-personal-trainer': 1,
           '/gestao-de-alunos-personal-trainer': 1, '/app-de-treino-para-alunos': 1,
           '/avaliacao-fisica-digital': 1, '/agenda-para-personal-trainer': 1,
           '/whatsapp-para-personal-trainer': 1, '/coachpilot-vs-planilhas': 1,

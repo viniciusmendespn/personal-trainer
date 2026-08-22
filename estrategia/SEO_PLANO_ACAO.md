@@ -66,8 +66,9 @@ ordem de esforço/retorno:
 
 ## 3. Cadência de conteúdo (a partir da semana 2)
 
-O blog nasceu com 6 artigos. Meta: **+2 artigos/mês** (Claude escreve, você revisa). Fila
-sugerida, por volume de busca e afinidade com o produto:
+O blog nasceu com 6 artigos e chegou a 11 em agosto/2026 (lote do cluster IA + MCP, ver §5).
+Meta: **+2 artigos/mês** (Claude escreve, você revisa). Fila sugerida, por volume de busca e
+afinidade com o produto:
 
 1. "Quanto cobrar como personal trainer em 2026 (tabela por cidade e modelo)"
 2. "CoachPilot vs Tecnofit Personal: comparativo"
@@ -79,9 +80,21 @@ sugerida, por volume de busca e afinidade com o produto:
 8. "Como usar WhatsApp profissionalmente sendo personal trainer"
 
 Regras editoriais (dos limites de `CONTEXTO_MARKETING.md` §14):
-- IA **gera + importa com revisão** — nunca "escreve direto no sistema".
+- **Dois canais de IA, regras diferentes** — no fluxo por prompt, a IA *gera e o personal importa
+  com revisão*; na conexão MCP, a IA *escreve direto*, e o que garante o controle é
+  escopo + notificação + auditoria + desfazer em 7 dias. Nunca misturar os dois na mesma frase.
+- **Nunca chamar a conexão de "plugin"** como afirmação própria. "Plugin do ChatGPT" só aparece
+  como termo de busca, sempre corrigido no corpo ("plugins foram descontinuados; o padrão é MCP").
 - App é **PWA** — nunca prometer App Store/Google Play.
 - Não prometer integrações inexistentes (Apple Health, Strava, multi-tenant).
+- **Não prometer escrita em massa pelo MCP**: a IA aplica um aluno por vez, por decisão de projeto.
+  O lote de verdade é o template/rotina aplicado a vários alunos pelo portal. Dizer "um pedido só",
+  não "uma operação só".
+- Requisito de plano de IA é de terceiro e muda: sempre datar ("agosto/2026") — hoje Claude aceita
+  conector no plano grátis (1), ChatGPT exige Developer mode em plano pago, Gemini é CLI/Vertex.
+- Dado de saúde (anamnese, avaliação, foto, relato de dor) é **sensível pela LGPD**: todo conteúdo
+  que fala de enviar dado de aluno para IA externa menciona consentimento específico. É diferencial
+  de confiança — nenhum concorrente escreve isso.
 - Dados de concorrentes sempre com "verificado em <mês/ano>, sujeito a alteração" e tom neutro
   (regra do battlecard: nunca falar mal).
 - Todo artigo linka ≥2 landing pages internas e ≥1 outro artigo.
@@ -94,9 +107,9 @@ Regras editoriais (dos limites de `CONTEXTO_MARKETING.md` §14):
 - Impressões e cliques totais (tendência).
 - Consultas: quais queries geram impressão (esperar "coachpilot", depois long-tail
   "coachpilot vs planilhas", "whatsapp para personal trainer", depois head terms).
-- Páginas → Indexação: nº de páginas indexadas deve chegar a ~22 (13 antigas + termos,
-  privacidade, blog + 6 posts) em 2–4 semanas. Se URLs ficarem em "Rastreada, não indexada",
-  reforçar links internos e pedir indexação de novo.
+- Páginas → Indexação: nº de páginas indexadas deve chegar a **29** (15 páginas SEO + divulgadores
+  + blog + 11 posts, conforme o sitemap gerado no build) em 2–4 semanas. Se URLs ficarem em
+  "Rastreada, não indexada", reforçar links internos e pedir indexação de novo.
 
 **Mensal (15 min)**:
 - GA4: sessões orgânicas → signups (taxa de conversão da landing).
@@ -109,7 +122,92 @@ long-tail em 4–8 semanas; competir nas head keywords ("app para personal train
 conteúdo + backlinks — MFIT e Tecnofit têm anos de autoridade. O caminho é long-tail → autoridade
 → head terms.
 
-## 5. Melhorias técnicas futuras (backlog, menor prioridade)
+## 5. Cluster IA + MCP (publicado em 2026-08-22)
+
+### A oportunidade, em uma frase
+As buscas por IA no mercado fitness já têm concorrência ("IA para personal trainer" tem TreinoAI,
+VFIT, Wiki4Fit e Eksy rankeando com conteúdo raso), mas **ninguém no Brasil escreve sobre IA
+conectada ao sistema**. A busca por "gerenciar alunos pelo ChatGPT", "plugin do ChatGPT para
+personal trainer" ou "MCP personal trainer" não tem página dedicada de nenhum concorrente — e é
+exatamente o que o produto faz desde agosto/2026. É a única frente em que dá para ser o resultado
+nº 1 sem disputar autoridade de domínio com MFIT e Tecnofit.
+
+Vantagem estrutural: os concorrentes **não podem copiar o conteúdo sem construir o produto**.
+Servidor MCP com OAuth, isolamento de tenant, auditoria e desfazer é meses de engenharia, não uma
+página de vendas.
+
+### Clusters de palavra-chave e a página que responde cada um
+
+| Cluster | Termos | Página alvo | Concorrência |
+|---|---|---|---|
+| Head de IA | "IA para personal trainer", "app de personal trainer com IA", "inteligência artificial para montar treino" | `/ia-para-personal-trainer` | Média (conteúdo raso) |
+| ChatGPT + profissão | "ChatGPT para personal trainer", "plugin do ChatGPT para personal trainer", "como usar ChatGPT para montar treino" | `/chatgpt-para-personal-trainer` | Baixa |
+| Operar pelo chat | "gerenciar alunos pelo ChatGPT", "atualizar treino sem abrir o app", "MCP personal trainer", "o que é MCP" | `/blog/gerenciar-alunos-e-treinos-pelo-chatgpt` | Praticamente zero |
+| Tutorial/setup | "como conectar ChatGPT ao sistema", "conector MCP ChatGPT", "MCP Claude conectar" | `/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot` | Zero em PT-BR |
+| Dor operacional | "atualizar treino de vários alunos", "mudar treino de todos os alunos de uma vez", "renovar mesociclo" | `/blog/atualizar-treinos-de-todos-os-alunos-com-ia` | Zero |
+| Categoria/comparativo | "o que a IA faz por um personal", "IA substitui personal trainer" | `/blog/ia-para-personal-trainer-o-que-automatizar` | Média |
+| Long-tail de volume | "prompts de ChatGPT para personal trainer" | `/blog/prompts-de-chatgpt-para-personal-trainer` | Baixa (conecta.fitness) |
+
+### O que foi publicado neste lote
+2 landing pages (`/ia-para-personal-trainer`, `/chatgpt-para-personal-trainer`) e 5 artigos —
+os cinco slugs da tabela acima. Total do site: 15 páginas SEO + blog + 11 artigos = 29 URLs no
+sitemap. Os artigos antigos de IA e os comparativos (`melhores-aplicativos`, `coachpilot-vs-mfit`,
+`como-montar-treino-com-ia-chatgpt`) foram atualizados para apontar para o cluster novo —
+é o que passa autoridade das páginas já indexadas para as novas.
+
+### Solicitar indexação no GSC (nesta ordem)
+- **Dia 1**: `/ia-para-personal-trainer`, `/chatgpt-para-personal-trainer`,
+  `/blog/gerenciar-alunos-e-treinos-pelo-chatgpt`,
+  `/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot`
+- **Dia 2**: `/blog/atualizar-treinos-de-todos-os-alunos-com-ia`,
+  `/blog/ia-para-personal-trainer-o-que-automatizar`,
+  `/blog/prompts-de-chatgpt-para-personal-trainer`, `/` (home mudou), `/blog`
+- **Dia 3**: reenviar os 3 artigos atualizados (`melhores-aplicativos-para-personal-trainer`,
+  `coachpilot-vs-mfit`, `como-montar-treino-com-ia-chatgpt`) e `/faq`, `/precos`, `/sobre`.
+
+### Backlinks: registries de MCP (a ação de maior retorno agora)
+Existe um ecossistema novo de diretórios de servidores MCP, com autoridade crescente e curadoria
+frouxa — o equivalente ao B2B Stack para esse nicho, mas sem fila e sem concorrente nosso listado.
+Cadastrar `mcp.coachpilot.com.br` em: **PulseMCP, Glama, Smithery, mcp.directory, mcpservers.md,
+MCP Market** e no **awesome-mcp-servers** do GitHub (PR). Usar sempre a mesma descrição
+("CoachPilot — gestão para personal trainers: alunos, treinos, avaliações e prescrição") e link para
+`/chatgpt-para-personal-trainer`, não para a home. Ganho duplo: backlink de domínio técnico + o
+personal que já usa MCP descobre o produto pelo diretório.
+
+Complemento off-page específico deste cluster: comunidades de MCP e de IA aplicada (Reddit
+r/mcp, grupos de "IA para negócios" em PT-BR) recebem bem um relato de caso de servidor MCP em
+produção num nicho não-óbvio. É conteúdo, não anúncio — e o nicho fitness chama atenção justamente
+por ser inesperado.
+
+### GEO/AEO — ser citado pela IA, não só rankear no Google
+O público-alvo deste cluster pesquisa dentro do ChatGPT. Duas alavancas já aplicadas:
+- `frontend/public/llms.txt` documenta a conexão MCP (escopos, operações, limites, requisitos por
+  provedor, preço) e lista todos os artigos. É o arquivo que os crawlers de LLM leem primeiro —
+  **manter atualizado a cada feature nova**.
+- Todo artigo tem `FAQPage` em JSON-LD com perguntas escritas na forma em que as pessoas perguntam
+  ("dá para gerenciar meus alunos pelo ChatGPT?", "é um plugin?"). É o formato que alimenta tanto
+  o rich result do Google quanto a citação em resposta de LLM.
+- Bing Webmaster Tools importa do GSC e alimenta o ChatGPT Search — se ainda não foi feito (§1),
+  agora vale mais do que antes.
+
+### Métrica de sucesso deste lote
+Em 4–8 semanas, esperar impressão em GSC para "chatgpt personal trainer", "ia para personal
+trainer", "gerenciar alunos chatgpt" e variações com "mcp". Termos de MCP devem ranquear rápido
+(concorrência zero); os head terms de IA são o alvo de médio prazo. Se as páginas ficarem em
+"Rastreada, não indexada", o reforço é link interno da home e do `/software-para-personal-trainer`
+— ambos já apontam para o cluster.
+
+### Próximos artigos deste cluster (fila)
+1. "O que é MCP e por que todo software vai ter um (explicado sem jargão)" — captura a busca
+   institucional e serve de âncora para os registries.
+2. "CoachPilot vs TreinoAI: IA que gera treino vs IA que opera o sistema" — comparativo direto no
+   concorrente que domina a keyword de IA.
+3. "Consultoria online com IA: como atender 50 alunos sem virar fábrica de ficha".
+4. "Claude, ChatGPT ou Gemini para personal trainer: qual usar na conexão" — long-tail dos três
+   nomes de marca, alto CTR e zero concorrência.
+5. "Como a IA me avisa que um aluno vai cancelar" (pendências + resumo de carteira).
+
+## 6. Melhorias técnicas futuras (backlog, menor prioridade)
 
 - **Fonts self-hosted**: Sora/Inter servidas do Google Fonts bloqueiam render (LCP). Já existem
   fontes em `frontend/public/fonts` — migrar com `@font-face` + preload.

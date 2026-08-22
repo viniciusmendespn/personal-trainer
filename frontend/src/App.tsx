@@ -79,6 +79,8 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <LandingPage /> },
       { path: '/software-para-personal-trainer', element: <PublicSeoPage pageKey="software-personal-trainer" /> },
+      { path: '/ia-para-personal-trainer', element: <PublicSeoPage pageKey="ia-personal-trainer" /> },
+      { path: '/chatgpt-para-personal-trainer', element: <PublicSeoPage pageKey="chatgpt-personal-trainer" /> },
       { path: '/app-para-personal-trainer', element: <PublicSeoPage pageKey="app-personal-trainer" /> },
       { path: '/gestao-de-alunos-personal-trainer', element: <PublicSeoPage pageKey="gestao-alunos" /> },
       { path: '/app-de-treino-para-alunos', element: <PublicSeoPage pageKey="app-treino-alunos" /> },
