@@ -7,6 +7,119 @@
 
 export const BLOG_POSTS = [
   {
+    slug: 'claude-chatgpt-ou-gemini-para-personal-trainer',
+    title: 'Claude, ChatGPT ou Gemini para personal trainer: qual usar? (2026)',
+    description: 'Comparativo honesto das três IAs para conectar ao seu sistema de gestão: qual funciona no plano grátis, qual funciona no celular, quanto custa cada uma e qual escolher.',
+    h1: 'Claude, ChatGPT ou Gemini para personal trainer: qual usar?',
+    datePublished: '2026-08-22',
+    dateModified: '2026-08-22',
+    readingMinutes: 9,
+    intro: 'Se você vai conectar uma IA ao seu sistema de gestão para consultar alunos e aplicar treinos conversando, a pergunta prática não é "qual modelo é mais inteligente" — as três dão conta de montar um ABC. A pergunta é onde o conector realmente funciona, quanto custa e se roda no celular entre um atendimento e outro. As respostas são bem diferentes entre Claude, ChatGPT e Gemini, e mudam mais rápido que o preço. Comparativo verificado em agosto de 2026.',
+    sections: [
+      {
+        h2: 'A resposta curta',
+        paragraphs: [
+          'Para o personal trainer que quer começar hoje: Claude. É a única das três em que o conector personalizado funciona no plano grátis (limitado a uma conexão), e a conexão feita no navegador ou no aplicativo de computador passa a aparecer no app do celular — que é onde você está quando precisa do dado.',
+          'Se você já paga ChatGPT Plus e trabalha sentado no computador, o ChatGPT resolve igualmente bem; a limitação real é que conector de terceiro é recurso de navegador, não do app de celular. E o Gemini, apesar de ser o mais barato em real, ainda não tem um caminho de conexão simples para usuário comum — hoje é CLI ou versão empresarial.',
+        ],
+      },
+      {
+        h2: 'O que realmente muda entre as três (não é o modelo)',
+        paragraphs: [
+          'Vale desarmar a comparação errada. Quando a IA está conectada ao [CoachPilot pelo servidor MCP](/blog/gerenciar-alunos-e-treinos-pelo-chatgpt), ela não precisa saber prescrever de memória: a primeira coisa que ela faz é ler o guia de prescrição da plataforma e a sua biblioteca de exercícios. O formato, as unidades, as regras e os nomes dos exercícios vêm do sistema. O que sobra para o modelo é seguir instrução e conversar sobre a proposta — e as três fazem isso bem.',
+          'A diferença entre uma IA conectada e uma IA solta é enorme; a diferença entre as três IAs conectadas é pequena, e está mais na plataforma do que no modelo. Por isso este comparativo é sobre onde o conector funciona, e não sobre qual escreve texto mais bonito.',
+        ],
+      },
+      {
+        h2: 'Claude — o caminho mais fácil, e o único que funciona no grátis',
+        paragraphs: [
+          'A Anthropic criou o MCP, então não surpreende que a experiência de conectar seja a mais direta: Settings → Connectors → adicionar conector personalizado, colar o endereço, autorizar. Funciona no claude.ai e no aplicativo de computador.',
+          'Dois pontos que decidem a escolha para muita gente. Primeiro: conector personalizado está disponível inclusive no plano gratuito, com o limite de uma conexão — e uma é exatamente quantas você precisa. Dá para viver o fluxo completo, com escrita de treino e tudo, sem pagar IA nenhuma. Segundo: depois de conectar no navegador ou no desktop, a conexão fica disponível quando você abre o Claude no iPhone ou no Android. Instalar conector direto pelo celular ainda é beta, mas usar o que já foi conectado funciona.',
+          'A limitação honesta do plano grátis não é o conector, é o volume de conversa: o uso é limitado, e numa tarde de renovação de mesociclo você provavelmente encosta no teto. Para uso diário sério, o Claude Pro sai por cerca de US$ 20/mês (algo em torno de R$ 120 com IOF, agosto/2026).',
+        ],
+      },
+      {
+        h2: 'ChatGPT — ótimo se você já paga, com uma pegadinha de celular',
+        paragraphs: [
+          'No ChatGPT, servidor MCP de terceiro é tratado como recurso de desenvolvedor: você ativa o Developer mode em Settings → Apps e adiciona o endereço. Exige plano pago (Plus, Pro, Business ou Enterprise/Edu) e acontece na versão web.',
+          'A pegadinha que ninguém verifica antes de assinar: essa conexão é de navegador. O aplicativo de celular do ChatGPT não é o lugar onde conector personalizado de terceiro vive hoje, e relatos de uso indicam ação de escrita bloqueada fora do desktop. Se a sua fantasia é perguntar "quem faltou essa semana?" pelo celular no intervalo entre dois alunos, hoje isso é Claude, não ChatGPT.',
+          'Onde o ChatGPT ganha: se você já paga Plus por outros motivos, a conexão sai de graça, e o ecossistema em volta (voz, análise de arquivo, memória entre conversas) é maduro. Para o personal que monta treino no computador de manhã, é uma escolha perfeitamente boa. O Plus custa US$ 20/mês (na faixa de R$ 116 a R$ 124 mais IOF, agosto/2026).',
+        ],
+      },
+      {
+        h2: 'Gemini — o mais barato em real, mas o conector ainda não é para todo mundo',
+        paragraphs: [
+          'Aqui é preciso separar três produtos diferentes com o mesmo nome. No app de consumidor, conectar um servidor MCP próprio não é auto-serviço: as integrações são de parceria ou dependem de acesso liberado. No Gemini CLI, dá para configurar qualquer servidor MCP no `settings.json` — funciona bem, mas é terminal, não conversa no celular. E na versão empresarial, o cliente conecta um servidor por conta própria.',
+          'Traduzindo para a sua rotina: se você não é uma pessoa de linha de comando, o Gemini hoje não é o caminho para conectar o seu sistema de gestão. Ele continua excelente para o resto (roteiro de conteúdo, transcrição, planilha, pesquisa) e é o mais barato dos três cobrado em real — o Google AI Pro fica na casa de R$ 97/mês, sem IOF, o que numa conta anual faz diferença real.',
+          'Vale acompanhar: esse é o item que mais deve mudar nos próximos meses. A conexão do CoachPilot é MCP padrão, então no dia em que o app do Gemini abrir conector de terceiro para todos, ela funciona sem nenhuma mudança do nosso lado.',
+        ],
+      },
+      {
+        h2: 'Comparativo lado a lado (agosto/2026)',
+        paragraphs: [
+          'Requisitos e preços são dos próprios provedores e mudam com frequência — confira antes de assinar.',
+        ],
+        table: {
+          headers: ['Critério', 'Claude', 'ChatGPT', 'Gemini'],
+          rows: [
+            ['Conecta servidor MCP próprio', 'Sim, auto-serviço', 'Sim, via Developer mode', 'Só CLI ou versão empresarial'],
+            ['Funciona no plano grátis', 'Sim (1 conector)', 'Não, exige plano pago', 'Não, no app de consumidor'],
+            ['Onde se conecta', 'claude.ai e app de computador', 'Navegador (Settings → Apps)', 'settings.json do CLI'],
+            ['Usa no celular depois de conectar', 'Sim (iOS e Android)', 'Não é o caminho hoje', 'Não'],
+            ['Preço do plano de entrada', '~US$ 20/mês (~R$ 120 c/ IOF)', 'US$ 20/mês (~R$ 120 c/ IOF)', '~R$ 97/mês, cobrado em real'],
+            ['Melhor para', 'Começar sem pagar e usar no celular', 'Quem já paga Plus e trabalha no PC', 'Todo o resto, menos a conexão'],
+          ],
+        },
+      },
+      {
+        h2: 'O critério que decide na prática: celular',
+        paragraphs: [
+          'Personal trainer não trabalha sentado. O momento em que a consulta vale mais é aquele em que o aluno está na sua frente e você não lembra a carga da última série, ou aquele em que alguém falta e você quer saber quem mais está sumido. Isso é celular, não desktop.',
+          'É por isso que a diferença entre "conector de navegador" e "conector que aparece no app do celular" pesa mais que qualquer benchmark de modelo. Se você só vai usar sentado, para planejar a semana e montar programas, o critério perde força e vale usar a IA que você já paga.',
+          'Se hoje você usa o portal no celular para essas consultas, isso continua funcionando normalmente — a conexão é um caminho a mais, não um substituto. O que muda é a velocidade: uma pergunta em vez de três telas.',
+        ],
+      },
+      {
+        h2: 'Dá para conectar mais de uma?',
+        paragraphs: [
+          'Sim, e é a forma mais barata de decidir. Cada conexão é autorizada separadamente, aparece individualmente em Configurações → Conexões do CoachPilot e pode ser revogada sem afetar as outras. Nada impede conectar Claude e ChatGPT ao mesmo tempo, usar duas semanas e manter a que você de fato abriu.',
+          'Uma boa prática vale para todas: autorize primeiro somente leitura. Passe alguns dias perguntando sobre alunos que você conhece de cor — é assim que você calibra a confiança antes de liberar a escrita de treino. E mantenha ativa só a conexão que você usa; cada uma é uma porta aberta, mesmo que estreita. O passo a passo por provedor está em [como conectar o ChatGPT, o Claude ou o Gemini](/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot).',
+        ],
+      },
+      {
+        h2: 'Uma decisão em 30 segundos',
+        paragraphs: ['Se você não quer ler o resto, use este atalho:'],
+        list: [
+          'Quer testar sem pagar nada, ou quer usar no celular → Claude (grátis serve para testar; Pro para uso diário).',
+          'Já paga ChatGPT Plus e trabalha no computador → ChatGPT, sem custo adicional.',
+          'Quer o mais barato em real e não faz questão de conectar agora → Gemini para o resto do trabalho, e conecte o Claude grátis só para o sistema.',
+          'Não sabe e não quer errar → conecte o Claude no plano grátis. É a única opção com custo zero e reversível em um clique.',
+        ],
+      },
+      {
+        h2: 'O que não muda entre as três',
+        paragraphs: [
+          'Três coisas valem para qualquer IA que você conectar, e é bom saber antes. A primeira: o custo de IA é sempre seu, da sua assinatura — a [conexão do CoachPilot é gratuita nos dois planos](/precos), inclusive no grátis de até 3 alunos, e o token não passa por nós. A segunda: o alcance é o mesmo em todas. Nenhuma conexão vê dado de outro personal, nenhuma exclui aluno, apaga histórico ou mexe em plano e cobrança, e toda escrita de treino gera notificação, auditoria e desfazer por 7 dias.',
+          'A terceira é a que exige mais atenção sua: qualquer uma das três envia ao provedor dela o que você consultar — e o escopo de leitura alcança anamnese, avaliações físicas e relatos de dor, que são dados sensíveis de saúde pela LGPD. Trocar de IA não muda essa natureza, só muda o destinatário. Antes de consultar dado de saúde por assistente externo, confirme que o consentimento obtido do aluno cobre essa transferência; está detalhado na [política de privacidade](/privacidade). Quem não quer essa transmissão simplesmente não conecta e segue usando o portal.',
+        ],
+      },
+    ],
+    faqs: [
+      { q: 'Qual a melhor IA para personal trainer em 2026?', a: 'Para conectar ao seu sistema de gestão, o Claude: é a única em que o conector personalizado funciona no plano grátis (1 conexão) e em que a conexão fica disponível no app de celular depois de configurada no navegador. Se você já paga ChatGPT Plus e trabalha no computador, o ChatGPT atende igualmente bem.' },
+      { q: 'Dá para usar no plano grátis?', a: 'No Claude, sim — conector personalizado funciona no plano gratuito, limitado a uma conexão. No ChatGPT é preciso plano pago para ativar o Developer mode. No app do Gemini, conectar servidor próprio não é auto-serviço hoje.' },
+      { q: 'A conexão funciona no celular?', a: 'No Claude, sim: depois de conectar no navegador ou no aplicativo de computador, a conexão aparece no app de iOS e Android. No ChatGPT, conector de terceiro é recurso de navegador (agosto/2026).' },
+      { q: 'O Gemini funciona com o CoachPilot?', a: 'Pelo Gemini CLI e pela versão empresarial, sim — a conexão é MCP padrão. No app de consumidor, conectar servidor de terceiro ainda não é auto-serviço, então não é o caminho recomendado para a maioria dos personais hoje.' },
+      { q: 'Preciso pagar as três?', a: 'Não. Uma basta, e você pode trocar quando quiser: cada conexão é autorizada e revogada separadamente em Configurações → Conexões.' },
+      { q: 'Muda a qualidade do treino dependendo da IA?', a: 'Pouco. Conectada, a IA lê o guia de prescrição e a sua biblioteca de exercícios no próprio CoachPilot, então o formato, as unidades e os nomes vêm do sistema. A diferença grande é entre IA conectada e IA solta, não entre as três conectadas.' },
+    ],
+    related: [
+      { label: 'Como conectar ChatGPT, Claude ou Gemini', to: '/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot' },
+      { label: 'Gerenciar alunos e treinos pelo ChatGPT', to: '/blog/gerenciar-alunos-e-treinos-pelo-chatgpt' },
+      { label: 'ChatGPT para personal trainer', to: '/chatgpt-para-personal-trainer' },
+      { label: 'IA para personal trainer', to: '/ia-para-personal-trainer' },
+    ],
+  },
+  {
     slug: 'gerenciar-alunos-e-treinos-pelo-chatgpt',
     title: 'Como gerenciar alunos e treinos pelo ChatGPT (guia completo 2026)',
     description: 'Conecte o ChatGPT, o Claude ou o Gemini ao CoachPilot e consulte alunos, monte e aplique treinos conversando — sem abrir o app. O que dá para pedir, o que não dá e como fica a segurança.',
@@ -49,7 +162,7 @@ export const BLOG_POSTS = [
         h2: 'Preparar a sessão em dez segundos',
         paragraphs: [
           'Antes de atender, o que você precisa é de um resumo — não de sete telas. Peça "me dá o resumo da Júlia antes da sessão de amanhã" e a IA devolve, numa resposta só: perfil e objetivos, respostas da anamnese, últimas avaliações físicas, metas, estatísticas de treino, últimas sessões registradas, evolução recente, dores e dúvidas relatadas, e as suas próprias notas sobre o aluno.',
-          'O mesmo vale no meio do dia, pelo celular: entre um atendimento e outro, você pergunta ao aplicativo da sua IA e recebe o contexto sem abrir o portal. Para quem atende em academia, condomínio ou parque, essa é a diferença entre consultar o histórico e confiar na memória.',
+          'O mesmo vale no meio do dia, entre um atendimento e outro — com uma ressalva que vale conferir antes de escolher a IA: em agosto de 2026, quem quer isso no celular deve usar o Claude, porque a conexão feita no navegador ou no desktop passa a aparecer no app do iPhone e do Android. No ChatGPT, conector de terceiro é recurso de navegador. A comparação completa está em [Claude, ChatGPT ou Gemini para personal trainer](/blog/claude-chatgpt-ou-gemini-para-personal-trainer).',
         ],
       },
       {
@@ -183,6 +296,12 @@ export const BLOG_POSTS = [
             ['Gemini', 'CLI (mcpServers no settings.json) ou Vertex AI', 'Varia conforme o caminho usado', 'No app de consumidor, o suporte a conector de terceiro ainda é limitado'],
           ],
         },
+      },
+      {
+        h2: 'Qual das três escolher',
+        paragraphs: [
+          'Se você ainda não tem preferência, o Claude é o caminho mais curto: conecta no plano grátis e, depois de configurado no navegador ou no aplicativo de computador, aparece no app do celular — que é onde o personal costuma precisar da consulta. O ChatGPT resolve igualmente bem para quem já paga Plus e trabalha sentado, com a ressalva de que o conector é de navegador. O comparativo completo, com preço e limitações de cada um, está em [Claude, ChatGPT ou Gemini para personal trainer](/blog/claude-chatgpt-ou-gemini-para-personal-trainer).',
+        ],
       },
       {
         h2: 'Escolha o escopo: leitura ou leitura e escrita',

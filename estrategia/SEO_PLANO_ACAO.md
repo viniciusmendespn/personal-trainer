@@ -149,9 +149,16 @@ página de vendas.
 | Long-tail de volume | "prompts de ChatGPT para personal trainer" | `/blog/prompts-de-chatgpt-para-personal-trainer` | Baixa (conecta.fitness) |
 
 ### O que foi publicado neste lote
-2 landing pages (`/ia-para-personal-trainer`, `/chatgpt-para-personal-trainer`) e 5 artigos —
-os cinco slugs da tabela acima. Total do site: 15 páginas SEO + blog + 11 artigos = 29 URLs no
-sitemap. Os artigos antigos de IA e os comparativos (`melhores-aplicativos`, `coachpilot-vs-mfit`,
+2 landing pages (`/ia-para-personal-trainer`, `/chatgpt-para-personal-trainer`) e 6 artigos — os
+cinco slugs da tabela acima mais `claude-chatgpt-ou-gemini-para-personal-trainer`. Total do site:
+15 páginas SEO + blog + 12 artigos = 30 URLs no sitemap.
+
+**Fato de produto que o comparativo das três IAs revelou** (verificado agosto/2026, vale corrigir
+em todo conteúdo futuro): o conector MCP do **Claude** funciona no plano grátis (1 conexão) e, uma
+vez configurado no navegador ou no desktop, fica disponível no app de celular; no **ChatGPT** o
+conector de terceiro é recurso de navegador, não do app de celular; no **Gemini** o caminho
+auto-serviço é só CLI/empresarial. Isso muda a recomendação padrão para Claude e obrigou a corrigir
+a promessa de "consultar pelo celular" no artigo pillar — que era verdadeira só para o Claude. Os artigos antigos de IA e os comparativos (`melhores-aplicativos`, `coachpilot-vs-mfit`,
 `como-montar-treino-com-ia-chatgpt`) foram atualizados para apontar para o cluster novo —
 é o que passa autoridade das páginas já indexadas para as novas.
 
@@ -159,7 +166,8 @@ sitemap. Os artigos antigos de IA e os comparativos (`melhores-aplicativos`, `co
 - **Dia 1**: `/ia-para-personal-trainer`, `/chatgpt-para-personal-trainer`,
   `/blog/gerenciar-alunos-e-treinos-pelo-chatgpt`,
   `/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot`
-- **Dia 2**: `/blog/atualizar-treinos-de-todos-os-alunos-com-ia`,
+- **Dia 2**: `/blog/claude-chatgpt-ou-gemini-para-personal-trainer`,
+  `/blog/atualizar-treinos-de-todos-os-alunos-com-ia`,
   `/blog/ia-para-personal-trainer-o-que-automatizar`,
   `/blog/prompts-de-chatgpt-para-personal-trainer`, `/` (home mudou), `/blog`
 - **Dia 3**: reenviar os 3 artigos atualizados (`melhores-aplicativos-para-personal-trainer`,
@@ -203,9 +211,10 @@ trainer", "gerenciar alunos chatgpt" e variações com "mcp". Termos de MCP deve
 2. "CoachPilot vs TreinoAI: IA que gera treino vs IA que opera o sistema" — comparativo direto no
    concorrente que domina a keyword de IA.
 3. "Consultoria online com IA: como atender 50 alunos sem virar fábrica de ficha".
-4. "Claude, ChatGPT ou Gemini para personal trainer: qual usar na conexão" — long-tail dos três
-   nomes de marca, alto CTR e zero concorrência.
+4. ~~"Claude, ChatGPT ou Gemini para personal trainer"~~ — **publicado em 2026-08-22**.
 5. "Como a IA me avisa que um aluno vai cancelar" (pendências + resumo de carteira).
+6. "Personal trainer usando Claude: o guia do plano grátis" — desdobramento do comparativo, se a
+   query "claude para personal trainer" mostrar impressão no GSC.
 
 ## 6. Melhorias técnicas futuras (backlog, menor prioridade)
 
