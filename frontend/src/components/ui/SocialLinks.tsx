@@ -22,6 +22,12 @@ function TikTokIcon({ size = 18 }: { size?: number }) {
 const LINK_BASE =
   'w-9 h-9 rounded-full bg-accent/10 hover:bg-accent/20 flex items-center justify-center text-accent-hover transition-colors'
 
+// `ugc nofollow` além do noopener: estas URLs são digitadas pelo personal no perfil dele e
+// aparecem em página pública (/@slug). Sem isso, o domínio empresta reputação para qualquer
+// link que um usuário cadastrar — e link de saída não confiável em página com formulário é
+// um dos padrões que o Safe Browsing pontua como engenharia social.
+const LINK_REL = 'noopener noreferrer nofollow ugc'
+
 export function SocialLinks({
   instagramUrl,
   tiktokUrl,
@@ -51,7 +57,7 @@ export function SocialLinks({
           key={l.label}
           href={l.url}
           target="_blank"
-          rel="noopener noreferrer"
+          rel={LINK_REL}
           aria-label={l.label}
           title={l.label}
           className={LINK_BASE}

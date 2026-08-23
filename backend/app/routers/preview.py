@@ -47,6 +47,11 @@ def _html(app_url: str, og_url: str, titulo: str, descricao: str) -> str:
 <html lang="pt-BR"><head>
 <meta charset="UTF-8">
 <title>{titulo}</title>
+<!-- O título carrega o primeiro nome do aluno e a página é um redirect: os dois motivos pelos
+     quais ela não pode ser indexada. Redirect por meta-refresh em página indexável também é
+     padrão que o Safe Browsing pontua como enganoso. O OG continua funcionando: WhatsApp,
+     Telegram e Facebook leem og:* e ignoram robots. -->
+<meta name="robots" content="noindex, nofollow">
 <meta name="description" content="{descricao}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{og_url}">

@@ -5,6 +5,8 @@ import { CheckCircle, Loader2 } from 'lucide-react'
 import { capturaApi, type CapturaPerfil } from '../api/captura'
 import { Button, Input, Spinner, SocialLinks } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
+import { RodapeFormPublico } from '../components/RodapeFormPublico'
+import { useNoIndex } from '../hooks/useNoIndex'
 
 const OBJETIVOS = [
   'Emagrecimento', 'Hipertrofia', 'Ganho de força',
@@ -15,6 +17,9 @@ export function CapturaPage() {
   const { handle = '' } = useParams()
   const [params] = useSearchParams()
   const fonte = params.get('fonte') ?? ''
+  // No topo da rota, não dentro do CapturaFlow: vale também para o estado de erro. Como esta
+  // rota é o catch-all de 1 segmento, isso também tira do índice o soft-404 de /qualquer-coisa.
+  useNoIndex()
 
   // A rota é um catch-all de 1 segmento; só tratamos como captação URLs iniciadas por '@'.
   const isHandle = handle.startsWith('@')
@@ -96,7 +101,7 @@ function CapturaFlow({ slug, perfil, fonte }: { slug: string; perfil: CapturaPer
               {perfil.personal_nome} vai falar com você em breve para montar seu plano.
             </p>
             {perfil.instagram_url && (
-              <a href={perfil.instagram_url} target="_blank" rel="noopener noreferrer" className="text-sm text-accent-hover hover:underline">
+              <a href={perfil.instagram_url} target="_blank" rel="noopener noreferrer nofollow ugc" className="text-sm text-accent-hover hover:underline">
                 Enquanto isso, siga no Instagram →
               </a>
             )}
@@ -141,6 +146,8 @@ function CapturaFlow({ slug, perfil, fonte }: { slug: string; perfil: CapturaPer
             )}
           </form>
         )}
+
+        <RodapeFormPublico personalNome={perfil.personal_nome} tipo="lead" />
       </div>
     </div>
   )

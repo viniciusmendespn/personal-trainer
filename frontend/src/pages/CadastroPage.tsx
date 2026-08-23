@@ -5,12 +5,15 @@ import { CheckCircle, Loader2 } from 'lucide-react'
 import { anamneseApi, type AnamneseTemplate } from '../api/anamnese'
 import { Button, Input, Spinner, ObjetivosPicker } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
+import { RodapeFormPublico } from '../components/RodapeFormPublico'
+import { useNoIndex } from '../hooks/useNoIndex'
 
 type Etapa = 'dados' | 'questionario' | 'sucesso'
 
 export function CadastroPage() {
   const [params] = useSearchParams()
   const token = params.get('token') ?? ''
+  useNoIndex()
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['cadastro-form', token],
@@ -141,6 +144,8 @@ function CadastroFlow({
         {cadastrar.isError && (
           <p className="text-sm text-danger text-center">Erro ao enviar. Tente novamente.</p>
         )}
+
+        {etapa !== 'sucesso' && <RodapeFormPublico personalNome={personalNome} tipo="cadastro" />}
       </div>
     </div>
   )
