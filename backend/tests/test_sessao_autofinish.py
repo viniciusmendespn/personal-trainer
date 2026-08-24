@@ -220,3 +220,53 @@ def test_fechamento_de_sessao_ja_finalizada_e_ignorado(sessao):
 
     assert sessao_service.encerrar_sessao_aberta(_agendamento(s, "FECHAR")) == "ignorada"
     assert len(_sessoes_historicas(sessao)) == 1   # não duplicou o histórico
+
+
+# ── Treino apagado no meio da sessão ─────────────────────────────────────────
+# O personal remonta o programa enquanto o aluno treina. A sessão sobrevive (carrega o
+# próprio snapshot dos exercícios), mas o agregado por treino do finish() escreve num
+# TREINO# que já não existe. Sem condição, o UpdateItem RECRIA o item como casca: um
+# treino sem `treino_id`/`nome` que reaparece na lista e derruba quem lê t["treino_id"].
+
+def _treinos(fake) -> list[dict]:
+    return [i for (pk, sk), i in fake.itens.items()
+            if pk == keys.pk_aluno(ALUNO) and sk.startswith(keys.SK_TREINO_PREFIX)]
+
+
+def test_finish_nao_recria_treino_apagado_durante_a_sessao(sessao):
+    _iniciar(sessao)
+    sessao_service.set_series(ALUNO, "e-1", [{"reps": 10, "carga": 50}])
+    sessao.delete_item(keys.pk_aluno(ALUNO), keys.sk_treino(TREINO))
+
+    sessao_service.finish(ALUNO)
+
+    assert _treinos(sessao) == []                      # nenhum fantasma ressuscitado
+    hist = _sessoes_historicas(sessao)
+    assert len(hist) == 1                              # a sessão dela vira histórico igual
+    assert hist[0]["treino_nome"] == "Treino A"
+    stats = sessao.get_item(keys.pk_aluno(ALUNO), keys.SK_STATS_ALUNO)
+    assert stats["total_sessoes"] == 1                 # agregados do aluno seguem contando
+
+
+def test_autofinish_nao_recria_treino_apagado_durante_a_sessao(sessao):
+    """Mesmo caminho pelo scheduler — foi assim que o fantasma nasceu em produção."""
+    s = _iniciar(sessao, minutos_atras=360)
+    _registrar(sessao, "e-1", minutos_apos_inicio=50)
+    sessao.delete_item(keys.pk_aluno(ALUNO), keys.sk_treino(TREINO))
+
+    assert sessao_service.encerrar_sessao_aberta(_agendamento(s, "FECHAR")) == "finalizada"
+
+    assert _treinos(sessao) == []
+    assert len(_sessoes_historicas(sessao)) == 1
+
+
+def test_agregado_por_treino_segue_sendo_gravado_quando_o_treino_existe(sessao):
+    """A condição não pode custar o contador do caso normal."""
+    _iniciar(sessao)
+    sessao_service.set_series(ALUNO, "e-1", [{"reps": 10, "carga": 50}])
+
+    sessao_service.finish(ALUNO)
+
+    t = sessao.get_item(keys.pk_aluno(ALUNO), keys.sk_treino(TREINO))
+    assert t["total_execucoes"] == 1
+    assert t["ultima_execucao"]

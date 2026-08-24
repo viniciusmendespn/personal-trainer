@@ -314,10 +314,17 @@ def increment_counter(pk: str, sk: str, field: str, amount: int = 1) -> None:
 
 
 def add_and_set(pk: str, sk: str, add: dict | None = None, set_: dict | None = None,
-                return_values: bool = False) -> dict:
+                return_values: bool = False, if_exists: bool = False) -> dict | None:
     """ADD (contadores) + SET (rótulos) num único write — agregação na escrita (ESPEC §3.1).
     `return_values=True` devolve o item pós-write (ALL_NEW) — opt-in, evita 1 read extra
-    quando o chamador precisa do valor atualizado (ex.: rate limit)."""
+    quando o chamador precisa do valor atualizado (ex.: rate limit).
+
+    `if_exists=True` desliga o upsert: sem ele o `UpdateItem` CRIA o item quando a chave
+    não existe, e um agregado gravado depois que a entidade foi apagada a ressuscita como
+    casca (só os contadores, sem os campos do modelo) — item fantasma que quebra quem lê
+    `t["treino_id"]`. Só faz sentido em agregado que mora DENTRO de uma entidade apagável;
+    os `STATS#`/`PONTOS#`/`QUOTA#` são singletons que devem mesmo nascer no upsert.
+    Devolve None quando o item não existia e nada foi escrito."""
     names: dict = {}
     values: dict = {}
     parts: list[str] = []
@@ -331,11 +338,19 @@ def add_and_set(pk: str, sk: str, add: dict | None = None, set_: dict | None = N
             names[f"#a{k}"] = k
             values[f":a{k}"] = _san(v)
         parts.append("ADD " + ", ".join(f"#a{k} :a{k}" for k in add))
-    resp = _get_table().update_item(
-        Key={"PK": pk, "SK": sk}, UpdateExpression=" ".join(parts),
-        ExpressionAttributeNames=names, ExpressionAttributeValues=values,
-        ReturnValues="ALL_NEW" if return_values else "NONE",
-    )
+    kwargs: dict = {
+        "Key": {"PK": pk, "SK": sk}, "UpdateExpression": " ".join(parts),
+        "ExpressionAttributeNames": names, "ExpressionAttributeValues": values,
+        "ReturnValues": "ALL_NEW" if return_values else "NONE",
+    }
+    if if_exists:
+        kwargs["ConditionExpression"] = Attr("PK").exists()
+    try:
+        resp = _get_table().update_item(**kwargs)
+    except ClientError as e:
+        if if_exists and e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            return None
+        raise
     return resp.get("Attributes", {})
 
 

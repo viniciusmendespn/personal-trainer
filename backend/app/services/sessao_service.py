@@ -433,9 +433,13 @@ def finish(aluno_id: str, body=None, auto: bool = False) -> dict:
             add_treino["soma_duracao_segundos"] = dur
             add_treino["soma_total_series"] = int(s.get("total_series") or 0)
             add_treino["sessoes_com_metrica"] = 1
+        # `if_exists`: o personal pode ter apagado/substituído o treino enquanto a sessão
+        # estava aberta (a sessão sobrevive, ela carrega o próprio snapshot dos exercícios).
+        # Sem a condição, este ADD recriaria o TREINO# apagado como casca só de contadores —
+        # um treino sem `nome`/`treino_id` que reaparece na lista do aluno e do portal.
         repo.add_and_set(
             keys.pk_aluno(aluno_id), keys.sk_treino(treino_id),
-            add=add_treino, set_={"ultima_execucao": fim_iso},
+            add=add_treino, set_={"ultima_execucao": fim_iso}, if_exists=True,
         )
     # Agregação na escrita: conta a sessão (aluno + semana) — ESPEC §3.1
     pk = keys.pk_aluno(aluno_id)

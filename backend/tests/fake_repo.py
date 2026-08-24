@@ -77,7 +77,9 @@ class FakeRepo:
             return None
         return self.update_item(pk, sk, fields)
 
-    def add_and_set(self, pk, sk, add=None, set_=None, return_values=False):
+    def add_and_set(self, pk, sk, add=None, set_=None, return_values=False, if_exists=False):
+        if if_exists and (pk, sk) not in self.itens:
+            return None
         item = self.itens.setdefault((pk, sk), {"PK": pk, "SK": sk})
         for k, v in (set_ or {}).items():
             item[k] = v
