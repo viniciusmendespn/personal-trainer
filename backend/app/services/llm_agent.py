@@ -15,7 +15,7 @@ from app.models.enums import Ator, CanalOrigem
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import agent_service, sessao_service
-from app.utils import treino_vigente
+from app.utils import treino_vigente, treinos_validos
 
 logger = logging.getLogger(__name__)
 
@@ -191,7 +191,8 @@ def _context(aluno_id: str) -> str:
     if not s:
         from datetime import date
         hoje_str = date.today().isoformat()
-        treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
+        treinos = treinos_validos(repo.query_pk(keys.pk_aluno(aluno_id),
+                                                sk_prefix=keys.SK_TREINO_PREFIX))
         lst = [{"id": t["treino_id"], "nome": t.get("nome"), "foco": t.get("foco"),
                 "vigente": treino_vigente(t, hoje_str)}
                for t in treinos if t.get("ativo", True)]

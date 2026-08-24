@@ -12,7 +12,7 @@ import {
   renderizarPromptIA,
   slimBiblioteca,
 } from '../utils/arquivoIa'
-import { extrairErroImport, type ErroImport, type ProblemaImport } from '../utils/erroApi'
+import { codigoDeErro, extrairErroImport, mensagemDeErro, type ErroImport, type ProblemaImport } from '../utils/erroApi'
 import type { ImportarProgramaResponse } from '../api/treinos'
 
 interface Props {
@@ -109,10 +109,28 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
     setErro(null)
     setConferido(null)
     try {
-      const res = await importar.mutateAsync(conteudo)
+      const res = await importar.mutateAsync({ conteudo })
       setResult(res)
       setJson('')
     } catch (err) {
+      // Substituição total apaga o treino que o aluno pode estar executando agora. O backend
+      // recusa uma vez; aqui a decisão volta para o personal, que é quem sabe o contexto.
+      if (codigoDeErro(err) === 'SESSAO_EM_ANDAMENTO') {
+        const mesmoAssim = await confirm({
+          title: 'O aluno está treinando agora',
+          message: mensagemDeErro(err),
+          confirmLabel: 'Importar mesmo assim', tone: 'danger',
+        })
+        if (!mesmoAssim) return
+        try {
+          const res = await importar.mutateAsync({ conteudo, confirmar: true })
+          setResult(res)
+          setJson('')
+        } catch (err2) {
+          setErro(extrairErroImport(err2, 'Não foi possível importar. Tente novamente.'))
+        }
+        return
+      }
       // O JSON colado FICA no textarea: o personal vai corrigi-lo com a IA e reimportar.
       setErro(extrairErroImport(err, 'Não foi possível importar. Tente novamente.'))
     }

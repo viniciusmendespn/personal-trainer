@@ -10,14 +10,15 @@ export const treinosApi = {
     api.post<Treino>(`/v1/alunos/${alunoId}/treinos`, body).then((r) => r.data),
   update: (alunoId: string, treinoId: string, body: TreinoCreate) =>
     api.put<Treino>(`/v1/alunos/${alunoId}/treinos/${treinoId}`, body).then((r) => r.data),
-  remove: (alunoId: string, treinoId: string) =>
-    api.delete(`/v1/alunos/${alunoId}/treinos/${treinoId}`),
+  /** `confirmar` só na 2ª tentativa, depois do 409 SESSAO_EM_ANDAMENTO. */
+  remove: (alunoId: string, treinoId: string, confirmar = false) =>
+    api.delete(`/v1/alunos/${alunoId}/treinos/${treinoId}`, { params: { confirmar } }),
 
   exportarPrograma: (alunoId: string) =>
     api.get<object>(`/v1/alunos/${alunoId}/treinos/exportar`).then((r) => r.data),
-  importarPrograma: (alunoId: string, conteudo: string) =>
+  importarPrograma: (alunoId: string, conteudo: string, confirmar = false) =>
     api
-      .post<ImportarProgramaResponse>(`/v1/alunos/${alunoId}/treinos/importar`, { conteudo })
+      .post<ImportarProgramaResponse>(`/v1/alunos/${alunoId}/treinos/importar`, { conteudo, confirmar })
       .then((r) => r.data),
   /** Confere o JSON sem gravar nada. Recusa vem como 400, no mesmo formato do import. */
   validarPrograma: (alunoId: string, conteudo: string) =>

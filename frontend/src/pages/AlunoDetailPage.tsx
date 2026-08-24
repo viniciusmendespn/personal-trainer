@@ -21,6 +21,7 @@ import { useCreateTemplateFromTreino } from '../hooks/useTemplates'
 import { useCreateRotinaFromAluno, useRotinas, useAplicarRotina } from '../hooks/useRotinas'
 import { useNotas, useCreateNota } from '../hooks/useNotas'
 import { treinosApi } from '../api/treinos'
+import { codigoDeErro, mensagemDeErro } from '../utils/erroApi'
 import { SeriesPrescritasEditor, SeriesPrescritasCompact, initSeriesPrescritas, fmtPrescricaoFlat } from '../components/exercicios/SeriesPrescritasEditor'
 import { LinksUteisSelector } from '../components/exercicios/LinksUteisSelector'
 import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
@@ -869,7 +870,23 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
       message: `Excluir "${treino.nome}"? Todos os exercícios e o histórico de execução desse treino serão perdidos.`,
       confirmLabel: 'Excluir', tone: 'danger',
     })
-    if (ok) delTreino.mutate(treino.treino_id)
+    if (!ok) return
+    try {
+      await delTreino.mutateAsync({ treinoId: treino.treino_id })
+    } catch (err) {
+      // O backend recusa uma vez quando o aluno está executando este treino agora — ele
+      // não tem como saber disso pela tela. Segunda passada leva `confirmar`.
+      if (codigoDeErro(err) !== 'SESSAO_EM_ANDAMENTO') {
+        show(mensagemDeErro(err, 'Não foi possível excluir o treino.'), 'error')
+        return
+      }
+      const mesmoAssim = await confirm({
+        title: 'O aluno está treinando agora',
+        message: mensagemDeErro(err),
+        confirmLabel: 'Excluir mesmo assim', tone: 'danger',
+      })
+      if (mesmoAssim) await delTreino.mutateAsync({ treinoId: treino.treino_id, confirmar: true })
+    }
   }
 
   async function saveTreino(e: React.FormEvent) {

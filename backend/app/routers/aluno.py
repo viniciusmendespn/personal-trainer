@@ -16,7 +16,7 @@ from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.models.postagem import MidiaRef, PostagemCreate, PostagemTipo
 from app.services import agent_service, alerta_service, anotif_service, badge_service, conhecimento_service, correcao_service, feed_global_service, ferias_service, financeiro_service, media_service, meta_service, notif_service, pontos_service, postagem_service, sessao_service
-from app.utils import init_series_prescritas, new_id, now_iso
+from app.utils import init_series_prescritas, new_id, now_iso, treinos_validos
 
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
 
@@ -173,7 +173,8 @@ def conhecimento_download(ctx: dict = Depends(get_current_aluno)):
 @router.get("/hoje")
 def hoje(ctx: dict = Depends(get_current_aluno)):
     aluno_id = ctx["aluno_id"]
-    treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
+    treinos = treinos_validos(repo.query_pk(keys.pk_aluno(aluno_id),
+                                            sk_prefix=keys.SK_TREINO_PREFIX))
     hoje_str = date.today().isoformat()
     treinos = [
         t for t in treinos

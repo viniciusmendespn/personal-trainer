@@ -119,6 +119,42 @@ def test_escrita_gera_auditoria_e_notificacao(carteira):
     assert "Marina" in notificacoes[0]["titulo"]
 
 
+def _abrir_sessao(repo):
+    repo.put_item(keys.pk_aluno(ALUNO), keys.SK_SESSION_ACTIVE, {
+        "sessao_id": "s-1", "aluno_id": ALUNO, "personal_id": PERSONAL, "treino_id": "t1",
+        "treino_nome": "Treino A", "status": "EM_ANDAMENTO",
+        "data_hora_inicio": "2026-08-23T19:28:46+00:00",
+    })
+
+
+def test_aluno_treinando_agora_volta_para_o_personal_decidir(carteira):
+    """Espelho do 409 do portal: o LLM não decide sozinho apagar o treino em execução."""
+    _abrir_sessao(carteira)
+
+    r = _chamar("aplicar_programa_treino",
+                {"aluno_id": ALUNO, "programa": PROGRAMA_NOVO,
+                 "resumo_da_mudanca": "deload"})
+
+    assert r["isError"] is True
+    texto = r["content"][0]["text"]
+    assert "Treino A" in texto and "confirmar_sessao_em_andamento" in texto
+    # Nada foi gravado — e a assinatura de idempotência não foi queimada.
+    assert [t["nome"] for t in carteira.query_pk(keys.pk_aluno(ALUNO), keys.SK_TREINO_PREFIX)] \
+        == ["Treino A"]
+
+
+def test_confirmado_pelo_personal_aplica(carteira):
+    _abrir_sessao(carteira)
+
+    r = _chamar("aplicar_programa_treino",
+                {"aluno_id": ALUNO, "programa": PROGRAMA_NOVO,
+                 "resumo_da_mudanca": "deload", "confirmar_sessao_em_andamento": True})
+
+    assert r["structuredContent"]["status"] == "aplicado"
+    assert [t["nome"] for t in carteira.query_pk(keys.pk_aluno(ALUNO), keys.SK_TREINO_PREFIX)] \
+        == ["Treino B — Superiores"]
+
+
 def test_atualizar_treino_altera_so_o_campo_pedido(carteira):
     r = _chamar("atualizar_treino",
                 {"aluno_id": ALUNO, "treino_id": "t1", "foco": "Posterior"})

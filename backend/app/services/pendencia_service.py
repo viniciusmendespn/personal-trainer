@@ -18,7 +18,7 @@ from datetime import date
 
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.utils import treino_vigente
+from app.utils import treino_vigente, treinos_validos
 
 DIAS_SEM_TREINAR = 10       # a partir de quantos dias sem sessão finalizada vira pendência
 # Aluno recém-cadastrado não pode estar "sem treinar há N dias". Acoplado ao limiar de propósito:
@@ -182,7 +182,8 @@ def do_aluno(personal_id: str, aluno_id: str, aluno: dict, bloqueado: bool) -> l
     Aproveita para corrigir o contador denormalizado `vencidas` quando ele divergir do real:
     a listagem se autoconserta toda vez que o personal abre o aluno, sem job de reconciliação."""
     hoje = hoje_iso()
-    treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
+    treinos = treinos_validos(repo.query_pk(keys.pk_aluno(aluno_id),
+                                            sk_prefix=keys.SK_TREINO_PREFIX))
     stats = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_STATS_ALUNO) or {}
     vencidas = [c for c in repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.COBRANCA_PREFIX)
                 if c.get("status") == "VENCIDA" and c.get("personal_id") == personal_id]

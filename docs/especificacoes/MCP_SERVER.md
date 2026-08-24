@@ -109,6 +109,14 @@ auditoria com o nome do cliente OAuth, notificação `MCP_ESCRITA` ao personal, 
 vazio. Não há tool destrutiva além dessas — sem deletar aluno, sem operação em massa, sem tocar em
 plano ou cobrança.
 
+**Aluno treinando agora**: se há sessão aberta, `aplicar_programa_treino` recusa a primeira
+chamada e manda o LLM contar ao personal — o treino em execução seria apagado, e quem decide é
+ele. A segunda passa com `confirmar_sessao_em_andamento: true`. Não é impeditivo de verdade
+porque a sessão carrega o próprio snapshot dos exercícios e o aluno termina o treino de qualquer
+jeito; o que se perde é o agregado daquele treino. Mesma recusa no portal
+(`DELETE /treinos/{id}` e `POST /importar` devolvem 409 `SESSAO_EM_ANDAMENTO`, com `?confirmar`
+/ `confirmar` na segunda) — regra de escrita vale para os dois canais.
+
 ### Como as regras de prescrição chegam ao LLM
 
 Por **tool** (`guia_de_prescricao`), não por `prompts/get`. Os conectores do ChatGPT não

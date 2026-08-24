@@ -10,7 +10,7 @@ from app.models.enums import Ator, CanalOrigem, Classificacao
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import alerta_service, sessao_service
-from app.utils import epoch_ms, new_id, now_iso, treino_vigente
+from app.utils import epoch_ms, new_id, now_iso, treino_vigente, treinos_validos
 
 logger = logging.getLogger(__name__)
 
@@ -216,7 +216,7 @@ def treino_de_hoje(aluno_id: str) -> dict:
     exs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")
     # Inclui exercícios do dia E exercícios sem dia fixo (diários, dia_semana=None)
     ids_hoje = {e["treino_id"] for e in exs if e.get("dia_semana") in (None, hoje)}
-    treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
+    treinos = treinos_validos(repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX))
     treinos.sort(key=lambda t: t.get("ordem", 0))
     matches = [t for t in treinos
                if t["treino_id"] in ids_hoje and treino_vigente(t, hoje_str)]
@@ -235,7 +235,7 @@ def listar_treinos(aluno_id: str) -> dict:
     """Todos os treinos do aluno com sinalização de vigência."""
     from datetime import date
     hoje_str = date.today().isoformat()
-    treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
+    treinos = treinos_validos(repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX))
     treinos.sort(key=lambda t: t.get("ordem", 0))
     exs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")
     counts: dict[str, int] = {}

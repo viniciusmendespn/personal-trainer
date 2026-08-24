@@ -43,6 +43,15 @@ function detailDe(err: unknown): unknown {
   return e?.response?.data?.detail
 }
 
+/** `code` do contrato de erro, quando o backend mandou um. Ex.: 'SESSAO_EM_ANDAMENTO'. */
+export function codigoDeErro(err: unknown): string | undefined {
+  const detail = detailDe(err)
+  if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
+    return (detail as { code?: string }).code
+  }
+  return undefined
+}
+
 /** Mensagem curta, para toast. Serve para qualquer erro da API. */
 export function mensagemDeErro(err: unknown, fallback = GENERICO): string {
   const detail = detailDe(err)

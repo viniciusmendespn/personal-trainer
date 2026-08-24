@@ -16,7 +16,7 @@ from app.models.enums import Ator, CanalOrigem, Classificacao, SessaoStatus, nor
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import badge_service, ferias_service, media_service, pontos_service
-from app.utils import epoch_ms, new_id, now_iso, treino_vigente
+from app.utils import epoch_ms, new_id, now_iso, treino_vigente, treinos_validos
 
 logger = logging.getLogger(__name__)
 
@@ -1062,7 +1062,7 @@ def ultimo_e_proximo(aluno_id: str) -> dict:
     ultima = repo.clean(ultima_raw) if ultima_raw else None
 
     hoje_str = date.today().isoformat()
-    treinos = repo.clean_all(repo.query_pk(pk, sk_prefix=keys.SK_TREINO_PREFIX))
+    treinos = treinos_validos(repo.clean_all(repo.query_pk(pk, sk_prefix=keys.SK_TREINO_PREFIX)))
     treinos = [t for t in treinos if treino_vigente(t, hoje_str)]
     treinos.sort(key=lambda t: t.get("ordem", 0))
 

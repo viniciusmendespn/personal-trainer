@@ -464,6 +464,11 @@ class AplicarProgramaArgs(BaseModel):
         ...,
         description="Uma frase dizendo o que mudou e por quê. Aparece na notificação e no "
                     "histórico de auditoria do personal.")
+    confirmar_sessao_em_andamento: bool = Field(
+        False,
+        description="Só marque true DEPOIS de contar ao personal que o aluno está treinando "
+                    "agora e ele responder que pode aplicar mesmo assim. Nunca marque por "
+                    "conta própria numa primeira tentativa.")
 
 
 @tool(nome="aplicar_programa_treino", titulo="Aplicar programa de treino",
@@ -501,6 +506,21 @@ def aplicar_programa_treino(a: AplicarProgramaArgs) -> dict:
             "Corrija e confira com `validar_programa_treino` antes de aplicar de novo:\n"
             f"{validacao_programa.texto_dos_achados(erros)}"
         )
+
+    # Aluno treinando agora: substituir o programa apaga o treino que ele está executando.
+    # Não é impeditivo (a sessão tem snapshot próprio e ele termina normal), mas quem decide
+    # é o personal — o LLM leva o recado e volta. Vale para o import do portal também
+    # (`routers/treinos._checar_sessao_aberta`): regra de escrita é dos dois canais.
+    if not a.confirmar_sessao_em_andamento:
+        aberta = programa_service.sessao_em_andamento(a.aluno_id)
+        if aberta:
+            raise ToolErro(
+                f'o aluno está executando "{aberta.get("treino_nome") or "um treino"}" neste '
+                f'momento (desde {aberta.get("desde")}) — nada foi gravado. Ele termina o '
+                "treino normalmente mesmo assim, mas o treino sai do programa e a execução "
+                "não será contabilizada nele. Conte isso ao personal e, se ele confirmar, "
+                "repita a chamada com `confirmar_sessao_em_andamento: true`."
+            )
 
     # Idempotência: o LLM costuma repetir a mesma chamada. Um replay em menos de 60s
     # devolve o resultado anterior em vez de apagar e recriar o programa de novo.

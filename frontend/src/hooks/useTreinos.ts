@@ -36,7 +36,8 @@ export function useUpdateTreino(alunoId: string) {
 export function useDeleteTreino(alunoId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (treinoId: string) => treinosApi.remove(alunoId, treinoId),
+    mutationFn: ({ treinoId, confirmar }: { treinoId: string; confirmar?: boolean }) =>
+      treinosApi.remove(alunoId, treinoId, confirmar),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['treinos', alunoId] })
       qc.invalidateQueries({ queryKey: ['pendencias', alunoId] }) // vigência mudou
@@ -53,7 +54,8 @@ export function useExportarPrograma() {
 export function useImportarPrograma(alunoId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (conteudo: string) => treinosApi.importarPrograma(alunoId, conteudo),
+    mutationFn: ({ conteudo, confirmar }: { conteudo: string; confirmar?: boolean }) =>
+      treinosApi.importarPrograma(alunoId, conteudo, confirmar),
     onSuccess: () => {
       // substituição total: invalida treinos + exercícios do aluno + biblioteca (auto-cadastro)
       qc.invalidateQueries({ queryKey: ['treinos', alunoId] })

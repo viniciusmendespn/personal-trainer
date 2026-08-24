@@ -25,6 +25,18 @@ def epoch_ms() -> str:
     return f"{int(datetime.now(timezone.utc).timestamp() * 1000):013d}"
 
 
+def treinos_validos(items: list[dict]) -> list[dict]:
+    """Descarta item de TREINO# sem `treino_id` — não é treino, é lixo.
+
+    Existiu por um bug de upsert (agregado de sessão recriando um treino apagado, ver
+    `dynamo_repo.add_and_set(if_exists=)`), e o estrago não foi o item em si: foi um
+    `t["treino_id"]` estourando KeyError no meio de `GET /v1/aluno/hoje` e deixando o app
+    do aluno sem nenhum treino. Filtrar na leitura mantém um item torto local em vez de
+    derrubar a tela inteira — vale para qualquer causa futura, não só aquele bug.
+    """
+    return [t for t in items if t.get("treino_id")]
+
+
 def treino_vigente(t: dict, hoje_str: str) -> bool:
     """True se o treino está ativo e dentro do período (campos opcionais)."""
     if not t.get("ativo", True):

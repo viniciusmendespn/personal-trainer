@@ -16,9 +16,9 @@ from app.models.treino_export import (
 )
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz, biblioteca_service, contexto_aluno_service
+from app.services import authz, biblioteca_service, contexto_aluno_service, sessao_service
 from app.services.sessao_service import chave_exercicio, upsert_excat
-from app.utils import init_series_prescritas, new_id, now_iso
+from app.utils import init_series_prescritas, new_id, now_iso, treinos_validos
 
 
 def aluno_nome(personal_id: str, aluno_id: str) -> str | None:
@@ -58,8 +58,8 @@ def touch_aluno_pointer(personal_id: str, aluno_id: str) -> None:
     Guarda as *janelas* dos treinos ativos, não um booleano: vigência depende da data de hoje,
     um booleano congelado no write estaria errado no dia seguinte. Query consistente porque
     roda logo após o write do treino — uma leitura eventual pode não enxergá-lo."""
-    treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX,
-                            consistent=True)
+    treinos = treinos_validos(repo.query_pk(keys.pk_aluno(aluno_id),
+                                            sk_prefix=keys.SK_TREINO_PREFIX, consistent=True))
     vigencias = [
         {k: v for k, v in (("i", t.get("data_inicio")), ("f", t.get("data_fim"))) if v}
         for t in treinos if t.get("ativo", True)
@@ -68,6 +68,25 @@ def touch_aluno_pointer(personal_id: str, aluno_id: str) -> None:
         keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id),
         {"updated_at": now_iso(), "vigencias": vigencias},
     )
+
+
+def sessao_em_andamento(aluno_id: str, treino_ids: set[str] | None = None) -> dict | None:
+    """Sessão aberta do aluno, quando ela é de um dos treinos que estão prestes a sumir
+    (`treino_ids=None` = qualquer treino). 1 GetItem na chave — o guard de "não apague o
+    treino que estão executando agora".
+
+    Não impede nada por si: a sessão carrega o próprio snapshot dos exercícios e o aluno
+    termina o treino mesmo que ele seja apagado no meio. Serve para o personal decidir
+    sabendo — ele não tem esse sinal na tela de treinos (o "treinando agora" do
+    ATIVIDADE# só aparece no dashboard).
+    """
+    s = sessao_service.get_active(aluno_id)
+    if not s:
+        return None
+    if treino_ids is not None and s.get("treino_id") not in treino_ids:
+        return None
+    return {"treino_id": s.get("treino_id"), "treino_nome": s.get("treino_nome"),
+            "desde": s.get("data_hora_inicio")}
 
 
 def ref_treino(i: int) -> str:
@@ -87,7 +106,8 @@ def exportar(personal_id: str, aluno_id: str,
     """Programa completo do aluno (treinos + exercícios) + `contexto_aluno` (perfil,
     histórico, dores, avaliações…) no formato editável por IA."""
     authz.authorize_aluno(personal_id, aluno_id)
-    treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
+    treinos = treinos_validos(repo.query_pk(keys.pk_aluno(aluno_id),
+                                            sk_prefix=keys.SK_TREINO_PREFIX))
     treinos.sort(key=lambda t: t.get("ordem", 0))
     out: list[TreinoFileItem] = []
     nomes_exercicios: list[str] = []

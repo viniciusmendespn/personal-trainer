@@ -24,7 +24,7 @@ from app.services import (
     validacao_programa,
 )
 from app.services.sessao_service import chave_exercicio, list_exercicios_aluno, upsert_excat
-from app.utils import new_id, now_iso
+from app.utils import new_id, now_iso, treinos_validos
 
 router = APIRouter(prefix="/v1/alunos/{aluno_id}/treinos", tags=["treinos"])
 
@@ -36,6 +36,35 @@ class CopiarBody(BaseModel):
 
 class ImportarProgramaRequest(BaseModel):
     conteudo: str
+    # Segunda passada depois do 409 SESSAO_EM_ANDAMENTO (ver `_checar_sessao_aberta`).
+    confirmar: bool = False
+
+
+SESSAO_EM_ANDAMENTO = "SESSAO_EM_ANDAMENTO"
+
+
+def _checar_sessao_aberta(aluno_id: str, treino_ids: set[str] | None, confirmar: bool) -> None:
+    """Recusa UMA vez quando o treino que vai sumir está sendo executado agora.
+
+    Aviso, não bloqueio: o `confirmar` da segunda chamada passa direto. Bloquear de verdade
+    seria pior — sessão "em andamento" costuma ser sessão esquecida aberta (o scheduler só
+    fecha em 6h), e o personal ficaria sem poder mexer no programa nesse meio-tempo. A
+    checagem é 1 GetItem e só corre no caminho destrutivo.
+    """
+    if confirmar:
+        return
+    aberta = programa_service.sessao_em_andamento(aluno_id, treino_ids)
+    if not aberta:
+        return
+    nome = aberta.get("treino_nome") or "um treino"
+    raise HTTPException(409, {
+        "code": SESSAO_EM_ANDAMENTO,
+        "mensagem": (f'O aluno está executando "{nome}" neste momento. Ele termina o treino '
+                     "normalmente mesmo assim — a sessão já está com os exercícios salvos — "
+                     "mas o treino sai do programa e a execução não será contabilizada nele."),
+        "treino_nome": aberta.get("treino_nome"),
+        "desde": aberta.get("desde"),
+    })
 
 
 # Helpers compartilhados com o servidor MCP — definição única em programa_service.
@@ -94,6 +123,8 @@ def importar_programa(aluno_id: str, body: ImportarProgramaRequest,
     (vive em SK próprios). Erro bloqueia; aviso volta junto do 201."""
     _guard(personal_id, aluno_id)
     programa, avisos = _validar_conteudo(personal_id, body.conteudo)
+    # Substituição total: todo treino atual vai sumir, então qualquer sessão aberta conta.
+    _checar_sessao_aberta(aluno_id, None, body.confirmar)
     resultado = programa_service.aplicar(personal_id, aluno_id, programa)
     resultado.avisos = validacao_programa.achados_json(avisos)
     resultado.relatorio_ia = (import_erros.relatorio_para_ia([], avisos) if avisos else None)
@@ -124,7 +155,8 @@ def validar_programa(aluno_id: str, body: ImportarProgramaRequest,
 @router.get("")
 def list_treinos(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
     _guard(personal_id, aluno_id)
-    items = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
+    items = treinos_validos(repo.query_pk(keys.pk_aluno(aluno_id),
+                                          sk_prefix=keys.SK_TREINO_PREFIX))
     items.sort(key=lambda t: t.get("ordem", 0))
     return repo.clean_all(items)
 
@@ -187,8 +219,10 @@ def update_treino(aluno_id: str, treino_id: str, body: TreinoCreate, personal_id
 
 
 @router.delete("/{treino_id}", status_code=204)
-def delete_treino(aluno_id: str, treino_id: str, personal_id: str = Depends(get_current_personal_id)):
+def delete_treino(aluno_id: str, treino_id: str, confirmar: bool = False,
+                  personal_id: str = Depends(get_current_personal_id)):
     _guard(personal_id, aluno_id)
+    _checar_sessao_aberta(aluno_id, {treino_id}, confirmar)
     # remove o treino + seus exercícios (+ agenda de vencimento) em lote
     treino = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id))
     exs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.sk_exercicio_prefix(treino_id))
