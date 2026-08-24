@@ -41,6 +41,15 @@ def historico_mes(aluno_id: str, ano: int, mes: int,
     return sessao_service.historico_mes(aluno_id, ano, mes, incluir_fotos=False)
 
 
+@router.get("/historico/intervalo")
+def historico_intervalo(aluno_id: str, de: str, ate: str,
+                        personal_id: str = Depends(get_current_personal_id)):
+    """Sessões que começaram em [de, ate) — o cliente manda os dois instantes UTC que
+    delimitam o dia no fuso dele. Usado pelo feed p/ abrir o treino do dia de um post."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    return {"sessoes": sessao_service.sessoes_no_intervalo(aluno_id, de, ate)}
+
+
 @router.get("/sessoes/{sessao_id}")
 def get_sessao_detalhe(aluno_id: str, sessao_id: str,
                        personal_id: str = Depends(get_current_personal_id)):
@@ -184,6 +193,34 @@ def feed_por_chave(aluno_id: str, chave: str, limit: int = 50, cursor: str | Non
         raise HTTPException(400, "Informe a chave do exercício.")
     items, next_cursor = correcao_service.feed_por_chave(aluno_id, chave.strip(), limit, cursor)
     return {"items": items, "next_cursor": next_cursor}
+
+
+class PrEditBody(BaseModel):
+    chave: str
+    carga: float | str   # aceita "62,5" digitado em pt-BR, como SerieExec.carga
+
+
+# `chave` vai em query/body, nunca em path: a chave de WOD carrega `#` e a canônica carrega
+# espaços — mesma convenção de `?chave=` já usada em /exercicios/evolucao e /exercicios/feed.
+@router.get("/exercicios/pr")
+def pr_exercicio(aluno_id: str, chave: str, personal_id: str = Depends(get_current_personal_id)):
+    """PR (recorde) de um exercício pela chave canônica — 1 GetItem."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    return sessao_service.get_pr(aluno_id, chave)
+
+
+@router.put("/exercicios/pr")
+def editar_pr(aluno_id: str, body: PrEditBody, personal_id: str = Depends(get_current_personal_id)):
+    """Corrige o valor do recorde. Não conta como recorde novo: sem ponto, meta ou badge."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    return sessao_service.editar_pr(aluno_id, body.chave, body.carga, Ator.PERSONAL.value)
+
+
+@router.delete("/exercicios/pr", status_code=204)
+def excluir_pr(aluno_id: str, chave: str, personal_id: str = Depends(get_current_personal_id)):
+    """Apaga o recorde do exercício."""
+    authz.authorize_aluno(personal_id, aluno_id)
+    sessao_service.excluir_pr(aluno_id, chave)
 
 
 @router.get("/resumo")

@@ -1,7 +1,7 @@
 import { alunoClient } from './alunoClient'
 import type { BlocoTreino, Exercicio, ExercicioSubstituto, Treino } from '../types'
-import type { Evolucao, ExercicioEvolucao, Resumo } from './evolucao'
-import type { FeedItem, MidiaExercicio, Relato } from './treinos'
+import type { Evolucao, ExercicioEvolucao, PrCorrigido, PrItem, Resumo } from './evolucao'
+import type { FeedItem, MidiaExercicio, Relato, SessaoDoDia } from './treinos'
 import { prepareMediaForUpload, MEDIA_CACHE_CONTROL } from '../utils/media'
 
 export interface SessaoAtiva {
@@ -34,7 +34,7 @@ export interface AlunoNotificacao {
   relato_sk?: string
 }
 
-export type { ExercicioEvolucao }
+export type { ExercicioEvolucao, PrItem }
 
 /** Exercício PRESCRITO (snapshot do treino no momento da sessão) — existe mesmo quando o
  * aluno não registrou nada (ex.: movimentos de um WOD, cujo resultado é o score do bloco). */
@@ -253,9 +253,14 @@ export const alunoApi = {
   listExerciciosHistorico: () =>
     alunoClient.get<ExercicioEvolucao[]>('/v1/aluno/exercicios', { params: { historico: 1 } }).then((r) => r.data),
   historicoExercicio: (exercicioNome: string) =>
-    alunoClient.get<Array<{ data_hora: string; series_exec: SerieInput[] }>>('/v1/aluno/exercicios/historico', { params: { exercicio_nome: exercicioNome, limit: 1 } }).then((r) => r.data),
+    alunoClient.get<Array<{ data_hora: string; series_exec: SerieInput[]; pse?: number }>>('/v1/aluno/exercicios/historico', { params: { exercicio_nome: exercicioNome, limit: 1 } }).then((r) => r.data),
   prExercicio: (exercicioNome: string) =>
-    alunoClient.get<{ carga: number; data?: string } | null>('/v1/aluno/exercicios/pr', { params: { exercicio_nome: exercicioNome } }).then((r) => r.data),
+    alunoClient.get<PrCorrigido | null>('/v1/aluno/exercicios/pr', { params: { exercicio_nome: exercicioNome } }).then((r) => r.data),
+  /** Corrige o valor de um recorde. Não conta como recorde novo (sem ponto/meta/badge). */
+  atualizarPr: (chave: string, carga: number) =>
+    alunoClient.put<PrCorrigido>('/v1/aluno/exercicios/pr', { chave, carga }).then((r) => r.data),
+  excluirPr: (chave: string) =>
+    alunoClient.delete('/v1/aluno/exercicios/pr', { params: { chave } }).then((r) => r.data),
   evolucao: (id: string) => alunoClient.get<Evolucao>(`/v1/aluno/exercicios/${id}/evolucao`).then((r) => r.data),
   evolucaoPorChave: (chave: string) =>
     alunoClient.get<Evolucao>('/v1/aluno/exercicios/evolucao', { params: { chave } }).then((r) => r.data),
@@ -281,6 +286,11 @@ export const alunoApi = {
     alunoClient.get<SessaoHistorico>(`/v1/aluno/sessoes/${sessaoId}`).then((r) => r.data),
   historicoMes: (ano: number, mes: number) =>
     alunoClient.get<HistoricoMes>('/v1/aluno/historico/mes', { params: { ano, mes } }).then((r) => r.data),
+  /** Sessões que começaram em [inicio, fim) — o dia é recortado no cliente (fuso do aparelho). */
+  sessoesNoIntervalo: (inicio: string, fim: string) =>
+    alunoClient
+      .get<{ sessoes: SessaoDoDia[] }>('/v1/aluno/historico/intervalo', { params: { de: inicio, ate: fim } })
+      .then((r) => r.data.sessoes),
 
   notificacoes: (params?: { cursor?: string; limit?: number }) =>
     alunoClient

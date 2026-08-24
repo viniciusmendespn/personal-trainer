@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Trophy, TrendingUp, Activity, BarChart3, CalendarCheck, FileDown, Search, MessageSquareDot, MessageCircle, Zap } from 'lucide-react'
+import { ArrowLeft, Trophy, TrendingUp, Activity, BarChart3, CalendarCheck, FileDown, MessageSquareDot, MessageCircle, Zap } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, ReferenceLine,
@@ -8,11 +8,13 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAluno } from '../hooks/useAlunos'
 import { useExerciciosAlunoHistorico, useEvolucaoPorChave, useResumo } from '../hooks/useEvolucao'
-import { Card, Spinner, StatCard, Badge, EmptyState, Button, Input, SearchableSelect, useToast } from '../components/ui'
+import { Card, Spinner, StatCard, Badge, EmptyState, Button, SearchableSelect, useToast } from '../components/ui'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
-import { normalizeText } from '../utils/normalizeText'
+import { RecordesList } from '../components/evolucao/RecordesList'
+import { evolucaoApi } from '../api/evolucao'
 import { fmtScoreValor } from '../utils/wod'
 import { PostComposer } from '../components/exercicio/PostComposer'
+import { TreinoDoDiaModal } from '../components/historico/TreinoDoDiaModal'
 import { RelatorioPrintLayout } from '../components/pdf/RelatorioPrintLayout'
 import { renderNodeToPdf } from '../utils/exportPdf'
 import { treinosApi } from '../api/treinos'
@@ -53,10 +55,25 @@ export function AlunoEvolucaoPage() {
   const [exKey, setExKey] = useState('')
   const [aba, setAba] = useState<AbaEvolucao>('feed')
   const [exporting, setExporting] = useState(false)
-  const [prQuery, setPrQuery] = useState('')
-  const [prLimit, setPrLimit] = useState(12)
+  const [salvandoPr, setSalvandoPr] = useState(false)
   const { show } = useToast()
   const qc = useQueryClient()
+
+  /** Corrigir/apagar recorde não mexe nos REG, mas o `pr` da evolução passa a sair do item
+   *  editado — por isso o gráfico e o bloco "histórico" também precisam recarregar. */
+  async function aplicarNoPr(acao: () => Promise<unknown>, erro: string) {
+    setSalvandoPr(true)
+    try {
+      await acao()
+      qc.invalidateQueries({ queryKey: ['resumo', alunoId] })
+      qc.invalidateQueries({ queryKey: ['evolucao-chave', alunoId] })
+      qc.invalidateQueries({ queryKey: ['evolucao', alunoId] })
+    } catch {
+      show(erro, 'error')
+    } finally {
+      setSalvandoPr(false)
+    }
+  }
 
   const exerciciosOrdenados = useMemo(
     () => [...(exercicios ?? [])].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
@@ -65,10 +82,6 @@ export function AlunoEvolucaoPage() {
   const exerciciosOptions = useMemo(
     () => exerciciosOrdenados.map((e) => ({ value: e.chave, label: e.nome })),
     [exerciciosOrdenados]
-  )
-  const prsFiltrados = useMemo(
-    () => (resumo?.prs ?? []).filter((p) => normalizeText(p.exercicio).includes(normalizeText(prQuery))),
-    [resumo, prQuery]
   )
 
   async function exportarPdf() {
@@ -346,38 +359,15 @@ const chartData = (evo?.serie ?? [])
 
           {/* Aba Recordes */}
           {aba === 'recordes' && (
-            !(resumo?.prs?.length) ? (
-              <p className="text-text-muted text-sm">Nenhum recorde ainda.</p>
-            ) : (
-              <Card variant="elevated">
-                <div className="relative mb-3">
-                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-                  <Input placeholder="Buscar exercício…" value={prQuery} onChange={(e) => setPrQuery(e.target.value)} className="pl-8" />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {prsFiltrados.slice(0, prLimit).map((p) => {
-                    const exPr = exercicios?.find((e) => (p.chave ? e.chave === p.chave : e.nome === p.exercicio))
-                    const tipoPr = normalizeTipoExercicio(exPr?.tipo_exercicio)
-                    const valorPr = p.wod || p.chave?.startsWith('wod#')
-                      ? `${fmtScoreValor(p.formato ?? exPr?.formato, p.carga)}${p.rx === false ? ' (adaptado)' : ''}`
-                      : tipoPr === 'PERFORMANCE'
-                        ? `${p.carga} ${exPr?.unidade_reps ?? ''}`.trimEnd()
-                        : `${p.carga} ${exPr?.unidade_carga ?? 'kg'}`
-                    return (
-                      <Badge key={p.exercicio} tone="warning">
-                        {p.exercicio}: <b className="ml-1">{valorPr}</b>
-                        <span className="ml-1 text-xs opacity-70">{new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
-                      </Badge>
-                    )
-                  })}
-                </div>
-                {prsFiltrados.length > prLimit && (
-                  <Button variant="ghost" size="sm" className="mt-2" onClick={() => setPrLimit((n) => n + 12)}>
-                    Carregar mais ({prsFiltrados.length - prLimit} restantes)
-                  </Button>
-                )}
-              </Card>
-            )
+            <RecordesList
+              prs={resumo?.prs ?? []}
+              exercicios={exercicios}
+              salvando={salvandoPr}
+              onSalvar={(chave, carga) =>
+                aplicarNoPr(() => evolucaoApi.atualizarPr(alunoId, chave, carga), 'Não foi possível corrigir o recorde.')}
+              onExcluir={(chave) =>
+                aplicarNoPr(() => evolucaoApi.excluirPr(alunoId, chave), 'Não foi possível apagar o recorde.')}
+            />
           )}
 
           {/* Aba Feed */}
@@ -412,6 +402,7 @@ const chartData = (evo?.serie ?? [])
                 alunoFotoUrl={aluno?.foto_url}
                 personalNome={myProfile?.nome}
                 personalFotoUrl={myProfile?.foto_url}
+                renderTreinoDoDia={(a) => <TreinoDoDiaModal alunoId={alunoId} {...a} destaqueChave={exKey} />}
                 uploadMidia={async (file) => {
                   const { upload_url, s3_key } = await treinosApi.uploadUrlMidia(alunoId, file.name, file.type)
                   await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })

@@ -5,6 +5,7 @@ Sessão ativa = 1 item denormalizado `SESSION#ACTIVE` que embute a sequência de
 (sessão, exercício) com séries acumuladas via list_append (1 write). Usado pelo portal e
 pelo agente."""
 import logging
+import math
 import os
 import time
 import unicodedata
@@ -844,6 +845,83 @@ def _calcular_pr(pk: str, chave: str, series: list, tipo: str, ex_nome: str,
     return None
 
 
+# ── PR: leitura, correção manual e exclusão ──────────────────────────────────
+# O item STATS#PR# é monotônico por construção (update_if_greater/_less) — foi feito para nunca
+# cair, e por isso um "600" digitado no lugar de "60" trava o recorde do exercício para sempre.
+# A edição é a porta de correção, e NÃO concede ponto, meta, badge nem notificação: não é um
+# recorde novo, é o conserto de um número.
+_PR_MIN, _PR_MAX = -10_000.0, 1_000_000.0
+
+
+def _chave_pr(chave: str | None) -> str:
+    # chave_exercicio é idempotente sobre chave já canônica e preserva o namespace "wod#".
+    canonica = chave_exercicio(chave)
+    if not canonica:
+        raise HTTPException(400, "Informe a chave do exercício.")
+    return canonica
+
+
+def get_pr(aluno_id: str, chave: str) -> dict | None:
+    """Recorde de um exercício pela chave canônica (aceita `wod#…`) — 1 GetItem."""
+    item = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_stats_pr(_chave_pr(chave)))
+    return repo.clean(item) if item else None
+
+
+def editar_pr(aluno_id: str, chave: str, carga, editado_por: str) -> dict:
+    """Sobrescreve o valor do recorde. 404 se o recorde não existe — nunca cria PR do nada,
+    senão uma chave qualquer inventaria recordes de exercícios jamais executados.
+
+    Só `carga` + a marca de auditoria entram no update: os campos extras do PR de WOD
+    (`formato`, `unidade`, `rx`, `direcao`) precisam sobreviver, e um `put_item` os apagaria —
+    "8:32" viraria "512" na tela e a meta perderia a direção."""
+    chave = _chave_pr(chave)
+    valor = _num(carga)
+    # NaN atravessa o _num e envenenaria a ConditionExpression do update_if_greater para sempre
+    # (toda comparação com NaN é falsa): o exercício nunca mais bateria um recorde.
+    if valor is None or not math.isfinite(valor) or not (_PR_MIN <= valor <= _PR_MAX):
+        raise HTTPException(400, "Valor de recorde inválido.")
+
+    pk, sk = keys.pk_aluno(aluno_id), keys.sk_stats_pr(chave)
+    atual = repo.get_item(pk, sk)
+    if not atual:
+        raise HTTPException(404, "Recorde não encontrado.")
+    # Único read antes da escrita, e só para saber a direção: em métrica "menor é melhor"
+    # (tempo de WOD) um valor <= 0 corrompe o ranking e concluiria qualquer meta na hora.
+    if atual.get("direcao") == "MENOR" and valor <= 0:
+        raise HTTPException(400, "Nesta métrica (menor é melhor) o valor precisa ser positivo.")
+
+    item = repo.update_item_if_exists(pk, sk, {
+        "carga": round(valor, 3),
+        "editado_em": now_iso(),
+        "editado_por": editado_por,
+    })
+    if item is None:
+        raise HTTPException(404, "Recorde não encontrado.")
+    return repo.clean(item)
+
+
+def excluir_pr(aluno_id: str, chave: str) -> None:
+    """Apaga o recorde. Saída de emergência para um PR fantasma: sem o item, a evolução volta
+    a derivar o PR da série — que pode trazer de volta o valor errado. Corrigir > excluir."""
+    if not repo.delete_item_if_exists(keys.pk_aluno(aluno_id), keys.sk_stats_pr(_chave_pr(chave))):
+        raise HTTPException(404, "Recorde não encontrado.")
+
+
+def _pr_editado(aluno_id: str, chave: str) -> dict | None:
+    """Recorde corrigido à mão — vira fonte única do `pr` da evolução (ver `_evolucao_serie`).
+    +1 GetItem de item < 200 B: ruído perto dos até 100 REG que a evolução já lê."""
+    if not chave:
+        return None
+    item = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_stats_pr(chave))
+    if not item or not item.get("editado_em"):
+        return None
+    valor = _num(item.get("carga"))
+    if valor is None:
+        return None
+    return {"carga": valor, "data": item.get("data"),
+            "editado_em": item.get("editado_em"), "editado_por": item.get("editado_por")}
+
+
 def chave_exercicio(nome: str | None) -> str:
     """Chave canônica do nome do exercício (sem acento/caixa/espaços extras) — usada para
     agrupar métricas (evolução/PR) de exercícios homônimos cadastrados em treinos diferentes,
@@ -1006,6 +1084,12 @@ def _evolucao_serie(aluno_id: str, chave: str, info: dict, limit: int) -> dict:
                 pr = {"carga": carga_max, "data": c.get("data_hora")}
 
         serie.append(ponto)
+
+    # Recorde corrigido à mão vira FONTE ÚNICA: o REG que gerou o PR errado continua no
+    # histórico (a série é real e o gráfico mostra os pontos reais), mas o rótulo do recorde
+    # passa a ser o corrigido. Sem edição, segue o derivado — compat com todo o legado.
+    pr = _pr_editado(aluno_id, chave) or pr
+
     return {"tipo": tipo, "direcao": direcao, "serie": serie, "pr": pr,
             "total_sessoes": len(serie), "nome": info.get("nome"), "chave": chave}
 
@@ -1168,6 +1252,57 @@ def historico_mes(aluno_id: str, ano: int, mes: int, incluir_fotos: bool = True)
     }
 
 
+SESSOES_INTERVALO_MAX_H = 48
+# Folga PARA FRENTE no BETWEEN: o `ts` da SK SESSION# é a hora do finish, não a do início, e o
+# autofinish do scheduler fecha até SESSAO_LIMITE_S (6h) depois — um treino das 23h pode estar
+# indexado às 5h do dia seguinte. Sem essa folga ele sumiria do dia em que realmente aconteceu.
+# Não há folga para trás: o ts do finish é sempre >= data_hora_inicio.
+_SESSAO_LAG_S = 12 * 3600
+_PROJ_SESSAO_INTERVALO = ["sessao_id", "treino_nome", "data_hora_inicio", "status"]
+
+
+def _parse_instante(valor: str | None) -> datetime | None:
+    """ISO-8601 → datetime aware (UTC quando vier sem fuso). None se ilegível."""
+    try:
+        dt = datetime.fromisoformat((valor or "").replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def sessoes_no_intervalo(aluno_id: str, de_iso: str, ate_iso: str) -> list[dict]:
+    """Sessões FINALIZADAS que COMEÇARAM em [de, ate) — dois instantes UTC. O recorte do dia é
+    do cliente (fuso do aparelho do aluno): o backend não assume timezone nenhum, só compara
+    instantes. 1 Query BETWEEN com projeção, sem paginação."""
+    de, ate = _parse_instante(de_iso), _parse_instante(ate_iso)
+    if de is None or ate is None:
+        raise HTTPException(400, "Informe `de` e `ate` em ISO-8601.")
+    if ate <= de:
+        raise HTTPException(400, "Intervalo inválido: `ate` precisa ser maior que `de`.")
+    if (ate - de).total_seconds() > SESSOES_INTERVALO_MAX_H * 3600:
+        raise HTTPException(400, f"Intervalo máximo de {SESSOES_INTERVALO_MAX_H}h.")
+
+    pk = keys.pk_aluno(aluno_id)
+    low = keys.sk_sessao_hist(f"{int(de.timestamp() * 1000):013d}", "")
+    high = keys.sk_sessao_hist(f"{int((ate.timestamp() + _SESSAO_LAG_S) * 1000):013d}", "")
+    # Filtro em memória (e não FilterExpression): a janela é de um único aluno e de poucas
+    # horas — na prática um punhado de itens — e o Dynamo aplica o filtro DEPOIS da leitura,
+    # então o RCU seria idêntico. Comparar datetime parseado, nunca string: `data_hora_inicio`
+    # termina em "+00:00" e o cliente manda "Z" — lexicograficamente isso quebra na virada.
+    out = []
+    for raw in repo.query_between(pk, low, high, projection=_PROJ_SESSAO_INTERVALO):
+        if raw.get("status") != SessaoStatus.FINALIZADA.value:
+            continue
+        inicio = _parse_instante(raw.get("data_hora_inicio"))
+        if inicio is None or not (de <= inicio < ate):
+            continue
+        out.append({"sessao_id": raw.get("sessao_id"),
+                    "data_hora": raw.get("data_hora_inicio"),
+                    "treino_nome": raw.get("treino_nome")})
+    out.sort(key=lambda s: s["data_hora"] or "")
+    return out
+
+
 def list_exercicios_aluno(aluno_id: str, incluir_historico: bool = False) -> list[dict]:
     """Lista plana de exercícios do aluno p/ seletores, deduplicada por nome canônico.
     Default: só o programa atual (EX#), na ordem de prescrição — shape original, usado
@@ -1275,7 +1410,8 @@ def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
         "prs": sorted(
             [{"exercicio": p.get("exercicio_nome"), "carga": p.get("carga"), "data": p.get("data"),
               "chave": p.get("chave"), "direcao": p.get("direcao"), "formato": p.get("formato"),
-              "wod": p.get("wod") or False, "unidade": p.get("unidade"), "rx": p.get("rx")}
+              "wod": p.get("wod") or False, "unidade": p.get("unidade"), "rx": p.get("rx"),
+              "editado_em": p.get("editado_em"), "editado_por": p.get("editado_por")}
              for p in prs],
             key=lambda x: x.get("carga") or 0, reverse=True,
         ),

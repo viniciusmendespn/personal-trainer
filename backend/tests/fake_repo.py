@@ -29,9 +29,13 @@ class FakeRepo:
     def query_pk_last_n(self, pk, sk_prefix, limit):
         return list(reversed(self._da_particao(pk, sk_prefix)))[:limit]
 
-    def query_between(self, pk, sk_low, sk_high):
-        return [dict(v) for (p, s), v in sorted(self.itens.items())
-                if p == pk and sk_low <= s <= sk_high]
+    def query_between(self, pk, sk_low, sk_high, projection=None):
+        itens = [dict(v) for (p, s), v in sorted(self.itens.items())
+                 if p == pk and sk_low <= s <= sk_high]
+        if projection:   # espelha o ProjectionExpression: atributo de fora NÃO volta
+            keep = set(projection)
+            itens = [{k: v for k, v in i.items() if k in keep} for i in itens]
+        return itens
 
     def query_pk_page(self, pk, sk_prefix, limit, cursor=None, forward=True,
                       filters=None, max_scans=8):

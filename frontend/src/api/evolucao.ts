@@ -53,6 +53,31 @@ export interface ExercicioEvolucao {
   formato?: string                // FOR_TIME | AMRAP | EMOM (quando wod)
 }
 
+/** Recorde de um exercício (item STATS#PR#), como o resumo o devolve. */
+export interface PrItem {
+  exercicio: string
+  carga: number
+  data: string
+  chave?: string
+  direcao?: 'MAIOR' | 'MENOR'
+  formato?: string
+  wod?: boolean
+  unidade?: string | null
+  rx?: boolean
+  /** Preenchidos quando o recorde foi corrigido à mão — a marca não some depois. */
+  editado_em?: string | null
+  editado_por?: 'ALUNO' | 'PERSONAL' | null
+}
+
+/** Recorde corrigido, como o PUT devolve (item cru, não a projeção do resumo). */
+export interface PrCorrigido {
+  carga: number
+  data?: string
+  exercicio_nome?: string
+  editado_em?: string
+  editado_por?: 'ALUNO' | 'PERSONAL'
+}
+
 export interface ResumoSemana {
   semana: string
   volume: number
@@ -66,10 +91,7 @@ export interface Resumo {
   ultimo_treino: string | null
   sessoes_semana: number
   semanas: ResumoSemana[]
-  prs: {
-    exercicio: string; carga: number; data: string; chave?: string
-    direcao?: 'MAIOR' | 'MENOR'; formato?: string; wod?: boolean; unidade?: string | null; rx?: boolean
-  }[]
+  prs: PrItem[]
   streak_atual?: number
   streak_maximo?: number
   multiplicador_atual?: number
@@ -98,4 +120,9 @@ export const evolucaoApi = {
     api.get<Evolucao>(`/v1/alunos/${alunoId}/exercicios/evolucao`, { params: { chave } }).then((r) => r.data),
   resumo: (alunoId: string) =>
     api.get<Resumo>(`/v1/alunos/${alunoId}/resumo`).then((r) => r.data),
+  /** Corrige o valor de um recorde. Não conta como recorde novo (sem ponto/meta/badge). */
+  atualizarPr: (alunoId: string, chave: string, carga: number) =>
+    api.put<PrCorrigido>(`/v1/alunos/${alunoId}/exercicios/pr`, { chave, carga }).then((r) => r.data),
+  excluirPr: (alunoId: string, chave: string) =>
+    api.delete(`/v1/alunos/${alunoId}/exercicios/pr`, { params: { chave } }).then((r) => r.data),
 }

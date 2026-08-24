@@ -163,9 +163,18 @@ def batch_get_items(keys_list: list[tuple[str, str]]) -> dict[tuple[str, str], d
     return out
 
 
-def query_between(pk: str, sk_low: str, sk_high: str) -> list[dict]:
+def query_between(pk: str, sk_low: str, sk_high: str, projection: list[str] | None = None) -> list[dict]:
+    """`projection` traz só os atributos pedidos — não reduz RCU (a cobrança é sobre o item
+    lido, antes da projeção), mas evita trafegar/parsear itens gordos (ex.: SESSION# carrega
+    `exercicios_exec` denormalizado). Todo atributo vai aliasado: `status`, `data` e afins
+    são palavras reservadas e explodiriam com ValidationException."""
     cond = Key("PK").eq(pk) & Key("SK").between(sk_low, sk_high)
-    resp = _get_table().query(KeyConditionExpression=cond)
+    kwargs: dict = {"KeyConditionExpression": cond}
+    if projection:
+        nomes = {f"#p{i}": attr for i, attr in enumerate(projection)}
+        kwargs["ProjectionExpression"] = ", ".join(nomes)
+        kwargs["ExpressionAttributeNames"] = nomes
+    resp = _get_table().query(**kwargs)
     return resp.get("Items", [])
 
 

@@ -28,6 +28,7 @@ import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIn
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
 import { BlocosTreinoEditor, formatoBlocoLabel, sufixoPrescricaoBloco, fmtPrescricaoBloco } from '../components/exercicios/BlocosTreinoEditor'
 import { IntervaloInput } from '../components/exercicios/IntervaloInput'
+import { SerieChips } from '../components/exercicio/SerieChips'
 import { SessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import { CalendarioMes } from '../components/historico/CalendarioMes'
 import { FeriasPanel } from '../components/historico/FeriasPanel'
@@ -1309,7 +1310,6 @@ function ExecucaoStats({
   const uni = unidadeCarga || 'kg'
   if (data.total_sessoes === 0) return <div className="mt-1 text-xs text-text-muted">ainda não executado</div>
 
-  const isPerf = tipoExercicio === 'PERFORMANCE'
   const ultima = hist?.[0]
   const seriesUltima = ultima?.series_exec.filter((s) => !s.contexto) ?? []
 
@@ -1329,21 +1329,13 @@ function ExecucaoStats({
               Esforço (PSE) {ultima.pse}/10
             </span>
           )}
-          <div className="mt-0.5 flex flex-wrap gap-1">
-            {seriesUltima.map((s, i) => {
-              let label: string
-              if (isPerf) {
-                const extra = s.carga ? ` · ${s.carga} ${unidadeCarga ?? ''}`.trimEnd() : ''
-                label = `${s.reps ?? '-'} ${unidadeReps ?? ''}`.trimEnd() + extra
-              } else {
-                const cargaLabel = s.carga ? ` · ${s.carga} ${unidadeCarga ?? 'kg'}` : ''
-                label = `${s.reps ?? '-'} ${unidadeReps ?? 'reps'}${cargaLabel}`
-              }
-              return (
-                <span key={i} className="text-text-secondary bg-white/5 rounded-md px-2 py-0.5">{label}</span>
-              )
-            })}
-          </div>
+          <SerieChips
+            series={seriesUltima}
+            tipo={normalizeTipoExercicio(tipoExercicio)}
+            unidadeCarga={unidadeCarga}
+            unidadeReps={unidadeReps}
+            className="mt-0.5 gap-1"
+          />
         </div>
       )}
     </div>

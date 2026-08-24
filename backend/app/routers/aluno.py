@@ -380,12 +380,30 @@ def historico_exercicio_aluno(exercicio_nome: str, limit: int = 1, ctx: dict = D
     return repo.clean_all(repo.query_gsi1_last(keys.gsi1_registro(ctx["aluno_id"], chave), limit))
 
 
+class PrEditBody(BaseModel):
+    chave: str
+    carga: float | str   # aceita "62,5" digitado em pt-BR, como SerieExec.carga
+
+
 @router.get("/exercicios/pr")
-def pr_exercicio_aluno(exercicio_nome: str, ctx: dict = Depends(get_current_aluno)):
-    """PR (recorde) de um exercício — 1 GetItem. Fonte: STATS#PR#{chave}."""
-    chave = sessao_service.chave_exercicio(exercicio_nome)
-    item = repo.get_item(keys.pk_aluno(ctx["aluno_id"]), keys.sk_stats_pr(chave))
-    return repo.clean(item) if item else None
+def pr_exercicio_aluno(exercicio_nome: str | None = None, chave: str | None = None,
+                       ctx: dict = Depends(get_current_aluno)):
+    """PR (recorde) de um exercício — 1 GetItem. Fonte: STATS#PR#{chave}.
+    `chave` tem precedência; `exercicio_nome` segue por compat (e não alcança PR de WOD,
+    cuja chave é `wod#…` e não sai de `chave_exercicio(nome)`)."""
+    return sessao_service.get_pr(ctx["aluno_id"], chave or exercicio_nome or "")
+
+
+@router.put("/exercicios/pr")
+def editar_pr_aluno(body: PrEditBody, ctx: dict = Depends(get_current_aluno)):
+    """Corrige o valor do recorde. Não conta como recorde novo: sem ponto, meta ou badge."""
+    return sessao_service.editar_pr(ctx["aluno_id"], body.chave, body.carga, Ator.ALUNO.value)
+
+
+@router.delete("/exercicios/pr", status_code=204)
+def excluir_pr_aluno(chave: str, ctx: dict = Depends(get_current_aluno)):
+    """Apaga o recorde do exercício."""
+    sessao_service.excluir_pr(ctx["aluno_id"], chave)
 
 
 @router.get("/exercicios/{exercicio_id}/midia")
@@ -488,6 +506,13 @@ def sessao_checkin(sessao_id: str, body: CheckinBody, ctx: dict = Depends(get_cu
 def historico_mes(ano: int, mes: int, ctx: dict = Depends(get_current_aluno)):
     """Resumo do mês p/ o calendário do histórico: dias treinados, destaques e fotos de check-in."""
     return sessao_service.historico_mes(ctx["aluno_id"], ano, mes)
+
+
+@router.get("/historico/intervalo")
+def historico_intervalo(de: str, ate: str, ctx: dict = Depends(get_current_aluno)):
+    """Sessões que começaram em [de, ate) — o cliente manda os dois instantes UTC que
+    delimitam o dia no fuso dele. Usado pelo feed p/ abrir o treino do dia de um post."""
+    return {"sessoes": sessao_service.sessoes_no_intervalo(ctx["aluno_id"], de, ate)}
 
 
 class RelatoBody(BaseModel):

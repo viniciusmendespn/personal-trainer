@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, BellRing, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Search, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info, Repeat, Zap, AlarmClock, CalendarDays, List } from 'lucide-react'
+import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, BellRing, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info, Repeat, Zap, AlarmClock, CalendarDays, List } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -11,6 +11,8 @@ import { fmtScoreValor } from '../utils/wod'
 import { usePushNotification } from '../hooks/usePushNotification'
 import { SeriesPrescritasCompact, fmtPrescricaoFlat } from '../components/exercicios/SeriesPrescritasEditor'
 import { AlunoSessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
+import { AlunoTreinoDoDiaModal } from '../components/historico/TreinoDoDiaModal'
+import { RecordesList } from '../components/evolucao/RecordesList'
 import { alunoClient } from '../api/alunoClient'
 import { FeedGlobalTab } from '../components/feed/FeedGlobalTab'
 import { PontosWidget } from '../components/gamificacao/PontosWidget'
@@ -22,6 +24,7 @@ import { ChatThread } from '../components/chat/ChatThread'
 import { ChatInputBar } from '../components/chat/ChatInputBar'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
 import { PostComposer } from '../components/exercicio/PostComposer'
+import { SerieChips } from '../components/exercicio/SerieChips'
 import { Button, Card, Spinner, Input, Badge, StatCard, EmptyState, SearchableSelect, SocialLinks, useToast, useConfirm, Modal, RichTextContent, ExpandableText } from '../components/ui'
 import { renderMarkdownLite } from '../components/chat/markdownLite'
 import { AlunoPerfilModal } from '../components/aluno/AlunoPerfilModal'
@@ -39,7 +42,7 @@ import { normalizeTipoExercicio } from '../types'
 import { formatoBlocoLabel, sufixoPrescricaoBloco, fmtPrescricaoBloco } from '../components/exercicios/BlocosTreinoEditor'
 import { videoUrlComFallback } from '../utils/video'
 import { feitoNaSemana, labelDiaCurto } from '../utils/datetime'
-import { chaveExercicio, normalizeText } from '../utils/normalizeText'
+import { chaveExercicio } from '../utils/normalizeText'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -1824,24 +1827,18 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
             <div>
               <p className="text-xs text-text-muted mb-1">
                 Última vez ({new Date(ultimaExec.data[0].data_hora).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })})
+                {ultimaExec.data[0].pse != null && (
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-energy/10 px-2 py-0.5 text-[11px] font-medium text-energy align-middle">
+                    Esforço (PSE) {ultimaExec.data[0].pse}/10
+                  </span>
+                )}
               </p>
-              <div className="flex flex-wrap gap-1.5">
-                {ultimaExec.data[0].series_exec.filter((s) => !s.contexto).map((s, i) => {
-                  let label: string
-                  if (tipo === 'PERFORMANCE') {
-                    const extra = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? ''}`.trimEnd() : ''
-                    label = `${s.reps ?? '-'} ${ex.unidade_reps ?? ''}`.trimEnd() + extra
-                  } else {
-                    const cargaLabel = s.carga ? ` · ${s.carga} ${ex.unidade_carga ?? 'kg'}` : ''
-                    label = `${s.reps ?? '-'} ${ex.unidade_reps ?? 'reps'}${cargaLabel}`
-                  }
-                  return (
-                    <span key={i} className="text-xs text-text-secondary bg-white/5 rounded-md px-2 py-0.5">
-                      {label}
-                    </span>
-                  )
-                })}
-              </div>
+              <SerieChips
+                series={ultimaExec.data[0].series_exec}
+                tipo={tipo}
+                unidadeCarga={ex.unidade_carga}
+                unidadeReps={ex.unidade_reps}
+              />
             </div>
           )}
 
@@ -1854,6 +1851,8 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
                   {formatPr(prEx.data.carga, tipo, tipo === 'PERFORMANCE' ? ex.unidade_reps : ex.unidade_carga)}
                 </span>
                 {prEx.data.data && ` (${new Date(prEx.data.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })})`}
+                {/* Explica por que o número mudou — a correção é feita na aba Recordes. */}
+                {prEx.data.editado_em && <span className="ml-1 text-accent-hover">· corrigido</span>}
               </span>
             </div>
           )}
@@ -1977,8 +1976,25 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
   const personal = useQuery({ queryKey: ['aluno-personal-profile'], queryFn: alunoApi.personalProfile, staleTime: 300_000 })
   const [exKey, setExKey] = useState('')
   const [aba, setAba] = useState<AbaEvolucao>('feed')
-  const [prQuery, setPrQuery] = useState('')
-  const [prLimit, setPrLimit] = useState(12)
+  const [salvandoPr, setSalvandoPr] = useState(false)
+
+  /** Corrigir/apagar recorde não mexe nos REG, mas o `pr` da evolução passa a sair do item
+   *  editado — daí invalidar também o gráfico. `aluno-pr-ex` é chaveado pelo NOME do exercício
+   *  (e a mutação só conhece a chave canônica), então a invalidação vai por prefixo. */
+  async function aplicarNoPr(acao: () => Promise<unknown>, erro: string) {
+    setSalvandoPr(true)
+    try {
+      await acao()
+      qc.invalidateQueries({ queryKey: ['aluno-resumo'] })
+      qc.invalidateQueries({ queryKey: ['aluno-pr-ex'] })
+      qc.invalidateQueries({ queryKey: ['aluno-evo'] })
+    } catch {
+      show(erro, 'error')
+    } finally {
+      setSalvandoPr(false)
+    }
+  }
+
   const exsOptions = useMemo(
     () => (exs.data ?? [])
       .map((e) => ({ value: e.chave, label: e.nome }))
@@ -2052,11 +2068,6 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
         ...Object.fromEntries(gruposNomes.map((g) => [g, w.grupos?.[g] ?? 0])),
       })),
     [resumo.data, gruposNomes]
-  )
-
-  const prsFiltrados = useMemo(
-    () => (resumo.data?.prs ?? []).filter((p) => normalizeText(p.exercicio).includes(normalizeText(prQuery))),
-    [resumo.data, prQuery]
   )
 
   return (
@@ -2238,35 +2249,15 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
 
       {/* Aba Recordes */}
       {aba === 'recordes' && (
-        !(resumo.data?.prs?.length) ? (
-          <p className="text-text-muted text-sm">Nenhum recorde ainda.</p>
-        ) : (
-          <Card variant="elevated">
-            <div className="relative mb-3">
-              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-              <Input placeholder="Buscar exercício…" value={prQuery} onChange={(e) => setPrQuery(e.target.value)} className="pl-8" />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {prsFiltrados.slice(0, prLimit).map((p) => {
-                const exPr = exs.data?.find((e) => (p.chave ? e.chave === p.chave : e.nome === p.exercicio))
-                const tipoPr = normalizeTipoExercicio(exPr?.tipo_exercicio)
-                const valorPr = p.wod || p.chave?.startsWith('wod#')
-                  ? `${fmtScoreValor(p.formato ?? exPr?.formato, p.carga)}${p.rx === false ? ' (adaptado)' : ''}`
-                  : tipoPr === 'PERFORMANCE'
-                    ? `${p.carga} ${exPr?.unidade_reps ?? ''}`.trimEnd()
-                    : `${p.carga} ${exPr?.unidade_carga ?? 'kg'}`
-                return (
-                  <Badge key={p.exercicio} tone="warning">{p.exercicio}: <b className="ml-1">{valorPr}</b><span className="ml-1 text-xs opacity-70">{new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span></Badge>
-                )
-              })}
-            </div>
-            {prsFiltrados.length > prLimit && (
-              <Button variant="ghost" size="sm" className="mt-2" onClick={() => setPrLimit((n) => n + 12)}>
-                Carregar mais ({prsFiltrados.length - prLimit} restantes)
-              </Button>
-            )}
-          </Card>
-        )
+        <RecordesList
+          prs={resumo.data?.prs ?? []}
+          exercicios={exs.data}
+          salvando={salvandoPr}
+          onSalvar={(chave, carga) =>
+            aplicarNoPr(() => alunoApi.atualizarPr(chave, carga), 'Não foi possível corrigir o recorde.')}
+          onExcluir={(chave) =>
+            aplicarNoPr(() => alunoApi.excluirPr(chave), 'Não foi possível apagar o recorde.')}
+        />
       )}
 
       {/* Aba Conquistas */}
@@ -2299,6 +2290,7 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
               alunoFotoUrl={me.data?.foto_url}
               personalNome={personal.data?.nome}
               personalFotoUrl={personal.data?.foto_url}
+              renderTreinoDoDia={(a) => <AlunoTreinoDoDiaModal {...a} destaqueChave={exKey} />}
               uploadMidia={async (file) => {
                 const { upload_url, s3_key } = await alunoApi.midiaUploadUrl(file.name, file.type)
                 await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })

@@ -63,6 +63,11 @@ export const treinosApi = {
     api.get<SessaoDetalhe>(`/v1/alunos/${alunoId}/sessoes/${sessaoId}`).then((r) => r.data),
   historicoMesAluno: (alunoId: string, ano: number, mes: number) =>
     api.get<HistoricoMes>(`/v1/alunos/${alunoId}/historico/mes`, { params: { ano, mes } }).then((r) => r.data),
+  /** Sessões que começaram em [inicio, fim) — o dia é recortado no cliente (fuso do aparelho). */
+  sessoesNoIntervalo: (alunoId: string, inicio: string, fim: string) =>
+    api
+      .get<{ sessoes: SessaoDoDia[] }>(`/v1/alunos/${alunoId}/historico/intervalo`, { params: { de: inicio, ate: fim } })
+      .then((r) => r.data.sessoes),
 
   feedExercicio: (alunoId: string, exercicioId: string) =>
     api.get<FeedItem[]>(`/v1/alunos/${alunoId}/exercicios/${exercicioId}/feed`).then((r) => r.data),
@@ -137,10 +142,19 @@ export interface Comentario {
   midias?: Array<{ s3_key: string; tipo: string; url?: string }>
 }
 
+/** Sessão finalizada num dia, no mínimo necessário para abrir o detalhe. */
+export interface SessaoDoDia {
+  sessao_id: string
+  data_hora: string
+  treino_nome?: string
+}
+
 export interface FeedItem {
   tipo: 'DOR' | 'DUVIDA' | 'CORRECAO' | 'EXECUCAO' | 'OUTRO'
   ator?: 'ALUNO' | 'PERSONAL'
   data_hora: string
+  /** Sessão em que o post nasceu — só nos posts feitos pelo aluno durante o treino. */
+  sessao_id?: string
   // Thread (DOR / DUVIDA / EXECUCAO com texto)
   descricao?: string
   respondido?: boolean

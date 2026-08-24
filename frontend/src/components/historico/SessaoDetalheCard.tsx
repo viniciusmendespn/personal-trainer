@@ -11,6 +11,8 @@ import { PostComposer } from '../exercicio/PostComposer'
 import { Modal, Badge } from '../ui'
 import { normalizeTipoExercicio, type TipoExercicio, type BlocoTreino } from '../../types'
 import { fmtScoreWod } from '../../utils/wod'
+import { fmtSerieExecutada } from '../../utils/serie'
+import { chaveExercicio } from '../../utils/normalizeText'
 import { formatoBlocoLabel, sufixoPrescricaoBloco, fmtPrescricaoBloco } from '../exercicios/BlocosTreinoEditor'
 import { fmtSerieCompacta } from '../exercicios/SeriesPrescritasEditor'
 import type { ScoreBlocoOut, ExercicioPrescritoSessao } from '../../api/alunoApp'
@@ -57,6 +59,8 @@ interface ExercicioDetalheProps {
   ex: ExecEx
   alunoId?: string  // presente só no lado do personal
   bloco?: BlocoTreino  // bloco a que o exercício pertencia (rótulos Rd N / "por round")
+  /** Exercício que motivou a abertura (post do feed) — destacado para achar de imediato. */
+  destaque?: boolean
 }
 
 function totalVolume(exs: ExecEx[]) {
@@ -99,24 +103,7 @@ function prescritoLabel(ex: PrescricaoShape, tipo: TipoExercicio, bloco?: BlocoT
   return null
 }
 
-function execLabel(tipo: TipoExercicio, s: { carga?: string; reps?: number; contexto?: boolean }, unidadeCarga?: string | null, unidadeReps?: string | null): string {
-  // `||` cobre null/undefined/'' — default params só cobrem undefined, e o backend grava null
-  // p/ FORÇA (kg/reps implícitos), o que renderizava a unidade literal "null".
-  const uc = unidadeCarga || 'kg'
-  const ur = unidadeReps || 'reps'
-  // Anotação dentro de bloco de WOD (contexto): só a carga usada — o resultado é o score do bloco
-  if (s.contexto || (s.reps == null && s.carga)) {
-    return s.carga ? `Carga usada: ${s.carga} ${unidadeCarga || 'kg'}` : '—'
-  }
-  if (tipo === 'PERFORMANCE') {
-    // 2ª medida (spec CROSSFIT §3.6): carga registrada em PERFORMANCE é contexto (ex.: min, kcal)
-    const extra = s.carga ? ` · ${s.carga} ${unidadeCarga || ''}`.trimEnd() : ''
-    return s.reps != null ? `${s.reps} ${ur}`.trimEnd() + extra : '—'
-  }
-  return `${s.reps != null ? `${s.reps} ${ur}` : '—'}${s.carga ? ` · ${s.carga} ${uc}` : ''}`
-}
-
-function ExercicioDetalhe({ ex, alunoId, bloco }: ExercicioDetalheProps) {
+function ExercicioDetalhe({ ex, alunoId, bloco, destaque }: ExercicioDetalheProps) {
   const tipo = normalizeTipoExercicio(ex.tipo_exercicio)
   const prescrito = prescritoLabel(ex, tipo, bloco)
   // Circuito (LIVRE/aquecimento com rounds): cada série executada é um round → "Rd N"
@@ -134,7 +121,8 @@ function ExercicioDetalhe({ ex, alunoId, bloco }: ExercicioDetalheProps) {
   const relatos = (ex.relatos ?? []).map((r) => ({ ...r, tipo: r.tipo as 'DOR' | 'DUVIDA' | 'CORRECAO' }))
 
   return (
-    <div className="space-y-2 pb-3 border-b border-border last:border-0 last:pb-0">
+    <div className={`space-y-2 pb-3 border-b border-border last:border-0 last:pb-0${
+      destaque ? ' -mx-2 px-2 rounded-lg bg-accent/10 ring-1 ring-accent/30' : ''}`}>
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-text">
           {ex.exercicio_nome}
@@ -175,7 +163,7 @@ function ExercicioDetalhe({ ex, alunoId, bloco }: ExercicioDetalheProps) {
             <div key={i} className="flex items-center gap-3 pl-2 text-xs">
               <span className="text-text-muted w-12 shrink-0">{circuito ? `Rd ${i + 1}` : `Sér ${i + 1}`}</span>
               <span className="text-text">
-                {execLabel(tipo, s, ex.unidade_carga, ex.unidade_reps)}
+                {fmtSerieExecutada(s, { tipo, unidadeCarga: ex.unidade_carga, unidadeReps: ex.unidade_reps })}
               </span>
               {s.aquecimento && <span className="text-[10px] text-warning">aq.</span>}
               {s.rpe != null && (
@@ -256,7 +244,8 @@ function pulados(prescritos: ExercicioPrescritoSessao[], execIds: Set<string>): 
   return prescritos.filter((p) => !execIds.has(p.exercicio_id) && !p.aquecimento)
 }
 
-function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: number; encerrada_automaticamente?: boolean; exercicios?: ExercicioPrescritoSessao[]; exercicios_exec?: ExecEx[]; scores_blocos?: ScoreBlocoOut[]; blocos?: BlocoTreino[] }; alunoId?: string }) {
+function SessaoDetalheConteudo({ data, alunoId, destaqueChave }: { data: { duracao_segundos?: number; encerrada_automaticamente?: boolean; exercicios?: ExercicioPrescritoSessao[]; exercicios_exec?: ExecEx[]; scores_blocos?: ScoreBlocoOut[]; blocos?: BlocoTreino[] }; alunoId?: string; destaqueChave?: string }) {
+  const destacado = (ex: ExecEx) => !!destaqueChave && chaveExercicio(ex.exercicio_nome) === destaqueChave
   const exs = data.exercicios_exec ?? []
   const prescritos = data.exercicios ?? []
   const vol = totalVolume(exs)
@@ -308,7 +297,7 @@ function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: n
         {blocos.length === 0 && (
           <>
             {exs.map((ex) => (
-              <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} />
+              <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} destaque={destacado(ex)} />
             ))}
             {pulados(prescritos, execIdsGlobal).map((ex) => (
               <ExercicioNaoExecutado key={ex.exercicio_id} ex={ex} />
@@ -336,7 +325,7 @@ function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: n
                   </div>
                   <div className="space-y-3 pl-1">
                     {doBloco.map((ex) => (
-                      <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} bloco={b} />
+                      <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} bloco={b} destaque={destacado(ex)} />
                     ))}
                     {referencias.length > 0 && (
                       <div className={doBloco.length > 0 ? 'pt-1 border-t border-border/60' : undefined}>
@@ -361,7 +350,7 @@ function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: n
                   <div className="mb-2"><span className="text-xs font-semibold text-text-secondary">Outros</span></div>
                   <div className="space-y-3 pl-1">
                     {semBloco.map((ex) => (
-                      <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} />
+                      <ExercicioDetalhe key={ex.exercicio_id} ex={ex} alunoId={alunoId} destaque={destacado(ex)} />
                     ))}
                     {naoExecSemBloco.map((ex) => (
                       <ExercicioNaoExecutado key={ex.exercicio_id} ex={ex} />
@@ -381,7 +370,7 @@ function SessaoDetalheConteudo({ data, alunoId }: { data: { duracao_segundos?: n
 }
 
 /** Versão para o personal (usa endpoint /v1/alunos/{alunoId}/sessoes/{sessaoId}) */
-export function SessaoDetalheCard({ alunoId, sessaoId }: { alunoId: string; sessaoId: string }) {
+export function SessaoDetalheCard({ alunoId, sessaoId, destaqueChave }: { alunoId: string; sessaoId: string; destaqueChave?: string }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['sessao-detalhe', alunoId, sessaoId],
     queryFn: () => treinosApi.sessaoDetalhe(alunoId, sessaoId),
@@ -390,11 +379,11 @@ export function SessaoDetalheCard({ alunoId, sessaoId }: { alunoId: string; sess
 
   if (isLoading) return <Skeleton />
   if (isError || !data) return <p className="text-xs text-text-muted py-2 mt-3 border-t border-border pt-3">Não foi possível carregar os detalhes.</p>
-  return <SessaoDetalheConteudo data={data} alunoId={alunoId} />
+  return <SessaoDetalheConteudo data={data} alunoId={alunoId} destaqueChave={destaqueChave} />
 }
 
 /** Versão para o app do aluno (usa endpoint /v1/aluno/sessoes/{sessaoId}) */
-export function AlunoSessaoDetalheCard({ sessaoId }: { sessaoId: string }) {
+export function AlunoSessaoDetalheCard({ sessaoId, destaqueChave }: { sessaoId: string; destaqueChave?: string }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['aluno-sessao-detalhe', sessaoId],
     queryFn: () => alunoApi.sessaoDetalhe(sessaoId),
@@ -403,7 +392,7 @@ export function AlunoSessaoDetalheCard({ sessaoId }: { sessaoId: string }) {
 
   if (isLoading) return <Skeleton />
   if (isError || !data) return <p className="text-xs text-text-muted py-2 mt-3 border-t border-border pt-3">Não foi possível carregar os detalhes.</p>
-  return <SessaoDetalheConteudo data={data} />
+  return <SessaoDetalheConteudo data={data} destaqueChave={destaqueChave} />
 }
 
 function Skeleton() {

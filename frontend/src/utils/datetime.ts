@@ -16,6 +16,23 @@ export function inicioSemanaLocal(): Date {
   return d
 }
 
+/** 'YYYY-MM-DD' do dia LOCAL de um instante ISO — chave estável de agrupamento/cache. */
+export function diaLocalIso(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** Instantes UTC que delimitam o dia LOCAL de `iso`, semiaberto [inicio, fim). Mesmo motivo de
+ * `inicioSemanaLocal`: o backend grava em UTC, então um post de 21h (BRT) é 00h UTC do dia
+ * seguinte — recortar por UTC traria o treino do dia errado. */
+export function limitesDiaLocal(iso: string): { inicio: string; fim: string } {
+  const d = new Date(iso)
+  const inicio = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  const fim = new Date(inicio)
+  fim.setDate(fim.getDate() + 1)
+  return { inicio: inicio.toISOString(), fim: fim.toISOString() }
+}
+
 /** "hoje" ou o dia da semana abreviado sem ponto ("seg", "qua"). */
 export function labelDiaCurto(iso: string): string {
   const d = new Date(iso)

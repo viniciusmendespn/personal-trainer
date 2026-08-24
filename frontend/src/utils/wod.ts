@@ -32,6 +32,40 @@ export function fmtScoreWod(sc: {
 
 /** Formata o score ordenável (STATS#PR / evolução) de volta para exibição por formato.
  * FOR_TIME guarda segundos; AMRAP guarda rounds*1000+reps; EMOM guarda minutos. */
+/** Inverso de `fmtScoreValor`: monta o score ordenável a partir dos campos do formato.
+ * Mesma codificação de `_processar_scores_wod` no backend — mexeu aqui, confira lá. */
+export function encodeScoreValor(
+  formato: FormatoBloco | string | undefined,
+  v: { tempo_s?: number | null; rounds?: number | null; reps_extras?: number | null; minutos_completos?: number | null },
+): number | null {
+  switch (formato) {
+    case 'FOR_TIME':
+      return v.tempo_s && v.tempo_s > 0 ? v.tempo_s : null
+    case 'AMRAP':
+      if (v.rounds == null && v.reps_extras == null) return null
+      return (v.rounds ?? 0) * 1000 + (v.reps_extras ?? 0)
+    case 'EMOM':
+      return v.minutos_completos ?? null
+    default:
+      return null
+  }
+}
+
+/** Decompõe o score ordenável de volta nos campos do formato — para preencher o form de edição. */
+export function decodeScoreValor(formato: FormatoBloco | string | undefined, valor?: number | null) {
+  if (valor == null) return {}
+  switch (formato) {
+    case 'FOR_TIME':
+      return { tempo_s: Math.round(valor) }
+    case 'AMRAP':
+      return { rounds: Math.floor(valor / 1000), reps_extras: Math.round(valor % 1000) }
+    case 'EMOM':
+      return { minutos_completos: Math.round(valor) }
+    default:
+      return {}
+  }
+}
+
 export function fmtScoreValor(formato: FormatoBloco | string | undefined, valor?: number | null): string {
   if (valor == null) return '—'
   switch (formato) {
