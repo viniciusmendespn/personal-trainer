@@ -161,3 +161,10 @@ h1, h2, h3, .font-display { font-family: var(--font-display); }
 [data-theme="dark"] .banner-pix-mp [class*="hover:bg-amber-100"]:hover {
   background-color: rgb(120 53 15 / 0.22) !important;
 }
+
+/* Calculadoras públicas (/calculadoras/*). Estilo inline não suporta :focus-visible,
+   e a landing é clara e fixa — por isso valor literal e não var(--color-*). */
+.cp-calc-campo:focus-visible {
+  outline: 2px solid #0d9488;
+  outline-offset: 2px;
+}
