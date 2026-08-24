@@ -107,9 +107,9 @@ Regras editoriais (dos limites de `CONTEXTO_MARKETING.md` §14):
 - Impressões e cliques totais (tendência).
 - Consultas: quais queries geram impressão (esperar "coachpilot", depois long-tail
   "coachpilot vs planilhas", "whatsapp para personal trainer", depois head terms).
-- Páginas → Indexação: nº de páginas indexadas deve chegar a **29** (15 páginas SEO + divulgadores
-  + blog + 11 posts, conforme o sitemap gerado no build) em 2–4 semanas. Se URLs ficarem em
-  "Rastreada, não indexada", reforçar links internos e pedir indexação de novo.
+- Páginas → Indexação: nº de páginas indexadas deve chegar a **35** (15 páginas SEO + 6 calculadoras
+  + divulgadores + blog + 11 posts, conforme o sitemap gerado no build) em 2–4 semanas. Se URLs
+  ficarem em "Rastreada, não indexada", reforçar links internos e pedir indexação de novo.
 
 **Mensal (15 min)**:
 - GA4: sessões orgânicas → signups (taxa de conversão da landing).
@@ -216,7 +216,77 @@ trainer", "gerenciar alunos chatgpt" e variações com "mcp". Termos de MCP deve
 6. "Personal trainer usando Claude: o guia do plano grátis" — desdobramento do comparativo, se a
    query "claude para personal trainer" mostrar impressão no GSC.
 
-## 6. Melhorias técnicas futuras (backlog, menor prioridade)
+## 6. Calculadoras (publicado em 2026-08-24)
+
+### Por que ferramenta, e não mais artigo
+Calculadora é o formato de conteúdo com maior taxa de backlink espontâneo, e em três das cinco
+quem busca **é o comprador** (personal trainer), não o leigo. É também o primeiro conteúdo do site
+que não fala do produto — utilidade pública, que é o que sustenta pedido de link.
+
+### O que foi publicado
+Seis rotas, todas com widget interativo e 800–1500 palavras de conteúdo técnico prerenderizado:
+
+| Rota | Busca-alvo | Concorrência BR |
+|---|---|---|
+| `/calculadoras` | calculadoras para personal trainer | — (hub) |
+| `/calculadoras/1rm` | calculadora 1rm · tabela de porcentagem 1rm | **Média**: Quorify, fisiculturismo, ambr, basefitness já existem |
+| `/calculadoras/dobras-cutaneas` | protocolo pollock 7 dobras · faulkner · petroski | **Fraca**: existem, mas com sítios anatômicos errados |
+| `/calculadoras/quanto-cobrar` | quanto cobrar personal trainer | **Nenhuma**: a MFIT rankeia só com post de blog |
+| `/calculadoras/volume-semanal` | quantas séries por semana | Commodity |
+| `/calculadoras/tmb-e-macros` | calculadora tmb · macros | Commodity |
+
+### O diferencial defensável
+Toda conta tem autor, ano, população e faixa de validade citados na página. E onde a internet
+brasileira erra, a página corrige — é conteúdo que o concorrente não copia sem refazer a pesquisa:
+
+- **Pollock 3 dobras em homens é peitoral/abdominal/coxa**, não tríceps. Há calculadoras BR
+  publicando a lista errada com os coeficientes certos.
+- **Pollock 7 não inclui panturrilha** — o sétimo ponto é a axilar média.
+- **A equação feminina de Petroski é logarítmica.** A forma polinomial que circula devolve
+  densidade negativa (verificável: Σ4 = 66 mm, 30 anos).
+- **"Faulkner" é a equação do Yuhasz** e não foi desenvolvida com nadadores (Pires Neto & Glaner).
+- **1RM**: Epley e Brzycki cruzam exatamente em 10 repetições, e 11 reps não existe na tabela NSCA.
+
+### Limites que o conteúdo respeita
+- **TMB/macros é estimativa educativa.** Prescrição dietética é privativa do nutricionista
+  (CFN 600/2018), e a página diz isso antes de qualquer número. Mesma régua da LGPD no cluster de IA.
+- **Nada de landmark MV/MEV/MAV/MRV por grupo muscular** na de volume: são framework de treinador,
+  não literatura revisada. Ficaram as três faixas de Schoenfeld (2017), que estão verificadas.
+- **Nenhum valor fiscal hardcoded** na de precificação: presets datados ("verificado em agosto/2026"),
+  e referências de mercado exibidas como contexto, nunca dentro da conta.
+- A classificação de % de gordura é a grade grossa. A grade fina por faixa etária (Pollock &
+  Wilmore, 5 faixas × 7 categorias) **não foi confirmada em fonte primária** e por isso não entrou.
+  Se um dia for confirmada, entra em `src/calc/dobras.ts` (CLASSIFICACAO) e os testes de invariante
+  já cobrem contiguidade.
+
+### Solicitar indexação no GSC (nesta ordem, ~10/dia)
+1. `/calculadoras` (hub — distribui autoridade para as filhas)
+2. `/calculadoras/quanto-cobrar` (maior lacuna competitiva)
+3. `/calculadoras/dobras-cutaneas`
+4. `/calculadoras/1rm`
+5. `/calculadoras/volume-semanal`
+6. `/calculadoras/tmb-e-macros`
+
+Ressubmeter o `sitemap.xml` (agora com 35 URLs estáticas + posts). A meta de páginas indexadas do
+§4 sobe de 29 para **35**.
+
+### Off-page específico deste lote
+Calculadora é o conteúdo mais fácil de pedir link. Ordem de retorno:
+1. **Grupos e comunidades de personal trainer** (Facebook, WhatsApp, Reddit r/personaltraining BR):
+   a de precificação é a que mais circula sozinha.
+2. **Cursos e faculdades de Educação Física**: a de dobras cutâneas é material de aula pronto, e o
+   argumento de contato é honesto — as calculadoras concorrentes têm os sítios errados.
+3. **Diretórios de ferramentas fitness** e listicles de "calculadoras para personal".
+
+### Próximos passos deste cluster
+1. Artigo "Quanto cobrar como personal trainer em 2026" (item 1 da fila do §3) — agora com a
+   calculadora como âncora, hub-and-spoke completo.
+2. "Avaliação física: protocolos e periodicidade ideal" (item 5 da fila) linkando a de dobras.
+3. Avaliar pelo GSC se `/calculadoras/1rm` ganha tração; se não, o esforço editorial deve ir para
+   precificação e dobras, onde a concorrência é mais fraca.
+4. Versão para imprimir da tabela NSCA de %1RM — ímã de backlink, ainda não feito.
+
+## 7. Melhorias técnicas futuras (backlog, menor prioridade)
 
 - **Fonts self-hosted**: Sora/Inter servidas do Google Fonts bloqueiam render (LCP). Já existem
   fontes em `frontend/public/fonts` — migrar com `@font-face` + preload.
