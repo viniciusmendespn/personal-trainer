@@ -559,7 +559,8 @@ Resources:
           '/gestao-de-alunos-personal-trainer': 1, '/app-de-treino-para-alunos': 1,
           '/avaliacao-fisica-digital': 1, '/agenda-para-personal-trainer': 1,
           '/whatsapp-para-personal-trainer': 1, '/coachpilot-vs-planilhas': 1,
-          '/precos': 1, '/faq': 1, '/sobre': 1, '/termos': 1, '/privacidade': 1, '/blog': 1
+          '/precos': 1, '/faq': 1, '/sobre': 1, '/termos': 1, '/privacidade': 1, '/blog': 1,
+          '/calculadoras': 1
         };
         function handler(event) {
           var request = event.request;
@@ -576,7 +577,7 @@ Resources:
             return { statusCode: 301, headers: { location: { value: loc }, 'cache-control': { value: 'no-store' } } };
           }
           var path = uri.length > 1 && uri[uri.length - 1] === '/' ? uri.slice(0, -1) : uri;
-          if (path.indexOf('.') === -1 && (PRERENDERED[path] === 1 || path.indexOf('/blog/') === 0)) {
+          if (path.indexOf('.') === -1 && (PRERENDERED[path] === 1 || path.indexOf('/blog/') === 0 || path.indexOf('/calculadoras/') === 0)) {
             request.uri = path + '/index.html';
             return request;
           }

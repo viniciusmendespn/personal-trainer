@@ -75,6 +75,22 @@ function renderSeoSection(s) {
   return `<section><h2>${escapeHtml(s.title)}</h2>${paragraphs}${list}${table}</section>`
 }
 
+// Espelha o slot de widget/index de PublicSeoPage.tsx. O widget em si não existe
+// para o crawler (o prerender não roda React) — por isso todo o conteúdo que
+// precisa ranquear vive em sections/faqs, e aqui sai só a ponte.
+function renderSlot(page) {
+  if (!page.widget && !page.index) return ''
+  const head = (page.widgetTitle ? `<h2>${escapeHtml(page.widgetTitle)}</h2>` : '')
+    + (page.widgetNote ? `<p>${inline(page.widgetNote)}</p>` : '')
+  if (page.index) {
+    const items = page.index
+      .map((k) => `<li><a href="${PAGES[k].path}"><strong>${escapeHtml(PAGES[k].label ?? PAGES[k].h1)}</strong></a> — ${escapeHtml(PAGES[k].description)}</li>`)
+      .join('')
+    return `<section id="calculadora">${head}<ul>${items}</ul></section>`
+  }
+  return `<section id="calculadora">${head}<p><em>A calculadora interativa carrega junto com a página. A referência completa em números está nas tabelas abaixo.</em></p></section>`
+}
+
 function renderSeoPageContent(page) {
   const bullets = page.bullets.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
   const sections = page.sections.map(renderSeoSection).join('')
@@ -87,7 +103,7 @@ function renderSeoPageContent(page) {
   return `<main style="font-family:Inter,Arial,sans-serif;max-width:920px;margin:0 auto;padding:48px 24px;color:#0f172a">
     <p style="font-weight:700;color:#0d9488;text-transform:uppercase">${escapeHtml(page.eyebrow ?? 'CoachPilot para personal trainers')}</p>
     <h1>${escapeHtml(page.h1)}</h1>
-    <p>${escapeHtml(page.intro)}</p>
+    <p>${escapeHtml(page.intro)}</p>${renderSlot(page)}
     <ul>${bullets}</ul>
     ${sections}
     ${faqs}
@@ -210,8 +226,10 @@ function assertDataIntegrity() {
     if (page.path.includes('.')) errors.push(`${where}: path "${page.path}" tem ponto — a CloudFront Function trata como asset e não serve o prerender`)
 
     for (const s of page.sections) {
-      const temTexto = s.body || (s.paragraphs && s.paragraphs.length)
-      if (!temTexto) errors.push(`${where} › "${s.title}": seção sem body nem paragraphs`)
+      // Uma seção só com lista ou só com tabela é conteúdo legítimo. O que não pode
+      // é <h2> órfão: título sem nada embaixo.
+      const temConteudo = s.body || s.paragraphs?.length || s.list?.length || s.table
+      if (!temConteudo) errors.push(`${where} › "${s.title}": seção sem conteúdo (nem body, paragraphs, list ou table)`)
       if (s.table) {
         const cols = s.table.headers.length
         s.table.rows.forEach((row, i) => {
@@ -280,6 +298,39 @@ function breadcrumbTrail(page, canonical) {
   return trail
 }
 
+// WebApplication, não SoftwareApplication: já existe um SoftwareApplication global
+// com @id .../#app em index.html, e dois nós do mesmo tipo na mesma página confundem
+// a desambiguação da entidade. WebApplication é subtipo e é o correto para ferramenta
+// que roda no navegador.
+function calculatorNode(page, canonical) {
+  return {
+    '@type': 'WebApplication',
+    '@id': `${canonical}#calculator`,
+    name: page.label ?? page.h1,
+    url: canonical,
+    applicationCategory: page.appCategory ?? 'HealthApplication',
+    operatingSystem: 'Web',
+    browserRequirements: 'Requer JavaScript',
+    inLanguage: 'pt-BR',
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' },
+    provider: { '@id': `${BASE_URL}/#organization` },
+  }
+}
+
+function itemListNode(page, canonical) {
+  return {
+    '@type': 'ItemList',
+    '@id': `${canonical}#lista`,
+    itemListElement: page.index.map((k, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: PAGES[k].label ?? PAGES[k].h1,
+      url: `${BASE_URL}${PAGES[k].path}`,
+    })),
+  }
+}
+
 function pageSchema(page) {
   const canonical = `${BASE_URL}${page.path}`
   const graph = [
@@ -299,6 +350,12 @@ function pageSchema(page) {
       itemListElement: breadcrumbTrail(page, canonical),
     },
   ]
+  // Espelha os mesmos nós em PublicSeoPage.tsx — editar os dois no mesmo commit.
+  if (page.widget) {
+    graph[0].mainEntity = { '@id': `${canonical}#calculator` }
+    graph.push(calculatorNode(page, canonical))
+  }
+  if (page.index) graph.push(itemListNode(page, canonical))
   if (page.faqs.length) {
     graph.push({
       '@type': 'FAQPage',
@@ -403,6 +460,12 @@ const PRIORITY = {
   '/agenda-para-personal-trainer': { priority: '0.8', changefreq: 'monthly' },
   '/coachpilot-vs-planilhas': { priority: '0.8', changefreq: 'monthly' },
   '/divulgadores': { priority: '0.8', changefreq: 'monthly' },
+  '/calculadoras': { priority: '0.8', changefreq: 'monthly' },
+  '/calculadoras/1rm': { priority: '0.75', changefreq: 'monthly' },
+  '/calculadoras/dobras-cutaneas': { priority: '0.75', changefreq: 'monthly' },
+  '/calculadoras/quanto-cobrar': { priority: '0.75', changefreq: 'monthly' },
+  '/calculadoras/volume-semanal': { priority: '0.75', changefreq: 'monthly' },
+  '/calculadoras/tmb-e-macros': { priority: '0.75', changefreq: 'monthly' },
   '/whatsapp-para-personal-trainer': { priority: '0.75', changefreq: 'monthly' },
   '/faq': { priority: '0.75', changefreq: 'monthly' },
   '/blog': { priority: '0.75', changefreq: 'weekly' },

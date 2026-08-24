@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react'
 import LandingFooter from './LandingFooter'
+import { WIDGETS } from './calculadoras/registry'
 import { renderInline, ProseList, ProseTable } from './prose'
 import { BASE_URL, PAGES } from './publicSeoData.js'
 import type { PageKey, SeoPage } from './publicSeoData.js'
@@ -79,6 +80,37 @@ function usePageMeta(page: SeoPage) {
         itemListElement: breadcrumbTrail(page, canonical),
       },
     ]
+    // Espelha calculatorNode/itemListNode de scripts/prerender-public-pages.mjs.
+    // WebApplication (subtipo de SoftwareApplication) para não colidir com o nó
+    // global .../#app declarado no index.html.
+    if (page.widget) {
+      ;(graph[0] as Record<string, unknown>).mainEntity = { '@id': `${canonical}#calculator` }
+      graph.push({
+        '@type': 'WebApplication',
+        '@id': `${canonical}#calculator`,
+        name: page.label ?? page.h1,
+        url: canonical,
+        applicationCategory: page.appCategory ?? 'HealthApplication',
+        operatingSystem: 'Web',
+        browserRequirements: 'Requer JavaScript',
+        inLanguage: 'pt-BR',
+        isAccessibleForFree: true,
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' },
+        provider: { '@id': `${BASE_URL}/#organization` },
+      })
+    }
+    if (page.index) {
+      graph.push({
+        '@type': 'ItemList',
+        '@id': `${canonical}#lista`,
+        itemListElement: page.index.map((key, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: PAGES[key].label ?? PAGES[key].h1,
+          url: `${BASE_URL}${PAGES[key].path}`,
+        })),
+      })
+    }
     if (page.faqs.length > 0) {
       graph.push({
         '@type': 'FAQPage',
@@ -102,10 +134,30 @@ function usePageMeta(page: SeoPage) {
   }, [page])
 }
 
+// Altura reservada: sem ela o chunk do widget chegando empurra bullets e seções
+// para baixo, e o CLS estraga justamente na página de aquisição.
+function CalcSkeleton() {
+  return <div style={{ minHeight: 420, borderRadius: 16, background: '#fff', border: '1px solid #e2e8f0' }} />
+}
+
+function IndexCards({ keys }: { keys: PageKey[] }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+      {keys.map((key) => (
+        <Link key={key} to={PAGES[key].path} style={{ textDecoration: 'none', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '22px 24px', display: 'block' }}>
+          <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 18, color: '#0f172a', marginBottom: 8, lineHeight: 1.3 }}>{LABELS[key]}</h3>
+          <p style={{ color: '#475569', fontSize: 14.5, lineHeight: 1.65 }}>{PAGES[key].description}</p>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
 export function PublicSeoPage({ pageKey }: { pageKey: PageKey }) {
   const page = PAGES[pageKey]
   usePageMeta(page)
   const parent = page.parent ? PAGES[page.parent] : null
+  const Widget = page.widget ? WIDGETS[page.widget] : null
 
   return (
     <div style={{ minHeight: '100vh', background: '#fff', color: '#0f172a' }}>
@@ -142,6 +194,21 @@ export function PublicSeoPage({ pageKey }: { pageKey: PageKey }) {
             </div>
           </div>
         </section>
+
+        {(Widget || page.index) && (
+          <section id="calculadora" style={{ padding: '48px 24px 56px', background: '#f8fafc' }}>
+            <div style={{ maxWidth: 900, margin: '0 auto' }}>
+              {page.widgetTitle && (
+                <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, marginBottom: 8 }}>{page.widgetTitle}</h2>
+              )}
+              {page.widgetNote && (
+                <p style={{ color: '#475569', fontSize: 16, lineHeight: 1.7, marginBottom: 20 }}>{renderInline(page.widgetNote)}</p>
+              )}
+              {Widget && <Suspense fallback={<CalcSkeleton />}><Widget /></Suspense>}
+              {page.index && <IndexCards keys={page.index} />}
+            </div>
+          </section>
+        )}
 
         <section style={{ padding: '64px 24px', background: '#f8fafc' }}>
           <div style={{ maxWidth: 980, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>

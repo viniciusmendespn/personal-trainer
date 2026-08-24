@@ -12,6 +12,7 @@ const NAV_LINKS = [
 
 const RESOURCE_LINKS = [
   { label: 'Blog', to: '/blog' },
+  { label: 'Calculadoras', to: '/calculadoras' },
   { label: 'Software para personal', to: '/software-para-personal-trainer' },
   { label: 'IA para personal', to: '/ia-para-personal-trainer' },
   { label: 'ChatGPT para personal', to: '/chatgpt-para-personal-trainer' },

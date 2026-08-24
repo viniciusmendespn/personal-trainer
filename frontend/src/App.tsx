@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from 'react'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Amplify } from 'aws-amplify'
 
@@ -93,7 +93,17 @@ const router = createBrowserRouter([
       { path: '/sobre', element: <PublicSeoPage pageKey="sobre" /> },
       { path: '/termos', element: <PublicSeoPage pageKey="termos" /> },
       { path: '/privacidade', element: <PublicSeoPage pageKey="privacidade" /> },
-      { path: '/blog', element: lazyPage(<BlogIndexPage />) },
+      // Calculadoras públicas: /calculadoras/<slug>. Dois segmentos de propósito —
+  // rota de um segmento só conviveria com o catch-all :handle de /@slug lá embaixo.
+  { path: '/calculadoras', element: <PublicSeoPage pageKey="calculadoras" /> },
+  { path: '/calculadoras/1rm', element: <PublicSeoPage pageKey="calculadora-1rm" /> },
+  { path: '/calculadoras/dobras-cutaneas', element: <PublicSeoPage pageKey="calculadora-dobras" /> },
+  { path: '/calculadoras/quanto-cobrar', element: <PublicSeoPage pageKey="calculadora-precificacao" /> },
+  { path: '/calculadoras/volume-semanal', element: <PublicSeoPage pageKey="calculadora-volume" /> },
+  { path: '/calculadoras/tmb-e-macros', element: <PublicSeoPage pageKey="calculadora-energia" /> },
+  // slug desconhecido volta para o hub em vez de cair no ErrorPage genérico
+  { path: '/calculadoras/*', element: <Navigate to="/calculadoras" replace /> },
+  { path: '/blog', element: lazyPage(<BlogIndexPage />) },
       { path: '/blog/:slug', element: lazyPage(<BlogPostPage />) },
       { path: '/aluno', element: lazyPage(<AlunoApp />) },     // dev only — prod served by aluno.html bundle
       { path: '/cadastro', element: lazyPage(<CadastroPage />) },  // auto-cadastro via link de anamnese

@@ -16,6 +16,13 @@ export type PageKey =
   | 'sobre'
   | 'termos'
   | 'privacidade'
+  // ── calculadoras (2026-08) ──
+  | 'calculadoras'
+  | 'calculadora-1rm'
+  | 'calculadora-dobras'
+  | 'calculadora-precificacao'
+  | 'calculadora-volume'
+  | 'calculadora-energia'
 
 /** Widget interativo da página (calculadoras). O valor NÃO é derivável do path:
  *  os slugs carregam keyword (/calculadoras/quanto-cobrar), então a ligação

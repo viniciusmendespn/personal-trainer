@@ -211,6 +211,481 @@ export const PAGES = {
     ],
     related: ['software-personal-trainer', 'gestao-alunos', 'precos'],
   },
+  // ── Calculadoras (2026-08) ────────────────────────────────────────────────
+  // Regra editorial destas páginas: toda conta exibida tem autor, ano e faixa de
+  // validade citados no corpo. Onde a internet brasileira erra (sítios do Pollock,
+  // equação feminina do Petroski, o mito do Faulkner), a página corrige — é o
+  // conteúdo que nenhum concorrente tem.
+  calculadoras: {
+    path: '/calculadoras',
+    title: 'Calculadoras grátis para personal trainer | CoachPilot',
+    description: 'Cinco calculadoras gratuitas para personal trainers: 1RM com tabela NSCA, percentual de gordura por dobras cutâneas, precificação, volume semanal de treino e gasto calórico. Sem cadastro.',
+    h1: 'Calculadoras grátis para personal trainers',
+    label: 'Calculadoras',
+    eyebrow: 'Ferramentas gratuitas',
+    widgetTitle: 'Escolha a calculadora',
+    widgetNote: 'Todas rodam no seu navegador, sem cadastro e sem enviar nada para servidor nenhum.',
+    index: ['calculadora-1rm', 'calculadora-dobras', 'calculadora-precificacao', 'calculadora-volume', 'calculadora-energia'],
+    intro: 'Cinco ferramentas que resolvem contas que o personal trainer faz toda semana — estimativa de carga máxima, composição corporal, preço da hora, volume de treino e gasto energético. Cada uma mostra a fórmula usada, quem a publicou, com que população foi desenvolvida e em que faixa ela deixa de valer. Nenhuma pede cadastro.',
+    bullets: [
+      'Sem cadastro, sem login e sem limite de uso',
+      'Cada conta com autor, ano e faixa de validade declarados',
+      'O cálculo roda no seu navegador — nada é enviado para servidor',
+      'Feitas para personal trainer, não adaptadas de site estrangeiro',
+    ],
+    sections: [
+      {
+        title: 'Qual usar em cada situação',
+        paragraphs: [
+          'As cinco cobrem momentos diferentes do atendimento. A de [1RM](/calculadoras/1rm) entra na prescrição: você tem uma série pesada registrada e precisa transformar isso em carga para as próximas semanas. A de [dobras cutâneas](/calculadoras/dobras-cutaneas) entra na avaliação física, quando você já tem o adipômetro na mão e precisa converter milímetros em percentual de gordura por um protocolo defensável.',
+          'A de [volume semanal](/calculadoras/volume-semanal) entra no desenho do programa, para conferir se cada grupo muscular está recebendo estímulo suficiente ao longo da semana. A de [gasto calórico](/calculadoras/tmb-e-macros) serve de referência educativa quando o aluno pergunta — lembrando que prescrição alimentar é do nutricionista. E a de [precificação](/calculadoras/quanto-cobrar) não é sobre treino: é sobre o seu negócio, e costuma ser a que dá o susto mais útil.',
+        ],
+      },
+      {
+        title: 'Por que estas contas e não outras',
+        body: 'Faltam aqui algumas calculadoras óbvias, e a ausência é deliberada. IMC, por exemplo, é fácil de implementar e tem busca alta, mas é um índice fraco justamente na população que treina: não separa massa magra de gordura, então classifica atleta como sobrepeso com frequência. Preferimos entregar dobras cutâneas bem feita a entregar IMC mal explicado.',
+      },
+      {
+        title: 'O que fazer com o resultado',
+        body: 'Toda estimativa aqui é um ponto de partida, não um laudo. O valor de um número desses aparece quando ele vira série temporal: o mesmo protocolo, o mesmo avaliador e o mesmo horário, repetidos a cada seis ou oito semanas. É exatamente isso que o CoachPilot guarda — avaliações, cargas e evolução por exercício ficam no histórico do aluno, e a comparação deixa de depender da sua memória ou de uma planilha paralela.',
+      },
+    ],
+    faqs: [
+      { q: 'As calculadoras são gratuitas mesmo?', a: 'Sim, e sem cadastro. Não há limite de uso, não pedimos e-mail e o cálculo roda inteiramente no seu navegador — nenhum dado que você digitar é enviado para os nossos servidores.' },
+      { q: 'Posso usar com meus alunos?', a: 'Pode. São ferramentas de uso profissional livre. A responsabilidade técnica pela interpretação e pela prescrição continua sendo do profissional registrado no CREF.' },
+      { q: 'Dá para salvar os resultados?', a: 'Nas calculadoras, não — elas não guardam nada. Para manter histórico por aluno e comparar avaliações ao longo do tempo, é preciso uma conta no CoachPilot, que tem plano grátis para até 3 alunos.' },
+      { q: 'De onde vêm as fórmulas?', a: 'De literatura publicada, citada em cada página com autor, ano, população estudada e faixa etária de validade. Onde há divergência entre fontes ou erro difundido na internet brasileira, a página aponta explicitamente.' },
+    ],
+    related: ['avaliacao-fisica', 'software-personal-trainer', 'precos'],
+  },
+
+  'calculadora-1rm': {
+    path: '/calculadoras/1rm',
+    title: 'Calculadora de 1RM: repetição máxima + tabela de porcentagem | CoachPilot',
+    description: 'Calcule seu 1RM por 7 fórmulas (Epley, Brzycki, Lombardi, Lander, Mayhew, Wathen, O’Conner) e veja a tabela oficial da NSCA de %1RM por repetições. Grátis, sem cadastro.',
+    h1: 'Calculadora de 1RM: estime a repetição máxima e monte a carga do treino',
+    label: 'Calculadora de 1RM',
+    eyebrow: 'Calculadora gratuita',
+    parent: 'calculadoras',
+    widget: '1rm',
+    widgetTitle: 'Calcule seu 1RM',
+    widgetNote: 'Informe uma série que você levou até (ou perto de) a falha. Quanto menor o número de repetições, mais confiável a estimativa.',
+    appCategory: 'HealthApplication',
+    intro: '1RM é a maior carga que se consegue mover por uma repetição completa. Testar isso na prática é demorado e nem sempre seguro, então a saída usual é estimar a partir de uma série submáxima — 100 kg por 8 repetições, por exemplo. Esta calculadora aplica sete equações publicadas de uma vez, mostra a divergência entre elas em vez de escondê-la, e converte o resultado na tabela de cargas que você vai usar de fato na prescrição.',
+    bullets: [
+      'Sete fórmulas ao mesmo tempo, com a divergência à mostra',
+      'Tabela oficial da NSCA de %1RM por número de repetições',
+      'Carga já convertida em kg para cada intensidade',
+      'Aviso quando a estimativa sai da faixa em que ela é confiável',
+    ],
+    sections: [
+      {
+        title: 'Tabela de porcentagem do 1RM (NSCA)',
+        paragraphs: [
+          'Esta é a tabela de referência do Training Load Chart da NSCA, adaptada de Landers, J. (NSCA Journal 6(6):60-61, 1984). Ela funciona nos dois sentidos: para estimar o 1RM a partir de uma série submáxima, e — o uso mais comum no dia a dia — para descobrir que carga colocar na barra quando o programa pede uma intensidade específica.',
+          'A coluna de carga usa um 1RM de 120 kg como exemplo. Repare que 11 repetições não existe na tabela original e não foi inventada aqui: entre 10 e 12 há um salto real, e preencher esse buraco com interpolação seria apresentar como referência algo que a fonte não traz.',
+        ],
+        table: {
+          headers: ['Repetições', '% do 1RM', 'Carga se o 1RM for 120 kg'],
+          rows: [
+            ['1', '100%', '120,0 kg'],
+            ['2', '95%', '114,0 kg'],
+            ['3', '93%', '111,6 kg'],
+            ['4', '90%', '108,0 kg'],
+            ['5', '87%', '104,4 kg'],
+            ['6', '85%', '102,0 kg'],
+            ['7', '83%', '99,6 kg'],
+            ['8', '80%', '96,0 kg'],
+            ['9', '77%', '92,4 kg'],
+            ['10', '75%', '90,0 kg'],
+            ['12', '70%', '84,0 kg'],
+          ],
+        },
+      },
+      {
+        title: 'As sete fórmulas, e por que elas discordam',
+        paragraphs: [
+          'Não existe uma equação de 1RM: existem várias, publicadas por autores diferentes, ajustadas a amostras diferentes. Todas partem da mesma ideia — quanto mais repetições você faz com uma carga, mais longe ela está do seu máximo — mas modelam essa curva de jeitos distintos. Abaixo, o que cada uma devolve para a mesma entrada de 100 kg por 8 repetições.',
+          'A mediana das sete nesse caso é 125,1 kg. A tabela da NSCA, pelo caminho independente da porcentagem, diz que 8 repetições correspondem a 80% do 1RM, o que dá 100 ÷ 0,80 = 125,0 kg. Duas fontes que não conversam entre si chegando a 100 gramas de distância é um bom sinal de que a faixa está certa.',
+        ],
+        table: {
+          headers: ['Fórmula', 'Equação', '1RM para 100 kg × 8'],
+          rows: [
+            ['Epley', '1RM = w × (1 + r/30)', '126,7 kg'],
+            ['Brzycki', '1RM = w × 36 / (37 − r)', '124,1 kg'],
+            ['Lombardi', '1RM = w × r^0,10', '123,1 kg'],
+            ['O’Conner', '1RM = w × (1 + 0,025r)', '120,0 kg'],
+            ['Lander', '1RM = 100w / (101,3 − 2,67123r)', '125,1 kg'],
+            ['Mayhew', '1RM = 100w / (52,2 + 41,9·e^(−0,055r))', '126,3 kg'],
+            ['Wathen', '1RM = 100w / (48,8 + 53,8·e^(−0,075r))', '127,7 kg'],
+          ],
+        },
+      },
+      {
+        title: 'Epley ou Brzycki? As duas cruzam exatamente em 10 repetições',
+        paragraphs: [
+          'É a dúvida mais comum, e ela tem resposta objetiva em vez de preferência. Em 10 repetições as duas fórmulas dão o mesmo resultado: Epley devolve w × (1 + 10/30) = 1,3333w, e Brzycki devolve w × 36/27 = 1,3333w. O cruzamento é exato, não aproximado.',
+          'Abaixo de 10 repetições, Epley estima mais alto; acima de 10, Brzycki estima mais alto, e a diferença cresce rápido. Em 15 repetições, Brzycki já devolve 1,64w contra 1,50w de Epley — quase 10% de distância. Na prática isso importa menos do que parece: o que estraga o acompanhamento não é escolher a fórmula "errada", é trocar de fórmula no meio do caminho. Escolha uma e mantenha.',
+        ],
+      },
+      {
+        title: 'Quando a estimativa deixa de valer',
+        list: [
+          'De 2 a 10 repetições, o erro típico fica em torno de ±5% — é a faixa em que estimar compensa.',
+          'Acima de 12 repetições, a divergência entre fórmulas chega a ±15–20%. A resistência muscular passa a pesar mais que a força máxima, e a extrapolação perde o sentido.',
+          'Com 1 repetição, não há estimativa: o 1RM é a própria carga. Vale dizer que várias fórmulas, aplicadas cegamente, erram justamente aí — a de Mayhew devolveria 130,6 kg para alguém que levantou 120 kg uma vez.',
+          'A série precisa ter sido levada até a falha ou muito perto dela. Uma série de 8 repetições que poderia ter sido de 12 subestima o 1RM em cerca de 10%.',
+          'A estimativa é específica do exercício. Um 1RM de agachamento não diz nada sobre o leg press, e a relação carga-repetição é diferente entre exercícios de membro superior e inferior.',
+        ],
+      },
+      {
+        title: '1RM estimado ou teste direto?',
+        body: 'O teste direto continua sendo o padrão-ouro, mas cobra caro: exige aquecimento longo, várias tentativas até a carga máxima, técnica consolidada e supervisão. Não é razoável para iniciante, para quem está voltando de lesão nem para a maioria dos alunos de personal — e ainda gera uma sessão inteira sem estímulo de treino. A estimativa a partir de uma série de 3 a 6 repetições resolve o mesmo problema com risco muito menor, e o erro de 5% costuma ser irrelevante diante da variação normal de força de um dia para o outro.',
+      },
+      {
+        title: 'Do número para a prescrição',
+        body: 'Estimar o 1RM só vale se ele virar carga escrita no treino do aluno. No CoachPilot, cada exercício tem um campo de 1RM: preenchido ele, você digita a intensidade em porcentagem e a plataforma converte para quilos automaticamente na hora de montar as séries — e faz o caminho inverso, mostrando a que porcentagem corresponde a carga que o aluno realmente usou. Com o histórico de sessões, dá para acompanhar a intensidade relativa média ao longo dos meses em vez de olhar carga absoluta solta.',
+      },
+    ],
+    faqs: [
+      { q: 'Qual fórmula de 1RM é a mais precisa?', a: 'Nenhuma é consistentemente melhor para todo mundo — a precisão depende do exercício, do nível de treino e da faixa de repetições. Por isso esta calculadora mostra as sete e a mediana. O que mais importa na prática é usar sempre a mesma fórmula ao longo do tempo, para que as comparações entre ciclos sejam válidas.' },
+      { q: 'Quantas repetições devo usar para estimar melhor?', a: 'Entre 3 e 6, levadas até perto da falha. É a faixa em que as equações concordam mais e o erro típico fica em torno de 5%, sem exigir uma tentativa máxima real.' },
+      { q: 'Por que a tabela não tem 11 repetições?', a: 'Porque a tabela original da NSCA não traz esse valor. Entre 10 repetições (75%) e 12 (70%) existe um salto na fonte, e inventar um valor interpolado seria apresentar como referência oficial algo que ela não diz.' },
+      { q: 'Serve para qualquer exercício?', a: 'A estimativa funciona melhor em exercícios multiarticulares com barra — agachamento, supino, terra, desenvolvimento. Em exercícios isolados e em máquinas a relação entre carga e repetições é menos previsível, e o resultado deve ser tratado como referência grosseira.' },
+      { q: 'O que é IRM no CoachPilot?', a: 'É outra coisa: intensidade relativa média, a média das porcentagens de 1RM usadas numa sessão, ponderada pelas repetições. Serve para acompanhar o quanto o aluno treinou pesado ao longo do tempo, e depende de o 1RM estar preenchido no exercício.' },
+    ],
+    related: ['calculadora-volume', 'calculadora-dobras', 'app-treino-alunos', 'software-personal-trainer'],
+  },
+
+  'calculadora-dobras': {
+    path: '/calculadoras/dobras-cutaneas',
+    title: 'Calculadora de Dobras Cutâneas: % de gordura por 5 protocolos | CoachPilot',
+    description: 'Calcule o percentual de gordura por dobras cutâneas: Pollock 3 e 7, Faulkner, Guedes e Petroski, com Siri e Brozek. Com os pontos anatômicos corretos e a faixa de validade de cada equação.',
+    h1: 'Calculadora de dobras cutâneas: percentual de gordura por 5 protocolos',
+    label: 'Dobras cutâneas',
+    eyebrow: 'Calculadora gratuita',
+    parent: 'calculadoras',
+    widget: 'dobras',
+    widgetTitle: 'Calcule o percentual de gordura',
+    widgetNote: 'Meça cada dobra três vezes e use a mediana. O protocolo já vem escolhido — troque só se quiser.',
+    appCategory: 'HealthApplication',
+    intro: 'A dobra cutânea continua sendo o método de campo mais usado para estimar composição corporal, porque custa pouco e é reprodutível quando a técnica é padronizada. Esta calculadora traz cinco protocolos — Jackson & Pollock de 3 e de 7 dobras, Faulkner, e os dois brasileiros, Guedes e Petroski — com os pontos anatômicos corretos de cada um, a faixa etária em que cada equação foi validada e a conversão de densidade em gordura por Siri ou Brozek.',
+    bullets: [
+      'Cinco protocolos, incluindo dois desenvolvidos com população brasileira',
+      'Pontos anatômicos de cada dobra descritos ponto a ponto',
+      'Aviso quando a idade sai da faixa em que a equação foi validada',
+      'Siri e Brozek, com a diferença entre as duas explicada',
+    ],
+    sections: [
+      {
+        title: 'Os protocolos e o que cada um exige',
+        paragraphs: [
+          'Um protocolo de dobras é sempre um par: uma lista de pontos anatômicos e uma equação de regressão desenvolvida com aquela lista, naquela população. Trocar os pontos e manter a equação invalida o resultado — é o erro mais comum nas calculadoras disponíveis em português.',
+        ],
+        table: {
+          headers: ['Protocolo', 'Dobras (homens)', 'Dobras (mulheres)', 'Validade'],
+          rows: [
+            ['Jackson & Pollock, 3 dobras', 'Peitoral, abdominal, coxa', 'Tríceps, suprailíaca, coxa', 'H 18–61 · M 18–55'],
+            ['Jackson & Pollock, 7 dobras', 'Peitoral, axilar média, tríceps, subescapular, abdominal, suprailíaca, coxa', 'Os mesmos 7 pontos', 'H 18–61 · M 18–55'],
+            ['Faulkner (Yuhasz), 4 dobras', 'Tríceps, subescapular, suprailíaca, abdominal', 'Os mesmos 4 pontos', 'Adultos jovens treinados'],
+            ['Guedes, 3 dobras', 'Tríceps, suprailíaca, abdominal', 'Coxa, suprailíaca, subescapular', 'H 17–27 · M 18–30'],
+            ['Petroski, 4 dobras', 'Subescapular, tríceps, suprailíaca, panturrilha medial', 'Axilar média, suprailíaca, coxa, panturrilha medial', 'H 18–66 · M 18–51'],
+          ],
+        },
+      },
+      {
+        title: 'Três erros que circulam nas calculadoras em português',
+        list: [
+          'Pollock de 3 dobras em homens não é tríceps, peitoral e abdominal: É peitoral, abdominal e coxa. Há calculadoras brasileiras publicando a lista errada com os coeficientes certos, o que produz um número plausível e incorreto.',
+          'Pollock de 7 dobras não inclui panturrilha: O sétimo ponto é a axilar média. A panturrilha medial aparece no protocolo de Petroski, não no de Jackson & Pollock.',
+          'A equação feminina de Petroski é logarítmica: Circulam versões com o somatório ao quadrado e sem termo linear. Não é questão de opinião: com quatro dobras somando 66 mm e 30 anos de idade, a forma incorreta devolve densidade corporal negativa, o que é fisicamente impossível. A forma correta é D = 1,19547130 − 0,07513507 × log₁₀(Σ4) − 0,00041072 × idade.',
+        ],
+      },
+      {
+        title: 'Onde e como medir cada dobra',
+        paragraphs: [
+          'A precisão do resultado depende muito mais da coleta do que da equação escolhida. Meça sempre do lado direito, com o avaliado em pé e relaxado, pinçando a pele e o tecido subcutâneo sem incluir músculo, e aplicando o compasso cerca de 1 cm abaixo dos dedos. Faça três medidas em cada ponto, em rodízio entre os pontos, e use a mediana.',
+        ],
+        table: {
+          headers: ['Dobra', 'Direção', 'Localização'],
+          rows: [
+            ['Tríceps', 'Vertical', 'Face posterior do braço, no ponto médio entre o acrômio e o olécrano, com o braço solto'],
+            ['Subescapular', 'Oblíqua, 45°', 'Dois centímetros abaixo do ângulo inferior da escápula, acompanhando a borda'],
+            ['Peitoral', 'Oblíqua', 'Homens: ponto médio entre a linha axilar anterior e o mamilo. Mulheres: a um terço dessa distância, a partir da axila'],
+            ['Axilar média', 'Vertical', 'Sobre a linha axilar média, na altura do processo xifoide'],
+            ['Abdominal', 'Vertical', 'Dois centímetros ao lado da cicatriz umbilical'],
+            ['Suprailíaca', 'Oblíqua', 'Logo acima da crista ilíaca, sobre a linha axilar média'],
+            ['Coxa', 'Vertical', 'Face anterior, no ponto médio entre a prega inguinal e a borda superior da patela'],
+            ['Panturrilha medial', 'Vertical', 'Face medial da perna, na altura do maior perímetro, com o joelho a 90°'],
+          ],
+        },
+      },
+      {
+        title: 'De densidade para percentual: Siri ou Brozek',
+        paragraphs: [
+          'Quase todos os protocolos não devolvem gordura diretamente — devolvem densidade corporal, que depois é convertida. As duas equações clássicas são a de Siri (1961), %G = 495 ÷ D − 450, e a de Brozek (1963), %G = 457 ÷ D − 414,2. Siri é o padrão da maior parte da literatura e é o default aqui.',
+          'A diferença entre as duas é pequena na faixa usual e cresce nos extremos: para uma densidade de 1,0657, Siri devolve 14,5% e Brozek 14,6%; em pessoas com percentual mais alto, Siri tende a dar valores um pouco maiores. O que não se pode fazer é alternar entre elas entre uma avaliação e outra do mesmo aluno — a variação do método viraria "evolução".',
+          'A exceção é o Faulkner, que estima o percentual direto do somatório, sem passar por densidade: %G = (Σ4 × 0,153) + 5,783. Nele, escolher Siri ou Brozek não muda nada.',
+        ],
+      },
+      {
+        title: 'Faixas de referência',
+        paragraphs: [
+          'A tabela abaixo traz as faixas mais difundidas na literatura de exercício. Trate-as como referência, não como diagnóstico: os pontos de corte variam entre fontes, e as faixas saudáveis sobem alguns pontos com a idade — o que é normal, não um problema a corrigir.',
+        ],
+        table: {
+          headers: ['Faixa', 'Homens', 'Mulheres'],
+          rows: [
+            ['Gordura essencial', '2–5%', '10–13%'],
+            ['Atletas', '6–13%', '14–20%'],
+            ['Bom / em forma', '14–17%', '21–24%'],
+            ['Aceitável', '18–24%', '25–31%'],
+            ['Acima do recomendado', '25% ou mais', '32% ou mais'],
+          ],
+        },
+      },
+      {
+        title: 'O que a estimativa não consegue fazer',
+        list: [
+          'Não é medida direta. É uma estimativa de densidade a partir de gordura subcutânea, com erro-padrão que costuma ficar em 3 a 4 pontos percentuais mesmo com boa técnica.',
+          'Não enxerga gordura visceral. Duas pessoas com o mesmo somatório de dobras podem ter distribuições internas bem diferentes.',
+          'Equações estrangeiras aplicadas à população brasileira tendem a viés — é a razão de existirem Guedes e Petroski, desenvolvidos aqui.',
+          'Fora da faixa etária de validade a equação continua devolvendo um número, e é aí que ela engana. A calculadora avisa quando isso acontece em vez de silenciar.',
+          'O valor absoluto importa menos que a série temporal. Mesmo protocolo, mesmo avaliador, mesmas condições — só assim a comparação entre duas avaliações significa alguma coisa.',
+        ],
+      },
+      {
+        title: 'Registrar no histórico do aluno',
+        body: 'Uma medição isolada resolve pouco. O que muda a conversa com o aluno é a sequência: o mesmo protocolo repetido a cada seis ou oito semanas, com peso, medidas e fotos ao lado. No CoachPilot, cada [avaliação física](/avaliacao-fisica-digital) guarda percentual de gordura, peso, medidas livres, fotos comparativas e anexos de bioimpedância no histórico do aluno, com gráficos de evolução gerados automaticamente. Você calcula aqui e registra lá — o plano grátis cobre até 3 alunos.',
+      },
+    ],
+    faqs: [
+      { q: 'Qual protocolo de dobras cutâneas devo usar?', a: 'Se você não tem preferência, Pollock de 3 dobras resolve na maior parte dos casos e é o mais rápido. Pollock de 7 reduz o erro em quem tem distribuição de gordura atípica. Para população brasileira adulta jovem, Guedes e Petroski foram desenvolvidos aqui e tendem a ter menos viés. O mais importante é não trocar de protocolo entre avaliações do mesmo aluno.' },
+      { q: 'Pollock de 3 dobras em homens usa quais pontos?', a: 'Peitoral, abdominal e coxa. Em mulheres, tríceps, suprailíaca e coxa. Atenção: existem calculadoras em português publicando "tríceps, peitoral e abdominal" para homens, o que está incorreto e produz um resultado plausível mas errado.' },
+      { q: 'A equação de Faulkner foi feita com nadadores?', a: 'Não — é um mito difundido. A equação nem sequer é de Faulkner: é atribuída a Yuhasz e nunca foi publicada por ele. Pires Neto e Glaner demonstraram na Revista Brasileira de Cineantropometria e Desempenho Humano que não houve amostra de nadadores no desenvolvimento dela.' },
+      { q: 'Qual a diferença entre Siri e Brozek?', a: 'São duas conversões de densidade corporal em percentual de gordura, com pressupostos ligeiramente diferentes sobre a densidade da massa magra. Na faixa usual a diferença é de décimos de ponto. Siri é o padrão da literatura e o default aqui; o que não vale é alternar entre elas ao acompanhar o mesmo aluno.' },
+      { q: 'Dobra cutânea ou bioimpedância?', a: 'Ambas são estimativas com erro parecido. A bioimpedância é mais rápida e não depende da técnica do avaliador, mas é sensível a hidratação, horário e refeição recente. A dobra depende de técnica, mas é mais estável entre dias. Na prática, escolha um método e mantenha — comparar dobra com bioimpedância no mesmo aluno gera diferença que não é mudança de composição corporal.' },
+      { q: 'Preciso de compasso profissional?', a: 'Sim, e calibrado. O compasso precisa exercer pressão constante de cerca de 10 g/mm² na superfície de contato. Modelos de plástico sem mola calibrada introduzem erro grande o suficiente para inviabilizar a comparação entre avaliações.' },
+    ],
+    related: ['calculadora-energia', 'calculadora-1rm', 'avaliacao-fisica', 'gestao-alunos'],
+  },
+
+  'calculadora-precificacao': {
+    path: '/calculadoras/quanto-cobrar',
+    title: 'Quanto cobrar como personal trainer: calculadora de preço | CoachPilot',
+    description: 'Calcule quanto cobrar por sessão e por mensalidade a partir dos seus custos, das horas que você tem e da renda que quer tirar. Mostra também quantos alunos você precisa. Grátis.',
+    h1: 'Calculadora: quanto cobrar como personal trainer',
+    label: 'Quanto cobrar',
+    eyebrow: 'Calculadora gratuita',
+    parent: 'calculadoras',
+    widget: 'precificacao',
+    widgetTitle: 'Calcule o seu preço',
+    widgetNote: 'Já vem preenchida com um cenário de exemplo. Troque pelos seus números e o resultado se ajusta na hora.',
+    appCategory: 'BusinessApplication',
+    intro: 'A maioria dos personais define preço olhando o que o colega da academia cobra. O problema é que o preço do colega foi calculado a partir dos custos dele, das horas dele e da ocupação dele. Esta calculadora faz o caminho inverso: parte do quanto você precisa receber e da agenda que você realmente consegue preencher, e devolve o preço por sessão, a mensalidade equivalente e quantos alunos isso exige.',
+    bullets: [
+      'Preço por sessão a partir dos seus custos, não do mercado',
+      'Mensalidade equivalente para 1×, 2× e 3× por semana',
+      'Quantos alunos você precisa para a renda que quer',
+      'Alerta quando a meta não cabe na sua agenda',
+    ],
+    sections: [
+      {
+        title: 'A conta que quase ninguém faz',
+        paragraphs: [
+          'Preço por hora não é renda por hora. Entre uma coisa e outra entram três descontos que costumam ser ignorados: o custo fixo de trabalhar (transporte, acesso à academia, material, celular, plano de gestão), o imposto, e principalmente a ociosidade — as horas que você tem disponíveis mas não consegue vender.',
+          'A ociosidade é o item mais subestimado. Um personal com 30 horas semanais disponíveis raramente atende 30 horas: a demanda se concentra em dois blocos, cedo e no fim da tarde, e o meio do dia fica vazio. Quem calcula preço supondo agenda cheia descobre no fim do mês que o número não fecha, e conclui erradamente que precisa de mais alunos, quando precisava de preço maior.',
+          'A conta usada aqui é direta: primeiro descobrimos quantas sessões você realmente vende por mês; depois, quanto precisa entrar de faturamento bruto para cobrir custos, imposto e a sua renda; e dividimos um pelo outro. O imposto incide sobre o bruto, então ele entra como bruto = (custos + renda desejada) ÷ (1 − alíquota), e não como um desconto no fim.',
+        ],
+      },
+      {
+        title: 'Referências de mercado, para contexto',
+        paragraphs: [
+          'Os números abaixo servem para você saber onde o seu resultado cai em relação ao mercado — eles não entram na conta em momento nenhum, e não deveriam definir o seu preço. Um preço muito abaixo da faixa costuma indicar custo subestimado ou ociosidade otimista demais; muito acima, uma proposta de valor que precisa estar clara para o aluno.',
+        ],
+        table: {
+          headers: ['Modalidade', 'Faixa praticada', 'Concentração'],
+          rows: [
+            ['Sessão presencial', 'R$ 50 a R$ 250', 'R$ 86 a R$ 150'],
+            ['Consultoria online (mensal)', 'R$ 90 a R$ 320', '—'],
+            ['Nichos de alta renda em capitais', 'Acima de R$ 250', '—'],
+          ],
+        },
+        list: [
+          'Verificado em agosto de 2026, a partir de levantamentos públicos de mercado. Faixas amplas e sujeitas a variação por cidade, especialização e formato.',
+        ],
+      },
+      {
+        title: 'Imposto: MEI, Simples ou nada',
+        paragraphs: [
+          'A calculadora trata o imposto como parâmetro, com três atalhos. O MEI paga um valor fixo mensal — R$ 86,05 para serviços em 2026 — e não um percentual, com teto de faturamento de R$ 81.000 por ano, o que dá uma média de R$ 6.750 por mês. Se o seu resultado projetar faturamento acima disso, a calculadora avisa: o enquadramento vai precisar mudar.',
+          'O Simples Nacional cobra percentual sobre o faturamento, com alíquota que varia por anexo e por faixa de receita. E há quem ainda atue sem CNPJ, caso em que o campo fica zerado — sem juízo de valor aqui, mas vale lembrar que isso costuma sair mais caro no imposto de renda pessoa física.',
+          'Regras tributárias mudam. Os valores acima foram verificados em agosto de 2026 e são exibidos como preenchimento sugerido, nunca travados: confirme com o seu contador antes de usar como base de decisão.',
+        ],
+      },
+      {
+        title: 'Preço por sessão ou mensalidade?',
+        body: 'A mensalidade é quase sempre melhor para os dois lados. Para você, transforma receita variável em previsível e reduz o buraco de agenda de quem falta. Para o aluno, ancora o compromisso no mês e não na sessão, o que melhora a adesão. A calculadora mostra a mensalidade equivalente para 1, 2 e 3 sessões por semana, usando 4,33 semanas por mês — a média real, e não 4, que é o arredondamento que faz perder quase uma sessão por mês em cada aluno.',
+      },
+      {
+        title: 'Quantos alunos você precisa',
+        body: 'É a saída mais útil da calculadora e a que costuma surpreender. Com o preço definido, o número de alunos para atingir a meta sai de uma divisão simples — mas o resultado precisa caber na agenda. Quando o número de sessões exigidas passa da sua capacidade real, subir o preço é o único caminho: não existe atender mais horas do que existem no dia. É nesse ponto que a conversa deixa de ser sobre preço e passa a ser sobre modelo de atendimento — consultoria online, treino em dupla ou pequenos grupos multiplicam a receita por hora sem esticar a agenda.',
+      },
+      {
+        title: 'Depois do preço vem a cobrança',
+        body: 'Definir o valor é a parte fácil; o que come tempo é lembrar quem pagou, quem está atrasado e quem venceu ontem. O CoachPilot tem controle financeiro por aluno com cobrança via Pix caindo direto na sua conta, sem taxa da plataforma, e marca automaticamente quem está em atraso. Junto com [gestão de alunos](/gestao-de-alunos-personal-trainer), treinos e avaliações, sai por R$ 39,90 por mês — que, aliás, é um custo fixo a incluir na conta acima. Veja os [planos](/precos).',
+      },
+    ],
+    faqs: [
+      { q: 'Quanto cobrar por aula de personal trainer em 2026?', a: 'A faixa praticada no Brasil vai de R$ 50 a R$ 250 por sessão presencial, com a maior parte entre R$ 86 e R$ 150. Mas a média de mercado é um péssimo ponto de partida: o preço certo depende dos seus custos fixos, das horas que você consegue efetivamente vender e da renda que precisa tirar. É essa conta que a calculadora faz.' },
+      { q: 'Quanto cobrar por consultoria online?', a: 'Os planos de acompanhamento a distância no Brasil ficam entre R$ 90 e R$ 320 por mês. Como não há deslocamento nem hora presencial, a conta muda: o limite deixa de ser a sua agenda e passa a ser quantos alunos você consegue acompanhar com qualidade.' },
+      { q: 'Devo cobrar por sessão avulsa ou pacote mensal?', a: 'Pacote mensal, na maior parte dos casos. Ele torna a sua receita previsível, reduz o prejuízo de faltas e melhora a adesão do aluno. A sessão avulsa faz sentido como porta de entrada ou para quem tem rotina realmente imprevisível, normalmente com preço maior que o da sessão dentro do pacote.' },
+      { q: 'Como calcular o preço de um pacote de 12 sessões?', a: 'Parta do preço por sessão calculado aqui e decida conscientemente se vai dar desconto. Um desconto de 10% num pacote fechado costuma se pagar pela previsibilidade e pelo pagamento antecipado — mas ele precisa ser uma escolha, não o resultado de não ter feito a conta.' },
+      { q: 'Personal trainer pode ser MEI?', a: 'Sim, pela atividade de condicionamento físico, com teto de faturamento de R$ 81.000 por ano e DAS mensal fixo de R$ 86,05 para serviços em 2026. Ultrapassando o teto, o desenquadramento é obrigatório. Valores verificados em agosto de 2026 — confirme com o seu contador, porque as regras mudam.' },
+    ],
+    related: ['calculadora-volume', 'calculadora-1rm', 'precos', 'gestao-alunos'],
+  },
+
+  'calculadora-volume': {
+    path: '/calculadoras/volume-semanal',
+    title: 'Calculadora de volume de treino: séries por semana | CoachPilot',
+    description: 'Quantas séries por semana por grupo muscular? Calcule o volume semanal e compare com a faixa da meta-análise de Schoenfeld. Com contagem de série indireta opcional. Grátis.',
+    h1: 'Calculadora de volume semanal: séries por grupo muscular',
+    label: 'Volume semanal',
+    eyebrow: 'Calculadora gratuita',
+    parent: 'calculadoras',
+    widget: 'volume',
+    widgetTitle: 'Calcule o volume semanal',
+    widgetNote: 'Um grupo muscular por vez. Se quiser conferir a semana inteira, vá adicionando grupos.',
+    appCategory: 'HealthApplication',
+    intro: 'Volume semanal — o número de séries que um grupo muscular recebe ao longo da semana — é hoje a variável com relação dose-resposta melhor documentada para hipertrofia. Esta calculadora soma as séries de cada grupo considerando a frequência de treino e mostra onde o resultado cai em relação às faixas encontradas na literatura, com a opção de contar séries indiretas pela metade.',
+    bullets: [
+      'Séries por semana por grupo, considerando a frequência',
+      'Faixas baseadas na meta-análise de Schoenfeld (2017)',
+      'Contagem fracionária de série indireta, opcional',
+      'Mostra quantas séries faltam para chegar à faixa alvo',
+    ],
+    sections: [
+      {
+        title: 'O que a literatura mostra',
+        paragraphs: [
+          'A referência mais citada é a meta-análise de Schoenfeld, Ogborn e Krieger (2017), publicada no Journal of Sports Sciences, que reuniu 34 grupos de tratamento de 15 estudos. O achado central é uma relação dose-resposta graduada: mais séries por semana produzem mais hipertrofia, na ordem de 0,38% de ganho adicional por série acrescentada.',
+          'Isso não significa que mais é sempre melhor sem teto — significa que, dentro das faixas estudadas, o volume é o que mais explica a diferença de resultado entre programas. As faixas abaixo são a leitura prática desse achado.',
+        ],
+        table: {
+          headers: ['Séries por semana', 'Leitura', 'O que costuma acontecer'],
+          rows: [
+            ['Menos de 5', 'Abaixo do mínimo', 'Funciona em iniciante e para manter, mas fica longe do potencial'],
+            ['5 a 9', 'Mínimo efetivo', 'Já produz ganho consistente na maioria das pessoas'],
+            ['10 ou mais', 'Faixa alvo', 'Onde os melhores resultados aparecem na meta-análise'],
+          ],
+        },
+      },
+      {
+        title: 'Série direta e série indireta',
+        paragraphs: [
+          'Uma série de rosca direta é volume direto de bíceps. Uma série de remada também recruta bíceps, mas como músculo auxiliar. A pergunta de sempre é se a remada conta para o volume de bíceps — e, se conta, quanto.',
+          'Durante anos isso foi convenção de treinador. Deixou de ser: a meta-regressão publicada na Sports Medicine em 2025, com 67 estudos e 2.058 participantes, comparou três formas de contar a série indireta — como 1, como 0,5 e como 0 — e a contagem fracionária, de meia série, foi a que melhor explicou os ganhos observados. É por isso que o fator padrão aqui é 0,5.',
+          'Ainda assim, o campo vem desligado na calculadora. O motivo é prático: quem só quer saber quantas séries diretas está fazendo não deveria precisar entender essa nuance para obter um número. Ligue quando quiser o retrato completo da semana.',
+        ],
+      },
+      {
+        title: 'Volume não é a única variável',
+        list: [
+          'Proximidade da falha muda tudo. Dez séries paradas a cinco repetições da falha não equivalem a dez séries levadas perto do limite.',
+          'A meta-análise descreve médias entre estudos, não previsão individual. A sua tolerância a volume depende de recuperação, sono, alimentação, estresse e tempo de treino.',
+          'Volume alto sem progressão de carga estagna. Séries a mais não substituem sobrecarga.',
+          'Frequência distribui o volume, e distribuir costuma ser melhor que concentrar: 12 séries em dois dias tende a render mais que 12 num só.',
+          'O volume que você aguenta hoje não é o de daqui a seis meses. Subir gradualmente e observar a recuperação vale mais que perseguir um número.',
+        ],
+      },
+      {
+        title: 'Contar volume sem planilha paralela',
+        body: 'Fazer essa conta na mão para dez alunos, toda semana, não se sustenta. No CoachPilot o programa do aluno já é estruturado por exercício, séries e frequência, então o volume por grupo sai do próprio treino prescrito — e o histórico de sessões mostra o que foi de fato executado, que é sempre diferente do planejado. Comece grátis com até 3 alunos.',
+      },
+    ],
+    faqs: [
+      { q: 'Quantas séries por semana para hipertrofia?', a: 'A meta-análise de Schoenfeld (2017) aponta relação dose-resposta graduada, com os melhores resultados a partir de 10 séries semanais por grupo muscular. Entre 5 e 9 já há ganho consistente. Abaixo de 5 funciona para iniciantes e para manutenção, mas fica aquém do potencial.' },
+      { q: 'Série de remada conta como volume de bíceps?', a: 'Conta parcialmente. A meta-regressão publicada na Sports Medicine em 2025, com 67 estudos, mostrou que contar a série indireta como meia série é o que melhor explica os ganhos observados — melhor do que contar como série inteira ou ignorar.' },
+      { q: 'Existe volume máximo?', a: 'A meta-análise não identifica um teto claro dentro das faixas estudadas, mas isso não autoriza volume ilimitado: os estudos têm duração limitada e a recuperação é individual. O sinal prático de excesso é queda de desempenho entre sessões, e não um número universal.' },
+      { q: 'É melhor treinar um grupo uma ou duas vezes por semana?', a: 'Para um mesmo volume total, distribuir em duas sessões costuma render mais que concentrar em uma, sobretudo em volumes mais altos. A frequência é o meio de acomodar o volume com qualidade, não um fim em si.' },
+    ],
+    related: ['calculadora-1rm', 'calculadora-energia', 'software-personal-trainer', 'app-treino-alunos'],
+  },
+
+  'calculadora-energia': {
+    path: '/calculadoras/tmb-e-macros',
+    title: 'Calculadora de TMB e gasto calórico + macros | CoachPilot',
+    description: 'Estime a taxa metabólica basal e o gasto calórico diário por Mifflin-St Jeor, Harris-Benedict revisada ou Katch-McArdle, com distribuição de macronutrientes. Estimativa educativa, grátis.',
+    h1: 'Calculadora de TMB e gasto calórico diário',
+    label: 'TMB e macros',
+    eyebrow: 'Calculadora gratuita',
+    parent: 'calculadoras',
+    widget: 'energia',
+    widgetTitle: 'Estime o gasto energético',
+    widgetNote: 'Estimativa educativa. Prescrição alimentar é atribuição privativa do nutricionista — veja a ressalva abaixo do resultado.',
+    appCategory: 'HealthApplication',
+    intro: 'Taxa metabólica basal é a energia que o corpo gasta em repouso absoluto; o gasto energético total acrescenta a isso o efeito da atividade do dia. Esta calculadora estima os dois por três equações diferentes e mostra uma distribuição possível de macronutrientes. É material educativo para embasar a conversa com o aluno — não é prescrição nutricional, e a diferença importa juridicamente.',
+    bullets: [
+      'Três equações: Mifflin-St Jeor, Harris-Benedict revisada e Katch-McArdle',
+      'Comparação lado a lado, porque elas discordam entre si',
+      'Distribuição de macros com proteína e gordura ajustáveis',
+      'Ressalva profissional explícita, não escondida no rodapé',
+    ],
+    sections: [
+      {
+        title: 'O limite profissional, dito antes de tudo',
+        paragraphs: [
+          'No Brasil, a prescrição de dietas é atribuição privativa do nutricionista, conforme a Resolução CFN nº 600/2018. Um personal trainer pode calcular e explicar gasto energético como informação educativa; não pode prescrever plano alimentar, cardápio ou meta calórica individualizada.',
+          'A distinção não é formalidade. Estimar que o gasto de alguém gira em torno de 2.700 kcal é informação; dizer a essa pessoa que ela deve comer 2.200 kcal por dia distribuídas assim e assado é prescrição. A calculadora foi desenhada para ficar do lado certo dessa linha, e por isso fala em estimativa e distribuição possível, nunca em meta ou recomendação.',
+        ],
+      },
+      {
+        title: 'As três equações',
+        paragraphs: [
+          'Mifflin-St Jeor (1990) é a mais usada hoje para adultos não atletas e costuma ser a mais precisa quando não se conhece a composição corporal. Harris-Benedict revisada por Roza e Shizgal (1984) é a atualização de uma equação de 1919 e tende a estimar um pouco acima. Katch-McArdle parte da massa magra em vez do peso total, o que a torna a melhor opção quando existe um percentual de gordura confiável — e é o motivo de essas duas calculadoras conversarem.',
+        ],
+        table: {
+          headers: ['Equação', 'Fórmula', 'Quando usar'],
+          rows: [
+            ['Mifflin-St Jeor (1990)', 'H: 10×peso + 6,25×altura − 5×idade + 5 · M: idem − 161', 'Padrão para adultos, sem dado de composição corporal'],
+            ['Harris-Benedict rev. (1984)', 'H: 88,362 + 13,397×peso + 4,799×altura − 5,677×idade · M: 447,593 + 9,247×peso + 3,098×altura − 4,330×idade', 'Alternativa clássica; tende a estimar um pouco mais alto'],
+            ['Katch-McArdle', '370 + 21,6 × massa magra (kg)', 'Quando há percentual de gordura medido — ver [dobras cutâneas](/calculadoras/dobras-cutaneas)'],
+          ],
+        },
+      },
+      {
+        title: 'Do basal para o gasto do dia',
+        paragraphs: [
+          'A TMB sozinha não serve para nada prático: ninguém passa o dia deitado. O gasto total é obtido multiplicando a TMB por um fator de atividade, que vai de 1,2 para quem é sedentário a 1,9 para quem treina pesado quase todos os dias.',
+          'Esse fator é a maior fonte de erro de toda a conta. A diferença entre escolher 1,55 e 1,725 pode passar de 300 kcal por dia — mais do que a diferença entre qualquer par de equações. Na dúvida, escolha o fator mais baixo: subestimar o gasto e ajustar depois com base no que acontece na balança é bem menos problemático que o contrário.',
+        ],
+      },
+      {
+        title: 'Como a distribuição de macros é montada',
+        list: [
+          'Proteína é definida em gramas por quilo de peso. O intervalo usual em quem treina força fica entre 1,6 e 2,2 g/kg.',
+          'Gordura pode ser definida em gramas por quilo ou como percentual das calorias. Abaixo de cerca de 0,5 g/kg costuma haver prejuízo hormonal.',
+          'Carboidrato entra por diferença: é o que sobra das calorias depois de proteína e gordura.',
+          'Se proteína e gordura já ultrapassam o total de calorias, o carboidrato não vira número negativo — a calculadora trava em zero e avisa que a combinação é impossível.',
+          'A soma dos macros arredondados sempre fecha com o total de calorias, sem sobrar aquela diferença de dezenas de kcal que aparece em muitas calculadoras.',
+        ],
+      },
+      {
+        title: 'O que a estimativa não sabe sobre a pessoa',
+        body: 'Todas essas equações são regressões feitas em populações e devolvem a média de pessoas parecidas com quem foi medido. A variação individual é real: duas pessoas de mesmo sexo, peso, altura e idade podem ter gasto basal diferente em 200 kcal ou mais, por genética, massa magra, histórico de dieta e função tireoidiana. Por isso o número aqui é ponto de partida. O que dá a resposta de verdade é o acompanhamento ao longo de algumas semanas — peso, medidas, desempenho no treino e como a pessoa se sente — e esse acompanhamento, quando envolve dieta, é do nutricionista.',
+      },
+    ],
+    faqs: [
+      { q: 'Qual a fórmula mais precisa para calcular a TMB?', a: 'Para adultos sem dado de composição corporal, Mifflin-St Jeor é a mais validada e a escolha padrão. Quando existe um percentual de gordura confiável, Katch-McArdle tende a ser melhor, porque parte da massa magra — que é o tecido metabolicamente ativo.' },
+      { q: 'Personal trainer pode prescrever dieta?', a: 'Não. A prescrição dietética é atribuição privativa do nutricionista pela Resolução CFN nº 600/2018. O personal pode calcular e explicar gasto energético como informação educativa, e deve encaminhar ao nutricionista quando o assunto for plano alimentar.' },
+      { q: 'Qual fator de atividade escolher?', a: 'Ele reflete o dia inteiro, não só o treino. Quem treina uma hora e passa o resto do dia sentado está mais perto de 1,375 do que de 1,55. Na dúvida, escolha o menor: é mais fácil ajustar para cima depois do que descobrir semanas depois que o gasto foi superestimado.' },
+      { q: 'Por que as três equações dão resultados diferentes?', a: 'Porque foram desenvolvidas com amostras diferentes, em épocas diferentes, e modelam o metabolismo a partir de variáveis diferentes — peso total em duas delas, massa magra na terceira. A divergência entre elas costuma ser menor que o erro de escolher o fator de atividade errado.' },
+      { q: 'A calculadora serve para emagrecimento?', a: 'Ela estima o gasto, que é o ponto de partida de qualquer estratégia. Definir o déficit adequado, a distribuição de nutrientes e o acompanhamento é trabalho de nutricionista. Se o resultado calculado cai abaixo de 1.200 kcal para mulheres ou 1.500 para homens, a calculadora avisa — é território que exige acompanhamento profissional.' },
+    ],
+    related: ['calculadora-dobras', 'calculadora-volume', 'avaliacao-fisica', 'app-treino-alunos'],
+  },
+
   precos: {
     path: '/precos',
     title: 'Preços do CoachPilot | Plano Grátis e Gestão Pro',
