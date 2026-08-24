@@ -91,7 +91,11 @@ export function PrecificacaoWidget() {
             <CalcAvisos avisos={calculo.avisos} />
           </>
         ) : (
-          <CalcResultado rotulo="Preço por sessão" valor="—" legenda="Preencha os quatro campos acima." destaque={false} />
+          <>
+            <CalcResultado rotulo="Preço por sessão" valor="—" legenda="Preencha os quatro campos acima." destaque={false} />
+            {/* sem isto o erro fica invisivel e a pessoa so ve um traco */}
+            {calculo && !calculo.ok && <CalcAvisos avisos={calculo.avisos} />}
+          </>
         )
       }
       avancado={

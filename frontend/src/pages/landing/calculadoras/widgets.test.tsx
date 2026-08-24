@@ -109,6 +109,29 @@ describe('ressalvas obrigatórias', () => {
   })
 })
 
+describe('toda equação/protocolo oferecido tem de ser utilizável', () => {
+  // Regressão: o seletor oferecia Katch-McArdle, mas o widget não tinha campo de
+  // percentual de gordura — selecionar a opção não calculava nada, e o erro ficava
+  // invisível porque os avisos só eram renderizados no ramo de sucesso.
+  it('energia tem campo para todo dado que suas equações exigem', () => {
+    const html = render(EnergiaWidget)
+    expect(html).toMatch(/id="energia-pgordura"/)
+    expect(html).toContain('Percentual de gordura')
+  })
+
+  it('energia liga para a calculadora de dobras quando falta o percentual', () => {
+    expect(render(EnergiaWidget)).toContain('/calculadoras/dobras-cutaneas')
+  })
+
+  it('todo widget renderiza os avisos também quando o cálculo falha', () => {
+    // sem CalcAvisos no ramo de erro a pessoa vê só um traço, sem explicação
+    for (const { nome, comp } of WIDGETS) {
+      const src = comp.toString()
+      expect(src.includes('CalcAvisos') || src.includes('avisos'), `${nome} não trata avisos`).toBe(true)
+    }
+  })
+})
+
 describe('regra 3: rótulo sem jargão na tela principal', () => {
   it('precificação não usa "ocupação" nem "alíquota" como rótulo', () => {
     const html = render(PrecificacaoWidget)

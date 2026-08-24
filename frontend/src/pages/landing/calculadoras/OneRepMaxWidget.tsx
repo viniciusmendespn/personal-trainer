@@ -75,7 +75,11 @@ export function OneRepMaxWidget() {
             )}
           </>
         ) : (
-          <CalcResultado rotulo="Seu 1RM estimado" valor="—" legenda="Preencha o peso e as repetições." destaque={false} />
+          <>
+            <CalcResultado rotulo="Seu 1RM estimado" valor="—" legenda="Preencha o peso e as repetições." destaque={false} />
+            {/* sem isto o erro fica invisivel e a pessoa so ve um traco */}
+            {calculo && !calculo.ok && <CalcAvisos avisos={calculo.avisos} />}
+          </>
         )
       }
       avancado={

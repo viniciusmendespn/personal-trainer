@@ -117,7 +117,11 @@ export function DobrasWidget() {
             )}
           </>
         ) : (
-          <CalcResultado rotulo="Percentual de gordura" valor="—" legenda="Preencha a idade e todas as dobras do protocolo." destaque={false} />
+          <>
+            <CalcResultado rotulo="Percentual de gordura" valor="—" legenda="Preencha a idade e todas as dobras do protocolo." destaque={false} />
+            {/* sem isto o erro fica invisivel e a pessoa so ve um traco */}
+            {calculo && !calculo.ok && <CalcAvisos avisos={calculo.avisos} />}
+          </>
         )
       }
       avancado={

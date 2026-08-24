@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   estimarEnergia, FATORES_ATIVIDADE, OBJETIVOS, PROVENIENCIAS_ENERGIA,
   type EquacaoTmb, type NivelAtividade, type Objetivo,
@@ -20,6 +21,8 @@ export function EnergiaWidget() {
   const idade = useCampoDecimal('30', { min: 10, max: 100, rotulo: 'Idade' })
   const proteina = useCampoDecimal('1,8', { min: 0.5, max: 4, rotulo: 'Proteína' })
   const gordura = useCampoDecimal('25', { min: 5, max: 60, rotulo: 'Gordura' })
+  // Vazio por padrão: é opcional, e é o que habilita Katch-McArdle.
+  const percentualGordura = useCampoDecimal('', { min: 3, max: 70, rotulo: 'Percentual de gordura' })
 
   const calculo = useMemo(() => {
     if (peso.valor === null || altura.valor === null || idade.valor === null) return null
@@ -31,10 +34,11 @@ export function EnergiaWidget() {
       nivelAtividade: nivel,
       objetivo,
       equacao,
+      percentualGordura: percentualGordura.valor ?? undefined,
       proteinaGPorKg: proteina.valor ?? undefined,
       gordura: gordura.valor === null ? undefined : { base: 'percentualDasCalorias', valor: gordura.valor / 100 },
     })
-  }, [sexo, nivel, objetivo, equacao, peso.valor, altura.valor, idade.valor, proteina.valor, gordura.valor])
+  }, [sexo, nivel, objetivo, equacao, peso.valor, altura.valor, idade.valor, percentualGordura.valor, proteina.valor, gordura.valor])
 
   const macros = calculo?.ok ? calculo.resultado.distribuicaoDeMacros : null
 
@@ -91,6 +95,17 @@ export function EnergiaWidget() {
               }
             />
             <CalcAvisos avisos={calculo.avisos} />
+            {calculo.resultado.massaMagraKg !== null && (
+              <CalcGrade min={170}>
+                <CalcResultado
+                  rotulo="Massa magra"
+                  valor={num(calculo.resultado.massaMagraKg, 1)}
+                  unidade="kg"
+                  destaque={false}
+                  legenda={`Base do cálculo quando a equação é Katch-McArdle`}
+                />
+              </CalcGrade>
+            )}
             {macros && (
               <CalcGrade min={150}>
                 <CalcResultado rotulo="Proteína" valor={num(macros.proteina.gramas, 0)} unidade="g" destaque={false} legenda={`${num(macros.proteina.gPorKg, 1)} g/kg`} />
@@ -100,7 +115,11 @@ export function EnergiaWidget() {
             )}
           </>
         ) : (
-          <CalcResultado rotulo="Gasto energético estimado" valor="—" legenda="Preencha peso, altura e idade." destaque={false} />
+          <>
+            <CalcResultado rotulo="Gasto energético estimado" valor="—" legenda="Preencha peso, altura e idade." destaque={false} />
+            {/* sem isto o erro fica invisível e a pessoa só vê um traço sem explicação */}
+            {calculo && !calculo.ok && <CalcAvisos avisos={calculo.avisos} />}
+          </>
         )
       }
       avancado={
@@ -113,13 +132,27 @@ export function EnergiaWidget() {
             opcoes={[
               { valor: 'mifflin', label: 'Mifflin-St Jeor (padrão)' },
               { valor: 'harrisBenedict', label: 'Harris-Benedict revisada' },
-              { valor: 'katchMcArdle', label: 'Katch-McArdle (exige % de gordura)' },
+              { valor: 'katchMcArdle', label: 'Katch-McArdle (usa a massa magra)' },
             ]}
           />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14 }}>
+            <CalcCampo
+              id="energia-pgordura"
+              rotulo="Percentual de gordura"
+              campo={percentualGordura}
+              sufixo="%"
+              dica="Opcional. Preenchido, habilita Katch-McArdle e mostra a massa magra."
+            />
             <CalcCampo id="energia-proteina" rotulo="Proteína" campo={proteina} sufixo="g/kg" dica="Usual: 1,6 a 2,2" />
             <CalcCampo id="energia-gordura" rotulo="Gordura" campo={gordura} sufixo="%" dica="Percentual das calorias" />
           </div>
+          <p style={{ fontSize: 13.5, lineHeight: 1.65, color: cor.suave }}>
+            Não sabe o percentual de gordura?{' '}
+            <Link to="/calculadoras/dobras-cutaneas" style={{ color: cor.tealEscuro, fontWeight: 650 }}>
+              Calcule por dobras cutâneas
+            </Link>{' '}
+            e volte com o número.
+          </p>
           {calculo?.ok && (
             <CalcTabela
               cabecalho={['Equação', 'TMB estimada']}

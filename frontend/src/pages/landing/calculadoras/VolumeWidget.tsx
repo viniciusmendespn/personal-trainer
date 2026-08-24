@@ -111,7 +111,11 @@ export function VolumeWidget() {
             )}
           </>
         ) : (
-          <CalcResultado rotulo="Volume semanal" valor="—" legenda="Informe séries por treino e treinos por semana." destaque={false} />
+          <>
+            <CalcResultado rotulo="Volume semanal" valor="—" legenda="Informe séries por treino e treinos por semana." destaque={false} />
+            {/* sem isto o erro fica invisivel e a pessoa so ve um traco */}
+            {calculo && !calculo.ok && <CalcAvisos avisos={calculo.avisos} />}
+          </>
         )
       }
       avancado={
