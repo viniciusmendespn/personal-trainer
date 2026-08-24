@@ -14,7 +14,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { BASE_URL, PAGES, allPublicPaths } from '../src/pages/landing/publicSeoData.js'
+import { BASE_URL, PAGES, WIDGET_KINDS, allPublicPaths } from '../src/pages/landing/publicSeoData.js'
 import { BLOG_POSTS, BLOG_BASE } from '../src/pages/landing/blogData.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -57,11 +57,27 @@ function inline(text) {
 
 const CTA = '<p><a href="/signup">Começar grátis</a> | <a href="/precos">Ver preços</a> | <a href="/">Página inicial</a></p>'
 
+// Espelha ProseTable de src/pages/landing/prose.tsx. O overflow-x é obrigatório:
+// sem ele o Googlebot mobile acusa conteúdo mais largo que a viewport.
+function renderTable(t) {
+  const head = t.headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('')
+  const body = t.rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')
+  return `<div style="overflow-x:auto"><table border="1" cellpadding="6" style="border-collapse:collapse">`
+    + `<thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`
+}
+
+// Espelha o map de sections em PublicSeoPage.tsx: paragraphs vence body,
+// body vira array de 1, e os dois aceitam links inline.
+function renderSeoSection(s) {
+  const paragraphs = (s.paragraphs ?? (s.body ? [s.body] : [])).map((p) => `<p>${inline(p)}</p>`).join('')
+  const list = s.list ? `<ul>${s.list.map((item) => `<li>${inline(item)}</li>`).join('')}</ul>` : ''
+  const table = s.table ? renderTable(s.table) : ''
+  return `<section><h2>${escapeHtml(s.title)}</h2>${paragraphs}${list}${table}</section>`
+}
+
 function renderSeoPageContent(page) {
   const bullets = page.bullets.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
-  const sections = page.sections
-    .map((s) => `<section><h2>${escapeHtml(s.title)}</h2><p>${escapeHtml(s.body)}</p></section>`)
-    .join('')
+  const sections = page.sections.map(renderSeoSection).join('')
   const faqs = page.faqs.length
     ? `<section><h2>Perguntas frequentes</h2>${page.faqs.map((f) => `<h3>${escapeHtml(f.q)}</h3><p>${escapeHtml(f.a)}</p>`).join('')}</section>`
     : ''
@@ -69,7 +85,7 @@ function renderSeoPageContent(page) {
     ? `<p>Veja também: ${page.related.map((key) => `<a href="${PAGES[key].path}">${escapeHtml(PAGES[key].h1)}</a>`).join(' · ')}</p>`
     : ''
   return `<main style="font-family:Inter,Arial,sans-serif;max-width:920px;margin:0 auto;padding:48px 24px;color:#0f172a">
-    <p style="font-weight:700;color:#0d9488;text-transform:uppercase">CoachPilot para personal trainers</p>
+    <p style="font-weight:700;color:#0d9488;text-transform:uppercase">${escapeHtml(page.eyebrow ?? 'CoachPilot para personal trainers')}</p>
     <h1>${escapeHtml(page.h1)}</h1>
     <p>${escapeHtml(page.intro)}</p>
     <ul>${bullets}</ul>
@@ -84,9 +100,7 @@ function renderBlogPostContent(post) {
   const sections = post.sections.map((s) => {
     const paragraphs = s.paragraphs.map((p) => `<p>${inline(p)}</p>`).join('')
     const list = s.list ? `<ul>${s.list.map((item) => `<li>${inline(item)}</li>`).join('')}</ul>` : ''
-    const table = s.table
-      ? `<table border="1" cellpadding="6" style="border-collapse:collapse"><thead><tr>${s.table.headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>${s.table.rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
-      : ''
+    const table = s.table ? renderTable(s.table) : ''
     return `<section><h2>${escapeHtml(s.h2)}</h2>${paragraphs}${list}${table}</section>`
   }).join('')
   const faqs = post.faqs.length
@@ -178,8 +192,92 @@ function renderHomeContent() {
   </main>`
 }
 
+// Valida publicSeoData.js antes de gerar qualquer HTML. Existe porque o arquivo é
+// .js puro (não passa pelo tsc), então um typo em `related` só apareceria como tela
+// branca em produção. Derruba o build de propósito.
+function assertDataIntegrity() {
+  const errors = []
+  let appTsx = ''
+  try {
+    appTsx = readFileSync(join(root, 'src/App.tsx'), 'utf8')
+  } catch {
+    errors.push('não consegui ler src/App.tsx para conferir as rotas')
+  }
+
+  for (const [key, page] of Object.entries(PAGES)) {
+    const where = `${key}`
+    if (!page.path.startsWith('/')) errors.push(`${where}: path "${page.path}" não começa com /`)
+    if (page.path.includes('.')) errors.push(`${where}: path "${page.path}" tem ponto — a CloudFront Function trata como asset e não serve o prerender`)
+
+    for (const s of page.sections) {
+      const temTexto = s.body || (s.paragraphs && s.paragraphs.length)
+      if (!temTexto) errors.push(`${where} › "${s.title}": seção sem body nem paragraphs`)
+      if (s.table) {
+        const cols = s.table.headers.length
+        s.table.rows.forEach((row, i) => {
+          if (row.length !== cols) errors.push(`${where} › "${s.title}": linha ${i + 1} tem ${row.length} células para ${cols} colunas`)
+        })
+      }
+    }
+
+    for (const r of page.related) if (!PAGES[r]) errors.push(`${where}: related "${r}" não existe em PAGES`)
+    for (const c of page.index ?? []) if (!PAGES[c]) errors.push(`${where}: index "${c}" não existe em PAGES`)
+    if (page.parent && !PAGES[page.parent]) errors.push(`${where}: parent "${page.parent}" não existe em PAGES`)
+    if (page.widget && page.index) errors.push(`${where}: widget e index são mutuamente exclusivos`)
+    if (page.widget && !WIDGET_KINDS.includes(page.widget)) {
+      errors.push(`${where}: widget "${page.widget}" não está em WIDGET_KINDS (${WIDGET_KINDS.join(', ')})`)
+    }
+    if (appTsx && !appTsx.includes(`'${page.path}'`)) {
+      errors.push(`${where}: rota ${page.path} ausente de src/App.tsx — a página seria indexada mas a navegação no SPA cairia no ErrorPage`)
+    }
+  }
+
+  if (errors.length) {
+    console.error('publicSeoData inválido:\n - ' + errors.join('\n - '))
+    process.exit(1)
+  }
+}
+
+// Aviso (não erro) se uma rota prerenderizada não estiver coberta pela SpaRouterFunction.
+// Sem isso a CDN serve o shell da home naquela URL — a causa-raiz que zerou a indexação
+// em 2026-07, e que não reproduz em ambiente local. Só avisa: o build do frontend não
+// pode depender de o checkout do backend estar presente.
+function avisarRotasForaDaCdn(paths) {
+  let yaml
+  try {
+    yaml = readFileSync(join(root, '..', 'backend', 'template.yaml'), 'utf8')
+  } catch {
+    return
+  }
+  const prefixos = [...yaml.matchAll(/path\.indexOf\('([^']+)'\)\s*===\s*0/g)].map((m) => m[1])
+  const descobertas = paths.filter((p) => {
+    if (p === '/') return false
+    if (yaml.includes(`'${p}': 1`)) return false
+    return !prefixos.some((prefixo) => p.startsWith(prefixo))
+  })
+  if (descobertas.length) {
+    console.warn(
+      '\n⚠  Rotas prerenderizadas SEM cobertura na SpaRouterFunction (backend/template.yaml):\n'
+      + descobertas.map((p) => `   ${p}`).join('\n')
+      + '\n   Em produção a CDN vai servir o shell da home nessas URLs. Adicione ao mapa'
+      + ' PRERENDERED ou a uma regra de prefixo, e rode sam deploy.\n'
+    )
+  }
+}
+
 function jsonLd(graph) {
   return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replaceAll('</', '<\\/')
+}
+
+// Espelha breadcrumbTrail() de src/pages/landing/PublicSeoPage.tsx.
+function breadcrumbTrail(page, canonical) {
+  const trail = [{ '@type': 'ListItem', position: 1, name: 'CoachPilot', item: BASE_URL }]
+  const parent = page.parent ? PAGES[page.parent] : null
+  if (parent) {
+    trail.push({ '@type': 'ListItem', position: 2, name: parent.label ?? parent.h1, item: `${BASE_URL}${parent.path}` })
+  }
+  trail.push({ '@type': 'ListItem', position: trail.length + 1, name: page.label ?? page.h1, item: canonical })
+  return trail
 }
 
 function pageSchema(page) {
@@ -198,10 +296,7 @@ function pageSchema(page) {
     {
       '@type': 'BreadcrumbList',
       '@id': `${canonical}#breadcrumb`,
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'CoachPilot', item: BASE_URL },
-        { '@type': 'ListItem', position: 2, name: page.h1, item: canonical },
-      ],
+      itemListElement: breadcrumbTrail(page, canonical),
     },
   ]
   if (page.faqs.length) {
@@ -341,6 +436,8 @@ function buildSitemap() {
 }
 
 // ── Execução ─────────────────────────────────────────────────────────────────
+assertDataIntegrity()
+
 const template = readFileSync(join(dist, 'index.html'), 'utf8')
 
 // Home: injeta fallback rico no index.html raiz
@@ -384,3 +481,9 @@ for (const post of BLOG_POSTS) {
 writeFileSync(join(dist, 'sitemap.xml'), buildSitemap(), 'utf8')
 
 console.log(`Prerendered ${count} public pages + home fallback + sitemap.xml (lastmod ${buildDate}).`)
+
+avisarRotasForaDaCdn([
+  ...allPublicPaths(),
+  '/blog',
+  ...BLOG_POSTS.map((post) => `/blog/${post.slug}`),
+])

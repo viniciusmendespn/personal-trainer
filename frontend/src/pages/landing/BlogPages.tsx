@@ -1,31 +1,11 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, CalendarDays, Clock } from 'lucide-react'
 import LandingFooter from './LandingFooter'
+import { renderInline, ProseList, ProseTable } from './prose'
 import { BASE_URL } from './publicSeoData.js'
 import { BLOG_POSTS, BLOG_BASE } from './blogData.js'
 import type { BlogPost } from './blogData.js'
-
-// Converte links inline [texto](/caminho) em <Link>/<a> — mesmo formato usado
-// pelo prerender (scripts/prerender-public-pages.mjs).
-function renderInline(text: string): ReactNode[] {
-  const nodes: ReactNode[] = []
-  const regex = /\[([^\]]+)\]\(([^)]+)\)/g
-  let lastIndex = 0
-  let match: RegExpExecArray | null
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index))
-    const [, label, href] = match
-    if (href.startsWith('http')) {
-      nodes.push(<a key={match.index} href={href} style={{ color: '#0f766e', fontWeight: 650 }}>{label}</a>)
-    } else {
-      nodes.push(<Link key={match.index} to={href} style={{ color: '#0f766e', fontWeight: 650 }}>{label}</Link>)
-    }
-    lastIndex = match.index + match[0].length
-  }
-  if (lastIndex < text.length) nodes.push(text.slice(lastIndex))
-  return nodes
-}
 
 function formatDate(iso: string) {
   return new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -228,33 +208,8 @@ export function BlogPostPage() {
                 {section.paragraphs.map((paragraph, i) => (
                   <p key={i} style={{ color: '#475569', fontSize: 16, lineHeight: 1.8, marginBottom: 14 }}>{renderInline(paragraph)}</p>
                 ))}
-                {section.list && (
-                  <ul style={{ color: '#475569', fontSize: 16, lineHeight: 1.8, paddingLeft: 24, marginBottom: 14, display: 'grid', gap: 6 }}>
-                    {section.list.map((item) => <li key={item}>{renderInline(item)}</li>)}
-                  </ul>
-                )}
-                {section.table && (
-                  <div style={{ overflowX: 'auto', marginTop: 8 }}>
-                    <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 14.5 }}>
-                      <thead>
-                        <tr>
-                          {section.table.headers.map((header) => (
-                            <th key={header} style={{ textAlign: 'left', padding: '10px 12px', background: '#f0fdfa', border: '1px solid #e2e8f0', color: '#0f172a', whiteSpace: 'nowrap' }}>{header}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {section.table.rows.map((row, i) => (
-                          <tr key={i}>
-                            {row.map((cell, j) => (
-                              <td key={j} style={{ padding: '10px 12px', border: '1px solid #e2e8f0', color: '#475569' }}>{cell}</td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                {section.list && <ProseList items={section.list} />}
+                {section.table && <ProseTable table={section.table} />}
               </section>
             ))}
 

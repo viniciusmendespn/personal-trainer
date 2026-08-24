@@ -6,6 +6,10 @@
 
 export const BASE_URL = 'https://coachpilot.com.br'
 
+// Widgets interativos das calculadoras. Lista em runtime (usada pelo assert do
+// prerender); o tipo espelho vive em publicSeoData.d.ts (WidgetKind).
+export const WIDGET_KINDS = ['1rm', 'dobras', 'precificacao', 'volume', 'energia']
+
 export const PAGES = {
   'software-personal-trainer': {
     path: '/software-para-personal-trainer',

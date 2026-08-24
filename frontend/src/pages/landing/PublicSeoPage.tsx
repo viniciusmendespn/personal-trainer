@@ -2,11 +2,12 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react'
 import LandingFooter from './LandingFooter'
+import { renderInline, ProseList, ProseTable } from './prose'
 import { BASE_URL, PAGES } from './publicSeoData.js'
 import type { PageKey, SeoPage } from './publicSeoData.js'
 
 const LABELS: Record<PageKey, string> = Object.fromEntries(
-  Object.entries(PAGES).map(([key, page]) => [key, page.h1.replace('CoachPilot vs ', 'Vs ')])
+  Object.entries(PAGES).map(([key, page]) => [key, page.label ?? page.h1.replace('CoachPilot vs ', 'Vs ')])
 ) as Record<PageKey, string>
 
 function upsertMeta(selector: string, create: () => HTMLMetaElement | HTMLLinkElement, attr: string, value: string) {
@@ -18,9 +19,22 @@ function upsertMeta(selector: string, create: () => HTMLMetaElement | HTMLLinkEl
   el.setAttribute(attr, value)
 }
 
+// Espelha breadcrumbTrail() de scripts/prerender-public-pages.mjs — o par de
+// JSON-LD (runtime x estático) precisa ser editado junto.
+function breadcrumbTrail(page: SeoPage, canonical: string) {
+  const trail: object[] = [{ '@type': 'ListItem', position: 1, name: 'CoachPilot', item: BASE_URL }]
+  const parent = page.parent ? PAGES[page.parent] : null
+  if (parent) {
+    trail.push({ '@type': 'ListItem', position: 2, name: parent.label ?? parent.h1, item: `${BASE_URL}${parent.path}` })
+  }
+  trail.push({ '@type': 'ListItem', position: trail.length + 1, name: page.label ?? page.h1, item: canonical })
+  return trail
+}
+
 function usePageMeta(page: SeoPage) {
   useEffect(() => {
     const canonical = `${BASE_URL}${page.path}`
+    window.scrollTo(0, 0)
     document.title = page.title
     upsertMeta('meta[name="description"]', () => {
       const el = document.createElement('meta')
@@ -62,10 +76,7 @@ function usePageMeta(page: SeoPage) {
       {
         '@type': 'BreadcrumbList',
         '@id': `${canonical}#breadcrumb`,
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'CoachPilot', item: BASE_URL },
-          { '@type': 'ListItem', position: 2, name: page.h1, item: canonical },
-        ],
+        itemListElement: breadcrumbTrail(page, canonical),
       },
     ]
     if (page.faqs.length > 0) {
@@ -94,6 +105,7 @@ function usePageMeta(page: SeoPage) {
 export function PublicSeoPage({ pageKey }: { pageKey: PageKey }) {
   const page = PAGES[pageKey]
   usePageMeta(page)
+  const parent = page.parent ? PAGES[page.parent] : null
 
   return (
     <div style={{ minHeight: '100vh', background: '#fff', color: '#0f172a' }}>
@@ -102,8 +114,8 @@ export function PublicSeoPage({ pageKey }: { pageKey: PageKey }) {
           <Link to="/" style={{ textDecoration: 'none' }}>
             <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 52, width: 'auto' }} />
           </Link>
-          <Link to="/" style={{ color: 'rgba(255,255,255,0.74)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600 }}>
-            <ArrowLeft size={15} /> Voltar
+          <Link to={parent ? parent.path : '/'} style={{ color: 'rgba(255,255,255,0.74)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600 }}>
+            <ArrowLeft size={15} /> {parent ? (parent.label ?? 'Voltar') : 'Voltar'}
           </Link>
         </div>
       </header>
@@ -112,7 +124,7 @@ export function PublicSeoPage({ pageKey }: { pageKey: PageKey }) {
         <section style={{ background: 'linear-gradient(160deg, #0f172a 0%, #0a0e1a 55%, #060a14 100%)', padding: '72px 24px 64px' }}>
           <div style={{ maxWidth: 980, margin: '0 auto' }}>
             <p style={{ color: '#14b8a6', fontWeight: 800, fontSize: 13, textTransform: 'uppercase', letterSpacing: 0, marginBottom: 16 }}>
-              CoachPilot para personal trainers
+              {page.eyebrow ?? 'CoachPilot para personal trainers'}
             </p>
             <h1 style={{ fontFamily: "'Sora', sans-serif", color: '#fff', fontSize: 'clamp(32px, 5vw, 56px)', lineHeight: 1.1, maxWidth: 860, marginBottom: 20 }}>
               {page.h1}
@@ -144,12 +156,22 @@ export function PublicSeoPage({ pageKey }: { pageKey: PageKey }) {
 
         <section style={{ padding: '64px 24px', background: '#fff' }}>
           <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gap: 28 }}>
-            {page.sections.map((section) => (
-              <article key={section.title}>
-                <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, marginBottom: 10 }}>{section.title}</h2>
-                <p style={{ color: '#475569', fontSize: 16, lineHeight: 1.75 }}>{section.body}</p>
-              </article>
-            ))}
+            {page.sections.map((section) => {
+              const paragraphs = section.paragraphs ?? (section.body ? [section.body] : [])
+              return (
+                <article key={section.title}>
+                  <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, marginBottom: 10 }}>{section.title}</h2>
+                  {paragraphs.map((paragraph, i) => (
+                    // margem só entre parágrafos: preserva o espaçamento das páginas de 1 parágrafo
+                    <p key={i} style={{ color: '#475569', fontSize: 16, lineHeight: 1.75, marginBottom: i === paragraphs.length - 1 ? 0 : 12 }}>
+                      {renderInline(paragraph)}
+                    </p>
+                  ))}
+                  {section.list && <ProseList items={section.list} />}
+                  {section.table && <ProseTable table={section.table} />}
+                </article>
+              )
+            })}
           </div>
         </section>
 
