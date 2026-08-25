@@ -8,6 +8,7 @@ import { AuthStepIndicator } from './AuthStepIndicator'
 import { PasswordChecklist } from './PasswordChecklist'
 import { useResendCooldown } from './useResendCooldown'
 import { SpamNotice } from './SpamNotice'
+import { PersonalOnlyNotice } from './PersonalOnlyNotice'
 import { Button, Input, ErrorText, Card, useToast } from '../components/ui'
 import { AuthBackground } from './AuthBackground'
 import { REF_PENDENTE_KEY } from './AuthProvider'
@@ -170,6 +171,7 @@ export function SignUpPage() {
         {step === 'email' && (
           <form onSubmit={handleEmailContinue} className="space-y-4 mt-3">
             <h1 className="font-display text-xl font-bold text-text text-center">Criar conta</h1>
+            <PersonalOnlyNotice />
             <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             <ErrorText>{error}</ErrorText>
             {alreadyRegistered && <p className="text-xs text-text-muted text-center">Redirecionando para o login…</p>}
