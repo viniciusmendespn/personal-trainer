@@ -4,14 +4,14 @@ import { useState } from 'react'
 const FEATURES = [
   {
     icon: <Sparkles size={28} />,
-    title: 'Cadastro por IA (linguagem natural)',
-    desc: 'Incluído e grátis: cadastre alunos, monte treinos completos e ajuste programas conversando — por texto ou voz — com o seu próprio ChatGPT. Importe tudo com 1 clique, sem digitar série a série.',
+    title: 'App oficial no ChatGPT',
+    desc: 'Grátis nos dois planos: instale o CoachPilot no seu ChatGPT em 3 cliques e gerencie tudo conversando — consultar alunos, preparar a sessão, montar e aplicar treinos. Ele grava direto na plataforma, sem copiar e colar.',
     color: '#10b981',
   },
   {
     icon: <Plug size={28} />,
-    title: 'Conexão MCP (sua IA falando com seus dados)',
-    desc: 'Ligue o ChatGPT, Claude ou Gemini direto no CoachPilot e pergunte em português: quem está sem treinar, o resumo do aluno antes da sessão, a evolução de um exercício. Ela também aplica o treino que você pedir — com aviso e desfazer.',
+    title: 'Também no Claude e no Gemini',
+    desc: 'A mesma conexão (padrão MCP) vale para Claude e Gemini. E, se preferir não conectar nada, os prompts prontos geram treinos e a migração da carteira para importar com 1 clique.',
     color: '#14b8a6',
   },
   {

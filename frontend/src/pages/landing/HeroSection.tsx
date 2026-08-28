@@ -3,9 +3,14 @@ import { ArrowRight, Users, Smartphone, Sparkles } from 'lucide-react'
 
 const STATS = [
   { icon: <Users size={16} />, label: 'Alunos ilimitados no plano pago' },
-  { icon: <Sparkles size={16} />, label: 'Cadastro por IA incluso e ilimitado' },
+  { icon: <Sparkles size={16} />, label: 'App no ChatGPT incluso e grátis' },
   { icon: <Smartphone size={16} />, label: 'Sem fidelidade · cancele quando quiser' },
 ]
+
+function scrollToChatGpt() {
+  const el = document.querySelector('#chatgpt')
+  if (el) window.scrollTo({ top: (el as HTMLElement).getBoundingClientRect().top + window.scrollY - 72, behavior: 'smooth' })
+}
 
 export default function HeroSection() {
   return (
@@ -39,14 +44,21 @@ export default function HeroSection() {
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '100px 24px 80px', position: 'relative', zIndex: 1, width: '100%' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 60, alignItems: 'center' }}>
           <div>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: 'rgba(20,184,166,0.12)', border: '1px solid rgba(20,184,166,0.3)',
-              borderRadius: 20, padding: '6px 14px', marginBottom: 24,
-            }}>
-              <span style={{ fontSize: 16 }}>✅</span>
-              <span style={{ color: '#14b8a6', fontSize: 13, fontWeight: 600 }}>1 plano · alunos ilimitados · sem pegadinha</span>
-            </div>
+            <button
+              onClick={() => scrollToChatGpt()}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+                background: 'rgba(16,185,129,0.14)', border: '1px solid rgba(16,185,129,0.4)',
+                borderRadius: 20, padding: '7px 15px', marginBottom: 24,
+                transition: 'background 0.2s, border-color 0.2s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.22)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.6)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.14)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)' }}
+            >
+              <span style={{ fontSize: 15 }}>🤖</span>
+              <span style={{ color: '#34d399', fontSize: 13, fontWeight: 700 }}>Novo: app oficial no ChatGPT — instale em 3 passos</span>
+              <ArrowRight size={14} color="#34d399" />
+            </button>
 
             <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 20, letterSpacing: '-1px' }}>
               Gerencie{' '}
@@ -57,7 +69,7 @@ export default function HeroSection() {
             </h1>
 
             <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, marginBottom: 36, maxWidth: 520 }}>
-              Um plano só, com tudo o que importa incluso: treinos, avaliações, agenda, app do aluno e evolução — para quantos alunos você quiser. Ainda cadastra treinos e alunos conversando com o ChatGPT, sem digitar série a série. Sem plano capado, sem limite de alunos escondido.
+              Um plano só, com tudo o que importa incluso: treinos, avaliações, agenda, app do aluno e evolução — para quantos alunos você quiser. E agora o CoachPilot é um <strong style={{ color: 'rgba(255,255,255,0.92)', fontWeight: 700 }}>app dentro do ChatGPT</strong>: você consulta alunos e monta treinos conversando, e ele grava direto na plataforma. Sem plano capado, sem limite de alunos escondido.
             </p>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 48 }}>
@@ -77,10 +89,7 @@ export default function HeroSection() {
                 Começar grátis agora <ArrowRight size={18} />
               </Link>
               <button
-                onClick={() => {
-                  const el = document.querySelector('#pricing')
-                  if (el) window.scrollTo({ top: (el as HTMLElement).getBoundingClientRect().top + window.scrollY - 72, behavior: 'smooth' })
-                }}
+                onClick={() => scrollToChatGpt()}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 8,
                   background: 'transparent', border: '1.5px solid rgba(255,255,255,0.25)',
@@ -91,7 +100,7 @@ export default function HeroSection() {
                 onMouseEnter={e => { e.currentTarget.style.borderColor = '#14b8a6'; e.currentTarget.style.color = '#14b8a6' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)' }}
               >
-                Ver planos
+                Ver o app no ChatGPT
               </button>
             </div>
 

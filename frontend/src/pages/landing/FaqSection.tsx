@@ -3,6 +3,18 @@ import { ChevronDown } from 'lucide-react'
 
 const FAQS = [
   {
+    q: 'Como eu instalo o CoachPilot no ChatGPT?',
+    a: 'No ChatGPT, abra "Plugins" no menu lateral, busque por "coachpilot" e clique no + para adicionar. Em seguida a tela do CoachPilot abre sozinha para você entrar com a sua conta e autorizar o acesso — sua senha nunca passa pelo ChatGPT. A partir daí é só conversar: "quem não treina há 10 dias?", "me dá o resumo da Júlia", "monta um ABC pro Rafael e aplica".',
+  },
+  {
+    q: 'Preciso pagar o ChatGPT para usar o app?',
+    a: 'Não. O app do CoachPilot está no diretório público do ChatGPT e funciona também na conta gratuita. Do lado do CoachPilot, ele é gratuito nos dois planos, inclusive no grátis de até 3 alunos — não existe custo de IA embutido na mensalidade, porque o modelo é o da sua própria conta.',
+  },
+  {
+    q: 'O que dá para fazer pelo chat?',
+    a: 'Consultar a carteira (quem está parado, quem está sem treino montado, quem tem mensalidade em atraso), preparar a sessão (resumo do aluno com anamnese, avaliações e últimos treinos), acompanhar evolução por exercício, ver a agenda do período e, se você autorizar a escrita, montar e aplicar programas de treino, ajustar um treino específico ("adapta pra dor no ombro") e desfazer a última alteração.',
+  },
+  {
     q: 'O CoachPilot é gratuito?',
     a: 'Sim. O plano gratuito permite gerenciar até 3 alunos com todas as funcionalidades essenciais: cadastro de treinos, avaliações físicas, agenda, app do aluno e dashboard. Para alunos ilimitados, o Gestão Pro custa R$39,90/mês (preço de lançamento).',
   },
@@ -27,16 +39,16 @@ const FAQS = [
     a: 'O aluno recebe um link exclusivo pelo WhatsApp e abre o app do aluno diretamente no navegador do celular, sem cadastro nem senha. Pode salvar o app na tela inicial como qualquer aplicativo nativo.',
   },
   {
-    q: 'Como o ChatGPT cadastra meus treinos e alunos?',
-    a: 'O CoachPilot foi feito para você operar por linguagem natural. Você conversa — por texto ou voz — com o seu próprio ChatGPT, Claude ou Gemini usando os prompts prontos da plataforma, e ele devolve: a lista de alunos a importar, um pacote de treino completo (exercícios, séries, repetições, cargas e intervalos) ou o ajuste de um treino existente. Você revisa e importa com 1 clique. Isso está incluído e não tem custo extra — você usa a IA que já tem.',
+    q: 'Uso Claude ou Gemini. Dá para conectar também?',
+    a: 'Dá. O app do ChatGPT é a porta mais fácil, mas por baixo o CoachPilot fala MCP, o padrão aberto de conexão entre IAs e sistemas. Em Configurações → Conexões você copia o endereço do servidor e adiciona no Claude ou no Gemini — mesmos dados, mesma autorização, mesmo desfazer. No Claude a conexão funciona até no plano grátis.',
   },
   {
-    q: 'O que é a conexão MCP do CoachPilot?',
-    a: 'MCP é o padrão que o ChatGPT, o Claude e o Gemini usam para se conectar a sistemas de fora — e o CoachPilot fala esse padrão. Você autoriza a conexão uma vez e, a partir daí, conversa com a sua IA sobre os seus dados reais: "quem está sem treinar há 10 dias", "me dá o resumo da Júlia antes da sessão", "como está a evolução do agachamento da Carla", "adapta o treino do Pedro pra dor no ombro e aplica". Sem copiar, sem colar, sem baixar arquivo. Está incluído nos dois planos, inclusive no grátis, e roda na assinatura de IA que você já paga.',
+    q: 'E se eu não quiser conectar minha IA à plataforma?',
+    a: 'Você continua operando por conversa sem conectar nada: a plataforma tem prompts prontos que fazem qualquer IA devolver um pacote de treino completo (exercícios, séries, repetições, cargas e intervalos) ou a lista de alunos para migrar. Você revisa e importa com 1 clique. Também é grátis em todos os planos.',
   },
   {
     q: 'A IA vai ter acesso aos dados dos meus alunos? É seguro?',
-    a: 'A conexão só existe se você autorizar, e só alcança os seus alunos — nenhuma conexão enxerga dado de outro personal. Na hora de conectar você escolhe se a IA apenas consulta ou se também pode alterar treinos. Toda alteração feita pela IA gera aviso no portal e tem botão de desfazer, e você revoga o acesso quando quiser em Configurações → Conexões. Não existe apagar aluno nem operação em massa pela IA.',
+    a: 'A conexão só existe se você autorizar, e só alcança os seus alunos — nenhuma conexão enxerga dado de outro personal. Na hora de instalar o app você faz login no próprio CoachPilot (sua senha nunca passa pela IA) e escolhe se ela apenas consulta ou se também pode alterar treinos. Toda alteração feita pela IA gera aviso no portal e tem botão de desfazer, e você revoga o acesso quando quiser em Configurações → Conexões. Não existe apagar aluno nem operação em massa pela IA.',
   },
   {
     q: 'Posso migrar dados de outro software?',

@@ -1,240 +1,113 @@
 import { Link } from 'react-router-dom'
-import { Plug, ArrowRight, Check, ShieldCheck, Undo2, Wallet, MessageSquare } from 'lucide-react'
+import { Plug, ArrowRight, Check, FileSpreadsheet } from 'lucide-react'
 
-const CHAT = [
-  { from: 'user', text: 'Quem dos meus alunos não treina há mais de 10 dias?' },
-  { from: 'ai', text: 'Quatro: Pedro (14 dias), Júlia (12), Rafael (11) e Bianca (10). O Rafael também está sem treino novo desde maio — quer que eu monte um?' },
-  { from: 'user', text: 'Monta e aplica pro Rafael, com foco em costas.' },
-  { from: 'ai', text: 'Aplicado ✓ O programa do Rafael já está atualizado no CoachPilot. Você recebeu o aviso no portal e pode desfazer quando quiser.' },
+const OUTRAS_IAS = [
+  'Mesma conexão, mesmos dados, mesmo desfazer',
+  'No Claude funciona até no plano grátis',
+  'Endereço em Configurações → Conexões',
 ]
 
-const PEDIDOS = [
-  {
-    pergunta: '"Me dá o resumo da Júlia antes da sessão de amanhã"',
-    retorno: 'Perfil, anamnese, avaliações e últimos treinos numa resposta só.',
-  },
-  {
-    pergunta: '"Como está a evolução do agachamento da Carla?"',
-    retorno: 'Carga, repetições, volume e recordes ao longo do tempo.',
-  },
-  {
-    pergunta: '"Quem está parado e quem está sem treino montado?"',
-    retorno: 'Panorama da carteira inteira, sem abrir uma tela.',
-  },
-  {
-    pergunta: '"Adapta o treino do Pedro pra dor no ombro e aplica"',
-    retorno: 'A IA reescreve o programa e grava direto no CoachPilot.',
-  },
-  {
-    pergunta: '"O que eu tenho na agenda de quinta?"',
-    retorno: 'Seus compromissos do período, na hora.',
-  },
-  {
-    pergunta: '"Desfaz a última alteração no treino do Pedro"',
-    retorno: 'Volta como estava antes, num comando.',
-  },
-]
-
-const BENEFICIOS = [
-  {
-    icon: <MessageSquare size={20} />,
-    title: 'Você para de operar o sistema',
-    desc: 'Sem abrir tela, filtrar lista e clicar em dez lugares. Você pergunta em português e a resposta vem — do computador ou do celular, entre um atendimento e outro.',
-  },
-  {
-    icon: <ShieldCheck size={20} />,
-    title: 'A resposta vem do seu dado, não do chute',
-    desc: 'A IA lê o que está de fato no seu CoachPilot naquele segundo. Não inventa aluno, não inventa carga, não confunde histórico.',
-  },
-  {
-    icon: <Undo2 size={20} />,
-    title: 'Você continua no comando',
-    desc: 'Na hora de conectar, você escolhe se a IA só consulta ou se também pode alterar treinos. Toda alteração te avisa no portal e tem botão de desfazer.',
-  },
-  {
-    icon: <Wallet size={20} />,
-    title: 'Sem custo extra',
-    desc: 'Roda na assinatura de IA que você já paga — ChatGPT, Claude ou Gemini. A conexão está incluída nos dois planos, inclusive no grátis.',
-  },
+const SEM_CONECTAR = [
+  'Prompts prontos para treino e migração de carteira',
+  'A IA devolve o pacote e você importa com 1 clique',
+  'Serve para planilha, PDF ou print da sua lista de alunos',
 ]
 
 export default function McpSection() {
   return (
-    <section id="mcp" style={{ background: '#f0fdfa', padding: '80px 24px' }}>
-      <div style={{ maxWidth: 1180, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 52 }}>
+    <section id="mcp" style={{
+      background: 'linear-gradient(160deg, #0f172a 0%, #0a0e1a 55%, #060a14 100%)',
+      padding: '72px 24px',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute', inset: 0, opacity: 0.12,
+        backgroundImage: 'radial-gradient(rgba(20,184,166,0.6) 1px, transparent 1px)',
+        backgroundSize: '30px 30px',
+      }} />
+      <div style={{
+        position: 'absolute', top: '10%', right: '0%',
+        width: 420, height: 420, borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)',
+        filter: 'blur(40px)', pointerEvents: 'none',
+      }} />
+
+      <div style={{ maxWidth: 1080, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             background: 'rgba(20,184,166,0.12)', border: '1px solid rgba(20,184,166,0.3)',
             borderRadius: 20, padding: '6px 14px', marginBottom: 18,
           }}>
-            <Plug size={14} color="#0d9488" />
-            <span style={{ color: '#0d9488', fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Novo · Conexão MCP</span>
+            <Plug size={14} color="#14b8a6" />
+            <span style={{ color: '#14b8a6', fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Não usa ChatGPT?</span>
           </div>
 
           <h2 style={{
             fontFamily: "'Sora', sans-serif",
-            fontSize: 'clamp(28px, 4.5vw, 44px)',
-            fontWeight: 800, color: '#0f172a',
-            lineHeight: 1.15, letterSpacing: '-1px',
-            maxWidth: 860, margin: '0 auto 18px',
+            fontSize: 'clamp(26px, 4vw, 38px)',
+            fontWeight: 800, color: '#fff',
+            lineHeight: 1.2, letterSpacing: '-0.5px',
+            maxWidth: 780, margin: '0 auto 16px',
           }}>
-            Conecte a sua IA ao CoachPilot e{' '}
-            <span style={{ background: 'linear-gradient(135deg, #14b8a6, #10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              pergunte o que quiser sobre seus alunos
-            </span>
+            Tem outros dois caminhos — e os dois são grátis
           </h2>
 
-          <p style={{ fontSize: 17.5, color: '#475569', lineHeight: 1.7, maxWidth: 720, margin: '0 auto' }}>
-            O CoachPilot tem um <strong style={{ color: '#0f172a' }}>servidor MCP</strong> — o padrão que o ChatGPT,
-            o Claude e o Gemini usam para se conectar a sistemas de fora. Na prática: você autoriza uma vez e a
-            sua IA passa a enxergar os seus dados aqui dentro.{' '}
-            <strong style={{ color: '#0f172a' }}>Sem copiar, sem colar, sem baixar arquivo.</strong>{' '}
-            Você pergunta, ela responde com o dado real. Você pede, ela faz.
+          <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.62)', lineHeight: 1.7, maxWidth: 660, margin: '0 auto' }}>
+            O app no ChatGPT é o caminho mais fácil, mas não é o único. O CoachPilot fala{' '}
+            <strong style={{ color: 'rgba(255,255,255,0.9)' }}>MCP</strong>, o padrão aberto de
+            conexão entre IAs e sistemas — e também funciona sem conectar nada.
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(330px, 1fr))', gap: 40, alignItems: 'center', marginBottom: 56 }}>
-          {/* Conversa */}
-          <div style={{
-            background: 'linear-gradient(160deg, #0f172a 0%, #0a0e1a 100%)',
-            border: '1px solid rgba(20,184,166,0.25)',
-            borderRadius: 20,
-            padding: 22,
-            boxShadow: '0 18px 45px rgba(15,23,42,0.18)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18, paddingBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #14b8a6, #10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Plug size={17} color="#fff" />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: '#fff', fontWeight: 600, fontSize: 14 }}>Sua IA · conectada ao CoachPilot</div>
-                <div style={{ color: '#14b8a6', fontSize: 12 }}>● lendo os seus dados agora</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {CHAT.map((m, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: m.from === 'user' ? 'flex-end' : 'flex-start' }}>
-                  <div style={{
-                    maxWidth: '86%',
-                    background: m.from === 'user' ? 'linear-gradient(135deg, #14b8a6, #10b981)' : 'rgba(255,255,255,0.06)',
-                    color: m.from === 'user' ? '#fff' : 'rgba(255,255,255,0.85)',
-                    border: m.from === 'user' ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: 14,
-                    borderBottomRightRadius: m.from === 'user' ? 4 : 14,
-                    borderBottomLeftRadius: m.from === 'ai' ? 4 : 14,
-                    padding: '10px 14px',
-                    fontSize: 13.5,
-                    lineHeight: 1.55,
-                  }}>
-                    {m.text}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(20,184,166,0.1)', border: '1px solid rgba(20,184,166,0.25)', borderRadius: 12, padding: '10px 12px' }}>
-              <Check size={15} color="#14b8a6" strokeWidth={3} />
-              <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12.5, lineHeight: 1.5 }}>
-                Nenhum arquivo, nenhum copiar e colar — a IA falou direto com o CoachPilot.
-              </span>
-            </div>
-          </div>
-
-          {/* O que você pode pedir */}
-          <div>
-            <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 19, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>
-              O que você pode pedir
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {PEDIDOS.map((p, i) => (
-                <div key={i} style={{
-                  background: '#fff',
-                  border: '1.5px solid rgba(20,184,166,0.14)',
-                  borderRadius: 12,
-                  padding: '13px 16px',
-                }}>
-                  <div style={{ color: '#0f172a', fontSize: 14.5, fontWeight: 700, lineHeight: 1.45, marginBottom: 4 }}>
-                    {p.pergunta}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
-                    <ArrowRight size={13} color="#14b8a6" style={{ flexShrink: 0, marginTop: 4 }} />
-                    <span style={{ color: '#64748b', fontSize: 13.5, lineHeight: 1.5 }}>{p.retorno}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Benefícios */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20, marginBottom: 44 }}>
-          {BENEFICIOS.map((b, i) => (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, marginBottom: 32 }}>
+          {[
+            {
+              icon: <Plug size={22} />,
+              titulo: 'Claude ou Gemini',
+              desc: 'A mesma conexão MCP vale para o Claude e para o Gemini: você autoriza uma vez e conversa com os seus dados do mesmo jeito, com escrita de treino, aviso no portal e desfazer.',
+              itens: OUTRAS_IAS,
+            },
+            {
+              icon: <FileSpreadsheet size={22} />,
+              titulo: 'Sem conectar nada',
+              desc: 'Prefere não ligar a sua IA à plataforma? Use os prompts prontos: você conversa com qualquer IA, ela devolve o treino ou a lista de alunos no formato certo e você revisa antes de importar.',
+              itens: SEM_CONECTAR,
+            },
+          ].map((c, i) => (
             <div key={i} style={{
-              background: '#fff',
-              border: '1.5px solid rgba(20,184,166,0.12)',
-              borderRadius: 16,
-              padding: 22,
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 18,
+              padding: 26,
             }}>
-              <div style={{ width: 42, height: 42, borderRadius: 11, background: 'rgba(20,184,166,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0d9488', marginBottom: 14 }}>
-                {b.icon}
+              <div style={{ width: 46, height: 46, borderRadius: 12, background: 'rgba(20,184,166,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#14b8a6', marginBottom: 16 }}>
+                {c.icon}
               </div>
-              <h3 style={{ color: '#0f172a', fontSize: 15.5, fontWeight: 700, lineHeight: 1.35, marginBottom: 8 }}>{b.title}</h3>
-              <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.6 }}>{b.desc}</p>
+              <h3 style={{ color: '#fff', fontSize: 17.5, fontWeight: 700, marginBottom: 10 }}>{c.titulo}</h3>
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14.5, lineHeight: 1.65, marginBottom: 16 }}>{c.desc}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {c.itens.map((t, j) => (
+                  <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(20,184,166,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                      <Check size={11} color="#14b8a6" strokeWidth={3} />
+                    </div>
+                    <span style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13.5, lineHeight: 1.5 }}>{t}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Faixa de confiança + CTA */}
-        <div style={{
-          display: 'flex', flexWrap: 'wrap', gap: 20,
-          alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(20,184,166,0.08)',
-          border: '1px solid rgba(20,184,166,0.25)',
-          borderRadius: 16,
-          padding: '24px 28px',
-        }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, flex: 1, minWidth: 280 }}>
-            {[
-              'Só os seus alunos — uma conexão nunca vê dado de outro personal',
-              'Você autoriza, e revoga quando quiser em Configurações → Conexões',
-              'Incluído nos dois planos, inclusive no grátis',
-            ].map((t, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#334155' }}>
-                <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(20,184,166,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Check size={12} color="#0d9488" strokeWidth={2.5} />
-                </div>
-                <span style={{ fontSize: 13.5, fontWeight: 500 }}>{t}</span>
-              </div>
-            ))}
-          </div>
-          <Link
-            to="/signup"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: 'linear-gradient(135deg, #14b8a6, #10b981)',
-              color: '#fff', fontWeight: 700, fontSize: 15, textDecoration: 'none',
-              padding: '13px 26px', borderRadius: 12,
-              boxShadow: '0 8px 25px rgba(20,184,166,0.3)',
-              whiteSpace: 'nowrap',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 30px rgba(20,184,166,0.4)' }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 25px rgba(20,184,166,0.3)' }}
-          >
-            Conectar minha IA <ArrowRight size={18} />
+        <p style={{ textAlign: 'center', fontSize: 14.5, color: 'rgba(255,255,255,0.55)' }}>
+          <Link to="/chatgpt-para-personal-trainer" style={{ color: '#14b8a6', fontWeight: 700 }}>
+            Ver como funciona a conexão em cada IA
           </Link>
-        </div>
-
-        <p style={{ textAlign: 'center', marginTop: 20, fontSize: 14.5, color: '#475569' }}>
-          Quer entender antes de criar a conta?{' '}
-          <Link to="/chatgpt-para-personal-trainer" style={{ color: '#0d9488', fontWeight: 700 }}>
-            Como funciona a conexão com ChatGPT, Claude ou Gemini
-          </Link>{' '}
-          ·{' '}
-          <Link to="/blog/gerenciar-alunos-e-treinos-pelo-chatgpt" style={{ color: '#0d9488', fontWeight: 700 }}>
-            tudo o que dá para pedir
+          <span style={{ margin: '0 8px', color: 'rgba(255,255,255,0.25)' }}>·</span>
+          <Link to="/signup" style={{ color: '#14b8a6', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            Começar grátis <ArrowRight size={15} />
           </Link>
         </p>
       </div>

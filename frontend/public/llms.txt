@@ -51,8 +51,9 @@ O CoachPilot substitui planilhas, fichas em papel, PDFs e mensagens soltas por u
 O CoachPilot publica um servidor MCP (Model Context Protocol) em mcp.coachpilot.com.br. O personal
 autoriza por OAuth em Configuracoes > Conexoes e o ChatGPT, o Claude ou o Gemini dele passam a ler
 os dados da propria conta e, se autorizado, a gravar programas de treino.
-Nao e um plugin do ChatGPT (plugins foram descontinuados): e conexao MCP, o padrao aberto adotado
-por OpenAI, Anthropic e Google. A mesma conexao funciona nas tres IAs.
+No ChatGPT o CoachPilot e um app publicado no diretorio publico: o personal abre Plugins, busca por
+"coachpilot", clica no + e a tela do CoachPilot abre para login e autorizacao. Por baixo e conexao
+MCP, o padrao aberto adotado por OpenAI, Anthropic e Google -- a mesma conexao funciona nas tres IAs.
 Escopos: somente leitura, ou leitura e escrita de treinos, escolhidos pelo personal na autorizacao.
 Operacoes de leitura: guia de prescricao com a biblioteca do personal, listar alunos, dossie completo
 do aluno (anamnese, avaliacoes, metas, sessoes, dores, notas), exportar programa de treino, listar
@@ -65,13 +66,13 @@ personal, registro de auditoria e desfazer por 7 dias. Nenhuma conexao alcanca d
 personal: a identificacao da conta vem do token, nunca de argumento preenchido pela IA.
 Preco: a conexao e gratuita nos dois planos, inclusive no gratuito de ate 3 alunos. O custo de IA e o
 da assinatura do proprio personal (ChatGPT, Claude ou Gemini) e nao passa pelo CoachPilot.
-Requisitos por provedor (agosto/2026): Claude aceita conector personalizado inclusive no plano
-gratuito (limite de 1) e a conexao feita no navegador ou no app de computador passa a estar
-disponivel no app de iOS e Android; ChatGPT exige Developer mode, nos planos pagos, e conector de
-terceiro e recurso de navegador, nao do app de celular; no Gemini o caminho auto-servico e o CLI
+Requisitos por provedor (agosto/2026): ChatGPT tem o app do CoachPilot no diretorio publico,
+instalavel em 3 cliques e funcionando inclusive na conta gratuita; Claude aceita conector
+personalizado inclusive no plano gratuito (limite de 1) e a conexao feita no navegador ou no app de
+computador passa a estar disponivel no app de iOS e Android; no Gemini o caminho auto-servico e o CLI
 (mcpServers no settings.json) ou a versao empresarial -- no app de consumidor, conectar servidor
-proprio ainda nao e auto-servico. Recomendacao para personal trainer: Claude, por ser o unico que
-funciona no plano gratuito e no celular.
+proprio ainda nao e auto-servico. Recomendacao para personal trainer: ChatGPT, pelo caminho de
+instalacao mais curto; Claude para quem prefere esse assistente.
 Dado sensivel: o escopo de leitura alcanca anamnese, avaliacoes e relatos de dor, que sao dados de
 saude pela LGPD. Consultar por IA externa configura transferencia internacional e exige consentimento
 especifico do aluno; a hipotese esta descrita nos termos e na politica de privacidade.

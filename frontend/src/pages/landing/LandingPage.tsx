@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthProvider'
 import LandingNavbar from './LandingNavbar'
 import HeroSection from './HeroSection'
-import IaOperacaoSection from './IaOperacaoSection'
+import ChatGptSection from './ChatGptSection'
 import McpSection from './McpSection'
 import FeaturesSection from './FeaturesSection'
 import HowItWorksSection from './HowItWorksSection'
@@ -60,9 +60,9 @@ export default function LandingPage() {
   }, [user, isLoading, navigate])
 
   useEffect(() => {
-    document.title = 'CoachPilot — Gestão para Personal Trainers'
+    document.title = 'CoachPilot — Gestão para Personal Trainers direto no ChatGPT'
     document.querySelector('meta[name="description"]')
-      ?.setAttribute('content', 'Plataforma para personal trainers: alunos, treinos, avaliações e agenda. Conecte sua IA (ChatGPT, Claude, Gemini) aos seus dados via MCP. Comece grátis.')
+      ?.setAttribute('content', 'Plataforma para personal trainers: alunos, treinos, avaliações e agenda. Instale o app CoachPilot no ChatGPT e gerencie tudo conversando — também funciona no Claude e no Gemini. Comece grátis.')
     document.querySelector('link[rel="canonical"]')
       ?.setAttribute('href', 'https://coachpilot.com.br/')
   }, [])
@@ -112,8 +112,8 @@ export default function LandingPage() {
       <LandingNavbar />
       <main>
         <HeroSection />
+        <ChatGptSection />
         <FeaturesSection />
-        <IaOperacaoSection />
         <McpSection />
         <HowItWorksSection />
         <LojaSection />
