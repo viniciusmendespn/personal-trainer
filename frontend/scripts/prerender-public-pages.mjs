@@ -157,7 +157,7 @@ function renderHomeContent() {
     .join('')
   return `<main style="font-family:Inter,Arial,sans-serif;max-width:960px;margin:0 auto;padding:48px 24px;color:#0f172a">
     <h1>CoachPilot — Gestão para personal trainers</h1>
-    <p>Plataforma SaaS brasileira para personal trainers gerenciarem alunos, treinos, avaliações físicas, agenda, financeiro, app do aluno e evolução em um só lugar — com operação por IA gratuita para montar treinos e migrar alunos sem digitar série a série.</p>
+    <p>Plataforma SaaS brasileira para personal trainers gerenciarem alunos, treinos, avaliações físicas, agenda, financeiro, app do aluno e evolução em um só lugar — com app oficial no ChatGPT para operar tudo conversando, sem digitar série a série.</p>
     <section>
       <h2>Tudo que você precisa para profissionalizar sua gestão</h2>
       <ul>
@@ -168,17 +168,17 @@ function renderHomeContent() {
         <li><a href="/app-de-treino-para-alunos">App do aluno</a> via PWA com gamificação: ranking, conquistas e streaks.</li>
         <li>Financeiro com cobrança via Pix direto na conta do personal, sem taxa da plataforma.</li>
         <li><a href="/whatsapp-para-personal-trainer">Canal WhatsApp e Assistente IA do aluno</a> como add-ons opcionais.</li>
-        <li><a href="/ia-para-personal-trainer">Conexão MCP com ChatGPT, Claude ou Gemini</a>: consulte alunos e aplique treinos conversando, incluído nos dois planos.</li>
+        <li><a href="/chatgpt-para-personal-trainer">App oficial no ChatGPT</a>: consulte alunos e aplique treinos conversando, incluído nos dois planos.</li>
       </ul>
     </section>
     <section>
-      <h2>Conecte a sua IA ao CoachPilot (servidor MCP)</h2>
-      <p>O CoachPilot publica um servidor MCP — o padrão que o ChatGPT, o Claude e o Gemini usam para se conectar a sistemas externos. Você autoriza uma vez e passa a gerenciar alunos e treinos conversando: pergunta quem não treina há mais de 10 dias, pede o resumo de um aluno antes da sessão, manda adaptar o treino para uma dor no ombro — e a IA aplica direto na plataforma, com aviso e desfazer. Sem copiar, sem colar, sem abrir o app. Gratuito nos dois planos.</p>
+      <h2>O CoachPilot dentro do ChatGPT</h2>
+      <p>O CoachPilot é um app publicado no diretório do ChatGPT: abra Plugins, busque por "coachpilot", clique no + e entre com a sua conta para autorizar — funciona também na conta gratuita do ChatGPT. A partir daí você gerencia alunos e treinos conversando: pergunta quem não treina há mais de 10 dias, pede o resumo de um aluno antes da sessão, manda adaptar o treino para uma dor no ombro — e ele aplica direto na plataforma, com aviso e desfazer. Sem copiar, sem colar, sem abrir o portal. Por baixo é o padrão aberto MCP, então a mesma conexão vale para Claude e Gemini. Gratuito nos dois planos.</p>
       <p><a href="/ia-para-personal-trainer">IA para personal trainer</a> · <a href="/chatgpt-para-personal-trainer">ChatGPT para personal trainer</a> · <a href="/blog/gerenciar-alunos-e-treinos-pelo-chatgpt">O que dá para fazer pelo chat</a></p>
     </section>
     <section>
-      <h2>Pare de digitar série a série — converse com a IA</h2>
-      <p>Prefere não conectar nada? Monte pacotes de treino e migre a sua carteira inteira de alunos (planilha, PDF ou print) conversando com o ChatGPT, Claude ou Gemini que você já usa: a IA gera tudo no formato do CoachPilot e você importa com um clique, revisando antes de aplicar. Grátis em todos os planos.</p>
+      <h2>Também funciona sem conectar nada</h2>
+      <p>Prefere não instalar o app? Monte pacotes de treino e migre a sua carteira inteira de alunos (planilha, PDF ou print) conversando com o ChatGPT, Claude ou Gemini que você já usa: a IA gera tudo no formato do CoachPilot e você importa com um clique, revisando antes de aplicar. Grátis em todos os planos.</p>
     </section>
     <section>
       <h2>Planos simples</h2>
