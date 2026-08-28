@@ -31,6 +31,11 @@ export function DivStatCard({ icon, label, value, sub }: { icon: React.ReactNode
   )
 }
 
+// Altura útil da barra, em px. NÃO usar % aqui: o `items-end` do container impede que as
+// colunas estiquem, elas ficam com altura automática, e uma % dentro de pai sem altura
+// definida vira `auto` — a div da barra (vazia) colapsa para 0 e só sobram as legendas.
+const BARRA_AREA_PX = 104
+
 export function BarrasMeses({ meses }: { meses: MesComissao[] }) {
   const max = Math.max(...meses.map(m => m.comissao_valor), 1)
   return (
@@ -42,7 +47,12 @@ export function BarrasMeses({ meses }: { meses: MesComissao[] }) {
           </span>
           <div
             className="w-full rounded-t-md loja-gradient transition-all"
-            style={{ height: `${Math.max((m.comissao_valor / max) * 100, m.comissao_valor > 0 ? 6 : 2)}%`, opacity: m.comissao_valor > 0 ? 1 : 0.15 }}
+            style={{
+              height: m.comissao_valor > 0
+                ? `${Math.max(Math.round((m.comissao_valor / max) * BARRA_AREA_PX), 6)}px`
+                : '2px',
+              opacity: m.comissao_valor > 0 ? 1 : 0.15,
+            }}
             title={`${mesLabel(m.mes)}: ${brl(m.comissao_valor)}`}
           />
           <span className="text-[10px] text-text-muted">{mesLabel(m.mes)}</span>
