@@ -1,4 +1,4 @@
-"""Seed de uma CONTA DE DEMONSTRAÇÃO completa (demo@coachpilot.com.br).
+r"""Seed de uma CONTA DE DEMONSTRAÇÃO completa (demo@coachpilot.com.br).
 
 Diferente de `seed_demo.py` (que seeda uma conta já existente), este script provisiona a
 conta demo do zero e a deixa pronta para demonstrar TODAS as funcionalidades da ferramenta:
@@ -18,11 +18,17 @@ conta demo do zero e a deixa pronta para demonstrar TODAS as funcionalidades da 
 Reaproveita os módulos reais do backend (app.repositories, app.models, app.services) — os
 dados ficam estruturalmente idênticos ao que a API produziria.
 
+Todas as datas são geradas **relativas ao momento da execução** — rodar de novo com `--reset`
+"envelhece zero": o histórico, a agenda, o financeiro e os treinos vencidos voltam a ficar
+colados na data de hoje. É esse o jeito de atualizar a demo (ver `atualizar_demo.ps1`).
+
 Uso:
     cd backend
     python scripts/seed_demo_conta.py                 # cria conta + seed completo
     python scripts/seed_demo_conta.py --reset          # limpa dados demo anteriores e recria
     python scripts/seed_demo_conta.py --no-cognito     # não mexe no Cognito (conta já existe)
+
+    .\scripts\atualizar_demo.ps1                       # atalho: --reset já embutido
 
 Defaults: profile "pessoal-hotmail", região "us-east-1", tabela "personal-trainer-prod",
 User Pool "us-east-1_JzbEnrPkk". Todos configuráveis via flags.
@@ -60,6 +66,8 @@ os.environ["AWS_PROFILE"] = args.profile
 os.environ["TABLE_NAME"] = args.table
 os.environ["COGNITO_REGION"] = args.region
 os.environ["STAGE"] = "prod"
+# Só afeta o link impresso no resumo (aluno_auth.token_link) — sem isso cairia no domínio do portal.
+os.environ.setdefault("ALUNO_FRONTEND_URL", "https://app.coachpilot.com.br")
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # backend/ no path
 
@@ -181,12 +189,22 @@ def reset_demo_data() -> None:
     pk = keys.pk_personal(PERSONAL_ID)
     alunos_ptrs = repo.query_pk(pk, sk_prefix="ALUNO#")
     print(f"  Removendo dados de {len(alunos_ptrs)} aluno(s) anteriores…")
+    orfaos = 0
     for ptr in alunos_ptrs:
         aluno_id = ptr["aluno_id"]
         items = repo.query_pk(keys.pk_aluno(aluno_id))
+        # Itens fora da partição do aluno/personal que ficariam órfãos a cada re-seed
+        for i in items:
+            if i["SK"] == keys.SK_PROFILE and i.get("acesso_token"):
+                repo.delete_item(f"TOKEN#{i['acesso_token']}", "META")  # link do app do aluno
+                orfaos += 1
+            elif i["SK"].startswith("TREINO#") and i.get("data_fim"):
+                repo.delete_item(keys.pk_sched(i["data_fim"]), keys.sk_due(i["treino_id"]))  # aviso de vencimento
+                orfaos += 1
         repo.batch_write(deletes=[(keys.pk_aluno(aluno_id), i["SK"]) for i in items])
         if ptr.get("telefone"):
             repo.delete_item(keys.pk_phone(PERSONAL_ID, ptr["telefone"]), "PHONE")
+    print(f"  Removidos {orfaos} item(ns) órfão(s) (TOKEN#/SCHED#).")
     pt_items = repo.query_pk(pk)
     pt_delete = [i for i in pt_items if not i["SK"].startswith("WAPI#")]  # preserva config sensível
     repo.batch_write(deletes=[(pk, i["SK"]) for i in pt_delete])
@@ -389,6 +407,14 @@ TREINO_DEFS = {
           ["Puxada frontal", "Remada curvada", "Remada unilateral", "Rosca direta", "Rosca alternada", "Prancha"]),
 }
 
+# Treinos já vencidos (demonstram o aviso de "treino vencido" no portal e a notificação no sino).
+# Chave = (nome do aluno, letra do treino); valor = há quantos dias venceu.
+# Mantenha SEMPRE 2 alunos aqui — é o cenário combinado para a demo.
+TREINOS_VENCIDOS = {
+    ("Carlos Eduardo Lima", "B"): 1,
+    ("Juliana Castro", "C"): 6,
+}
+
 REP_RANGE = {"compound": (6, 10), "isolation": (10, 14)}
 COMPOUND = {"Supino reto", "Agachamento livre", "Leg press 45°", "Stiff", "Puxada frontal",
             "Remada curvada", "Levantamento terra", "Desenvolvimento com halteres"}
@@ -451,10 +477,8 @@ for aluno in alunos_criados:
     for letra, (nome, foco, exs) in TREINO_DEFS.items():
         treino_id = new_id()
         now = iso_at(NOW)
-        # Um treino vencido só para o Carlos (demonstra a notificação de "treino vencido")
-        data_fim = None
-        if aluno["nome"] == "Carlos Eduardo Lima" and letra == "B":
-            data_fim = (NOW - timedelta(days=1)).strftime("%Y-%m-%d")
+        dias_vencido = TREINOS_VENCIDOS.get((aluno["nome"], letra))
+        data_fim = (NOW - timedelta(days=dias_vencido)).strftime("%Y-%m-%d") if dias_vencido else None
         treino = Treino(
             treino_id=treino_id, aluno_id=aluno_id, nome=nome, foco=foco,
             ordem=ord(letra) - ord("A"), data_inicio=data_inicio_programa,
@@ -1068,6 +1092,8 @@ print(f"Sessões:           {total_sessoes} (~{args.semanas} semanas, progressã
 print(f"Avaliações:        {total_avaliacoes}")
 print(f"Agendamentos:      {total_agendamentos}")
 print("Financeiro:        4 meses pagos/aluno + pendentes + 1 vencida")
+print(f"Treinos vencidos:  {len(TREINOS_VENCIDOS)} — " +
+      ", ".join(f"{n} (treino {l}, há {d}d)" for (n, l), d in TREINOS_VENCIDOS.items()))
 print("Extras:            metas, férias, badges, ranking, feed, postagens, notificações")
 print("\nLinks do app do aluno (app.coachpilot.com.br):")
 for aluno in alunos_criados:

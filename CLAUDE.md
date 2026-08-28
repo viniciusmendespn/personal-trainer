@@ -81,6 +81,21 @@ assim: sempre revisar o changeset do CloudFormation antes de executar (`--no-exe
 → revisar → `execute-change-set`), nunca pular hooks, e pausar para perguntar se a mudança for
 genuinamente arriscada/destrutiva (ex.: troca de parâmetro que apague infraestrutura).
 
+## Conta de demonstração — como atualizar para a data de hoje
+`demo@coachpilot.com.br` (portal, slug `/@demo`) é a conta usada em demos para prospects. Os dados
+envelhecem: o histórico fica preso na data em que o seed rodou. Para recolar tudo em hoje:
+
+```powershell
+cd backend
+.\scripts\atualizar_demo.ps1        # -Force pula a confirmação
+```
+
+Ele roda `scripts/seed_demo_conta.py --reset` (apaga e recria só essa conta). Todas as datas do
+seed são relativas ao `now` da execução, então não há nada a editar — é só rodar de novo.
+Preserva: login/senha, `personal_id`, slug, os 5 alunos e o cenário (pago/pendente/vencido,
+2 alunos com treino vencido — `TREINOS_VENCIDOS` no seed). Troca: todos os IDs e os **links do
+app do aluno** (os antigos morrem; o script imprime os novos no fim).
+
 ## Regras obrigatórias (herdadas do padrão)
 - `user_id` sempre via JWT (`Depends(get_current_user_id)`) — nunca do body
 - Single-table DynamoDB: PK = `USER#{user_id}`, SK = `{TIPO}#{id}`
