@@ -83,15 +83,17 @@ Regras editoriais (dos limites de `CONTEXTO_MARKETING.md` §14):
 - **Dois canais de IA, regras diferentes** — no fluxo por prompt, a IA *gera e o personal importa
   com revisão*; na conexão MCP, a IA *escreve direto*, e o que garante o controle é
   escopo + notificação + auditoria + desfazer em 7 dias. Nunca misturar os dois na mesma frase.
-- **Nunca chamar a conexão de "plugin"** como afirmação própria. "Plugin do ChatGPT" só aparece
-  como termo de busca, sempre corrigido no corpo ("plugins foram descontinuados; o padrão é MCP").
+- **"Plugin do ChatGPT" pode ser usado** (regra revista em ago/2026): é o rótulo do menu no ChatGPT
+  e o termo da submissão da OpenAI, e o CoachPilot está publicado no diretório. A tecnologia por
+  baixo segue sendo MCP — explicar isso no corpo, sem dizer que "plugins foram descontinuados".
 - App é **PWA** — nunca prometer App Store/Google Play.
 - Não prometer integrações inexistentes (Apple Health, Strava, multi-tenant).
 - **Não prometer escrita em massa pelo MCP**: a IA aplica um aluno por vez, por decisão de projeto.
   O lote de verdade é o template/rotina aplicado a vários alunos pelo portal. Dizer "um pedido só",
   não "uma operação só".
-- Requisito de plano de IA é de terceiro e muda: sempre datar ("agosto/2026") — hoje Claude aceita
-  conector no plano grátis (1), ChatGPT exige Developer mode em plano pago, Gemini é CLI/Vertex.
+- Requisito de plano de IA é de terceiro e muda: sempre datar ("agosto/2026") — hoje o ChatGPT
+  instala pelo diretório (conta gratuita, e também no app de celular), o Claude aceita conector
+  personalizado no plano grátis (1) e o Gemini é CLI/Vertex.
 - Dado de saúde (anamnese, avaliação, foto, relato de dor) é **sensível pela LGPD**: todo conteúdo
   que fala de enviar dado de aluno para IA externa menciona consentimento específico. É diferencial
   de confiança — nenhum concorrente escreve isso.
@@ -153,12 +155,15 @@ página de vendas.
 cinco slugs da tabela acima mais `claude-chatgpt-ou-gemini-para-personal-trainer`. Total do site:
 15 páginas SEO + blog + 12 artigos = 30 URLs no sitemap.
 
-**Fato de produto que o comparativo das três IAs revelou** (verificado agosto/2026, vale corrigir
-em todo conteúdo futuro): o conector MCP do **Claude** funciona no plano grátis (1 conexão) e, uma
-vez configurado no navegador ou no desktop, fica disponível no app de celular; no **ChatGPT** o
-conector de terceiro é recurso de navegador, não do app de celular; no **Gemini** o caminho
-auto-serviço é só CLI/empresarial. Isso muda a recomendação padrão para Claude e obrigou a corrigir
-a promessa de "consultar pelo celular" no artigo pillar — que era verdadeira só para o Claude. Os artigos antigos de IA e os comparativos (`melhores-aplicativos`, `coachpilot-vs-mfit`,
+**Fato de produto por provedor** (revisado em 31/ago/2026 — vale para todo conteúdo futuro): no
+**ChatGPT**, o CoachPilot é app publicado no diretório público, instala em 3 cliques, funciona na
+conta gratuita e fica disponível também no aplicativo de iOS e Android. A restrição antiga de que
+"conector de terceiro é recurso de navegador" valia para o caminho do Developer mode e **não se
+aplica mais** ao nosso app — não repetir. No **Claude**, o conector personalizado funciona no plano
+grátis (1 conexão) e, configurado no navegador ou no desktop, aparece no app de celular. No
+**Gemini**, o caminho auto-serviço segue só CLI/empresarial. Recomendação padrão: ChatGPT, com o
+Claude como alternativa igualmente boa; a promessa de "consultar pelo celular" vale para os dois.
+Os artigos antigos de IA e os comparativos (`melhores-aplicativos`, `coachpilot-vs-mfit`,
 `como-montar-treino-com-ia-chatgpt`) foram atualizados para apontar para o cluster novo —
 é o que passa autoridade das páginas já indexadas para as novas.
 

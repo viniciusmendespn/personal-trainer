@@ -375,17 +375,21 @@ gerenciando seus alunos como um profissional."*
     o programa direto na plataforma**. Isso pode e deve ser afirmado — é o diferencial. O controle
     não é a revisão em tela, é: escopo escolhido na autorização (leitura ou leitura+escrita),
     notificação ao personal a cada escrita, auditoria e desfazer por 7 dias.
-  - NÃO chamar de "plugin", "GPT Action" ou "integração nativa com a OpenAI". É **servidor MCP**
-    (Model Context Protocol), padrão aberto — a mesma conexão serve ChatGPT, Claude e Gemini.
-    "Plugin do ChatGPT" só entra em conteúdo como termo de busca, sempre corrigido no corpo.
+  - A tecnologia é **servidor MCP** (Model Context Protocol), padrão aberto — a mesma conexão serve
+    ChatGPT, Claude e Gemini. Do lado do usuário, no ChatGPT, "app" e "plugin publicado no
+    diretório" são nomes corretos (é o rótulo do menu e o termo da submissão da OpenAI). NÃO chamar
+    de "GPT Action" nem de "integração nativa com a OpenAI".
   - NÃO prometer escrita em massa pelo chat: `aplicar_programa_treino` é por aluno, com snapshot
     individual, por decisão de projeto. Dizer "um pedido só, a IA aplica aluno por aluno".
     O lote real (mesmo programa para vários alunos) é o template/rotina aplicado pelo portal.
   - NÃO prometer cadastro de aluno, avaliação física ou agenda pelo chat — não existem tools de
     escrita para isso. Só treino é gravável pela conexão.
-  - Requisito de plano de IA é de terceiro e muda: datar sempre. Em agosto/2026, Claude aceita
-    conector personalizado inclusive no plano grátis (limite de 1), ChatGPT exige Developer mode
-    (planos pagos) e no Gemini o caminho é CLI/Vertex.
+  - Requisito de plano de IA é de terceiro e muda: datar sempre. Em agosto/2026, o CoachPilot é app
+    publicado no diretório do ChatGPT — instala em 3 cliques, funciona na conta gratuita e fica
+    disponível também no aplicativo de iOS/Android; o Claude aceita conector personalizado no plano
+    grátis (limite de 1), com a conexão do navegador/desktop aparecendo no celular; no Gemini o
+    caminho é CLI/Vertex. A restrição antiga (Developer mode, plano pago, só no navegador) não vale
+    mais para o nosso app — não repetir.
   - Ao falar de conexão, mencionar o lado LGPD: o escopo de leitura alcança anamnese, avaliações e
     relatos de dor — dado sensível de saúde —, e consultar por IA externa é transferência
     internacional que exige consentimento específico do aluno. Isso é diferencial de confiança,

@@ -303,7 +303,7 @@ export const BLOG_POSTS = [
         h2: 'Preparar a sessão em dez segundos',
         paragraphs: [
           'Antes de atender, o que você precisa é de um resumo — não de sete telas. Peça "me dá o resumo da Júlia antes da sessão de amanhã" e a IA devolve, numa resposta só: perfil e objetivos, respostas da anamnese, últimas avaliações físicas, metas, estatísticas de treino, últimas sessões registradas, evolução recente, dores e dúvidas relatadas, e as suas próprias notas sobre o aluno.',
-          'O mesmo vale no meio do dia, entre um atendimento e outro — com uma ressalva que vale conferir antes de escolher a IA: em agosto de 2026, quem quer isso no celular deve usar o Claude, porque a conexão feita no navegador ou no desktop passa a aparecer no app do iPhone e do Android. No ChatGPT, conector de terceiro é recurso de navegador. A comparação completa está em [Claude, ChatGPT ou Gemini para personal trainer](/blog/claude-chatgpt-ou-gemini-para-personal-trainer).',
+          'O mesmo vale no meio do dia, entre um atendimento e outro — e no celular, que é onde você está quando o aluno está na sua frente. No ChatGPT, o app instalado pelo diretório fica disponível também no aplicativo de iOS e Android; no Claude, a conexão feita no navegador ou no computador aparece depois no celular. Quem fica de fora hoje é o Gemini, cujo caminho auto-serviço é terminal. A comparação completa está em [Claude, ChatGPT ou Gemini para personal trainer](/blog/claude-chatgpt-ou-gemini-para-personal-trainer).',
         ],
       },
       {
@@ -600,7 +600,7 @@ export const BLOG_POSTS = [
     description: 'Os três níveis de IA no mercado fitness — chat solto, gerador dentro do app e IA conectada ao seu sistema —, o que cada um resolve de verdade e o que não se deve automatizar.',
     h1: 'IA para personal trainer: o que realmente dá para automatizar',
     datePublished: '2026-08-22',
-    dateModified: '2026-08-22',
+    dateModified: '2026-08-31',
     readingMinutes: 9,
     intro: '"Plataforma com IA" virou item obrigatório de qualquer página de vendas do mercado fitness em 2026 — e o termo passou a significar coisas muito diferentes. Há três níveis distintos de IA em uso hoje, com ganhos que variam de "economiza dez minutos" a "muda a rotina de trabalho". Este guia separa os três, mostra o que cada um resolve e delimita o que não se deve automatizar por motivo técnico, ético e legal.',
     sections: [
@@ -687,7 +687,7 @@ export const BLOG_POSTS = [
     faqs: [
       { q: 'Qual o melhor app para personal trainer com IA?', a: 'Depende do nível de IA que você precisa. Para gerar treino dentro do app, MFIT e TreinoAI atendem. Para conectar o ChatGPT, o Claude ou o Gemini aos seus próprios dados e operar por conversa, o CoachPilot é a plataforma nacional com servidor MCP em produção (agosto/2026).' },
       { q: 'IA vai substituir o personal trainer?', a: 'Não. IA produz estrutura e texto rapidamente, mas prescrição é ato profissional com responsabilidade técnica e registro no CREF. O ganho real é de tempo operacional, não de julgamento.' },
-      { q: 'Preciso pagar ChatGPT Plus para usar IA na gestão?', a: 'Para o fluxo de prompts com importação, não — funciona nas versões gratuitas. Para conectar o ChatGPT ao sistema por MCP, sim, o Developer mode exige plano pago. No Claude, o conector funciona até no plano grátis, limitado a um.' },
+      { q: 'Preciso pagar ChatGPT Plus para usar IA na gestão?', a: 'Não, nos dois caminhos. Os prompts com importação funcionam nas versões gratuitas, e para conectar o sistema ao ChatGPT também não: desde agosto de 2026 o CoachPilot é um app publicado no diretório público, instalável na conta gratuita e disponível também no aplicativo de celular. No Claude, o conector funciona até no plano grátis, limitado a um.' },
       { q: 'É seguro dar acesso dos meus dados a uma IA?', a: 'Depende de como o acesso é desenhado. Procure conexão por OAuth com escopo escolhido por você, isolamento por conta, registro de auditoria, notificação de escrita, opção de desfazer e revogação imediata — e leia o que os termos dizem sobre dado de saúde.' },
     ],
     related: [
