@@ -3,7 +3,7 @@ import { ChevronDown } from 'lucide-react'
 
 const FAQS = [
   {
-    q: 'Como eu instalo o CoachPilot no ChatGPT?',
+    q: 'Como eu instalo o plugin do CoachPilot no ChatGPT?',
     a: 'No ChatGPT, abra "Plugins" no menu lateral, busque por "coachpilot" e clique no + para adicionar. Em seguida a tela do CoachPilot abre sozinha para você entrar com a sua conta e autorizar o acesso — sua senha nunca passa pelo ChatGPT. A partir daí é só conversar: "quem não treina há 10 dias?", "me dá o resumo da Júlia", "monta um ABC pro Rafael e aplica".',
   },
   {

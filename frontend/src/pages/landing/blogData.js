@@ -9,7 +9,7 @@ export const BLOG_POSTS = [
   {
     slug: 'app-de-personal-trainer-para-chatgpt',
     title: 'App de personal trainer para ChatGPT: o CoachPilot foi aprovado pela OpenAI',
-    description: 'O CoachPilot é o primeiro sistema de gestão para personal trainer com app publicado no diretório do ChatGPT. Instale em três cliques, converse com os dados reais dos seus alunos e aplique treinos sem sair do chat.',
+    description: 'O CoachPilot é o primeiro sistema de gestão para personal trainer com plugin publicado no diretório do ChatGPT. Instale em três cliques, converse com os dados reais dos seus alunos e aplique treinos sem sair do chat.',
     h1: 'App de personal trainer dentro do ChatGPT',
     datePublished: '2026-08-31',
     dateModified: '2026-08-31',
@@ -33,9 +33,9 @@ export const BLOG_POSTS = [
         ],
       },
       {
-        h2: 'Instalar leva menos de um minuto',
+        h2: 'Como instalar o plugin do CoachPilot no ChatGPT',
         paragraphs: [
-          'Você precisa de uma conta CoachPilot (o [plano grátis de até 3 alunos](/precos) serve) e de qualquer conta de ChatGPT, inclusive a gratuita.',
+          'Leva menos de um minuto. Você precisa de uma conta CoachPilot (o [plano grátis de até 3 alunos](/precos) serve) e de qualquer conta de ChatGPT, inclusive a gratuita.',
         ],
         list: [
           'No menu lateral do ChatGPT, abra "Plugins".',
@@ -128,7 +128,8 @@ export const BLOG_POSTS = [
       },
     ],
     faqs: [
-      { q: 'Existe app de personal trainer para o ChatGPT?', a: 'Sim. O CoachPilot tem um app publicado no diretório público do ChatGPT desde agosto de 2026, aprovado pela revisão da OpenAI. Você busca por "coachpilot" nos Plugins, clica no + e autoriza com a sua conta CoachPilot.' },
+      { q: 'Existe plugin do ChatGPT para personal trainer?', a: 'Sim. O CoachPilot está publicado no diretório público do ChatGPT desde agosto de 2026, aprovado pela revisão da OpenAI. Você busca por "coachpilot" no menu Plugins, clica no + e autoriza com a sua conta CoachPilot.' },
+      { q: 'Chama plugin ou app?', a: 'Os dois nomes circulam, e não é erro usar nenhum: no ChatGPT a instalação fica no menu Plugins, e "Plugin name" é o campo do próprio formulário de submissão da OpenAI. O nome da tecnologia por baixo é MCP (Model Context Protocol), padrão aberto — é por isso que a mesma conexão funciona também no Claude e no Gemini.' },
       { q: 'Preciso de ChatGPT Plus?', a: 'Não. O app do diretório funciona também na conta gratuita do ChatGPT, e no aplicativo de celular. O plano pago continua valendo pelos limites maiores de uso, não pelo acesso ao app.' },
       { q: 'O MFIT tem integração com o ChatGPT?', a: 'Na verificação de agosto de 2026, não. O MFIT tem um gerador de treino por IA dentro do próprio aplicativo, que é outra coisa: ele não lê a sua carteira, não consulta o histórico de um aluno específico e não funciona fora do app.' },
       { q: 'O ChatGPT pode apagar meus alunos ou mexer na cobrança?', a: 'Não. Essas operações não existem no app. O alcance de escrita é apenas aplicar programa de treino, atualizar treino e desfazer alteração — sempre um aluno por vez, com notificação, auditoria e desfazer por 7 dias.' },
@@ -261,12 +262,12 @@ export const BLOG_POSTS = [
   {
     slug: 'gerenciar-alunos-e-treinos-pelo-chatgpt',
     title: 'Como gerenciar alunos e treinos pelo ChatGPT (guia completo 2026)',
-    description: 'Conecte o ChatGPT, o Claude ou o Gemini ao CoachPilot e consulte alunos, monte e aplique treinos conversando — sem abrir o app. O que dá para pedir, o que não dá e como fica a segurança.',
+    description: 'Instale o plugin do CoachPilot no ChatGPT (ou conecte o Claude e o Gemini) e consulte alunos, monte e aplique treinos conversando — sem abrir o app. O que dá para pedir, o que não dá e como fica a segurança.',
     h1: 'Como gerenciar alunos e treinos pelo ChatGPT',
     datePublished: '2026-08-22',
-    dateModified: '2026-08-22',
+    dateModified: '2026-08-31',
     readingMinutes: 12,
-    intro: 'Até 2026, usar IA como personal trainer significava conversar com o ChatGPT numa aba e copiar o resultado para o sistema em outra. Isso acabou: o CoachPilot tem um servidor MCP, e o ChatGPT, o Claude e o Gemini passam a ler e escrever nos seus dados reais. Você pergunta "quem não treina há mais de 10 dias?" e a resposta vem da sua carteira, não de um chute. Este guia mostra tudo que dá para pedir, o que continua exigindo o portal e como fica o controle sobre os seus dados.',
+    intro: 'Até 2026, usar IA como personal trainer significava conversar com o ChatGPT numa aba e copiar o resultado para o sistema em outra. Isso acabou: o CoachPilot é um plugin publicado no diretório do ChatGPT, e o ChatGPT, o Claude e o Gemini passam a ler e escrever nos seus dados reais. Você pergunta "quem não treina há mais de 10 dias?" e a resposta vem da sua carteira, não de um chute. Este guia mostra tudo que dá para pedir, o que continua exigindo o portal e como fica o controle sobre os seus dados.',
     sections: [
       {
         h2: 'O que mudou: a IA parou de adivinhar e passou a ler o seu dado',
@@ -277,9 +278,10 @@ export const BLOG_POSTS = [
         ],
       },
       {
-        h2: 'O que é MCP (e por que não é um "plugin do ChatGPT")',
+        h2: 'Plugin, app ou MCP: três nomes para a mesma coisa',
         paragraphs: [
-          'Muita gente procura por "plugin do ChatGPT para personal trainer". O termo é compreensível, mas os plugins do ChatGPT foram descontinuados em 2024. O que existe hoje se chama MCP — Model Context Protocol, um padrão aberto criado pela Anthropic e adotado pela OpenAI, pelo Google e pelo restante do mercado.',
+          'Muita gente procura por "plugin do ChatGPT para personal trainer", e o termo está certo: é assim que o ChatGPT chama, no menu lateral, o lugar onde o CoachPilot é instalado — e é a palavra que aparece no próprio formulário de submissão da OpenAI. Se você chegou aqui procurando por plugin, achou o que procurava: [o CoachPilot está publicado no diretório do ChatGPT](/blog/app-de-personal-trainer-para-chatgpt) desde agosto de 2026.',
+          'O nome da tecnologia por baixo é outro: MCP, ou Model Context Protocol, um padrão aberto criado pela Anthropic e adotado pela OpenAI, pelo Google e pelo restante do mercado. "Plugin" e "app" são como a instalação aparece para você no ChatGPT; MCP é o que faz a conversa acontecer. Saber a diferença só importa por um motivo prático, o do parágrafo final desta seção.',
           'MCP é o protocolo que permite a uma IA conversar com um sistema de fora de forma padronizada e autorizada. Quem publica um servidor MCP — como o CoachPilot faz em mcp.coachpilot.com.br — declara quais operações a IA pode executar e sob qual permissão. Quem conecta escolhe o que autorizar. Não há upload de arquivo, não há robô controlando a sua tela, não há integração frágil que quebra na próxima atualização.',
           'A vantagem prática de ser um padrão: a mesma conexão vale para o ChatGPT, para o Claude e para o Gemini. Você não fica preso à IA de um fornecedor — usa a que já assina, ou troca quando quiser.',
         ],
@@ -389,7 +391,7 @@ export const BLOG_POSTS = [
     ],
     faqs: [
       { q: 'Dá para gerenciar meus alunos pelo ChatGPT?', a: 'Sim. Com a conexão MCP do CoachPilot, o ChatGPT consulta alunos, anamnese, avaliações, histórico de sessões, evolução, agenda e pendências, e — se você autorizar a escrita — monta e aplica programas de treino direto na plataforma.' },
-      { q: 'É um plugin do ChatGPT?', a: 'Não. Os plugins do ChatGPT foram descontinuados. O CoachPilot usa MCP (Model Context Protocol), o padrão aberto que ChatGPT, Claude e Gemini adotaram para se conectar a sistemas externos. A mesma conexão funciona nos três.' },
+      { q: 'É um plugin do ChatGPT?', a: 'Sim, é assim que muita gente chama — e é onde ele fica: no menu Plugins do ChatGPT, onde o CoachPilot aparece como app publicado no diretório desde agosto de 2026. O nome da tecnologia por baixo é MCP (Model Context Protocol), o padrão aberto que ChatGPT, Claude e Gemini adotaram. Por isso a mesma conexão funciona nos três.' },
       { q: 'A IA pode apagar meus dados ou mexer na minha assinatura?', a: 'Não. Não existe operação para excluir aluno, apagar histórico ou alterar plano, assinatura e cobranças. A escrita se limita a programas de treino, sempre com snapshot, notificação e desfazer por 7 dias.' },
       { q: 'A IA de outro personal pode ver meus alunos?', a: 'Não. Cada conexão só alcança os dados da conta que a autorizou. A identificação da conta vem do token de autorização e nunca é um parâmetro que a IA possa preencher.' },
       { q: 'Preciso pagar mais para usar a conexão?', a: 'Não. A conexão MCP é gratuita nos dois planos, inclusive no grátis de até 3 alunos. O que você paga é a sua assinatura de IA (ChatGPT, Claude ou Gemini), que não passa pelo CoachPilot.' },
