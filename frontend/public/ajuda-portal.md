@@ -57,7 +57,7 @@ Segurança e reversibilidade:
 
 ⚠️ Ao conectar, o conteúdo que você consultar — **incluindo anamnese e avaliações físicas dos seus alunos** — é enviado ao aplicativo de IA para responder às suas perguntas. Conecte apenas aplicativos em que você confia.
 
-Onde encontrar no aplicativo: no **Claude** e no **ChatGPT**, procure por *Conectores* nas configurações. No **Gemini**, o caminho hoje é pelo Gemini CLI (entrada `mcpServers`).
+Onde encontrar no aplicativo: no **ChatGPT**, o CoachPilot é um app do diretório — abra *Plugins*, busque por "coachpilot" e clique no **+** (não precisa colar endereço nenhum). No **Claude**, procure por *Conectores* nas configurações e cole o endereço. No **Gemini**, o caminho hoje é só pelo Gemini CLI.
 
 ---
 

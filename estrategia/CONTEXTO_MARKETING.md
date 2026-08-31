@@ -375,6 +375,9 @@ gerenciando seus alunos como um profissional."*
     o programa direto na plataforma**. Isso pode e deve ser afirmado — é o diferencial. O controle
     não é a revisão em tela, é: escopo escolhido na autorização (leitura ou leitura+escrita),
     notificação ao personal a cada escrita, auditoria e desfazer por 7 dias.
+  - **Nada de implementação em página pública** (31/ago/2026): sem endereço de servidor, OAuth,
+    token, snapshot, auditoria, lista de tools/operações ou checklist da revisão da OpenAI. Só o
+    efeito para o personal. "MCP" fica como nome (entendimento + SEO); a mecânica em volta, não.
   - A tecnologia é **servidor MCP** (Model Context Protocol), padrão aberto — a mesma conexão serve
     ChatGPT, Claude e Gemini. Do lado do usuário, no ChatGPT, "app" e "plugin publicado no
     diretório" são nomes corretos (é o rótulo do menu e o termo da submissão da OpenAI). NÃO chamar

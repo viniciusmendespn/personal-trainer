@@ -83,6 +83,14 @@ Regras editoriais (dos limites de `CONTEXTO_MARKETING.md` §14):
 - **Dois canais de IA, regras diferentes** — no fluxo por prompt, a IA *gera e o personal importa
   com revisão*; na conexão MCP, a IA *escreve direto*, e o que garante o controle é
   escopo + notificação + auditoria + desfazer em 7 dias. Nunca misturar os dois na mesma frase.
+- **Conteúdo público não explica como o produto foi feito** (decisão de 31/ago/2026). Nada de
+  endereço do servidor, OAuth, token, snapshot, auditoria, inventário de tools/operações, checklist
+  da revisão da OpenAI ou "a identificação vem do token". Escreva o efeito para o personal: "você
+  autoriza e escolhe o que a IA pode fazer", "toda alteração avisa e pode ser desfeita em 7 dias",
+  "cada conexão alcança só a sua conta". Motivo: concorrente não recebe o mapa de implementação de
+  graça. **"MCP" permanece** — é nome, serve ao entendimento e é a palavra-chave do cluster; o que
+  sai é a mecânica em volta dele. Vale para blog, páginas SEO, landing, ajuda e `llms.txt`; termos e
+  privacidade mantêm o que a LGPD exige.
 - **"Plugin do ChatGPT" pode ser usado** (regra revista em ago/2026): é o rótulo do menu no ChatGPT
   e o termo da submissão da OpenAI, e o CoachPilot está publicado no diretório. A tecnologia por
   baixo segue sendo MCP — explicar isso no corpo, sem dizer que "plugins foram descontinuados".

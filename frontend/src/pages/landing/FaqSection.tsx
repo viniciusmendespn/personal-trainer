@@ -40,7 +40,7 @@ const FAQS = [
   },
   {
     q: 'Uso Claude ou Gemini. Dá para conectar também?',
-    a: 'Dá. O app do ChatGPT é a porta mais fácil, mas por baixo o CoachPilot fala MCP, o padrão aberto de conexão entre IAs e sistemas. Em Configurações → Conexões você copia o endereço do servidor e adiciona no Claude ou no Gemini — mesmos dados, mesma autorização, mesmo desfazer. No Claude a conexão funciona até no plano grátis.',
+    a: 'Dá. O app do ChatGPT é a porta mais fácil, mas por baixo o CoachPilot fala MCP, o padrão aberto de conexão entre IAs e sistemas. Em Configurações → Conexões você copia o endereço e adiciona no Claude ou no Gemini — mesmos dados, mesma autorização, mesmo desfazer. No Claude a conexão funciona até no plano grátis.',
   },
   {
     q: 'E se eu não quiser conectar minha IA à plataforma?',

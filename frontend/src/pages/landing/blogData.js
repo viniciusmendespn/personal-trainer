@@ -19,8 +19,8 @@ export const BLOG_POSTS = [
       {
         h2: 'O que mudou: de gambiarra de desenvolvedor a três cliques',
         paragraphs: [
-          'Conectar uma IA ao seu sistema de gestão já era possível antes, mas o caminho no ChatGPT era ruim: era preciso plano pago, ativar um "Developer mode" escondido nas configurações avançadas, colar o endereço de um servidor à mão e torcer. Nada disso é o tipo de coisa que um personal trainer faz entre dois atendimentos.',
-          'Com o app publicado no diretório, o caminho virou o mesmo de instalar qualquer coisa: buscar pelo nome e clicar no +. Não precisa saber o que é um servidor, não precisa colar endereço nenhum, não precisa de plano pago do ChatGPT — funciona inclusive na conta gratuita — e funciona no aplicativo de celular, que é onde você está quando o aluno está na sua frente.',
+          'Conectar uma IA ao seu sistema de gestão já era possível antes, mas o caminho no ChatGPT era ruim: exigia plano pago, um modo escondido nas configurações avançadas e uma configuração manual que ninguém conclui de primeira. Nada disso é o tipo de coisa que um personal trainer faz entre dois atendimentos.',
+          'Com o app publicado no diretório, o caminho virou o mesmo de instalar qualquer coisa: buscar pelo nome e clicar no +. Não precisa configurar nada, não precisa de plano pago do ChatGPT — funciona inclusive na conta gratuita — e funciona no aplicativo de celular, que é onde você está quando o aluno está na sua frente.',
           'É a diferença entre um recurso que existe e um recurso que as pessoas usam. E é ela que transforma "sistema com IA" em "sistema que vive dentro da IA que você já abre dez vezes por dia".',
         ],
       },
@@ -28,8 +28,8 @@ export const BLOG_POSTS = [
         h2: 'O que significa ter sido aprovado pela OpenAI',
         paragraphs: [
           'Estar no diretório não é ligar uma chave. É uma submissão que passa por revisão humana, e o que a OpenAI olha diz muito sobre o que você está instalando.',
-          'A propriedade do domínio precisa ser comprovada por um token publicado no próprio servidor — ninguém publica um app fingindo ser o CoachPilot. A autenticação precisa ser OAuth de verdade, com a autorização acontecendo no site do CoachPilot: a sua senha nunca passa pelo ChatGPT, e o que a IA recebe é um token com o escopo que você concedeu. E cada operação que o app expõe precisa ser descrita e justificada uma a uma, declarando se ela só lê, se altera dado e se alcança algo fora do sistema.',
-          'Na prática, essa última exigência é uma auditoria do que a IA pode fazer com a sua carteira. As operações de consulta são declaradas como somente leitura; as de escrita são declaradas como escrita, com o que isso implica. Não sobra zona cinzenta — nem para você nem para a OpenAI.',
+          'Três coisas foram verificadas antes da publicação, e as três são do seu interesse. Que o app é mesmo do CoachPilot, e não de alguém se passando por nós. Que o login acontece no site do CoachPilot, de modo que a sua senha nunca passa pelo ChatGPT. E que tudo o que o app pode fazer com a sua conta foi declarado e revisado, separando o que apenas consulta do que altera dado.',
+          'Na prática, é uma revisão do que a IA pode fazer com a sua carteira, feita por gente de fora antes de o app existir para o público. Não sobra zona cinzenta — nem para você nem para a OpenAI.',
         ],
       },
       {
@@ -63,7 +63,7 @@ export const BLOG_POSTS = [
         paragraphs: [
           'Quase toda plataforma de gestão para personal trainer anuncia IA em 2026, e é justo separar as duas coisas, porque elas não competem entre si — são níveis diferentes.',
           'A IA de dentro do app é um gerador: você preenche um formulário (objetivo, frequência, nível) e ela devolve um treino. Ajuda a economizar digitação, mas não sabe quem faltou essa semana, não lê o histórico de um aluno específico para propor o ajuste e não existe fora daquela tela.',
-          'O app no ChatGPT é o contrário: a inteligência é a que você já paga, e o que ela ganha é acesso ao seu dado real. Ela responde sobre a sua carteira porque leu a sua carteira naquele segundo. Ela propõe uma progressão porque leu a evolução daquele exercício naquele aluno. E ela usa a sua biblioteca de exercícios, com os seus vídeos, porque a primeira coisa que faz antes de montar qualquer treino é ler o guia de prescrição da plataforma.',
+          'O app no ChatGPT é o contrário: a inteligência é a que você já paga, e o que ela ganha é acesso ao seu dado real. Ela responde sobre a sua carteira porque leu a sua carteira naquele segundo. Ela propõe uma progressão porque leu a evolução daquele exercício naquele aluno. E ela usa a sua biblioteca de exercícios, com os seus vídeos, porque consulta as regras de prescrição e o seu catálogo antes de montar qualquer treino.',
           'Esse último detalhe é o que separa treino aproveitável de treino descartável. Sem ler a biblioteca, qualquer IA inventa nome de exercício e formato. Lendo, ela devolve algo que entra no sistema sem retrabalho.',
         ],
       },
@@ -98,24 +98,24 @@ export const BLOG_POSTS = [
         ],
         list: [
           'Não existe excluir aluno nem apagar histórico. Simplesmente não há essa operação.',
-          'Não existe alterar plano, assinatura ou cobrança. O financeiro está fora do alcance da IA em qualquer escopo.',
+          'Não existe alterar plano, assinatura ou cobrança. O financeiro está fora do alcance da IA, com qualquer permissão.',
           'Não existe escrita em massa. Cada programa é aplicado a um aluno por vez.',
-          'Toda escrita gera snapshot, notificação para você no portal, registro de auditoria e botão de desfazer por 7 dias.',
-          'Nenhuma conexão alcança dados de outro personal: a identificação da sua conta vem do token da autorização, nunca de algo que a IA preencha.',
-          'Você escolhe o escopo na autorização e revoga quando quiser em Configurações → Conexões, com corte imediato.',
+          'Toda alteração de treino avisa você no portal, com o resumo do que mudou, e pode ser desfeita por 7 dias.',
+          'Nenhuma conexão alcança dados de outro personal: cada autorização vale só para a sua conta.',
+          'Você escolhe o que autorizar e revoga quando quiser em Configurações → Conexões, com corte imediato.',
         ],
       },
       {
         h2: 'A parte que exige consentimento do aluno',
         paragraphs: [
-          'O escopo de leitura alcança anamnese, avaliações físicas e relatos de dor — dados sensíveis de saúde pela LGPD. Consultá-los por uma IA externa configura transferência internacional de dado sensível, e isso exige consentimento específico do aluno para essa finalidade.',
+          'A consulta alcança anamnese, avaliações físicas e relatos de dor — dados sensíveis de saúde pela LGPD. Consultá-los por uma IA externa configura transferência internacional de dado sensível, e isso exige consentimento específico do aluno para essa finalidade.',
           'Não é um detalhe burocrático: é a diferença entre usar a ferramenta bem e criar um passivo. A hipótese está descrita nos [termos](/termos) e na [política de privacidade](/privacidade), e vale adequar o seu contrato de prestação de serviço. Quem não quiser essa transmissão simplesmente não conecta e segue usando o portal normalmente — a conexão é um caminho a mais, nunca um substituto obrigatório.',
         ],
       },
       {
         h2: 'E se eu preferir o Claude ou o Gemini?',
         paragraphs: [
-          'Funciona também. Por baixo do app do ChatGPT existe um servidor MCP — o Model Context Protocol, padrão aberto adotado por OpenAI, Anthropic e Google —, e é a mesma conexão que atende as três IAs. No Claude você adiciona um conector personalizado, que funciona inclusive no plano gratuito (limite de um). No Gemini, o caminho auto-serviço hoje é o CLI ou a versão empresarial.',
+          'Funciona também: é a mesma conexão que atende as três IAs, porque todas adotaram o mesmo padrão aberto (MCP). No Claude você adiciona um conector personalizado, que funciona inclusive no plano gratuito (limite de um). No Gemini, o caminho auto-serviço hoje é o CLI ou a versão empresarial.',
           'Dá para conectar mais de uma ao mesmo tempo: cada conexão é autorizada e revogada separadamente. O comparativo completo está em [Claude, ChatGPT ou Gemini para personal trainer](/blog/claude-chatgpt-ou-gemini-para-personal-trainer), e o passo a passo de cada provedor em [como conectar](/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot).',
         ],
       },
@@ -129,12 +129,12 @@ export const BLOG_POSTS = [
     ],
     faqs: [
       { q: 'Existe plugin do ChatGPT para personal trainer?', a: 'Sim. O CoachPilot está publicado no diretório público do ChatGPT desde agosto de 2026, aprovado pela revisão da OpenAI. Você busca por "coachpilot" no menu Plugins, clica no + e autoriza com a sua conta CoachPilot.' },
-      { q: 'Chama plugin ou app?', a: 'Os dois nomes circulam, e não é erro usar nenhum: no ChatGPT a instalação fica no menu Plugins, e "Plugin name" é o campo do próprio formulário de submissão da OpenAI. O nome da tecnologia por baixo é MCP (Model Context Protocol), padrão aberto — é por isso que a mesma conexão funciona também no Claude e no Gemini.' },
+      { q: 'Chama plugin ou app?', a: 'Os dois nomes circulam, e não é erro usar nenhum: no ChatGPT a instalação fica no menu Plugins, e "Plugin name" é o campo do próprio formulário de submissão da OpenAI. O nome do padrão aberto por trás é MCP — é por isso que a mesma conexão funciona também no Claude e no Gemini.' },
       { q: 'Preciso de ChatGPT Plus?', a: 'Não. O app do diretório funciona também na conta gratuita do ChatGPT, e no aplicativo de celular. O plano pago continua valendo pelos limites maiores de uso, não pelo acesso ao app.' },
       { q: 'O MFIT tem integração com o ChatGPT?', a: 'Na verificação de agosto de 2026, não. O MFIT tem um gerador de treino por IA dentro do próprio aplicativo, que é outra coisa: ele não lê a sua carteira, não consulta o histórico de um aluno específico e não funciona fora do app.' },
-      { q: 'O ChatGPT pode apagar meus alunos ou mexer na cobrança?', a: 'Não. Essas operações não existem no app. O alcance de escrita é apenas aplicar programa de treino, atualizar treino e desfazer alteração — sempre um aluno por vez, com notificação, auditoria e desfazer por 7 dias.' },
-      { q: 'Minha senha do CoachPilot vai para o ChatGPT?', a: 'Não. A autorização é por OAuth: o login acontece na tela do próprio CoachPilot e o ChatGPT recebe apenas um token com o escopo que você concedeu. Você revoga quando quiser em Configurações → Conexões.' },
-      { q: 'A IA vê os dados de outros personais?', a: 'Nunca. A identificação da conta vem do token gerado na sua autorização, e não de um argumento que a IA preencha — é uma decisão de arquitetura justamente para que nada escrito por um aluno possa induzir acesso cruzado.' },
+      { q: 'O ChatGPT pode apagar meus alunos ou mexer na cobrança?', a: 'Não. O app não faz isso. Ele altera apenas programa de treino, sempre um aluno por vez, com notificação no portal e desfazer por 7 dias. Excluir aluno, apagar histórico e mexer em cobrança estão fora do alcance da IA.' },
+      { q: 'Minha senha do CoachPilot vai para o ChatGPT?', a: 'Não. O login acontece na tela do próprio CoachPilot — o ChatGPT nunca vê a sua senha e recebe apenas a permissão que você concedeu. Você revoga quando quiser em Configurações → Conexões.' },
+      { q: 'A IA vê os dados de outros personais?', a: 'Nunca. Cada conexão alcança somente os dados da conta que a autorizou.' },
       { q: 'Funciona no celular?', a: 'Sim. Instalado no ChatGPT, o app fica disponível também no aplicativo de iOS e Android, que é onde a consulta rápida entre um atendimento e outro faz mais diferença.' },
       { q: 'A IA vai prescrever no lugar do personal?', a: 'Não. Ela analisa, propõe e aplica o que você aprovou na conversa. Restrições de anamnese e dores relatadas são invioláveis, os exercícios saem da sua biblioteca com os seus vídeos, e a revisão é sua.' },
     ],
@@ -165,22 +165,22 @@ export const BLOG_POSTS = [
       {
         h2: 'O que realmente muda entre as três (não é o modelo)',
         paragraphs: [
-          'Vale desarmar a comparação errada. Quando a IA está conectada ao [CoachPilot pelo servidor MCP](/blog/gerenciar-alunos-e-treinos-pelo-chatgpt), ela não precisa saber prescrever de memória: a primeira coisa que ela faz é ler o guia de prescrição da plataforma e a sua biblioteca de exercícios. O formato, as unidades, as regras e os nomes dos exercícios vêm do sistema. O que sobra para o modelo é seguir instrução e conversar sobre a proposta — e as três fazem isso bem.',
-          'A diferença entre uma IA conectada e uma IA solta é enorme; a diferença entre as três IAs conectadas é pequena, e está mais na plataforma do que no modelo. Por isso este comparativo é sobre onde o conector funciona, e não sobre qual escreve texto mais bonito.',
+          'Vale desarmar a comparação errada. Quando a IA está [conectada ao CoachPilot](/blog/gerenciar-alunos-e-treinos-pelo-chatgpt), ela não precisa saber prescrever de memória: antes de montar, consulta as regras de prescrição da plataforma e a sua biblioteca de exercícios. O formato, as unidades, as regras e os nomes dos exercícios vêm do sistema. O que sobra para o modelo é seguir instrução e conversar sobre a proposta — e as três fazem isso bem.',
+          'A diferença entre uma IA conectada e uma IA solta é enorme; a diferença entre as três IAs conectadas é pequena, e está mais na plataforma do que no modelo. Por isso este comparativo é sobre onde a conexão funciona, e não sobre qual escreve texto mais bonito.',
         ],
       },
       {
         h2: 'ChatGPT — app publicado, instalação em três cliques',
         paragraphs: [
-          'Até julho de 2026, conectar um servidor MCP de terceiro ao ChatGPT era recurso de desenvolvedor: ativar o Developer mode nas configurações avançadas, colar o endereço à mão, e só no plano pago. Isso deixou de valer para o CoachPilot em agosto de 2026, quando o app foi aprovado pela OpenAI e publicado no diretório público.',
-          'O caminho agora é o de instalar qualquer app: menu lateral → Plugins → buscar "coachpilot" → clicar no +. A tela do CoachPilot abre para você entrar e escolher o escopo, e pronto. Não exige plano pago — funciona na conta gratuita do ChatGPT — e fica disponível também no aplicativo de iOS e Android, que é onde a consulta rápida entre dois atendimentos acontece.',
+          'Até julho de 2026, ligar um sistema de terceiro ao ChatGPT era coisa de desenvolvedor: um modo escondido nas configurações avançadas, configuração manual e só no plano pago. Isso deixou de valer para o CoachPilot em agosto de 2026, quando o app foi aprovado pela OpenAI e publicado no diretório público.',
+          'O caminho agora é o de instalar qualquer app: menu lateral → Plugins → buscar "coachpilot" → clicar no +. A tela do CoachPilot abre para você entrar e escolher o que autorizar, e pronto. Não exige plano pago — funciona na conta gratuita do ChatGPT — e fica disponível também no aplicativo de iOS e Android, que é onde a consulta rápida entre dois atendimentos acontece.',
           'Se você já paga Plus por outros motivos, nada muda além dos limites de uso maiores: o Plus custa US$ 20/mês (na faixa de R$ 116 a R$ 124 mais IOF, agosto/2026), e o ecossistema em volta (voz, análise de arquivo, memória entre conversas) é maduro.',
         ],
       },
       {
         h2: 'Claude — conector personalizado, inclusive no plano grátis',
         paragraphs: [
-          'A Anthropic criou o MCP, então a experiência de conectar é direta: Settings → Connectors → adicionar conector personalizado, colar o endereço, autorizar. Funciona no claude.ai e no aplicativo de computador.',
+          'A experiência de conectar é direta: Settings → Connectors → adicionar conector personalizado, colar o endereço que o CoachPilot mostra em Configurações → Conexões, autorizar. Funciona no claude.ai e no aplicativo de computador.',
           'Dois pontos a favor. Primeiro: conector personalizado está disponível inclusive no plano gratuito, com o limite de uma conexão — e uma é exatamente quantas você precisa. Dá para viver o fluxo completo, com escrita de treino e tudo, sem pagar IA nenhuma. Segundo: depois de conectar no navegador ou no desktop, a conexão fica disponível quando você abre o Claude no iPhone ou no Android. Instalar conector direto pelo celular ainda é beta, mas usar o que já foi conectado funciona.',
           'A limitação honesta do plano grátis não é o conector, é o volume de conversa: o uso é limitado, e numa tarde de renovação de mesociclo você provavelmente encosta no teto. Para uso diário sério, o Claude Pro sai por cerca de US$ 20/mês (algo em torno de R$ 120 com IOF, agosto/2026). O atrito extra em relação ao ChatGPT é só a colagem do endereço na primeira vez.',
         ],
@@ -188,9 +188,9 @@ export const BLOG_POSTS = [
       {
         h2: 'Gemini — o mais barato em real, mas o conector ainda não é para todo mundo',
         paragraphs: [
-          'Aqui é preciso separar três produtos diferentes com o mesmo nome. No app de consumidor, conectar um servidor MCP próprio não é auto-serviço: as integrações são de parceria ou dependem de acesso liberado. No Gemini CLI, dá para configurar qualquer servidor MCP no `settings.json` — funciona bem, mas é terminal, não conversa no celular. E na versão empresarial, o cliente conecta um servidor por conta própria.',
+          'Aqui é preciso separar três produtos diferentes com o mesmo nome. No app de consumidor, ligar um sistema de fora não é auto-serviço: as integrações são de parceria ou dependem de acesso liberado. No Gemini CLI, dá para configurar a conexão à mão — funciona bem, mas é terminal, não conversa no celular. E na versão empresarial, o cliente configura por conta própria.',
           'Traduzindo para a sua rotina: se você não é uma pessoa de linha de comando, o Gemini hoje não é o caminho para conectar o seu sistema de gestão. Ele continua excelente para o resto (roteiro de conteúdo, transcrição, planilha, pesquisa) e é o mais barato dos três cobrado em real — o Google AI Pro fica na casa de R$ 97/mês, sem IOF, o que numa conta anual faz diferença real.',
-          'Vale acompanhar: esse é o item que mais deve mudar nos próximos meses. A conexão do CoachPilot é MCP padrão, então no dia em que o app do Gemini abrir conector de terceiro para todos, ela funciona sem nenhuma mudança do nosso lado.',
+          'Vale acompanhar: esse é o item que mais deve mudar nos próximos meses. A conexão do CoachPilot segue o padrão que as três IAs adotaram, então no dia em que o app do Gemini liberar conexão de terceiro para todos, ela funciona sem nenhuma mudança do nosso lado.',
         ],
       },
       {
@@ -201,10 +201,10 @@ export const BLOG_POSTS = [
         table: {
           headers: ['Critério', 'ChatGPT', 'Claude', 'Gemini'],
           rows: [
-            ['Como se conecta ao CoachPilot', 'App publicado no diretório', 'Conector MCP personalizado', 'Só CLI ou versão empresarial'],
-            ['Instalação', 'Buscar "coachpilot" e clicar no +', 'Colar o endereço do servidor', 'Editar settings.json'],
+            ['Como se conecta ao CoachPilot', 'App publicado no diretório', 'Conector personalizado', 'Só CLI ou versão empresarial'],
+            ['Instalação', 'Buscar "coachpilot" e clicar no +', 'Colar o endereço da conexão', 'Configurar o CLI à mão'],
             ['Funciona no plano grátis', 'Sim', 'Sim (1 conector)', 'Não, no app de consumidor'],
-            ['Onde se conecta', 'Plugins, no app ou na web', 'claude.ai e app de computador', 'settings.json do CLI'],
+            ['Onde se conecta', 'Plugins, no app ou na web', 'claude.ai e app de computador', 'Só no CLI'],
             ['Usa no celular', 'Sim (iOS e Android)', 'Sim, depois de conectar no PC', 'Não'],
             ['Preço do plano de entrada', 'US$ 20/mês (~R$ 120 c/ IOF)', '~US$ 20/mês (~R$ 120 c/ IOF)', '~R$ 97/mês, cobrado em real'],
             ['Melhor para', 'Praticamente todo mundo', 'Quem prefere o Claude', 'Todo o resto, menos a conexão'],
@@ -239,18 +239,18 @@ export const BLOG_POSTS = [
       {
         h2: 'O que não muda entre as três',
         paragraphs: [
-          'Três coisas valem para qualquer IA que você conectar, e é bom saber antes. A primeira: o custo de IA é sempre seu, da sua assinatura — a [conexão do CoachPilot é gratuita nos dois planos](/precos), inclusive no grátis de até 3 alunos, e o token não passa por nós. A segunda: o alcance é o mesmo em todas. Nenhuma conexão vê dado de outro personal, nenhuma exclui aluno, apaga histórico ou mexe em plano e cobrança, e toda escrita de treino gera notificação, auditoria e desfazer por 7 dias.',
-          'A terceira é a que exige mais atenção sua: qualquer uma das três envia ao provedor dela o que você consultar — e o escopo de leitura alcança anamnese, avaliações físicas e relatos de dor, que são dados sensíveis de saúde pela LGPD. Trocar de IA não muda essa natureza, só muda o destinatário. Antes de consultar dado de saúde por assistente externo, confirme que o consentimento obtido do aluno cobre essa transferência; está detalhado na [política de privacidade](/privacidade). Quem não quer essa transmissão simplesmente não conecta e segue usando o portal.',
+          'Três coisas valem para qualquer IA que você conectar, e é bom saber antes. A primeira: o custo de IA é sempre seu, da sua assinatura — a [conexão do CoachPilot é gratuita nos dois planos](/precos), inclusive no grátis de até 3 alunos, e nada desse custo passa por nós. A segunda: o alcance é o mesmo em todas. Nenhuma conexão vê dado de outro personal, nenhuma exclui aluno, apaga histórico ou mexe em plano e cobrança, e toda alteração de treino gera notificação no portal e pode ser desfeita por 7 dias.',
+          'A terceira é a que exige mais atenção sua: qualquer uma das três envia ao provedor dela o que você consultar — e a consulta alcança anamnese, avaliações físicas e relatos de dor, que são dados sensíveis de saúde pela LGPD. Trocar de IA não muda essa natureza, só muda o destinatário. Antes de consultar dado de saúde por assistente externo, confirme que o consentimento obtido do aluno cobre essa transferência; está detalhado na [política de privacidade](/privacidade). Quem não quer essa transmissão simplesmente não conecta e segue usando o portal.',
         ],
       },
     ],
     faqs: [
       { q: 'Qual a melhor IA para personal trainer em 2026?', a: 'Para conectar ao seu sistema de gestão, o ChatGPT: desde agosto de 2026 o CoachPilot é um app publicado no diretório público, instalável em três cliques, sem exigir plano pago e disponível no celular. O Claude é uma alternativa igualmente boa, com um passo a mais na instalação.' },
-      { q: 'Dá para usar no plano grátis?', a: 'Sim, nos dois. No ChatGPT o app do diretório funciona na conta gratuita. No Claude, o conector personalizado funciona no plano gratuito, limitado a uma conexão. No app do Gemini, conectar servidor próprio não é auto-serviço hoje.' },
+      { q: 'Dá para usar no plano grátis?', a: 'Sim, nos dois. No ChatGPT o app do diretório funciona na conta gratuita. No Claude, o conector personalizado funciona no plano gratuito, limitado a uma conexão. No app do Gemini, ligar um sistema de fora não é auto-serviço hoje.' },
       { q: 'A conexão funciona no celular?', a: 'Sim, no ChatGPT e no Claude. No ChatGPT, o app instalado fica disponível no aplicativo de iOS e Android; no Claude, a conexão feita no navegador ou no aplicativo de computador aparece depois no celular.' },
-      { q: 'O Gemini funciona com o CoachPilot?', a: 'Pelo Gemini CLI e pela versão empresarial, sim — a conexão é MCP padrão. No app de consumidor, conectar servidor de terceiro ainda não é auto-serviço, então não é o caminho recomendado para a maioria dos personais hoje.' },
+      { q: 'O Gemini funciona com o CoachPilot?', a: 'Pelo Gemini CLI e pela versão empresarial, sim. No app de consumidor, ligar um sistema de fora ainda não é auto-serviço, então não é o caminho recomendado para a maioria dos personais hoje.' },
       { q: 'Preciso pagar as três?', a: 'Não. Uma basta, e você pode trocar quando quiser: cada conexão é autorizada e revogada separadamente em Configurações → Conexões.' },
-      { q: 'Muda a qualidade do treino dependendo da IA?', a: 'Pouco. Conectada, a IA lê o guia de prescrição e a sua biblioteca de exercícios no próprio CoachPilot, então o formato, as unidades e os nomes vêm do sistema. A diferença grande é entre IA conectada e IA solta, não entre as três conectadas.' },
+      { q: 'Muda a qualidade do treino dependendo da IA?', a: 'Pouco. Conectada, a IA consulta as regras de prescrição e a sua biblioteca de exercícios no próprio CoachPilot, então o formato, as unidades e os nomes vêm do sistema. A diferença grande é entre IA conectada e IA solta, não entre as três conectadas.' },
     ],
     related: [
       { label: 'O app do CoachPilot no ChatGPT', to: '/blog/app-de-personal-trainer-para-chatgpt' },
@@ -273,17 +273,17 @@ export const BLOG_POSTS = [
         h2: 'O que mudou: a IA parou de adivinhar e passou a ler o seu dado',
         paragraphs: [
           'O problema da IA genérica nunca foi a qualidade do texto — foi a falta de contexto. Um ChatGPT sem acesso aos seus dados não sabe o nome dos seus alunos, não sabe que a Júlia parou de treinar há duas semanas, não sabe qual carga o Pedro usou no supino em maio. Ele produz um treino plausível para um aluno imaginário, e a ponte entre esse texto e o seu sistema era você, copiando e colando.',
-          'Com a conexão MCP do CoachPilot, essa ponte deixa de existir. Você autoriza uma vez, e a sua IA passa a consultar a sua carteira no momento da pergunta: alunos, anamnese, avaliações físicas, histórico de sessões, evolução por exercício, agenda, pendências. Se autorizar também a escrita, ela monta o programa e grava direto no CoachPilot — com aviso no portal e botão de desfazer.',
+          'Com a conexão do CoachPilot, essa ponte deixa de existir. Você autoriza uma vez, e a sua IA passa a consultar a sua carteira no momento da pergunta: alunos, anamnese, avaliações físicas, histórico de sessões, evolução por exercício, agenda, pendências. Se autorizar também a escrita, ela monta o programa e grava direto no CoachPilot — com aviso no portal e botão de desfazer.',
           'Na prática, o sistema de gestão deixa de ser um lugar onde você digita e passa a ser um lugar onde você pergunta. É a diferença entre operar o software e conversar com ele.',
         ],
       },
       {
-        h2: 'Plugin, app ou MCP: três nomes para a mesma coisa',
+        h2: 'Plugin, app ou conexão: o nome não muda o que você faz',
         paragraphs: [
           'Muita gente procura por "plugin do ChatGPT para personal trainer", e o termo está certo: é assim que o ChatGPT chama, no menu lateral, o lugar onde o CoachPilot é instalado — e é a palavra que aparece no próprio formulário de submissão da OpenAI. Se você chegou aqui procurando por plugin, achou o que procurava: [o CoachPilot está publicado no diretório do ChatGPT](/blog/app-de-personal-trainer-para-chatgpt) desde agosto de 2026.',
-          'O nome da tecnologia por baixo é outro: MCP, ou Model Context Protocol, um padrão aberto criado pela Anthropic e adotado pela OpenAI, pelo Google e pelo restante do mercado. "Plugin" e "app" são como a instalação aparece para você no ChatGPT; MCP é o que faz a conversa acontecer. Saber a diferença só importa por um motivo prático, o do parágrafo final desta seção.',
-          'MCP é o protocolo que permite a uma IA conversar com um sistema de fora de forma padronizada e autorizada. Quem publica um servidor MCP — como o CoachPilot faz em mcp.coachpilot.com.br — declara quais operações a IA pode executar e sob qual permissão. Quem conecta escolhe o que autorizar. Não há upload de arquivo, não há robô controlando a sua tela, não há integração frágil que quebra na próxima atualização.',
-          'A vantagem prática de ser um padrão: a mesma conexão vale para o ChatGPT, para o Claude e para o Gemini. Você não fica preso à IA de um fornecedor — usa a que já assina, ou troca quando quiser.',
+          '"Plugin" e "app" são como a instalação aparece para você no ChatGPT. O padrão aberto que faz a conversa acontecer chama-se MCP, e foi adotado pela OpenAI, pela Anthropic e pelo Google — é só isso que você precisa saber do nome.',
+          'O que importa na prática: você autoriza uma vez e escolhe o que a IA pode fazer. Não há upload de arquivo, não há robô controlando a sua tela, não há integração frágil que quebra na próxima atualização.',
+          'E porque é um padrão, a mesma conexão vale para o ChatGPT, para o Claude e para o Gemini. Você não fica preso à IA de um fornecedor — usa a que já assina, ou troca quando quiser.',
         ],
       },
       {
@@ -335,50 +335,26 @@ export const BLOG_POSTS = [
         ],
       },
       {
-        h2: 'As 13 operações disponíveis hoje',
-        paragraphs: [
-          'A conexão expõe um conjunto fechado de operações — a IA não tem acesso livre ao banco de dados, só a estas ações. Dez são de leitura e três de escrita; uma conexão autorizada apenas para leitura nem enxerga as três últimas.',
-        ],
-        table: {
-          headers: ['Operação', 'O que faz', 'Permissão'],
-          rows: [
-            ['Guia de prescrição', 'Entrega à IA as regras de prescrição do CoachPilot e a sua biblioteca de exercícios', 'Leitura'],
-            ['Listar alunos', 'Lista alunos com status, objetivo e último treino', 'Leitura'],
-            ['Detalhar aluno', 'Dossiê completo: anamnese, avaliações, metas, sessões, dores, notas', 'Leitura'],
-            ['Exportar programa', 'O programa de treino vigente do aluno, exercício por exercício', 'Leitura'],
-            ['Listar biblioteca', 'A sua biblioteca de exercícios, com nomes e vídeos', 'Leitura'],
-            ['Histórico de sessões', 'Sessões executadas pelo aluno, com o que foi registrado', 'Leitura'],
-            ['Evolução por exercício', 'Carga, repetições, volume e recordes ao longo do tempo', 'Leitura'],
-            ['Resumo da carteira', 'Panorama: parados, sem treino vigente, mensalidade em atraso', 'Leitura'],
-            ['Agenda do período', 'Compromissos agendados num intervalo de datas', 'Leitura'],
-            ['Validar programa', 'Confere um programa proposto sem gravar nada', 'Leitura'],
-            ['Aplicar programa', 'Substitui o programa do aluno, com snapshot e desfazer', 'Escrita'],
-            ['Atualizar treino', 'Ajusta um treino específico do programa', 'Escrita'],
-            ['Desfazer alteração', 'Volta o programa do aluno ao estado anterior', 'Escrita'],
-          ],
-        },
-      },
-      {
         h2: 'O que a conexão não faz — e por que isso é bom',
         paragraphs: [
-          'A lista de limites é curta e proposital. Não existe operação para excluir aluno, mexer em plano, assinatura ou cobrança, nem apagar histórico. Não existe escrita em massa: cada programa é aplicado a um aluno por vez, com snapshot próprio, justamente para que qualquer alteração seja reversível individualmente.',
+          'A lista de limites é curta e proposital. A IA não exclui aluno, não apaga histórico e não mexe em plano, assinatura ou cobrança. E não existe alteração em massa: cada programa é aplicado a um aluno por vez, justamente para que cada mudança possa ser desfeita sozinha, sem tocar nos outros alunos.',
           'Também não existe cadastro de aluno novo, lançamento de avaliação física ou criação de compromisso na agenda pelo chat — essas continuam sendo ações do portal. A regra que orienta o desenho: a IA lê tudo que ajuda a decidir e escreve apenas onde o erro é reversível.',
-          'E há um limite estrutural mais importante que todos: nenhuma conexão consegue ver dado de outro personal. O identificador da conta nunca é um parâmetro que a IA preenche — ele vem do token de autorização. Mesmo que alguém escrevesse uma instrução maliciosa dentro de uma mensagem de aluno, não há campo onde a IA possa pedir "os dados de outra conta".',
+          'E há um limite que vale por todos: nenhuma conexão consegue ver dado de outro personal. Cada autorização alcança exclusivamente os dados da conta que a concedeu.',
         ],
       },
       {
         h2: 'Segurança: o que você autoriza, e como revoga',
         paragraphs: [
-          'A autorização acontece por OAuth, o mesmo mecanismo de "entrar com" que você já usa. Você faz login no CoachPilot, vê uma tela de consentimento dizendo exatamente o que aquela IA vai poder fazer e escolhe entre somente leitura ou leitura e escrita de treinos. Sua senha nunca passa pela IA.',
-          'Depois de conectado: toda escrita é registrada em auditoria com o nome do cliente que a fez, gera notificação para você no portal e mantém um snapshot que permite desfazer por 7 dias. A conexão aparece em Configurações → Conexões e pode ser revogada a qualquer momento, com efeito imediato.',
-          'Um ponto que merece atenção honesta: o escopo de leitura alcança anamnese, avaliações físicas e relatos de dor — dados pessoais sensíveis de saúde dos seus alunos. Ao consultá-los por uma IA externa, você os envia ao provedor daquela IA, que trata os dados em servidores no exterior. Isso é legítimo e é a sua decisão, mas exige que o consentimento que você obteve do aluno cubra essa transferência. Quem não quer essa transmissão simplesmente não conecta. Os detalhes estão nos [termos de uso](/termos) e na [política de privacidade](/privacidade).',
+          'A autorização funciona como o "entrar com" que você já usa: o login acontece no próprio CoachPilot, uma tela mostra exatamente o que aquela IA vai poder fazer e você escolhe entre somente leitura ou leitura e escrita de treinos. Sua senha nunca passa pela IA.',
+          'Depois de conectado: toda escrita gera notificação para você no portal, com o resumo da mudança, fica registrada com o nome da IA que a fez e pode ser desfeita por 7 dias. A conexão aparece em Configurações → Conexões e pode ser revogada a qualquer momento, com efeito imediato.',
+          'Um ponto que merece atenção honesta: a consulta alcança anamnese, avaliações físicas e relatos de dor — dados pessoais sensíveis de saúde dos seus alunos. Ao consultá-los por uma IA externa, você os envia ao provedor daquela IA, que trata os dados em servidores no exterior. Isso é legítimo e é a sua decisão, mas exige que o consentimento que você obteve do aluno cubra essa transferência. Quem não quer essa transmissão simplesmente não conecta. Os detalhes estão nos [termos de uso](/termos) e na [política de privacidade](/privacidade).',
         ],
       },
       {
         h2: 'Quanto custa',
         paragraphs: [
-          'A conexão MCP é gratuita e está incluída nos dois planos do CoachPilot, inclusive no plano grátis de até 3 alunos. Não há add-on, não há cobrança por uso e não há gate de plano.',
-          'O custo de IA é o da assinatura que você já paga — ChatGPT, Claude ou Gemini — e não passa pelo CoachPilot. É uma diferença relevante em relação a plataformas que embutem IA própria e repassam o custo do modelo na mensalidade: aqui, o token é do seu plano, e você escolhe qual IA usar. Veja os [preços completos](/precos).',
+          'A conexão é gratuita e está incluída nos dois planos do CoachPilot, inclusive no plano grátis de até 3 alunos. Não há add-on, não há cobrança por uso e não há gate de plano.',
+          'O custo de IA é o da assinatura que você já paga — ChatGPT, Claude ou Gemini — e não passa pelo CoachPilot. É uma diferença relevante em relação a plataformas que embutem IA própria e repassam o custo do modelo na mensalidade: aqui, o custo do modelo é do seu plano, e você escolhe qual IA usar. Veja os [preços completos](/precos).',
         ],
       },
       {
@@ -390,11 +366,11 @@ export const BLOG_POSTS = [
       },
     ],
     faqs: [
-      { q: 'Dá para gerenciar meus alunos pelo ChatGPT?', a: 'Sim. Com a conexão MCP do CoachPilot, o ChatGPT consulta alunos, anamnese, avaliações, histórico de sessões, evolução, agenda e pendências, e — se você autorizar a escrita — monta e aplica programas de treino direto na plataforma.' },
-      { q: 'É um plugin do ChatGPT?', a: 'Sim, é assim que muita gente chama — e é onde ele fica: no menu Plugins do ChatGPT, onde o CoachPilot aparece como app publicado no diretório desde agosto de 2026. O nome da tecnologia por baixo é MCP (Model Context Protocol), o padrão aberto que ChatGPT, Claude e Gemini adotaram. Por isso a mesma conexão funciona nos três.' },
-      { q: 'A IA pode apagar meus dados ou mexer na minha assinatura?', a: 'Não. Não existe operação para excluir aluno, apagar histórico ou alterar plano, assinatura e cobranças. A escrita se limita a programas de treino, sempre com snapshot, notificação e desfazer por 7 dias.' },
-      { q: 'A IA de outro personal pode ver meus alunos?', a: 'Não. Cada conexão só alcança os dados da conta que a autorizou. A identificação da conta vem do token de autorização e nunca é um parâmetro que a IA possa preencher.' },
-      { q: 'Preciso pagar mais para usar a conexão?', a: 'Não. A conexão MCP é gratuita nos dois planos, inclusive no grátis de até 3 alunos. O que você paga é a sua assinatura de IA (ChatGPT, Claude ou Gemini), que não passa pelo CoachPilot.' },
+      { q: 'Dá para gerenciar meus alunos pelo ChatGPT?', a: 'Sim. Com a conexão do CoachPilot, o ChatGPT consulta alunos, anamnese, avaliações, histórico de sessões, evolução, agenda e pendências, e — se você autorizar a escrita — monta e aplica programas de treino direto na plataforma.' },
+      { q: 'É um plugin do ChatGPT?', a: 'Sim, é assim que muita gente chama — e é onde ele fica: no menu Plugins do ChatGPT, onde o CoachPilot aparece como app publicado no diretório desde agosto de 2026. O padrão aberto por trás (MCP) é o mesmo que Claude e Gemini adotaram, e por isso a mesma conexão funciona nos três.' },
+      { q: 'A IA pode apagar meus dados ou mexer na minha assinatura?', a: 'Não. Excluir aluno, apagar histórico e alterar plano, assinatura ou cobrança estão fora do alcance da IA. A escrita se limita a programas de treino, sempre com notificação no portal e desfazer por 7 dias.' },
+      { q: 'A IA de outro personal pode ver meus alunos?', a: 'Não. Cada conexão só alcança os dados da conta que a autorizou.' },
+      { q: 'Preciso pagar mais para usar a conexão?', a: 'Não. A conexão é gratuita nos dois planos, inclusive no grátis de até 3 alunos. O que você paga é a sua assinatura de IA (ChatGPT, Claude ou Gemini), que não passa pelo CoachPilot.' },
       { q: 'Consigo cadastrar aluno novo pelo chat?', a: 'Ainda não. Cadastro de aluno, avaliação física e agenda continuam sendo feitos no portal. Pelo chat você consulta tudo e altera programas de treino.' },
     ],
     related: [
@@ -406,7 +382,7 @@ export const BLOG_POSTS = [
   {
     slug: 'como-conectar-chatgpt-claude-gemini-ao-coachpilot',
     title: 'Como conectar o ChatGPT, o Claude ou o Gemini ao CoachPilot (passo a passo)',
-    description: 'Tutorial de conexão MCP do CoachPilot: requisitos por provedor, escopos de leitura e escrita, passo a passo no ChatGPT e no Claude, primeiros comandos e como revogar.',
+    description: 'Tutorial de conexão do CoachPilot com a sua IA: requisitos por provedor, permissões de leitura e escrita, passo a passo no ChatGPT e no Claude, primeiros comandos e como revogar.',
     h1: 'Como conectar o ChatGPT, o Claude ou o Gemini ao CoachPilot',
     datePublished: '2026-08-22',
     dateModified: '2026-08-31',
@@ -434,28 +410,28 @@ export const BLOG_POSTS = [
           rows: [
             ['ChatGPT', 'Plugins → buscar "coachpilot" → +', 'Não — funciona na conta gratuita', 'App publicado no diretório público; funciona também no app de celular'],
             ['Claude (claude.ai e Desktop)', 'Settings → Connectors → Add custom connector', 'Não — funciona no plano grátis', 'No plano grátis, o limite é 1 conector personalizado'],
-            ['Gemini', 'CLI (mcpServers no settings.json) ou Vertex AI', 'Varia conforme o caminho usado', 'No app de consumidor, o suporte a conector de terceiro ainda é limitado'],
+            ['Gemini', 'Só pelo CLI ou pela versão empresarial', 'Varia conforme o caminho usado', 'No app de consumidor, o suporte a conexão de terceiro ainda é limitado'],
           ],
         },
       },
       {
         h2: 'Qual das três escolher',
         paragraphs: [
-          'Se você ainda não tem preferência, o ChatGPT é o caminho mais curto: o CoachPilot está no diretório público, então a instalação é buscar pelo nome e clicar no +, sem plano pago e sem colar endereço nenhum. O Claude resolve igualmente bem e também funciona no plano gratuito, com o passo extra de colar o endereço do servidor. O comparativo completo, com preço e limitações de cada um, está em [Claude, ChatGPT ou Gemini para personal trainer](/blog/claude-chatgpt-ou-gemini-para-personal-trainer).',
+          'Se você ainda não tem preferência, o ChatGPT é o caminho mais curto: o CoachPilot está no diretório público, então a instalação é buscar pelo nome e clicar no +, sem plano pago e sem colar endereço nenhum. O Claude resolve igualmente bem e também funciona no plano gratuito, com o passo extra de colar o endereço da conexão. O comparativo completo, com preço e limitações de cada um, está em [Claude, ChatGPT ou Gemini para personal trainer](/blog/claude-chatgpt-ou-gemini-para-personal-trainer).',
         ],
       },
       {
-        h2: 'Escolha o escopo: leitura ou leitura e escrita',
+        h2: 'Escolha a permissão: leitura ou leitura e escrita',
         paragraphs: [
-          'Na tela de consentimento você decide o que aquela IA pode fazer. São duas opções, e a escolha não é definitiva — dá para revogar e reconectar com outro escopo.',
+          'Na tela de consentimento você decide o que aquela IA pode fazer. São duas opções, e a escolha não é definitiva — dá para revogar e reconectar com outra permissão.',
           'Somente leitura permite consultar tudo: alunos, anamnese, avaliações, sessões, evolução, agenda e pendências. A IA não altera nada. É o modo recomendado para começar.',
-          'Leitura e escrita de treinos adiciona três operações: aplicar programa, atualizar treino e desfazer alteração. Nada além de treino é gravável — plano, assinatura, cobrança e exclusão de aluno estão fora do alcance da IA em qualquer escopo.',
+          'Leitura e escrita de treinos permite que a IA aplique um programa, ajuste um treino e desfaça o que aplicou. Nada além de treino é gravável — plano, assinatura, cobrança e exclusão de aluno ficam fora do alcance da IA com qualquer permissão.',
         ],
       },
       {
         h2: 'Passo a passo no ChatGPT',
         paragraphs: [
-          'É o caminho mais curto, porque o CoachPilot é um app publicado no diretório: nada de endereço de servidor nem de modo de desenvolvedor.',
+          'É o caminho mais curto, porque o CoachPilot é um app publicado no diretório: nada de configuração manual nem de modo de desenvolvedor.',
         ],
         list: [
           'No menu lateral do ChatGPT, abra "Plugins".',
@@ -471,7 +447,7 @@ export const BLOG_POSTS = [
           'Um passo a mais que no ChatGPT, e também funciona sem plano pago (com o limite de um conector).',
         ],
         list: [
-          'No CoachPilot, abra Configurações → Conexões e copie o endereço do servidor MCP.',
+          'No CoachPilot, abra Configurações → Conexões e copie o endereço que aparece ali.',
           'No Claude, vá em Settings → Connectors e escolha adicionar um conector personalizado.',
           'Cole o endereço e confirme. O Claude abre a tela de autorização do CoachPilot no navegador.',
           'Faça login (ou aproveite a sessão já aberta), escolha entre leitura ou leitura e escrita e confirme.',
@@ -481,7 +457,7 @@ export const BLOG_POSTS = [
       {
         h2: 'A primeira conversa: por onde começar',
         paragraphs: [
-          'Duas dicas que mudam a qualidade das respostas desde o início. A primeira: peça à IA para ler o guia de prescrição do CoachPilot antes de qualquer pedido de treino. É uma operação da própria conexão, e ela entrega as regras de formato, unidades e a sua biblioteca de exercícios — sem isso, a IA monta com nomes de exercício que não existem no seu catálogo.',
+          'Duas dicas que mudam a qualidade das respostas desde o início. A primeira: peça à IA para consultar as regras de prescrição do CoachPilot e a sua biblioteca antes de qualquer pedido de treino. Com isso ela usa o seu formato, as suas unidades e os seus nomes de exercício; sem isso, monta com nomes que não existem no seu catálogo.',
           'A segunda: comece pelas perguntas de leitura. "Me dá o resumo da carteira", "quem está sem treino vigente", "me dá o dossiê da Júlia". Você calibra a confiança vendo a IA acertar sobre dados que você conhece de cor, antes de deixá-la escrever.',
         ],
       },
@@ -493,7 +469,7 @@ export const BLOG_POSTS = [
         list: [
           'A IA diz que não tem acesso aos dados: quase sempre é conexão não autorizada até o fim (a tela de consentimento foi fechada antes de confirmar). Reconecte.',
           'As ferramentas de escrita não aparecem: a conexão foi autorizada como somente leitura. Revogue em Configurações → Conexões e reconecte escolhendo leitura e escrita.',
-          'A IA monta treino com exercícios que não são os seus: ela não leu a biblioteca. Peça explicitamente para consultar o guia de prescrição antes de montar.',
+          'A IA monta treino com exercícios que não são os seus: ela não consultou a biblioteca. Peça explicitamente para consultar as regras de prescrição e a sua biblioteca antes de montar.',
           'A IA inventa um aluno ou uma carga: peça para ela consultar o dado antes de responder. Modelos podem preencher lacunas quando não buscam — o pedido explícito de consulta resolve.',
         ],
       },
@@ -502,7 +478,7 @@ export const BLOG_POSTS = [
         paragraphs: [
           'Conecte uma IA por vez e mantenha só as conexões que você usa — cada conexão ativa é uma porta aberta, mesmo que estreita. Prefira revisar as propostas de treino na conversa antes de mandar aplicar; a revisão é a sua camada de responsabilidade técnica, e é ela que transforma a IA em assistente em vez de prescritor.',
           'Para encerrar, vá em Configurações → Conexões e revogue. O efeito é imediato: o acesso é cortado e nenhuma consulta nova passa. Se preferir, revogue também do lado da IA, removendo o conector.',
-          'Vale lembrar do lado jurídico, porque o escopo de leitura alcança anamnese, avaliações e relatos de dor — dado sensível de saúde do seu aluno. Antes de consultar essas informações por uma IA externa, confirme que o consentimento obtido do aluno cobre essa transferência ao provedor. Está detalhado na [política de privacidade](/privacidade).',
+          'Vale lembrar do lado jurídico, porque a consulta alcança anamnese, avaliações e relatos de dor — dado sensível de saúde do seu aluno. Antes de consultar essas informações por uma IA externa, confirme que o consentimento obtido do aluno cobre essa transferência ao provedor. Está detalhado na [política de privacidade](/privacidade).',
         ],
       },
     ],
@@ -510,7 +486,7 @@ export const BLOG_POSTS = [
       { q: 'Preciso de ChatGPT Plus para conectar?', a: 'Não. Desde agosto de 2026 o CoachPilot é um app publicado no diretório público do ChatGPT, e a instalação funciona também na conta gratuita — basta buscar por "coachpilot" nos Plugins. No Claude, o conector personalizado também funciona no plano grátis, limitado a um conector.' },
       { q: 'A conexão custa algo no CoachPilot?', a: 'Não. Ela é gratuita e está incluída nos dois planos, inclusive no grátis de até 3 alunos.' },
       { q: 'Posso conectar mais de uma IA ao mesmo tempo?', a: 'Sim. Cada conexão é autorizada separadamente e aparece individualmente em Configurações → Conexões, onde pode ser revogada sem afetar as outras.' },
-      { q: 'Minha senha do CoachPilot vai para a IA?', a: 'Não. A autorização é por OAuth: você faz login no próprio CoachPilot e a IA recebe apenas um token com o escopo que você concedeu.' },
+      { q: 'Minha senha do CoachPilot vai para a IA?', a: 'Não. Você faz login no próprio CoachPilot, e a IA recebe apenas a permissão que você concedeu — nunca a sua senha.' },
       { q: 'Como eu desconecto?', a: 'Em Configurações → Conexões, revogue a conexão. O corte é imediato.' },
     ],
     related: [
@@ -549,8 +525,8 @@ export const BLOG_POSTS = [
         paragraphs: [
           'Com o [ChatGPT, o Claude ou o Gemini conectados ao CoachPilot](/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot), o pedido é uma frase: "todos os meus alunos de hipertrofia estão entrando no terceiro mesociclo — atualiza o programa de cada um aumentando a intensidade e reduzindo o volume, respeitando as restrições da anamnese, e me mostra a proposta antes de aplicar".',
           'O que acontece em seguida, na prática: a IA lista os alunos que se encaixam, lê o programa vigente e o histórico de cada um, propõe as mudanças na conversa, você revisa e ajusta em linguagem natural, e ela aplica. Cada aluno recebe um programa pensado para ele — não a mesma cópia.',
-          'Um ponto de honestidade que vale mais que qualquer promessa de marketing: não existe operação de escrita em massa. A IA aplica um aluno por vez, e isso é uma decisão de projeto, não uma limitação temporária. Cada aplicação tem o seu próprio snapshot, a sua própria notificação e o seu próprio botão de desfazer. Se a proposta para o aluno 7 estava errada, você desfaz o aluno 7 — e não os outros 29. Escrita em massa às cegas é exatamente o tipo de operação que ninguém quer que uma IA execute na sua carteira.',
-          'Do seu lado, a experiência é a que você pediu: um pedido, nada digitado. A diferença está em como isso é gravado por baixo — e é essa diferença que torna a operação reversível.',
+          'Um ponto de honestidade que vale mais que qualquer promessa de marketing: não existe alteração em massa. A IA aplica um aluno por vez, e isso é decisão de projeto, não limitação temporária. Cada aplicação tem a sua própria notificação e o seu próprio botão de desfazer. Se a proposta para o aluno 7 estava errada, você desfaz o aluno 7 — e não os outros 29. Escrita em massa às cegas é exatamente o tipo de operação que ninguém quer que uma IA execute na sua carteira.',
+          'Do seu lado, a experiência é a que você pediu: um pedido, nada digitado. A diferença está em cada alteração ser registrada separadamente — e é isso que torna tudo reversível, aluno por aluno.',
         ],
       },
       {
@@ -584,8 +560,8 @@ export const BLOG_POSTS = [
     faqs: [
       { q: 'Dá para alterar o treino de todos os alunos de uma vez?', a: 'Sim, com dois caminhos. Para o mesmo programa em vários alunos, o portal aplica um template a todos os selecionados de uma vez. Para programas individualizados, a IA conectada resolve num único pedido, aplicando aluno por aluno — com desfazer individual em cada um.' },
       { q: 'Preciso digitar algo?', a: 'Não. No caminho do template, você seleciona os alunos e aplica. No caminho do chat, você pede em linguagem natural, revisa a proposta e manda aplicar.' },
-      { q: 'Se a IA errar em um aluno, perco o programa dele?', a: 'Não. Cada aplicação guarda um snapshot do programa anterior e pode ser desfeita por 7 dias, individualmente, sem afetar os outros alunos.' },
-      { q: 'A IA avisa quando altera algo?', a: 'Sim. Toda escrita gera notificação no portal com o resumo da mudança e fica registrada em auditoria.' },
+      { q: 'Se a IA errar em um aluno, perco o programa dele?', a: 'Não. O programa anterior fica guardado e a alteração pode ser desfeita por 7 dias, individualmente, sem afetar os outros alunos.' },
+      { q: 'A IA avisa quando altera algo?', a: 'Sim. Toda alteração gera notificação no portal, com o resumo da mudança e a opção de desfazer.' },
       { q: 'Isso funciona no plano grátis?', a: 'Sim. A conexão com IA é gratuita nos dois planos; o plano grátis cobre até 3 alunos.' },
     ],
     related: [
@@ -622,7 +598,7 @@ export const BLOG_POSTS = [
       {
         h2: 'Nível 3 — IA conectada ao seu sistema',
         paragraphs: [
-          'Aqui a lógica se inverte: em vez de a plataforma ter uma IA dentro dela, a sua IA passa a ter acesso à plataforma. É o que o padrão MCP (Model Context Protocol) permite, e o que o CoachPilot implementou em 2026 com um servidor MCP próprio.',
+          'Aqui a lógica se inverte: em vez de a plataforma ter uma IA dentro dela, a sua IA passa a ter acesso à plataforma. É o que o padrão aberto MCP permite, e o que o CoachPilot passou a oferecer em 2026.',
           'Na prática você conversa com o ChatGPT, o Claude ou o Gemini que já assina, e ele lê os seus dados reais: alunos, anamnese, avaliações, histórico de sessões, evolução por exercício, agenda, pendências. Com permissão de escrita, monta e aplica programas de treino direto na plataforma, com aviso e desfazer. Sem copiar, sem colar, sem baixar arquivo — e sem abrir o app para consultar.',
           'A diferença de natureza está em quem tem iniciativa. Nos níveis 1 e 2, você pede uma peça de conteúdo. No nível 3, você faz uma pergunta sobre o seu negócio e recebe uma resposta baseada no seu dado — ou dá uma instrução e ela é executada. Os detalhes do que é possível estão em [gerenciar alunos e treinos pelo ChatGPT](/blog/gerenciar-alunos-e-treinos-pelo-chatgpt).',
         ],
@@ -679,16 +655,16 @@ export const BLOG_POSTS = [
       {
         h2: 'Onde o CoachPilot se posiciona',
         paragraphs: [
-          'O CoachPilot cobre os níveis 1 e 3 — e deliberadamente não vende o nível 2. Para quem não quer conectar nada, existem prompts prontos que fazem a IA gerar o programa no formato exato de importação, com revisão em tela antes de aplicar. Para quem quer a operação inteira por conversa, existe o servidor MCP, gratuito nos dois planos, funcionando com a assinatura de IA que você já tem.',
+          'O CoachPilot cobre os níveis 1 e 3 — e deliberadamente não vende o nível 2. Para quem não quer conectar nada, existem prompts prontos que fazem a IA gerar o programa no formato exato de importação, com revisão em tela antes de aplicar. Para quem quer a operação inteira por conversa, existe a conexão com a sua IA, gratuita nos dois planos e funcionando com a assinatura que você já tem.',
           'Nas duas pontas, a decisão técnica permanece sua e toda escrita é reversível. Dá para testar o fluxo completo no [plano grátis de até 3 alunos](/precos), sem cartão — e a [conexão com ChatGPT, Claude ou Gemini](/chatgpt-para-personal-trainer) está incluída desde o primeiro dia.',
         ],
       },
     ],
     faqs: [
-      { q: 'Qual o melhor app para personal trainer com IA?', a: 'Depende do nível de IA que você precisa. Para gerar treino dentro do app, MFIT e TreinoAI atendem. Para conectar o ChatGPT, o Claude ou o Gemini aos seus próprios dados e operar por conversa, o CoachPilot é a plataforma nacional com servidor MCP em produção (agosto/2026).' },
+      { q: 'Qual o melhor app para personal trainer com IA?', a: 'Depende do nível de IA que você precisa. Para gerar treino dentro do app, MFIT e TreinoAI atendem. Para conectar o ChatGPT, o Claude ou o Gemini aos seus próprios dados e operar por conversa, o CoachPilot é a plataforma nacional que oferece essa conexão em produção (agosto/2026).' },
       { q: 'IA vai substituir o personal trainer?', a: 'Não. IA produz estrutura e texto rapidamente, mas prescrição é ato profissional com responsabilidade técnica e registro no CREF. O ganho real é de tempo operacional, não de julgamento.' },
       { q: 'Preciso pagar ChatGPT Plus para usar IA na gestão?', a: 'Não, nos dois caminhos. Os prompts com importação funcionam nas versões gratuitas, e para conectar o sistema ao ChatGPT também não: desde agosto de 2026 o CoachPilot é um app publicado no diretório público, instalável na conta gratuita e disponível também no aplicativo de celular. No Claude, o conector funciona até no plano grátis, limitado a um.' },
-      { q: 'É seguro dar acesso dos meus dados a uma IA?', a: 'Depende de como o acesso é desenhado. Procure conexão por OAuth com escopo escolhido por você, isolamento por conta, registro de auditoria, notificação de escrita, opção de desfazer e revogação imediata — e leia o que os termos dizem sobre dado de saúde.' },
+      { q: 'É seguro dar acesso dos meus dados a uma IA?', a: 'Depende de como o acesso é desenhado. Procure autorização explícita com permissão escolhida por você, acesso restrito à sua conta, notificação a cada alteração, opção de desfazer e revogação imediata — e leia o que os termos dizem sobre dado de saúde.' },
     ],
     related: [
       { label: 'Gerenciar alunos e treinos pelo ChatGPT', to: '/blog/gerenciar-alunos-e-treinos-pelo-chatgpt' },
@@ -810,7 +786,7 @@ export const BLOG_POSTS = [
         h2: '1. CoachPilot — gestão com IA e WhatsApp integrados',
         paragraphs: [
           'O [CoachPilot](/software-para-personal-trainer) é uma plataforma brasileira com plano grátis para até 3 alunos e Gestão Pro por R$39,90/mês com alunos ilimitados. O diferencial é a operação por IA: você monta pacotes de treino ABC/ABCDE e migra a carteira inteira de alunos conversando com o ChatGPT, Claude ou Gemini que já usa — a IA gera o conteúdo no formato da plataforma e você importa com um clique, revisando antes de aplicar. Esse recurso é gratuito em todos os planos.',
-          'Desde agosto de 2026 há um segundo nível de IA, e é o que mais separa a plataforma do restante da lista: um [servidor MCP](/ia-para-personal-trainer) que conecta o ChatGPT, o Claude ou o Gemini direto aos dados do personal. Conectada, a IA responde "quem não treina há mais de 10 dias?" lendo a carteira real, entrega o dossiê de um aluno antes da sessão e — se autorizada — aplica programas de treino sem copiar e colar, com notificação e desfazer. Nenhuma outra plataforma nacional oferecia isso na verificação de agosto de 2026.',
+          'Desde agosto de 2026 há um segundo nível de IA, e é o que mais separa a plataforma do restante da lista: uma [conexão MCP](/ia-para-personal-trainer) que liga o ChatGPT, o Claude ou o Gemini direto aos dados do personal. Conectada, a IA responde "quem não treina há mais de 10 dias?" lendo a carteira real, entrega o dossiê de um aluno antes da sessão e — se autorizada — aplica programas de treino sem copiar e colar, com notificação e desfazer. Nenhuma outra plataforma nacional oferecia isso na verificação de agosto de 2026.',
           'Também se destaca na experiência do aluno: app via PWA (sem loja de aplicativos), gamificação completa com ranking, conquistas e streaks, e um assistente de IA opcional que responde o aluno no WhatsApp com contexto do treino real — o aluno manda "fiz 3x10 com 80kg" e o registro entra no treino dele. O financeiro recebe via Pix direto na conta do personal, sem taxa da plataforma.',
           'Pontos a considerar: é uma plataforma mais nova, sem a base de avaliações dos líderes de mercado, e o app do aluno é PWA em vez de app nativo nas lojas.',
         ],
@@ -910,7 +886,7 @@ export const BLOG_POSTS = [
       {
         h2: 'A diferença que mais pesa hoje: o app dentro do ChatGPT',
         paragraphs: [
-          'Em agosto de 2026 o [CoachPilot foi aprovado pela OpenAI e publicado no diretório de apps do ChatGPT](/blog/app-de-personal-trainer-para-chatgpt). Você abre os Plugins, busca por "coachpilot", clica no + e o ChatGPT que já está no seu celular passa a enxergar os seus alunos de verdade: "quem não treina há mais de 10 dias?", "me dá o resumo da Júlia antes da sessão", "adapta o treino do Pedro pra dor no ombro e aplica". Sem copiar, sem colar, sem abrir o portal. Por baixo é um servidor MCP, o padrão aberto que ChatGPT, Claude e Gemini usam — então a mesma conexão atende as três IAs.',
+          'Em agosto de 2026 o [CoachPilot foi aprovado pela OpenAI e publicado no diretório de apps do ChatGPT](/blog/app-de-personal-trainer-para-chatgpt). Você abre os Plugins, busca por "coachpilot", clica no + e o ChatGPT que já está no seu celular passa a enxergar os seus alunos de verdade: "quem não treina há mais de 10 dias?", "me dá o resumo da Júlia antes da sessão", "adapta o treino do Pedro pra dor no ombro e aplica". Sem copiar, sem colar, sem abrir o portal. E como o padrão de conexão (MCP) é o mesmo nas três IAs, vale igual para Claude e Gemini.',
           'O MFIT tem IA dentro do aplicativo, que gera treino a partir de um formulário. É útil, mas é outra categoria: não responde sobre a carteira, não lê o histórico de um aluno para propor o ajuste e não existe fora daquela tela. Na verificação de 31 de agosto de 2026, o MFIT não tinha app no diretório do ChatGPT nem conexão equivalente — e nenhuma outra plataforma nacional de gestão para personal trainer tinha.',
           'A conexão do CoachPilot é gratuita nos dois planos, inclusive no grátis, e o custo do modelo é da sua própria assinatura de IA — que nem precisa ser paga, porque o app funciona também na conta gratuita do ChatGPT. O que dá e o que não dá para pedir está detalhado em [gerenciar alunos e treinos pelo ChatGPT](/blog/gerenciar-alunos-e-treinos-pelo-chatgpt).',
         ],
@@ -1083,7 +1059,7 @@ export const BLOG_POSTS = [
       {
         h2: 'Atualização: agora dá para pular o copiar e colar',
         paragraphs: [
-          'Desde agosto de 2026, o passo 3 deste guia tem uma versão sem arquivo nenhum. O CoachPilot publica um servidor MCP — o padrão que ChatGPT, Claude e Gemini usam para se conectar a sistemas externos — e a IA passa a ler os seus dados e gravar o programa direto na plataforma, sem download, sem colar e sem tela de importação.',
+          'Desde agosto de 2026, o passo 3 deste guia tem uma versão sem arquivo nenhum. O CoachPilot tem conexão MCP — o padrão que ChatGPT, Claude e Gemini usam para conversar com sistemas de fora — e a IA passa a ler os seus dados e gravar o programa direto na plataforma, sem download, sem colar e sem tela de importação.',
           'O fluxo por prompt continua valendo e continua gratuito: é a opção de quem prefere não conectar nada e revisar em tela. Quem quer a operação inteira por conversa encontra o passo a passo em [como conectar o ChatGPT, o Claude ou o Gemini](/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot) e a lista do que dá para pedir em [gerenciar alunos e treinos pelo ChatGPT](/blog/gerenciar-alunos-e-treinos-pelo-chatgpt).',
         ],
       },
