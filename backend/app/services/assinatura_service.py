@@ -14,7 +14,7 @@ from fastapi import HTTPException
 from app.config import settings
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.utils import new_id, now_iso
+from app.utils import add_meses, new_id, now_iso
 
 _bloqueados_cache: dict[str, tuple[float, set[str]]] = {}
 _BLOQUEADOS_TTL = 60  # s
@@ -56,6 +56,7 @@ def _ensure_assinatura(personal_id: str) -> dict:
         "plano": PLANO_TRIAL,
         "trial_iniciado_em": now,
         "valida_ate": None,
+        "dia_ancora": None,
         "aviso_sched_data": None,
         "addon_whatsapp_ativo": False,
         "addon_ia_ativo": False,
@@ -166,23 +167,58 @@ def _reagendar_aviso(personal_id: str, assinatura_atual: dict, nova_valida_ate: 
     return nova_aviso_data
 
 
+def _avancar_vigencia(assinatura: dict, hoje: date, meses: int, dias: int) -> tuple[date, date, int]:
+    """Calcula `(base, nova_valida_ate, dia_ancora)` do próximo ciclo.
+
+    O ciclo pago avança por **mês de calendário ancorado** no dia da assinatura, não por 30
+    dias corridos: com 30 fixos o vencimento anda para trás em todo mês de 31 dias
+    (17/07 → 16/08 → 15/09) e 12 mensalidades cobrem só 360 dias.
+
+    A base é o vencimento atual quando o plano está ativo — renovar antecipado nunca perde
+    saldo — e `hoje` quando é trial/expirado (o período parado não é recuperado, é
+    intencional). O `>=` é o mesmo de `_is_pro_ativo`: com `>` estrito, renovar no último dia
+    de um ciclo clampado (âncora 31, `valida_ate == hoje == 28/02`) cairia no ramo de
+    reativação e re-ancoraria em 28, matando a âncora 31 para sempre.
+
+    Crédito em `dias` (cupom, indicação, bônus de feedback, admin) continua em dias corridos
+    e **move a âncora** para o dia em que passou a vencer. Sem isso o `add_meses` da
+    renovação seguinte teleportaria de volta para a âncora antiga e comeria o bônus: âncora
+    17 + 10 dias de bônus = 27/09, e o mês seguinte voltaria para 17/10 (−10 dias)."""
+    valida_ate_atual = assinatura.get("valida_ate")
+    atual = date.fromisoformat(valida_ate_atual) if valida_ate_atual else None
+    if atual and atual >= hoje:
+        base = atual
+        ancora = int(assinatura.get("dia_ancora") or base.day)
+    else:
+        base = hoje
+        ancora = hoje.day
+    nova = add_meses(base, meses, ancora) if meses else base
+    if dias:
+        nova += timedelta(days=dias)
+        ancora = nova.day
+    return base, nova, ancora
+
+
 def aplicar_pagamento(
-    personal_id: str, dias: int = 30, *,
+    personal_id: str, dias: int = 0, *, meses: int = 0,
     payment_id: str | None = None, valor: float | None = None,
     origem: Literal["PIX", "ADMIN", "PROMO", "INDICACAO"] = "PIX",
 ) -> dict:
-    """Estende a validade de forma cumulativa: se ainda ativa, soma a partir do
-    vencimento atual; se expirada/trial, soma a partir de hoje. Registra também o
-    histórico de pagamentos (PIX aprovado ou concessão ADMIN — ver conceder_admin)."""
+    """Estende a validade de forma cumulativa: se ainda ativa, a partir do vencimento
+    atual; se expirada/trial, a partir de hoje. `meses` avança meses de calendário (ciclo
+    pago, ancorado — ver `_avancar_vigencia`); `dias` soma dias corridos (cupom/bônus).
+    Registra também o histórico de pagamentos (PIX aprovado ou concessão ADMIN — ver
+    conceder_admin)."""
+    if meses <= 0 and dias <= 0:
+        raise ValueError("aplicar_pagamento exige meses > 0 ou dias > 0")
     assinatura = _ensure_assinatura(personal_id)
     hoje = _hoje()
-    valida_ate_atual = assinatura.get("valida_ate")
-    base = date.fromisoformat(valida_ate_atual) if valida_ate_atual and date.fromisoformat(valida_ate_atual) > hoje else hoje
-    nova_valida_ate = base + timedelta(days=dias)
+    base, nova_valida_ate, dia_ancora = _avancar_vigencia(assinatura, hoje, meses, dias)
     nova_aviso_data = _reagendar_aviso(personal_id, assinatura, nova_valida_ate)
     fields = {
         "plano": PLANO_GESTAO_PRO,
         "valida_ate": nova_valida_ate.isoformat(),
+        "dia_ancora": dia_ancora,
         "aviso_sched_data": nova_aviso_data,
         "atualizado_em": now_iso(),
     }
@@ -199,11 +235,15 @@ def aplicar_pagamento(
         "payment_id": payment_id,
         "origem": origem,
         "valor": valor,
-        "dias_concedidos": dias,
+        # Dias REAIS do ciclo (28..31 no mensal), não a constante pedida — o campo já existe
+        # no histórico gravado, então continua legível para os itens antigos.
+        "dias_concedidos": (nova_valida_ate - base).days,
         "plano": PLANO_GESTAO_PRO,
         "valida_ate": nova_valida_ate.isoformat(),
         "processado_em": processado_em,
     }
+    if meses:
+        pagamento_item["meses_concedidos"] = meses
     if finpilot_code is not None:
         pagamento_item["finpilot_code"] = finpilot_code
     repo.put_item(
@@ -219,10 +259,13 @@ def listar_pagamentos(personal_id: str, limit: int = 24) -> list[dict]:
     return [repo.clean(it) for it in items]
 
 
-def conceder_admin(personal_id: str, dias: int, addons: list[str] | None = None) -> dict:
+def conceder_admin(personal_id: str, dias: int = 0, addons: list[str] | None = None, *,
+                   meses: int = 0) -> dict:
     """Concessão manual (admin) — mesmo efeito de um pagamento aprovado, mais os
-    add-ons indicados. Usado no bootstrap das contas internas e em suporte futuro."""
-    resultado = aplicar_pagamento(personal_id, dias=dias, origem="ADMIN")
+    add-ons indicados. Usado no bootstrap das contas internas e em suporte futuro.
+    Preferir `meses` para conceder ciclo de plano (mantém o dia do vencimento fixo);
+    `dias` é para bônus avulso."""
+    resultado = aplicar_pagamento(personal_id, dias=dias, meses=meses, origem="ADMIN")
     fields = {}
     for addon in addons or []:
         if addon == "whatsapp":

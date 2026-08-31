@@ -51,7 +51,7 @@ parser.add_argument("--email", default="demo@coachpilot.com.br", help="E-mail da
 parser.add_argument("--senha", default="Demo@123", help="Senha permanente da conta demo")
 parser.add_argument("--nome", default="Studio Demonstração", help="Nome do personal (Cognito + perfil)")
 parser.add_argument("--slug", default="demo", help="Slug público (/@slug)")
-parser.add_argument("--plano-dias", type=int, default=365, help="Dias de Gestão Pro concedidos")
+parser.add_argument("--plano-meses", type=int, default=12, help="Meses de Gestão Pro concedidos")
 parser.add_argument("--profile", default="pessoal-hotmail")
 parser.add_argument("--region", default="us-east-1")
 parser.add_argument("--table", default="personal-trainer-prod")
@@ -219,8 +219,8 @@ if args.reset:
 # ══════════════════════════════════════════════════════════════════════════════════════
 # 1) Plano — 1 ano de Gestão Pro (grátis, concessão de admin) → alunos ilimitados
 # ══════════════════════════════════════════════════════════════════════════════════════
-assinatura_service.conceder_admin(PERSONAL_ID, dias=args.plano_dias)
-print(f"Plano: Gestão Pro concedido por {args.plano_dias} dias (alunos ilimitados).")
+assinatura_service.conceder_admin(PERSONAL_ID, meses=args.plano_meses)
+print(f"Plano: Gestão Pro concedido por {args.plano_meses} meses (alunos ilimitados).")
 
 
 # ══════════════════════════════════════════════════════════════════════════════════════

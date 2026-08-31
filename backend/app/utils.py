@@ -1,5 +1,6 @@
 import uuid
-from datetime import datetime, timezone
+from calendar import monthrange
+from datetime import date, datetime, timezone
 
 # Namespace fixo para IDs determinísticos de itens importados de pacote.
 # Mesmo (pacote_id, ref) → mesmo ID → reimport sobrescreve (upsert), nunca duplica.
@@ -23,6 +24,24 @@ def now_iso() -> str:
 def epoch_ms() -> str:
     """Epoch em ms, zero-padded — ordenável lexicograficamente em SK (ESPEC §2)."""
     return f"{int(datetime.now(timezone.utc).timestamp() * 1000):013d}"
+
+
+def add_meses(base: date, meses: int, dia_ancora: int | None = None) -> date:
+    """Avança `meses` meses de calendário mantendo `dia_ancora` (padrão: o dia de `base`),
+    com clamp para o último dia do mês quando o dia não existe (31/01 + 1 mês = 28/02).
+
+    Quem chama é responsável por GUARDAR a âncora e passá-la de volta na chamada seguinte:
+    é isso que impede a degradação permanente do dia. Sem âncora persistida, o clamp de
+    fevereiro contamina todos os ciclos futuros (31/01 → 28/02 → 28/03 → 28/04); com ela,
+    28/02 + 1 mês volta para 31/03.
+
+    Mesmo padrão `min(dia, monthrange(...))` de `financeiro_service._proximo_periodo`, que
+    faz o vencimento das cobranças do aluno."""
+    dia = dia_ancora or base.day
+    total = base.year * 12 + (base.month - 1) + meses
+    ano, mes = divmod(total, 12)
+    mes += 1
+    return date(ano, mes, min(dia, monthrange(ano, mes)[1]))
 
 
 def treinos_validos(items: list[dict]) -> list[dict]:

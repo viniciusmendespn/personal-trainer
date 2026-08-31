@@ -8,6 +8,7 @@ import { FinPilotBenefitCard } from '../components/billing/FinPilotBenefitCard'
 import { usePagamentos, usePlanoStatus } from '../hooks/usePlano'
 import { useCupomIndicacao, useResgatarCupom } from '../hooks/useCupom'
 import { divulgadorApi } from '../api/divulgador'
+import type { PagamentoAssinatura } from '../types'
 
 const CUPOM_ERROS: Record<string, string> = {
   CUPOM_INVALIDO: 'Código inválido ou expirado.',
@@ -30,6 +31,16 @@ function formatDateTime(iso: string) {
 function formatValor(valor: number | null) {
   if (valor == null) return 'Concedido'
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
+/** Ciclo pago é vendido em meses; bônus (cupom, indicação, admin) em dias corridos.
+ *  Registros gravados antes do ciclo mensal só têm `dias_concedidos`. */
+function formatPeriodo(p: PagamentoAssinatura) {
+  const meses = p.meses_concedidos
+  if (!meses) return `${p.dias_concedidos} dias`
+  if (meses === 12) return '1 ano'
+  if (meses === 1) return '1 mês'
+  return meses % 12 === 0 ? `${meses / 12} anos` : `${meses} meses`
 }
 
 function PeriodoSelector({
@@ -461,7 +472,7 @@ export function PlanoPage() {
                     <div>
                       <p className="text-sm text-text font-medium">{formatDateTime(p.processado_em)}</p>
                       <p className="text-xs text-text-muted">
-                        {p.dias_concedidos} dias · válido até {formatDate(p.valida_ate)}
+                        {formatPeriodo(p)} · válido até {formatDate(p.valida_ate)}
                       </p>
                     </div>
                   </div>

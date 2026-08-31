@@ -49,6 +49,7 @@ export interface AssinaturaStatus {
   trial_iniciado_em: string
   valida_ate?: string | null
   dias_restantes?: number | null
+  dia_ancora?: number | null   // dia do mês em que o ciclo vence (1-31)
   alunos_limit: number | null
   alunos_count: number
   addon_whatsapp_ativo: boolean
@@ -60,6 +61,7 @@ export interface PagamentoAssinatura {
   origem: 'PIX' | 'ADMIN' | 'PROMO' | 'INDICACAO'
   valor: number | null
   dias_concedidos: number
+  meses_concedidos?: number | null   // ausente nos registros anteriores ao ciclo mensal e nos bônus em dias
   plano: PlanoTipo
   valida_ate: string
   processado_em: string

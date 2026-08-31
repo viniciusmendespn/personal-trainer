@@ -83,7 +83,8 @@ def impersonate(personal_id: str, admin_sub: str = Depends(_require_admin)):
 
 
 class ConcederAssinaturaBody(BaseModel):
-    dias: int
+    meses: int = 0           # ciclo de plano — mantém o dia do vencimento fixo (preferir este)
+    dias: int = 0            # bônus avulso em dias corridos
     addons: list[str] = []   # subset de ["whatsapp", "ia"]
 
 
@@ -92,7 +93,11 @@ def conceder_assinatura(personal_id: str, body: ConcederAssinaturaBody, _: str =
     """Concessão manual de Gestão Pro + add-ons — suporte e bootstrap de contas internas.
     Nunca apaga/altera dados do personal (alunos, templates, etc.) — só estende a
     validade da assinatura e liga flags de add-on."""
-    return assinatura_service.conceder_admin(personal_id, dias=body.dias, addons=body.addons)
+    try:
+        return assinatura_service.conceder_admin(
+            personal_id, dias=body.dias, addons=body.addons, meses=body.meses)
+    except ValueError as exc:
+        raise HTTPException(400, {"code": "PERIODO_INVALIDO", "detail": str(exc)})
 
 
 class CriarCupomBody(BaseModel):

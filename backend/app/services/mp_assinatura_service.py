@@ -14,7 +14,7 @@ import logging
 import time
 import urllib.request
 import urllib.error
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 
 from app.config import settings
 from app.repositories import dynamo_repo as repo
@@ -27,8 +27,11 @@ logger = logging.getLogger(__name__)
 _MP_BASE = "https://api.mercadopago.com"
 _LOCK_TTL_S = 60 * 24 * 3600    # 60 dias — idempotência webhook
 _ROUTING_TTL_S = 25 * 3600      # 25 horas — lookup payment_id -> personal_id
-_PIX_DIAS_CONCEDIDOS = 30
-_PIX_DIAS_ANUAL = 365
+# Ciclo em MESES DE CALENDÁRIO, não em dias corridos: o vencimento tem que cair sempre no
+# mesmo dia do mês (é o que o portal promete — "Renovar por 1 mês"). Ver
+# `assinatura_service._avancar_vigencia`.
+_PIX_MESES_MENSAL = 1
+_PIX_MESES_ANUAL = 12
 
 
 def _mp_request(method: str, path: str, token: str,
@@ -52,7 +55,7 @@ def _mp_request(method: str, path: str, token: str,
 
 def criar_pix(personal_id: str, payer_email: str | None = None, periodo: str = "mensal") -> dict:
     """Cria pagamento Pix da assinatura. Retorna {payment_id, qr_code, qr_code_base64, expires_at}.
-    periodo: "mensal" (30 dias, R$39,90) ou "anual" (365 dias, R$399,00)."""
+    periodo: "mensal" (1 mês, R$39,90) ou "anual" (12 meses, R$399,00)."""
     token = settings.ml_access_token
     if not token:
         raise ValueError("ML_ACCESS_TOKEN não configurado na plataforma.")
@@ -171,7 +174,8 @@ def processar_webhook(body: dict) -> None:
         logger.warning("MP assinatura external_reference inválido: %s (routing personal=%s)", ext_ref, personal_id)
         return
 
-    dias = _PIX_DIAS_ANUAL if parts[0] == "ASSINATURA_ANUAL" else _PIX_DIAS_CONCEDIDOS
+    anual = parts[0] == "ASSINATURA_ANUAL"
+    meses = _PIX_MESES_ANUAL if anual else _PIX_MESES_MENSAL
 
     # Grava lock ANTES de processar (evita race-condition em reinvocações)
     repo.put_item(lock_pk, "lock", {
@@ -181,14 +185,20 @@ def processar_webhook(body: dict) -> None:
     })
 
     assinatura_atualizada = assinatura_service.aplicar_pagamento(
-        personal_id, dias=dias,
+        personal_id, meses=meses,
         payment_id=payment_id, valor=resp.get("transaction_amount"), origem="PIX",
     )
 
     from app.services import notif_service
+    # A data nova é a informação útil (e prova que o dia do vencimento não andou) — o texto
+    # antigo dizia "por mais 30 dias", que era justamente o que estava errado.
+    validade = assinatura_atualizada.get("valida_ate")
+    validade_br = date.fromisoformat(validade).strftime("%d/%m/%Y") if validade else "—"
+    periodo_label = "1 ano" if anual else "1 mês"
     notif_service.criar(
         personal_id, "ASSINATURA_PAGA", "Assinatura renovada",
-        f"Pagamento confirmado via Pix. Seu plano Gestão Pro foi renovado por mais {dias} dias.",
+        f"Pagamento confirmado via Pix. Seu plano Gestão Pro foi renovado por {periodo_label} "
+        f"e está válido até {validade_br}.",
     )
 
     # Recompensa de indicação: se este personal veio de um código de indicação, o
