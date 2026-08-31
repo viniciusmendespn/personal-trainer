@@ -891,12 +891,12 @@ export const BLOG_POSTS = [
   {
     slug: 'coachpilot-vs-mfit',
     title: 'CoachPilot vs MFIT: qual sistema para personal trainer escolher em 2026?',
-    description: 'Comparativo honesto entre CoachPilot e MFIT Personal: preços, IA, WhatsApp, gamificação, taxas de pagamento e migração. Dados de julho/2026.',
+    description: 'Comparativo honesto entre CoachPilot e MFIT Personal: preços, IA, app dentro do ChatGPT, WhatsApp, gamificação, taxas de pagamento e migração. Atualizado em agosto/2026.',
     h1: 'CoachPilot vs MFIT: qual escolher?',
     datePublished: '2026-07-10',
-    dateModified: '2026-08-22',
+    dateModified: '2026-08-31',
     readingMinutes: 7,
-    intro: 'MFIT é o líder do mercado brasileiro de apps para personal trainer; o CoachPilot é a alternativa que aposta em IA de ponta a ponta e WhatsApp. Os dois custam os mesmos R$39,90/mês no plano com alunos ilimitados — então a escolha se decide nos detalhes. Comparamos os dois com dados verificados em julho de 2026 (sujeitos a alteração).',
+    intro: 'MFIT é o líder do mercado brasileiro de apps para personal trainer; o CoachPilot é a alternativa que aposta em IA de ponta a ponta e WhatsApp. Os dois custam os mesmos R$39,90/mês no plano com alunos ilimitados — então a escolha se decide nos detalhes, e um deles ficou grande em agosto de 2026, quando o CoachPilot virou um app publicado no diretório do ChatGPT. Comparamos os dois com dados verificados em julho de 2026 e a checagem de IA refeita em 31 de agosto (tudo sujeito a alteração).',
     sections: [
       {
         h2: 'Onde o MFIT é mais forte',
@@ -906,10 +906,11 @@ export const BLOG_POSTS = [
         ],
       },
       {
-        h2: 'A diferença que mais pesa hoje: a IA conectada',
+        h2: 'A diferença que mais pesa hoje: o app dentro do ChatGPT',
         paragraphs: [
-          'Desde agosto de 2026 o CoachPilot publica um servidor MCP — o padrão que ChatGPT, Claude e Gemini usam para se conectar a sistemas externos. Na prática, a IA que você já assina passa a ler os seus dados reais e a gravar programas de treino na plataforma: "quem não treina há mais de 10 dias?", "me dá o resumo da Júlia antes da sessão", "adapta o treino do Pedro pra dor no ombro e aplica". Sem copiar, sem colar, sem abrir o app.',
-          'O MFIT tem IA dentro do aplicativo, que gera treino a partir de um formulário. É útil, mas é outra categoria: não responde sobre a carteira, não lê o histórico para propor ajuste e não funciona fora do app. A conexão do CoachPilot é gratuita nos dois planos e o custo do modelo é da sua própria assinatura de IA — detalhado em [gerenciar alunos e treinos pelo ChatGPT](/blog/gerenciar-alunos-e-treinos-pelo-chatgpt).',
+          'Em agosto de 2026 o [CoachPilot foi aprovado pela OpenAI e publicado no diretório de apps do ChatGPT](/blog/app-de-personal-trainer-para-chatgpt). Você abre os Plugins, busca por "coachpilot", clica no + e o ChatGPT que já está no seu celular passa a enxergar os seus alunos de verdade: "quem não treina há mais de 10 dias?", "me dá o resumo da Júlia antes da sessão", "adapta o treino do Pedro pra dor no ombro e aplica". Sem copiar, sem colar, sem abrir o portal. Por baixo é um servidor MCP, o padrão aberto que ChatGPT, Claude e Gemini usam — então a mesma conexão atende as três IAs.',
+          'O MFIT tem IA dentro do aplicativo, que gera treino a partir de um formulário. É útil, mas é outra categoria: não responde sobre a carteira, não lê o histórico de um aluno para propor o ajuste e não existe fora daquela tela. Na verificação de 31 de agosto de 2026, o MFIT não tinha app no diretório do ChatGPT nem conexão equivalente — e nenhuma outra plataforma nacional de gestão para personal trainer tinha.',
+          'A conexão do CoachPilot é gratuita nos dois planos, inclusive no grátis, e o custo do modelo é da sua própria assinatura de IA — que nem precisa ser paga, porque o app funciona também na conta gratuita do ChatGPT. O que dá e o que não dá para pedir está detalhado em [gerenciar alunos e treinos pelo ChatGPT](/blog/gerenciar-alunos-e-treinos-pelo-chatgpt).',
         ],
       },
       {
@@ -921,8 +922,8 @@ export const BLOG_POSTS = [
         ],
       },
       {
-        h2: 'Comparativo lado a lado (julho/2026)',
-        paragraphs: ['Preços e recursos verificados nos canais oficiais em julho de 2026.'],
+        h2: 'Comparativo lado a lado',
+        paragraphs: ['Preços e recursos verificados nos canais oficiais em julho de 2026; os itens de IA rechecados em 31 de agosto de 2026.'],
         table: {
           headers: ['Critério', 'CoachPilot', 'MFIT Personal'],
           rows: [
@@ -930,7 +931,9 @@ export const BLOG_POSTS = [
             ['Plano grátis', '3 alunos, sem prazo', '1 aluno'],
             ['App do aluno', 'PWA (sem loja)', 'Nativo (lojas)'],
             ['IA', 'Monta pacotes + migra carteira (grátis)', 'Gera treino in-app'],
-            ['IA conectada ao sistema', 'Sim, servidor MCP (ChatGPT/Claude/Gemini)', 'Não tem'],
+            ['App no diretório do ChatGPT', 'Sim, aprovado pela OpenAI', 'Não tem'],
+            ['A IA lê seus dados reais', 'Sim (ChatGPT/Claude/Gemini)', 'Não'],
+            ['A IA grava treino no sistema', 'Sim, com desfazer por 7 dias', 'Não'],
             ['WhatsApp', 'Lembretes + assistente IA (add-ons)', 'Compartilhar link'],
             ['Gamificação', 'Ranking, conquistas, streak', 'Não tem'],
             ['Recebimento', 'Pix direto, sem taxa', 'Carteira com taxa 2,59%'],
@@ -942,13 +945,14 @@ export const BLOG_POSTS = [
       {
         h2: 'Como decidir',
         paragraphs: [
-          'Escolha o MFIT se prova social, app nativo nas lojas e biblioteca de vídeos gigante são decisivos para você. Escolha o CoachPilot se a sua prioridade é operar com IA (montagem e migração sem digitação), engajar alunos com gamificação e usar o WhatsApp como canal inteligente — pagando o mesmo valor mensal e sem taxa sobre os seus recebimentos.',
+          'Escolha o MFIT se prova social, app nativo nas lojas e biblioteca de vídeos gigante são decisivos para você. Escolha o CoachPilot se a sua prioridade é operar com IA — a sua carteira consultada e prescrita pelo ChatGPT que você já usa, além da montagem e migração sem digitação —, engajar alunos com gamificação e usar o WhatsApp como canal inteligente, pagando o mesmo valor mensal e sem taxa sobre os seus recebimentos.',
           'Migrar não exige recomeçar do zero: a IA do CoachPilot importa a sua carteira a partir da exportação ou planilha que você já tem. Dá para [começar grátis com até 3 alunos](/precos) e testar o fluxo completo antes de decidir.',
         ],
       },
     ],
     faqs: [
       { q: 'CoachPilot e MFIT custam o mesmo?', a: 'No plano com alunos ilimitados, sim: R$39,90/mês em ambos (julho/2026). O MFIT tem um degrau de R$10,90/mês para até 3 alunos; no CoachPilot, até 3 alunos é grátis.' },
+      { q: 'O MFIT tem integração com o ChatGPT?', a: 'Na verificação de 31 de agosto de 2026, não. A MFIT IA gera treino dentro do próprio aplicativo, a partir de um formulário. O CoachPilot tem um app publicado no diretório do ChatGPT, aprovado pela OpenAI: o ChatGPT lê a sua carteira real e, se autorizado, grava programas de treino na plataforma.' },
       { q: 'Consigo migrar do MFIT para o CoachPilot?', a: 'Sim. A operação por IA do CoachPilot converte planilhas, PDFs e exportações em cadastros e treinos importáveis com revisão — sem redigitar aluno por aluno.' },
       { q: 'O CoachPilot tem app na App Store ou Google Play?', a: 'Não. O app do aluno e o portal são PWA: abrem pelo navegador e podem ser instalados na tela inicial, sem loja de aplicativos.' },
     ],
