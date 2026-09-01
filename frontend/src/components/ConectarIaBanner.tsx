@@ -11,6 +11,9 @@ const DISMISS_KEY = 'cp_aviso_conexao_ia_oculto'
  * Aviso para quem ainda não conectou nenhuma IA. Some sozinho quando existe
  * conexão autorizada, e o "Agora não" é lembrado no localStorage (só neste
  * navegador — é conveniência, não estado de conta).
+ *
+ * Quem chama (AlunosPage) só monta o banner depois do primeiro aluno cadastrado:
+ * o MCP não cadastra aluno, então na carteira vazia o convite só atrapalharia.
  */
 export function ConectarIaBanner() {
   const { data, isLoading } = useMcpConexoes()

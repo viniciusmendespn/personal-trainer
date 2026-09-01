@@ -125,7 +125,9 @@ export function AlunosPage() {
         </div>
       </div>
 
-      <ConectarIaBanner />
+      {/* Só depois do primeiro aluno: o MCP não cadastra aluno, então antes disso
+          o convite competiria com o passo que o personal realmente precisa dar. */}
+      {!!alunos?.length && <ConectarIaBanner />}
 
       {!!alunos?.length && (
         <div className="flex gap-2 mb-4 flex-wrap">
