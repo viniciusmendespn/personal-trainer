@@ -95,7 +95,7 @@ export function FeedGlobalTab() {
     staleTime: 300_000,
   })
 
-  const posts = data?.pages.flatMap((p) => p.items) ?? []
+  const posts = data?.pages.flatMap((p) => p.items ?? []) ?? []
 
   if (isLoading) return <div className="flex justify-center pt-8"><Spinner /></div>
 

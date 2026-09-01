@@ -9,7 +9,7 @@ export function useNotas(alunoId: string) {
     getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
     enabled: !!alunoId,
   })
-  return { ...query, data: query.data?.pages.flatMap((p) => p.items) }
+  return { ...query, data: query.data?.pages.flatMap((p) => p.items ?? []) }
 }
 
 export function useCreateNota(alunoId: string) {

@@ -8,6 +8,7 @@ import { usePlanoStatus } from '../hooks/usePlano'
 import { Button, Card, Input, Spinner, ErrorText, Modal, Avatar, Badge, EmptyState, useToast, ObjetivosPicker } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { ImportarAlunosModal } from '../components/ImportarAlunosModal'
+import { ConectarIaBanner } from '../components/ConectarIaBanner'
 import { PendenciaBadge } from '../components/aluno/PendenciasTab'
 import { anamneseApi } from '../api/anamnese'
 import { tempoRelativo } from '../utils/datetime'
@@ -123,6 +124,8 @@ export function AlunosPage() {
           </Button>
         </div>
       </div>
+
+      <ConectarIaBanner />
 
       {!!alunos?.length && (
         <div className="flex gap-2 mb-4 flex-wrap">

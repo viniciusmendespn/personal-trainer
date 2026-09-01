@@ -8,7 +8,7 @@ export function useNotificacoes(tipo?: string) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
   })
-  return { ...query, data: query.data?.pages.flatMap((p) => p.items) }
+  return { ...query, data: query.data?.pages.flatMap((p) => p.items ?? []) }
 }
 
 export function useUnreadCount() {

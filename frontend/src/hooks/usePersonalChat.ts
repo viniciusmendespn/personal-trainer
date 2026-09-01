@@ -14,7 +14,7 @@ export function usePersonalChat(alunoId: string | null) {
     refetchInterval: alunoId ? 15_000 : false,
   })
   // páginas vêm da mais recente p/ a mais antiga; inverter p/ exibir a thread em ordem cronológica
-  const messages = query.data?.pages.slice().reverse().flatMap((p) => p.items)
+  const messages = query.data?.pages.slice().reverse().flatMap((p) => p.items ?? [])
   // agente_habilitado vem sempre da página mais recente (primeira carregada = mais recente)
   const agenteHabilitado = query.data?.pages[0]?.agente_habilitado ?? false
   return { ...query, messages, agenteHabilitado }

@@ -1,8 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plug, Copy, Trash2, Info, ExternalLink } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Plug, Copy, Trash2, Sparkles, ExternalLink } from 'lucide-react'
 import { mcpApi, type McpConexao } from '../../api/mcp'
+import { useMcpConexoes, MCP_CONEXOES_KEY } from '../../hooks/useMcpConexoes'
 import { CHATGPT_APP_URL } from '../../lib/links'
-import { Button, Card, EmptyState, Spinner, useToast, useConfirm } from '../ui'
+import { Badge, Button, Card, EmptyState, Spinner, useToast, useConfirm } from '../ui'
 
 function quando(iso?: string | null): string {
   if (!iso) return 'ainda não usado'
@@ -21,16 +22,13 @@ export function ConexoesTab() {
   const { show } = useToast()
   const confirm = useConfirm()
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['mcp-conexoes'],
-    queryFn: mcpApi.listConexoes,
-  })
+  const { data, isLoading } = useMcpConexoes()
 
   const revogar = useMutation({
     mutationFn: mcpApi.revogar,
     onSuccess: () => {
       show('Conexão revogada.')
-      qc.invalidateQueries({ queryKey: ['mcp-conexoes'] })
+      qc.invalidateQueries({ queryKey: MCP_CONEXOES_KEY })
     },
     onError: () => show('Não foi possível revogar agora.', 'error'),
   })
@@ -52,36 +50,47 @@ export function ConexoesTab() {
     <div className="space-y-4">
       <Card>
         <div className="flex items-start gap-3">
-          <Info size={18} className="mt-0.5 text-accent-hover shrink-0" />
-          <div className="text-sm text-text-secondary space-y-2">
+          <Sparkles size={18} className="mt-0.5 text-accent-hover shrink-0" />
+          <div>
             <p className="text-text font-medium">
               Converse com seus dados no ChatGPT, Claude ou Gemini
             </p>
-            <p>
-              Adicione o CoachPilot ao aplicativo de IA que você já usa e peça coisas
-              como “quem não treina há mais de 10 dias?” ou “monta o treino B da Marina para
-              esta semana respeitando a anamnese”. Você autoriza aqui, com a sua conta — nenhuma
-              senha é compartilhada.
+            <p className="text-sm text-text-secondary mt-1">
+              Pergunte em português — <em>“quem não treina há mais de 10 dias?”</em>, <em>“monta o
+              treino B da Marina respeitando a anamnese”</em>. O login acontece aqui, você escolhe
+              entre somente leitura ou leitura e escrita de treinos, e nenhuma senha é compartilhada.
             </p>
-            <div className="pt-1">
-              <a href={CHATGPT_APP_URL} target="_blank" rel="noopener noreferrer">
-                <Button size="sm">
-                  <span className="flex items-center gap-2">
-                    <ExternalLink size={14} /> Instalar no ChatGPT
-                  </span>
-                </Button>
-              </a>
-              <p className="text-xs mt-1.5">
-                Abre o app do CoachPilot no ChatGPT: clique em <strong>+</strong> para adicionar e
-                autorize com a sua conta. Funciona também na conta gratuita e no app de celular.
-              </p>
-            </div>
-            <p className="text-xs pt-1">
-              <strong>Usa Claude ou Gemini?</strong> Copie o endereço abaixo e cole no aplicativo —
-              no Claude, em <em>Settings → Connectors</em>; no Gemini, pelo CLI.
-            </p>
+          </div>
+        </div>
+
+        {/* Dois caminhos, lado a lado: o app pronto e o endereço para colar. */}
+        <div className="grid gap-3 sm:grid-cols-2 mt-4">
+          <div className="rounded-xl border border-accent/30 bg-accent/5 p-4 flex flex-col">
             <div className="flex items-center gap-2">
-              <code className="px-2 py-1 rounded bg-white/5 text-xs break-all">{url}</code>
+              <span className="text-sm font-medium text-text">ChatGPT</span>
+              <Badge tone="success">mais rápido</Badge>
+            </div>
+            <p className="text-xs text-text-secondary mt-1.5 flex-1">
+              App pronto no diretório: instala em 3 cliques, funciona na conta gratuita e também no
+              aplicativo de celular.
+            </p>
+            <a href={CHATGPT_APP_URL} target="_blank" rel="noopener noreferrer" className="mt-3">
+              <Button size="sm" className="w-full">
+                <span className="flex items-center justify-center gap-2">
+                  <ExternalLink size={14} /> Instalar no ChatGPT
+                </span>
+              </Button>
+            </a>
+          </div>
+
+          <div className="rounded-xl border border-border bg-white/[0.02] p-4 flex flex-col">
+            <span className="text-sm font-medium text-text">Claude ou Gemini</span>
+            <p className="text-xs text-text-secondary mt-1.5 flex-1">
+              Cole este endereço como conector — no Claude, em <em>Settings → Connectors</em>; no
+              Gemini, pelo CLI.
+            </p>
+            <div className="flex items-center gap-2 mt-3">
+              <code className="flex-1 min-w-0 px-2 py-1.5 rounded bg-white/5 text-xs break-all">{url}</code>
               <Button
                 size="sm"
                 variant="ghost"

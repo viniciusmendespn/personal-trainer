@@ -10,6 +10,6 @@ export function useAlunoTimeline() {
   })
   return {
     ...query,
-    sessions: query.data?.pages.flatMap((p) => p.items) ?? [],
+    sessions: query.data?.pages.flatMap((p) => p.items ?? []) ?? [],
   }
 }

@@ -13,7 +13,7 @@ export function useAlunoChat() {
     refetchInterval: 15_000,
   })
   // páginas vêm da mais recente p/ a mais antiga; inverter p/ exibir a thread em ordem cronológica
-  const messages = query.data?.pages.slice().reverse().flatMap((p) => p.items)
+  const messages = query.data?.pages.slice().reverse().flatMap((p) => p.items ?? [])
   const agenteHabilitado = query.data?.pages[0]?.agente_habilitado ?? false
   return { ...query, messages, agenteHabilitado }
 }

@@ -164,7 +164,7 @@ function usePosts() {
     getNextPageParam: (last) => last.next_cursor ?? undefined,
   })
   return {
-    posts: data?.pages.flatMap((p) => p.items) ?? [],
+    posts: data?.pages.flatMap((p) => p.items ?? []) ?? [],
     isLoading,
     fetchNextPage,
     hasNextPage,

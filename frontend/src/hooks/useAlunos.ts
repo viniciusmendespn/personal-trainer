@@ -16,6 +16,24 @@ function useAlunosInfinite(key: unknown[]) {
   })
 }
 
+/**
+ * Achata as páginas ignorando resposta fora do formato.
+ *
+ * `pages.flatMap((p) => p.items)` insere `undefined` na lista quando uma página
+ * chega sem `items` — e aí todo consumidor que faz `.find(a => a.aluno_id)` estoura.
+ * O ChatWidget usa este hook e vive no AppLayout, então o portal inteiro cai numa
+ * tela branca por causa de uma única página estranha. Nunca remover o guard.
+ */
+function achatarPaginas<T>(pages: { items?: T[] }[]): T[] {
+  return pages.flatMap((p) => {
+    if (!p?.items) {
+      console.warn('[alunos] página sem "items" na resposta — ignorada', p)
+      return []
+    }
+    return p.items
+  })
+}
+
 /** Roster completo do personal — carrega todas as páginas em segundo plano. Usar em
  * seletores/pickers que precisam de todos os alunos (Agenda, Templates, Pendências, Chat). */
 export function useAlunos() {
@@ -24,13 +42,13 @@ export function useAlunos() {
   useEffect(() => {
     if (hasNextPage && !isFetchingNextPage) fetchNextPage()
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
-  return { ...query, data: query.data?.pages.flatMap((p) => p.items) }
+  return { ...query, data: query.data && achatarPaginas(query.data.pages) }
 }
 
 /** Lista paginada (1 página por vez) p/ a tela de Alunos, com "carregar mais". */
 export function useAlunosPaginated() {
   const query = useAlunosInfinite(KEY_PAGE)
-  return { ...query, data: query.data?.pages.flatMap((p) => p.items) }
+  return { ...query, data: query.data && achatarPaginas(query.data.pages) }
 }
 
 export function useAluno(id: string) {

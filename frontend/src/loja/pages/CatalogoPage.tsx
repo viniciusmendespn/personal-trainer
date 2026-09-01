@@ -103,7 +103,7 @@ export function CatalogoPage() {
       getNextPageParam: (last) => last.cursor,
     })
 
-  const anuncios = data?.pages.flatMap((p) => p.anuncios) ?? []
+  const anuncios = data?.pages.flatMap((p) => p.anuncios ?? []) ?? []
 
   return (
     <div className="relative">

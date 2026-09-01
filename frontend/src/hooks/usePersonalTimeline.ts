@@ -12,6 +12,6 @@ export function usePersonalTimeline(alunoId: string) {
   })
   return {
     ...query,
-    sessions: query.data?.pages.flatMap((p) => p.items) ?? [],
+    sessions: query.data?.pages.flatMap((p) => p.items ?? []) ?? [],
   }
 }

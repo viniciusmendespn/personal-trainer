@@ -230,7 +230,7 @@ export function AjudaPage() {
                 </Button>
               </a>
               <Link
-                to="/settings?tab=conexoes"
+                to="/config?tab=conexoes"
                 className="text-xs text-text-secondary hover:text-text underline"
               >
                 Conexões: usar Claude ou Gemini, e revogar acesso
