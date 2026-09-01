@@ -6,6 +6,7 @@ export interface Personal {
   email: string
   name: string
   status: string
+  criado_em: string | null   // ISO — UserCreateDate do Cognito (vem junto na mesma listagem)
 }
 
 export interface IndicacaoAdmin {

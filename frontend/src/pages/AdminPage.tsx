@@ -1,45 +1,18 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Shield, LogIn, Search, Gift, Megaphone, Check, Trash2, BarChart3, MessageSquareText, Archive } from 'lucide-react'
+import { Shield, LogIn, Search, Gift, Megaphone, Check, Trash2, BarChart3, MessageSquareText, Archive, Users, UserPlus, CalendarDays } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { adminApi, type DivulgadorAdmin, type FeedbackAdmin, type Personal } from '../api/admin'
 import { AdminDivulgadorDetail } from './admin/AdminDivulgadorDetail'
 import { normalizeText } from '../utils/normalizeText'
 import { useAuth } from '../auth/AuthProvider'
 import { Tabs, Modal, Button, useToast, useConfirm } from '../components/ui'
+import { DivStatCard, mesLabel } from '../divulgador/historico'
 
 type Tab = 'personais' | 'indicacoes' | 'divulgadores' | 'feedbacks'
 
 export function AdminPage() {
-  const { impersonate } = useAuth()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const [tab, setTab] = useState<Tab>('personais')
-  const [search, setSearch] = useState('')
-  const [loading, setLoading] = useState<string | null>(null)
-
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['admin-personals'],
-    queryFn: adminApi.listPersonals,
-  })
-
-  const filtered = (data?.personals ?? []).filter(
-    (p) =>
-      normalizeText(p.name).includes(normalizeText(search)) ||
-      normalizeText(p.email).includes(normalizeText(search)),
-  )
-
-  async function handleImpersonate(p: Personal) {
-    setLoading(p.personal_id)
-    try {
-      const result = await adminApi.impersonate(p.personal_id)
-      queryClient.clear()
-      impersonate(p.personal_id, p.name || p.email, result.token)
-      navigate('/dashboard')
-    } catch {
-      setLoading(null)
-    }
-  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -60,52 +33,237 @@ export function AdminPage() {
         onChange={(k) => setTab(k as Tab)}
       />
 
-      {tab === 'personais' && (
-        <>
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-            <input
-              type="text"
-              placeholder="Buscar por nome ou email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm bg-surface-elevated border border-border rounded-lg text-text placeholder-text-muted outline-none focus:ring-1 focus:ring-accent"
-            />
-          </div>
-
-          {isLoading && <p className="text-sm text-text-muted">Carregando...</p>}
-          {error && <p className="text-sm text-red-400">Erro ao carregar personals.</p>}
-          {!isLoading && !error && filtered.length === 0 && (
-            <p className="text-sm text-text-muted">Nenhum personal encontrado.</p>
-          )}
-
-          <div className="space-y-2">
-            {filtered.map((p) => (
-              <div
-                key={p.personal_id}
-                className="flex items-center justify-between p-3 bg-surface-elevated border border-border rounded-lg"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-text truncate">{p.name || '(sem nome)'}</p>
-                  <p className="text-xs text-text-muted truncate">{p.email}</p>
-                </div>
-                <button
-                  onClick={() => handleImpersonate(p)}
-                  disabled={loading === p.personal_id}
-                  className="ml-3 shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 transition-colors"
-                >
-                  <LogIn size={13} />
-                  {loading === p.personal_id ? 'Entrando...' : 'Visualizar como'}
-                </button>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
+      {tab === 'personais' && <PersonaisTab />}
       {tab === 'indicacoes' && <IndicacoesTab />}
       {tab === 'divulgadores' && <DivulgadoresTab />}
       {tab === 'feedbacks' && <FeedbacksTab />}
+    </div>
+  )
+}
+
+// ── Cadastros de personais ─────────────────────────────────────────────────────
+// Tudo aqui (contadores + gráfico) é derivado da MESMA resposta de GET /v1/admin/personals,
+// que já traz criado_em do Cognito (UserCreateDate). Nenhuma chamada extra, nenhuma leitura
+// no DynamoDB — o custo desta tela é exatamente o de antes.
+
+const DIAS_MS = 86_400_000
+const BARRA_AREA_PX = 96   // altura útil em px — % dentro de `items-end` colapsa (ver historico.tsx)
+
+type Balde = { key: string; label: string; mostrarLabel: boolean; titulo: string; valor: number }
+
+/** Chave do dia no fuso local (o dia é o do admin, não UTC). */
+function chaveDia(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function chaveMes(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+function contarPor(personais: Personal[], chave: (d: Date) => string): Map<string, number> {
+  const m = new Map<string, number>()
+  for (const p of personais) {
+    if (!p.criado_em) continue
+    const d = new Date(p.criado_em)
+    if (Number.isNaN(d.getTime())) continue
+    const k = chave(d)
+    m.set(k, (m.get(k) ?? 0) + 1)
+  }
+  return m
+}
+
+function baldesDia(personais: Personal[], n: number): Balde[] {
+  const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
+  const contagem = contarPor(personais, chaveDia)
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(hoje)
+    d.setDate(d.getDate() - (n - 1 - i))
+    const key = chaveDia(d)
+    return {
+      key,
+      label: String(d.getDate()),
+      mostrarLabel: i === n - 1 || d.getDate() % 5 === 0,
+      titulo: d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }),
+      valor: contagem.get(key) ?? 0,
+    }
+  })
+}
+
+function baldesMes(personais: Personal[], n: number): Balde[] {
+  const hoje = new Date()
+  const contagem = contarPor(personais, chaveMes)
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - (n - 1 - i), 1)
+    const key = chaveMes(d)
+    return { key, label: mesLabel(key), mostrarLabel: true, titulo: mesLabel(key), valor: contagem.get(key) ?? 0 }
+  })
+}
+
+function BarrasCadastros({ baldes }: { baldes: Balde[] }) {
+  const max = Math.max(...baldes.map((b) => b.valor), 1)
+  return (
+    <div className="flex items-end gap-[3px] h-36">
+      {baldes.map((b) => (
+        <div key={b.key} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+          <span className="text-[9px] leading-none text-text-secondary font-medium">
+            {b.valor > 0 ? b.valor : ''}
+          </span>
+          <div
+            className="w-full rounded-t-md bg-accent transition-all"
+            style={{
+              height: b.valor > 0 ? `${Math.max(Math.round((b.valor / max) * BARRA_AREA_PX), 6)}px` : '2px',
+              opacity: b.valor > 0 ? 1 : 0.15,
+            }}
+            title={`${b.titulo}: ${b.valor} cadastro${b.valor === 1 ? '' : 's'}`}
+          />
+          <span className="text-[9px] leading-none text-text-muted truncate max-w-full">
+            {b.mostrarLabel ? b.label : ''}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** "hoje" / "ontem" / "há 5 dias" / "há 3 meses" — leitura rápida de quem é recente. */
+function faz(iso: string | null): string {
+  if (!iso) return ''
+  const dias = Math.floor((Date.now() - new Date(iso).getTime()) / DIAS_MS)
+  if (dias <= 0) return 'hoje'
+  if (dias === 1) return 'ontem'
+  if (dias < 30) return `há ${dias} dias`
+  const meses = Math.floor(dias / 30)
+  return `há ${meses} ${meses === 1 ? 'mês' : 'meses'}`
+}
+
+function PersonaisTab() {
+  const { impersonate } = useAuth()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState<string | null>(null)
+  const [periodo, setPeriodo] = useState<'30d' | '12m'>('30d')
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['admin-personals'],
+    queryFn: adminApi.listPersonals,
+  })
+
+  const personais = useMemo(() => data?.personals ?? [], [data])
+
+  const { novos7, novos30, baldes } = useMemo(() => {
+    const agora = Date.now()
+    const idade = (p: Personal) => (p.criado_em ? (agora - new Date(p.criado_em).getTime()) / DIAS_MS : Infinity)
+    return {
+      novos7: personais.filter((p) => idade(p) < 7).length,
+      novos30: personais.filter((p) => idade(p) < 30).length,
+      baldes: periodo === '30d' ? baldesDia(personais, 30) : baldesMes(personais, 12),
+    }
+  }, [personais, periodo])
+
+  const filtered = personais
+    .filter(
+      (p) =>
+        normalizeText(p.name).includes(normalizeText(search)) ||
+        normalizeText(p.email).includes(normalizeText(search)),
+    )
+    .sort((a, b) => (b.criado_em ?? '').localeCompare(a.criado_em ?? ''))   // mais recentes primeiro
+
+  const noPeriodo = baldes.reduce((acc, b) => acc + b.valor, 0)
+
+  async function handleImpersonate(p: Personal) {
+    setLoading(p.personal_id)
+    try {
+      const result = await adminApi.impersonate(p.personal_id)
+      queryClient.clear()
+      impersonate(p.personal_id, p.name || p.email, result.token)
+      navigate('/dashboard')
+    } catch {
+      setLoading(null)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-3">
+        <DivStatCard icon={<Users size={14} />} label="Total" value={String(personais.length)} sub="contas cadastradas" />
+        <DivStatCard icon={<UserPlus size={14} />} label="7 dias" value={String(novos7)} sub="novos cadastros" />
+        <DivStatCard icon={<CalendarDays size={14} />} label="30 dias" value={String(novos30)} sub="novos cadastros" />
+      </div>
+
+      <div className="p-4 bg-surface-elevated border border-border rounded-lg">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+            Cadastros por {periodo === '30d' ? 'dia' : 'mês'}
+            <span className="ml-2 normal-case tracking-normal text-text-secondary font-medium">
+              {noPeriodo} no período
+            </span>
+          </p>
+          <div className="flex gap-1.5">
+            {([['30d', '30 dias'], ['12m', '12 meses']] as const).map(([k, rotulo]) => (
+              <button
+                key={k}
+                onClick={() => setPeriodo(k)}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${periodo === k ? 'bg-accent text-white' : 'bg-bg border border-border text-text-secondary hover:bg-white/5'}`}
+              >
+                {rotulo}
+              </button>
+            ))}
+          </div>
+        </div>
+        <BarrasCadastros baldes={baldes} />
+      </div>
+
+      <div className="relative">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+        <input
+          type="text"
+          placeholder="Buscar por nome ou email..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-9 pr-3 py-2 text-sm bg-surface-elevated border border-border rounded-lg text-text placeholder-text-muted outline-none focus:ring-1 focus:ring-accent"
+        />
+      </div>
+
+      {isLoading && <p className="text-sm text-text-muted">Carregando...</p>}
+      {error && <p className="text-sm text-red-400">Erro ao carregar personals.</p>}
+      {!isLoading && !error && filtered.length === 0 && (
+        <p className="text-sm text-text-muted">Nenhum personal encontrado.</p>
+      )}
+
+      <div className="space-y-2">
+        {filtered.map((p) => {
+          const recente = !!p.criado_em && Date.now() - new Date(p.criado_em).getTime() < 7 * DIAS_MS
+          return (
+            <div
+              key={p.personal_id}
+              className="flex items-center justify-between p-3 bg-surface-elevated border border-border rounded-lg"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-text truncate">
+                  {p.name || '(sem nome)'}
+                  {recente && <span className="ml-1.5 text-[10px] font-semibold text-accent align-middle">NOVO</span>}
+                </p>
+                <p className="text-xs text-text-muted truncate">{p.email}</p>
+                <p className="text-[11px] text-text-muted mt-0.5">
+                  {p.criado_em
+                    ? `Cadastrado em ${new Date(p.criado_em).toLocaleDateString('pt-BR')} · ${faz(p.criado_em)}`
+                    : 'Data de cadastro indisponível'}
+                </p>
+              </div>
+              <button
+                onClick={() => handleImpersonate(p)}
+                disabled={loading === p.personal_id}
+                className="ml-3 shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 transition-colors"
+              >
+                <LogIn size={13} />
+                {loading === p.personal_id ? 'Entrando...' : 'Visualizar como'}
+              </button>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

@@ -40,11 +40,16 @@ def _listar_personals() -> list[dict]:
             email = attrs.get("email", "")
             if email == settings.admin_email:
                 continue
+            criado = u.get("UserCreateDate")
             users.append({
                 "personal_id": attrs.get("sub", ""),
                 "email": email,
                 "name": attrs.get("name", ""),
                 "status": u["UserStatus"],
+                # Data de cadastro já vem do próprio list_users — nenhuma leitura extra
+                # (nem no Cognito, nem no DynamoDB). O frontend deriva contadores e o
+                # gráfico dessa mesma lista, sem chamada adicional.
+                "criado_em": criado.isoformat() if criado else None,
             })
     return users
 
