@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, ArrowLeft, Check, ChevronDown, ChevronUp, Users, Share2, DollarSign, TrendingUp } from 'lucide-react'
 import LandingFooter from './LandingFooter'
 
-const WA_DIVULGADOR = 'https://wa.me/5513988088204?text=Oi%2C%20quero%20ser%20divulgador%20do%20CoachPilot'
-const WA_EMBAIXADOR = 'https://wa.me/5513988088204?text=Oi%2C%20quero%20conversar%20sobre%20ser%20Embaixador%20CoachPilot'
-const WA_ENTRAR = 'https://wa.me/5513988088204?text=Oi%2C%20quero%20entrar%20no%20programa%20de%20divulgadores%20do%20CoachPilot'
+const WA_DIVULGADOR = 'https://wa.me/5514996906105?text=Oi%2C%20quero%20ser%20divulgador%20do%20CoachPilot'
+const WA_EMBAIXADOR = 'https://wa.me/5514996906105?text=Oi%2C%20quero%20conversar%20sobre%20ser%20Embaixador%20CoachPilot'
+const WA_ENTRAR = 'https://wa.me/5514996906105?text=Oi%2C%20quero%20entrar%20no%20programa%20de%20divulgadores%20do%20CoachPilot'
 
 const NIVEIS = [
   { nivel: 'Divulgador Inicial', clientes: '1 a 4 clientes ativos', comissao: '20%', turbo: '25% no mês com 2+ vendas novas', cor: '#64748b' },

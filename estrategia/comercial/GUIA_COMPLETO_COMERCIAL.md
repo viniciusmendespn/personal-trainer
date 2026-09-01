@@ -86,8 +86,14 @@ aluno é reter renda.
 | Faz o quê | Gera treinos, pacotes, migrações → personal **revisa** e importa com 1 clique | Responde dúvidas 24h, registra execução, alerta dor |
 | Custo | **GRÁTIS** (usa a IA que o personal já tem) | **R$ 4,90/aluno/mês** (add-on, por aluno habilitado) |
 
-Nunca dizer "a IA está inclusa" sem dizer **qual**. Nunca dizer que a IA "escreve direto no
-sistema" — ela gera, o personal revisa e importa.
+Nunca dizer "a IA está inclusa" sem dizer **qual**.
+
+> ⚠️ **Atualizado set/2026:** existe um terceiro caminho, hoje o principal — o **app do CoachPilot
+> no ChatGPT**, publicado e aprovado no diretório de apps da OpenAI. Instalado, o ChatGPT lê os
+> dados reais do personal e **grava o treino direto na plataforma** (com escopo escolhido na
+> autorização, aviso no portal e desfazer por 7 dias). É grátis nos dois planos e funciona até na
+> conta gratuita do ChatGPT. Claude e Gemini chegam ao mesmo pelo conector MCP. A regra "a IA gera,
+> o personal importa" vale só para o caminho por prompt, sem app instalado.
 
 ## 4. Planos, preços e mecânica comercial
 
@@ -187,7 +193,10 @@ Regra: **nunca falar mal do concorrente.** Validar ("é bom mesmo") e ancorar no
 
 ## 9. O que NUNCA dizer (compliance — infração séria)
 
-- ❌ "A IA escreve direto no sistema / plugin oficial do ChatGPT" (fluxo real: gera → revisa → importa)
+- ⚠️ set/2026: com o **app instalado no ChatGPT**, a IA **grava o treino direto no sistema** — pode
+  e deve ser dito. "Gera → revisa → importa" é só o caminho por prompt, sem app (§3.3)
+- ❌ "GPT Action" / "integração oficial ou parceria com a OpenAI" → diga **"app publicado e aprovado
+  no diretório de apps do ChatGPT"**
 - ❌ "A IA está inclusa" sem distinguir as duas IAs (§3.3)
 - ❌ "+500 personal trainers" — o número real é **"+500 alunos gerenciados"**
 - ❌ Prometer: app nas lojas, integração Apple Health/Strava, painel multi-personal para estúdio

@@ -170,8 +170,14 @@ dificuldade e de troca de ferramenta.
 
 ## 7. O que NUNCA dizer (limites de compliance do discurso)
 
-- ❌ "A IA escreve direto no sistema / é um plugin oficial do ChatGPT" → o fluxo é: prompt pronto →
-  IA gera → personal **revisa** e importa com 1 clique.
+- ⚠️ **Atualizado set/2026:** com o **app do CoachPilot instalado no ChatGPT** (publicado e aprovado
+  no diretório de apps da OpenAI), dizer que a IA **grava o treino direto no sistema** está CORRETO
+  — é o diferencial nº 1. A regra antiga ("IA gera → personal revisa → importa com 1 clique") vale
+  só para o caminho por prompt, sem app instalado. Não misturar os dois na mesma frase.
+- ❌ "GPT Action" / "integração oficial da OpenAI" / "parceria com a OpenAI" → o termo correto é
+  **"app publicado e aprovado no diretório de apps do ChatGPT"**.
+- ❌ Prometer que pela conversa a IA cadastra aluno, lança avaliação ou marca agenda (só treino é
+  gravável), ou que aplica treino em vários alunos de uma vez (é um aluno por vez).
 - ❌ "A IA está inclusa" sem qualificar → a **operação por IA do personal é grátis**; o
   **Assistente IA do aluno é add-on pago** (R$ 4,90/aluno/mês). São coisas diferentes.
 - ❌ "+500 personal trainers" → o número real usado é **"+500 alunos gerenciados"** na plataforma.
