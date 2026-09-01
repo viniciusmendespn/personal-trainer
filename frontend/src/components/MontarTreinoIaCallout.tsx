@@ -25,9 +25,12 @@ export function MontarTreinoIaCallout({
   onAplicarRotina?: () => void
   alunoNome?: string
 }) {
+  // Exemplo de programa inteiro (não de um treino só): é o que o app faz de uma vez,
+  // e é o que economiza mais tempo na primeira montagem.
   // "de {Nome}" evita chutar gênero pela terminação do nome.
   const primeiroNome = alunoNome?.trim().split(/\s+/)[0]
-  const exemplo = `Monte o treino A de ${primeiroNome || 'Marina'}: ABC, foco em inferiores.`
+  const exemplo = `Monte o programa de ${primeiroNome || 'Marina'}: ABCDE, 5x por semana, `
+    + 'hipertrofia com ênfase em inferiores, respeitando a anamnese.'
 
   const { data: conexoes } = useMcpConexoes()
   const conectado = !!conexoes && conexoes.items.length > 0
@@ -46,8 +49,8 @@ export function MontarTreinoIaCallout({
         </div>
         <p className="text-sm text-text-secondary mt-2 max-w-xl">
           Você é o profissional e sabe o que prescrever. {conectado ? 'Seu ChatGPT já está conectado' : 'Com o app instalado'}, você
-          descreve o treino na conversa e ele já entra na conta do aluno — a IA só escreve e
-          cadastra, sem baixar prompt nem colar arquivo.
+          descreve o programa na conversa — a semana inteira de uma vez — e ele já entra na conta do
+          aluno. A IA só escreve e cadastra, sem baixar prompt nem colar arquivo.
         </p>
 
         <ol className="mt-4 space-y-2">
@@ -61,7 +64,7 @@ export function MontarTreinoIaCallout({
               Diga o que quer prescrever — ex.:{' '}
               <span className="text-text-secondary italic">“{exemplo}”</span>
             </>,
-            <>Confira o que ele montou e mande cadastrar. O treino aparece aqui na hora.</>,
+            <>Confira o que ele montou e mande cadastrar. O programa inteiro aparece aqui na hora.</>,
           ].map((txt, i) => (
             <li key={i} className="flex items-start gap-2.5 text-sm">
               <span className="flex items-center justify-center shrink-0 w-5 h-5 rounded-full bg-accent/20 text-accent-hover text-[11px] font-semibold">
