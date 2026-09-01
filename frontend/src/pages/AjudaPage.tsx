@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
-import { HelpCircle, ChevronDown, Download, Bot, MessageSquare, Lightbulb, Send, LifeBuoy } from 'lucide-react'
+import { HelpCircle, ChevronDown, Download, Bot, MessageSquare, Lightbulb, Send, LifeBuoy, Plug, ExternalLink } from 'lucide-react'
 import { feedbackApi } from '../api/feedback'
+import { CHATGPT_APP_URL } from '../lib/links'
 import { Button, useToast } from '../components/ui'
 
 interface FaqItem {
@@ -25,6 +27,10 @@ const FAQ_PORTAL: FaqItem[] = [
   {
     q: 'Como atualizar o treino de um aluno com IA?',
     a: 'Na aba Treinos do aluno, clique em "Atualizar treino com IA". Baixe o JSON do treino atual e o prompt, cole ambos no ChatGPT e descreva o ajuste ("aumenta o volume de pernas", "adapta para dor no ombro" etc.). Cole o JSON atualizado de volta no modal e confirme. Atenção: a importação substitui o programa de treinos inteiro do aluno (o histórico e a evolução por exercício são preservados).',
+  },
+  {
+    q: 'Como instalar o app do CoachPilot no ChatGPT?',
+    a: 'Use o botão "Instalar no ChatGPT" no topo desta página (ou em Configurações → Conexões): ele abre o app do CoachPilot no ChatGPT, você clica no + para adicionar e autoriza com a sua conta — a senha nunca passa pelo ChatGPT. Na autorização você escolhe entre somente leitura ou leitura e escrita de treinos. Funciona também na conta gratuita do ChatGPT e no aplicativo de celular. Para usar Claude ou Gemini, copie o endereço em Configurações → Conexões e cole no aplicativo. Para cortar o acesso, use Revogar na mesma tela.',
   },
   {
     q: 'Qual a diferença entre o cadastro por IA (grátis) e o Assistente IA do aluno (add-on)?',
@@ -200,6 +206,39 @@ export function AjudaPage() {
       </div>
 
       <FeedbackCard />
+
+      {/* Atalho de instalação do app no ChatGPT */}
+      <section className="rounded-2xl border border-accent/30 bg-accent/5 p-5">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center shrink-0 mt-0.5">
+            <Plug size={18} className="text-accent-hover" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="font-semibold text-text text-sm">Converse com seus dados no ChatGPT</h2>
+            <p className="text-xs text-text-secondary mt-1 leading-relaxed">
+              Instale o app do CoachPilot no ChatGPT e pergunte direto: <em>“quem não treina há mais
+              de 10 dias?”</em>, <em>“me dá o resumo da Júlia antes da sessão”</em>, <em>“adapta o
+              treino do Pedro pra dor no ombro e aplica”</em>. Funciona também na conta gratuita e no
+              aplicativo de celular, e é grátis nos dois planos.
+            </p>
+            <div className="flex flex-wrap items-center gap-3 mt-3">
+              <a href={CHATGPT_APP_URL} target="_blank" rel="noopener noreferrer">
+                <Button size="sm">
+                  <span className="flex items-center gap-2">
+                    <ExternalLink size={14} /> Instalar no ChatGPT
+                  </span>
+                </Button>
+              </a>
+              <Link
+                to="/settings?tab=conexoes"
+                className="text-xs text-text-secondary hover:text-text underline"
+              >
+                Conexões: usar Claude ou Gemini, e revogar acesso
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* FAQ */}
       <section className="space-y-4">

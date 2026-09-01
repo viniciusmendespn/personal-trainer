@@ -51,8 +51,13 @@ function escapeHtml(value) {
 }
 
 // [texto](/caminho) → <a href="/caminho">texto</a> (mesmo formato do React)
+// Link externo ganha target/rel, espelhando renderInline de prose.tsx.
 function inline(text) {
-  return escapeHtml(text).replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+  return escapeHtml(text).replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label, href) => (
+    href.startsWith('http')
+      ? `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>`
+      : `<a href="${href}">${label}</a>`
+  ))
 }
 
 const CTA = '<p><a href="/signup">Começar grátis</a> | <a href="/precos">Ver preços</a> | <a href="/">Página inicial</a></p>'

@@ -35,7 +35,7 @@ export const BLOG_POSTS = [
       {
         h2: 'Como instalar o plugin do CoachPilot no ChatGPT',
         paragraphs: [
-          'Leva menos de um minuto. Você precisa de uma conta CoachPilot (o [plano grátis de até 3 alunos](/precos) serve) e de qualquer conta de ChatGPT, inclusive a gratuita.',
+          'Leva menos de um minuto. Você precisa de uma conta CoachPilot (o [plano grátis de até 3 alunos](/precos) serve) e de qualquer conta de ChatGPT, inclusive a gratuita. Se você já está logado no ChatGPT, [este link abre o app do CoachPilot direto](https://chatgpt.com/plugins/plugin_asdk_app_6a80cc8edfb48191b895cbaecd19b642) — é só clicar no + e autorizar.',
         ],
         list: [
           'No menu lateral do ChatGPT, abra "Plugins".',
@@ -158,7 +158,7 @@ export const BLOG_POSTS = [
       {
         h2: 'A resposta curta',
         paragraphs: [
-          'Para o personal trainer que quer começar hoje: ChatGPT. Desde agosto de 2026 o CoachPilot é um app publicado no diretório público, então a instalação é buscar por "coachpilot" nos Plugins e clicar no + — sem plano pago, sem modo de desenvolvedor, sem colar endereço de servidor, e funcionando também no aplicativo de celular.',
+          'Para o personal trainer que quer começar hoje: ChatGPT. Desde agosto de 2026 o CoachPilot é um app publicado no diretório público, então a instalação é buscar por "coachpilot" nos Plugins e clicar no + — sem plano pago, sem modo de desenvolvedor, sem colar endereço nenhum, e funcionando também no aplicativo de celular. [O link direto do app](https://chatgpt.com/plugins/plugin_asdk_app_6a80cc8edfb48191b895cbaecd19b642) resolve a instalação em uma tela.',
           'O Claude continua uma escolha ótima, principalmente para quem já prefere esse assistente: aceita conector personalizado inclusive no plano grátis (limite de um) e a conexão feita no navegador aparece depois no app do celular. A diferença hoje é só de atrito na instalação. E o Gemini, apesar de ser o mais barato em real, ainda não tem um caminho de conexão simples para usuário comum — é CLI ou versão empresarial.',
         ],
       },
@@ -360,7 +360,7 @@ export const BLOG_POSTS = [
       {
         h2: 'Como começar em 5 minutos',
         paragraphs: [
-          'Crie a conta (o plano grátis de 3 alunos serve para testar o fluxo inteiro), vá em Configurações → Conexões e siga o passo a passo do seu assistente. O [tutorial de conexão por provedor](/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot) cobre ChatGPT, Claude e Gemini, incluindo o que cada um exige de plano.',
+          'Crie a conta (o plano grátis de 3 alunos serve para testar o fluxo inteiro). Se a sua IA é o ChatGPT, o caminho é [instalar o app do CoachPilot](https://chatgpt.com/plugins/plugin_asdk_app_6a80cc8edfb48191b895cbaecd19b642) e autorizar com a sua conta; para Claude ou Gemini, o endereço da conexão fica em Configurações → Conexões. O [tutorial de conexão por provedor](/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot) cobre os três, incluindo o que cada um exige de plano.',
           'Uma recomendação de quem já usa: comece com permissão somente de leitura. Passe alguns dias perguntando sobre a carteira, veja a qualidade das respostas e só então libere a escrita de treinos. A confiança se constrói na ordem certa.',
         ],
       },
@@ -431,7 +431,7 @@ export const BLOG_POSTS = [
       {
         h2: 'Passo a passo no ChatGPT',
         paragraphs: [
-          'É o caminho mais curto, porque o CoachPilot é um app publicado no diretório: nada de configuração manual nem de modo de desenvolvedor.',
+          'É o caminho mais curto, porque o CoachPilot é um app publicado no diretório: nada de configuração manual nem de modo de desenvolvedor. Atalho para quem já está logado: [abrir o app do CoachPilot no ChatGPT](https://chatgpt.com/plugins/plugin_asdk_app_6a80cc8edfb48191b895cbaecd19b642).',
         ],
         list: [
           'No menu lateral do ChatGPT, abra "Plugins".',

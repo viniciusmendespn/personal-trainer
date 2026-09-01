@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Bot, Sparkles } from 'lucide-react'
+import { Bot, Sparkles, ExternalLink } from 'lucide-react'
+import { CHATGPT_APP_URL } from '../lib/links'
 import { Button } from './ui'
 
 /**
@@ -27,7 +28,18 @@ export function MontarTreinoIaCallout({ compact = false }: { compact?: boolean }
             <span className="flex items-center gap-2"><Bot size={16} /> Cadastrar treino com IA</span>
           </Button>
         </Link>
+        <a href={CHATGPT_APP_URL} target="_blank" rel="noopener noreferrer">
+          <Button variant="ghost">
+            <span className="flex items-center gap-2">
+              <ExternalLink size={16} /> Instalar o app no ChatGPT
+            </span>
+          </Button>
+        </a>
       </div>
+      <p className="text-xs text-text-muted mt-2">
+        Com o app instalado, você pede o treino direto na conversa e ele já entra na conta do aluno —
+        sem baixar prompt nem colar arquivo.
+      </p>
       {!compact && (
         <p className="text-xs text-text-muted mt-3">
           ou adicione manualmente no botão <span className="text-text-secondary">Adicionar treino</span> acima,

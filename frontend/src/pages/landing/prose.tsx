@@ -17,7 +17,8 @@ export function renderInline(text: string): ReactNode[] {
     if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index))
     const [, label, href] = match
     if (href.startsWith('http')) {
-      nodes.push(<a key={match.index} href={href} style={{ color: '#0f766e', fontWeight: 650 }}>{label}</a>)
+      // Link externo abre em aba nova: o leitor não perde o artigo ao instalar o app.
+      nodes.push(<a key={match.index} href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#0f766e', fontWeight: 650 }}>{label}</a>)
     } else {
       nodes.push(<Link key={match.index} to={href} style={{ color: '#0f766e', fontWeight: 650 }}>{label}</Link>)
     }

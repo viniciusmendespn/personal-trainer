@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plug, Copy, Trash2, Info } from 'lucide-react'
+import { Plug, Copy, Trash2, Info, ExternalLink } from 'lucide-react'
 import { mcpApi, type McpConexao } from '../../api/mcp'
+import { CHATGPT_APP_URL } from '../../lib/links'
 import { Button, Card, EmptyState, Spinner, useToast, useConfirm } from '../ui'
 
 function quando(iso?: string | null): string {
@@ -57,12 +58,29 @@ export function ConexoesTab() {
               Converse com seus dados no ChatGPT, Claude ou Gemini
             </p>
             <p>
-              Adicione o CoachPilot como conector no aplicativo que você já usa e peça coisas
+              Adicione o CoachPilot ao aplicativo de IA que você já usa e peça coisas
               como “quem não treina há mais de 10 dias?” ou “monta o treino B da Marina para
               esta semana respeitando a anamnese”. Você autoriza aqui, com a sua conta — nenhuma
               senha é compartilhada.
             </p>
-            <div className="flex items-center gap-2 pt-1">
+            <div className="pt-1">
+              <a href={CHATGPT_APP_URL} target="_blank" rel="noopener noreferrer">
+                <Button size="sm">
+                  <span className="flex items-center gap-2">
+                    <ExternalLink size={14} /> Instalar no ChatGPT
+                  </span>
+                </Button>
+              </a>
+              <p className="text-xs mt-1.5">
+                Abre o app do CoachPilot no ChatGPT: clique em <strong>+</strong> para adicionar e
+                autorize com a sua conta. Funciona também na conta gratuita e no app de celular.
+              </p>
+            </div>
+            <p className="text-xs pt-1">
+              <strong>Usa Claude ou Gemini?</strong> Copie o endereço abaixo e cole no aplicativo —
+              no Claude, em <em>Settings → Connectors</em>; no Gemini, pelo CLI.
+            </p>
+            <div className="flex items-center gap-2">
               <code className="px-2 py-1 rounded bg-white/5 text-xs break-all">{url}</code>
               <Button
                 size="sm"
@@ -75,10 +93,6 @@ export function ConexoesTab() {
                 <Copy size={14} /> Copiar
               </Button>
             </div>
-            <p className="text-xs">
-              No aplicativo, procure por <strong>Conectores</strong> (Claude e ChatGPT) ou
-              configure o servidor MCP (Gemini CLI) e cole esse endereço.
-            </p>
           </div>
         </div>
       </Card>
@@ -90,6 +104,15 @@ export function ConexoesTab() {
           icon={<Plug size={28} />}
           title="Nenhum aplicativo conectado"
           description="Quando você autorizar o ChatGPT, o Claude ou o Gemini, ele aparece aqui."
+          action={(
+            <a href={CHATGPT_APP_URL} target="_blank" rel="noopener noreferrer">
+              <Button>
+                <span className="flex items-center gap-2">
+                  <ExternalLink size={16} /> Instalar no ChatGPT
+                </span>
+              </Button>
+            </a>
+          )}
         />
       ) : (
         <div className="space-y-2">

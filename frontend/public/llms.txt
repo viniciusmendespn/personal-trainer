@@ -52,7 +52,8 @@ O personal conecta a IA que ja assina -- ChatGPT, Claude ou Gemini -- a propria 
 passa a consultar e atualizar os dados dos alunos conversando. A autorizacao e feita por ele em
 Configuracoes > Conexoes e vale apenas para a conta que autorizou.
 No ChatGPT o CoachPilot e um app publicado no diretorio publico: o personal abre Plugins, busca por
-"coachpilot", clica no + e a tela do CoachPilot abre para login e autorizacao. O padrao aberto por
+"coachpilot", clica no + e a tela do CoachPilot abre para login e autorizacao. Link direto de
+instalacao: https://chatgpt.com/plugins/plugin_asdk_app_6a80cc8edfb48191b895cbaecd19b642 O padrao aberto por
 tras e o MCP (Model Context Protocol), adotado por OpenAI, Anthropic e Google -- por isso a mesma
 conexao funciona nas tres IAs.
 Permissoes: somente leitura, ou leitura e escrita de treinos, escolhidas pelo personal ao autorizar.

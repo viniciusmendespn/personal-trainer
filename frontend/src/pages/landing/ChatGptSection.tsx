@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Check, Copy, ShieldCheck, Undo2, Wallet, Sparkles } from 'lucide-react'
+import { ArrowRight, Check, Copy, ShieldCheck, Undo2, Wallet, Sparkles, ExternalLink } from 'lucide-react'
+import { CHATGPT_APP_URL } from '../../lib/links'
 
 const PASSOS = [
-  { titulo: 'Abra os Plugins no ChatGPT', desc: 'No menu lateral do ChatGPT, clique em "Plugins".' },
+  { titulo: 'Abra o app no ChatGPT', desc: 'Pelo botão abaixo, ou no menu lateral do ChatGPT em "Plugins".' },
   { titulo: 'Busque por CoachPilot', desc: 'Digite "coachpilot" na busca — ele aparece na lista de apps públicos.' },
   { titulo: 'Clique no + para adicionar', desc: 'O app entra na sua conta do ChatGPT na hora.' },
   { titulo: 'Entre e autorize', desc: 'A tela do CoachPilot abre sozinha para você fazer login e liberar o acesso. Sua senha nunca passa pelo ChatGPT.' },
@@ -200,6 +201,19 @@ export default function ChatGptSection() {
               >
                 Criar conta grátis e conectar <ArrowRight size={18} />
               </Link>
+              <a
+                href={CHATGPT_APP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  background: '#fff', color: '#0f766e', fontWeight: 700, fontSize: 15,
+                  textDecoration: 'none', padding: '13px 22px', borderRadius: 12,
+                  border: '1.5px solid rgba(15,118,110,0.35)',
+                }}
+              >
+                Abrir o app no ChatGPT <ExternalLink size={16} />
+              </a>
               <span style={{ color: '#64748b', fontSize: 13.5, lineHeight: 1.5 }}>
                 Você precisa de uma conta CoachPilot para autorizar.
               </span>

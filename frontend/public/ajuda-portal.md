@@ -40,7 +40,12 @@ Nos três primeiros, a IA gera o conteúdo (JSON ou CSV) e você cola/anexa o re
 
 ### Conectar o ChatGPT, Claude ou Gemini
 
-Em **Configurações → Conexões** você encontra o endereço do CoachPilot para colar como **conector** no aplicativo de IA que já usa. Feito isso, o chat passa a enxergar os seus dados e você pergunta direto: *"quem não treina há mais de 10 dias?"*, *"monta o treino B da Marina para esta semana respeitando a anamnese"*.
+No **ChatGPT**, o caminho mais curto é o link direto do app:
+<https://chatgpt.com/plugins/plugin_asdk_app_6a80cc8edfb48191b895cbaecd19b642> — clique no **+** para
+adicionar e autorize com a sua conta CoachPilot. O mesmo botão está em **Ajuda** e em
+**Configurações → Conexões**, no portal.
+
+Para **Claude** ou **Gemini**, em **Configurações → Conexões** você encontra o endereço do CoachPilot para colar como **conector** no aplicativo de IA que já usa. Feito isso, o chat passa a enxergar os seus dados e você pergunta direto: *"quem não treina há mais de 10 dias?"*, *"monta o treino B da Marina para esta semana respeitando a anamnese"*.
 
 Como funciona a autorização:
 
