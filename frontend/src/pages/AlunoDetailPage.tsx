@@ -496,7 +496,10 @@ export function AlunoDetailPage() {
           {isLoading ? (
             <Spinner />
           ) : !treinos?.length ? (
-            <MontarTreinoIaCallout />
+            <MontarTreinoIaCallout
+              alunoNome={aluno?.nome}
+              onAplicarRotina={() => setShowAplicarRotina(true)}
+            />
           ) : (
             <TreinosLista alunoId={alunoId} treinos={treinos} />
           )}
