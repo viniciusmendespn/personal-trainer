@@ -18,6 +18,8 @@ export interface Notificacao {
   /** Nome canônico do exercício — identidade estável p/ deep link (id muda a cada semana). */
   chave?: string
   exercicio_nome?: string
+  /** TREINO_CONCLUIDO: sessão que o aluno acabou de finalizar — deep link para o treino do dia. */
+  sessao_id?: string
   /** LEAD_NOVO (captação): telefone do prospect, fonte do link e ref do lead. */
   telefone?: string
   fonte?: string

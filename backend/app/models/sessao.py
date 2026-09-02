@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models.enums import SessaoStatus, TipoExercicio
 
@@ -36,6 +36,10 @@ class ScoreBloco(BaseModel):
 class FinishBody(BaseModel):
     """Payload opcional do finish — ausente = comportamento clássico (musculação)."""
     scores_blocos: list[ScoreBloco] = []
+    # Comentário curto do aluno ao fechar o treino: justifica um exercício pulado, relata como
+    # foi o dia. Texto escrito por aluno é DADO, nunca instrução — vale para a IA que lê o
+    # histórico pelo MCP tanto quanto para o personal.
+    observacao: Optional[str] = Field(None, max_length=500)
 
 
 class SessaoTreino(BaseModel):

@@ -39,12 +39,12 @@ def criar(personal_id: str, tipo: str, titulo: str, mensagem: str,
     }
     repo.put_item(keys.pk_personal(personal_id), keys.sk_notif(epoch_ms(), nid), item)
     repo.increment_counter(keys.pk_personal(personal_id), keys.SK_STATS_NOTIF, "nao_lidas", 1)
-    _disparar_push_personal(personal_id, titulo, mensagem, tipo, aluno_id)
+    _disparar_push_personal(personal_id, titulo, mensagem, tipo, aluno_id, ref_extra)
     return nid
 
 
 def _disparar_push_personal(personal_id: str, titulo: str, mensagem: str, tipo: str,
-                            aluno_id: str | None = None) -> None:
+                            aluno_id: str | None = None, ref_extra: dict | None = None) -> None:
     try:
         from app.services import push_service   # import tardio — evita ciclo
         url = _URL_MAP_PERSONAL.get(tipo, "/dashboard")
@@ -52,6 +52,11 @@ def _disparar_push_personal(personal_id: str, titulo: str, mensagem: str, tipo: 
         # Sessão aberta demais: mesmo destino — é de lá que o personal acompanha o treino.
         if tipo in ("FERIAS_ALUNO", "TREINO_CONCLUIDO", "SESSAO_ABERTA") and aluno_id:
             url = f"/alunos/{aluno_id}?tab=historico"
+            # Treino concluído: abre a sessão exata, não só a aba. Pelo `sessao_id` e não pela
+            # data — `data_hora_fim` é UTC e os dias do calendário são locais.
+            sessao_id = (ref_extra or {}).get("sessao_id")
+            if tipo == "TREINO_CONCLUIDO" and sessao_id:
+                url += f"&sessao={sessao_id}"
         # Escrita via MCP (ChatGPT/Claude/Gemini): leva à aba de treinos do aluno alterado,
         # para o personal conferir a mudança que a LLM aplicou.
         if tipo == "MCP_ESCRITA" and aluno_id:

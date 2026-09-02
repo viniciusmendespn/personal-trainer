@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, AlertTriangle, CalendarClock, CheckCircle2, Clock, Image, Camera, HelpCircle, Pin, MailOpen, Link2, UserRound, Dumbbell, PlaySquare, MessageSquareDot, MessageCircle, DollarSign, UserPlus } from 'lucide-react'
+import { Bell, AlertTriangle, CalendarClock, CalendarDays, CheckCircle2, Clock, Image, Camera, HelpCircle, Pin, MailOpen, Link2, UserRound, Dumbbell, PlaySquare, MessageSquareDot, MessageCircle, DollarSign, UserPlus } from 'lucide-react'
 import { useNotificacoes, useMarkRead, useMarkAllRead, useVincularMidia } from '../hooks/useNotificacoes'
 import { useAlunos } from '../hooks/useAlunos'
 import { useExerciciosAluno } from '../hooks/useEvolucao'
@@ -150,6 +150,17 @@ function useQuickAction(item: Notificacao, markRead: ReturnType<typeof useMarkRe
       label: 'Ver histórico',
       icon: <CalendarClock size={15} />,
       fn: doAndRead(() => navigate(`/alunos/${item.aluno_id}?tab=historico`)),
+    }
+  }
+  if (item.tipo === 'TREINO_CONCLUIDO') {
+    // Abre a sessão exata (o treino inteiro + o comentário do aluno). Pelo `sessao_id` e não
+    // pela data: `data_hora` é UTC e os dias do calendário são locais.
+    const dest = `/alunos/${item.aluno_id}?tab=historico`
+      + (item.sessao_id ? `&sessao=${encodeURIComponent(item.sessao_id)}` : '')
+    return {
+      label: 'Ver treino do dia',
+      icon: <CalendarDays size={15} />,
+      fn: doAndRead(() => navigate(dest)),
     }
   }
 
