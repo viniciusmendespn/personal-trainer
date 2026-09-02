@@ -9,6 +9,7 @@ Para alterar o item canônico, edita-se a Biblioteca diretamente.
 import urllib.parse
 
 from app.models.biblioteca import ExLib
+from app.models.grupos_musculares import grupos_do_item
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services.sessao_service import chave_exercicio
@@ -51,38 +52,44 @@ def listar_para_ia(personal_id: str) -> list[dict]:
     ocultos e **zera as URLs de busca** — apresentar uma página de resultados como se fosse a
     demonstração do exercício faz a IA concluir que a biblioteca não tem vídeo e sair usando
     os dela, que é justamente o que a regra de ouro nº 1 tenta evitar.
-    Uma única Query; ordena por (grupo, nome) como o portal.
+    Uma única Query; ordena por (primeiro grupo, nome) como o portal.
     """
     itens = []
     for item in repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.EXLIB_PREFIX):
         if item.get("ativo") is False:
             continue
         video = item.get("video_url")
+        grupos = grupos_do_item(item)
         itens.append({
             "nome": item.get("nome") or "",
-            "grupo": item.get("grupo") or None,
+            "grupos": grupos,
+            "grupo": item.get("grupo") or None,   # legado — a IA antiga ainda lê este campo
             "video_url": None if (not video or eh_busca_youtube(video)) else video,
         })
-    itens.sort(key=lambda e: ((e["grupo"] or "").lower(), e["nome"].lower()))
+    itens.sort(key=lambda e: (e["grupos"][0].lower(), e["nome"].lower()))
     return itens
 
 
 def markdown_para_ia(itens: list[dict]) -> str:
     """A biblioteca como lista markdown agrupada por grupo muscular — ~1 linha por exercício,
     contra as ~6 do JSON indentado. Espelha `bibliotecaMarkdown` do portal: numa biblioteca de
-    150 exercícios é a diferença entre ~900 e ~170 linhas dentro do prompt."""
+    150 exercícios é a diferença entre ~900 e ~170 linhas dentro do prompt.
+
+    Um exercício aparece uma única vez, sob o primeiro grupo; os demais vão entre colchetes ao
+    lado do nome. Repetir a linha em cada grupo inflaria o prompt sem dizer nada novo."""
     if not itens:
         return "_(o personal ainda não cadastrou exercícios — monte tudo do zero)_"
     linhas: list[str] = []
     grupo_atual = object()
     for ex in itens:
-        grupo = (ex.get("grupo") or "").strip() or "Sem grupo"
-        if grupo != grupo_atual:
+        grupos = ex.get("grupos") or grupos_do_item(ex)
+        if grupos[0] != grupo_atual:
             if linhas:
                 linhas.append("")
-            linhas.append(f"**{grupo}**")
-            grupo_atual = grupo
-        linhas.append(f"- {ex['nome']} → {ex.get('video_url') or '(sem vídeo cadastrado)'}")
+            linhas.append(f"**{grupos[0]}**")
+            grupo_atual = grupos[0]
+        extras = f" [{', '.join(grupos)}]" if len(grupos) > 1 else ""
+        linhas.append(f"- {ex['nome']}{extras} → {ex.get('video_url') or '(sem vídeo cadastrado)'}")
     return "\n".join(linhas)
 
 
@@ -130,6 +137,7 @@ def upsert_from_exercicios(personal_id: str, exercicios: list[dict]) -> int:
         item = ExLib(
             exlib_id=new_id(),
             nome=nome,
+            grupos=ex.get("grupos"),
             grupo=ex.get("grupo"),
             video_url=video_url,
             recomendacoes=ex.get("observacoes"),

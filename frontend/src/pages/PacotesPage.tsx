@@ -12,6 +12,7 @@ import { downloadText, fetchPromptMd, limparJsonColado, renderizarPromptIA, slim
 import { extrairErroImport, mensagemDeErro, type ErroImport, type ProblemaImport } from '../utils/erroApi'
 import type { ExLib, ImportarPacoteResponse, PacoteInstalado } from '../types'
 import { normalizeText } from '../utils/normalizeText'
+import { gruposDoExercicio } from '../utils/grupos'
 
 // ── Tela de importação ────────────────────────────────────────────────────────
 
@@ -618,16 +619,20 @@ function CriarPacoteTab() {
     const items = biblioteca ?? []
     if (!q) return items
     return items.filter(
-      (e) => normalizeText(e.nome).includes(q) || normalizeText(e.grupo).includes(q),
+      (e) => normalizeText(e.nome).includes(q)
+        || gruposDoExercicio(e).some((g) => normalizeText(g).includes(q)),
     )
   }, [biblioteca, exQuery])
 
   const gruposExercicios = useMemo(() => {
     const map = new Map<string, ExLib[]>()
     for (const e of exerciciosFiltrados) {
-      const g = e.grupo?.trim() || 'Sem grupo'
-      if (!map.has(g)) map.set(g, [])
-      map.get(g)!.push(e)
+      // Exercício multi-grupo aparece sob cada grupo — aqui a lista é para SELECIONAR o que
+      // vai no pacote, e quem procura por "Tríceps" espera achar o supino ali também.
+      for (const g of gruposDoExercicio(e)) {
+        if (!map.has(g)) map.set(g, [])
+        map.get(g)!.push(e)
+      }
     }
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b, 'pt-BR'))
   }, [exerciciosFiltrados])

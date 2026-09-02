@@ -7,10 +7,11 @@ templates e rotinas prontos para importação. Dois tipos:
 """
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.models.enums import TipoExercicio
 from app.models.exercicio import ExercicioSubstituto, SeriePrescrita
+from app.models.grupos_musculares import sincronizar_grupo_legado
 from app.models.treino import BlocoTreino
 
 
@@ -28,7 +29,8 @@ class ExercicioPacote(BaseModel):
     """Exercício dentro de um .cpkg — mapeado para ExLib no import."""
     ref: str                               # identificador interno do arquivo (ex: "ex_supino")
     nome: str
-    grupo: Optional[str] = None
+    grupos: Optional[list[str]] = None         # grupos musculares atingidos — ex.: ["Peito", "Tríceps"]
+    grupo: Optional[str] = None                # derivado de `grupos`; legado nos pacotes antigos
     video_url: Optional[str] = None
     descricao: Optional[str] = None
     recomendacoes: Optional[str] = None
@@ -36,6 +38,8 @@ class ExercicioPacote(BaseModel):
     unidade_reps: Optional[str] = None         # PERFORMANCE: unidade da métrica (≤7 chars)
     metrica_direcao: Optional[str] = "MAIOR"   # PERFORMANCE: "MAIOR"|"MENOR"
     substitutos: list[ExercicioSubstituto] = Field(default_factory=list)
+
+    _sincroniza_grupo = model_validator(mode="after")(sincronizar_grupo_legado)
 
 
 class ExercicioPacoteTemplate(BaseModel):

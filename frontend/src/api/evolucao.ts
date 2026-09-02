@@ -43,6 +43,9 @@ export interface ExercicioEvolucao {
   exercicio_id?: string | null
   exercicio_ids?: string[]
   tipo_exercicio?: string
+  /** Grupos musculares atingidos. `grupo` é derivado (join) e é o único campo dos
+   *  itens antigos — leia sempre via `gruposDoExercicio` (utils/grupos.ts). */
+  grupos?: string[]
   grupo?: string
   unidade_carga?: string
   unidade_reps?: string

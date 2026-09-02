@@ -88,6 +88,7 @@ from app.models.enums import (  # noqa: E402
     CustomFieldType,
 )
 from app.models.exercicio import Exercicio, SeriePrescrita  # noqa: E402
+from app.models.grupos_musculares import normalizar_grupo  # noqa: E402
 from app.models.registro import Registro, SerieExec  # noqa: E402
 from app.models.template import ExercicioTemplate, TreinoTemplate  # noqa: E402
 from app.models.treino import Treino  # noqa: E402
@@ -575,7 +576,7 @@ def registrar_sessao_historica(aluno_id: str, treino: dict, dt: datetime) -> str
                 cargas.append(cg)
                 volume += cg * (s.reps or 0)
         if volume > 0:
-            grupo_key = sessao_service._normalizar_grupo(ex["grupo"])
+            grupo_key = normalizar_grupo(ex["grupo"])
             repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_volume": volume}, set_={"ultimo_treino": iso_at(dt)})
             repo.add_and_set(pk, keys.sk_stats_week(wk), add={"volume": volume}, set_={"semana": wk})
             repo.add_and_set(pk, keys.sk_stats_week_grupo(wk, grupo_key),

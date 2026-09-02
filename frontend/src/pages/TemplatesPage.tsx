@@ -5,6 +5,8 @@ import { normalizeText } from '../utils/normalizeText'
 import { useTemplates, useCreateTemplate, useDeleteTemplate, useUpdateTemplate, useAplicarTemplate } from '../hooks/useTemplates'
 import { useBiblioteca } from '../hooks/useDominio'
 import { Button, Card, Input, Textarea, Spinner, Modal, EmptyState, Badge, useToast, useConfirm, AutocompleteInput, ExpandableText } from '../components/ui'
+import { GruposMuscularesInput } from '../components/exercicios/GruposMuscularesInput'
+import { gruposDoExercicio, grupoLegado, sugestoesDeGrupo } from '../utils/grupos'
 import { SeriesPrescritasEditor, initSeriesPrescritas } from '../components/exercicios/SeriesPrescritasEditor'
 import { SubstitutosTreinoEditor } from '../components/exercicios/SubstitutosTreinoEditor'
 import { BlocosTreinoEditor } from '../components/exercicios/BlocosTreinoEditor'
@@ -177,7 +179,7 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
   const saving = create.isPending || upd.isPending
 
   const gruposUnicos = useMemo(
-    () => Array.from(new Set((biblioteca ?? []).map((b) => b.grupo).filter(Boolean))) as string[],
+    () => sugestoesDeGrupo((biblioteca ?? []).map((b) => b.grupos?.join(', ') ?? b.grupo)),
     [biblioteca]
   )
 
@@ -245,19 +247,23 @@ function EditForm({ template, onDone }: { template?: TreinoTemplate; onDone: () 
                       suggestions={(biblioteca ?? []).map((b) => b.nome)}
                       onChange={(v) => {
                         const lib = biblioteca?.find((b) => b.nome.toLowerCase() === v.toLowerCase())
+                        const herdaGrupos = (lib?.grupos?.length || lib?.grupo) && !ex.grupos?.length && !ex.grupo
                         updateEx(i, {
                           nome: v,
-                          ...(lib?.grupo && !ex.grupo ? { grupo: lib.grupo } : {}),
+                          ...(herdaGrupos
+                            ? { grupos: gruposDoExercicio(lib), grupo: grupoLegado(gruposDoExercicio(lib)) }
+                            : {}),
                           ...(lib?.video_url && !ex.video_url ? { video_url: lib.video_url } : {}),
                           ...(lib?.recomendacoes && !ex.observacoes ? { observacoes: lib.recomendacoes } : {}),
                         })
                       }}
                     />
-                    <AutocompleteInput
-                      label="Grupo muscular"
-                      value={ex.grupo ?? ''}
+                    <GruposMuscularesInput
+                      value={(ex.grupos?.length || ex.grupo) ? gruposDoExercicio(ex) : []}
                       suggestions={gruposUnicos}
-                      onChange={(v) => updateEx(i, { grupo: v || undefined })}
+                      onChange={(gs) => updateEx(i, {
+                        grupos: gs.length ? gs : undefined, grupo: grupoLegado(gs),
+                      })}
                     />
                   </div>
                   <div className="flex items-end gap-3 mt-3">

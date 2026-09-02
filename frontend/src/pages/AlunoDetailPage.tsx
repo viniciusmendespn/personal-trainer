@@ -11,6 +11,8 @@ import {
   useExercicios, useCreateExercicio, useUpdateExercicio, useDeleteExercicio, useMidiaExercicio,
 } from '../hooks/useTreinos'
 import { Button, Card, Input, Textarea, Spinner, Tabs, Badge, Modal, ErrorText, useToast, useConfirm, AvatarUpload, Avatar, ObjetivosPicker, AutocompleteInput, StatChip, OverflowMenu, ExpandableText, SortableList, type SortableRenderProps } from '../components/ui'
+import { GruposMuscularesInput } from '../components/exercicios/GruposMuscularesInput'
+import { gruposDoExercicio, grupoLegado, sugestoesDeGrupo } from '../utils/grupos'
 import { PhoneInput } from '../components/PhoneInput'
 import { MontarTreinoIaCallout } from '../components/MontarTreinoIaCallout'
 import { AtualizarTreinoIAModal } from '../components/AtualizarTreinoIAModal'
@@ -99,7 +101,12 @@ export function AlunoDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const raw = searchParams.get('tab') as TabKey | null
   const tab: TabKey = TAB_KEYS.includes(raw as TabKey) ? (raw as TabKey) : 'treinos'
+  // Trocar de aba na mão descarta os demais params (inclusive `sessao`) — é o comportamento
+  // desejado: o deep link já cumpriu o papel.
   const setTab = (k: TabKey) => setSearchParams({ tab: k }, { replace: true })
+  // Deep link da notificação "aluno concluiu um treino": abre aquela sessão no histórico.
+  const sessaoFoco = searchParams.get('sessao') || undefined
+  const limparSessaoFoco = () => setSearchParams({ tab: 'historico' }, { replace: true })
   const [showAddTreino, setShowAddTreino] = useState(false)
   const [showAplicarRotina, setShowAplicarRotina] = useState(false)
   const [showAtualizarIA, setShowAtualizarIA] = useState(false)
@@ -507,7 +514,9 @@ export function AlunoDetailPage() {
       )}
 
       {tab === 'pendencias' && <PendenciasTab alunoId={alunoId} />}
-      {tab === 'historico' && <HistoricoPersonal alunoId={alunoId} />}
+      {tab === 'historico' && (
+        <HistoricoPersonal alunoId={alunoId} sessaoFoco={sessaoFoco} onFecharSessaoFoco={limparSessaoFoco} />
+      )}
       {tab === 'frequencia' && <FrequenciaTab alunoId={alunoId} />}
       {tab === 'metas' && <MetasTab alunoId={alunoId} />}
       {tab === 'financeiro' && <FinanceiroTab alunoId={alunoId} />}
@@ -771,7 +780,7 @@ function NotasTimeline({ alunoId }: { alunoId: string }) {
 /** Reconstrói o corpo `ExercicioCreate` a partir de um `Exercicio` existente (para reordenar). */
 function toExercicioCreate(ex: Exercicio): ExercicioCreate {
   return {
-    nome: ex.nome, grupo: ex.grupo, ordem: ex.ordem, bloco_id: ex.bloco_id,
+    nome: ex.nome, grupos: ex.grupos, grupo: ex.grupo, ordem: ex.ordem, bloco_id: ex.bloco_id,
     aquecimento: ex.aquecimento, tipo_exercicio: ex.tipo_exercicio,
     unidade_carga: ex.unidade_carga, unidade_reps: ex.unidade_reps,
     metrica_direcao: ex.metrica_direcao, series: ex.series,
@@ -1030,7 +1039,7 @@ function ExercicioForm({
   initial, biblioteca, exerciciosAluno, blocos, onSubmit, submitting, submitLabel,
 }: {
   initial?: Partial<Exercicio>
-  biblioteca?: { exlib_id: string; nome: string; grupo?: string; video_url?: string; recomendacoes?: string; links_uteis?: string[]; substitutos?: ExercicioSubstituto[] }[]
+  biblioteca?: { exlib_id: string; nome: string; grupos?: string[]; grupo?: string; video_url?: string; recomendacoes?: string; links_uteis?: string[]; substitutos?: ExercicioSubstituto[] }[]
   exerciciosAluno?: Exercicio[]
   blocos?: BlocoTreino[]
   onSubmit: (body: ExercicioCreate) => Promise<void>
@@ -1038,7 +1047,10 @@ function ExercicioForm({
   submitLabel: string
 }) {
   const [nome, setNome] = useState(initial?.nome ?? '')
-  const [grupo, setGrupo] = useState(initial?.grupo ?? '')
+  // Exercício antigo abre com a string composta já quebrada em chips (ver utils/grupos.ts).
+  const [gruposSel, setGruposSel] = useState<string[]>(
+    () => (initial?.grupos?.length || initial?.grupo) ? gruposDoExercicio(initial) : []
+  )
   const [blocoId, setBlocoId] = useState(initial?.bloco_id ?? '')
   const [aquecimento, setAquecimento] = useState(!!initial?.aquecimento)
   const [tipo, setTipo] = useState<TipoExercicio>(normalizeTipoExercicio(initial?.tipo_exercicio))
@@ -1067,10 +1079,10 @@ function ExercicioForm({
   }, [exerciciosAluno])
 
   const grupos = useMemo(
-    () => Array.from(new Set([
-      ...exerciciosAlunoUnicos.map((e) => e.grupo),
-      ...(biblioteca ?? []).map((b) => b.grupo),
-    ].filter((g): g is string => !!g))).sort(),
+    () => sugestoesDeGrupo([
+      ...exerciciosAlunoUnicos.map((e) => e.grupos?.join(', ') ?? e.grupo),
+      ...(biblioteca ?? []).map((b) => b.grupos?.join(', ') ?? b.grupo),
+    ]),
     [biblioteca, exerciciosAlunoUnicos]
   )
 
@@ -1088,9 +1100,9 @@ function ExercicioForm({
     const usado = exerciciosAlunoUnicos.find((e) => e.nome.toLowerCase() === v.toLowerCase())
     const lib = biblioteca?.find((b) => b.nome.toLowerCase() === v.toLowerCase())
     const video = usado?.video_url || lib?.video_url
-    const grp = usado?.grupo || lib?.grupo
+    const fonteGrupos = (usado?.grupos?.length || usado?.grupo) ? usado : lib
     if (video) setVid(video)
-    if (grp) setGrupo(grp)
+    if (fonteGrupos?.grupos?.length || fonteGrupos?.grupo) setGruposSel(gruposDoExercicio(fonteGrupos))
     if (usado?.tipo_exercicio) setTipo(normalizeTipoExercicio(usado.tipo_exercicio))
     if (usado?.unidade_reps) setUnidadeReps(usado.unidade_reps)
     if (usado?.metrica_direcao) setMetricaDirecao(usado.metrica_direcao)
@@ -1104,7 +1116,8 @@ function ExercicioForm({
     const validas = seriesPrescritas.filter((s) => s.reps || s.carga)
     await onSubmit({
       nome,
-      grupo: grupo || undefined,
+      grupos: gruposSel.length ? gruposSel : undefined,
+      grupo: grupoLegado(gruposSel),
       bloco_id: blocoId || undefined,
       aquecimento,
       tipo_exercicio: tipo,
@@ -1133,11 +1146,7 @@ function ExercicioForm({
             value={nome} onChange={onNome}
             suggestions={datalistNomes.map((item) => item.nome)}
           />
-          <AutocompleteInput
-            label="Grupo muscular"
-            value={grupo} onChange={setGrupo}
-            suggestions={grupos}
-          />
+          <GruposMuscularesInput value={gruposSel} onChange={setGruposSel} suggestions={grupos} />
         </div>
         <div className="flex items-end gap-3 mt-3">
           {(blocos?.length ?? 0) > 0 && (
@@ -1447,13 +1456,26 @@ function ExercicioRow({
   )
 }
 
-function HistoricoPersonal({ alunoId }: { alunoId: string }) {
+function HistoricoPersonal({ alunoId, sessaoFoco, onFecharSessaoFoco }: {
+  alunoId: string
+  /** Sessão vinda do deep link da notificação de treino concluído — abre já no detalhe. */
+  sessaoFoco?: string
+  onFecharSessaoFoco?: () => void
+}) {
   // Mesmo toggle Mês/Lista do app do aluno. O calendário vai SEM fotos de check-in e sem o botão
   // de compartilhar story (privacidade do aluno); a lista é read-only (sem envio de foto).
   const [view, setView] = useState<'mes' | 'lista'>('mes')
   const qc = useQueryClient()
   return (
     <div className="space-y-4 pb-4">
+      <Modal
+        open={!!sessaoFoco}
+        onClose={() => onFecharSessaoFoco?.()}
+        title="Treino concluído"
+        size="lg"
+      >
+        {sessaoFoco && <SessaoDetalheCard alunoId={alunoId} sessaoId={sessaoFoco} />}
+      </Modal>
       <FeriasPanel
         queryKey={['ferias', alunoId]}
         list={() => feriasApi.list(alunoId)}

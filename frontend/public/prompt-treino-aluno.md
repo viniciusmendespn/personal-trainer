@@ -116,7 +116,7 @@ A ordem do array é a ordem de execução.
 ```json
 {
   "nome": "Supino reto",
-  "grupo": "Peito",
+  "grupos": ["Peito", "Tríceps"],
   "bloco_id": null,
   "aquecimento": false,
   "tipo_exercicio": "FORCA",
@@ -139,7 +139,7 @@ A ordem do array é a ordem de execução.
 | Campo | Regra |
 |---|---|
 | `nome` | Obrigatório. **Idêntico ao da biblioteca quando o exercício existir lá** |
-| `grupo` | Peito, Costas, Ombros, Pernas, Glúteos, Bíceps, Tríceps, Abdômen… ou `null` |
+| `grupos` | **Lista** dos grupos musculares que o exercício atinge — um supino é `["Peito", "Tríceps"]`. Vocabulário sugerido: `Peito` `Costas` `Ombros` `Trapézio` `Bíceps` `Tríceps` `Antebraço` `Quadríceps` `Posteriores de coxa` `Glúteos` `Panturrilhas` `Abdômen` `Core` `Full body` `Cardio`. Pode usar um grupo fora da lista. `null` ou `[]` se não souber. O campo antigo `grupo` (string) ainda é aceito, mas prefira `grupos`: é ele que faz o gráfico de volume somar no grupo certo |
 | `bloco_id` | `null` em treino clássico. Com blocos, deve existir em `blocos[]` do MESMO treino |
 | `aquecimento` | `true` marca o exercício como warm-up (fora de PR/volume/pontos). Default `false` |
 | `tipo_exercicio` | `"FORCA"` (carga + repetições) ou `"PERFORMANCE"` (métrica numérica — apêndice B) |
@@ -165,7 +165,7 @@ falha"`), `carga` (texto ou `null`) e, opcionalmente, `aquecimento: true` para s
 |---|---|
 | "Atualize com base no histórico" (sem pedido específico) | Aplique a análise completa do `contexto_aluno` e proponha a evolução natural do programa |
 | Aumentar volume | Mais séries em `series_prescritas` e/ou mais exercícios; ajuste intervalos se fizer sentido |
-| Trocar exercício | Substitua o objeto mantendo prescrição coerente e ajustando `grupo`/`tipo_exercicio`. **Prefira um que já exista na biblioteca** (nome idêntico + `video_url` de lá) |
+| Trocar exercício | Substitua o objeto mantendo prescrição coerente e ajustando `grupos`/`tipo_exercicio`. **Prefira um que já exista na biblioteca** (nome idêntico + `video_url` de lá) |
 | Lesão / restrição | Remova ou troque o que sobrecarrega a região afetada; explique em `observacoes` |
 | Reduzir treino | Remova exercícios menos prioritários ou reduza séries |
 | Adicionar treino | Novo item em `treinos[]` com seus exercícios |
@@ -230,7 +230,7 @@ nas últimas 8 sessões)."*
       "exercicios": [
         {
           "nome": "Supino reto com barra",
-          "grupo": "Peito",
+          "grupos": ["Peito", "Tríceps"],
           "bloco_id": null,
           "aquecimento": false,
           "tipo_exercicio": "FORCA",
@@ -250,7 +250,7 @@ nas últimas 8 sessões)."*
         },
         {
           "nome": "Tríceps na polia",
-          "grupo": "Tríceps",
+          "grupos": ["Tríceps"],
           "bloco_id": null,
           "aquecimento": false,
           "tipo_exercicio": "FORCA",
@@ -277,7 +277,7 @@ nas últimas 8 sessões)."*
       "exercicios": [
         {
           "nome": "Agachamento livre",
-          "grupo": "Pernas",
+          "grupos": ["Quadríceps", "Glúteos"],
           "bloco_id": null,
           "aquecimento": false,
           "tipo_exercicio": "FORCA",
@@ -363,28 +363,28 @@ Exemplo de treino com blocos (o app agrupa por bloco, oferece o timer do AMRAP e
   ],
   "exercicios": [
     {
-      "nome": "Air Squat", "grupo": "Pernas", "bloco_id": "aq", "aquecimento": false,
+      "nome": "Air Squat", "grupos": ["Quadríceps", "Glúteos"], "bloco_id": "aq", "aquecimento": false,
       "tipo_exercicio": "PERFORMANCE",
       "series_prescritas": [ { "series": 1, "reps": "10", "carga": null } ],
       "intervalo_s": null, "video_url": null, "observacoes": "10 por round (2 rounds)",
       "unidade_carga": null, "unidade_reps": "reps", "metrica_direcao": "MAIOR", "substitutos": []
     },
     {
-      "nome": "Front Squat", "grupo": "Pernas", "bloco_id": "a", "aquecimento": false,
+      "nome": "Front Squat", "grupos": ["Quadríceps", "Glúteos"], "bloco_id": "a", "aquecimento": false,
       "tipo_exercicio": "FORCA",
       "series_prescritas": [ { "series": 5, "reps": "5", "carga": "75-80%" } ],
       "intervalo_s": 120, "video_url": null, "observacoes": null,
       "unidade_carga": "%1RM", "unidade_reps": null, "metrica_direcao": null, "substitutos": []
     },
     {
-      "nome": "Wall Ball", "grupo": "Pernas", "bloco_id": "c", "aquecimento": false,
+      "nome": "Wall Ball", "grupos": ["Quadríceps", "Glúteos"], "bloco_id": "c", "aquecimento": false,
       "tipo_exercicio": "PERFORMANCE",
       "series_prescritas": [ { "series": 1, "reps": "12", "carga": null } ],
       "intervalo_s": null, "video_url": null, "observacoes": "12 por round — conta para o score do AMRAP",
       "unidade_carga": null, "unidade_reps": "reps", "metrica_direcao": "MAIOR", "substitutos": []
     },
     {
-      "nome": "Power Clean", "grupo": "Costas", "bloco_id": "c", "aquecimento": false,
+      "nome": "Power Clean", "grupos": ["Costas", "Quadríceps"], "bloco_id": "c", "aquecimento": false,
       "tipo_exercicio": "PERFORMANCE",
       "series_prescritas": [ { "series": 1, "reps": "9", "carga": "60/40kg" } ],
       "intervalo_s": null, "video_url": null, "observacoes": "9 por round (60/40kg) — conta para o score do AMRAP",
@@ -417,7 +417,7 @@ calorias, peso corporal.
 ```json
 {
   "nome": "Corrida 5 km",
-  "grupo": null,
+  "grupos": null,
   "bloco_id": null,
   "aquecimento": false,
   "tipo_exercicio": "PERFORMANCE",

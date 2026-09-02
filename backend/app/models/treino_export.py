@@ -12,17 +12,19 @@ Par export-rico / import-enxuto: o DOWNLOAD usa `ProgramaTreinoExportFile` (prog
 campo extra `contexto_aluno` colado de volta é descartado (extra='ignore', default Pydantic)."""
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.models.contexto_export import ContextoAluno
 from app.models.enums import TipoExercicio
 from app.models.exercicio import ExercicioSubstituto, SeriePrescrita
+from app.models.grupos_musculares import sincronizar_grupo_legado
 from app.models.treino import BlocoTreino
 
 
 class ExercicioTreinoFile(BaseModel):
     nome: str
-    grupo: Optional[str] = None
+    grupos: Optional[list[str]] = None         # grupos musculares atingidos — ex.: ["Peito", "Tríceps"]
+    grupo: Optional[str] = None                # derivado de `grupos`; legado nos arquivos antigos
     bloco_id: Optional[str] = None             # referencia BlocoTreino.id do treino (CrossFit)
     aquecimento: bool = False                  # exercício de warmup
     tipo_exercicio: TipoExercicio = TipoExercicio.FORCA
@@ -34,6 +36,8 @@ class ExercicioTreinoFile(BaseModel):
     unidade_reps: Optional[str] = None
     metrica_direcao: Optional[str] = "MAIOR"   # PERFORMANCE: "MAIOR"|"MENOR"
     substitutos: list[ExercicioSubstituto] = Field(default_factory=list)
+
+    _sincroniza_grupo = model_validator(mode="after")(sincronizar_grupo_legado)
 
 
 class TreinoFileItem(BaseModel):

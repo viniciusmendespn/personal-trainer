@@ -195,6 +195,9 @@ export interface ExercicioSubstituto {
 export interface ExLib {
   exlib_id: string
   nome: string
+  /** Grupos musculares atingidos. `grupo` é derivado (join) e é o único campo dos
+   *  itens antigos — leia sempre via `gruposDoExercicio` (utils/grupos.ts). */
+  grupos?: string[]
   grupo?: string
   video_url?: string
   descricao?: string
@@ -235,6 +238,9 @@ export interface Exercicio {
   treino_id: string
   aluno_id: string
   nome: string
+  /** Grupos musculares atingidos. `grupo` é derivado (join) e é o único campo dos
+   *  itens antigos — leia sempre via `gruposDoExercicio` (utils/grupos.ts). */
+  grupos?: string[]
   grupo?: string
   ordem: number
   bloco_id?: string
@@ -261,6 +267,9 @@ export interface Exercicio {
 
 export interface ExercicioCreate {
   nome: string
+  /** Grupos musculares atingidos. `grupo` é derivado (join) e é o único campo dos
+   *  itens antigos — leia sempre via `gruposDoExercicio` (utils/grupos.ts). */
+  grupos?: string[]
   grupo?: string
   ordem?: number
   bloco_id?: string
@@ -336,6 +345,9 @@ export interface ExercicioTemplate {
   bloco_id?: string
   aquecimento?: boolean
   tipo_exercicio?: TipoExercicio
+  /** Grupos musculares atingidos. `grupo` é derivado (join) e é o único campo dos
+   *  itens antigos — leia sempre via `gruposDoExercicio` (utils/grupos.ts). */
+  grupos?: string[]
   grupo?: string
   rm_kg?: number
   unidade_carga?: string

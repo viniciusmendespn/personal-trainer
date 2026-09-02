@@ -55,7 +55,7 @@ Com as 4 respostas, **ainda não gere o JSON**. Apresente assim:
 📋 TREINO PROPOSTO — [Nome do Pacote]
 
 TREINO A — [Nome]  |  Foco: [Grupos]
-  1. [Exercício] ([Grupo]) — [N]s × [reps]  |  Intervalo: [X]s
+  1. [Exercício] ([Grupos]) — [N]s × [reps]  |  Intervalo: [X]s
   2. ...
 
 TREINO B — [Nome]  |  Foco: [Grupos]
@@ -112,7 +112,7 @@ Estes são os **únicos** campos da raiz.
 {
   "ref": "ex_supino_reto",
   "nome": "Supino Reto com Barra",
-  "grupo": "Peito",
+  "grupos": ["Peito", "Tríceps"],
   "tipo_exercicio": "FORCA",
   "video_url": null,
   "descricao": "Exercício composto para o peitoral maior.",
@@ -124,7 +124,7 @@ Estes são os **únicos** campos da raiz.
 |---|---|---|
 | `ref` | ✅ | Começa com `ex_`, minúsculas, sem acento, `_` no lugar de espaço/hífen. **Único no arquivo**. Ok: `ex_supino_reto`, `ex_leg_press_45`. Errado: `Supino_Reto`, `ex-supino`, `ex_supino reto` |
 | `nome` | ✅ | **Da biblioteca quando existir lá — idêntico, com acentos** |
-| `grupo` | ✅ | `Peito` `Costas` `Ombro` `Bíceps` `Tríceps` `Quadríceps` `Posterior de Coxa` `Glúteo` `Panturrilha` `Core` `Abdômen` `Antebraço` `Full Body` `Cardio` |
+| `grupos` | ✅ | **Lista** dos grupos que o exercício atinge — um supino é `["Peito", "Tríceps"]`. Vocabulário sugerido: `Peito` `Costas` `Ombros` `Trapézio` `Bíceps` `Tríceps` `Antebraço` `Quadríceps` `Posteriores de coxa` `Glúteos` `Panturrilhas` `Abdômen` `Core` `Full body` `Cardio`. Pode usar um grupo fora da lista. É `grupos` que faz o gráfico de volume somar no grupo certo |
 | `tipo_exercicio` | ✅ | `"FORCA"` (carga + repetições) ou `"PERFORMANCE"` (métrica numérica — ver apêndice B) |
 | `video_url` | ❌ | **Da biblioteca se o exercício estiver lá.** Senão: um vídeo do YouTube que você conheça, ou `null` |
 | `descricao` | ❌ | Descrição técnica, para o personal |
@@ -214,7 +214,7 @@ o segundo é novo, então recebeu um vídeo do YouTube.
     {
       "ref": "ex_supino_reto",
       "nome": "Supino Reto com Barra",
-      "grupo": "Peito",
+      "grupos": ["Peito", "Tríceps"],
       "tipo_exercicio": "FORCA",
       "video_url": "https://www.youtube.com/watch?v=EXEMPLO_DA_BIBLIOTECA",
       "descricao": "Exercício composto para o peitoral maior.",
@@ -223,7 +223,7 @@ o segundo é novo, então recebeu um vídeo do YouTube.
     {
       "ref": "ex_remada_curvada",
       "nome": "Remada Curvada com Barra",
-      "grupo": "Costas",
+      "grupos": ["Costas", "Bíceps"],
       "tipo_exercicio": "FORCA",
       "video_url": null,
       "descricao": "Exercício composto para espessura das costas.",
@@ -361,7 +361,7 @@ calorias. Além dos campos normais, inclua:
 {
   "ref": "ex_corrida_5km",
   "nome": "Corrida 5 km",
-  "grupo": "Cardio",
+  "grupos": ["Cardio"],
   "tipo_exercicio": "PERFORMANCE",
   "unidade_reps": "min",
   "metrica_direcao": "MENOR",

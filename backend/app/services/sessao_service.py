@@ -14,6 +14,7 @@ from datetime import date, datetime, timedelta, timezone
 from fastapi import HTTPException
 
 from app.models.enums import Ator, CanalOrigem, Classificacao, SessaoStatus, normalizar_tipo_exercicio
+from app.models.grupos_musculares import grupos_do_item, normalizar_grupo, separar_grupos
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import badge_service, ferias_service, media_service, pontos_service
@@ -57,6 +58,9 @@ def _snapshot(ex: dict, blocos_by_id: dict | None = None) -> dict:
     return {
         "exercicio_id": ex["exercicio_id"],
         "nome": ex.get("nome"),
+        # `grupos` é a verdade; `grupo` fica no snapshot para os leitores legados e para o
+        # histórico de exercícios cadastrados antes do campo múltiplo existir.
+        "grupos": ex.get("grupos"),
         "grupo": ex.get("grupo"),
         "bloco_id": ex.get("bloco_id"),
         # Resolvido aqui (único ponto): exercício herda warmup do bloco (spec CROSSFIT §3.4)
@@ -168,9 +172,16 @@ def _notificar_treino_concluido(personal_id: str, aluno_id: str, snap: dict,
             partes.append(f"{prs} novo{'s' if prs > 1 else ''} recorde{'s' if prs > 1 else ''}")
         if snap.get("encerrada_automaticamente"):
             partes.append("finalizado automaticamente")
+        mensagem = " · ".join(partes)
+        # O comentário do aluno é a razão de o personal abrir a notificação — vai no corpo,
+        # truncado, e o texto inteiro fica no detalhe da sessão (o botão leva direto lá).
+        obs = (snap.get("observacao") or "").strip()
+        if obs:
+            trecho = obs if len(obs) <= 80 else obs[:79].rstrip() + "…"
+            mensagem += f' · 💬 "{trecho}"'
         notif_service.criar(
             personal_id, "TREINO_CONCLUIDO", f"{nome} concluiu um treino",
-            " · ".join(partes), aluno_id=aluno_id,
+            mensagem, aluno_id=aluno_id,
             ref_extra={"sessao_id": snap.get("sessao_id")},
         )
     except Exception:
@@ -408,6 +419,11 @@ def finish(aluno_id: str, body=None, auto: bool = False) -> dict:
     ids_validos = {e.get("exercicio_id") for e in s.get("exercicios", [])}
     if body and getattr(body, "scores_blocos", None):
         s["scores_blocos"] = _processar_scores_wod(aluno_id, s, body.scores_blocos, fim_iso)
+    # Comentário do aluno no fecho do treino. Vai no item da sessão, sem write extra: o `snap`
+    # abaixo copia tudo, então o campo já sai no detalhe da sessão e na timeline dos dois lados.
+    observacao = (getattr(body, "observacao", None) or "").strip() if body else ""
+    if observacao:
+        s["observacao"] = observacao
     snap = {k: v for k, v in s.items() if k not in ("PK", "SK", "ttl", "sched_refs")}
     ts = epoch_ms()
     sk_hist = keys.sk_sessao_hist(ts, sessao_id)
@@ -641,7 +657,6 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
     snaps = s.get("exercicios", [])
     ex_id = exercicio_id or ex.get("exercicio_id")
     ex_nome = exercicio_nome or ex.get("nome")
-    ex_grupo = next((e.get("grupo") for e in snaps if e.get("exercicio_id") == ex_id), ex.get("grupo")) or "Sem grupo"
     if not ex_id:
         raise HTTPException(400, "Exercício não identificado")
     chave = chave_exercicio(ex_nome)
@@ -673,14 +688,27 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
         wk = _isoweek()
         repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_volume": volume}, set_={"ultimo_treino": now_iso()})
         repo.add_and_set(pk, keys.sk_stats_week(wk), add={"volume": volume}, set_={"semana": wk})
-        ex_grupo_key = _normalizar_grupo(ex_grupo)
-        repo.add_and_set(pk, keys.sk_stats_week_grupo(wk, ex_grupo_key), add={"volume": volume}, set_={"semana": wk, "grupo": ex_grupo})
-        repo.add_and_set(pk, keys.sk_stats_grupo(ex_grupo_key), add={"volume": volume}, set_={"grupo": ex_grupo})
+        _creditar_volume_grupos(pk, wk, ex_snap, volume)
     pr_novo = _calcular_pr(pk, chave, series, ex_tipo, ex_nome, ex_direcao)
     if pr_novo is not None:
         ex_unidade = ex_snap.get("unidade_reps") if ex_tipo == "PERFORMANCE" else ex_snap.get("unidade_carga")
         _registrar_pr_sessao(aluno_id, ex_nome, pr_novo, ex_tipo, ex_unidade)
     return updated, pr_novo
+
+
+def _creditar_volume_grupos(pk: str, wk: str, ex_snap: dict, volume: float) -> None:
+    """Soma `volume` nos agregados de CADA grupo muscular do exercício (semanal + all-time).
+
+    Um exercício atinge mais de um grupo, então o volume é creditado integralmente a todos —
+    a soma das barras do gráfico deixa de bater com o volume total, o que é o comportamento
+    correto para "volume por grupo muscular". Exercício de 2 grupos = 2 pares de writes de
+    agregado, itens minúsculos numa tabela PAY_PER_REQUEST."""
+    for grupo in grupos_do_item(ex_snap):
+        chave = normalizar_grupo(grupo)
+        repo.add_and_set(pk, keys.sk_stats_week_grupo(wk, chave),
+                         add={"volume": volume}, set_={"semana": wk, "grupo": grupo})
+        repo.add_and_set(pk, keys.sk_stats_grupo(chave),
+                         add={"volume": volume}, set_={"grupo": grupo})
 
 
 def _volume(series: list | None) -> float:
@@ -736,7 +764,6 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
     if not ex_id:
         raise HTTPException(400, "Exercício não identificado")
     ex_nome = next((e.get("nome") for e in snaps if e.get("exercicio_id") == ex_id), ex_atual.get("nome"))
-    ex_grupo = next((e.get("grupo") for e in snaps if e.get("exercicio_id") == ex_id), ex_atual.get("grupo")) or "Sem grupo"
     ex_snap = next((e for e in snaps if e.get("exercicio_id") == ex_id), None) or ex_atual
     ex_tipo = normalizar_tipo_exercicio(ex_snap.get("tipo_exercicio"))
     ex_direcao = ex_snap.get("metrica_direcao") or "MAIOR"
@@ -763,9 +790,7 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
         wk = _isoweek()
         repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_volume": delta}, set_={"ultimo_treino": now_iso()})
         repo.add_and_set(pk, keys.sk_stats_week(wk), add={"volume": delta}, set_={"semana": wk})
-        ex_grupo_key = _normalizar_grupo(ex_grupo)
-        repo.add_and_set(pk, keys.sk_stats_week_grupo(wk, ex_grupo_key), add={"volume": delta}, set_={"semana": wk, "grupo": ex_grupo})
-        repo.add_and_set(pk, keys.sk_stats_grupo(ex_grupo_key), add={"volume": delta}, set_={"grupo": ex_grupo})
+        _creditar_volume_grupos(pk, wk, ex_snap, delta)
     pr_novo = None
     if not substituto_nome:
         pr_novo = _calcular_pr(pk, chave, series, ex_tipo, ex_nome, ex_direcao)
@@ -932,7 +957,7 @@ def chave_exercicio(nome: str | None) -> str:
     return " ".join(sem_acento.lower().split())
 
 
-_EXCAT_META_CAMPOS = ("tipo_exercicio", "grupo", "unidade_carga", "unidade_reps",
+_EXCAT_META_CAMPOS = ("tipo_exercicio", "grupo", "grupos", "unidade_carga", "unidade_reps",
                       "metrica_direcao", "rm_kg", "wod", "formato")
 
 
@@ -954,25 +979,26 @@ def upsert_excat(aluno_id: str, nome: str | None, meta: dict | None = None,
     repo.update_item(keys.pk_aluno(aluno_id), keys.sk_excat(chave), fields)
 
 
-def _normalizar_grupo(grupo: str | None) -> str:
-    """Chave canônica do grupo muscular para SK do DynamoDB (lowercase, sem acento, sem espaço extra)."""
-    if not grupo:
-        return "sem grupo"
-    sem_acento = unicodedata.normalize("NFKD", grupo).encode("ascii", "ignore").decode()
-    return " ".join(sem_acento.lower().split())
+def _partes_do_agregado(grupo: str | None) -> list[str]:
+    """Os grupos de um item de agregado (STATS#G# / STATS#WG#), já quebrando os compostos.
+
+    Agregados gravados antes do campo múltiplo carregam chaves como "peito, triceps" — uma
+    barra própria no gráfico, separada de "peito". Quebrar aqui, na leitura, corrige o
+    histórico inteiro sem reescrever nenhum item. Os agregados novos já vêm por grupo, então
+    a quebra é no-op para eles e nada é contado em dobro."""
+    return separar_grupos(grupo) or ["Sem grupo"]
 
 
 def _dedup_grupos(grupos: list[dict]) -> list[dict]:
-    """Soma volumes de itens com mesmo grupo (normalizado).
+    """Soma volumes de itens com mesmo grupo (normalizado), quebrando os compostos legados.
     O nome de exibição é grp_key.capitalize() para garantir que bate com as chaves de semanas[].grupos."""
     agg: dict[str, dict] = {}
     for g in grupos:
-        grp_raw = g.get("grupo") or "Sem grupo"
-        grp_key = _normalizar_grupo(grp_raw)
-        display = grp_key.capitalize()
-        if grp_key not in agg:
-            agg[grp_key] = {"grupo": display, "volume": 0.0}
-        agg[grp_key]["volume"] = agg[grp_key]["volume"] + g.get("volume", 0)
+        for grp_raw in _partes_do_agregado(g.get("grupo")):
+            grp_key = normalizar_grupo(grp_raw)
+            if grp_key not in agg:
+                agg[grp_key] = {"grupo": grp_key.capitalize(), "volume": 0.0}
+            agg[grp_key]["volume"] = agg[grp_key]["volume"] + g.get("volume", 0)
     return list(agg.values())
 
 
@@ -1335,6 +1361,7 @@ def list_exercicios_aluno(aluno_id: str, incluir_historico: bool = False) -> lis
             "exercicio_id": c.get("exercicio_id") if atual else None,
             "exercicio_ids": ids_por_chave.get(ch, []) if atual else [],
             "tipo_exercicio": normalizar_tipo_exercicio(c.get("tipo_exercicio")),
+            "grupos": grupos_do_item(c),
             "grupo": c.get("grupo"),
             "unidade_carga": c.get("unidade_carga"),
             "unidade_reps": c.get("unidade_reps"),
@@ -1373,9 +1400,12 @@ def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
     for wg in wk_grupos:
         sem, grp = wg.get("semana"), wg.get("grupo")
         if sem in semanas_validas and grp:
-            display = _normalizar_grupo(grp).capitalize()
             cur = volume_por_semana_grupo.setdefault(sem, {})
-            cur[display] = cur.get(display, 0) + wg.get("volume", 0)
+            # Quebra os agregados compostos legados ("peito, triceps") — mesma regra do
+            # `volume_por_grupo`, para as duas séries do gráfico baterem entre si.
+            for parte in _partes_do_agregado(grp):
+                display = normalizar_grupo(parte).capitalize()
+                cur[display] = cur.get(display, 0) + wg.get("volume", 0)
     wk_atual = _isoweek()
     streak_atual = int(st.get("streak_atual", 0))
     total_sessoes = int(st.get("total_sessoes", 0))

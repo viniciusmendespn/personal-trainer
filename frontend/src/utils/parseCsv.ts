@@ -1,5 +1,6 @@
 import type { ExLibCreate } from '../api/biblioteca'
 import type { AlunoCreate } from '../types'
+import { separarGrupos, grupoLegado } from './grupos'
 
 export interface CsvParseResult {
   valid: ExLibCreate[]
@@ -40,9 +41,14 @@ export function parseCsvBiblioteca(text: string): CsvParseResult {
       continue
     }
 
+    // Um exercício atinge mais de um grupo. Separador `;` (e não `,`) para não colidir com o
+    // delimitador do CSV — mesma convenção da coluna `objetivos` no import de alunos.
+    const grupos = separarGrupos(grupo)
+
     valid.push({
       nome: nomeTrimmed,
-      grupo: grupo.trim() || undefined,
+      grupos: grupos.length ? grupos : undefined,
+      grupo: grupoLegado(grupos),
       video_url: video_url.trim() || undefined,
       descricao: descricao.trim() || undefined,
       recomendacoes: recomendacoes.trim() || undefined,

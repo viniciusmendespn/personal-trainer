@@ -3,6 +3,9 @@ import type { ExercicioSubstituto, ExLib } from '../types'
 
 export interface ExLibCreate {
   nome: string
+  /** Grupos musculares atingidos. `grupo` é derivado (join) e é o único campo dos
+   *  itens antigos — leia sempre via `gruposDoExercicio` (utils/grupos.ts). */
+  grupos?: string[]
   grupo?: string
   video_url?: string
   descricao?: string

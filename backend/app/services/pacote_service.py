@@ -20,6 +20,7 @@ from fastapi import HTTPException
 
 from pydantic import ValidationError
 
+from app.models.grupos_musculares import grupos_do_item
 from app.models.pacote import ImportarPacoteResponse, PacoteFile, PacoteRefFile
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
@@ -59,6 +60,7 @@ def _build_exercicio_out(nome: str, item: dict) -> dict:
     return {
         "ref": _nome_para_ref("ex_", nome),
         "nome": nome,
+        "grupos": grupos_do_item(item),
         "grupo": item.get("grupo"),
         "tipo_exercicio": item.get("tipo_exercicio", "FORCA"),
         "unidade_reps": item.get("unidade_reps"),
@@ -313,6 +315,7 @@ def _instalar(
     # 1. Exercícios — exlib_id = det_id(pacote_id, chave_nome) → dedup por nome no pacote
     ref_to_exlib: dict[str, str] = {}
     ref_to_grupo: dict[str, str] = {}
+    ref_to_grupos: dict[str, list[str]] = {}
     ref_to_tipo: dict[str, str] = {}
     ref_to_unidade: dict[str, str | None] = {}
     ref_to_direcao: dict[str, str] = {}
@@ -328,6 +331,7 @@ def _instalar(
         exlib_id = det_id(pacote_id, chave)
         ref_to_exlib[ex_pkg.ref] = exlib_id
         ref_to_grupo[ex_pkg.ref] = ex_pkg.grupo or ""
+        ref_to_grupos[ex_pkg.ref] = ex_pkg.grupos or []
         ref_to_tipo[ex_pkg.ref] = ex_pkg.tipo_exercicio.value
         ref_to_unidade[ex_pkg.ref] = ex_pkg.unidade_reps
         ref_to_direcao[ex_pkg.ref] = ex_pkg.metrica_direcao or "MAIOR"
@@ -343,6 +347,7 @@ def _instalar(
             "SK": keys.sk_exlib(exlib_id),
             "exlib_id": exlib_id,
             "nome": nome,
+            "grupos": ex_pkg.grupos,
             "grupo": ex_pkg.grupo,
             "tipo_exercicio": ex_pkg.tipo_exercicio.value,
             "unidade_reps": ex_pkg.unidade_reps,
@@ -373,6 +378,7 @@ def _instalar(
             exercicios.append({
                 "nome": nome_ex,
                 "exlib_id": exlib_id,
+                "grupos": ref_to_grupos.get(ex_ref_item.ex_ref) or None,
                 "grupo": ref_to_grupo.get(ex_ref_item.ex_ref),
                 "ordem": ex_ref_item.ordem,
                 "bloco_id": ex_ref_item.bloco_id,
@@ -724,6 +730,7 @@ def gerar_pacote(
                 exercise_info[nl] = {
                     "nome": ex["nome"].strip(),
                     "exlib_id": ex.get("exlib_id"),
+                    "grupos": ex.get("grupos"),
                     "grupo": ex.get("grupo"),
                     "tipo_exercicio": ex.get("tipo_exercicio", "FORCA"),
                     "unidade_reps": ex.get("unidade_reps"),
@@ -745,6 +752,7 @@ def gerar_pacote(
                 exercise_info[nl] = {
                     "nome": item["nome"].strip(),
                     "exlib_id": item.get("exlib_id"),
+                    "grupos": item.get("grupos"),
                     "grupo": item.get("grupo"),
                     "tipo_exercicio": item.get("tipo_exercicio", "FORCA"),
                     "unidade_reps": item.get("unidade_reps"),
@@ -774,7 +782,7 @@ def gerar_pacote(
                                              "detail": f"Exercício '{base['nome']}' tem origem licenciada e não pode ser redistribuído"})
         # base (dados do template/exlib já resolvido) tem prioridade sobre o enriquecimento
         # por nome — evita que um homônimo de outro pacote sobrescreva o dado correto.
-        exlib_filtered = {k: v for k, v in exlib.items() if k in ("grupo", "tipo_exercicio", "unidade_reps", "metrica_direcao", "video_url", "descricao", "recomendacoes", "substitutos") and v}
+        exlib_filtered = {k: v for k, v in exlib.items() if k in ("grupo", "grupos", "tipo_exercicio", "unidade_reps", "metrica_direcao", "video_url", "descricao", "recomendacoes", "substitutos") and v}
         base_filtered = {k: v for k, v in base.items() if k != "exlib_id" and v}
         merged = {**exlib_filtered, **base_filtered}
         ex_out = _build_exercicio_out(base["nome"], merged)

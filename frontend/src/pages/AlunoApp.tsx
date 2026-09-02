@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, BellRing, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info, Repeat, Zap, AlarmClock, CalendarDays, List } from 'lucide-react'
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts'
 import { alunoApi, type ExSessao, type SessaoAtiva, type SessaoFinalizada, type PostGlobal, type FinishPayload, type ScoreBlocoInput } from '../api/alunoApp'
 import { ScoreWodModal } from '../components/aluno/ScoreWodModal'
@@ -31,6 +31,7 @@ import { AlunoPerfilModal } from '../components/aluno/AlunoPerfilModal'
 import { CronometroProvider } from '../components/aluno/CronometroProvider'
 import { useCronometro } from '../components/aluno/cronometroContext'
 import { CheckinPosTreino } from '../components/aluno/CheckinPosTreino'
+import { FinalizarTreinoModal } from '../components/aluno/FinalizarTreinoModal'
 import { CalendarioMes } from '../components/historico/CalendarioMes'
 import { FeriasPanel } from '../components/historico/FeriasPanel'
 import { HistoricoLista } from '../components/historico/HistoricoLista'
@@ -43,6 +44,7 @@ import { formatoBlocoLabel, sufixoPrescricaoBloco, fmtPrescricaoBloco } from '..
 import { videoUrlComFallback } from '../utils/video'
 import { feitoNaSemana, labelDiaCurto } from '../utils/datetime'
 import { chaveExercicio } from '../utils/normalizeText'
+import { lerRascunho, limparRascunhoEx, limparRascunhoSessao, salvarRascunhoEx } from '../utils/rascunhoSessao'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -52,14 +54,14 @@ const chartTip = {
   fontSize: 12,
 }
 const axisTick = { fill: 'var(--color-text-secondary)', fontSize: 12 }
-const PALETA_GRUPOS = [
-  'var(--color-accent)',
-  'var(--color-energy)',
-  'var(--color-success)',
-  'var(--color-warning)',
-  'var(--color-danger)',
-  'var(--color-info)',
-]
+// O rótulo da legenda usa tinta de texto; a bolinha ao lado é quem carrega a identidade.
+const legendStyle = { fontSize: 11, color: 'var(--color-text-secondary)', paddingTop: 8 }
+/** Eixo de volume em toneladas a partir de 1000 kg: com um exercício somando em vários grupos,
+ *  o total da semana passa de 5 dígitos e "10500" era cortado pela margem do eixo. */
+const fmtVolumeEixo = (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(1).replace('.', ',')}t` : String(v))
+// Espelho de `PALETA_GRUPOS` do portal — 12 matizes, ordem fixa, passos próprios por tema
+// (ver `--color-chart-*` em index.css).
+const PALETA_GRUPOS = Array.from({ length: 12 }, (_, i) => `var(--color-chart-${i + 1})`)
 
 function formatDiaCompleto(iso: string) {
   const d = new Date(iso)
@@ -403,7 +405,11 @@ export function AlunoApp() {
     }
     // App voltou ao primeiro plano (reaberto)
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') refreshNotif()
+      if (document.visibilityState !== 'visible') return
+      refreshNotif()
+      // Rede de segurança para a home: `Hoje` não desmonta enquanto o app fica aberto e
+      // `refetchOnWindowFocus` está desligado, então sem isto ela envelhece em segundo plano.
+      qc.invalidateQueries({ queryKey: ['aluno-hoje'] })
     }
     navigator.serviceWorker?.addEventListener('message', onSwMessage)
     document.addEventListener('visibilitychange', onVisibility)
@@ -1212,25 +1218,48 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
   const ses = useQuery({ queryKey: ['aluno-sessao-exs'], queryFn: alunoApi.sessaoExercicios, retry: false })
   const [finalizada, setFinalizada] = useState<SessaoFinalizada | null>(null)
   const [scoreModal, setScoreModal] = useState(false)
+  // Confirmação de fim de treino: além do sim/não, coleta o comentário do aluno. Guarda os
+  // scores de WOD já informados, porque o modal de score vem antes dele.
+  const [finalizarModal, setFinalizarModal] = useState<
+    { pendentes: string[]; scores: ScoreBlocoInput[] } | null
+  >(null)
   const finish = useMutation({
     mutationFn: (payload?: FinishPayload) => alunoApi.finish(payload),
-    // Mantém a sessão montada e abre a tela de check-in; só invalida (transiciona a UI)
-    // quando o aluno fecha o check-in — assim os destaques continuam visíveis no overlay.
-    onSuccess: (data) => { setScoreModal(false); setFinalizada(data) },
+    // Mantém a sessão montada e abre a tela de check-in; só transiciona a UI quando o aluno
+    // fecha o check-in — assim os destaques continuam visíveis no overlay. `aluno-hoje` já é
+    // invalidada aqui para os dados chegarem enquanto o check-in está na tela.
+    onSuccess: (data) => {
+      setScoreModal(false)
+      setFinalizarModal(null)
+      limparRascunhoSessao()
+      qc.invalidateQueries({ queryKey: ['aluno-hoje'] })
+      setFinalizada(data)
+    },
   })
   const fecharCheckin = () => {
     setFinalizada(null)
     qc.invalidateQueries({ queryKey: ['aluno-sessao'] })
     qc.invalidateQueries({ queryKey: ['aluno-sessao-exs'] })
     qc.invalidateQueries({ queryKey: ['aluno-sessoes'] })
+    // Sem estas, a home volta mostrando o treino recém-feito como "próximo" e o streak parado
+    // até um F5: `Hoje` nunca desmonta, então nada refetcha sozinho.
+    qc.invalidateQueries({ queryKey: ['aluno-hoje'] })
+    qc.invalidateQueries({ queryKey: ['aluno-pontos'] })
+    qc.invalidateQueries({ queryKey: ['aluno-resumo'] })
+    qc.invalidateQueries({ queryKey: ['aluno-historico-mes'] })
   }
   const cancel = useMutation({
     mutationFn: () => alunoApi.cancel(),
     onSuccess: () => {
+      limparRascunhoSessao()
       qc.invalidateQueries({ queryKey: ['aluno-sessao'] })
       qc.invalidateQueries({ queryKey: ['aluno-sessao-exs'] })
     },
   })
+
+  // Poda rascunho de uma sessão anterior (ex.: a que o scheduler fechou sozinho): `lerRascunho`
+  // descarta tudo que não for desta sessão.
+  useEffect(() => { lerRascunho(sessao.sessao_id) }, [sessao.sessao_id])
 
   useEffect(() => {
     const inicio = new Date(sessao.data_hora_inicio).getTime()
@@ -1247,29 +1276,12 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
   const progresso = exs.length ? Math.round((feitos / exs.length) * 100) : 0
   const blocosPontuaveis = (ses.data.blocos ?? []).filter((b) => b.formato !== 'LIVRE' && !b.aquecimento)
 
-  async function confirmarEFinalizar(scores: ScoreBlocoInput[]) {
+  function abrirFinalizacao(scores: ScoreBlocoInput[]) {
     const blocosComScore = new Set(scores.map((s) => s.bloco_id))
-    const pendentes = exs.filter((e) => !exFeito(e) && !(e.bloco_id && blocosComScore.has(e.bloco_id)))
-    const ok = await confirm({
-      title: 'Finalizar treino?',
-      message: pendentes.length > 0 ? (
-        <div className="space-y-2">
-          <p>
-            {pendentes.length} exercício{pendentes.length > 1 ? 's' : ''} ainda não
-            {pendentes.length > 1 ? ' foram executados' : ' foi executado'}:
-          </p>
-          <ul className="list-disc pl-4 space-y-0.5 text-text-muted">
-            {pendentes.map((e) => <li key={e.exercicio_id}>{e.nome}</li>)}
-          </ul>
-          <p>Deseja finalizar mesmo assim?</p>
-        </div>
-      ) : 'Confirma a finalização do treino?',
-      confirmLabel: 'Finalizar',
-      cancelLabel: 'Continuar treinando',
-    })
-    if (ok) {
-      finish.mutate({ scores_blocos: scores.length ? scores : undefined })
-    }
+    const pendentes = exs
+      .filter((e) => !exFeito(e) && !(e.bloco_id && blocosComScore.has(e.bloco_id)))
+      .map((e) => e.nome)
+    setFinalizarModal({ pendentes, scores })
   }
 
   return (
@@ -1315,7 +1327,8 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
         const blocoIds = new Set(blocos.map((b) => b.id))
         const semBloco = exs.filter((e) => !e.bloco_id || !blocoIds.has(e.bloco_id))
         const card = (ex: ExSessao, bloco?: BlocoTreino) => (
-          <ExercicioCard key={ex.exercicio_id} ex={ex} bloco={bloco} onVerFeed={onVerFeed} onAbrirCronometro={abrirCrono} />
+          <ExercicioCard key={ex.exercicio_id} ex={ex} bloco={bloco} sessaoId={sessao.sessao_id}
+            onVerFeed={onVerFeed} onAbrirCronometro={abrirCrono} />
         )
         if (!blocos.length) return exs.map((e) => card(e))
         return (
@@ -1394,7 +1407,7 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
         disabled={finish.isPending}
         onClick={() => {
           if (blocosPontuaveis.length) setScoreModal(true)
-          else void confirmarEFinalizar([])
+          else abrirFinalizacao([])
         }}
       >
         {finish.isPending ? 'Finalizando…' : 'Finalizar treino'}
@@ -1407,8 +1420,19 @@ function SessaoTreino({ sessao, onVerFeed }: { sessao: SessaoAtiva; onVerFeed: (
               ? { blocoId: crono.wod.blocoId, rounds: crono.wodRounds }
               : undefined)}
           submitting={finish.isPending}
-          onConfirm={(scores) => void confirmarEFinalizar(scores)}
+          onConfirm={(scores) => { setScoreModal(false); abrirFinalizacao(scores) }}
           onClose={() => setScoreModal(false)}
+        />
+      )}
+      {finalizarModal && (
+        <FinalizarTreinoModal
+          pendentes={finalizarModal.pendentes}
+          submitting={finish.isPending}
+          onConfirm={(observacao) => finish.mutate({
+            scores_blocos: finalizarModal.scores.length ? finalizarModal.scores : undefined,
+            observacao,
+          })}
+          onClose={() => setFinalizarModal(null)}
         />
       )}
       <Button
@@ -1554,10 +1578,12 @@ function SubstitutosModal({
   )
 }
 
-function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
+function ExercicioCard({ ex, bloco, sessaoId, onVerFeed, onAbrirCronometro }: {
   ex: ExSessao
   /** Bloco a que o exercício pertence (formato/rounds mudam a exibição e o registro). */
   bloco?: BlocoTreino
+  /** Escopo do rascunho local — troca a cada treino, então o próximo começa zerado. */
+  sessaoId: string
   onVerFeed: (exId: string) => void
   onAbrirCronometro: (seconds?: number, label?: string) => void
 }) {
@@ -1567,9 +1593,16 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
   const [substitutosOpen, setSubstitutosOpen] = useState(false)
   const [pseOpen, setPseOpen] = useState(false)
   const [pr, setPr] = useState<number | null>(null)
-  const [variante, setVariante] = useState<ExercicioSubstituto | null>(
-    () => ex.substitutos_efetivos?.find((s) => s.nome === ex.substituto_executado) ?? null
-  )
+  // Registrado nesta montagem: o que está na tela já é o do servidor, não um rascunho.
+  const salvoRef = useRef(false)
+  // Rascunho lido UMA vez, no mount: reload da PWA, troca de aba ou recolher/reabrir o card
+  // deixavam de perder o que já tinha sido digitado. Nada disso vai para o servidor.
+  const rascunhoInicial = useRef(lerRascunho(sessaoId)[ex.exercicio_id]).current
+  const [variante, setVariante] = useState<ExercicioSubstituto | null>(() => {
+    const salvo = rascunhoInicial?.variante
+    if (salvo !== undefined) return ex.substitutos_efetivos?.find((s) => s.nome === salvo) ?? null
+    return ex.substitutos_efetivos?.find((s) => s.nome === ex.substituto_executado) ?? null
+  })
   const feito = !!ex.registrado?.length
   const temRecursos = (ex.recursos?.length ?? 0) > 0
   const temSubstitutos = (ex.substitutos_efetivos?.length ?? 0) > 0
@@ -1605,7 +1638,7 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
     }
     return Array.from({ length: ex.series ?? 1 }, () => ({ carga: '', reps: '', repsHint: '', cargaHint: ex.carga_prescrita ?? '', aquecimento: false }))
   }
-  const [rows, setRows] = useState(() => buildRows(variante))
+  const [rows, setRows] = useState(() => rascunhoInicial?.rows ?? buildRows(variante))
   const upd = (i: number, f: 'carga' | 'reps', v: string) =>
     setRows((rs) => rs.map((r, j) => (j === i ? { ...r, [f]: v } : r)))
   const removeRow = (i: number) => setRows((rs) => rs.filter((_, j) => j !== i))
@@ -1615,6 +1648,7 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
     setVariante(item)
     setRows(buildRows(item))
     setPr(null)
+    salvoRef.current = false
   }
 
   const tipo = normalizeTipoExercicio(ex.tipo_exercicio)
@@ -1622,7 +1656,37 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
   // aluno registra também esse campo (contextual: histórico/última vez; PR segue na métrica).
   const temSegundaMetrica = tipo === 'PERFORMANCE' && !!ex.unidade_carga
   const mostraCarga = tipo !== 'PERFORMANCE' || temSegundaMetrica
-  const [cargaAnotada, setCargaAnotada] = useState(() => ex.registrado?.[0]?.carga ?? '')
+  const [cargaAnotada, setCargaAnotada] = useState(
+    () => rascunhoInicial?.cargaAnotada ?? ex.registrado?.[0]?.carga ?? ''
+  )
+
+  // Persiste o que está em edição, mas só quando há algo digitado — senão o storage encheria
+  // de linhas vazias de todo exercício do treino. Deixar de estar sujo apaga o rascunho.
+  const sujo = rows.some((r) => r.carga.trim() || r.reps.trim()) || !!cargaAnotada.trim()
+  useEffect(() => {
+    if (salvoRef.current) return
+    if (sujo) {
+      salvarRascunhoEx(sessaoId, ex.exercicio_id, {
+        rows, cargaAnotada, variante: variante?.nome ?? null,
+      })
+    } else {
+      limparRascunhoEx(sessaoId, ex.exercicio_id)
+    }
+  }, [sujo, rows, cargaAnotada, variante, sessaoId, ex.exercicio_id])
+
+  /** Abrir/fechar o card. Reabrir só descarta o que está na tela quando não há rascunho a
+   *  proteger — era o rebuild incondicional daqui que apagava o que o aluno tinha digitado. */
+  function alternarAberto() {
+    if (!open) {
+      if (salvoRef.current || !sujo) {
+        setRows(buildRows(variante))
+        setCargaAnotada(ex.registrado?.[0]?.carga ?? '')
+        salvoRef.current = false
+      }
+      setPr(null)
+    }
+    setOpen((o) => !o)
+  }
 
   const ultimaExec = useQuery({
     queryKey: ['aluno-hist-ex', ex.nome],
@@ -1661,6 +1725,10 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
     onError: (e: Error) => show(e.message, 'error'),
     onSuccess: (r) => {
       if (r.pr_novo) setPr(r.pr_novo)
+      // Registrado: o servidor virou a verdade, o rascunho não tem mais o que proteger — e
+      // reabrir o card volta a hidratar de `ex.registrado`.
+      limparRascunhoEx(sessaoId, ex.exercicio_id)
+      salvoRef.current = true
       qc.invalidateQueries({ queryKey: ['aluno-sessao-exs'] })
       qc.invalidateQueries({ queryKey: ['aluno-resumo'] })
       qc.invalidateQueries({ queryKey: ['aluno-pr-ex', ex.nome] })
@@ -1705,7 +1773,7 @@ function ExercicioCard({ ex, bloco, onVerFeed, onAbrirCronometro }: {
       )}
       <div className="flex items-center gap-1">
         <button className="flex-1 flex items-center justify-between text-left min-w-0"
-          onClick={() => { if (!open) { setRows(buildRows(variante)); setPr(null) } setOpen((o) => !o) }}>
+          onClick={alternarAberto}>
           <span className="min-w-0">
             <ExpandableText text={nomeAtivo} className={`font-medium block ${ex.aquecimento ? 'text-text-secondary' : ''}`}>
               {nomeAtivo}
@@ -2223,12 +2291,15 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
             {gruposNomes.length > 0 && (
               <Card variant="elevated">
                 <p className="text-sm text-text-secondary mb-3">Volume por grupo muscular (kg)</p>
-                <ResponsiveContainer width="100%" height={180}>
-                  <BarChart data={semanasPorGrupo} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                <ResponsiveContainer width="100%" height={230}>
+                  <BarChart data={semanasPorGrupo} margin={{ top: 5, right: 10, bottom: 5, left: -8 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                     <XAxis dataKey="semana" tick={axisTick} stroke="var(--color-border-strong)" />
-                    <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
+                    <YAxis tick={axisTick} stroke="var(--color-border-strong)" width={44} tickFormatter={fmtVolumeEixo} />
                     <Tooltip contentStyle={chartTip} />
+                    {/* Identidade não pode depender só da cor: com o grupo virando lista, o
+                        número de séries subiu e alguns pares vizinhos ficam próximos p/ daltonismo. */}
+                    <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} />
                     {gruposNomes.map((g, i) => (
                       <Bar
                         key={g}
@@ -2236,6 +2307,9 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
                         stackId="grupo"
                         fill={PALETA_GRUPOS[i % PALETA_GRUPOS.length]}
                         name={g}
+                        // Fresta de 2px na cor da superfície entre os segmentos empilhados.
+                        stroke="var(--color-surface)"
+                        strokeWidth={2}
                         radius={i === gruposNomes.length - 1 ? [6, 6, 0, 0] : undefined}
                       />
                     ))}

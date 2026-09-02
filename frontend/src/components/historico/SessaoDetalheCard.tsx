@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Clock, Wrench } from 'lucide-react'
+import { Clock, MessageSquare, Wrench } from 'lucide-react'
 import { treinosApi } from '../../api/treinos'
 import { alunoApi } from '../../api/alunoApp'
 import { alunosApi } from '../../api/alunos'
@@ -244,7 +244,7 @@ function pulados(prescritos: ExercicioPrescritoSessao[], execIds: Set<string>): 
   return prescritos.filter((p) => !execIds.has(p.exercicio_id) && !p.aquecimento)
 }
 
-function SessaoDetalheConteudo({ data, alunoId, destaqueChave }: { data: { duracao_segundos?: number; encerrada_automaticamente?: boolean; exercicios?: ExercicioPrescritoSessao[]; exercicios_exec?: ExecEx[]; scores_blocos?: ScoreBlocoOut[]; blocos?: BlocoTreino[] }; alunoId?: string; destaqueChave?: string }) {
+function SessaoDetalheConteudo({ data, alunoId, destaqueChave }: { data: { duracao_segundos?: number; encerrada_automaticamente?: boolean; observacao?: string; exercicios?: ExercicioPrescritoSessao[]; exercicios_exec?: ExecEx[]; scores_blocos?: ScoreBlocoOut[]; blocos?: BlocoTreino[] }; alunoId?: string; destaqueChave?: string }) {
   const destacado = (ex: ExecEx) => !!destaqueChave && chaveExercicio(ex.exercicio_nome) === destaqueChave
   const exs = data.exercicios_exec ?? []
   const prescritos = data.exercicios ?? []
@@ -268,6 +268,18 @@ function SessaoDetalheConteudo({ data, alunoId, destaqueChave }: { data: { durac
           )}
           {vol && <span>Volume: {vol}</span>}
           {exs.length > 0 && <span>{exs.length} exercício{exs.length !== 1 ? 's' : ''}</span>}
+        </div>
+      )}
+
+      {data.observacao && (
+        // Comentário que o aluno escreveu ao finalizar — costuma ser a explicação de um
+        // exercício pulado, então vem antes da lista, não no fim.
+        <div className="mb-3 flex gap-2 rounded-xl border border-accent/30 bg-accent/10 px-3 py-2">
+          <MessageSquare size={14} className="mt-0.5 shrink-0 text-accent" />
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-accent">Comentário do aluno</p>
+            <p className="text-xs text-text-secondary whitespace-pre-wrap break-words">{data.observacao}</p>
+          </div>
         </div>
       )}
 

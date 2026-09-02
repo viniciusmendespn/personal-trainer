@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Plus, Trash2, Video, Pencil, BookOpen, Search, Upload } from 'lucide-react'
 import { useBiblioteca, useCreateExLib, useUpdateExLib, useDeleteExLib } from '../hooks/useDominio'
-import { Button, Card, Input, Textarea, Spinner, EmptyState, Modal, useConfirm, AutocompleteInput, ExpandableText } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, EmptyState, Modal, useConfirm, ExpandableText } from '../components/ui'
+import { GruposMuscularesInput } from '../components/exercicios/GruposMuscularesInput'
+import { gruposDoExercicio, grupoLegado, sugestoesDeGrupo, SEM_GRUPO } from '../utils/grupos'
 import { ImportarExerciciosModal } from '../components/ImportarExerciciosModal'
 import { LinksUteisIncluirSelector } from '../components/exercicios/LinksUteisIncluirSelector'
 import { SubstitutosBibliotecaEditor } from '../components/exercicios/SubstitutosBibliotecaEditor'
@@ -17,8 +19,10 @@ export function BibliotecaPage() {
   const [showImport, setShowImport] = useState(false)
   const [query, setQuery] = useState('')
 
+  // Vocabulário canônico + o que este personal já usa (quebrando os compostos legados:
+  // "Peito, Tríceps" vira duas sugestões, não uma).
   const grupos = useMemo(
-    () => Array.from(new Set((exs ?? []).map((e) => e.grupo).filter((g): g is string => !!g))).sort(),
+    () => sugestoesDeGrupo((exs ?? []).map((e) => e.grupos?.join(', ') ?? e.grupo)),
     [exs]
   )
 
@@ -31,7 +35,9 @@ export function BibliotecaPage() {
     if (!exs) return exs
     const q = normalizeText(query)
     if (!q) return exs
-    return exs.filter((ex) => normalizeText(ex.nome).includes(q) || normalizeText(ex.grupo).includes(q))
+    return exs.filter((ex) =>
+      normalizeText(ex.nome).includes(q)
+      || gruposDoExercicio(ex).some((g) => normalizeText(g).includes(q)))
   }, [exs, query])
 
   return (
@@ -81,7 +87,11 @@ function ExLibForm({
   submitLabel: string
 }) {
   const [nome, setNome] = useState(initial?.nome ?? '')
-  const [grupo, setGrupo] = useState(initial?.grupo ?? '')
+  // Exercício antigo abre com a string composta já quebrada em chips; o item só muda quando
+  // o personal salvar — por escolha dele, não por migração.
+  const [gruposSel, setGruposSel] = useState<string[]>(
+    () => (initial?.grupos?.length || initial?.grupo) ? gruposDoExercicio(initial) : []
+  )
   const [video, setVideo] = useState(initial?.video_url ?? '')
   const [descricao, setDescricao] = useState(initial?.descricao ?? '')
   const [rec, setRec] = useState(initial?.recomendacoes ?? '')
@@ -92,7 +102,8 @@ function ExLibForm({
     e.preventDefault()
     if (!nome) return
     await onSubmit({
-      nome, grupo: grupo || undefined, video_url: video || undefined,
+      nome, grupos: gruposSel.length ? gruposSel : undefined, grupo: grupoLegado(gruposSel),
+      video_url: video || undefined,
       descricao: descricao || undefined, recomendacoes: rec || undefined,
       links_uteis: linksUteis, substitutos,
     })
@@ -102,7 +113,7 @@ function ExLibForm({
     <form onSubmit={submit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input label="Nome" value={nome} onChange={(e) => setNome(e.target.value)} autoFocus />
-        <AutocompleteInput label="Grupo muscular" value={grupo} onChange={setGrupo} suggestions={grupos} />
+        <GruposMuscularesInput value={gruposSel} onChange={setGruposSel} suggestions={grupos} />
       </div>
       <Input label="Vídeo (URL)" value={video} onChange={(e) => setVideo(e.target.value)} />
       <Textarea label="Descrição" rows={2} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
@@ -136,10 +147,13 @@ function ExLibRow({ ex, grupos, biblioteca }: { ex: ExLib; grupos: string[]; bib
     if (ok) del.mutate(ex.exlib_id)
   }
 
+  const gruposEx = gruposDoExercicio(ex)
+  const rotuloGrupos = gruposEx[0] === SEM_GRUPO ? null : gruposEx.join(' · ')
+
   return (
     <Card variant="elevated" className="flex items-start justify-between">
       <div className="min-w-0">
-        <ExpandableText as="p" className="font-medium" text={ex.grupo ? `${ex.nome} · ${ex.grupo}` : ex.nome}>{ex.nome} {ex.grupo && <span className="text-xs text-text-muted">· {ex.grupo}</span>}</ExpandableText>
+        <ExpandableText as="p" className="font-medium" text={rotuloGrupos ? `${ex.nome} · ${rotuloGrupos}` : ex.nome}>{ex.nome} {rotuloGrupos && <span className="text-xs text-text-muted">· {rotuloGrupos}</span>}</ExpandableText>
         <a href={videoUrlComFallback(ex.nome, ex.video_url)} target="_blank" rel="noreferrer" className="text-xs text-accent-hover inline-flex items-center gap-1 hover:underline">
           <Video size={12} /> vídeo
         </a>

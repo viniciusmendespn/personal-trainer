@@ -1,15 +1,17 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.models.enums import TipoExercicio
 from app.models.exercicio import ExercicioSubstituto, SeriePrescrita
+from app.models.grupos_musculares import sincronizar_grupo_legado
 from app.models.treino import BlocoTreino
 
 
 class ExercicioTemplate(BaseModel):
     nome: str
-    grupo: Optional[str] = None
+    grupos: Optional[list[str]] = None          # grupos musculares atingidos — ex.: ["Peito", "Tríceps"]
+    grupo: Optional[str] = None                 # derivado de `grupos`; legado nos itens antigos
     ordem: int = 0
     bloco_id: Optional[str] = None             # bloco do treino/template (CrossFit)
     aquecimento: bool = False                  # exercício de warmup — fora de PR/volume/pontos
@@ -31,6 +33,8 @@ class ExercicioTemplate(BaseModel):
     substitutos: list[ExercicioSubstituto] = []
     substitutos_excluidos: list[str] = []
     origem_licenciada: bool = False   # proveniência: exercício oriundo de pacote licenciado
+
+    _sincroniza_grupo = model_validator(mode="after")(sincronizar_grupo_legado)
 
 
 class TreinoTemplateCreate(BaseModel):

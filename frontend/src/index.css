@@ -24,6 +24,24 @@
   --color-danger: #fb7185;
   --color-info: #38bdf8;
 
+  /* Paleta categórica dos gráficos (volume por grupo muscular). Separada das cores de
+     status — verde/amarelo/vermelho significam estado, não "série 4". Ordem fixa: a cor
+     segue o grupo, nunca a posição dele no ranking.
+     Passos próprios por tema (não é um flip automático): estes são os do tema ESCURO,
+     validados contra as superfícies #13121c/#1c1a28; o tema claro redefine todos abaixo. */
+  --color-chart-1: #9c7700;
+  --color-chart-2: #728de2;
+  --color-chart-3: #758716;
+  --color-chart-4: #d16d90;
+  --color-chart-5: #39924f;
+  --color-chart-6: #9e7fd7;
+  --color-chart-7: #be5a4e;
+  --color-chart-8: #00ac94;
+  --color-chart-9: #b46617;
+  --color-chart-10: #00a7bd;
+  --color-chart-11: #a75ea3;
+  --color-chart-12: #319cd9;
+
   --shadow-glow-accent: 0 0 24px -8px rgb(99 102 241 / 0.45);
   --shadow-glow-energy: 0 0 24px -8px rgb(163 230 53 / 0.4);
   --shadow-card: 0 4px 24px -8px rgb(0 0 0 / 0.5);
@@ -43,6 +61,18 @@
   --color-accent-active: #4f46e5;
   --color-energy: #a3e635;
   --color-energy-hover: #bef264;
+  --color-chart-1: #9c7700;
+  --color-chart-2: #728de2;
+  --color-chart-3: #758716;
+  --color-chart-4: #d16d90;
+  --color-chart-5: #39924f;
+  --color-chart-6: #9e7fd7;
+  --color-chart-7: #be5a4e;
+  --color-chart-8: #00ac94;
+  --color-chart-9: #b46617;
+  --color-chart-10: #00a7bd;
+  --color-chart-11: #a75ea3;
+  --color-chart-12: #319cd9;
   --shadow-glow-accent: 0 0 24px -8px rgb(99 102 241 / 0.45);
   --shadow-glow-energy: 0 0 24px -8px rgb(163 230 53 / 0.4);
   --shadow-card: 0 4px 24px -8px rgb(0 0 0 / 0.5);
@@ -63,6 +93,20 @@
   --color-accent-active: #4338ca;
   --color-energy: #65a30d;
   --color-energy-hover: #84cc16;
+  /* Mesmas matizes na mesma ordem (o grupo não troca de cor ao mudar de tema), em passos
+     mais escuros — validados contra as superfícies claras #ffffff/#eeedfb. */
+  --color-chart-1: #805c00;
+  --color-chart-2: #546dbf;
+  --color-chart-3: #5b6c00;
+  --color-chart-4: #ad4d71;
+  --color-chart-5: #167635;
+  --color-chart-6: #7e5fb4;
+  --color-chart-7: #a03f34;
+  --color-chart-8: #008a74;
+  --color-chart-9: #974b00;
+  --color-chart-10: #00869b;
+  --color-chart-11: #8a4387;
+  --color-chart-12: #007bb6;
   --shadow-glow-accent: 0 0 24px -8px rgb(99 102 241 / 0.25);
   --shadow-glow-energy: 0 0 24px -8px rgb(101 163 13 / 0.25);
   --shadow-card: 0 4px 24px -8px rgb(0 0 0 / 0.1);

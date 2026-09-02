@@ -1,15 +1,17 @@
 import re
 from typing import Optional
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 from app.models.exercicio import ExercicioSubstituto
+from app.models.grupos_musculares import sincronizar_grupo_legado
 
 
 class ExLibCreate(BaseModel):
     """Exercício do catálogo reutilizável do personal (com vídeo de referência)."""
     nome: str
-    grupo: Optional[str] = None                # ex.: "Peito", "Pernas"
+    grupos: Optional[list[str]] = None         # grupos musculares atingidos — ex.: ["Peito", "Tríceps"]
+    grupo: Optional[str] = None                # derivado de `grupos` (", ".join); legado nos itens antigos
     video_url: Optional[str] = None
     descricao: Optional[str] = None
     recomendacoes: Optional[str] = None        # texto livre do personal (técnica, cuidados…)
@@ -18,6 +20,8 @@ class ExLibCreate(BaseModel):
     pacote_id: Optional[str] = None            # preenchido quando criado via importação de pacote
     ativo: bool = True                         # False = oculto na montagem de treinos
     origem_licenciada: bool = False            # proveniência: veio (direta ou indiretamente) de pacote licenciado — bloqueia export/redistribuição
+
+    _sincroniza_grupo = model_validator(mode="after")(sincronizar_grupo_legado)
 
     @field_validator("video_url")
     @classmethod

@@ -199,7 +199,7 @@ As mensagens que o aluno envia pelo chat do app (e pelo WhatsApp, quando conecta
 3. Preencha:
    - Nome do exercício (com autocomplete da biblioteca e dos exercícios já usados por esse aluno)
    - Tipo: **Força** ou **Performance**
-   - Grupo muscular (opcional)
+   - Grupos musculares (opcional) — um exercício pode atingir mais de um: o supino é Peito **e** Tríceps. Escolha das sugestões ou digite um grupo seu
    - Séries prescritas: para cada série, defina repetições e carga (pode variar por série — ex.: 4×10 com cargas 30/35/35/35)
    - Carga prescrita e unidade (ex.: kg, lb, %1RM, ou personalizado)
    - Repetições prescritas e unidade (ex.: reps, min, km, ou personalizado)
@@ -210,7 +210,7 @@ As mensagens que o aluno envia pelo chat do app (e pelo WhatsApp, quando conecta
    - Observações (visíveis ao aluno durante a sessão)
 4. Arraste os exercícios para reordenar
 
-Ao digitar o nome do exercício, o campo sugere automaticamente exercícios da biblioteca e exercícios que **esse aluno já usou antes**. Se você escolher um nome já usado pelo aluno, o link de vídeo e o grupo muscular são preenchidos com base no último uso.
+Ao digitar o nome do exercício, o campo sugere automaticamente exercícios da biblioteca e exercícios que **esse aluno já usou antes**. Se você escolher um nome já usado pelo aluno, o link de vídeo e os grupos musculares são preenchidos com base no último uso.
 
 Exercícios com o mesmo nome em treinos diferentes têm a evolução de carga e os recordes (PRs) **unificados automaticamente** — não é preciso recriar o exercício do zero para manter o histórico.
 
@@ -466,7 +466,7 @@ Na página do aluno há a aba **"Evolução"** (ou link para a página de evolu�
 
 **Gráfico de IRM (Intensidade Relativa Média):** visível quando o exercício tem 1RM cadastrado. Mostra, sessão a sessão, o percentual médio do 1RM utilizado nas séries. Ajuda a verificar se o aluno está treinando na intensidade prescrita.
 
-**Gráfico de Volume:** volume semanal por grupo muscular (séries × reps × carga), visualizado como barras empilhadas. Ajuda a ver se o treino está balanceado.
+**Gráfico de Volume:** volume semanal por grupo muscular (séries × reps × carga), visualizado como barras empilhadas. Ajuda a ver se o treino está balanceado. Um exercício de mais de um grupo soma o volume **inteiro em cada um deles** — o supino conta para Peito e para Tríceps —, então a soma das barras de uma semana pode passar do volume total daquela semana.
 
 **Recordes (PRs):** melhor carga registrada em cada exercício, com data. Exercícios com o mesmo nome em treinos diferentes compartilham o mesmo PR.
 
@@ -665,7 +665,7 @@ Acesse **Biblioteca** no menu para gerenciar materiais compartilhados com todos 
 
 Os alunos baixam os arquivos em formato ZIP pelo app deles.
 
-Na Biblioteca você também configura **exercícios da biblioteca**: adicione exercícios com nome, grupo muscular, substitutos padrão e links úteis. Esses dados são usados como sugestão em todos os treinos que usarem o mesmo nome de exercício.
+Na Biblioteca você também configura **exercícios da biblioteca**: adicione exercícios com nome, grupos musculares, substitutos padrão e links úteis. Esses dados são usados como sugestão em todos os treinos que usarem o mesmo nome de exercício.
 
 ---
 

@@ -353,3 +353,28 @@ def test_achados_sempre_dizem_como_corrigir():
         assert achado.correcao.strip(), f"{achado.codigo} não diz o que fazer"
         assert achado.campo.startswith("treinos[")
         assert achado.onde
+
+
+# ── grupo muscular múltiplo ──────────────────────────────────────────────────
+# O campo virou lista (`grupos`) porque um exercício atinge mais de um grupo. Nem a lista nova
+# nem a string legada podem virar achado: o validador rejeita campo inventado, e um falso
+# positivo aqui bloquearia a gravação de um programa perfeitamente legítimo.
+
+@pytest.mark.parametrize("campos", [
+    {"grupos": ["Peito", "Tríceps"]},
+    {"grupos": ["Costas"]},
+    {"grupos": None},
+    {"grupo": "Peito, Tríceps"},        # exercício antigo, nunca reeditado
+    {"grupos": ["Adutores"]},           # grupo fora do vocabulário sugerido — é permitido
+    {},
+])
+def test_grupos_nao_geram_achado(campos):
+    erros, avisos = _validar({"treinos": [_treino(exercicios=[_forca(**campos)])]})
+    assert erros == [] and avisos == []
+
+
+def test_grupos_deriva_o_campo_legado_no_programa_importado():
+    """Quem lê `grupo` (export .cpkg, markdown da biblioteca) continua funcionando."""
+    prog = ProgramaTreinoFile(**{"treinos": [_treino(exercicios=[_forca(grupos=["Peito", "Tríceps"])])]})
+    ex = prog.treinos[0].exercicios[0]
+    assert ex.grupo == "Peito, Tríceps"

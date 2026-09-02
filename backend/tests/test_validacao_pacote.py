@@ -201,3 +201,20 @@ def test_achados_sempre_dizem_como_corrigir():
             assert achado.correcao, f"{achado.codigo} sem correção"
             assert achado.campo, f"{achado.codigo} sem campo"
             assert achado.onde, f"{achado.codigo} sem onde"
+
+
+# ── grupo muscular múltiplo ──────────────────────────────────────────────────
+
+def test_grupos_no_pacote_nao_geram_achado():
+    """`grupos` (lista) é o campo novo; `grupo` (string) segue aceito nos pacotes antigos."""
+    pacote = _pacote(exercicios=[
+        {"ref": "ex_supino", "nome": "Supino reto", "grupos": ["Peito", "Tríceps"],
+         "tipo_exercicio": "FORCA"},
+        {"ref": "ex_remada", "nome": "Remada baixa", "grupo": "Costas, Bíceps",
+         "tipo_exercicio": "FORCA"},
+    ])
+    erros, avisos = vpk.validar(pacote)
+    assert erros == [] and avisos == []
+    # O campo legado sai derivado, para os leitores que ainda esperam texto.
+    assert pacote.exercicios[0].grupo == "Peito, Tríceps"
+    assert pacote.exercicios[1].grupos is None   # nada é reescrito no item antigo

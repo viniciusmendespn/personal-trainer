@@ -189,7 +189,7 @@ def aplicar(personal_id: str, aluno_id: str,
             if chave and chave not in canon_by_chave:
                 canon_by_chave[chave] = eid   # primeira ocorrência vira canônico
             dados = ExercicioCreate(
-                nome=ef.nome, grupo=ef.grupo, ordem=ordem_e, tipo_exercicio=ef.tipo_exercicio,
+                nome=ef.nome, grupos=ef.grupos, grupo=ef.grupo, ordem=ordem_e, tipo_exercicio=ef.tipo_exercicio,
                 series_prescritas=ef.series_prescritas, intervalo_s=ef.intervalo_s,
                 video_url=biblioteca_service.resolver_video(ef.nome, ef.video_url, videos_lib),
                 observacoes=ef.observacoes,

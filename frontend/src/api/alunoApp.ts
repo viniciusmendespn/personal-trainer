@@ -60,6 +60,8 @@ export interface SessaoHistorico {
   /** Sessão que o aluno esqueceu de finalizar e o sistema fechou sozinho 6h depois do início.
    *  Nesse caso `data_hora_fim` é a hora do último registro, não a do fechamento. */
   encerrada_automaticamente?: boolean
+  /** Comentário curto que o aluno escreveu ao finalizar o treino. */
+  observacao?: string
   total_ex: number
   /** Todos os exercícios prescritos no treino (independente de terem sido registrados). */
   exercicios?: ExercicioPrescritoSessao[]
@@ -123,6 +125,8 @@ export interface ScoreBlocoOut extends ScoreBlocoInput {
 
 export interface FinishPayload {
   scores_blocos?: ScoreBlocoInput[]
+  /** Comentário curto do aluno no fecho do treino (máx. 500) — vai para o histórico. */
+  observacao?: string
 }
 
 /** Resposta de finalizar treino — destaques da sessão p/ a tela de check-in pós-treino. */

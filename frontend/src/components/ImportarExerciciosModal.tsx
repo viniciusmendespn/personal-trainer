@@ -9,11 +9,11 @@ import type { ImportarResult } from '../api/biblioteca'
 const CHATGPT_PROMPT = `Analise o arquivo anexado e extraia todos os exercícios físicos que encontrar (podem estar em uma planilha, lista, tabela, ficha de treino ou qualquer outro formato).
 
 Para cada exercício encontrado, gere uma linha no formato CSV com exatamente estas 5 colunas:
-nome,grupo,video_url,descricao,recomendacoes
+nome,grupos,video_url,descricao,recomendacoes
 
 Descrição dos campos:
 - nome: nome do exercício (obrigatório)
-- grupo: grupo muscular principal (ex: Peito, Costas, Ombros, Bíceps, Tríceps, Pernas, Glúteos, Abdômen, Cardio, Funcional) — infira pelo contexto se não estiver explícito
+- grupos: grupos musculares que o exercício atinge, separados por ponto e vírgula — um supino é "Peito;Tríceps". Vocabulário sugerido: Peito, Costas, Ombros, Trapézio, Bíceps, Tríceps, Antebraço, Quadríceps, Posteriores de coxa, Glúteos, Panturrilhas, Abdômen, Core, Full body, Cardio. Infira pelo contexto se não estiver explícito
 - video_url: URL de vídeo de referência, se houver
 - descricao: breve descrição do movimento, se houver
 - recomendacoes: dicas de execução, cuidados ou observações técnicas, se houver
@@ -113,7 +113,7 @@ export function ImportarExerciciosModal({ open, onClose }: Props) {
             <p className="text-sm font-medium mb-2">2. Cole o CSV gerado</p>
             <Textarea
               rows={6}
-              placeholder={'nome,grupo,video_url,descricao,recomendacoes\nSupino Reto,Peito,,Exercício de peito com barra,Manter escápulas retraídas\nAgachamento,Pernas,,,'}
+              placeholder={'nome,grupos,video_url,descricao,recomendacoes\nSupino Reto,Peito;Tríceps,,Exercício de peito com barra,Manter escápulas retraídas\nAgachamento,Quadríceps;Glúteos,,,'}
               value={csv}
               onChange={(e) => setCsv(e.target.value)}
             />
@@ -130,7 +130,7 @@ export function ImportarExerciciosModal({ open, onClose }: Props) {
                   <thead>
                     <tr className="border-b border-border bg-surface-1 text-text-muted">
                       <th className="text-left px-3 py-2 font-medium">Nome</th>
-                      <th className="text-left px-3 py-2 font-medium">Grupo</th>
+                      <th className="text-left px-3 py-2 font-medium">Grupos</th>
                       <th className="text-left px-3 py-2 font-medium">Vídeo</th>
                     </tr>
                   </thead>
@@ -138,7 +138,7 @@ export function ImportarExerciciosModal({ open, onClose }: Props) {
                     {valid.slice(0, 8).map((ex, i) => (
                       <tr key={i} className="border-b border-border last:border-0">
                         <td className="px-3 py-2 max-w-[160px] truncate">{ex.nome}</td>
-                        <td className="px-3 py-2 text-text-muted">{ex.grupo ?? '—'}</td>
+                        <td className="px-3 py-2 text-text-muted">{ex.grupos?.join(' · ') || ex.grupo || '—'}</td>
                         <td className="px-3 py-2 text-text-muted">{ex.video_url ? '✓' : '—'}</td>
                       </tr>
                     ))}

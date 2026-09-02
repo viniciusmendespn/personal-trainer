@@ -143,7 +143,7 @@ Mostra cinco sub-abas:
 - Se você fez o mesmo exercício (mesmo nome) em treinos diferentes, a evolução é unificada automaticamente em um único gráfico — não fica dividida por treino
 - Para exercícios de **Força com 1RM cadastrado**, aparece também o gráfico de **IRM (Intensidade Relativa Média)**: o percentual médio do seu 1RM que você utilizou em cada sessão. Ajuda a ver se você está treinando na intensidade correta
 
-**Volume** — gráfico de barras empilhadas mostrando o volume de treino semanal (séries × reps × carga), dividido por **grupo muscular** (cada cor representa um grupo). Ajuda a ver se o treino está balanceado entre os grupos ao longo das semanas.
+**Volume** — gráfico de barras empilhadas mostrando o volume de treino semanal (séries × reps × carga), dividido por **grupo muscular** (cada cor representa um grupo). Ajuda a ver se o treino está balanceado entre os grupos ao longo das semanas. Um exercício que trabalha mais de um grupo (o supino trabalha peito e tríceps) conta em todos eles, então a soma das barras pode passar do volume total da semana.
 
 **Recordes** — seus personal records (PRs) em cada exercício
 - Busque pelo nome do exercício
@@ -444,7 +444,7 @@ R: Esses são exercícios do tipo **Performance**. Você registra um único valo
 R: IRM (Intensidade Relativa Média) mostra o percentual médio do seu 1RM que você utilizou em uma sessão. Aparece somente em exercícios de Força onde seu personal registrou o seu 1RM. Serve para acompanhar se você está treinando na intensidade correta ao longo do tempo.
 
 **P: O que é o gráfico de Volume na aba Evolução?**
-R: O gráfico de Volume mostra o quanto você treinou em cada semana, dividido por grupo muscular (ombro, peito, costas, etc.) — cada cor é um grupo. Serve para ver se o seu treino está equilibrado entre os grupos ao longo do tempo.
+R: O gráfico de Volume mostra o quanto você treinou em cada semana, dividido por grupo muscular (ombro, peito, costas, etc.) — cada cor é um grupo. Serve para ver se o seu treino está equilibrado entre os grupos ao longo do tempo. Um exercício que pega mais de um grupo conta em cada um deles.
 
 **P: O exercício tem uma prescrição diferente para cada série. É normal?**
 R: Sim. Seu personal pode prescever séries com cargas diferentes (ex.: 1ª série 30kg, 2ª e 3ª 35kg). Cada bloco de série terá seus próprios campos de registro.

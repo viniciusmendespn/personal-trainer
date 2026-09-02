@@ -1,9 +1,12 @@
 import type { ExLib } from '../types'
+import { gruposDoExercicio, grupoLegado } from './grupos'
 
 /** Referência enxuta de um exercício da biblioteca, para dar de contexto à IA:
- *  nome EXATO (para casar por chave canônica no import) + grupo + vídeo. */
+ *  nome EXATO (para casar por chave canônica no import) + grupos + vídeo. */
 export interface BibliotecaRefIA {
   nome: string
+  grupos: string[]
+  /** `grupos.join(', ')` — a IA antiga (e os arquivos já gerados) ainda leem este campo. */
   grupo: string | null
   video_url: string | null
 }
@@ -16,31 +19,39 @@ function ehBuscaYoutube(url?: string | null): boolean {
   return !!url && url.includes('youtube.com/results')
 }
 
-/** Biblioteca enxuta e ordenada (grupo, depois nome) para embutir no arquivo da IA.
- *  Ignora exercícios ocultos (`ativo === false`) e zera URLs de busca. */
+/** Biblioteca enxuta e ordenada (primeiro grupo, depois nome) para embutir no arquivo da IA.
+ *  Ignora exercícios ocultos (`ativo === false`) e zera URLs de busca.
+ *  Espelha `biblioteca_service.listar_para_ia` no backend. */
 export function slimBiblioteca(lib: ExLib[]): BibliotecaRefIA[] {
   return lib
     .filter((e) => e.ativo !== false)
-    .map((e) => ({
-      nome: e.nome,
-      grupo: e.grupo ?? null,
-      video_url: ehBuscaYoutube(e.video_url) ? null : e.video_url ?? null,
-    }))
+    .map((e) => {
+      const grupos = gruposDoExercicio(e)
+      return {
+        nome: e.nome,
+        grupos,
+        grupo: grupoLegado(grupos) ?? null,
+        video_url: ehBuscaYoutube(e.video_url) ? null : e.video_url ?? null,
+      }
+    })
     .sort(
       (a, b) =>
-        (a.grupo ?? '').localeCompare(b.grupo ?? '', 'pt-BR') ||
+        a.grupos[0].localeCompare(b.grupos[0], 'pt-BR') ||
         a.nome.localeCompare(b.nome, 'pt-BR'),
     )
 }
 
 /** Biblioteca como lista markdown agrupada por grupo muscular — ~1 linha por exercício, contra
  *  as ~6 do JSON indentado. Numa biblioteca de 150 exercícios isso é a diferença entre ~900 e
- *  ~170 linhas no arquivo, o que decide se uma IA gratuita consegue ou não chegar até o fim. */
+ *  ~170 linhas no arquivo, o que decide se uma IA gratuita consegue ou não chegar até o fim.
+ *
+ *  Um exercício aparece uma vez só, sob o primeiro grupo; os demais vão entre colchetes ao lado
+ *  do nome. Espelha `biblioteca_service.markdown_para_ia`. */
 export function bibliotecaMarkdown(slim: BibliotecaRefIA[]): string {
   if (!slim.length) return '_(o personal ainda não cadastrou exercícios — monte tudo do zero)_'
   const porGrupo = new Map<string, BibliotecaRefIA[]>()
   for (const ex of slim) {
-    const g = ex.grupo?.trim() || 'Sem grupo'
+    const g = ex.grupos[0]
     const lista = porGrupo.get(g)
     if (lista) lista.push(ex)
     else porGrupo.set(g, [ex])
@@ -49,7 +60,8 @@ export function bibliotecaMarkdown(slim: BibliotecaRefIA[]): string {
   for (const [grupo, exs] of porGrupo) {
     linhas.push(`**${grupo}**`)
     for (const ex of exs) {
-      linhas.push(`- ${ex.nome} → ${ex.video_url ?? '(sem vídeo cadastrado)'}`)
+      const extras = ex.grupos.length > 1 ? ` [${ex.grupos.join(', ')}]` : ''
+      linhas.push(`- ${ex.nome}${extras} → ${ex.video_url ?? '(sem vídeo cadastrado)'}`)
     }
     linhas.push('')
   }

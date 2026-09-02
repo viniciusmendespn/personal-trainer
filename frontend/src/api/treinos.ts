@@ -208,6 +208,8 @@ export interface SessaoHistoricoPersonal {
   /** Sessão que o aluno esqueceu de finalizar e o sistema fechou sozinho 6h depois do início.
    *  Nesse caso `data_hora_fim` é a hora do último registro, não a do fechamento. */
   encerrada_automaticamente?: boolean
+  /** Comentário curto que o aluno escreveu ao finalizar o treino. */
+  observacao?: string
   total_ex: number
   /** Todos os exercícios prescritos no treino (independente de terem sido registrados). */
   exercicios?: ExercicioPrescritoSessao[]
