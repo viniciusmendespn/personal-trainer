@@ -6,7 +6,6 @@ Sessão ativa = 1 item denormalizado `SESSION#ACTIVE` que embute a sequência de
 pelo agente."""
 import logging
 import math
-import os
 import time
 import unicodedata
 from datetime import date, datetime, timedelta, timezone
@@ -17,7 +16,7 @@ from app.models.enums import Ator, CanalOrigem, Classificacao, SessaoStatus, nor
 from app.models.grupos_musculares import grupos_do_item, normalizar_grupo, separar_grupos
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import badge_service, ferias_service, media_service, pontos_service
+from app.services import badge_service, ferias_service, locale_service, media_service, pontos_service
 from app.utils import epoch_ms, new_id, now_iso, treino_vigente, treinos_validos
 
 logger = logging.getLogger(__name__)
@@ -33,9 +32,11 @@ REG_TTL_S = 48 * 3600          # GC do REG# — precisa sobreviver com folga ao 
 SCHED_TTL_S = 7 * 24 * 3600    # GC das entradas do scheduler
 
 
-def _isoweek() -> str:
-    y, w, _ = datetime.now(timezone.utc).isocalendar()
-    return f"{y}-W{w:02d}"
+def _isoweek(tz: str) -> str:
+    """Semana ISO corrente no fuso do ALUNO. O `tz` é obrigatório de propósito: com default
+    o parâmetro seria esquecido em alguma chamada e aquele balde ficaria em UTC — que é
+    exatamente o bug que isto corrige (docs/TIMEZONE.md §2)."""
+    return locale_service.semana_iso_agora(tz)
 
 
 def _semana_anterior(semana: str) -> str:
@@ -200,6 +201,11 @@ def start_session(personal_id: str, aluno_id: str, treino_id: str, iniciado_pelo
     blocos = treino.get("blocos") or []
     blocos_by_id = {b.get("id"): b for b in blocos}
     snaps = [_snapshot(e, blocos_by_id) for e in exs]
+    # Fuso dos dois lados congelado no item da sessão. Motivo: o `finish()` bucketiza streak,
+    # frequência e o STATS#D# do dashboard, e é o caminho mais quente do app do aluno —
+    # resolver o fuso lá custaria duas leituras por treino finalizado. Aqui, ao iniciar o
+    # treino, custa uma vez só. Guarda a ZONA, nunca o dia derivado (docs/TIMEZONE.md §3).
+    tz_aluno, tz_personal = locale_service.tzs_da_dupla(aluno_id, personal_id)
     item = {
         "sessao_id": new_id(),
         "aluno_id": aluno_id,
@@ -213,6 +219,8 @@ def start_session(personal_id: str, aluno_id: str, treino_id: str, iniciado_pelo
         "ordem_atual": 0,
         "total_ex": len(snaps),
         "data_hora_inicio": now_iso(),
+        "tz_aluno": tz_aluno,
+        "tz_personal": tz_personal,
         # Persistido para o finish() saber quem conduziu a sessão: só sessão do aluno
         # gera a notificação TREINO_CONCLUIDO para o personal.
         "iniciado_pelo_aluno": iniciado_pelo_aluno,
@@ -464,7 +472,9 @@ def finish(aluno_id: str, body=None, auto: bool = False) -> dict:
     st_atual = repo.clean(repo.get_item(pk, keys.SK_STATS_ALUNO, consistent=True)) or {}
     total_sessoes_novo = int(st_atual.get("total_sessoes", 0)) + 1
     # Cálculo do streak de semanas consecutivas
-    wk = _isoweek()
+    # Semana do INSTANTE em que a sessão terminou, não de "agora": o fechamento automático
+    # (sessao_scheduler) roda até 6h depois do treino e podia jogar a sessão na semana seguinte.
+    wk = locale_service.semana_iso(fim_iso, _tz_da_sessao(s)) or _isoweek(_tz_da_sessao(s))
     ultima_semana = st_atual.get("streak_ultima_semana", "")
     if ultima_semana == wk:
         novo_streak = int(st_atual.get("streak_atual", 1))
@@ -482,13 +492,12 @@ def finish(aluno_id: str, body=None, auto: bool = False) -> dict:
         add_stats["soma_duracao_segundos"] = dur
         add_stats["soma_total_series"] = int(s.get("total_series") or 0)
         add_stats["sessoes_com_metrica"] = 1
-        # dia da semana (0=segunda) do início do treino. Datas em UTC — leve deriva de fuso,
-        # aceitável para o padrão "dias que treina".
-        try:
-            dow = datetime.fromisoformat(s["data_hora_inicio"].replace("Z", "+00:00")).weekday()
+        # Dia da semana (0=segunda) do início do treino, no fuso do ALUNO — é o padrão dele.
+        # Em UTC, quem treina depois das 21h (BRT) era contado no dia seguinte, e à noite é
+        # justamente quando a maior parte dos alunos treina.
+        dow = locale_service.dow(s.get("data_hora_inicio"), _tz_da_sessao(s))
+        if dow is not None:
             add_stats[f"dow_{dow}"] = 1
-        except Exception:
-            pass
     repo.add_and_set(pk, keys.SK_STATS_ALUNO, add=add_stats, set_={
         "ultimo_treino": fim_iso,
         "streak_atual": novo_streak,
@@ -499,7 +508,10 @@ def finish(aluno_id: str, body=None, auto: bool = False) -> dict:
     # Agregado diário por personal (para gráfico do dashboard)
     personal_id = s.get("personal_id")
     if personal_id:
-        hoje = fim_iso[:10]
+        # Dia no fuso do PERSONAL, não do aluno: este agregado mora na partição dele e alimenta
+        # o gráfico do dashboard dele. Com alunos em fusos diferentes, usar o dia de cada aluno
+        # deixaria a "terça" do gráfico misturando três terças distintas (docs/TIMEZONE.md §2).
+        hoje = locale_service.dia(fim_iso, _tz_do_personal_da_sessao(s)) or fim_iso[:10]
         repo.add_and_set(keys.pk_personal(personal_id), f"STATS#D#{hoje}",
                          add={"sessoes": 1}, set_={"data": hoje})
         repo.add_to_set(keys.pk_personal(personal_id), f"STATS#D#{hoje}",
@@ -601,7 +613,7 @@ def avisar_sessao_aberta(sched: dict) -> str:
         return "ignorada"
     from app.services import anotif_service, notif_service   # import tardio — evita ciclo
     treino = s.get("treino_nome") or "seu treino"
-    hora = _hora_local(s.get("data_hora_inicio"))
+    hora = locale_service.hora(s.get("data_hora_inicio"), _tz_da_sessao(s))
     restante = int((SESSAO_LIMITE_S - SESSAO_AVISO_S) / 3600)
     if s.get("iniciado_pelo_aluno"):
         anotif_service.criar(
@@ -635,14 +647,18 @@ def encerrar_sessao_aberta(sched: dict) -> str:
     return "finalizada"
 
 
-def _hora_local(iso: str | None) -> str:
-    """HH:MM no fuso do produto (mesmo TZ_OFFSET_HOURS de agenda_notif_service)."""
-    try:
-        offset = int(os.environ.get("TZ_OFFSET_HOURS", "-3"))
-        dt = datetime.fromisoformat((iso or "").replace("Z", "+00:00")) + timedelta(hours=offset)
-        return dt.strftime("%H:%M")
-    except (ValueError, AttributeError):
-        return "—"
+def _tz_da_sessao(s: dict) -> str:
+    """Fuso do ALUNO vigente quando a sessão rodou.
+
+    `start_session` grava `tz_aluno` no item, então o caminho quente (`finish`) não paga
+    leitura nenhuma. Sessão anterior a essa mudança não tem o campo e cai na resolução pelo
+    perfil — degradação limpa, sem migração (docs/TIMEZONE.md §3)."""
+    return s.get("tz_aluno") or locale_service.tz_do_aluno(s.get("aluno_id"), s.get("personal_id"))
+
+
+def _tz_do_personal_da_sessao(s: dict) -> str:
+    """Idem, para o fuso do PERSONAL — é o dono da partição onde mora o `STATS#D#`."""
+    return s.get("tz_personal") or locale_service.tz_do_personal(s.get("personal_id"))
 
 
 def record(aluno_id: str, series: list, exercicio_id: str | None = None,
@@ -685,7 +701,7 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
             cargas.append(cg)
             volume += cg * (it.get("reps") or 0)
     if volume > 0:
-        wk = _isoweek()
+        wk = _isoweek(_tz_da_sessao(s))
         repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_volume": volume}, set_={"ultimo_treino": now_iso()})
         repo.add_and_set(pk, keys.sk_stats_week(wk), add={"volume": volume}, set_={"semana": wk})
         _creditar_volume_grupos(pk, wk, ex_snap, volume)
@@ -787,7 +803,7 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
                                           "atualizado_em": now_iso()})
     delta = _volume(series) - old_vol
     if delta:
-        wk = _isoweek()
+        wk = _isoweek(_tz_da_sessao(s))
         repo.add_and_set(pk, keys.SK_STATS_ALUNO, add={"total_volume": delta}, set_={"ultimo_treino": now_iso()})
         repo.add_and_set(pk, keys.sk_stats_week(wk), add={"volume": delta}, set_={"semana": wk})
         _creditar_volume_grupos(pk, wk, ex_snap, delta)
@@ -1232,21 +1248,32 @@ def historico_mes(aluno_id: str, ano: int, mes: int, incluir_fotos: bool = True)
     sessões do mês via BETWEEN no SK por epoch-ms — sem varrer o histórico inteiro.
 
     `incluir_fotos=False` (visão do personal): não gera presigned URL da foto de check-in —
-    a privacidade do aluno é preservada (nem miniatura) e evita-se o custo do presign."""
+    a privacidade do aluno é preservada (nem miniatura) e evita-se o custo do presign.
+
+    O dia é o do calendário do ALUNO — é o histórico dele, mesmo quando quem olha é o personal
+    de outro fuso. Agrupamento na LEITURA de propósito: nada é pré-agregado aqui, então trocar
+    o fuso do aluno reescreve o passado inteiro corretamente, sem migração. Gravar o dia junto
+    da sessão congelaria um fuso configurado errado para sempre (docs/TIMEZONE.md §2)."""
     if not 1 <= mes <= 12:
         raise HTTPException(400, "Mês inválido")
     pk = keys.pk_aluno(aluno_id)
-    inicio = datetime(ano, mes, 1, tzinfo=timezone.utc)
-    fim = datetime(ano + (mes // 12), (mes % 12) + 1, 1, tzinfo=timezone.utc)
+    tz = locale_service.tz_do_aluno(aluno_id)
+    # Janela alargada em 1 dia de cada lado: os limites do mês LOCAL caem até 14h fora dos
+    # limites do mês UTC, então sem a folga a primeira e a última madrugada do mês sumiriam.
+    # O recorte exato é feito abaixo, pelo dia local de cada sessão.
+    inicio = datetime(ano, mes, 1, tzinfo=timezone.utc) - timedelta(days=1)
+    fim = datetime(ano + (mes // 12), (mes % 12) + 1, 1, tzinfo=timezone.utc) + timedelta(days=1)
     low = keys.sk_sessao_hist(f"{int(inicio.timestamp() * 1000):013d}", "")
     high = keys.sk_sessao_hist(f"{int(fim.timestamp() * 1000):013d}", "")
+    prefixo_mes = f"{ano:04d}-{mes:02d}"
     dias: dict[str, list] = {}
     volume_total = 0.0
     prs_total = 0
     for raw in repo.query_between(pk, low, high):
         s = repo.clean(raw)
-        dia = (s.get("data_hora_inicio") or "")[:10]
-        if not dia:
+        dia = locale_service.dia(s.get("data_hora_inicio"), tz)
+        # Descarta o que a folga trouxe de fora do mês local.
+        if not dia or not dia.startswith(prefixo_mes):
             continue
         novos_prs = s.get("novos_prs") or []
         vol = s.get("volume_total") or 0
@@ -1406,7 +1433,7 @@ def resumo_aluno(aluno_id: str, semanas: int = 16) -> dict:
             for parte in _partes_do_agregado(grp):
                 display = normalizar_grupo(parte).capitalize()
                 cur[display] = cur.get(display, 0) + wg.get("volume", 0)
-    wk_atual = _isoweek()
+    wk_atual = _isoweek(locale_service.tz_do_aluno(aluno_id))
     streak_atual = int(st.get("streak_atual", 0))
     total_sessoes = int(st.get("total_sessoes", 0))
     semanas_com_treino = sum(1 for w in weeks if w.get("sessoes", 0) > 0)

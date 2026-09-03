@@ -1,5 +1,77 @@
 import { describe, it, expect } from 'vitest'
-import { diaLocal, diaLocalIso, limitesDiaLocal } from './datetime'
+import {
+  civilNoFuso, diaIsoNoFuso, diaLocal, diaLocalIso, diaNoFuso,
+  horaNoFuso, instanteDeCivil, limitesDiaLocal,
+} from './datetime'
+
+const SP = 'America/Sao_Paulo'
+const TOKYO = 'Asia/Tokyo'
+const NY = 'America/New_York'
+
+describe('diaNoFuso / horaNoFuso', () => {
+  it('o mesmo instante é dia 7 em SP e dia 8 em Tóquio', () => {
+    const inicio = '2026-09-08T02:30:00Z'          // 23h30 do dia 7 em SP
+    expect(diaIsoNoFuso(inicio, SP)).toBe('2026-09-07')
+    expect(diaIsoNoFuso(inicio, TOKYO)).toBe('2026-09-08')
+  })
+
+  it('compromisso das 21h no BRT não vaza para o dia seguinte', () => {
+    expect(diaIsoNoFuso('2026-09-08T00:30:00Z', SP)).toBe('2026-09-07')
+  })
+
+  it('não confunde meia-noite com o dia seguinte', () => {
+    // `hour: '2-digit'` devolve 24 à meia-noite em alguns engines — se não normalizasse,
+    // a data pularia um dia justo na virada.
+    expect(diaIsoNoFuso('2026-09-08T03:00:00Z', SP)).toBe('2026-09-08')
+    expect(horaNoFuso('2026-09-08T03:00:00Z', SP)).toBe('00:00')
+  })
+
+  it('respeita o horário de verão pelo nome IANA', () => {
+    expect(horaNoFuso('2026-01-15T17:00:00Z', NY)).toBe('12:00')   // EST, -5
+    expect(horaNoFuso('2026-07-15T17:00:00Z', NY)).toBe('13:00')   // EDT, -4
+  })
+
+  it('fuso inválido degrada para o dia do aparelho em vez de quebrar', () => {
+    const d = new Date(2026, 7, 20, 15)
+    expect(diaNoFuso(d, 'Marte/Olympus')).toBe(diaLocal(d))
+    expect(diaNoFuso(d, null)).toBe(diaLocal(d))
+  })
+})
+
+describe('instanteDeCivil', () => {
+  it('21h em São Paulo vira o instante UTC correto', () => {
+    expect(instanteDeCivil('2026-09-07', '21:00', SP)).toBe('2026-09-08T00:00:00.000Z')
+  })
+
+  it('a mesma hora civil em fusos diferentes dá instantes diferentes', () => {
+    expect(instanteDeCivil('2026-09-07', '08:00', TOKYO)).toBe('2026-09-06T23:00:00.000Z')
+    expect(instanteDeCivil('2026-09-07', '08:00', SP)).toBe('2026-09-07T11:00:00.000Z')
+  })
+
+  it('acerta os dois lados de uma virada de horário de verão', () => {
+    // Nova York: -5 em janeiro, -4 em julho. Offset fixo erraria metade do ano.
+    expect(instanteDeCivil('2026-01-15', '09:00', NY)).toBe('2026-01-15T14:00:00.000Z')
+    expect(instanteDeCivil('2026-07-15', '09:00', NY)).toBe('2026-07-15T13:00:00.000Z')
+  })
+
+  it('é a inversa exata de civilNoFuso', () => {
+    for (const tz of [SP, TOKYO, NY]) {
+      for (const [data, hora] of [['2026-06-15', '21:00'], ['2026-01-02', '00:00'], ['2026-11-01', '01:30']]) {
+        const iso = instanteDeCivil(data, hora, tz)
+        expect(civilNoFuso(iso, tz)).toEqual([data, hora])
+      }
+    }
+  })
+
+  it('hora inexistente na virada do horário de verão não quebra, escorrega', () => {
+    // 08/03/2026 em Nova York: o relógio pula de 02:00 para 03:00, então 02:30 NÃO EXISTE.
+    // Não há resposta certa — o que importa é ser determinístico e não estourar. Cai em 01:30,
+    // e o compromisso fica no dia certo. (Só alcançável escolhendo essa hora à mão nos EUA.)
+    const iso = instanteDeCivil('2026-03-08', '02:30', NY)
+    expect(diaIsoNoFuso(iso, NY)).toBe('2026-03-08')
+    expect(horaNoFuso(iso, NY)).toBe('01:30')
+  })
+})
 
 /** O recorte é sempre no fuso do aparelho — é isso que o backend NÃO assume. */
 const OFFSET_MIN = new Date('2026-08-20T12:00:00Z').getTimezoneOffset()

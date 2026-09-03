@@ -16,7 +16,7 @@ from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.models.postagem import MidiaRef, PostagemCreate, PostagemTipo
 from app.services import agent_service, alerta_service, anotif_service, badge_service, conhecimento_service, correcao_service, feed_global_service, ferias_service, financeiro_service, media_service, meta_service, notif_service, pontos_service, postagem_service, sessao_service
-from app.utils import init_series_prescritas, new_id, now_iso, treinos_validos
+from app.utils import init_series_prescritas, new_id, now_iso, treinos_validos, tz_valido
 
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
 
@@ -29,6 +29,21 @@ _ALUNO_ORIGIN = "app.coachpilot.com.br"
 class RedeemBody(BaseModel):
     code: str | None = None
     token: str | None = None
+    timezone: str | None = None   # IANA detectado no aparelho; só semeia o perfil vazio
+
+
+def _semear_timezone(aluno_id: str, tz: str | None) -> None:
+    """Grava o fuso detectado no aparelho na PRIMEIRA vez, e só.
+
+    Sticky de propósito: se redetectasse a cada acesso, uma viagem de duas semanas reescreveria
+    em silêncio o fuso do aluno — e com ele o balde onde caem streak e frequência
+    (docs/TIMEZONE.md §5). Depois de semeado, só muda por edição explícita."""
+    if not tz or not tz_valido(tz):
+        return
+    perfil = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE) or {}
+    if perfil.get("timezone"):
+        return
+    repo.update_item_if_exists(keys.pk_aluno(aluno_id), keys.SK_PROFILE, {"timezone": tz})
 
 
 def _require_aluno_origin(request: Request) -> None:
@@ -47,6 +62,7 @@ def auth_redeem(body: RedeemBody, request: Request, response: Response):
         result = aluno_auth.redeem_code(body.code)
     if not result:
         raise HTTPException(400, "Link inválido ou revogado")
+    _semear_timezone(result["aluno_id"], body.timezone)
     response.set_cookie(_COOKIE_NAME, result["session_id"], **_COOKIE_OPTS)
 
 

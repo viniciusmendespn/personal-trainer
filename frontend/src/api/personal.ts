@@ -19,6 +19,8 @@ export interface PersonalProfile {
   slug?: string
   /** Avisar quando um aluno concluir um treino pelo app. Ausente = ligado. */
   notif_treino_concluido?: boolean
+  /** Fuso IANA (ex.: 'America/Sao_Paulo'). Base de todo dia/semana do portal. Nunca offset. */
+  timezone?: string
   updated_at?: string
 }
 

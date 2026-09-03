@@ -42,7 +42,7 @@ import type { BlocoTreino, Cobranca, ExercicioSubstituto, SeriePrescrita } from 
 import { normalizeTipoExercicio } from '../types'
 import { formatoBlocoLabel, sufixoPrescricaoBloco, fmtPrescricaoBloco } from '../components/exercicios/BlocosTreinoEditor'
 import { videoUrlComFallback } from '../utils/video'
-import { feitoNaSemana, labelDiaCurto } from '../utils/datetime'
+import { feitoNaSemana, labelDiaCurto, fusoDoAparelho } from '../utils/datetime'
 import { chaveExercicio } from '../utils/normalizeText'
 import { lerRascunho, limparRascunhoEx, limparRascunhoSessao, salvarRascunhoEx } from '../utils/rascunhoSessao'
 
@@ -100,7 +100,13 @@ function useAlunoSession() {
       if (code || token) {
         window.history.replaceState({}, '', '/')
         try {
-          await alunoClient.post('/v1/aluno/auth/redeem', token ? { token } : { code })
+          // O fuso do aparelho vai junto: é a única chance de descobrir onde o aluno está,
+          // já que ele entra por link e não passa por cadastro. O backend só usa se o perfil
+          // ainda não tiver fuso — depois disso só muda por edição (docs/TIMEZONE.md §5).
+          await alunoClient.post('/v1/aluno/auth/redeem', {
+            ...(token ? { token } : { code }),
+            timezone: fusoDoAparelho(),
+          })
         } catch {
           // link inválido ou revogado; tenta usar sessão existente
         }

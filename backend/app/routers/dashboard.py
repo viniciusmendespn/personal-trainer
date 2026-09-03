@@ -1,5 +1,5 @@
 """Dashboard do personal — contadores a partir da partição PT# (bounded, sem scan)."""
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends
@@ -8,7 +8,7 @@ from app.dependencies import get_current_personal_id
 from app.models.enums import SessaoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import financeiro_service, media_service, notif_service
+from app.services import financeiro_service, locale_service, media_service, notif_service
 from app.services.sessao_service import SESSAO_LIMITE_S
 
 router = APIRouter(prefix="/v1", tags=["dashboard"])
@@ -30,8 +30,10 @@ def dashboard(personal_id: str = Depends(get_current_personal_id)):
     stats_notif = repo.get_item(pk, keys.SK_STATS_NOTIF)
     nao_lidas = int(stats_notif.get("nao_lidas", 0)) if stats_notif is not None else notif_service.nao_lidas(personal_id)
 
-    # Sessões por dia (últimos 14 dias) — lê STATS#D# da partição PT# (escrita em finish())
-    hoje = datetime.now(timezone.utc).date()
+    # Sessões por dia (últimos 14 dias) — lê STATS#D# da partição PT# (escrita em finish()).
+    # O balde é gravado no dia local do personal, então a janela também é: perguntar em UTC
+    # aqui desalinharia as chaves e o gráfico mostraria zero no dia de hoje.
+    hoje = date.fromisoformat(locale_service.hoje(locale_service.tz_do_personal(personal_id)))
     dias = [(hoje - timedelta(days=i)).isoformat() for i in range(13, -1, -1)]
     stats_dias = repo.query_pk(pk, sk_prefix="STATS#D#")
     por_dia = {s.get("data", ""): int(s.get("sessoes", 0)) for s in stats_dias}

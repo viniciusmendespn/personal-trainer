@@ -11,13 +11,14 @@ Dois caminhos de leitura, mesmas regras:
     lidos em 2 queries na mesma partição, O(1) no número de alunos;
   • aba do aluno → recálculo exato na partição do próprio aluno (fan-out de 1).
 
-Datas em UTC (`date.today()`), como o resto do financeiro (`_marcar_vencida`). Na virada do dia
-em BRT a diferença é de no máximo 1 dia — aceitável para regras de granularidade diária.
+Datas no fuso do personal, via `hoje_iso(personal_id)` — ver `docs/TIMEZONE.md` §1.2: prazo e
+vencimento são data civil, não instante, e comparar com o dia UTC os adiantava em 3h no BRT.
 """
 from datetime import date
 
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
+from app.services import locale_service
 from app.utils import treino_vigente, treinos_validos
 
 DIAS_SEM_TREINAR = 10       # a partir de quantos dias sem sessão finalizada vira pendência
@@ -37,8 +38,14 @@ _META: dict[str, tuple[str, str, str]] = {
 }
 
 
-def hoje_iso() -> str:
-    return date.today().isoformat()
+def hoje_iso(personal_id: str | None = None) -> str:
+    """Hoje no calendário do PERSONAL — é a worklist dele, e as datas que ela compara
+    (vencimento de cobrança) são datas civis dele.
+
+    Fuso do personal, e não de cada aluno, também por custo: a listagem avalia N alunos numa
+    passada só; resolver o fuso de cada um seria N leituras de perfil — o fan-out que a
+    arquitetura evita. `date.today()` aqui era o dia UTC, que no BRT vira 3h cedo."""
+    return locale_service.hoje(locale_service.tz_do_personal(personal_id))
 
 
 def _pendencia(tipo: str, detalhe: str | None = None) -> dict:
@@ -181,7 +188,7 @@ def do_aluno(personal_id: str, aluno_id: str, aluno: dict, bloqueado: bool) -> l
 
     Aproveita para corrigir o contador denormalizado `vencidas` quando ele divergir do real:
     a listagem se autoconserta toda vez que o personal abre o aluno, sem job de reconciliação."""
-    hoje = hoje_iso()
+    hoje = hoje_iso(personal_id)
     treinos = treinos_validos(repo.query_pk(keys.pk_aluno(aluno_id),
                                             sk_prefix=keys.SK_TREINO_PREFIX))
     stats = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_STATS_ALUNO) or {}

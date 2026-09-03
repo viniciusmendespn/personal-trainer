@@ -15,7 +15,8 @@ import { useBiblioteca } from '../hooks/useDominio'
 import { useTemplates } from '../hooks/useTemplates'
 import { wapiApi } from '../api/wapi'
 import { Card, StatCard, Skeleton, SkeletonLine, EmptyState, Avatar, Badge, ExpandableText } from '../components/ui'
-import { tempoRelativo } from '../utils/datetime'
+import { tempoRelativo, diaLocal, hojeNoFuso, diaIsoNoFuso, horaNoFuso } from '../utils/datetime'
+import { useTimezone } from '../hooks/useTimezone'
 import { formatBRL } from '../utils/currency'
 
 const chartTip = {
@@ -40,12 +41,9 @@ const PIE_COLORS = [
   '#60a5fa',
 ]
 
-// Dia UTC de propósito — NÃO trocar por `diaLocal` isoladamente. Estas chaves são comparadas
-// com `data.sessoes_por_dia[].data`, que vem de STATS#D# (backend, agregado em dia UTC na
-// escrita de finish()). Enquanto o backend agregar em UTC, o front tem que perguntar em UTC:
-// mudar só este lado desalinharia os dois. Os dois viram dia local juntos, quando o aluno
-// tiver fuso — ver docs/PLANO_INTERNACIONALIZACAO.md §4.1.
-function ymd(d: Date) { return d.toISOString().slice(0, 10) }
+// As chaves abaixo são comparadas com `data.sessoes_por_dia[].data`, que vem de STATS#D# —
+// agregado pelo backend no dia local do PERSONAL (sessao_service.finish). As duas pontas
+// viraram dia local na mesma entrega: mudar só uma delas desalinharia o gráfico inteiro.
 function startOfWeek(d: Date) {
   const date = new Date(d)
   const diff = (date.getDay() + 6) % 7
@@ -54,13 +52,9 @@ function startOfWeek(d: Date) {
   return date
 }
 function fmtDia(iso: string) { return iso.split('-')[2] }
-function fmtEvento(iso: string) {
-  const d = new Date(iso)
-  const hh = String(d.getHours()).padStart(2, '0')
-  const mm = String(d.getMinutes()).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mo = String(d.getMonth() + 1).padStart(2, '0')
-  return `${hh}:${mm} · ${dd}/${mo}`
+function fmtEvento(iso: string, tz?: string) {
+  const [, mo, dd] = diaIsoNoFuso(iso, tz).split('-')
+  return `${horaNoFuso(iso, tz)} · ${dd}/${mo}`
 }
 
 function DeltaChip({ curr, prev, unit = '' }: { curr: number; prev: number; unit?: string }) {
@@ -87,25 +81,28 @@ export function DashboardPage() {
   const { data: alunos } = useAlunos()
   const { data: biblioteca } = useBiblioteca()
   const { data: templates } = useTemplates()
+  const tz = useTimezone()
 
-  const hoje = useMemo(() => ymd(new Date()), [])
-  const semanaInicio = useMemo(() => ymd(startOfWeek(new Date())), [])
+  // Tudo derivado de "hoje no fuso do personal": é o mesmo dia que o backend usou na chave.
+  const hojeDate = useMemo(() => hojeNoFuso(tz), [tz])
+  const hoje = useMemo(() => diaLocal(hojeDate), [hojeDate])
+  const semanaInicio = useMemo(() => diaLocal(startOfWeek(hojeDate)), [hojeDate])
   const semanaFim = useMemo(() => {
-    const d = startOfWeek(new Date())
+    const d = startOfWeek(hojeDate)
     d.setDate(d.getDate() + 6)
-    return ymd(d)
-  }, [])
+    return diaLocal(d)
+  }, [hojeDate])
   const semanaAntInicio = useMemo(() => {
-    const d = startOfWeek(new Date())
+    const d = startOfWeek(hojeDate)
     d.setDate(d.getDate() - 7)
-    return ymd(d)
-  }, [])
+    return diaLocal(d)
+  }, [hojeDate])
   const semanaAntFim = useMemo(() => {
-    const d = startOfWeek(new Date())
+    const d = startOfWeek(hojeDate)
     d.setDate(d.getDate() - 1)
-    return ymd(d)
-  }, [])
-  const mesAtual = useMemo(() => new Date().getMonth(), [])
+    return diaLocal(d)
+  }, [hojeDate])
+  const mesAtual = useMemo(() => hojeDate.getMonth(), [hojeDate])
 
   const sessoesHoje = useMemo(
     () => (data?.sessoes_por_dia ?? []).find((d) => d.data === hoje)?.total ?? 0,
@@ -524,7 +521,7 @@ export function DashboardPage() {
                             </Link>
                             <Badge tone={s.tone}>{s.label}</Badge>
                           </div>
-                          <p className="text-xs text-text-muted">{fmtEvento(ev.data_hora_inicio)} · {ev.duracao_min}min</p>
+                          <p className="text-xs text-text-muted">{fmtEvento(ev.data_hora_inicio, tz)} · {ev.duracao_min}min</p>
                         </div>
                       </div>
                     )

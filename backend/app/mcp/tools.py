@@ -311,7 +311,7 @@ def resumo_carteira(_: SemArgs) -> dict:
     vencidas = {p["aluno_id"]: int(p.get("vencidas", 0) or 0)
                 for p in repo.query_pk(pk, sk_prefix=keys.COBRANCA_ALUNO_PREFIX)
                 if p.get("aluno_id")}
-    hoje = pendencia_service.hoje_iso()
+    hoje = pendencia_service.hoje_iso(t.personal_id)
 
     ativos = 0
     por_tipo: dict[str, list[dict]] = {}

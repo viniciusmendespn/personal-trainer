@@ -3,13 +3,13 @@ import re
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app.dependencies import get_current_personal_id
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services import media_service
-from app.utils import now_iso
+from app.utils import now_iso, tz_valido
 
 router = APIRouter(prefix="/v1/personal", tags=["personal"])
 
@@ -39,6 +39,15 @@ class PersonalProfileUpdate(BaseModel):
     x_url: Optional[str] = None
     site_url: Optional[str] = None
     notif_treino_concluido: Optional[bool] = None   # ausente no perfil = ligado
+    timezone: Optional[str] = None                  # IANA; base de todo dia/semana local
+
+    @field_validator("timezone")
+    @classmethod
+    def _validar_tz(cls, v: Optional[str]) -> Optional[str]:
+        """Só nome IANA — offset fixo ('-3') quebra no horário de verão (docs/TIMEZONE.md §5)."""
+        if v is not None and v != "" and not tz_valido(v):
+            raise ValueError("Fuso horário inválido — use um nome IANA (ex.: America/Sao_Paulo)")
+        return v or None
 
 
 class AvatarUploadUrlBody(BaseModel):

@@ -1,16 +1,14 @@
 """Lembretes de agenda — grava itens SCHED# 15 min antes do evento e os dispara."""
 import logging
-import os
 from datetime import datetime, timedelta, timezone
 
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import anotif_service, notif_service
+from app.services import anotif_service, locale_service, notif_service
 
 logger = logging.getLogger(__name__)
 
 _ANTECIPACAO_MIN = 15
-_TZ_OFFSET = int(os.environ.get("TZ_OFFSET_HOURS", "-3"))
 
 
 def _notif_dt(data_hora_inicio: str) -> datetime:
@@ -49,19 +47,23 @@ def cancelar(agendamento: dict) -> None:
 
 
 def enviar_lembrete(item: dict) -> None:
-    """Chamado pelo agenda_scheduler — envia push para personal e aluno."""
-    dt_local = datetime.fromisoformat(
-        item["data_hora_inicio"].replace("Z", "+00:00")
-    ) + timedelta(hours=_TZ_OFFSET)
-    hora = dt_local.strftime("%H:%M")
+    """Chamado pelo agenda_scheduler — envia push para personal e aluno.
+
+    Cada um vê a hora no PRÓPRIO relógio: a frase é sobre o compromisso de quem lê, então o
+    fuso é o do leitor (docs/TIMEZONE.md §4). Com aluno e personal em fusos diferentes, um
+    horário só estaria errado para um dos dois."""
+    inicio = item["data_hora_inicio"]
+    personal_id = item["personal_id"]
+    aluno_id = item["aluno_id"]
     anotif_service.criar(
-        item["aluno_id"], "LEMBRETE_AULA",
+        aluno_id, "LEMBRETE_AULA",
         "Treino em 15 minutos!",
-        f"Seu treino começa às {hora}. Prepare-se!",
+        f"Seu treino começa às {locale_service.hora(inicio, locale_service.tz_do_aluno(aluno_id, personal_id))}. "
+        f"Prepare-se!",
     )
     notif_service.criar(
-        item["personal_id"], "LEMBRETE_AULA",
+        personal_id, "LEMBRETE_AULA",
         "Sessão em 15 minutos!",
-        f"Sessão com aluno às {hora}.",
-        aluno_id=item["aluno_id"],
+        f"Sessão com aluno às {locale_service.hora(inicio, locale_service.tz_do_personal(personal_id))}.",
+        aluno_id=aluno_id,
     )

@@ -1,8 +1,16 @@
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.models.enums import AlunoStatus
+from app.utils import tz_valido
+
+
+def _validar_tz(v: Optional[str]) -> Optional[str]:
+    """Recusa offset ('-3') e nome inexistente. Só nome IANA — docs/TIMEZONE.md §5."""
+    if v is not None and v != "" and not tz_valido(v):
+        raise ValueError("Fuso horário inválido — use um nome IANA (ex.: America/Sao_Paulo)")
+    return v or None
 
 
 class AlunoCreate(BaseModel):
@@ -14,7 +22,10 @@ class AlunoCreate(BaseModel):
     objetivos: list[str] = Field(default_factory=list)
     observacoes: Optional[str] = None
     descricao: Optional[str] = None            # tagline curta exibida no perfil
+    timezone: Optional[str] = None             # IANA; None = herda o do personal
     custom: dict[str, Any] = Field(default_factory=dict)
+
+    _tz = field_validator("timezone")(_validar_tz)
 
 
 class AlunoUpdate(BaseModel):
@@ -28,7 +39,10 @@ class AlunoUpdate(BaseModel):
     descricao: Optional[str] = None
     status: Optional[AlunoStatus] = None
     foto_s3_key: Optional[str] = None          # chave S3 da foto de perfil
+    timezone: Optional[str] = None             # IANA; None = herda o do personal
     custom: Optional[dict[str, Any]] = None
+
+    _tz = field_validator("timezone")(_validar_tz)
 
 
 class Aluno(AlunoCreate):

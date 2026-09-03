@@ -9,7 +9,7 @@ legado, e as duas séries do gráfico (`volume_por_grupo` e `semanas[].grupos`) 
 import pytest
 
 from app.repositories import keys
-from app.services import sessao_service
+from app.services import locale_service, sessao_service
 
 PERSONAL = "p-1"
 ALUNO = "a-1"
@@ -115,7 +115,7 @@ def _semear_agregado_legado(fake, grupo: str, volume: float, semana: str) -> Non
 
 
 def test_resumo_quebra_o_agregado_composto_legado(sessao):
-    semana = sessao_service._isoweek()
+    semana = sessao_service._isoweek(locale_service.TZ_PADRAO)
     _semear_agregado_legado(sessao, "peito, triceps", 500, semana)
 
     resumo = sessao_service.resumo_aluno(ALUNO)
@@ -128,7 +128,7 @@ def test_resumo_quebra_o_agregado_composto_legado(sessao):
 
 def test_resumo_soma_legado_composto_e_agregado_novo_no_mesmo_grupo(sessao):
     """O caso real: histórico antigo sob "peito, triceps" + registros novos sob "peito"."""
-    semana = sessao_service._isoweek()
+    semana = sessao_service._isoweek(locale_service.TZ_PADRAO)
     _semear_agregado_legado(sessao, "peito, triceps", 500, semana)
     _semear_agregado_legado(sessao, "peito", 200, semana)
 
@@ -141,7 +141,7 @@ def test_resumo_soma_legado_composto_e_agregado_novo_no_mesmo_grupo(sessao):
 def test_semanas_e_volume_por_grupo_usam_os_mesmos_rotulos(sessao):
     """O gráfico empilhado lê os nomes de `volume_por_grupo` e os valores de `semanas[].grupos`:
     rótulo divergente entre os dois vira barra vazia."""
-    semana = sessao_service._isoweek()
+    semana = sessao_service._isoweek(locale_service.TZ_PADRAO)
     _semear_agregado_legado(sessao, "peito, triceps", 500, semana)
 
     resumo = sessao_service.resumo_aluno(ALUNO)

@@ -7,3 +7,6 @@ python-jose[cryptography]==3.3.0
 httpx==0.28.1
 pytest==8.3.4
 pywebpush==2.0.0
+# Base de fusos IANA para o zoneinfo. O container da Lambda até traz /usr/share/zoneinfo,
+# mas depender disso é frágil; ~600 KB no layer elimina a dúvida (docs/TIMEZONE.md §5).
+tzdata==2026.3

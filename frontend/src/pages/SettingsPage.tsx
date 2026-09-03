@@ -14,10 +14,11 @@ import { AnamneseEditor } from '../components/anamnese/AnamneseEditor'
 import { ConexoesTab } from '../components/settings/ConexoesTab'
 import { usePlanoStatus } from '../hooks/usePlano'
 import { useTheme, type ThemeChoice } from '../context/ThemeContext'
+import { fusoDoAparelho } from '../utils/datetime'
 
 const SUPPORT_URL = `https://wa.me/5513988088204?text=${encodeURIComponent('Olá! Gostaria de configurar o WhatsApp no meu CoachPilot.')}`
 
-type TabId = 'whatsapp' | 'anamnese' | 'pagamentos' | 'notificacoes' | 'conexoes' | 'aparencia'
+type TabId = 'whatsapp' | 'anamnese' | 'pagamentos' | 'notificacoes' | 'conexoes' | 'regiao' | 'aparencia'
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'whatsapp', label: 'WhatsApp' },
@@ -25,6 +26,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'pagamentos', label: 'Pagamentos' },
   { id: 'notificacoes', label: 'Notificações' },
   { id: 'conexoes', label: 'Conexões' },
+  { id: 'regiao', label: 'Região' },
   { id: 'aparencia', label: 'Aparência' },
 ]
 
@@ -392,6 +394,92 @@ function AparenciaTab() {
   )
 }
 
+/** Fusos oferecidos na lista. O detectado no aparelho entra na frente quando não estiver aqui,
+ * então quem mora fora desta lista continua conseguindo se configurar. */
+const FUSOS = [
+  { id: 'America/Sao_Paulo', label: 'Brasília, São Paulo (BRT)' },
+  { id: 'America/Manaus', label: 'Manaus, Cuiabá (AMT)' },
+  { id: 'America/Rio_Branco', label: 'Rio Branco (ACT)' },
+  { id: 'America/Noronha', label: 'Fernando de Noronha' },
+  { id: 'America/New_York', label: 'Nova York, Miami (ET)' },
+  { id: 'America/Chicago', label: 'Chicago (CT)' },
+  { id: 'America/Denver', label: 'Denver (MT)' },
+  { id: 'America/Los_Angeles', label: 'Los Angeles (PT)' },
+  { id: 'Europe/Lisbon', label: 'Lisboa' },
+  { id: 'Europe/London', label: 'Londres' },
+  { id: 'Europe/Madrid', label: 'Madri, Paris, Roma' },
+  { id: 'America/Buenos_Aires', label: 'Buenos Aires' },
+  { id: 'America/Mexico_City', label: 'Cidade do México' },
+  { id: 'Asia/Tokyo', label: 'Tóquio' },
+  { id: 'Australia/Sydney', label: 'Sydney' },
+]
+
+function RegiaoTab() {
+  const qc = useQueryClient()
+  const { show: toast } = useToast()
+  const perfil = useQuery({ queryKey: ['personal-me'], queryFn: personalApi.getProfile })
+  const detectado = fusoDoAparelho()
+  const atual = perfil.data?.timezone || detectado
+
+  const salvar = useMutation({
+    mutationFn: (tz: string) => personalApi.updateProfile({ timezone: tz }),
+    onSuccess: () => {
+      // As duas chaves: o resto do portal lê o fuso por ['personal-profile'].
+      qc.invalidateQueries({ queryKey: ['personal-me'] })
+      qc.invalidateQueries({ queryKey: ['personal-profile'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+      toast('Fuso horário atualizado.', 'success')
+    },
+    onError: () => toast('Não foi possível salvar o fuso horário.', 'error'),
+  })
+
+  const opcoes = FUSOS.some((f) => f.id === atual)
+    ? FUSOS
+    : [{ id: atual, label: atual.replace(/_/g, ' ') }, ...FUSOS]
+  const divergente = !perfil.data?.timezone && detectado !== 'America/Sao_Paulo'
+  const agora = new Date().toLocaleTimeString('pt-BR', {
+    timeZone: atual, hour: '2-digit', minute: '2-digit',
+  })
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-text-secondary">
+        Define o dia de cada compromisso, treino e cobrança. Um treino às 21h precisa contar no
+        dia em que aconteceu, não no seguinte.
+      </p>
+
+      <Card variant="elevated" className="space-y-3">
+        <label className="block text-sm font-medium" htmlFor="tz">Fuso horário</label>
+        <select
+          id="tz"
+          value={atual}
+          disabled={perfil.isLoading || salvar.isPending}
+          onChange={(e) => salvar.mutate(e.target.value)}
+          className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm"
+        >
+          {opcoes.map((f) => (
+            <option key={f.id} value={f.id}>{f.label}</option>
+          ))}
+        </select>
+        <p className="text-xs text-text-muted flex items-center gap-1.5">
+          <Info size={13} /> Agora são <span className="font-medium text-text-secondary">{agora}</span> nesse fuso.
+        </p>
+        {divergente && (
+          <p className="text-xs text-warning">
+            Seu aparelho está em <span className="font-medium">{detectado.replace(/_/g, ' ')}</span>.
+            Se for onde você atende, selecione para salvar.
+          </p>
+        )}
+      </Card>
+
+      <p className="text-xs text-text-muted">
+        Cada aluno pode ter o próprio fuso — quem não tiver, usa o seu. O app do aluno detecta
+        sozinho no primeiro acesso.
+      </p>
+    </div>
+  )
+}
+
 function NotificacoesTab() {
   const qc = useQueryClient()
   const { show: toast } = useToast()
@@ -696,6 +784,7 @@ export function SettingsPage() {
       {activeTab === 'pagamentos' && <PagamentosTab />}
       {activeTab === 'notificacoes' && <NotificacoesTab />}
       {activeTab === 'conexoes' && <ConexoesTab />}
+      {activeTab === 'regiao' && <RegiaoTab />}
       {activeTab === 'aparencia' && <AparenciaTab />}
     </div>
   )

@@ -30,6 +30,98 @@ export function diaLocalIso(iso: string): string {
   return diaLocal(new Date(iso))
 }
 
+/** Fuso IANA do aparelho, para SUGERIR na configuração — nunca para persistir calado. */
+export function fusoDoAparelho(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo'
+  } catch {
+    return 'America/Sao_Paulo'
+  }
+}
+
+/** 'YYYY-MM-DD' do dia de um instante NO FUSO DADO (IANA), não no do aparelho.
+ *
+ * É o que faz a agenda bater quando o personal viaja: o compromisso continua sendo do dia em
+ * que ele foi marcado, no fuso configurado. Fuso ausente ou inválido cai no dia do aparelho —
+ * degradar é melhor que quebrar a tela (docs/TIMEZONE.md §4). */
+export function diaNoFuso(d: Date, tz?: string | null): string {
+  if (!tz) return diaLocal(d)
+  try {
+    const partes = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(d)
+    const get = (t: string) => partes.find((p) => p.type === t)?.value
+    const [y, m, dia] = [get('year'), get('month'), get('day')]
+    return y && m && dia ? `${y}-${m}-${dia}` : diaLocal(d)
+  } catch {
+    return diaLocal(d)
+  }
+}
+
+/** Mesmo que `diaNoFuso`, a partir de um instante ISO. */
+export function diaIsoNoFuso(iso: string, tz?: string | null): string {
+  return diaNoFuso(new Date(iso), tz)
+}
+
+/** Hoje no fuso dado, como Date "porta-calendário" (meia-noite local do aparelho).
+ * Serve para navegar semana/mês; nunca use o instante dele para exibir hora. */
+export function hojeNoFuso(tz?: string | null): Date {
+  const [y, m, d] = diaNoFuso(new Date(), tz).split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+/** Partes do relógio de `tz` no instante `d`. Base de tudo abaixo. */
+function partesNoFuso(d: Date, tz: string) {
+  const partes = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).formatToParts(d)
+  const g = (t: string) => Number(partes.find((p) => p.type === t)?.value)
+  // `hour` sai como 24 à meia-noite em alguns engines — normalizar evita o dia pular.
+  return { y: g('year'), mo: g('month'), d: g('day'), h: g('hour') % 24, mi: g('minute'), s: g('second') }
+}
+
+/** Offset de `tz` em minutos no instante `d` (positivo a leste de Greenwich). */
+function offsetMin(d: Date, tz: string): number {
+  const p = partesNoFuso(d, tz)
+  return (Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi, p.s) - d.getTime()) / 60000
+}
+
+/** 'HH:MM' de um instante no fuso dado — para exibir hora de compromisso. */
+export function horaNoFuso(iso: string, tz?: string | null): string {
+  const d = new Date(iso)
+  if (!tz) return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  try {
+    const p = partesNoFuso(d, tz)
+    return `${String(p.h).padStart(2, '0')}:${String(p.mi).padStart(2, '0')}`
+  } catch {
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  }
+}
+
+/** ['YYYY-MM-DD', 'HH:MM'] civis de um instante, no fuso dado — preenche formulário de edição. */
+export function civilNoFuso(iso: string, tz?: string | null): [string, string] {
+  return [diaIsoNoFuso(iso, tz), horaNoFuso(iso, tz)]
+}
+
+/** Instante ISO de uma data+hora CIVIL num fuso: ('2026-09-07', '21:00', 'America/Sao_Paulo').
+ *
+ * Direção inversa de `diaNoFuso`, e a mais delicada: "21:00 do dia 7 em São Paulo" só vira um
+ * instante depois de saber o offset vigente NAQUELE dia — que muda com o horário de verão.
+ * Daí as duas passadas: a primeira estima o offset, a segunda o corrige caso a estimativa
+ * tenha caído do outro lado de uma virada de DST. */
+export function instanteDeCivil(data: string, hora: string, tz?: string | null): string {
+  if (!tz) return new Date(`${data}T${hora}:00`).toISOString()
+  try {
+    const comoUtc = new Date(`${data}T${hora}:00Z`)
+    const passo1 = new Date(comoUtc.getTime() - offsetMin(comoUtc, tz) * 60000)
+    return new Date(comoUtc.getTime() - offsetMin(passo1, tz) * 60000).toISOString()
+  } catch {
+    return new Date(`${data}T${hora}:00`).toISOString()
+  }
+}
+
 /** Instantes UTC que delimitam o dia LOCAL de `iso`, semiaberto [inicio, fim). Mesmo motivo de
  * `inicioSemanaLocal`: o backend grava em UTC, então um post de 21h (BRT) é 00h UTC do dia
  * seguinte — recortar por UTC traria o treino do dia errado. */

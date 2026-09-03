@@ -88,7 +88,7 @@ def list_alunos(limit: int = 50, cursor: str | None = None, personal_id: str = D
                 for p in repo.query_pk(keys.pk_personal(personal_id),
                                        sk_prefix=keys.COBRANCA_ALUNO_PREFIX)
                 if p.get("aluno_id")}
-    hoje = pendencia_service.hoje_iso()
+    hoje = pendencia_service.hoje_iso(personal_id)
     cleaned = []
     for i in items:
         aluno_id = i.get("aluno_id", "")

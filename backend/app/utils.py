@@ -1,6 +1,7 @@
 import uuid
 from calendar import monthrange
 from datetime import date, datetime, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 # Namespace fixo para IDs determinísticos de itens importados de pacote.
 # Mesmo (pacote_id, ref) → mesmo ID → reimport sobrescreve (upsert), nunca duplica.
@@ -19,6 +20,20 @@ def det_id(*parts: str) -> str:
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def tz_valido(tz: str | None) -> bool:
+    """True se `tz` é um nome IANA que este runtime conhece (ex.: 'America/Sao_Paulo').
+
+    Mora aqui, e não em `services/locale_service`, para que os models possam validar entrada
+    sem importar services — `utils` é folha, não cria ciclo."""
+    if not tz or not isinstance(tz, str):
+        return False
+    try:
+        ZoneInfo(tz)
+        return True
+    except (ZoneInfoNotFoundError, ValueError):
+        return False
 
 
 def epoch_ms() -> str:

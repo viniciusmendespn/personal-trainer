@@ -4,7 +4,8 @@ import { Plus, ChevronLeft, ChevronRight, Calendar, Check, X, Trash2, Pencil, Du
 import { useAlunos } from '../hooks/useAlunos'
 import { useAgenda, useCreateAgendamento, useUpdateAgendamento, useSetAgendamentoStatus, useDeleteAgendamento } from '../hooks/useAgenda'
 import { Button, Card, Input, Select, Modal, Badge, EmptyState, Spinner, useConfirm, ExpandableText } from '../components/ui'
-import { diaLocal, diaLocalIso } from '../utils/datetime'
+import { diaLocal, diaNoFuso, diaIsoNoFuso, civilNoFuso, horaNoFuso, instanteDeCivil } from '../utils/datetime'
+import { useTimezone } from '../hooks/useTimezone'
 import type { Agendamento, AgendamentoCreate, AgendamentoStatus } from '../types'
 
 const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
@@ -50,6 +51,7 @@ export function AgendaPage() {
   const [anchor, setAnchor] = useState(() => new Date())
   const [open, setOpen] = useState(false)
   const { data: alunos } = useAlunos()
+  const tz = useTimezone()
 
   const weekStart = useMemo(() => startOfWeek(anchor), [anchor])
   const weekEnd = useMemo(() => addDays(weekStart, 6), [weekStart])
@@ -58,21 +60,25 @@ export function AgendaPage() {
 
   const rangeStart = view === 'semana' ? weekStart : monthStart
   const rangeEnd = view === 'semana' ? weekEnd : monthEnd
+  // Janela alargada em 1 dia de cada lado: os limites da grade são meia-noite do APARELHO e o
+  // recorte é feito no fuso CONFIGURADO. Com os dois divergindo (personal viajando), sem a
+  // folga o compromisso da borda não viria. O recorte exato é o `porDia` abaixo.
   const { data: agendamentos, isLoading } = useAgenda(
-    rangeStart.toISOString(),
-    new Date(rangeEnd.getTime() + 24 * 60 * 60 * 1000 - 1).toISOString()
+    new Date(rangeStart.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+    new Date(rangeEnd.getTime() + 2 * 24 * 60 * 60 * 1000 - 1).toISOString()
   )
 
-  // Chave = dia LOCAL do compromisso, igual à das células da grade. `data_hora_inicio` é um
-  // instante UTC: fatiar a string agrupava pelo dia UTC, e a grade procura pelo dia local.
+  // Chave = dia do compromisso no fuso configurado, igual à das células da grade.
+  // `data_hora_inicio` é um instante UTC: fatiar a string agrupava pelo dia UTC, e das 21h
+  // (BRT) em diante o dia UTC já é o seguinte — o compromisso caía no card errado.
   const porDia = useMemo(() => {
     const map: Record<string, Agendamento[]> = {}
     for (const a of agendamentos ?? []) {
-      const k = diaLocalIso(a.data_hora_inicio)
+      const k = diaIsoNoFuso(a.data_hora_inicio, tz)
       ;(map[k] ||= []).push(a)
     }
     return map
-  }, [agendamentos])
+  }, [agendamentos, tz])
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -143,7 +149,8 @@ function AgendamentoRow({ a, alunoNome }: { a: Agendamento; alunoNome?: string }
   const del = useDeleteAgendamento()
   const confirm = useConfirm()
   const [editOpen, setEditOpen] = useState(false)
-  const hora = new Date(a.data_hora_inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  const tz = useTimezone()
+  const hora = horaNoFuso(a.data_hora_inicio, tz)
   const statusEfetivo = getStatusEfetivo(a)
 
   async function cancelar() {
@@ -242,15 +249,6 @@ function MonthGrid({
   )
 }
 
-function splitDateHora(iso: string): [string, string] {
-  const d = new Date(iso)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return [
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
-    `${pad(d.getHours())}:${pad(d.getMinutes())}`,
-  ]
-}
-
 function AgendamentoForm({
   alunos, onDone, defaultDate, editing,
 }: { alunos?: { aluno_id: string; nome: string }[]; onDone: () => void; defaultDate?: Date; editing?: Agendamento }) {
@@ -258,9 +256,10 @@ function AgendamentoForm({
   const lista = alunos ?? alunosLoaded ?? []
   const create = useCreateAgendamento()
   const update = useUpdateAgendamento()
-  const [eData, eHora] = editing ? splitDateHora(editing.data_hora_inicio) : ['', '']
+  const tz = useTimezone()
+  const [eData, eHora] = editing ? civilNoFuso(editing.data_hora_inicio, tz) : ['', '']
   const [alunoId, setAlunoId] = useState(editing?.aluno_id ?? lista[0]?.aluno_id ?? '')
-  const [data, setData] = useState(editing ? eData : diaLocal(defaultDate ?? new Date()))
+  const [data, setData] = useState(editing ? eData : diaNoFuso(defaultDate ?? new Date(), tz))
   const [hora, setHora] = useState(editing ? eHora : '08:00')
   const [duracao, setDuracao] = useState(String(editing?.duracao_min ?? 60))
   const [observacao, setObservacao] = useState(editing?.observacao ?? '')
@@ -271,7 +270,7 @@ function AgendamentoForm({
     if (!alunoId || !data || !hora) return
     const body: AgendamentoCreate = {
       aluno_id: alunoId,
-      data_hora_inicio: new Date(`${data}T${hora}:00`).toISOString(),
+      data_hora_inicio: instanteDeCivil(data, hora, tz),
       duracao_min: Number(duracao) || 60,
       observacao: observacao || undefined,
     }
