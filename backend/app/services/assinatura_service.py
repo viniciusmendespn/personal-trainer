@@ -14,6 +14,7 @@ from fastapi import HTTPException
 from app.config import settings
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
+from app.services import locale_service
 from app.utils import add_meses, new_id, now_iso
 
 _bloqueados_cache: dict[str, tuple[float, set[str]]] = {}
@@ -162,7 +163,8 @@ def _reagendar_aviso(personal_id: str, assinatura_atual: dict, nova_valida_ate: 
         repo.put_item(
             keys.pk_sched(nova_aviso_data),
             keys.sk_sched_assinatura_aviso(personal_id),
-            {"personal_id": personal_id, "ttl": int(time.time()) + _SCHED_TTL_S},
+            {"personal_id": personal_id, "tz": locale_service.tz_do_personal(personal_id),
+             "ttl": int(time.time()) + _SCHED_TTL_S},
         )
     return nova_aviso_data
 

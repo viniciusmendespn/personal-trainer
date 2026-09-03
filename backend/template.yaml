@@ -368,7 +368,7 @@ Resources:
         DNSName: !GetAtt McpDomainName.RegionalDomainName
         HostedZoneId: !GetAtt McpDomainName.RegionalHostedZoneId
 
-  # ── Scheduler (EventBridge diário — vencimentos de treino) ───────────────────
+  # ── Scheduler (EventBridge horário — vencimentos de treino e régua financeira) ──
   SchedulerFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -381,10 +381,16 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref MainTable
       Events:
+        # A chave continua "Daily" apesar de o disparo ser horário: mudá-la trocaria o logical
+        # ID, e o CloudFormation criaria a regra nova antes de apagar a velha — as duas com o
+        # mesmo `Name` explícito. O delete da antiga levaria junto a regra recém-criada e o
+        # agendamento sumiria. Nome feio é mais barato que ficar sem scheduler.
         Daily:
           Type: Schedule
           Properties:
-            Schedule: cron(0 9 * * ? *)   # 09:00 UTC, diariamente
+            # De hora em hora: o handler dispara cada entrada na manhã LOCAL de quem recebe
+            # (docs/TIMEZONE.md §7). Era cron(0 9 UTC) = 06:00 no BRT e só servia o Brasil.
+            Schedule: rate(1 hour)
             Name: !Sub "${ProjectName}-scheduler-${Stage}"
             Enabled: true
 

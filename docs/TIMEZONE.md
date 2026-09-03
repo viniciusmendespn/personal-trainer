@@ -3,6 +3,9 @@
 > Documento de referência. Define como o CoachPilot trata tempo, para que o sistema funcione em
 > qualquer fuso sem correção caso a caso. Substitui o §4 de `PLANO_INTERNACIONALIZACAO.md`.
 > Escrito em 2026-09-03.
+>
+> **Status: implementado (Passos 1 a 5).** O sistema está correto em qualquer fuso.
+> O que sobra está no §10 — a trava de regressão e a limitação assumida do agendamento futuro.
 
 ---
 
@@ -189,17 +192,17 @@ outro fuso que o personal não é caso raro — é o caso de uso.
 | `utils.now_iso()`, todos os `created_at` | Instante | **Nada.** Já correto. |
 | `data_hora_inicio` de agendamento | Evento futuro | **Nada.** Limitação assumida (§1.3). |
 | `agenda_scheduler.py`, `sessao_scheduler.py` | Instante | **Nada.** Já corretos por construção. |
-| `AgendaPage.tsx` | Instante → dia | ✅ Corrigido (dia local do aparelho). Falta passar o fuso **configurado** no lugar do fuso do aparelho. |
-| `sessao_service.historico_mes:1248` | Instante → dia | Agrupar no fuso do aluno **na leitura**. Janela da query alargada em ±1 dia. **Corrige o histórico antigo junto.** |
-| `routers/dashboard.py:34-42` | Instante → dia | Janelas de 7/14 dias no fuso do personal. |
-| `sessao_service:502` `STATS#D#` | Balde | Dia local **do personal** (dono da partição). Escrita. |
-| `sessao_service:467` streak / `STATS#W#` | Balde | Semana ISO local **do aluno**. Escrita. |
-| `sessao_service:486` `dow_{n}` | Balde | Dia da semana local **do aluno**. Escrita. |
-| `pendencia_service.hoje_iso():41` | Data civil | `date.today()` → `hoje_no_fuso(tz_do_personal)`. |
-| `financeiro_service` (5 × `date.today()`) | Data civil | Idem. Vencimento e atraso no calendário de quem cobra. |
-| `scheduler.py` + `template.yaml:387` | Instante | Item agendado pelo instante de disparo (06:00 local → UTC); EventBridge `cron(0 9)` → `rate(1 hour)`. |
-| `agenda_notif_service:13`, `sessao_service:641` | Exibição | Matar `TZ_OFFSET_HOURS`; formatar no fuso do destinatário (§4). |
-| `DashboardPage.tsx:43` `ymd` | Balde | UTC de propósito hoje; vira dia local **junto** com `STATS#D#`, nunca antes. |
+| `AgendaPage.tsx` | Instante → dia | ✅ Agrupamento, hora exibida e formulário no fuso configurado (`instanteDeCivil` faz a direção inversa). |
+| `sessao_service.historico_mes` | Instante → dia | ✅ Agrupa no fuso do aluno **na leitura**. Janela da query alargada em ±1 dia. **Corrige o histórico antigo junto.** |
+| `routers/dashboard.py` | Instante → dia | ✅ Janelas de 7/14 dias no fuso do personal. |
+| `sessao_service` `STATS#D#` | Balde | ✅ Dia local **do personal** (dono da partição). Escrita. |
+| `sessao_service` streak / `STATS#W#` | Balde | ✅ Semana ISO local **do aluno**. Escrita. |
+| `sessao_service` `dow_{n}` | Balde | ✅ Dia da semana local **do aluno**. Escrita. |
+| `pendencia_service.hoje_iso()` | Data civil | ✅ `hoje_iso(personal_id)` no fuso do personal. |
+| `financeiro_service` (6 × `date.today()`) | Data civil | ✅ `_hoje(personal_id)`. Vencimento e atraso no calendário de quem cobra. |
+| `scheduler.py` + `template.yaml` | Data civil + gate | ✅ Entrada carrega `tz`; handler horário dispara às 06:00 locais. EventBridge `rate(1 hour)`. |
+| `agenda_notif_service`, `sessao_service` | Exibição | ✅ Sem `TZ_OFFSET_HOURS`: cada destinatário vê no próprio relógio (§4). |
+| `DashboardPage.tsx` | Balde | ✅ Dia local, na mesma entrega do `STATS#D#`. |
 
 ---
 
@@ -229,11 +232,22 @@ entrega, senão as duas pontas desalinham.
 
 Caminho quente do app do aluno: teste antes, e conferir que o agregado antigo continua legível.
 
-### Passo 5 — Datas civis e agendamento
-`financeiro_service` no fuso do personal; `scheduler.py` migrado para instante de disparo com
-EventBridge horário. Deixado por último porque mexe na régua de cobrança e, para o Brasil, o
-comportamento atual (06:00 BRT) já está correto — só passa a importar quando existir usuário
-fora do fuso.
+### Passo 5 — Datas civis e agendamento ✅
+`financeiro_service` passou a usar `_hoje(personal_id)` nos seis pontos que chamavam
+`date.today()`. O `scheduler.py` virou horário (`rate(1 hour)` no lugar de `cron(0 9 UTC)`).
+
+A decisão de desenho que importa aqui: **a partição continua sendo a data civil do disparo**,
+e não o instante UTC. Particionar pelo instante obrigaria `_cancelar_agendamentos_billing` a
+recalcular o fuso para achar a chave — e um personal que trocasse de fuso entre agendar e
+pagar deixaria entradas órfãs. Em vez disso, cada entrada carrega o `tz` de quem recebe, e o
+handler horário só age nas que já passaram das 06:00 locais. Uma agenda serve todos os fusos.
+
+Consequência boa: **para quem está no Brasil o comportamento é idêntico ao de antes** — o gate
+dispara na primeira execução a partir das 06:00 BRT, que era exatamente o `cron(0 9 UTC)`.
+A única diferença é o jitter de até uma hora, aceitável para aviso diário.
+
+Entrada gravada antes da mudança não tem `tz` e cai no padrão — que é o fuso em que ela foi
+agendada. Nenhuma migração.
 
 ---
 
@@ -251,7 +265,23 @@ fora do fuso.
 
 ---
 
-## 9. Erros a não cometer
+## 9. O que falta
+
+**Trava de regressão (recomendado).** Uma checagem no CI que falhe em `toISOString().slice(0,10)`,
+`date.today()` e `datetime.now(timezone.utc).date()` usado como data civil. São exatamente os
+três padrões que geraram todos os bugs desta série, e o código nasceu com eles porque nada
+impedia. É o que transforma "corrigido" em "resolvido".
+
+**Limitação assumida.** Agendamento futuro segue guardado como instante UTC, não como hora local
++ zona (§1.3). Revisar se surgir agendamento recorrente ou marcado com meses de antecedência.
+
+**Histórico anterior aos Passos 3–4.** Os baldes já somados em dia UTC ficam como estão — decisão
+consciente, não vale migração. O calendário e as pendências, por serem derivados na leitura, já
+se corrigiram sozinhos.
+
+---
+
+## 10. Erros a não cometer
 
 1. **Guardar offset** (`-3`) em vez de nome IANA. Quebra no horário de verão.
 2. **Converter data civil para instante UTC.** Vencimento vira o dia errado em metade do mundo.

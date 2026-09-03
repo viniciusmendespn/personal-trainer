@@ -1,24 +1,50 @@
-"""Lambda diária (EventBridge): processa vencimentos de treino, geração de cobranças
-e transições de status financeiro. Agenda particionada por dia (`SCHED#{data}`)."""
+"""Lambda horária (EventBridge): processa vencimentos de treino, geração de cobranças
+e transições de status financeiro. Agenda particionada por dia (`SCHED#{data}`).
+
+Cada entrada é gravada na partição da DATA CIVIL em que deve disparar, e carrega o fuso
+(`tz`) de quem vai receber. Este handler roda de hora em hora e só age nas entradas cujo
+horário local já chegou — assim uma única agenda serve todos os fusos, sem partição por
+região e sem uma Lambda por país (docs/TIMEZONE.md §7, Passo 5).
+
+Antes rodava 1x/dia em `cron(0 9 UTC)` = 06:00 no BRT. Para quem está em São Paulo nada
+muda: o gate dispara na primeira execução a partir das 06:00 locais. Para quem está fora,
+é a diferença entre receber o aviso de manhã e recebê-lo às 18h.
+
+Entrada sem `tz` (gravada antes desta mudança) cai no padrão — que é justamente o fuso em
+que ela foi agendada. Nenhuma migração.
+"""
 import logging
 from datetime import datetime, timedelta, timezone
 
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import financeiro_service, notif_service
+from app.services import financeiro_service, locale_service, notif_service
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 _JANELA_DIAS = 30   # cobre entradas não processadas em execuções anteriores
+# Um dia à frente do "hoje UTC": para um personal em UTC+13, as 06:00 locais de amanhã
+# acontecem enquanto em UTC ainda é hoje. Sem isso, a entrada dele só seria vista com um
+# dia de atraso.
+_JANELA_FUTURO_DIAS = 1
+_HORA_DISPARO = 6   # manhã local de quem recebe
 
 
-def _processar_dia_treinos(data: str) -> int:
+def _na_hora(item: dict, dia_local: str) -> bool:
+    """Já passou das 06:00 locais de `dia_local` para o dono desta entrada?"""
+    return locale_service.ja_passou(dia_local, item.get("tz"), _HORA_DISPARO)
+
+
+def _processar_dia_treinos(data: str, dia_disparo: str) -> int:
+    """`data` é a partição (= data_fim do treino); o aviso "vence amanhã" sai em D-1."""
     n = 0
     cursor = None
     while True:
         items, cursor = repo.query_pk_page(keys.pk_sched(data), keys.DUE_PREFIX, limit=50, cursor=cursor)
         for it in items:
+            if not _na_hora(it, dia_disparo):
+                continue
             # Delete first — atomic claim prevents duplicate notifications on Lambda retries
             if not repo.delete_item_if_exists(keys.pk_sched(data), it["SK"]):
                 continue
@@ -36,139 +62,80 @@ def _processar_dia_treinos(data: str) -> int:
     return n
 
 
-def _processar_dia_billing_gerar(data: str) -> int:
-    """Gera cobranças agendadas para hoje."""
+def _processar_prefixo(data: str, prefixo: str, acao, rotulo: str) -> int:
+    """Varre uma partição/prefixo, respeita o horário local e aplica `acao(item)`.
+
+    O gate vem ANTES do claim de propósito: deletar uma entrada cuja hora ainda não chegou
+    a perderia para sempre."""
     n = 0
     cursor = None
     while True:
-        items, cursor = repo.query_pk_page(
-            keys.pk_sched(data), keys.BILLING_GERAR_PREFIX, limit=50, cursor=cursor)
+        items, cursor = repo.query_pk_page(keys.pk_sched(data), prefixo, limit=50, cursor=cursor)
         for it in items:
+            if not _na_hora(it, data):
+                continue
             if not repo.delete_item_if_exists(keys.pk_sched(data), it["SK"]):
                 continue
             try:
-                financeiro_service._gerar_cobranca_agendada(
-                    it["aluno_id"], it["personal_id"], it["vencimento"])
+                acao(it)
             except Exception as exc:
-                logger.error("[scheduler] billing_gerar falhou aluno=%s: %s", it.get("aluno_id"), exc)
+                logger.error("[scheduler] %s falhou aluno=%s: %s", rotulo, it.get("aluno_id"), exc)
             n += 1
         if cursor is None:
             break
     return n
 
 
-def _processar_dia_assinatura_aviso(data: str) -> int:
-    """Notifica o personal 7 dias antes do vencimento da assinatura (Gestão Pro)."""
-    n = 0
-    cursor = None
-    while True:
-        items, cursor = repo.query_pk_page(
-            keys.pk_sched(data), keys.ASSINATURA_AVISO_PREFIX, limit=50, cursor=cursor)
-        for it in items:
-            if not repo.delete_item_if_exists(keys.pk_sched(data), it["SK"]):
-                continue
-            personal_id = it.get("personal_id")
-            if personal_id:
-                notif_service.criar(
-                    personal_id, "ASSINATURA_VENCENDO", "Sua assinatura vence em breve",
-                    "Seu plano Gestão Pro vence em 7 dias. Renove para manter alunos ilimitados.")
-            n += 1
-        if cursor is None:
-            break
-    return n
+def _billing_gerar(it: dict) -> None:
+    financeiro_service._gerar_cobranca_agendada(it["aluno_id"], it["personal_id"], it["vencimento"])
 
 
-def _processar_dia_billing_aviso(data: str) -> int:
-    """Avisa o aluno que hoje é o dia de pagamento da mensalidade (D-0)."""
-    n = 0
-    cursor = None
-    while True:
-        items, cursor = repo.query_pk_page(
-            keys.pk_sched(data), keys.BILLING_AVISO_PREFIX, limit=50, cursor=cursor)
-        for it in items:
-            if not repo.delete_item_if_exists(keys.pk_sched(data), it["SK"]):
-                continue
-            try:
-                financeiro_service._avisar_dia_pagamento(
-                    it["aluno_id"], it["cobranca_id"], it["vencimento"], it["personal_id"])
-            except Exception as exc:
-                logger.error("[scheduler] billing_aviso falhou aluno=%s: %s", it.get("aluno_id"), exc)
-            n += 1
-        if cursor is None:
-            break
-    return n
+def _billing_aviso(it: dict) -> None:
+    financeiro_service._avisar_dia_pagamento(
+        it["aluno_id"], it["cobranca_id"], it["vencimento"], it["personal_id"])
 
 
-def _processar_dia_billing_vencer(data: str) -> int:
-    """Marca cobranças como VENCIDA quando a data de vencimento chega."""
-    n = 0
-    cursor = None
-    while True:
-        items, cursor = repo.query_pk_page(
-            keys.pk_sched(data), keys.BILLING_VENCER_PREFIX, limit=50, cursor=cursor)
-        for it in items:
-            if not repo.delete_item_if_exists(keys.pk_sched(data), it["SK"]):
-                continue
-            try:
-                financeiro_service._marcar_vencida(
-                    it["aluno_id"], it["cobranca_id"], it["vencimento"], it["personal_id"])
-            except Exception as exc:
-                logger.error("[scheduler] billing_vencer falhou aluno=%s: %s", it.get("aluno_id"), exc)
-            n += 1
-        if cursor is None:
-            break
-    return n
+def _billing_vencer(it: dict) -> None:
+    financeiro_service._marcar_vencida(
+        it["aluno_id"], it["cobranca_id"], it["vencimento"], it["personal_id"])
 
 
-def _processar_dia_billing_lembrete(data: str) -> int:
-    """Relembra cobranças ainda VENCIDAS (D+5 e D+10 após o vencimento)."""
-    n = 0
-    cursor = None
-    while True:
-        items, cursor = repo.query_pk_page(
-            keys.pk_sched(data), keys.BILLING_LEMBRETE_PREFIX, limit=50, cursor=cursor)
-        for it in items:
-            if not repo.delete_item_if_exists(keys.pk_sched(data), it["SK"]):
-                continue
-            try:
-                financeiro_service._lembrar_vencida(
-                    it["aluno_id"], it["cobranca_id"], it["personal_id"], int(it.get("dias", 0)))
-            except Exception as exc:
-                logger.error("[scheduler] billing_lembrete falhou aluno=%s: %s", it.get("aluno_id"), exc)
-            n += 1
-        if cursor is None:
-            break
-    return n
+def _billing_lembrete(it: dict) -> None:
+    financeiro_service._lembrar_vencida(
+        it["aluno_id"], it["cobranca_id"], it["personal_id"], int(it.get("dias", 0)))
+
+
+def _assinatura_aviso(it: dict) -> None:
+    personal_id = it.get("personal_id")
+    if personal_id:
+        notif_service.criar(
+            personal_id, "ASSINATURA_VENCENDO", "Sua assinatura vence em breve",
+            "Seu plano Gestão Pro vence em 7 dias. Renove para manter alunos ilimitados.")
+
+
+_TAREFAS = (
+    (keys.BILLING_GERAR_PREFIX,    _billing_gerar,     "billing_gerar"),
+    (keys.BILLING_AVISO_PREFIX,    _billing_aviso,     "billing_aviso"),
+    (keys.BILLING_VENCER_PREFIX,   _billing_vencer,    "billing_vencer"),
+    (keys.BILLING_LEMBRETE_PREFIX, _billing_lembrete,  "billing_lembrete"),
+    (keys.ASSINATURA_AVISO_PREFIX, _assinatura_aviso,  "assinatura_aviso"),
+)
 
 
 def handler(event, context):
     hoje = datetime.now(timezone.utc).date()
-    treinos_total = 0
-    billing_gerar_total = 0
-    billing_aviso_total = 0
-    billing_vencer_total = 0
-    billing_lembrete_total = 0
-    assinatura_aviso_total = 0
-    for i in range(_JANELA_DIAS, -1, -1):
+    totais: dict[str, int] = {"treinos": 0}
+    for prefixo, _acao, rotulo in _TAREFAS:
+        totais[rotulo] = 0
+
+    for i in range(_JANELA_DIAS, -_JANELA_FUTURO_DIAS - 1, -1):
         data = (hoje - timedelta(days=i)).isoformat()
-        data_treino_aviso = (hoje - timedelta(days=i - 1)).isoformat()
-        treinos_total += _processar_dia_treinos(data_treino_aviso)
-        billing_gerar_total += _processar_dia_billing_gerar(data)
-        billing_aviso_total += _processar_dia_billing_aviso(data)
-        billing_vencer_total += _processar_dia_billing_vencer(data)
-        billing_lembrete_total += _processar_dia_billing_lembrete(data)
-        assinatura_aviso_total += _processar_dia_assinatura_aviso(data)
-    logger.info(
-        "[scheduler] treinos=%d billing_gerar=%d billing_aviso=%d billing_vencer=%d "
-        "billing_lembrete=%d assinatura_aviso=%d",
-        treinos_total, billing_gerar_total, billing_aviso_total, billing_vencer_total,
-        billing_lembrete_total, assinatura_aviso_total,
-    )
-    return {
-        "treinos": treinos_total,
-        "billing_gerar": billing_gerar_total,
-        "billing_aviso": billing_aviso_total,
-        "billing_vencer": billing_vencer_total,
-        "billing_lembrete": billing_lembrete_total,
-        "assinatura_aviso": assinatura_aviso_total,
-    }
+        # O aviso de treino sai um dia ANTES do vencimento: a partição é `data_fim`, mas
+        # quem manda no horário é a véspera.
+        data_treino = (hoje - timedelta(days=i - 1)).isoformat()
+        totais["treinos"] += _processar_dia_treinos(data_treino, data)
+        for prefixo, acao, rotulo in _TAREFAS:
+            totais[rotulo] += _processar_prefixo(data, prefixo, acao, rotulo)
+
+    logger.info("[scheduler] %s", totais)
+    return totais

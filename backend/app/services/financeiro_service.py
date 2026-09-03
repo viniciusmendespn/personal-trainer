@@ -7,7 +7,7 @@ from typing import Optional
 
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import anotif_service, notif_service
+from app.services import anotif_service, locale_service, notif_service
 from app.utils import new_id, now_iso
 
 logger = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ def set_config(personal_id: str, aluno_id: str, body: dict) -> dict:
         "recorrencia": cfg["recorrencia"], "atualizado_em": now,
     })
     if cfg["ativo"]:
-        hoje = date.today()
+        hoje = _hoje(personal_id)
         mes = cfg.get("mes_vencimento")
         vencimento = _proxima_data_vencimento(cfg["dia_vencimento"], cfg["recorrencia"], hoje, mes)
         # Cria cobrança imediatamente se não existir para este período
@@ -224,7 +224,7 @@ def dashboard_bloco(personal_id: str) -> dict:
     Faz backfill 1x na primeira leitura, igual ao lazy-init de STATS#ALUNOS."""
     aberto = _ensure_aberto(personal_id)
     mes_item = repo.get_item(keys.pk_personal(personal_id),
-                             keys.sk_stats_fin_mes(date.today().strftime("%Y-%m"))) or {}
+                             keys.sk_stats_fin_mes(_hoje(personal_id).strftime("%Y-%m"))) or {}
     return {
         "recebido_valor": float(mes_item.get("recebido_valor", 0) or 0),
         "a_receber_valor": float(aberto.get("pendente_valor", 0) or 0),
@@ -237,7 +237,7 @@ def dashboard_bloco(personal_id: str) -> dict:
 def resumo(personal_id: str, mes: str | None = None) -> dict:
     """KPIs do painel — leitura O(1) dos agregados (com backfill preguiçoso)."""
     from app.services import mp_service   # import tardio — evita ciclo
-    hoje = date.today()
+    hoje = _hoje(personal_id)
     mes = mes or hoje.strftime("%Y-%m")
 
     aberto = _ensure_aberto(personal_id)
@@ -429,7 +429,7 @@ def _gerar_cobranca_agendada(aluno_id: str, personal_id: str, vencimento_str: st
 def _marcar_vencida(aluno_id: str, cobranca_id: str, vencimento_str: str, personal_id: str) -> None:
     """Chamado pelo scheduler ao disparar BILLING_VENCER#. A cobrança só vence em D+1."""
     vencimento = date.fromisoformat(vencimento_str)
-    if date.today() <= vencimento:
+    if _hoje(personal_id) <= vencimento:
         # Ainda não venceu (entrada legada agendada em D-0) → reagenda p/ D+1 e sai.
         _agendar_vencer(aluno_id, cobranca_id, personal_id, vencimento)
         return
@@ -476,7 +476,7 @@ def _lembrar_vencida(aluno_id: str, cobranca_id: str, personal_id: str, dias: in
     vencimento = date.fromisoformat(item["vencimento"])
     venc_fmt = vencimento.strftime("%d/%m/%Y")
     # Atraso real (o scheduler pode processar a entrada com dias de folga)
-    atraso = max((date.today() - vencimento).days, dias)
+    atraso = max((_hoje(personal_id) - vencimento).days, dias)
     anotif_service.criar(aluno_id, "COBRANCA_VENCIDA",
         "Mensalidade em atraso",
         f"Sua mensalidade de R$ {valor:.2f} está vencida há {atraso} dias "
@@ -520,8 +520,9 @@ def _criar_cobranca_pendente(aluno_id: str, personal_id: str, valor: float,
     repo.put_item(keys.pk_aluno(aluno_id), keys.sk_cobranca_idx(cid),
                   {"cobranca_id": cid, "sk": sk, "personal_id": personal_id})
     _bump_open(personal_id, {"pendente_valor": float(valor), "pendente_count": 1})
-    _agendar_vencer(aluno_id, cid, personal_id, vencimento)
-    _agendar_aviso_dia(aluno_id, cid, personal_id, vencimento)
+    tz = locale_service.tz_do_personal(personal_id)   # uma leitura para os dois agendamentos
+    _agendar_vencer(aluno_id, cid, personal_id, vencimento, tz)
+    _agendar_aviso_dia(aluno_id, cid, personal_id, vencimento, tz)
     aluno = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE) or {}
     aluno_nome = aluno.get("nome", "Aluno")
     venc_fmt = vencimento.strftime("%d/%m/%Y")
@@ -535,7 +536,15 @@ def _criar_cobranca_pendente(aluno_id: str, personal_id: str, valor: float,
     return cid
 
 
-def _agendar_vencer(aluno_id: str, cobranca_id: str, personal_id: str, vencimento: date) -> None:
+def _hoje(personal_id: str | None) -> date:
+    """Hoje no calendário do PERSONAL. Vencimento é data civil, não instante
+    (docs/TIMEZONE.md §1.2): `date.today()` na Lambda é o dia UTC, que no BRT vira 3h antes
+    da meia-noite — a cobrança era marcada VENCIDA ainda no dia do vencimento."""
+    return date.fromisoformat(locale_service.hoje(locale_service.tz_do_personal(personal_id)))
+
+
+def _agendar_vencer(aluno_id: str, cobranca_id: str, personal_id: str, vencimento: date,
+                    tz: str | None = None) -> None:
     # Marca VENCIDA só no dia seguinte ao vencimento (D+1) — nunca no próprio dia.
     data_vencer = vencimento + timedelta(days=1)
     repo.put_item(
@@ -544,12 +553,14 @@ def _agendar_vencer(aluno_id: str, cobranca_id: str, personal_id: str, venciment
         {
             "aluno_id": aluno_id, "cobranca_id": cobranca_id,
             "personal_id": personal_id, "vencimento": vencimento.isoformat(),
+            "tz": tz or locale_service.tz_do_personal(personal_id),
             "ttl": int(time.time()) + _SCHED_TTL_S,
         },
     )
 
 
-def _agendar_aviso_dia(aluno_id: str, cobranca_id: str, personal_id: str, vencimento: date) -> None:
+def _agendar_aviso_dia(aluno_id: str, cobranca_id: str, personal_id: str, vencimento: date,
+                       tz: str | None = None) -> None:
     # Aviso "dia de pagamento" ao aluno, na partição do próprio dia do vencimento (D-0).
     repo.put_item(
         keys.pk_sched(vencimento.isoformat()),
@@ -557,6 +568,7 @@ def _agendar_aviso_dia(aluno_id: str, cobranca_id: str, personal_id: str, vencim
         {
             "aluno_id": aluno_id, "cobranca_id": cobranca_id,
             "personal_id": personal_id, "vencimento": vencimento.isoformat(),
+            "tz": tz or locale_service.tz_do_personal(personal_id),
             "ttl": int(time.time()) + _SCHED_TTL_S,
         },
     )
@@ -581,6 +593,7 @@ def _agendar_lembretes_vencida(aluno_id: str, cobranca_id: str, personal_id: str
                                 vencimento: date) -> None:
     """Agenda os lembretes pós-vencimento (D+5 e D+10). Datas já passadas não são
     problema: o handler do scheduler varre uma janela de 30 dias para trás."""
+    tz = locale_service.tz_do_personal(personal_id)
     for dias in _LEMBRETES_POS_VENCIMENTO:
         data = vencimento + timedelta(days=dias)
         repo.put_item(
@@ -589,7 +602,7 @@ def _agendar_lembretes_vencida(aluno_id: str, cobranca_id: str, personal_id: str
             {
                 "aluno_id": aluno_id, "cobranca_id": cobranca_id,
                 "personal_id": personal_id, "vencimento": vencimento.isoformat(),
-                "dias": dias,
+                "dias": dias, "tz": tz,
                 "ttl": int(time.time()) + _SCHED_TTL_S,
             },
         )
@@ -621,14 +634,16 @@ def _agendar_proxima_geracao(aluno_id: str, personal_id: str, dia: int,
                               mes: Optional[int] = None) -> None:
     proximo_vencimento = _proximo_periodo(dia, recorrencia, ultimo_vencimento, mes)
     data_criacao = proximo_vencimento - timedelta(days=dias_antecedencia)
-    if data_criacao <= date.today():
-        data_criacao = date.today()
+    hoje = _hoje(personal_id)
+    if data_criacao <= hoje:
+        data_criacao = hoje
     repo.put_item(
         keys.pk_sched(data_criacao.isoformat()),
         keys.sk_sched_billing_gerar(aluno_id),
         {
             "aluno_id": aluno_id, "personal_id": personal_id,
             "vencimento": proximo_vencimento.isoformat(),
+            "tz": locale_service.tz_do_personal(personal_id),
             "ttl": int(time.time()) + _SCHED_TTL_S,
         },
     )

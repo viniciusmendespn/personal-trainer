@@ -120,6 +120,22 @@ def dow(iso: str | None, tz: str | None) -> int | None:
         return None
 
 
+def ja_passou(data_iso: str, tz: str | None, hora_local: int = 0) -> bool:
+    """No fuso dado, já é `data_iso` às `hora_local`h (ou depois)?
+
+    É o gatilho dos jobs agendados: o item é gravado na partição da DATA CIVIL em que deve
+    disparar, e quem decide se chegou a hora é isto — assim a mesma entrada serve para
+    qualquer fuso, sem uma partição por região (docs/TIMEZONE.md §7, Passo 5)."""
+    z = _zona(tz)
+    try:
+        # `.replace(tzinfo=...)` com ZoneInfo é o jeito correto de fixar hora de PAREDE:
+        # a zona resolve sozinha o offset vigente naquele dia, horário de verão incluso.
+        alvo = datetime.fromisoformat(data_iso).replace(hour=hora_local, tzinfo=z)
+    except (ValueError, TypeError):
+        return True   # data corrompida: não segurar o disparo para sempre
+    return datetime.now(z) >= alvo
+
+
 def hora(iso: str | None, tz: str | None) -> str:
     """'HH:MM' no fuso dado — para texto exibido ao usuário (push, notificação).
     Substitui o `TZ_OFFSET_HOURS` global, que não conseguia variar por destinatário."""

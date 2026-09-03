@@ -16,7 +16,7 @@ from app.models.treino_export import (
 )
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz, biblioteca_service, contexto_aluno_service, sessao_service
+from app.services import authz, biblioteca_service, contexto_aluno_service, locale_service, sessao_service
 from app.services.sessao_service import chave_exercicio, upsert_excat
 from app.utils import init_series_prescritas, new_id, now_iso, treinos_validos
 
@@ -47,6 +47,9 @@ def sync_due(personal_id: str, aluno_id: str, treino_id: str, treino_nome: str,
             "personal_id": personal_id, "aluno_id": aluno_id, "treino_id": treino_id,
             "treino_nome": treino_nome, "aluno_nome": aluno_nome(personal_id, aluno_id),
             "data_fim": data_fim, "tipo": "TREINO_FIM",
+            # Fuso do personal congelado aqui: é ele quem decide em que manhã o aviso
+            # "vence amanhã" dispara (docs/TIMEZONE.md §7, Passo 5).
+            "tz": locale_service.tz_do_personal(personal_id),
         })
 
 
