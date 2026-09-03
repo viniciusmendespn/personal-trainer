@@ -47,8 +47,17 @@ def test_challenge_devolve_apenas_o_token_em_texto_puro(cliente, monkeypatch):
     assert r.text == "token-de-verificacao-abc123"      # sem JSON, sem lista, sem \n extra
 
 
-def test_challenge_sem_token_configurado_da_404(cliente):
-    """404 em vez de string vazia: verificação não pode passar por engano."""
+def test_challenge_sem_token_configurado_da_404(cliente, monkeypatch):
+    """404 em vez de string vazia: verificação não pode passar por engano.
+
+    O `monkeypatch` para "" não é decoração: `Settings` lê `.env.local`, onde a máquina de
+    quem deploya tem o `OPENAI_APPS_CHALLENGE` de verdade. Sem zerar aqui, o teste passava
+    no CI (sem o arquivo) e falhava só na máquina do dev — que é o contrário do útil. Mesmo
+    motivo do `promo_code_secret` em `test_assinatura_ciclo.py`: teste que depende da
+    AUSÊNCIA de config precisa criar a ausência, não torcer pelo ambiente."""
+    from app.config import settings
+    monkeypatch.setattr(settings, "openai_apps_challenge", "")
+
     assert cliente.get("/.well-known/openai-apps-challenge").status_code == 404
 
 
