@@ -25,6 +25,7 @@ from fastapi import HTTPException
 
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
+from app.services import locale_service
 from app.utils import now_iso
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,11 @@ FAIXA_POR_NOME: dict[str, tuple[str, float, float]] = {
     "MASTER": ("MASTER", 0.30, 0.30),
     "EMBAIXADOR": EMBAIXADOR,
 }
+
+
+def _hoje() -> date:
+    """Hoje no fuso padrão do sistema."""
+    return date.fromisoformat(locale_service.hoje(None))
 
 
 def _faixa(assinantes_ativos: int, embaixador: bool, faixa_manual: str | None = None) -> tuple[str, float, float]:
@@ -164,7 +170,10 @@ def registrar_pagamento(indicado_id: str, assinatura: dict, valor: float | None,
     if not divulgador_id or not valor:
         return
     pk = keys.pk_personal(divulgador_id)
-    ym = date.today().strftime("%Y-%m")
+    # O programa de divulgadores é Brasil-only (comissão em BRL, regras em
+    # estrategia/PROGRAMA_DIVULGADORES_REGRAS.md) e o divulgador não tem perfil com fuso.
+    # Padrão do sistema, explícito — quando houver divulgador fora do BR, é aqui que muda.
+    ym = _hoje().strftime("%Y-%m")
 
     # 1º pagamento deste indicado? Flip condicional PENDENTE→ASSINANTE = venda nova.
     venda_nova = False
@@ -241,7 +250,7 @@ def painel(divulgador_id: str, *, exigir_ativo: bool = True) -> dict:
     if exigir_ativo and not perfil.get("ativo", True):
         raise HTTPException(404, {"code": "DIVULGADOR_NAO_CADASTRADO"})
 
-    hoje = date.today()
+    hoje = _hoje()
     ym_atual = hoje.strftime("%Y-%m")
     embaixador = bool(perfil.get("embaixador"))
     faixa_manual = perfil.get("faixa_manual")
@@ -307,7 +316,7 @@ def painel(divulgador_id: str, *, exigir_ativo: bool = True) -> dict:
 def listar_clientes(divulgador_id: str) -> list[dict]:
     if not get_perfil(divulgador_id):
         raise HTTPException(404, {"code": "DIVULGADOR_NAO_CADASTRADO"})
-    hoje_iso = date.today().isoformat()
+    hoje_iso = _hoje().isoformat()
     out = []
     for c in _clientes(divulgador_id):
         out.append({
@@ -328,7 +337,7 @@ def listar_divulgadores_admin() -> list[dict]:
     registros = [repo.clean(it) for it in repo.query_pk(keys.PK_DIVULGADOR_REGISTRY)]
     if not registros:
         return []
-    ym = date.today().strftime("%Y-%m")
+    ym = _hoje().strftime("%Y-%m")
     chaves = []
     for r in registros:
         did = r["divulgador_id"]

@@ -15,7 +15,7 @@ from app.models.sessao import FinishBody
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.models.postagem import MidiaRef, PostagemCreate, PostagemTipo
-from app.services import agent_service, alerta_service, anotif_service, badge_service, conhecimento_service, correcao_service, feed_global_service, ferias_service, financeiro_service, media_service, meta_service, notif_service, pontos_service, postagem_service, sessao_service
+from app.services import agent_service, alerta_service, anotif_service, badge_service, conhecimento_service, correcao_service, feed_global_service, ferias_service, financeiro_service, locale_service, media_service, meta_service, notif_service, pontos_service, postagem_service, sessao_service
 from app.utils import init_series_prescritas, new_id, now_iso, treinos_validos, tz_valido
 
 router = APIRouter(prefix="/v1/aluno", tags=["app-aluno"])
@@ -191,7 +191,7 @@ def hoje(ctx: dict = Depends(get_current_aluno)):
     aluno_id = ctx["aluno_id"]
     treinos = treinos_validos(repo.query_pk(keys.pk_aluno(aluno_id),
                                             sk_prefix=keys.SK_TREINO_PREFIX))
-    hoje_str = date.today().isoformat()
+    hoje_str = locale_service.hoje(locale_service.tz_do_aluno(aluno_id, ctx["personal_id"]))
     treinos = [
         t for t in treinos
         if t.get("ativo", True)
@@ -748,7 +748,7 @@ def curtir_feed(body: CurtirFeedBody, ctx: dict = Depends(get_current_aluno)):
 
 @router.get("/pontos")
 def get_pontos(ctx: dict = Depends(get_current_aluno)):
-    result = pontos_service.get_pontos(ctx["aluno_id"])
+    result = pontos_service.get_pontos(ctx["aluno_id"], ctx["personal_id"])
     # Inclui streak e multiplicador para o widget de pontos
     st = repo.get_item(keys.pk_aluno(ctx["aluno_id"]), keys.SK_STATS_ALUNO) or {}
     streak_atual = int(st.get("streak_atual", 0))

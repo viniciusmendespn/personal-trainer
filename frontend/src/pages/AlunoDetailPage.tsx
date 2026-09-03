@@ -46,7 +46,8 @@ import { PendenciasTab } from '../components/aluno/PendenciasTab'
 import { usePendenciasAluno } from '../hooks/usePendencias'
 import { FinanceiroTab } from '../components/financeiro/FinanceiroTab'
 import { videoUrlComFallback } from '../utils/video'
-import { formatDuracao, feitoNaSemana, labelDiaCurto } from '../utils/datetime'
+import { formatDuracao, feitoNaSemana, labelDiaCurto, diaNoFuso } from '../utils/datetime'
+import { useTimezone } from '../hooks/useTimezone'
 
 const TAB_KEYS = ['treinos', 'pendencias', 'historico', 'frequencia', 'metas', 'financeiro', 'perfil'] as const
 type TabKey = typeof TAB_KEYS[number]
@@ -527,7 +528,10 @@ export function AlunoDetailPage() {
 const fmtDate = (d?: string) => (d ? d.split('-').reverse().slice(0, 2).join('/') : '')
 const fmtDateFull = (d?: string) => (d ? d.split('-').reverse().join('/') : '')
 function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[] }) {
-  const hoje = new Date().toISOString().slice(0, 10)
+  const tz = useTimezone()
+  // Dia do calendário, não dia UTC: das 21h (BRT) em diante o treino que vence hoje
+  // aparecia como expirado, porque em UTC já era amanhã.
+  const hoje = diaNoFuso(new Date(), tz)
   const isVigente = (t: Treino) => t.ativo !== false && (!t.data_fim || t.data_fim >= hoje)
   const expirados = treinos.filter((t) => !isVigente(t))
   const [vigentes, setVigentes] = useState<Treino[]>(() => treinos.filter(isVigente))
@@ -542,7 +546,7 @@ function TreinosLista({ alunoId, treinos }: { alunoId: string; treinos: Treino[]
   const defaultDataFim = () => {
     const d = new Date()
     d.setDate(d.getDate() + 30)
-    return d.toISOString().slice(0, 10)
+    return diaNoFuso(d, tz)
   }
 
   async function reordenarTreinos(newList: Treino[]) {

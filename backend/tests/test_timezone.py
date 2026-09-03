@@ -206,3 +206,29 @@ def test_horario_de_verao_e_tratado_pelo_nome_iana():
     gravado, metade do ano sairia errada — é por isso que a validação recusa '-3'."""
     assert locale_service.hora("2026-01-15T17:00:00Z", NY) == "12:00"   # EST, -5
     assert locale_service.hora("2026-07-15T17:00:00Z", NY) == "13:00"   # EDT, -4
+
+
+# ── Cupom: data civil e instante são comparados de formas diferentes ─────────
+
+def test_cupom_com_data_civil_nao_estoura():
+    """Regressão: data civil virava datetime naive e caía em `naive < aware`, que levanta
+    TypeError (não ValueError) — o except não pegava e o resgate dava 500."""
+    from app.services import cupom_service
+    assert cupom_service._expirado("2020-01-01") is True
+    assert cupom_service._expirado("2099-12-31") is False
+
+
+def test_cupom_com_instante_compara_com_agora():
+    from app.services import cupom_service
+    assert cupom_service._expirado("2020-01-01T00:00:00+00:00") is True
+    assert cupom_service._expirado("2099-12-31T23:59:00+00:00") is False
+    # Instante sem offset é assumido UTC em vez de estourar.
+    assert cupom_service._expirado("2020-01-01T00:00:00") is True
+
+
+def test_cupom_sem_expiracao_ou_corrompido():
+    from app.services import cupom_service
+    assert cupom_service._expirado(None) is False
+    assert cupom_service._expirado("") is False
+    # Config quebrada trava o cupom em vez de liberá-lo para sempre.
+    assert cupom_service._expirado("2026-13-45T99:99:99") is True

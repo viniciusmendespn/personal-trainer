@@ -123,6 +123,8 @@ _TAREFAS = (
 
 
 def handler(event, context):
+    # fuso-ok: janela de PARTIÇÕES a varrer, não a data civil de ninguém. Quem decide se
+    # chegou a hora é `_na_hora`, no fuso de cada entrada.
     hoje = datetime.now(timezone.utc).date()
     totais: dict[str, int] = {"treinos": 0}
     for prefixo, _acao, rotulo in _TAREFAS:

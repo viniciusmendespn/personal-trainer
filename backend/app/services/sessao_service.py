@@ -1187,7 +1187,7 @@ def ultimo_e_proximo(aluno_id: str) -> dict:
     ultima_raw = next((c for c in candidatos if c.get("status") != SessaoStatus.EM_ANDAMENTO.value), None)
     ultima = repo.clean(ultima_raw) if ultima_raw else None
 
-    hoje_str = date.today().isoformat()
+    hoje_str = locale_service.hoje(locale_service.tz_do_aluno(aluno_id))
     treinos = treinos_validos(repo.clean_all(repo.query_pk(pk, sk_prefix=keys.SK_TREINO_PREFIX)))
     treinos = [t for t in treinos if treino_vigente(t, hoje_str)]
     treinos.sort(key=lambda t: t.get("ordem", 0))

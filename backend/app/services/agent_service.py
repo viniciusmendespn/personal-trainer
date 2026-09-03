@@ -9,7 +9,7 @@ from app.config import settings
 from app.models.enums import Ator, CanalOrigem, Classificacao
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import alerta_service, sessao_service
+from app.services import alerta_service, locale_service, sessao_service
 from app.utils import epoch_ms, new_id, now_iso, treino_vigente, treinos_validos
 
 logger = logging.getLogger(__name__)
@@ -210,9 +210,9 @@ def enviar_link_portal(aluno_id: str, personal_id: str) -> dict:
 
 def treino_de_hoje(aluno_id: str) -> dict:
     """Treino(s) com exercícios agendados para hoje (vigentes + dia da semana ou diários)."""
-    from datetime import date, datetime, timezone
-    hoje = datetime.now(timezone.utc).weekday()   # 0=seg .. 6=dom
-    hoje_str = date.today().isoformat()
+    tz = locale_service.tz_do_aluno(aluno_id)
+    hoje_str = locale_service.hoje(tz)
+    hoje = date.fromisoformat(hoje_str).weekday()   # 0=seg .. 6=dom, no fuso do aluno
     exs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")
     # Inclui exercícios do dia E exercícios sem dia fixo (diários, dia_semana=None)
     ids_hoje = {e["treino_id"] for e in exs if e.get("dia_semana") in (None, hoje)}
@@ -233,8 +233,7 @@ def treino_de_hoje(aluno_id: str) -> dict:
 
 def listar_treinos(aluno_id: str) -> dict:
     """Todos os treinos do aluno com sinalização de vigência."""
-    from datetime import date
-    hoje_str = date.today().isoformat()
+    hoje_str = locale_service.hoje(locale_service.tz_do_aluno(aluno_id))
     treinos = treinos_validos(repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX))
     treinos.sort(key=lambda t: t.get("ordem", 0))
     exs = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix="EX#")

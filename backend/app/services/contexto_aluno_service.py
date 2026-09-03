@@ -33,7 +33,7 @@ from app.models.contexto_export import (
 )
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import meta_service, nota_service, sessao_service
+from app.services import locale_service, meta_service, nota_service, sessao_service
 from app.services.sessao_service import chave_exercicio
 from app.utils import now_iso
 
@@ -68,7 +68,8 @@ def _idade(data_nascimento: str | None) -> int | None:
         return None
     try:
         nasc = date.fromisoformat(data_nascimento[:10])
-        hoje = date.today()
+        # Fuso padrão: a idade só divergiria no próprio dia do aniversário.
+        hoje = date.fromisoformat(locale_service.hoje(None))
         return hoje.year - nasc.year - ((hoje.month, hoje.day) < (nasc.month, nasc.day))
     except ValueError:
         return None

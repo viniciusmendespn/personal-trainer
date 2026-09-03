@@ -4,8 +4,8 @@
 > qualquer fuso sem correção caso a caso. Substitui o §4 de `PLANO_INTERNACIONALIZACAO.md`.
 > Escrito em 2026-09-03.
 >
-> **Status: implementado (Passos 1 a 5).** O sistema está correto em qualquer fuso.
-> O que sobra está no §10 — a trava de regressão e a limitação assumida do agendamento futuro.
+> **Status: implementado e travado (Passos 1 a 6).** O sistema está correto em qualquer fuso, e
+> `tests/test_sem_data_utc.py` + `src/utils/semDataUtc.test.ts` impedem os padrões de voltar.
 
 ---
 
@@ -265,12 +265,26 @@ agendada. Nenhuma migração.
 
 ---
 
-## 9. O que falta
+## 9. A trava (Passo 6) e o que sobra
 
-**Trava de regressão (recomendado).** Uma checagem no CI que falhe em `toISOString().slice(0,10)`,
-`date.today()` e `datetime.now(timezone.utc).date()` usado como data civil. São exatamente os
-três padrões que geraram todos os bugs desta série, e o código nasceu com eles porque nada
-impedia. É o que transforma "corrigido" em "resolvido".
+**Feito.** `backend/tests/test_sem_data_utc.py` e `frontend/src/utils/semDataUtc.test.ts` varrem
+o código atrás de `date.today()`, `datetime.utcnow()`, `now(timezone.utc).date()`,
+`toISOString().slice(0,10)`, `ZoneInfo` fora do `locale_service` e `TZ_OFFSET`. Não há CI neste
+projeto — as travas moram na suíte, que é o gate real antes de cada deploy.
+
+A varredura ignora comentário e docstring (via `tokenize` no backend), para que o texto que
+**explica** o padrão errado não dispare o alarme. Exceção legítima usa o marcador `fuso-ok:`
+com a justificativa escrita ao lado — hoje só o `scheduler.py`, cuja janela de partições é UTC
+de propósito.
+
+**A trava não era formalidade: ela achou 16 pontos que a varredura manual tinha perdido.** O mais
+grave era `pontos_service`, que bucketizava a gamificação em semana e mês UTC — mesma categoria
+do `STATS#W#`, escrita irreversível, e ninguém tinha visto. Também apareceram a vigência de
+assinatura, os baldes de comissão, a expiração de cupom, o "hoje" do agente e três telas do
+portal (treino vigente, renovação, data de pagamento).
+
+Lição para o próximo eixo (moeda, unidades, i18n): **escrever a trava primeiro** — ela é um
+inventário melhor que a leitura arquivo a arquivo.
 
 **Limitação assumida.** Agendamento futuro segue guardado como instante UTC, não como hora local
 + zona (§1.3). Revisar se surgir agendamento recorrente ou marcado com meses de antecedência.

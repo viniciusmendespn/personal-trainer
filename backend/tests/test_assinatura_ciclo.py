@@ -33,7 +33,8 @@ def env(repo_fake, monkeypatch):
 
 
 def hoje_eh(monkeypatch, iso: str) -> None:
-    monkeypatch.setattr(assinatura_service, "_hoje", lambda: date.fromisoformat(iso))
+    # `_hoje` recebe o personal_id (fuso do dono da assinatura) — o fake ignora e fixa a data.
+    monkeypatch.setattr(assinatura_service, "_hoje", lambda _pid=None: date.fromisoformat(iso))
 
 
 def assinatura(env) -> dict:

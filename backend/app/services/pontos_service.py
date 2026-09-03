@@ -4,6 +4,7 @@ from datetime import date
 from math import floor
 
 from app.repositories import dynamo_repo as repo, keys
+from app.services import locale_service
 from app.utils import new_id, now_iso
 
 logger = logging.getLogger(__name__)
@@ -36,14 +37,17 @@ def multiplicador_streak(streak: int) -> float:
     return 1.0
 
 
-def _semana_key() -> str:
-    d = date.today()
-    iso = d.isocalendar()
-    return f"{iso[0]}-W{iso[1]:02d}"
+# Fuso do PERSONAL, não de cada aluno, e de propósito: o ranking é uma competição entre os
+# alunos de um mesmo personal, então precisa de UMA fronteira de semana compartilhada — com
+# cada aluno zerando no próprio fuso a comparação deixaria de fazer sentido. E há um
+# acoplamento duro: `award` grava `semana_semana` e `get_ranking`/`get_pontos` comparam com a
+# chave que calculam; fusos diferentes nos dois lados zerariam o painel para sempre.
+def _semana_key(tz: str | None) -> str:
+    return locale_service.semana_iso_agora(tz)
 
 
-def _mes_key() -> str:
-    d = date.today()
+def _mes_key(tz: str | None) -> str:
+    d = date.fromisoformat(locale_service.hoje(tz))
     return f"{d.year}-{d.month:02d}"
 
 
@@ -66,8 +70,9 @@ def award(aluno_id: str, tipo: str, personal_id: str, pts: int | None = None,
             pts = base_pts
         ts = now_iso()
         pk_al = keys.pk_aluno(aluno_id)
-        semana_key = _semana_key()
-        mes_key = _mes_key()
+        tz = locale_service.tz_do_personal(personal_id)
+        semana_key = _semana_key(tz)
+        mes_key = _mes_key(tz)
 
         # Lê contadores atuais para fazer reset lazy de semana/mês
         current = repo.get_item(pk_al, keys.SK_PONTOS) or {}
@@ -114,13 +119,15 @@ def award(aluno_id: str, tipo: str, personal_id: str, pts: int | None = None,
         return 0
 
 
-def get_pontos(aluno_id: str) -> dict:
+def get_pontos(aluno_id: str, personal_id: str | None = None) -> dict:
     item = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PONTOS) or {}
     cleaned = repo.clean(item) or {}
+    # Mesma chave usada na escrita (fuso do personal) — ver comentário em `_semana_key`.
+    tz = locale_service.tz_do_personal(personal_id)
     # Reset lazy na leitura (aluno sem atividade na semana/mês corrente)
-    if cleaned.get("semana_semana") != _semana_key():
+    if cleaned.get("semana_semana") != _semana_key(tz):
         cleaned["semana_atual"] = 0
-    if cleaned.get("mes_mes") != _mes_key():
+    if cleaned.get("mes_mes") != _mes_key(tz):
         cleaned["mes_atual"] = 0
     log_items = repo.query_pk_last_n(keys.pk_aluno(aluno_id), keys.PONTO_LOG_PREFIX, limit=10)
     cleaned["log_recente"] = repo.clean_all(log_items)
@@ -130,8 +137,9 @@ def get_pontos(aluno_id: str) -> dict:
 def get_ranking(personal_id: str) -> list[dict]:
     items = repo.query_pk(keys.pk_personal(personal_id), sk_prefix=keys.RANKING_PREFIX)
     ranking = repo.clean_all(items)
-    semana_key = _semana_key()
-    mes_key = _mes_key()
+    tz = locale_service.tz_do_personal(personal_id)
+    semana_key = _semana_key(tz)
+    mes_key = _mes_key(tz)
     # Aplica reset lazy nas entradas do ranking
     for r in ranking:
         if r.get("semana_semana") != semana_key:

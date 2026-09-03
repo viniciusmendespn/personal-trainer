@@ -24,7 +24,7 @@ from fastapi import HTTPException
 
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import assinatura_service
+from app.services import assinatura_service, locale_service
 from app.utils import now_iso
 
 logger = logging.getLogger(__name__)
@@ -161,12 +161,26 @@ def criar_cupom_campanha(
 # ── Resgate (genérico, qualquer campanha) ─────────────────────────────────────
 
 def _expirado(expira_em: str | None) -> bool:
+    """`expira_em` chega digitado pelo admin e aceita as duas formas: data civil
+    ('2026-12-31') ou instante ('2026-12-31T23:59:00+00:00'). São categorias diferentes
+    (docs/TIMEZONE.md §1.1 e §1.2) e cada uma compara com uma coisa: data civil com o DIA,
+    instante com o AGORA.
+
+    Antes, a data civil virava datetime naive e caía direto em `naive < aware` — que levanta
+    TypeError, não ValueError. O `except ValueError` não pegava e o resgate do cupom dava 500.
+    """
     if not expira_em:
         return False
+    if "T" not in expira_em:
+        # Data civil. Cupom não tem dono de fuso: padrão do sistema, explícito.
+        return expira_em < locale_service.hoje(None)
     try:
-        return datetime.fromisoformat(expira_em) < datetime.now(timezone.utc)
+        dt = datetime.fromisoformat(expira_em)
     except ValueError:
-        return date.fromisoformat(expira_em) < date.today()
+        return True   # configuração quebrada trava o cupom em vez de liberá-lo para sempre
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt < datetime.now(timezone.utc)
 
 
 def resgatar(personal_id: str, codigo: str) -> dict:

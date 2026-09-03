@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Modal, Button, Input } from '../ui'
+import { diaNoFuso } from '../../utils/datetime'
+import { useTimezone } from '../../hooks/useTimezone'
 import type { Cobranca, RegistrarPagamentoIn } from '../../types'
 
 interface Props {
@@ -9,7 +11,10 @@ interface Props {
 }
 
 export function RegistrarPagamentoModal({ cobranca, onConfirm, onClose }: Props) {
-  const today = new Date().toISOString().slice(0, 10)
+  const tz = useTimezone()
+  // Data do pagamento no calendário do personal: com o dia UTC, registrar um recebimento
+  // depois das 21h (BRT) vinha pré-preenchido com amanhã.
+  const today = diaNoFuso(new Date(), tz)
   const [dataPagamento, setDataPagamento] = useState(today)
   const [notas, setNotas] = useState('')
   const [loading, setLoading] = useState(false)

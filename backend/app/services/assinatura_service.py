@@ -30,8 +30,9 @@ DEFAULT_CATALOGO = {
 }
 
 
-def _hoje() -> date:
-    return date.today()
+def _hoje(personal_id: str | None = None) -> date:
+    """Vigência de assinatura é data civil do personal (docs/TIMEZONE.md §1.2)."""
+    return date.fromisoformat(locale_service.hoje(locale_service.tz_do_personal(personal_id)))
 
 
 # ── Catálogo de planos (parametrizável, sem redeploy) ─────────────────────────
@@ -70,20 +71,20 @@ def _ensure_assinatura(personal_id: str) -> dict:
     return repo.clean(repo.get_item(keys.pk_personal(personal_id), keys.SK_ASSINATURA))
 
 
-def _is_pro_ativo(assinatura: dict) -> bool:
+def _is_pro_ativo(assinatura: dict, personal_id: str | None = None) -> bool:
     if assinatura.get("plano") != PLANO_GESTAO_PRO:
         return False
     valida_ate = assinatura.get("valida_ate")
-    return bool(valida_ate and date.fromisoformat(valida_ate) >= _hoje())
+    return bool(valida_ate and date.fromisoformat(valida_ate) >= _hoje(personal_id))
 
 
 def get_status(personal_id: str) -> dict:
     assinatura = _ensure_assinatura(personal_id)
-    pro_ativo = _is_pro_ativo(assinatura)
+    pro_ativo = _is_pro_ativo(assinatura, personal_id)
     alunos_limit = None if pro_ativo else TRIAL_ALUNOS_LIMIT
     dias_restantes = None
     if assinatura.get("valida_ate"):
-        dias_restantes = max((date.fromisoformat(assinatura["valida_ate"]) - _hoje()).days, 0)
+        dias_restantes = max((date.fromisoformat(assinatura["valida_ate"]) - _hoje(personal_id)).days, 0)
     if pro_ativo:
         status = "ATIVO"
     elif assinatura.get("plano") == PLANO_GESTAO_PRO:
@@ -214,7 +215,7 @@ def aplicar_pagamento(
     if meses <= 0 and dias <= 0:
         raise ValueError("aplicar_pagamento exige meses > 0 ou dias > 0")
     assinatura = _ensure_assinatura(personal_id)
-    hoje = _hoje()
+    hoje = _hoje(personal_id)
     base, nova_valida_ate, dia_ancora = _avancar_vigencia(assinatura, hoje, meses, dias)
     nova_aviso_data = _reagendar_aviso(personal_id, assinatura, nova_valida_ate)
     fields = {
