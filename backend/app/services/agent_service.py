@@ -4,6 +4,7 @@ O `{personal_id, aluno_id}` já vem resolvido pelo webhook — a LLM nunca infor
 """
 import logging
 import time
+from datetime import date
 
 from app.config import settings
 from app.models.enums import Ator, CanalOrigem, Classificacao
