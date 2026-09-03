@@ -40,6 +40,11 @@ const PIE_COLORS = [
   '#60a5fa',
 ]
 
+// Dia UTC de propósito — NÃO trocar por `diaLocal` isoladamente. Estas chaves são comparadas
+// com `data.sessoes_por_dia[].data`, que vem de STATS#D# (backend, agregado em dia UTC na
+// escrita de finish()). Enquanto o backend agregar em UTC, o front tem que perguntar em UTC:
+// mudar só este lado desalinharia os dois. Os dois viram dia local juntos, quando o aluno
+// tiver fuso — ver docs/PLANO_INTERNACIONALIZACAO.md §4.1.
 function ymd(d: Date) { return d.toISOString().slice(0, 10) }
 function startOfWeek(d: Date) {
   const date = new Date(d)

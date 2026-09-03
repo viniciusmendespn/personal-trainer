@@ -4,6 +4,7 @@ import { Plus, ChevronLeft, ChevronRight, Calendar, Check, X, Trash2, Pencil, Du
 import { useAlunos } from '../hooks/useAlunos'
 import { useAgenda, useCreateAgendamento, useUpdateAgendamento, useSetAgendamentoStatus, useDeleteAgendamento } from '../hooks/useAgenda'
 import { Button, Card, Input, Select, Modal, Badge, EmptyState, Spinner, useConfirm, ExpandableText } from '../components/ui'
+import { diaLocal, diaLocalIso } from '../utils/datetime'
 import type { Agendamento, AgendamentoCreate, AgendamentoStatus } from '../types'
 
 const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
@@ -19,9 +20,6 @@ function addDays(d: Date, n: number) {
   const date = new Date(d)
   date.setDate(date.getDate() + n)
   return date
-}
-function ymd(d: Date) {
-  return d.toISOString().slice(0, 10)
 }
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1)
@@ -65,10 +63,12 @@ export function AgendaPage() {
     new Date(rangeEnd.getTime() + 24 * 60 * 60 * 1000 - 1).toISOString()
   )
 
+  // Chave = dia LOCAL do compromisso, igual à das células da grade. `data_hora_inicio` é um
+  // instante UTC: fatiar a string agrupava pelo dia UTC, e a grade procura pelo dia local.
   const porDia = useMemo(() => {
     const map: Record<string, Agendamento[]> = {}
     for (const a of agendamentos ?? []) {
-      const k = a.data_hora_inicio.slice(0, 10)
+      const k = diaLocalIso(a.data_hora_inicio)
       ;(map[k] ||= []).push(a)
     }
     return map
@@ -113,7 +113,7 @@ export function AgendaPage() {
         <div className="space-y-3">
           {Array.from({ length: 7 }).map((_, i) => {
             const day = addDays(weekStart, i)
-            const key = ymd(day)
+            const key = diaLocal(day)
             const items = (porDia[key] ?? []).sort((a, b) => a.data_hora_inicio.localeCompare(b.data_hora_inicio))
             return (
               <Card key={key} variant="elevated">
@@ -222,7 +222,7 @@ function MonthGrid({
     <div className="grid grid-cols-7 gap-1.5 text-center">
       {DIAS_SEMANA.map((d) => <div key={d} className="text-[11px] text-text-muted py-1">{d.slice(0, 3)}</div>)}
       {days.map((day) => {
-        const key = ymd(day)
+        const key = diaLocal(day)
         const count = porDia[key]?.length ?? 0
         const inMonth = day.getMonth() === monthStart.getMonth()
         return (
@@ -260,7 +260,7 @@ function AgendamentoForm({
   const update = useUpdateAgendamento()
   const [eData, eHora] = editing ? splitDateHora(editing.data_hora_inicio) : ['', '']
   const [alunoId, setAlunoId] = useState(editing?.aluno_id ?? lista[0]?.aluno_id ?? '')
-  const [data, setData] = useState(editing ? eData : ymd(defaultDate ?? new Date()))
+  const [data, setData] = useState(editing ? eData : diaLocal(defaultDate ?? new Date()))
   const [hora, setHora] = useState(editing ? eHora : '08:00')
   const [duracao, setDuracao] = useState(String(editing?.duracao_min ?? 60))
   const [observacao, setObservacao] = useState(editing?.observacao ?? '')

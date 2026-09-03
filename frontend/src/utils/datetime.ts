@@ -16,10 +16,18 @@ export function inicioSemanaLocal(): Date {
   return d
 }
 
+/** 'YYYY-MM-DD' do dia LOCAL de um Date — chave de dia de calendário.
+ *
+ * Nunca usar `toISOString().slice(0, 10)` para isso: aquilo devolve o dia UTC, e das 21h em
+ * diante (BRT) o dia UTC já é o seguinte. Era o que fazia o compromisso das 21h de terça cair
+ * no card da quarta, e o de domingo à noite sumir da semana. */
+export function diaLocal(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 /** 'YYYY-MM-DD' do dia LOCAL de um instante ISO — chave estável de agrupamento/cache. */
 export function diaLocalIso(iso: string): string {
-  const d = new Date(iso)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return diaLocal(new Date(iso))
 }
 
 /** Instantes UTC que delimitam o dia LOCAL de `iso`, semiaberto [inicio, fim). Mesmo motivo de
