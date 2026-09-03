@@ -9,8 +9,11 @@ const CHATGPT_URL = 'https://chatgpt.com/'
 /**
  * Callout do empty-state de treinos do aluno. A ordem aqui é intencional:
  * o **destaque é o app/plugin** (caminho mais curto — o personal pede na conversa e o
- * treino cai na conta do aluno), e o fluxo de templates/rotinas/import fica como
- * segunda opção, para quem quer reaproveitar treino pronto.
+ * treino cai na conta do aluno), e o segundo card é o **import de IA por arquivo**,
+ * que é o mesmo destino para quem não quer conectar o app: baixa o arquivo do aluno,
+ * pede o programa na IA que já usa e cola o JSON de volta.
+ * Rotina pronta é só um atalho secundário aqui — o aluno ainda não tem treino nenhum,
+ * e o botão "Aplicar rotina" já está no topo da aba.
  * O personal continua sendo quem prescreve — a IA só escreve e cadastra.
  *
  * Quem já tem conexão autorizada não vê o passo de instalar (mesma fonte do
@@ -19,10 +22,12 @@ const CHATGPT_URL = 'https://chatgpt.com/'
 export function MontarTreinoIaCallout({
   compact = false,
   onAplicarRotina,
+  onImportarIa,
   alunoNome,
 }: {
   compact?: boolean
   onAplicarRotina?: () => void
+  onImportarIa?: () => void
   alunoNome?: string
 }) {
   // Exemplo de programa inteiro (não de um treino só): é o que o app faz de uma vez,
@@ -94,30 +99,40 @@ export function MontarTreinoIaCallout({
       </div>
 
       <div className="rounded-xl border border-border bg-surface-secondary/40 p-5">
-        <h4 className="font-display font-semibold text-sm text-text">
-          Crie templates e rotinas reutilizáveis
-        </h4>
-        <p className="text-sm text-text-secondary mt-1 max-w-xl">
-          Monte o treino uma vez e aplique em qualquer aluno com 1 clique. Dá também para gerar o
-          treino com IA em outra conversa e importar tudo de uma vez.
+        <div className="flex items-center gap-2">
+          <Upload size={16} className="shrink-0 text-text-secondary" />
+          <h4 className="font-display font-semibold text-sm text-text">
+            Prefere usar a IA que você já usa? Importe o treino
+          </h4>
+        </div>
+        <p className="text-sm text-text-secondary mt-1.5 max-w-xl">
+          Sem instalar nada: baixe o arquivo do aluno (perfil, histórico e a sua biblioteca de
+          exercícios), anexe no ChatGPT, Claude ou Gemini, peça o programa e cole o JSON de volta
+          aqui. Vale para qualquer IA, inclusive as gratuitas.
         </p>
         <div className="flex flex-wrap items-center gap-2 mt-3">
+          {onImportarIa ? (
+            <Button variant="outline" size="sm" onClick={onImportarIa}>
+              <span className="flex items-center gap-2"><Upload size={16} /> Importar treino de IA</span>
+            </Button>
+          ) : (
+            <Link to="/pacotes">
+              <Button variant="outline" size="sm">
+                <span className="flex items-center gap-2"><Upload size={16} /> Importar treino de IA</span>
+              </Button>
+            </Link>
+          )}
           {onAplicarRotina ? (
-            <Button variant="outline" size="sm" onClick={onAplicarRotina}>
+            <Button variant="ghost" size="sm" onClick={onAplicarRotina}>
               <span className="flex items-center gap-2"><ListChecks size={16} /> Aplicar rotina pronta</span>
             </Button>
           ) : (
             <Link to="/rotinas">
-              <Button variant="outline" size="sm">
+              <Button variant="ghost" size="sm">
                 <span className="flex items-center gap-2"><ListChecks size={16} /> Aplicar rotina pronta</span>
               </Button>
             </Link>
           )}
-          <Link to="/pacotes">
-            <Button variant="ghost" size="sm">
-              <span className="flex items-center gap-2"><Upload size={16} /> Importar treino de IA</span>
-            </Button>
-          </Link>
         </div>
       </div>
 

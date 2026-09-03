@@ -479,6 +479,7 @@ export function AlunoDetailPage() {
             onClose={() => setShowAtualizarIA(false)}
             alunoId={alunoId}
             alunoNome={aluno?.nome}
+            semTreinos={!treinos?.length}
           />
 
           <Modal open={showAplicarRotina} onClose={() => setShowAplicarRotina(false)} title="Aplicar rotina pronta">
@@ -507,6 +508,7 @@ export function AlunoDetailPage() {
             <MontarTreinoIaCallout
               alunoNome={aluno?.nome}
               onAplicarRotina={() => setShowAplicarRotina(true)}
+              onImportarIa={() => setShowAtualizarIA(true)}
             />
           ) : (
             <TreinosLista alunoId={alunoId} treinos={treinos} />

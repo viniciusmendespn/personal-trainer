@@ -20,6 +20,11 @@ interface Props {
   onClose: () => void
   alunoId: string
   alunoNome?: string
+  /**
+   * Aluno ainda sem nenhum treino: o mesmo fluxo, mas sem falar em "sobrescrever" —
+   * não há o que sobrescrever, e a confirmação destrutiva só assustaria.
+   */
+  semTreinos?: boolean
 }
 
 /** Conferência bem-sucedida: nada a corrigir, ou só avisos. */
@@ -28,7 +33,7 @@ interface Conferido {
   relatorioIa?: string | null
 }
 
-export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Props) {
+export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome, semTreinos }: Props) {
   const [json, setJson] = useState('')
   const [result, setResult] = useState<ImportarProgramaResponse | null>(null)
   const [erro, setErro] = useState<ErroImport | null>(null)
@@ -99,13 +104,15 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
   async function handleImportar() {
     const conteudo = prepararJson()
     if (!conteudo) return
-    const ok = await confirm({
-      title: 'Sobrescrever treino',
-      message: `Isso substitui TODOS os treinos atuais de ${alunoNome ?? 'este aluno'} pelo conteúdo do JSON. O histórico de sessões é preservado.`,
-      confirmLabel: 'Importar e sobrescrever',
-      tone: 'danger',
-    })
-    if (!ok) return
+    if (!semTreinos) {
+      const ok = await confirm({
+        title: 'Sobrescrever treino',
+        message: `Isso substitui TODOS os treinos atuais de ${alunoNome ?? 'este aluno'} pelo conteúdo do JSON. O histórico de sessões é preservado.`,
+        confirmLabel: 'Importar e sobrescrever',
+        tone: 'danger',
+      })
+      if (!ok) return
+    }
     setErro(null)
     setConferido(null)
     try {
@@ -145,13 +152,18 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
   }
 
   return (
-    <Modal open={open} onClose={handleClose} title="Atualizar treino com IA" size="lg">
+    <Modal
+      open={open}
+      onClose={handleClose}
+      title={semTreinos ? 'Montar o treino com IA' : 'Atualizar treino com IA'}
+      size="lg"
+    >
       {result ? (
         <div className="space-y-4">
           <div className="rounded-lg bg-surface-1 p-6 text-center space-y-1">
             <Check size={28} className="mx-auto text-accent" />
             <p className="text-sm text-text-secondary">
-              Treino atualizado: <span className="font-semibold text-text-primary">{result.treinos_importados}</span> treino
+              {semTreinos ? 'Treino criado' : 'Treino atualizado'}: <span className="font-semibold text-text-primary">{result.treinos_importados}</span> treino
               {result.treinos_importados !== 1 ? 's' : ''} · {result.exercicios_importados} exercício
               {result.exercicios_importados !== 1 ? 's' : ''}.
             </p>
@@ -167,11 +179,12 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
       ) : (
         <div className="space-y-5">
           <p className="text-sm text-text-secondary">
-            Baixe <span className="text-text-primary font-medium">um único arquivo</span> — instruções + treino
-            atual + perfil completo do aluno (histórico de sessões, frequência, dores, dúvidas, avaliações,
-            metas e anamnese) + sua biblioteca de exercícios (com os vídeos já cadastrados). Anexe esse arquivo
-            numa IA (ChatGPT, Claude, Gemini) e peça o ajuste. A IA analisa o histórico, reaproveita seus
-            exercícios e devolve o JSON do programa atualizado; cole abaixo para sobrescrever.
+            Baixe <span className="text-text-primary font-medium">um único arquivo</span> — instruções
+            {semTreinos ? '' : ' + treino atual'} + perfil completo do aluno (histórico de sessões, frequência,
+            dores, dúvidas, avaliações, metas e anamnese) + sua biblioteca de exercícios (com os vídeos já
+            cadastrados). Anexe esse arquivo numa IA (ChatGPT, Claude, Gemini) e diga o que quer prescrever.
+            A IA reaproveita seus exercícios e devolve o JSON do programa; cole abaixo para
+            {semTreinos ? ' cadastrar' : ' sobrescrever'}.
           </p>
 
           <div>
@@ -189,17 +202,32 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
           </div>
 
           <div>
-            <p className="text-sm font-medium mb-1">2. Peça o ajuste à IA</p>
+            <p className="text-sm font-medium mb-1">
+              {semTreinos ? '2. Peça o programa à IA' : '2. Peça o ajuste à IA'}
+            </p>
             <p className="text-xs text-text-secondary">
-              Anexe o arquivo baixado e descreva a mudança em linguagem natural — ou peça "atualize o
-              treino com base no histórico". A IA analisa o perfil e o histórico completos do aluno,
-              reaproveita os exercícios da sua biblioteca (com os vídeos certos) e devolve o programa
-              COMPLETO atualizado, apenas com o bloco de treinos.
+              {semTreinos ? (
+                <>
+                  Anexe o arquivo baixado e descreva o programa em linguagem natural — ex.: "monte um
+                  ABC, 3x por semana, hipertrofia, respeitando a anamnese". A IA lê o perfil do aluno,
+                  reaproveita os exercícios da sua biblioteca (com os vídeos certos) e devolve o programa
+                  COMPLETO, apenas com o bloco de treinos.
+                </>
+              ) : (
+                <>
+                  Anexe o arquivo baixado e descreva a mudança em linguagem natural — ou peça "atualize o
+                  treino com base no histórico". A IA analisa o perfil e o histórico completos do aluno,
+                  reaproveita os exercícios da sua biblioteca (com os vídeos certos) e devolve o programa
+                  COMPLETO atualizado, apenas com o bloco de treinos.
+                </>
+              )}
             </p>
           </div>
 
           <div>
-            <p className="text-sm font-medium mb-2">3. Cole o JSON atualizado</p>
+            <p className="text-sm font-medium mb-2">
+              {semTreinos ? '3. Cole o JSON do programa' : '3. Cole o JSON atualizado'}
+            </p>
             <Textarea
               rows={6}
               placeholder={'Cole aqui o JSON gerado pela IA (bloco { "version": "1", "treinos": [ ... ] })'}
@@ -253,7 +281,9 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome }: Pr
             >
               <span className="flex items-center gap-1.5">
                 {importar.isPending ? <Spinner className="w-4 h-4" /> : <FileUp size={16} />}
-                {importar.isPending ? 'Importando…' : 'Importar e sobrescrever treino'}
+                {importar.isPending
+                  ? 'Importando…'
+                  : semTreinos ? 'Importar treino' : 'Importar e sobrescrever treino'}
               </span>
             </Button>
           </div>
