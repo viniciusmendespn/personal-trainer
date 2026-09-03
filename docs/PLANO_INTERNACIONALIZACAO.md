@@ -50,9 +50,13 @@ Estas quatro decisões mudam o desenho e não dá para adiar até a Fase 4:
 
 ### 2.1 A favor (não precisa mexer)
 
-- **O backend já grava tudo em UTC.** `utils.now_iso()` usa `datetime.now(timezone.utc)`. Não
-  existe nenhum `America/Sao_Paulo` no código. Não há offset fixo gravado em lugar nenhum.
-  Isso é enorme: significa que o dado histórico **não precisa de migração de fuso**.
+- **O backend já grava tudo em UTC.** `utils.now_iso()` usa `datetime.now(timezone.utc)`, e
+  nenhum instante é persistido com offset. Isso é enorme: o dado histórico **não precisa de
+  migração de fuso**.
+  > Ressalva que a primeira varredura errou: existe, sim, um offset fixo no código —
+  > `TZ_OFFSET_HOURS`, env var global com default `-3`, em `agenda_notif_service.py:13` e
+  > `sessao_service.py:641`. Ela não é persistida em item nenhum (só formata horário dentro do
+  > texto dos pushes), então a frase acima continua valendo para o dado. Ver `TIMEZONE.md` §5.
 - **Enums são códigos, não texto.** `models/enums.py` usa `ATIVO`, `PENDENTE`, `FOR_TIME`. O
   texto exibido já está separado do valor persistido.
 - **`PhoneInput.tsx` já é multi-país** (BR, US, PT, AR, MX, CO, CL, ES) com E.164.
@@ -92,7 +96,8 @@ Estas quatro decisões mudam o desenho e não dá para adiar até a Fase 4:
 - `assinatura_service.py`: `{"preco": "39.90", "preco_anual": "399.00"}` sem código de moeda.
 - `mp_service.py` cria pagamento com `payment_method_id: "pix"` — Brasil-only por construção.
 
-**Fuso — os pontos concretos que quebram fora do Brasil** (detalhe em §4):
+**Fuso — os pontos concretos que quebram fora do Brasil** (modelo, decisões e plano completo em
+`docs/TIMEZONE.md`):
 
 | Onde | O que acontece |
 |---|---|
@@ -175,89 +180,19 @@ idioma**, não só traduzir os botões.
 
 ---
 
-## 4. Fuso horário — desenho da solução
+## 4. Fuso horário
 
-Este é o capítulo mais técnico e o de maior risco. Três problemas distintos.
-
-### 4.1 Agregados pré-calculados em dia UTC
-
-`STATS#D#{dia}`, `STATS#W#{semana}` e `dow_{n}` são incrementados na escrita
-(`sessao_service.py:466-505`) usando dia/semana **UTC**. Não dá para "converter na leitura":
-o dado já foi somado no balde errado.
-
-**Solução recomendada — calcular o balde no fuso do aluno, no momento da escrita.**
-
-```
-dia_local  = instante_utc → ZoneInfo(tz_do_aluno) → date().isoformat()
-semana_local = mesma coisa → isocalendar()
-```
-
-O formato da chave não muda (`STATS#D#2026-09-02`), só o valor passa a ser o dia local. Nenhuma
-migração de schema, nenhum GSI novo, nenhum custo extra de RCU/WCU.
-
-**Consequência a aceitar conscientemente**: se o aluno trocar de fuso, o histórico agregado
-continua nos baldes do fuso antigo. É o comportamento certo — o treino aconteceu de manhã no
-Brasil e continua tendo sido de manhã no Brasil. Documentar e não tentar reprocessar.
-
-**Dado já existente**: fica no dia UTC. Para BR (UTC-3) o desvio é de até 3h — só sessões
-iniciadas depois das 21h caem no dia errado, e apenas no histórico anterior à mudança. Não vale
-migração; vale uma nota no changelog.
-
-### 4.2 `date.today()` no backend
-
-`pendencia_service.hoje_iso()` e os 5 pontos de `financeiro_service` usam `date.today()`, que na
-Lambda é UTC. Todos passam a receber o fuso do dono:
-
-```python
-def hoje_no_fuso(tz: str) -> str:
-    return datetime.now(ZoneInfo(tz)).date().isoformat()
-```
-
-`pendencia_service` já recebe `hoje` como parâmetro em quase todas as funções internas — a
-mudança fica quase toda em `hoje_iso()` e nos dois pontos que a chamam.
-
-> **Nota de runtime**: adicionar `tzdata` ao `requirements.txt`. O runtime Python da Lambda tem
-> `zoneinfo` no stdlib, mas depender da base de fusos do sistema no container é frágil; o pacote
-> `tzdata` custa ~600 KB no layer e elimina a dúvida.
-
-### 4.3 Jobs agendados
-
-**`scheduler.py` (diário, `cron(0 9 * * ? *)`)** — hoje dispara tudo no mesmo instante mundial.
-Avisos de vencimento e cobrança precisam chegar de manhã **local**.
-
-Recomendação: **unificar com o padrão que `sessao_scheduler.py` já usa** — partição por dia UTC,
-SK carregando o instante de disparo, e o job varrendo `query_between(prefixo, prefixo + agora)`.
-
-- Na hora de **agendar** o item, converter "06:00 do dia D no fuso do personal" para instante UTC
-  e usar esse instante tanto na partição (`SCHED#{dia_utc_do_disparo}`) quanto no SK.
-- Trocar o EventBridge de `cron(0 9 * * ? *)` para `rate(1 hour)`.
-- A janela retroativa de 30 dias (`_JANELA_DIAS`) continua valendo e cobre Lambda fora do ar.
-
-Custo: 24 invocações/dia em vez de 1, cada uma varrendo uma partição pequena. Irrelevante frente
-ao free tier — e resolve o problema para todos os fusos de uma vez, sem job por região.
-
-**`agenda_scheduler.py` e `sessao_scheduler.py`**: já corretos, nada a fazer. Vale um teste
-explícito confirmando isso, para ninguém "consertar" o que não está quebrado.
-
-### 4.4 Frontend
-
-`utils/datetime.ts` já faz a coisa certa em espírito — recorta o dia/semana **no fuso do
-aparelho**, com comentários explicando o porquê. O problema é que "fuso do aparelho" e "fuso
-configurado do usuário" divergem quando o aluno viaja.
-
-Mudança: essas funções passam a receber o fuso como parâmetro (vindo de um `LocaleContext`), com
-o fuso do aparelho como fallback. E `AgendaPage.tsx:71` deixa de usar `.slice(0, 10)` e passa a
-usar `diaLocalIso()` — que já existe no arquivo e já faz certo.
-
-### 4.5 Testes a criar
-
-- Sessão às 23h em UTC+9 e às 01h em UTC-10 caem no dia local certo em `STATS#D#`.
-- Segunda-feira 07:00 em UTC+12 conta na semana ISO local, não na anterior.
-- Cobrança com vencimento `2026-03-10` para um personal em `America/New_York` vira `VENCIDA` no
-  instante certo — **atravessando a virada do DST americano em março**.
-- Agrupamento da agenda: compromisso 22:00 BRT aparece no dia do compromisso.
-
----
+> **Superado por `docs/TIMEZONE.md`.** Aquele documento reanalisa o problema do zero, define o
+> modelo (as quatro categorias temporais e por que "tudo em UTC" só cobre uma delas) e traz o
+> plano em passos com inventário completo.
+>
+> Duas coisas que esta seção dizia e que estavam **erradas**:
+>
+> - *"Não existe nenhum offset fixo no código."* Existe: `TZ_OFFSET_HOURS`, env var global com
+>   default `-3`, usada para formatar horário no texto dos pushes.
+> - *"Os agregados passam a usar o dia local do aluno."* O `STATS#D#` mora na partição do
+>   personal e alimenta o dashboard dele — tem que usar o dia do **personal**. E o
+>   `historico_mes` não precisa de balde nenhum: agrupa na leitura.
 
 ## 5. Infraestrutura de i18n
 
