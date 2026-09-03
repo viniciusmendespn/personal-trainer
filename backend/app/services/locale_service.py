@@ -9,23 +9,35 @@ Ponto ÚNICO de leitura do fuso. Regras completas em `docs/TIMEZONE.md`; o essen
   • Data civil (vencimento, nascimento) não é instante: compara-se com `hoje()` no fuso de
     quem é dono da data, nunca com `date.today()` (que na Lambda é UTC).
 """
-from datetime import datetime
+import logging
+from datetime import datetime, timezone, tzinfo
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.utils import tz_valido  # noqa: F401  — reexport: quem valida entrada usa daqui
 
+logger = logging.getLogger(__name__)
+
 TZ_PADRAO = "America/Sao_Paulo"
 
 
-def _zona(tz: str | None) -> ZoneInfo:
+def _zona(tz: str | None) -> tzinfo:
     """Nunca levanta: fuso ausente ou inválido cai no padrão. Um valor corrompido no perfil
-    não pode derrubar o dashboard inteiro — degradar para o padrão é melhor que erro 500."""
+    não pode derrubar o dashboard inteiro — degradar para o padrão é melhor que erro 500.
+
+    O segundo `except` cobre o PADRÃO também falhar, o que só acontece se a base IANA sumir do
+    pacote (`tzdata` fora do requirements). Aí a data sai em UTC — errada por até 14h, mas a
+    tela abre: a diferença entre um gráfico torto e o portal inteiro fora do ar."""
     try:
         return ZoneInfo(tz or TZ_PADRAO)
     except (ZoneInfoNotFoundError, ValueError):
+        pass
+    try:
         return ZoneInfo(TZ_PADRAO)
+    except (ZoneInfoNotFoundError, ValueError):
+        logger.error("[locale] base IANA indisponível — tzdata saiu do requirements?")
+        return timezone.utc
 
 
 # ── Resolução em cascata ─────────────────────────────────────────────────────
