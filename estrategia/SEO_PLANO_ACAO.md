@@ -66,7 +66,8 @@ ordem de esforço/retorno:
 
 ## 3. Cadência de conteúdo (a partir da semana 2)
 
-O blog nasceu com 6 artigos e chegou a 11 em agosto/2026 (lote do cluster IA + MCP, ver §5).
+O blog nasceu com 6 artigos, chegou a 13 em agosto/2026 (lote do cluster IA + MCP, ver §5) e está
+em **14** desde 04/set/2026, com o artigo de decisão `melhor-app-para-personal-trainer-2026` (ver §7).
 Meta: **+2 artigos/mês** (Claude escreve, você revisa). Fila sugerida, por volume de busca e
 afinidade com o produto:
 
@@ -117,9 +118,10 @@ Regras editoriais (dos limites de `CONTEXTO_MARKETING.md` §14):
 - Impressões e cliques totais (tendência).
 - Consultas: quais queries geram impressão (esperar "coachpilot", depois long-tail
   "coachpilot vs planilhas", "whatsapp para personal trainer", depois head terms).
-- Páginas → Indexação: nº de páginas indexadas deve chegar a **35** (15 páginas SEO + 6 calculadoras
-  + divulgadores + blog + 11 posts, conforme o sitemap gerado no build) em 2–4 semanas. Se URLs
-  ficarem em "Rastreada, não indexada", reforçar links internos e pedir indexação de novo.
+- Páginas → Indexação: nº de páginas indexadas deve chegar a **38** (24 URLs estáticas — páginas SEO,
+  calculadoras, divulgadores, institucionais e o índice do blog — mais 14 posts, conforme o
+  `sitemap.xml` gerado no build) em 2–4 semanas. Se URLs ficarem em "Rastreada, não indexada",
+  reforçar links internos e pedir indexação de novo.
 
 **Mensal (15 min)**:
 - GA4: sessões orgânicas → signups (taxa de conversão da landing).
@@ -299,7 +301,33 @@ Calculadora é o conteúdo mais fácil de pedir link. Ordem de retorno:
    precificação e dobras, onde a concorrência é mais fraca.
 4. Versão para imprimir da tabela NSCA de %1RM — ímã de backlink, ainda não feito.
 
-## 7. Melhorias técnicas futuras (backlog, menor prioridade)
+## 7. Artigo de decisão "melhor app" (publicado em 2026-09-04)
+
+`/blog/melhor-app-para-personal-trainer-2026` — "Melhor app para personal trainer em 2026: o critério
+que mudou". Captura a query **singular** ("melhor app para personal trainer", "melhor aplicativo para
+personal trainer 2026"), que é intenção de decisão, enquanto o listicle antigo
+(`melhores-aplicativos-para-personal-trainer`) captura a plural, que é intenção de pesquisa. São
+duas SERPs diferentes e a canibalização foi evitada por divisão de papel:
+
+- o **listicle** continua sendo o dono do comparativo plataforma-por-plataforma, com preços;
+- o **novo** não repete preço de concorrente: é roteiro de decisão (critérios, checklist de 8 itens
+  em tabela, roteiro de teste em 7 dias) e manda o leitor ao listicle para os números.
+
+Ângulo editorial: a lista de features de 2023 virou commodity, então o que decide em 2026 é
+(1) quanto tempo de digitação **individualizada** a plataforma devolve e (2) se a IA lê o histórico
+completo do aluno antes de prescrever. A honestidade que sustenta o texto — e que nenhum concorrente
+escreve — é dizer que **template e rotina já resolvem a parte repetida, e toda plataforma decente tem
+os dois**; o que a IA elimina é a individualização, que não cabe em template. Sem isso o artigo seria
+o mesmo marketing de IA de todo mundo.
+
+Cuidados aplicados (valem para os próximos): o `intro` e os `faqs` **não** renderizam link inline —
+só `paragraphs`, `list` e células de `table` passam pelo parser; e **não existe negrito** no
+formato, apenas `[texto](/caminho)` (asterisco sai como asterisco na tela).
+
+Indexação no GSC: pedir `/blog/melhor-app-para-personal-trainer-2026` no dia 1 e reenviar
+`/blog/melhores-aplicativos-para-personal-trainer` (ganhou link novo) e `/blog` no dia 2.
+
+## 8. Melhorias técnicas futuras (backlog, menor prioridade)
 
 - **Fonts self-hosted**: Sora/Inter servidas do Google Fonts bloqueiam render (LCP). Já existem
   fontes em `frontend/public/fonts` — migrar com `@font-face` + preload.

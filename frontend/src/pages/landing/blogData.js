@@ -7,6 +7,156 @@
 
 export const BLOG_POSTS = [
   {
+    slug: 'melhor-app-para-personal-trainer-2026',
+    title: 'Melhor app para personal trainer em 2026: o critério que mudou',
+    description: 'Treino, agenda e avaliação física viraram commodity. O que separa os apps para personal trainer em 2026 é quanto tempo de digitação eles devolvem e se a IA consegue ler o histórico completo do aluno antes de montar o treino.',
+    h1: 'Melhor app para personal trainer em 2026',
+    datePublished: '2026-09-04',
+    dateModified: '2026-09-04',
+    readingMinutes: 12,
+    intro: 'Toda lista de "melhor app para personal trainer" compara as mesmas coisas: número de exercícios na biblioteca, se tem agenda, se tem avaliação física, quanto custa. Em 2026 isso decide pouco, porque praticamente todas as plataformas nacionais já têm tudo isso. Os dois critérios que realmente separam uma da outra hoje são outros: quanto tempo de digitação repetitiva a plataforma devolve para você, e se a inteligência artificial que você já usa consegue ler o histórico completo de um aluno antes de propor o treino dele. Este artigo é o roteiro de decisão — os critérios, as perguntas que testam cada um e onde o CoachPilot se posiciona, com as ressalvas.',
+    sections: [
+      {
+        h2: 'A resposta curta',
+        paragraphs: [
+          'Não existe "o melhor app" universal: existe o melhor para o tamanho da sua carteira e para o jeito que você trabalha. Mas existe um critério que em 2026 vale mais que todos os outros somados, e é fácil de verificar antes de assinar qualquer coisa: a IA da plataforma tem acesso ao seu dado real, ou é só um gerador de treino que preenche formulário?',
+          'A diferença não é de sofisticação, é de utilidade. Um gerador devolve um treino plausível para "mulher, 34 anos, hipertrofia, 4x por semana" — o que você mesmo escreveria em cinco minutos. Uma IA conectada aos seus dados responde sobre a Júlia: o que ela levantou no supino nas últimas seis semanas, qual ombro doeu em julho, quantas sessões ela fez no mês passado e o que a anamnese dela proíbe. É a diferença entre economizar digitação e economizar a leitura de doze telas de histórico.',
+          'Se você quer o comparativo de preços e recursos plataforma por plataforma, ele está em [os 7 melhores aplicativos para personal trainer em 2026](/blog/melhores-aplicativos-para-personal-trainer). Aqui o assunto é como decidir.',
+        ],
+      },
+      {
+        h2: 'Por que a lista de features de 2023 não decide mais nada',
+        paragraphs: [
+          'Prescrição de treino com séries e repetições, biblioteca de exercícios com vídeo, agenda com lembrete, avaliação física com gráfico, app para o aluno, controle de mensalidade. Três anos atrás essa lista separava as plataformas boas das ruins. Hoje ela é o piso: se um app não tem isso, ele não está na disputa.',
+          'Quando todo mundo tem as mesmas caixinhas marcadas, o comparativo por lista de recursos deixa de informar — e é exatamente por isso que as páginas de comparação do mercado se parecem tanto. O que sobrou de diferença real está em três lugares que quase nenhuma tabela mostra: quanto trabalho manual a plataforma tira de você por semana, o que ela faz com o histórico que já acumulou, e quanto ela vai custar quando a sua carteira dobrar.',
+          'Os oito critérios do fim deste artigo são construídos em cima disso. Antes deles, os dois que pesam mais.',
+        ],
+      },
+      {
+        h2: 'Critério nº 1: quanto tempo de digitação a plataforma devolve',
+        paragraphs: [
+          'Faça a conta com os seus números, porque ela é sempre pior do que a lembrança. Um treino de oito exercícios exige, para cada exercício, séries, repetições, carga prescrita, intervalo e observação — cinco campos. São 40 campos por sessão. Um ABC completo são 120. Vinte alunos com programa individualizado são 2.400 campos por ciclo, e se você renova o mesociclo a cada seis semanas, isso acontece oito vezes por ano.',
+          'Aqui vem a parte honesta, que a maioria do marketing de IA omite: template e rotina reutilizável já resolvem a maior parte disso, e toda plataforma decente tem os dois. Se os seus vinte alunos rodam três variações do mesmo ABC, você aplica a rotina a todos com poucos cliques e o problema acaba. Não precisa de IA nenhuma para isso, e quem vende IA como solução para esse caso está vendendo o que você já tem.',
+          'O trabalho que template não resolve é a individualização — e é aí que vai o tempo de verdade. É o aluno que precisa do mesmo ABC, mas sem exercício acima da linha do ombro. É a progressão de carga que depende do que ele levantou nas últimas quatro semanas, aluno por aluno. É o novo que chega com uma ficha em PDF do personal anterior e vinte exercícios para cadastrar do zero. Nenhum desses cabe num template, todos são digitação, e é essa fatia que a IA elimina.',
+          'Com o CoachPilot há dois caminhos para isso, e eles funcionam de formas diferentes. No caminho conectado, você instala o app do CoachPilot no ChatGPT (ou liga o Claude pelo conector) e pede na conversa: a IA lê os dados do aluno, propõe o programa e — se você autorizou escrita — grava direto na plataforma, com aviso no portal e botão de desfazer por sete dias. No caminho por prompt, sem conectar nada, você usa um prompt pronto na IA que preferir, ela devolve o arquivo do programa, você revisa e importa com um clique. O primeiro é mais rápido; o segundo não exige instalar nada. Os dois são gratuitos nos dois planos.',
+        ],
+      },
+      {
+        h2: 'Critério nº 2: a IA consegue ler o histórico completo antes de montar o treino?',
+        paragraphs: [
+          'Esse é o critério que menos aparece nas comparações e o que mais muda a qualidade do que você entrega. Todo personal sabe que o treino do próximo ciclo deveria ser decidido olhando o ciclo anterior inteiro. Quase ninguém faz — e não é por preguiça, é por custo de atenção. Reunir o quadro completo de um aluno significa abrir a anamnese, a última avaliação física, o histórico de sessões, a evolução de carga exercício por exercício, a percepção de esforço que ele registrou, os relatos de dor, a frequência do mês e as metas. São muitas telas para vinte, quarenta alunos, a cada seis semanas.',
+          'Quando a IA está conectada à sua conta, esse custo desaparece: ela lê tudo isso em um pedido e o que volta é uma leitura, não uma tela. "A Júlia estagnou no supino há cinco semanas e a percepção de esforço dela caiu — a carga está leve" é o tipo de conclusão que estava disponível no seu banco de dados desde sempre, mas que ninguém tinha tempo de ir buscar.',
+          'E há um detalhe técnico que decide se o treino gerado é aproveitável ou descartável: antes de montar qualquer coisa, a IA conectada consulta a biblioteca de exercícios da sua própria conta e as regras de prescrição da plataforma. Sem isso, qualquer IA inventa nome de exercício, unidade e formato, e o que ela devolve dá mais trabalho para corrigir do que para escrever. Lendo a sua biblioteca, ela devolve um programa com os seus exercícios e os seus vídeos, que entra no sistema sem retrabalho — e é isso que o aluno vê no app dele.',
+        ],
+      },
+      {
+        h2: 'Três momentos em que o histórico decide o treino',
+        paragraphs: [
+          'Menos abstrato: três situações da semana de qualquer personal em que ler o histórico completo muda a decisão, e não só a velocidade dela.',
+        ],
+        list: [
+          'Renovação de mesociclo. Em vez de repetir o ciclo anterior com 2,5 kg a mais em tudo, o ajuste sai da evolução real de cada exercício: onde houve progressão consistente a carga sobe, onde estagnou o estímulo muda, onde a percepção de esforço vive no teto o volume desce.',
+          'Aluno com dor. O relato de dor que ele registrou no app fica vinculado ao exercício em que apareceu. Pedir "adapta o treino do Pedro para a dor no ombro" tem contexto: qual movimento, quando começou, com que carga — e a restrição da anamnese continua valendo por cima de qualquer proposta.',
+          'Aluno que sumiu. Antes de mandar a mensagem de cobrança, saber que ele caiu de quatro para uma sessão por semana desde a mudança de horário muda a conversa: o problema é agenda, não motivação. Perguntar "quem reduziu a frequência no último mês?" devolve a lista inteira em uma linha.',
+        ],
+      },
+      {
+        h2: 'Os oito critérios que decidem em 2026',
+        paragraphs: [
+          'Use isto como checklist no teste grátis de qualquer plataforma, inclusive das que não são o CoachPilot. Cada critério vem com a pergunta que o testa de verdade — a que não dá para responder com material de vendas.',
+        ],
+        table: {
+          headers: ['Critério', 'A pergunta que testa', 'Por que decide'],
+          rows: [
+            ['Acesso da IA ao dado real', 'Consigo perguntar "quem não treina há 10 dias?" e receber a lista dos meus alunos?', 'Separa IA que gera texto de IA que trabalha na sua carteira'],
+            ['Prescrição a partir do histórico', 'A IA lê a evolução de carga e a anamnese antes de propor o programa?', 'É o que transforma treino plausível em treino individualizado'],
+            ['Digitação da individualização', 'Quantos campos eu preencho para adaptar um ABC a uma restrição de ombro?', 'É onde vai o tempo que template não devolve'],
+            ['Custo de crescer', 'Quanto custa quando eu dobrar a carteira?', 'Preço por faixa de alunos cresce junto com o seu sucesso'],
+            ['Migração sem perda', 'Consigo trazer a carteira e as fichas antigas sem redigitar?', 'É o que trava a troca de plataforma e mantém o personal na planilha'],
+            ['Experiência do aluno', 'O aluno instala fácil, vê o treino do dia e a evolução dele sozinho?', 'Retenção de aluno é receita; app ruim vira pergunta no seu WhatsApp'],
+            ['Limites explícitos da IA', 'O que a IA não pode fazer, e como eu desfaço o que ela fez?', 'Acesso à base de alunos sem limite declarado é risco, não recurso'],
+            ['Dado sensível e LGPD', 'O que os termos dizem sobre enviar anamnese e relato de dor para uma IA externa?', 'Dado de saúde exige consentimento específico do aluno'],
+          ],
+        },
+      },
+      {
+        h2: 'O custo de crescer é um critério, não um detalhe',
+        paragraphs: [
+          'Boa parte do mercado nacional cobra por faixa de alunos. Começa barato — dez, vinte reais para os primeiros alunos — e sobe a cada degrau, até passar de duzentos reais por mês nas faixas altas. O problema desse modelo é que ele cobra você por ter dado certo: cada aluno novo que você conquista encarece a ferramenta.',
+          'Preço fixo com alunos ilimitados resolve isso, e a conta a fazer não é a do mês que vem, é a do ano que vem com o dobro da carteira. Os valores atualizados de cada plataforma estão no [comparativo de apps](/blog/melhores-aplicativos-para-personal-trainer); os do CoachPilot, em [preços](/precos) — plano grátis de até 3 alunos sem prazo e Gestão Pro com alunos ilimitados por valor fixo, com a operação por IA incluída nos dois. Se você ainda está definindo a sua própria mensalidade, a [calculadora de quanto cobrar](/calculadoras/quanto-cobrar) parte dos seus custos, horas disponíveis e ocupação.',
+        ],
+      },
+      {
+        h2: 'Migrar sem perder o histórico',
+        paragraphs: [
+          'O motivo real pelo qual tanto personal continua na planilha não é gostar da planilha: é o medo de perder o que já está lá e a certeza de que vai redigitar tudo. É um medo justificado, e vale testar isso antes de escolher qualquer plataforma.',
+          'É outro ponto em que a IA muda a conta, pelo caminho por prompt. Você joga a planilha, o PDF ou até o print da ficha antiga na IA que preferir, usa o prompt pronto da plataforma, ela devolve o arquivo no formato do sistema e você importa com um clique — revisando antes. Se algum aluno vier com dado inconsistente, o erro volta como um relatório que você cola de novo na IA para ela mesma corrigir. Quem está saindo de planilha tem o roteiro completo em [planilha de treino ou sistema de gestão: quando migrar](/blog/planilha-de-treino-ou-sistema-de-gestao).',
+        ],
+      },
+      {
+        h2: 'O app do aluno continua sendo metade da decisão',
+        paragraphs: [
+          'Tudo o que foi dito até aqui é sobre o seu tempo. Mas a plataforma que você escolhe é a cara do seu serviço para quem paga por ele, e aluno que não consegue usar o app volta a te perguntar o treino no WhatsApp — o que anula a economia inteira.',
+          'Três coisas para testar no lugar do aluno, não no seu: quanto atrito existe para ele entrar (no CoachPilot o app do aluno é PWA, aberto por link e instalável na tela inicial, sem passar por loja de aplicativos — em troca, não é app nativo de loja, e isso é uma escolha com prós e contras), se ele consegue ver o treino do dia e a própria evolução sem perguntar nada, e se existe algum motivo para ele voltar quando a motivação cai. Ranking de frequência, conquistas e sequência de semanas treinadas parecem enfeite até você ver a diferença de aderência entre um aluno que vê a evolução dele e um que não vê. Detalhes em [gestão de alunos: guia completo](/blog/gestao-de-alunos-guia-completo).',
+        ],
+      },
+      {
+        h2: 'O que a IA não decide — e não é conservadorismo',
+        paragraphs: [
+          'Prescrição de exercício é ato profissional com responsabilidade técnica e registro no CREF. A IA analisa, propõe e — quando você pede — aplica o que você aprovou; o julgamento, a assinatura e a responsabilidade continuam suas. Restrições de anamnese e dores relatadas pelo aluno são invioláveis para ela, e nenhuma proposta passa por cima disso.',
+          'No CoachPilot, alguns limites não são configuráveis nem por você nem pela IA, de propósito: não existe excluir aluno nem apagar histórico, não existe mexer em plano, assinatura ou cobrança, e não existe alteração em massa — cada programa é aplicado a um aluno por vez, num pedido só. Toda alteração de treino avisa você no portal com o resumo do que mudou e pode ser desfeita por sete dias, você escolhe na autorização se a IA só consulta ou também altera treinos, cada conexão alcança apenas os dados da sua conta, e a revogação é imediata em Configurações → Conexões. Vale aplicar o mesmo escrutínio a qualquer plataforma: acesso à sua base de alunos sem limite declarado é risco, não recurso.',
+        ],
+      },
+      {
+        h2: 'A parte que quase ninguém escreve: LGPD e dado de saúde',
+        paragraphs: [
+          'Anamnese, avaliação física, foto comparativa e relato de dor são dados sensíveis de saúde pela LGPD. Consultá-los por meio de uma IA externa configura transferência internacional de dado sensível, e isso exige consentimento específico do aluno para essa finalidade — não basta o aceite genérico de termos de uso.',
+          'Não é detalhe burocrático nem ressalva para esconder: é a diferença entre usar a ferramenta bem e criar um passivo em nome próprio. No CoachPilot a hipótese está descrita nos [termos](/termos) e na [política de privacidade](/privacidade), e vale adequar o seu contrato de prestação de serviço. Quem não quiser essa transmissão simplesmente não conecta e segue usando o portal normalmente — a conexão é um caminho a mais, nunca um substituto obrigatório. Se a plataforma que você está avaliando não diz nada sobre isso, a pergunta é sua para fazer.',
+        ],
+      },
+      {
+        h2: 'Como decidir em sete dias',
+        paragraphs: [
+          'Teste grátis serve para responder perguntas, não para clicar em tudo. Um roteiro que cabe em uma semana e resolve a escolha:',
+        ],
+        list: [
+          'Dia 1 — cadastre três alunos reais, os mais diferentes entre si que você tiver. Aluno fictício esconde exatamente o atrito que você quer descobrir.',
+          'Dia 2 — monte um programa completo do jeito difícil, na mão, cronometrando. Esse número é a sua linha de base.',
+          'Dia 3 — refaça o mesmo programa pelo caminho de IA da plataforma. Compare o tempo e, mais importante, a qualidade: os exercícios são os da sua biblioteca ou nomes inventados?',
+          'Dia 4 — teste a individualização. Peça a adaptação para uma restrição real ("sem nada acima da linha do ombro") e veja se ela respeita.',
+          'Dia 5 — pergunte algo que você sabe de cor. "Quanto o João levantou no agachamento na última vez?" Se a resposta não bater com o seu registro, a IA não está lendo o seu dado.',
+          'Dia 6 — entre como aluno. Abra o app do aluno no celular de alguém que não é você e veja quantas perguntas surgem.',
+          'Dia 7 — faça a conta de doze meses com o número de alunos que você espera ter, não com o de hoje.',
+        ],
+      },
+      {
+        h2: 'Onde o CoachPilot se posiciona (com as ressalvas)',
+        paragraphs: [
+          'O CoachPilot é uma plataforma brasileira de gestão para personal trainers com alunos, treinos, agenda, avaliações físicas, financeiro por Pix e app do aluno — o piso da categoria, que todo mundo tem. O que ele tem de diferente, verificado em setembro de 2026, é o acesso da IA ao dado real: o CoachPilot é um app publicado e aprovado no diretório do ChatGPT, instalável em menos de um minuto, que funciona inclusive na conta gratuita e no aplicativo de celular. Por baixo, a tecnologia é um servidor MCP — padrão aberto —, então quem usa Claude chega ao mesmo lugar por um conector, e o Gemini tem hoje um caminho mais técnico. O comparativo dos três está em [Claude, ChatGPT ou Gemini para personal trainer](/blog/claude-chatgpt-ou-gemini-para-personal-trainer).',
+          'As ressalvas honestas: é uma plataforma mais nova, sem a base de avaliações e o volume de downloads dos líderes de mercado; o app do aluno é PWA e não app nativo de loja; não há integração com Apple Health, Strava ou similares; e a conta é de um personal por conta, sem painel multiusuário para equipe. Se o que você procura é a marca mais estabelecida do mercado ou app nativo nas lojas, o [comparativo de plataformas](/blog/melhores-aplicativos-para-personal-trainer) tem opções melhores para esse critério.',
+          'Se o que decide para você são os dois critérios deste artigo — devolver o tempo da digitação individualizada e prescrever lendo o histórico inteiro do aluno —, o caminho é [criar a conta grátis](/signup) e rodar o teste de sete dias acima com três alunos de verdade. Não precisa de cartão, e a operação por IA está incluída também no plano grátis. Para entender antes o que muda na prática, comece por [IA para personal trainer: o que realmente dá para automatizar](/blog/ia-para-personal-trainer-o-que-automatizar) ou pela página de [software para personal trainer](/software-para-personal-trainer).',
+        ],
+      },
+    ],
+    faqs: [
+      { q: 'Qual o melhor app para personal trainer em 2026?', a: 'Depende do que decide para você. Se o critério é marca estabelecida e biblioteca de vídeos, o MFIT é a referência do mercado; se é o maior plano grátis, a Tecnofit começa com 5 alunos. Se o critério é IA que lê os dados reais dos seus alunos e devolve o tempo da digitação individualizada, o CoachPilot é a plataforma nacional que oferece essa conexão em produção, verificado em setembro de 2026. O comparativo completo de preços e recursos está no artigo dos 7 melhores aplicativos.' },
+      { q: 'Qual o melhor app gratuito para personal trainer?', a: 'A Tecnofit tem o maior plano grátis (5 alunos). O CoachPilot oferece 3 alunos grátis sem prazo, com todos os recursos essenciais e com a operação por IA incluída. O MFIT oferece 1 aluno grátis. Para quem está começando, o plano grátis serve como teste real: cadastre alunos de verdade, não fictícios.' },
+      { q: 'Vale a pena usar IA para montar treino de aluno?', a: 'Para a parte operacional, sim: montar a estrutura, digitar séries e repetições, adaptar um programa a uma restrição e migrar fichas antigas são tarefas em que a IA economiza horas. Para a decisão técnica, não: prescrição é ato profissional com responsabilidade e registro no CREF. O ganho é de tempo, não de julgamento — e as restrições de anamnese continuam valendo por cima de qualquer proposta.' },
+      { q: 'Qual a diferença entre IA que gera treino e IA conectada ao sistema?', a: 'O gerador dentro do app preenche um formulário (objetivo, frequência, nível) e devolve um treino genérico plausível, sem saber quem é o aluno. A IA conectada lê o dado real da sua conta — anamnese, avaliações, sessões, evolução de carga, percepção de esforço, relatos de dor — e propõe a partir disso, usando os exercícios da sua própria biblioteca. São níveis diferentes, não concorrentes.' },
+      { q: 'Preciso pagar ChatGPT Plus para usar a IA na gestão dos alunos?', a: 'Não. O app do CoachPilot está no diretório público do ChatGPT e funciona também na conta gratuita, inclusive no aplicativo de celular. No Claude, o conector personalizado funciona até no plano grátis, limitado a uma conexão. Requisitos de plano são dos provedores de IA e mudam — dado verificado em setembro de 2026.' },
+      { q: 'Quanto tempo dá para economizar com IA na prescrição?', a: 'Faça a conta com os seus números em vez de acreditar em promessa: um treino de 8 exercícios tem cerca de 40 campos para preencher, um ABC completo tem 120, e vinte alunos com programa individualizado somam 2.400 campos por ciclo. Template e rotina reutilizável já cortam a parte repetida — o que a IA elimina é a individualização, que é justamente o que não cabe em template.' },
+      { q: 'É seguro dar acesso dos meus dados de alunos a uma IA?', a: 'Depende de como o acesso foi desenhado. Procure: permissão escolhida por você (só consultar ou também alterar), acesso restrito à sua conta, notificação a cada alteração, opção de desfazer, revogação imediata e limites declarados sobre o que a IA não pode fazer. E leia o que os termos dizem sobre dado de saúde: anamnese, avaliação e relato de dor são dados sensíveis pela LGPD e exigem consentimento específico do aluno.' },
+      { q: 'Consigo migrar minha planilha de treinos para um app sem redigitar tudo?', a: 'Sim, e vale testar isso no período grátis antes de escolher a plataforma. No CoachPilot você joga a planilha, o PDF ou o print da ficha antiga na IA que já usa, aplica o prompt pronto da plataforma, revisa o resultado e importa com um clique. Se algum dado vier inconsistente, o erro volta como relatório para colar de novo na IA e ela mesma corrigir.' },
+      { q: 'O app do aluno precisa ser baixado da App Store ou Google Play?', a: 'No CoachPilot, não: o app do aluno é um PWA aberto por link e instalável na tela inicial do celular, o que reduz o atrito de entrada. A contrapartida honesta é que não é um app nativo de loja — se ter presença nas lojas é um critério para você, outras plataformas atendem melhor esse ponto.' },
+    ],
+    related: [
+      { label: 'Os 7 melhores aplicativos para personal trainer', to: '/blog/melhores-aplicativos-para-personal-trainer' },
+      { label: 'IA para personal trainer: o que automatizar', to: '/blog/ia-para-personal-trainer-o-que-automatizar' },
+      { label: 'App de personal trainer dentro do ChatGPT', to: '/blog/app-de-personal-trainer-para-chatgpt' },
+      { label: 'Software para personal trainer', to: '/software-para-personal-trainer' },
+    ],
+  },
+  {
     slug: 'app-de-personal-trainer-para-chatgpt',
     title: 'App de personal trainer para ChatGPT: o CoachPilot foi aprovado pela OpenAI',
     description: 'O CoachPilot é o primeiro sistema de gestão para personal trainer com plugin publicado no diretório do ChatGPT. Instale em três cliques, converse com os dados reais dos seus alunos e aplique treinos sem sair do chat.',
@@ -771,7 +921,7 @@ export const BLOG_POSTS = [
     description: 'Comparamos os principais apps para personal trainer do Brasil em 2026: MFIT, CoachPilot, Tecnofit, Nexur e mais — preços, IA, WhatsApp e gamificação.',
     h1: 'Os 7 melhores aplicativos para personal trainer em 2026',
     datePublished: '2026-07-10',
-    dateModified: '2026-08-22',
+    dateModified: '2026-09-04',
     readingMinutes: 9,
     intro: 'Escolher um aplicativo para personal trainer virou uma decisão de negócio: o app certo economiza horas de montagem de treino, reduz faltas e ajuda a reter alunos. Comparamos as principais opções disponíveis no Brasil em 2026 — com preços e recursos verificados em julho de 2026 nos sites oficiais (valores sujeitos a alteração).',
     sections: [
@@ -780,6 +930,7 @@ export const BLOG_POSTS = [
         paragraphs: [
           'Antes da lista, vale alinhar os critérios. Um bom app para personal trainer precisa resolver cinco frentes: prescrição de treinos (com templates e progressão), experiência do aluno (app próprio, de preferência sem fricção de instalação), avaliações físicas com evolução visível, agenda com lembretes e controle financeiro. Recursos de IA e comunicação por WhatsApp deixaram de ser luxo e passaram a diferenciar as plataformas em 2026.',
           'Outro ponto decisivo é o modelo de cobrança: algumas plataformas cobram por faixa de alunos (o custo sobe conforme você cresce), outras cobram valor fixo com alunos ilimitados. Para quem está escalando a carteira, essa diferença muda a conta no fim do ano.',
+          'Se você quer o roteiro de decisão em vez do comparativo — quais critérios pesam mais em 2026 e como testar cada um no período grátis —, ele está em [melhor app para personal trainer em 2026: o critério que mudou](/blog/melhor-app-para-personal-trainer-2026). Esta página é a lista; aquela é a escolha.',
         ],
       },
       {
@@ -860,6 +1011,7 @@ export const BLOG_POSTS = [
       { q: 'Quanto custa um app para personal trainer?', a: 'Em 2026, os planos nacionais vão de R$10,90 a R$249,90/mês, dependendo do número de alunos. Plataformas com alunos ilimitados custam em torno de R$39,90/mês.' },
     ],
     related: [
+      { label: 'Melhor app para personal trainer em 2026: como decidir', to: '/blog/melhor-app-para-personal-trainer-2026' },
       { label: 'CoachPilot vs MFIT: comparativo completo', to: '/blog/coachpilot-vs-mfit' },
       { label: 'IA para personal trainer: o que automatizar', to: '/blog/ia-para-personal-trainer-o-que-automatizar' },
       { label: 'Software para personal trainer', to: '/software-para-personal-trainer' },
