@@ -1,14 +1,16 @@
 import { createPortal } from 'react-dom'
-import { X, Timer, Play, Pause } from 'lucide-react'
+import { X, Timer, Play, Pause, RotateCcw } from 'lucide-react'
 import { useCronometro, fmtCrono } from './cronometroContext'
 
 /**
  * Pílula flutuante do cronômetro (estado minimizado). Renderizada pelo provider sobre todas as
  * telas/abas — continua contando enquanto o aluno registra carga ou navega. Toque no corpo para
- * expandir; botão ▸/❚❚ para iniciar/pausar; ✕ para encerrar.
+ * expandir; botão ▸/❚❚ para iniciar/pausar; ✕ para encerrar. Pausado ou concluído aparece o ↺,
+ * que volta ao tempo cheio (e silencia o alarme) sem precisar fechar nem abrir em tela cheia —
+ * daí o play repetir o intervalo em um toque.
  */
 export function CronometroPill() {
-  const { displayMs, running, done, modo, label, expandir, fechar, iniciar, pausar } = useCronometro()
+  const { displayMs, running, done, modo, label, expandir, fechar, iniciar, pausar, resetar } = useCronometro()
 
   const alerta = displayMs <= 5000 && modo === 'regressivo' && running
   const timeColor = done ? 'text-energy' : alerta ? 'text-warning' : 'text-text'
@@ -30,11 +32,23 @@ export function CronometroPill() {
           aria-label="Expandir cronômetro"
         >
           <Timer size={16} className={done ? 'text-energy' : 'text-energy shrink-0'} />
-          <span className={`font-display tabular-nums text-lg leading-none ${timeColor}`}>
+          <span className={`font-display tabular-nums text-lg leading-none shrink-0 ${timeColor}`}>
             {fmtCrono(displayMs)}
           </span>
           {label && <span className="text-xs text-text-muted truncate max-w-[9rem]">{label}</span>}
         </button>
+        {!running && (
+          <button
+            type="button"
+            onClick={resetar}
+            aria-label="Resetar cronômetro"
+            className={`p-1.5 rounded-full hover:bg-white/10 ${
+              done ? 'text-energy' : 'text-text-secondary hover:text-text'
+            }`}
+          >
+            <RotateCcw size={18} />
+          </button>
+        )}
         {!done && (
           <button
             type="button"
