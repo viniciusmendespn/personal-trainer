@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Shield, LogIn, Search, Gift, Megaphone, Check, Trash2, BarChart3, MessageSquareText, Archive, Users, UserPlus, CalendarDays } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -48,8 +48,11 @@ export function AdminPage() {
 
 const DIAS_MS = 86_400_000
 const BARRA_AREA_PX = 96   // altura útil em px — % dentro de `items-end` colapsa (ver historico.tsx)
+const LABEL_PX = 44        // espaço mínimo por legenda; define quantas cabem na largura atual
 
-type Balde = { key: string; label: string; mostrarLabel: boolean; titulo: string; valor: number }
+// `key` é sempre YYYY-MM-DD (dia) ou YYYY-MM (mês) — `key.slice(0, 7)` identifica o mês em ambos,
+// que é como o gráfico decide entre a legenda curta ("3") e a longa ("3/set", na virada do mês).
+type Balde = { key: string; curto: string; longo: string; titulo: string; valor: number }
 
 /** Chave do dia no fuso local (o dia é o do admin, não UTC). */
 function chaveDia(d: Date): string {
@@ -72,6 +75,8 @@ function contarPor(personais: Personal[], chave: (d: Date) => string): Map<strin
   return m
 }
 
+const MESES_CURTOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+
 function baldesDia(personais: Personal[], n: number): Balde[] {
   const hoje = new Date()
   hoje.setHours(0, 0, 0, 0)
@@ -82,9 +87,11 @@ function baldesDia(personais: Personal[], n: number): Balde[] {
     const key = chaveDia(d)
     return {
       key,
-      label: String(d.getDate()),
-      mostrarLabel: i === n - 1 || d.getDate() % 5 === 0,
-      titulo: d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }),
+      curto: String(d.getDate()),
+      longo: `${d.getDate()}/${MESES_CURTOS[d.getMonth()]}`,
+      titulo: i === n - 1
+        ? 'hoje'
+        : d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }),
       valor: contagem.get(key) ?? 0,
     }
   })
@@ -96,32 +103,108 @@ function baldesMes(personais: Personal[], n: number): Balde[] {
   return Array.from({ length: n }, (_, i) => {
     const d = new Date(hoje.getFullYear(), hoje.getMonth() - (n - 1 - i), 1)
     const key = chaveMes(d)
-    return { key, label: mesLabel(key), mostrarLabel: true, titulo: mesLabel(key), valor: contagem.get(key) ?? 0 }
+    const label = mesLabel(key)
+    return { key, curto: label, longo: label, titulo: label, valor: contagem.get(key) ?? 0 }
   })
 }
 
+/** Largura do elemento, para decidir quantas legendas cabem sem sobrepor. */
+function useLargura<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null)
+  const [largura, setLargura] = useState(0)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    setLargura(el.getBoundingClientRect().width)
+    const ro = new ResizeObserver(([entry]) => setLargura(entry.contentRect.width))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return [ref, largura] as const
+}
+
 function BarrasCadastros({ baldes }: { baldes: Balde[] }) {
+  const [ref, largura] = useLargura<HTMLDivElement>()
+  const [ativoKey, setAtivoKey] = useState<string | null>(null)
+
   const max = Math.max(...baldes.map((b) => b.valor), 1)
+  const ativo = baldes.find((b) => b.key === ativoKey) ?? null
+  const porBarra = largura > 0 ? largura / baldes.length : 0
+
+  // Legendas espaçadas por igual, ancoradas no último balde (hoje / mês atual): o passo cresce
+  // conforme a largura encolhe, então no celular sobram poucas — mas legíveis e regulares.
+  const rotulos = useMemo(() => {
+    const cabem = Math.max(2, Math.floor((largura || 320) / LABEL_PX))
+    const passo = Math.max(1, Math.ceil(baldes.length / cabem))
+    const mapa = new Map<number, string>()
+    let mesAnterior: string | null = null
+    for (let i = 0; i < baldes.length; i++) {
+      if ((baldes.length - 1 - i) % passo !== 0) continue
+      const mes = baldes[i].key.slice(0, 7)
+      mapa.set(i, mesAnterior === null || mes !== mesAnterior ? baldes[i].longo : baldes[i].curto)
+      mesAnterior = mes
+    }
+    return mapa
+  }, [baldes, largura])
+
   return (
-    <div className="flex items-end gap-[3px] h-36">
-      {baldes.map((b) => (
-        <div key={b.key} className="flex-1 flex flex-col items-center gap-1 min-w-0">
-          <span className="text-[9px] leading-none text-text-secondary font-medium">
-            {b.valor > 0 ? b.valor : ''}
-          </span>
-          <div
-            className="w-full rounded-t-md bg-accent transition-all"
-            style={{
-              height: b.valor > 0 ? `${Math.max(Math.round((b.valor / max) * BARRA_AREA_PX), 6)}px` : '2px',
-              opacity: b.valor > 0 ? 1 : 0.15,
-            }}
-            title={`${b.titulo}: ${b.valor} cadastro${b.valor === 1 ? '' : 's'}`}
-          />
-          <span className="text-[9px] leading-none text-text-muted truncate max-w-full">
-            {b.mostrarLabel ? b.label : ''}
-          </span>
-        </div>
-      ))}
+    <div>
+      {/* leitura do balde sob o cursor/toque — no celular o `title` nativo nunca aparece */}
+      <div className="h-4 mb-1.5 text-[11px] leading-4 truncate">
+        {ativo ? (
+          <>
+            <span className="font-semibold text-text">{ativo.titulo}</span>
+            <span className="text-text-secondary">
+              {' · '}{ativo.valor} cadastro{ativo.valor === 1 ? '' : 's'}
+            </span>
+          </>
+        ) : (
+          <span className="text-text-muted">Toque numa barra para ver a data</span>
+        )}
+      </div>
+
+      <div
+        ref={ref}
+        className="flex items-end gap-[2px] sm:gap-[3px] h-32 border-b border-border"
+        onPointerLeave={() => setAtivoKey(null)}
+      >
+        {baldes.map((b, i) => {
+          const rotulo = rotulos.get(i)
+          const primeiro = i === 0
+          const ultimo = i === baldes.length - 1
+          return (
+            <button
+              key={b.key}
+              type="button"
+              onPointerEnter={() => setAtivoKey(b.key)}
+              onClick={() => setAtivoKey((k) => (k === b.key ? null : b.key))}
+              aria-label={`${b.titulo}: ${b.valor} cadastro${b.valor === 1 ? '' : 's'}`}
+              className="relative flex-1 min-w-0 h-full flex flex-col items-center justify-end gap-1"
+            >
+              <span className="text-[9px] leading-none text-text-secondary font-medium">
+                {b.valor > 0 && porBarra >= 13 ? b.valor : ''}
+              </span>
+              <div
+                className="w-full rounded-t-md bg-accent transition-all"
+                style={{
+                  height: b.valor > 0 ? `${Math.max(Math.round((b.valor / max) * BARRA_AREA_PX), 6)}px` : '2px',
+                  opacity: b.valor > 0 ? (ativoKey && ativoKey !== b.key ? 0.5 : 1) : 0.15,
+                }}
+              />
+              {rotulo && (
+                <span
+                  className={`absolute top-full mt-1.5 whitespace-nowrap text-[10px] leading-none ${ativoKey === b.key ? 'text-text' : 'text-text-muted'} ${
+                    primeiro ? 'left-0' : ultimo ? 'right-0' : 'left-1/2 -translate-x-1/2'
+                  }`}
+                >
+                  {rotulo}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+      <div className="h-5" aria-hidden />{/* espaço das legendas, que são absolutas */}
     </div>
   )
 }
