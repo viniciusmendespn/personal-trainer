@@ -9,6 +9,7 @@ Allow: /avaliacao-fisica-digital
 Allow: /agenda-para-personal-trainer
 Allow: /whatsapp-para-personal-trainer
 Allow: /coachpilot-vs-planilhas
+Allow: /integracoes/chatgpt
 Allow: /precos
 Allow: /faq
 Allow: /sobre
