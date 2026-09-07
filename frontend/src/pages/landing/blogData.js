@@ -7,12 +7,395 @@
 
 export const BLOG_POSTS = [
   {
+    slug: 'melhores-apps-personal-trainer-com-ia',
+    title: 'Melhores Apps para Personal Trainer com IA em 2026: Comparativo',
+    description: 'Comparativo dos apps para personal trainer com IA em 2026: MFIT, Tecnofit, TreinoAI, Nexur e CoachPilot. Quatro níveis de IA, o que cada plataforma realmente entrega e quais delas a IA consegue ler e operar de verdade.',
+    h1: 'Os melhores apps para personal trainer com IA em 2026',
+    datePublished: '2026-09-07',
+    dateModified: '2026-09-07',
+    readingMinutes: 11,
+    intro: 'Existem tipos muito diferentes de IA para personal trainer, e o mesmo rótulo cobre todos eles. Algumas plataformas usam IA só para gerar uma ficha de treino a partir de um formulário; outras permitem conectar uma IA externa aos dados reais dos alunos. Entre as plataformas brasileiras analisadas em setembro de 2026, o CoachPilot se diferencia por ter um plugin publicado no Diretório de Plugins do ChatGPT, o que permite consultar dados autorizados da carteira e operar treinos pela conversa. Este comparativo separa os quatro níveis de IA, mostra em qual deles cada plataforma está e explica como testar isso antes de assinar.',
+    sections: [
+      {
+        h2: 'Qual o melhor app para personal trainer com IA?',
+        paragraphs: [
+          'A resposta depende do nível de IA que você precisa, e a pergunta certa não é "tem IA?" — hoje quase todas têm — mas "a IA consegue ler os meus dados, e consegue gravar no sistema?". Essas duas perguntas separam as plataformas em quatro grupos bem diferentes.',
+          'Para gerar treino dentro do app a partir de um formulário ou de uma descrição em texto, MFIT Personal e TreinoAI atendem, e o MFIT é o mais maduro dos dois. Para conectar o ChatGPT, o Claude ou o Gemini que você já usa aos dados reais dos seus alunos e operar por conversa, o CoachPilot é a plataforma nacional que oferece isso em produção, verificado em setembro de 2026. Tecnofit Personal e Nexur não têm recursos de IA no produto para personal.',
+          'O resto deste artigo é o critério por trás dessa resposta — porque a mesma tabela daqui a seis meses pode ser outra, e vale saber avaliar sozinho.',
+        ],
+      },
+      {
+        h2: 'Comparativo de IA por plataforma (setembro/2026)',
+        paragraphs: [
+          'Dados verificados em setembro de 2026 nos canais oficiais de cada plataforma — blog, central de ajuda e páginas de planos. Recursos mudam: se alguma delas lançar algo equivalente, esta tabela muda junto.',
+        ],
+        table: {
+          headers: ['Plataforma', 'Tem IA', 'Nível', 'Lê histórico real', 'Integra com ChatGPT', 'Plugin no diretório', 'Grava treino'],
+          rows: [
+            ['CoachPilot', 'Sim', 'Nível 4', 'Sim', 'Sim', 'Sim', 'Sim, com desfazer'],
+            ['MFIT Personal', 'Sim (MFIT IA)', 'Nível 2', 'Não', 'Não', 'Não', 'Sim, dentro do app'],
+            ['TreinoAI', 'Sim', 'Nível 2', 'Não', 'Não', 'Não', 'Sim, dentro do app'],
+            ['Tecnofit Personal', 'Não', '—', 'Não', 'Não', 'Não', 'Não'],
+            ['Nexur', 'Não', '—', 'Não', 'Não', 'Não', 'Não'],
+            ['Trainerize / Everfit', 'Sim (AI builder)', 'Nível 2', 'Não', 'Não', 'Não', 'Sim, dentro do app'],
+          ],
+        },
+      },
+      {
+        h2: 'Os quatro níveis de IA para personal trainer',
+        paragraphs: [
+          'Esta classificação é nossa, mas ela descreve o mercado como ele está — e é útil justamente porque os níveis não competem entre si: cada um resolve um problema diferente, e é possível usar dois ao mesmo tempo.',
+        ],
+      },
+      {
+        h2: 'Nível 1 — IA genérica',
+        paragraphs: [
+          'O personal abre o ChatGPT, o Claude ou o Gemini numa aba, descreve o aluno e recebe texto. Não custa nada além do que ele já paga (ou nada, nas versões gratuitas) e funciona bem para o que a IA faz melhor: estruturar e redigir.',
+          'O limite é operacional. A IA não sabe quem é o aluno, então cada conversa recomeça do zero, e o resultado é texto que alguém precisa transportar para o sistema, exercício por exercício. É produtividade de redação, não de gestão.',
+        ],
+      },
+      {
+        h2: 'Nível 2 — Gerador de treino dentro do sistema',
+        paragraphs: [
+          'A plataforma tem um botão "gerar treino com IA": você preenche objetivo, nível e frequência — ou descreve em texto — e recebe uma ficha já no formato do sistema, sem transporte manual. É onde estão MFIT, TreinoAI, Trainerize e Everfit.',
+          'O ganho real é economizar digitação em treino padrão. As limitações são de escopo: costuma ser um treino por vez, dentro de uma tela específica; não dá para perguntar "quem da minha carteira precisa de ajuste?"; e o custo do modelo está embutido na mensalidade, então quem não usa também paga.',
+        ],
+      },
+      {
+        h2: 'Nível 3 — IA conectada à gestão',
+        paragraphs: [
+          'Aqui a lógica se inverte: em vez de a plataforma ter uma IA dentro dela, a sua IA passa a ter acesso autorizado à plataforma. Ela consulta dado real — alunos, histórico de sessões, cargas, avaliações, anamnese, frequência, treinos vigentes — e responde a partir disso.',
+          'A diferença prática aparece na qualidade da resposta. "Monte um treino de hipertrofia para mulher de 34 anos" produz algo plausível que você mesmo escreveria em cinco minutos. "Como está a evolução do supino da Júlia nas últimas seis semanas, e o que a anamnese dela restringe?" produz uma leitura que estava no seu banco de dados desde sempre, e que ninguém tinha tempo de ir buscar.',
+        ],
+      },
+      {
+        h2: 'Nível 4 — IA conectada com ações',
+        paragraphs: [
+          'O nível 4 é o nível 3 mais a capacidade de executar ações autorizadas: criar e alterar treino direto no sistema, a partir da conversa. É a diferença entre a IA que informa e a IA que trabalha.',
+          'É também o nível que exige mais cuidado de desenho, e vale exigir isso de quem oferece: permissão escolhida pelo personal (só consultar, ou também alterar), acesso restrito à própria conta, notificação a cada alteração, desfazer, revogação imediata e uma lista explícita do que a IA não pode fazer. Acesso à base de alunos sem limite declarado é risco, não recurso.',
+          'Na verificação de setembro de 2026, o CoachPilot é a plataforma nacional de gestão para personal trainer que opera nesse nível, pelo [plugin publicado no Diretório de Plugins do ChatGPT](/blog/app-de-personal-trainer-para-chatgpt) e, por MCP, também no Claude e no Gemini.',
+        ],
+      },
+      {
+        h2: 'Existe app de personal trainer dentro do ChatGPT?',
+        paragraphs: [
+          'Sim. Desde agosto de 2026 o CoachPilot está publicado no Diretório de Plugins do ChatGPT: você busca por "coachpilot", clica no + e autoriza com a sua conta CoachPilot. O plugin inclui o app que conecta a conversa aos dados e ações autorizadas da conta.',
+          'Duas notas de terminologia, porque elas confundem a busca. Em julho de 2026 a OpenAI migrou o antigo diretório de apps para o Diretório de Plugins, empacotando os apps existentes em plugins — por isso "plugin para personal trainer" e "app de personal trainer no ChatGPT" apontam para a mesma coisa. E o diretório está disponível em todos os planos do ChatGPT, inclusive o gratuito, então não é preciso assinar o Plus para instalar.',
+          'O passo a passo com as telas está em [como instalar o CoachPilot no ChatGPT](/blog/como-instalar-coachpilot-no-chatgpt).',
+        ],
+      },
+      {
+        h2: 'Plataforma por plataforma',
+        paragraphs: [
+          'O que cada uma entrega hoje no critério de IA, com o que foi possível verificar em fontes oficiais.',
+        ],
+        list: [
+          'CoachPilot — nível 4. Plugin no Diretório de Plugins do ChatGPT desde agosto de 2026; a IA lê a carteira real e, com escrita autorizada, aplica programas de treino com notificação e desfazer por 7 dias. Também oferece o nível 1 estruturado: prompts prontos que geram o pacote no formato de importação, para quem prefere não conectar nada. Gratuito nos dois planos, inclusive no grátis de 3 alunos. Ressalvas: plataforma mais nova, sem a base de avaliações dos líderes, e o app do aluno é PWA, não app nativo de loja.',
+          'MFIT Personal — nível 2. A MFIT IA gera treino dentro do aplicativo a partir de uma descrição em texto, e o blog oficial descreve as melhorias de 2026 nesse escopo (melhor compreensão de descrições curtas, mais variação de exercícios). Não há menção a ChatGPT, plugin no diretório ou MCP nos canais oficiais. É a plataforma com maior base instalada e biblioteca de vídeos do mercado.',
+          'TreinoAI — nível 2. Aposta na geração de treino por IA dentro da própria plataforma, com preço por faixa de alunos. Boa porta de entrada para quem quer testar prescrição assistida, com a ressalva de que o custo escala com a carteira.',
+          'Tecnofit Personal — sem IA no produto para personal. A IA da Tecnofit existe no sistema de academias, que é outro produto e outra faixa de preço. Em compensação, tem o maior plano gratuito da lista: 10 alunos ativos no Starter, verificado na central de ajuda oficial em setembro de 2026.',
+          'Nexur — sem IA. Cobra por faixa de alunos, de R$19,90 para 9 alunos a R$249,90 para 250.',
+          'Trainerize e Everfit — nível 2, internacionais. Têm AI builders maduros, mas cobram em dólar, não têm painel em português, Pix nem WhatsApp. Para quem atende alunos brasileiros, a barreira costuma pesar mais que os recursos.',
+        ],
+      },
+      {
+        h2: 'Qual a diferença entre IA que gera treino e IA conectada aos dados?',
+        paragraphs: [
+          'É a diferença entre economizar digitação e economizar leitura de histórico — e a segunda é a que muda o que você entrega ao aluno.',
+          'O gerador não sabe quem é o aluno: ele preenche um formulário. A IA conectada lê anamnese, avaliações, sessões, evolução de carga por exercício, relatos de dor e frequência antes de propor qualquer coisa. Tem ainda um detalhe técnico que decide se o treino gerado é aproveitável: a IA conectada consulta a biblioteca de exercícios da sua própria conta e as regras de prescrição da plataforma antes de montar. Sem isso, qualquer IA inventa nome de exercício, unidade e formato — e o resultado dá mais trabalho para corrigir do que para escrever do zero.',
+        ],
+      },
+      {
+        h2: 'Como testar isso no plano grátis, em cinco minutos',
+        paragraphs: [
+          'Não acredite em nenhuma tabela, inclusive nesta. Três testes que qualquer plataforma responde em minutos e que separam marketing de funcionalidade:',
+        ],
+        list: [
+          'Pergunte algo que você sabe de cor. "Quanto o João levantou no agachamento na última vez?" Se a resposta não bater com o seu registro, a IA não está lendo o seu dado — está inventando.',
+          'Peça uma leitura de carteira. "Quem não treina há mais de 10 dias?" Gerador de treino não responde a isso; IA conectada responde com a lista.',
+          'Peça uma adaptação com restrição real. "Adapta o treino do Pedro sem nada acima da linha do ombro." Veja se ela respeita a restrição e se os exercícios saem da sua biblioteca ou de nomes inventados.',
+        ],
+      },
+      {
+        h2: 'O que a IA não decide, em nenhum nível',
+        paragraphs: [
+          'Prescrição de exercício é ato profissional com responsabilidade técnica e registro no CREF. A IA analisa, propõe e — quando você aprova — aplica; o julgamento e a assinatura continuam seus. Plataforma que promete "IA que prescreve sozinha" está vendendo um risco que sobra para o profissional.',
+          'E há a camada legal que quase ninguém no mercado menciona: anamnese, avaliação física, foto de evolução e relato de dor são dados pessoais sensíveis de saúde pela LGPD. Consultá-los por uma IA externa configura transferência internacional de dado sensível e exige consentimento específico do aluno para essa finalidade — não basta o aceite genérico de termos de uso. O tratamento completo do assunto está em [ChatGPT e dados de alunos: o que o personal precisa saber](/blog/chatgpt-dados-alunos-personal-trainer-seguranca).',
+        ],
+      },
+      {
+        h2: 'Como escolher',
+        paragraphs: [
+          'Se o que você quer é economizar digitação em treinos parecidos e prefere não conectar nada, um gerador de nível 2 resolve — e o MFIT é o mais maduro deles no Brasil. Se o que você quer é o maior plano gratuito para começar, o Tecnofit Personal tem 10 alunos ativos no Starter, sem IA.',
+          'Se o que decide para você é a IA ler o histórico completo do aluno antes de propor o treino e gravar o resultado no sistema sem redigitação, o caminho é uma plataforma de nível 4. Dá para testar isso [de graça, com até 3 alunos](/precos) no CoachPilot, sem cartão, instalando o plugin no ChatGPT que você já usa — inclusive na conta gratuita dele.',
+          'Se o seu recorte é mais amplo do que IA — preço, agenda, avaliação física, app do aluno, financeiro —, o comparativo geral está em [os 7 melhores aplicativos para personal trainer em 2026](/blog/melhores-aplicativos-para-personal-trainer), e o roteiro de decisão em [melhor app para personal trainer em 2026](/blog/melhor-app-para-personal-trainer-2026).',
+        ],
+      },
+    ],
+    faqs: [
+      { q: 'Qual o melhor app para personal trainer com IA?', a: 'Depende do nível de IA que você precisa. Para gerar treino dentro do app, MFIT Personal e TreinoAI atendem. Para conectar o ChatGPT, o Claude ou o Gemini aos dados reais dos seus alunos e operar por conversa, o CoachPilot é a plataforma nacional que oferece isso em produção, com plugin publicado no Diretório de Plugins do ChatGPT — verificado em setembro de 2026.' },
+      { q: 'Existe app para personal trainer dentro do ChatGPT?', a: 'Sim. O CoachPilot é um plugin para personal trainers publicado no Diretório de Plugins do ChatGPT desde agosto de 2026. Você busca por "coachpilot" no diretório, clica no + e autoriza com a sua conta CoachPilot.' },
+      { q: 'Qual app para personal trainer integra com ChatGPT?', a: 'Na verificação de setembro de 2026, o CoachPilot. MFIT, Tecnofit Personal, Nexur e TreinoAI não têm plugin no diretório do ChatGPT nem conexão equivalente segundo os canais oficiais de cada um.' },
+      { q: 'Qual a diferença entre IA que gera treino e IA conectada aos dados?', a: 'O gerador preenche um formulário e devolve um treino genérico plausível, sem saber quem é o aluno. A IA conectada lê o dado real da sua conta — anamnese, avaliações, sessões, evolução de carga, relatos de dor — e propõe a partir disso, usando os exercícios da sua própria biblioteca. São níveis diferentes, não concorrentes.' },
+      { q: 'Preciso pagar ChatGPT Plus para usar IA com meus alunos?', a: 'Não. O Diretório de Plugins do ChatGPT está disponível em todos os planos, inclusive o gratuito (verificado em setembro de 2026). No Claude, o conector personalizado funciona até no plano grátis, limitado a um. Requisitos de plano são dos provedores de IA e mudam.' },
+      { q: 'O MFIT tem integração com ChatGPT?', a: 'Na verificação de setembro de 2026 no blog oficial do MFIT Personal, não. A MFIT IA é um gerador de treino que roda dentro do próprio aplicativo, sem acesso à carteira por uma IA externa.' },
+      { q: 'A IA consegue montar e alterar treino sozinha?', a: 'Ela monta e, com permissão de escrita autorizada, aplica — mas sempre a partir da sua aprovação na conversa, um aluno por vez, com notificação no portal e desfazer por 7 dias. A prescrição continua sendo ato profissional com responsabilidade técnica e registro no CREF.' },
+      { q: 'Qual o melhor app gratuito para personal trainer com IA?', a: 'O CoachPilot é o único da lista cujo plano gratuito inclui a operação por IA completa, incluindo o plugin do ChatGPT — são 3 alunos, sem prazo e sem cartão. O Tecnofit Personal tem o maior plano gratuito em número de alunos (10 ativos no Starter), mas sem recursos de IA no produto para personal.' },
+    ],
+    related: [
+      { label: 'Como instalar o CoachPilot no ChatGPT', to: '/blog/como-instalar-coachpilot-no-chatgpt' },
+      { label: 'ChatGPT para personal trainer', to: '/chatgpt-para-personal-trainer' },
+      { label: 'IA para personal trainer', to: '/ia-para-personal-trainer' },
+      { label: 'Os 7 melhores aplicativos para personal trainer', to: '/blog/melhores-aplicativos-para-personal-trainer' },
+      { label: 'O MFIT tem integração com ChatGPT?', to: '/blog/mfit-tem-integracao-com-chatgpt' },
+    ],
+  },
+  {
+    slug: 'como-instalar-coachpilot-no-chatgpt',
+    title: 'Como instalar o plugin CoachPilot no ChatGPT (passo a passo 2026)',
+    description: 'Passo a passo para instalar o plugin CoachPilot no Diretório de Plugins do ChatGPT: pré-requisitos, busca, autorização, permissões, primeiro comando e solução de problemas. Funciona na conta gratuita.',
+    h1: 'Como instalar o CoachPilot no ChatGPT',
+    datePublished: '2026-09-07',
+    dateModified: '2026-09-07',
+    readingMinutes: 7,
+    intro: 'A instalação leva menos de um minuto e tem nove etapas, contando o primeiro teste. Você precisa de uma conta CoachPilot (o plano grátis de até 3 alunos serve) e de qualquer conta de ChatGPT, inclusive a gratuita — o Diretório de Plugins está disponível em todos os planos, verificado em setembro de 2026. Este guia cobre a instalação, a escolha das permissões, o primeiro comando e o que fazer quando algo não aparece.',
+    sections: [
+      {
+        h2: 'O que é o plugin CoachPilot',
+        paragraphs: [
+          'O CoachPilot é um plugin para personal trainers publicado no Diretório de Plugins do ChatGPT. O plugin inclui um app que conecta a conversa aos dados e ações autorizadas da sua conta CoachPilot: com ele instalado, você pergunta sobre a sua carteira em português e a resposta vem do seu dado real — e, se você autorizar a escrita, pede alterações de treino que são aplicadas na plataforma.',
+          'Por baixo, a tecnologia é MCP (Model Context Protocol), um padrão aberto. É por isso que a mesma conexão funciona também no Claude e no Gemini, por um caminho um pouco diferente — coberto no final deste guia.',
+        ],
+      },
+      {
+        h2: 'Pré-requisitos',
+        paragraphs: ['São dois, e o segundo costuma surpreender quem já tentou conectar IA a um sistema antes:'],
+        list: [
+          'Uma conta CoachPilot. O [plano grátis de até 3 alunos](/precos) serve para o fluxo inteiro, sem cartão e sem prazo.',
+          'Uma conta de ChatGPT. A gratuita funciona: o Diretório de Plugins está disponível em todos os planos (verificado em setembro de 2026).',
+          'Nada mais. Não é preciso modo de desenvolvedor, plano pago, chave de API nem colar endereço nenhum.',
+        ],
+      },
+      {
+        h2: 'Passo 1 — Abrir o Diretório de Plugins',
+        paragraphs: [
+          'No menu lateral do ChatGPT, abra "Plugins". Esse é o diretório público — em julho de 2026 a OpenAI migrou para lá o antigo diretório de apps, empacotando os apps existentes em plugins, então é o mesmo lugar com nome novo.',
+          'Atalho para quem já está logado: [abrir a ficha do plugin CoachPilot direto](https://chatgpt.com/plugins/plugin_asdk_app_6a80cc8edfb48191b895cbaecd19b642). Isso pula os passos 1 e 2.',
+        ],
+      },
+      {
+        h2: 'Passo 2 — Pesquisar CoachPilot',
+        paragraphs: [
+          'Digite "coachpilot", em uma palavra só. O plugin aparece na lista pública, com o nome CoachPilot e a descrição de gestão para personal trainers. Se aparecerem resultados parecidos, confira o nome exato — o CoachPilot é sempre escrito assim, sem espaço e sem hífen.',
+        ],
+      },
+      {
+        h2: 'Passo 3 — Adicionar',
+        paragraphs: [
+          'Clique no + para adicionar. O plugin entra na sua conta do ChatGPT imediatamente, e a tela de login do CoachPilot abre em seguida.',
+        ],
+      },
+      {
+        h2: 'Passo 4 — Fazer login',
+        paragraphs: [
+          'O login acontece no site do CoachPilot, não dentro do ChatGPT: você entra com o e-mail e a senha que já usa no portal. Isso importa por um motivo prático — a sua senha nunca passa pelo ChatGPT, que recebe apenas um token com a permissão que você conceder.',
+          'Se você ainda não tem conta, dá para [criar na hora](/signup) e voltar. O plano grátis não pede cartão.',
+        ],
+      },
+      {
+        h2: 'Passo 5 — Escolher as permissões',
+        paragraphs: [
+          'Na tela de consentimento você escolhe o que aquela IA vai poder fazer com a sua conta. São duas opções, e a recomendação para o primeiro dia é começar pela primeira:',
+        ],
+        list: [
+          'Somente leitura — a IA consulta alunos, anamnese, avaliações, sessões, evolução por exercício, agenda e pendências. Não altera nada.',
+          'Leitura e escrita de treinos — além de consultar, aplica programa de treino, atualiza um treino específico e desfaz a última alteração. A escrita alcança apenas treino: plano, assinatura, cobrança e exclusão de aluno ficam fora, com qualquer permissão.',
+        ],
+      },
+      {
+        h2: 'Passo 6 — Testar o primeiro comando',
+        paragraphs: [
+          'Volte para a conversa e comece por algo que você sabe de cor — é assim que você confirma que ele está lendo o seu dado, e não inventando. Três bons primeiros comandos:',
+        ],
+        list: [
+          '"Lista meus alunos ativos."',
+          '"Quem não treina há mais de 10 dias?"',
+          '"Me dá o resumo da [nome de um aluno] antes da sessão."',
+        ],
+      },
+      {
+        h2: 'Passo 7 — O primeiro treino pela conversa',
+        paragraphs: [
+          'Se você autorizou a escrita, o teste seguinte é o que muda a rotina: "monta um ABC de hipertrofia pro Rafael, 4x por semana, e aplica". A IA lê o histórico do aluno e a sua biblioteca de exercícios antes de montar, mostra a proposta na conversa, e só grava depois que você aprova.',
+          'A alteração gera notificação no portal com o resumo do que mudou e pode ser desfeita por 7 dias — pelo portal ou pedindo "desfaz a última alteração" na própria conversa.',
+        ],
+      },
+      {
+        h2: 'Resolvendo problemas',
+        paragraphs: [
+          'Quatro coisas que podem dar errado, e o que fazer em cada uma:',
+        ],
+        list: [
+          'O plugin não aparece na busca. Confira a grafia ("coachpilot", junto) e atualize a página. Em contas corporativas, o administrador do workspace pode restringir quais plugins são permitidos — nesse caso o pedido tem que passar por ele.',
+          'A autorização não conclui. Costuma ser bloqueio de pop-up ou uma sessão antiga do CoachPilot no navegador. Feche a aba, entre no portal do CoachPilot pelo navegador para confirmar que o login funciona, e refaça a instalação.',
+          'Ele responde sem os seus dados. Se a resposta parece genérica demais, peça explicitamente: "consulta minha carteira no CoachPilot e me diz quem está parado". E confira em Configurações → Conexões se a conexão está ativa.',
+          'Ele diz que não tem permissão para alterar. Você autorizou somente leitura. Em Configurações → Conexões dá para revogar e autorizar de novo com escrita de treinos.',
+        ],
+      },
+      {
+        h2: 'E no Claude ou no Gemini?',
+        paragraphs: [
+          'O caminho é outro, porque não passa por um diretório público. Em Configurações → Conexões, no portal do CoachPilot, você copia o endereço da conexão e adiciona no assistente: no Claude, como conector personalizado — que funciona até no plano grátis, limitado a um; no Gemini, o caminho suportado hoje é CLI ou Vertex.',
+          'Dá para manter mais de uma conexão ativa ao mesmo tempo: cada uma é autorizada e revogada separadamente. O passo a passo por provedor está em [como conectar ChatGPT, Claude ou Gemini ao CoachPilot](/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot).',
+        ],
+      },
+      {
+        h2: 'Como revogar',
+        paragraphs: [
+          'Em Configurações → Conexões, no portal, a qualquer momento e com efeito imediato. A revogação corta o acesso daquela conexão sem afetar as outras nem os dados já gravados. Você também pode remover o plugin pelo próprio ChatGPT.',
+          'A ficha técnica completa da integração — permissões, limites, garantias de escrita e changelog — está em [documentação da integração com o ChatGPT](/integracoes/chatgpt).',
+        ],
+      },
+    ],
+    faqs: [
+      { q: 'Como instalar o CoachPilot no ChatGPT?', a: 'Abra o Diretório de Plugins no menu lateral do ChatGPT, busque por "coachpilot", clique no + para adicionar, faça login na tela do CoachPilot que abre em seguida e escolha as permissões (somente leitura, ou leitura e escrita de treinos). Depois volte à conversa e teste com "lista meus alunos ativos".' },
+      { q: 'Preciso pagar ChatGPT Plus para instalar o plugin CoachPilot?', a: 'Não. O Diretório de Plugins do ChatGPT está disponível em todos os planos, inclusive o gratuito — verificado em setembro de 2026. O plano pago vale pelos limites maiores de uso, não pelo acesso ao plugin.' },
+      { q: 'Quantas etapas tem a instalação?', a: 'Seis até o plugin estar funcionando (abrir o diretório, buscar, adicionar, fazer login, escolher permissões, confirmar) e uma sétima opcional para testar o primeiro comando. Leva menos de um minuto.' },
+      { q: 'Minha senha do CoachPilot vai para o ChatGPT?', a: 'Não. O login acontece na tela do próprio CoachPilot; o ChatGPT recebe apenas um token com a permissão que você concedeu, e nunca vê a sua senha.' },
+      { q: 'Funciona no aplicativo de celular do ChatGPT?', a: 'Sim. Instalado uma vez, o plugin fica disponível também no aplicativo de iOS e Android — que é onde a consulta rápida entre um atendimento e outro faz mais diferença.' },
+      { q: 'Preciso de conta paga no CoachPilot?', a: 'Não. O plugin está incluído nos dois planos, inclusive no grátis de até 3 alunos, sem cartão e sem prazo.' },
+      { q: 'Como eu desinstalo ou revogo o acesso?', a: 'Em Configurações → Conexões, no portal do CoachPilot, com efeito imediato. Você também pode remover o plugin pelo próprio ChatGPT.' },
+    ],
+    related: [
+      { label: 'ChatGPT para personal trainer', to: '/chatgpt-para-personal-trainer' },
+      { label: 'App de personal trainer dentro do ChatGPT', to: '/blog/app-de-personal-trainer-para-chatgpt' },
+      { label: 'Gerenciar alunos e treinos pelo ChatGPT', to: '/blog/gerenciar-alunos-e-treinos-pelo-chatgpt' },
+      { label: 'Documentação da integração', to: '/integracoes/chatgpt' },
+    ],
+  },
+  {
+    slug: 'ia-para-gerenciar-alunos-personal-trainer',
+    title: 'Como usar IA para gerenciar alunos de personal trainer (2026)',
+    description: 'Sete situações reais da semana de um personal trainer resolvidas com IA conectada aos dados: aluno parado, treino vencendo, resumo antes da aula, evolução de carga, anamnese, dor relatada e atualização de treino — com o comando exato de cada uma.',
+    h1: 'Como usar IA para gerenciar alunos de personal trainer',
+    datePublished: '2026-09-07',
+    dateModified: '2026-09-07',
+    readingMinutes: 8,
+    intro: 'Gestão de alunos é feita de perguntas repetitivas cuja resposta já está no seu sistema — só que espalhada por telas demais para você ir buscar entre dois atendimentos. Este guia mostra sete situações concretas da semana de qualquer personal trainer, cada uma com o comando exato para resolver por conversa, usando o ChatGPT, o Claude ou o Gemini conectado aos seus dados reais. Não são prompts genéricos: eles só funcionam com a IA conectada ao sistema, e é essa diferença que o artigo explica.',
+    sections: [
+      {
+        h2: 'O que muda quando a IA lê o seu dado',
+        paragraphs: [
+          'Uma IA solta responde sobre treino em geral. Uma IA conectada responde sobre a sua carteira, porque leu a sua carteira naquele segundo: alunos, anamnese, avaliações, histórico de sessões, evolução por exercício, agenda e pendências.',
+          'No CoachPilot, essa conexão é o [plugin publicado no Diretório de Plugins do ChatGPT](/blog/app-de-personal-trainer-para-chatgpt) — instalado em três cliques e disponível também na conta gratuita do ChatGPT — e, por MCP, o conector do Claude e do Gemini. Os comandos abaixo pressupõem essa conexão ativa; os cinco primeiros funcionam só com permissão de leitura.',
+        ],
+      },
+      {
+        h2: '1. O aluno que parou de treinar',
+        paragraphs: [
+          'O problema clássico de retenção: quando você percebe que alguém sumiu, já passaram três semanas. A informação estava lá desde o primeiro treino perdido.',
+          'Comando: "quem não treina há mais de 10 dias?"',
+          'A resposta vem como lista, com o último treino registrado de cada um. O comando seguinte é o que muda a conversa com o aluno: "o Rafael reduziu a frequência desde quando?" — se ele caiu de quatro para uma sessão por semana depois de uma mudança de horário, o problema é agenda, não motivação, e a mensagem que você manda é outra.',
+        ],
+      },
+      {
+        h2: '2. O treino que está vencendo',
+        paragraphs: [
+          'Programa vencido é aluno treinando no automático, e é a falha de gestão mais silenciosa que existe: ninguém reclama.',
+          'Comando: "quem está sem programa vigente ou com treino vencendo nos próximos 7 dias?"',
+          'Com a lista na mão, dá para encadear: "monta a renovação do mesociclo do Pedro a partir da evolução dele nas últimas 6 semanas e aplica". A renovação sai da progressão real de cada exercício — onde houve progressão consistente a carga sobe, onde estagnou o estímulo muda —, e não de somar 2,5 kg em tudo.',
+        ],
+      },
+      {
+        h2: '3. O resumo antes da aula',
+        paragraphs: [
+          'Cinco minutos antes da sessão, com o aluno chegando: o que ele fez da última vez, o que dói, o que a anamnese restringe, qual a meta do ciclo. São sete telas do portal, ou uma pergunta.',
+          'Comando: "me dá o resumo da Júlia antes da sessão de amanhã".',
+          'Vem anamnese, metas, últimas sessões, cargas da última vez e dores relatadas, em um parágrafo. Funciona no aplicativo de celular do ChatGPT, que é onde você está quando isso importa.',
+        ],
+      },
+      {
+        h2: '4. A evolução de carga',
+        paragraphs: [
+          'A pergunta que decide a progressão do próximo ciclo e que quase ninguém tem tempo de responder aluno por aluno.',
+          'Comando: "como está a evolução do agachamento da Carla nos últimos 3 meses?"',
+          'A resposta traz carga e volume ao longo do tempo. E o comando complementar é o que transforma dado em decisão: "ela estagnou em algum exercício?" — estagnação de cinco semanas com percepção de esforço caindo costuma significar carga leve, não platô.',
+        ],
+      },
+      {
+        h2: '5. A anamnese que ninguém relê',
+        paragraphs: [
+          'A anamnese é preenchida uma vez e esquecida, o que é justamente o oposto do que ela deveria ser. Ela é a restrição permanente que precisa valer em cada renovação de treino.',
+          'Comando: "o que a anamnese do Pedro restringe?"',
+          'Vale como conferência antes de qualquer alteração — e, no CoachPilot, restrições de anamnese e dores relatadas são invioláveis para a IA: nenhuma proposta passa por cima delas, com qualquer permissão.',
+        ],
+      },
+      {
+        h2: '6. A dor relatada',
+        paragraphs: [
+          'O aluno registra uma dor no app, vinculada ao exercício em que ela apareceu. Isso vira contexto, e não um recado solto no WhatsApp.',
+          'Comando: "quem relatou dor na última semana e em qual exercício?"',
+          'Depois, com escrita autorizada: "adapta o treino do Pedro pra dor no ombro e aplica". A proposta chega na conversa com o histórico do relato — qual movimento, quando começou, com que carga — e você aprova antes de gravar.',
+          'Uma ressalva que não é formalidade: dor recente, lesão em investigação ou retorno de afastamento longo são território de decisão clínica. A IA serve para organizar a informação, não para escolher a conduta, e o encaminhamento a outro profissional de saúde é decisão humana.',
+        ],
+      },
+      {
+        h2: '7. A atualização de treino',
+        paragraphs: [
+          'A ponta operacional: transformar a sua decisão em treino no sistema, sem digitar campo a campo.',
+          'Comando: "troca o supino reto do Rafael por supino inclinado com halteres, mantendo séries e repetições".',
+          'A IA usa os exercícios da sua biblioteca, com os seus vídeos, porque consulta o catálogo da sua conta e as regras de prescrição antes de montar. A alteração gera notificação no portal com o resumo do que mudou e pode ser desfeita por 7 dias — "desfaz a última alteração" funciona na própria conversa.',
+        ],
+      },
+      {
+        h2: 'A rotina semanal em quatro perguntas',
+        paragraphs: [
+          'Juntando tudo, o diagnóstico completo da carteira cabe em quatro comandos que levam menos de dois minutos:',
+        ],
+        list: [
+          'Segunda de manhã: "me dá o resumo da carteira" — quem parou, quem está sem programa vigente, quem está com mensalidade atrasada.',
+          'Antes de cada sessão: "resumo do [aluno] antes da sessão".',
+          'Meio da semana: "quem relatou dor ou reduziu frequência nos últimos 7 dias?"',
+          'Domingo de planejamento: "quais alunos precisam de renovação de mesociclo nas próximas 2 semanas?"',
+        ],
+      },
+      {
+        h2: 'O que a IA não faz na gestão',
+        paragraphs: [
+          'Limites que valem tanto como garantia quanto como expectativa. No CoachPilot, a IA não exclui aluno e não apaga histórico — a operação não existe. Não altera plano, assinatura ou cobrança, com nenhuma permissão. Não faz alteração em massa: cada programa é aplicado a um aluno por vez, para que o desfazer também seja individual. E nenhuma conexão alcança dados de outro personal.',
+          'A prescrição continua sendo ato profissional com responsabilidade técnica e registro no CREF: a IA analisa, propõe e aplica o que você aprovou. E vale saber que anamnese, avaliação e relato de dor são dados sensíveis de saúde pela LGPD — consultá-los por uma IA externa exige consentimento específico do aluno, assunto tratado em [ChatGPT e dados de alunos](/blog/chatgpt-dados-alunos-personal-trainer-seguranca).',
+        ],
+      },
+      {
+        h2: 'Como começar',
+        paragraphs: [
+          'O caminho mais curto é o [plugin do CoachPilot no ChatGPT](/blog/como-instalar-coachpilot-no-chatgpt): instalação em menos de um minuto, funcionando também na conta gratuita do ChatGPT, e incluído nos dois planos do CoachPilot — inclusive no [grátis de até 3 alunos](/precos), sem cartão. Comece autorizando somente leitura e libere a escrita depois de se acostumar com as respostas.',
+          'Se você prefere prompts sem conectar nada, a lista está em [25 prompts de ChatGPT para personal trainer](/blog/prompts-de-chatgpt-para-personal-trainer). E o panorama de gestão além da IA está em [gestão de alunos: guia completo](/blog/gestao-de-alunos-guia-completo).',
+        ],
+      },
+    ],
+    faqs: [
+      { q: 'Como usar IA para gerenciar alunos de personal trainer?', a: 'Conectando a IA que você já usa aos dados reais do seu sistema. Com o plugin do CoachPilot instalado no ChatGPT, você pergunta em português — "quem não treina há mais de 10 dias?", "me dá o resumo da Júlia antes da sessão" — e a resposta vem da sua carteira. Com permissão de escrita, também dá para pedir alterações de treino, que são aplicadas com notificação e desfazer.' },
+      { q: 'O ChatGPT consegue ler os dados dos meus alunos?', a: 'Só se você autorizar, e apenas os da sua conta. A autorização é feita na tela do CoachPilot, com escolha entre somente leitura e leitura com escrita de treinos, e pode ser revogada a qualquer momento em Configurações → Conexões.' },
+      { q: 'Dá para pedir para a IA avisar os alunos parados?', a: 'A IA identifica quem está parado e ajuda a redigir a mensagem, mas o envio é seu: ela não dispara mensagem para aluno. Envio automático de lembrete é função do canal de WhatsApp, que é um add-on separado e configurado por você.' },
+      { q: 'A IA consegue excluir um aluno?', a: 'Não, com nenhuma permissão. Excluir aluno e apagar histórico não existem como operação. O mesmo vale para plano, assinatura e cobrança.' },
+      { q: 'Preciso decorar comandos ou usar alguma sintaxe?', a: 'Não. Os comandos deste artigo são frases em português corrido, e variações funcionam igual. O que ajuda é ser específico sobre aluno, período e exercício.' },
+      { q: 'Isso funciona no celular?', a: 'Sim. Instalado uma vez, o plugin fica disponível no aplicativo do ChatGPT no iOS e no Android — que é onde a consulta rápida entre um atendimento e outro faz mais diferença.' },
+    ],
+    related: [
+      { label: 'Gerenciar alunos e treinos pelo ChatGPT', to: '/blog/gerenciar-alunos-e-treinos-pelo-chatgpt' },
+      { label: 'Como instalar o CoachPilot no ChatGPT', to: '/blog/como-instalar-coachpilot-no-chatgpt' },
+      { label: 'Gestão de alunos: guia completo', to: '/blog/gestao-de-alunos-guia-completo' },
+      { label: 'IA para personal trainer', to: '/ia-para-personal-trainer' },
+    ],
+  },
+  {
     slug: 'melhor-app-para-personal-trainer-2026',
     title: 'Melhor app para personal trainer em 2026: o critério que mudou',
     description: 'Treino, agenda e avaliação física viraram commodity. O que separa os apps para personal trainer em 2026 é quanto tempo de digitação eles devolvem e se a IA consegue ler o histórico completo do aluno antes de montar o treino.',
     h1: 'Melhor app para personal trainer em 2026',
     datePublished: '2026-09-04',
-    dateModified: '2026-09-04',
+    dateModified: '2026-09-07',
     readingMinutes: 12,
     intro: 'Toda lista de "melhor app para personal trainer" compara as mesmas coisas: número de exercícios na biblioteca, se tem agenda, se tem avaliação física, quanto custa. Em 2026 isso decide pouco, porque praticamente todas as plataformas nacionais já têm tudo isso. Os dois critérios que realmente separam uma da outra hoje são outros: quanto tempo de digitação repetitiva a plataforma devolve para você, e se a inteligência artificial que você já usa consegue ler o histórico completo de um aluno antes de propor o treino dele. Este artigo é o roteiro de decisão — os critérios, as perguntas que testam cada um e onde o CoachPilot se posiciona, com as ressalvas.',
     sections: [
@@ -21,7 +404,7 @@ export const BLOG_POSTS = [
         paragraphs: [
           'Não existe "o melhor app" universal: existe o melhor para o tamanho da sua carteira e para o jeito que você trabalha. Mas existe um critério que em 2026 vale mais que todos os outros somados, e é fácil de verificar antes de assinar qualquer coisa: a IA da plataforma tem acesso ao seu dado real, ou é só um gerador de treino que preenche formulário?',
           'A diferença não é de sofisticação, é de utilidade. Um gerador devolve um treino plausível para "mulher, 34 anos, hipertrofia, 4x por semana" — o que você mesmo escreveria em cinco minutos. Uma IA conectada aos seus dados responde sobre a Júlia: o que ela levantou no supino nas últimas seis semanas, qual ombro doeu em julho, quantas sessões ela fez no mês passado e o que a anamnese dela proíbe. É a diferença entre economizar digitação e economizar a leitura de doze telas de histórico.',
-          'Se você quer o comparativo de preços e recursos plataforma por plataforma, ele está em [os 7 melhores aplicativos para personal trainer em 2026](/blog/melhores-aplicativos-para-personal-trainer). Aqui o assunto é como decidir.',
+          'Se você quer o comparativo de preços e recursos plataforma por plataforma, ele está em [os 7 melhores aplicativos para personal trainer em 2026](/blog/melhores-aplicativos-para-personal-trainer); se o seu recorte é só IA, o comparativo por nível de inteligência está em [melhores apps para personal trainer com IA](/blog/melhores-apps-personal-trainer-com-ia). Aqui o assunto é como decidir.',
         ],
       },
       {
@@ -139,8 +522,8 @@ export const BLOG_POSTS = [
       },
     ],
     faqs: [
-      { q: 'Qual o melhor app para personal trainer em 2026?', a: 'Depende do que decide para você. Se o critério é marca estabelecida e biblioteca de vídeos, o MFIT é a referência do mercado; se é o maior plano grátis, a Tecnofit começa com 5 alunos. Se o critério é IA que lê os dados reais dos seus alunos e devolve o tempo da digitação individualizada, o CoachPilot é a plataforma nacional que oferece essa conexão em produção, verificado em setembro de 2026. O comparativo completo de preços e recursos está no artigo dos 7 melhores aplicativos.' },
-      { q: 'Qual o melhor app gratuito para personal trainer?', a: 'A Tecnofit tem o maior plano grátis (5 alunos). O CoachPilot oferece 3 alunos grátis sem prazo, com todos os recursos essenciais e com a operação por IA incluída. O MFIT oferece 1 aluno grátis. Para quem está começando, o plano grátis serve como teste real: cadastre alunos de verdade, não fictícios.' },
+      { q: 'Qual o melhor app para personal trainer em 2026?', a: 'Depende do que decide para você. Se o critério é marca estabelecida e biblioteca de vídeos, o MFIT é a referência do mercado; se é o maior plano grátis, o Tecnofit Personal começa com 10 alunos ativos no plano Starter (verificado em setembro de 2026). Se o critério é IA que lê os dados reais dos seus alunos e devolve o tempo da digitação individualizada, o CoachPilot é a plataforma nacional que oferece essa conexão em produção, com plugin publicado no Diretório de Plugins do ChatGPT. O comparativo completo de preços e recursos está no artigo dos 7 melhores aplicativos, e o recorte só de IA em melhores apps para personal trainer com IA.' },
+      { q: 'Qual o melhor app gratuito para personal trainer?', a: 'O Tecnofit Personal tem o maior plano grátis (10 alunos ativos no plano Starter, verificado em setembro de 2026). O CoachPilot oferece 3 alunos grátis sem prazo, com todos os recursos essenciais e com a operação por IA incluída, inclusive o plugin do ChatGPT. O MFIT oferece 1 aluno grátis. Para quem está começando, o plano grátis serve como teste real: cadastre alunos de verdade, não fictícios.' },
       { q: 'Vale a pena usar IA para montar treino de aluno?', a: 'Para a parte operacional, sim: montar a estrutura, digitar séries e repetições, adaptar um programa a uma restrição e migrar fichas antigas são tarefas em que a IA economiza horas. Para a decisão técnica, não: prescrição é ato profissional com responsabilidade e registro no CREF. O ganho é de tempo, não de julgamento — e as restrições de anamnese continuam valendo por cima de qualquer proposta.' },
       { q: 'Qual a diferença entre IA que gera treino e IA conectada ao sistema?', a: 'O gerador dentro do app preenche um formulário (objetivo, frequência, nível) e devolve um treino genérico plausível, sem saber quem é o aluno. A IA conectada lê o dado real da sua conta — anamnese, avaliações, sessões, evolução de carga, percepção de esforço, relatos de dor — e propõe a partir disso, usando os exercícios da sua própria biblioteca. São níveis diferentes, não concorrentes.' },
       { q: 'Preciso pagar ChatGPT Plus para usar a IA na gestão dos alunos?', a: 'Não. O app do CoachPilot está no diretório público do ChatGPT e funciona também na conta gratuita, inclusive no aplicativo de celular. No Claude, o conector personalizado funciona até no plano grátis, limitado a uma conexão. Requisitos de plano são dos provedores de IA e mudam — dado verificado em setembro de 2026.' },
@@ -150,6 +533,7 @@ export const BLOG_POSTS = [
       { q: 'O app do aluno precisa ser baixado da App Store ou Google Play?', a: 'No CoachPilot, não: o app do aluno é um PWA aberto por link e instalável na tela inicial do celular, o que reduz o atrito de entrada. A contrapartida honesta é que não é um app nativo de loja — se ter presença nas lojas é um critério para você, outras plataformas atendem melhor esse ponto.' },
     ],
     related: [
+      { label: 'Melhores apps para personal trainer com IA', to: '/blog/melhores-apps-personal-trainer-com-ia' },
       { label: 'Os 7 melhores aplicativos para personal trainer', to: '/blog/melhores-aplicativos-para-personal-trainer' },
       { label: 'IA para personal trainer: o que automatizar', to: '/blog/ia-para-personal-trainer-o-que-automatizar' },
       { label: 'App de personal trainer dentro do ChatGPT', to: '/blog/app-de-personal-trainer-para-chatgpt' },
@@ -158,13 +542,13 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'app-de-personal-trainer-para-chatgpt',
-    title: 'App de personal trainer para ChatGPT: o CoachPilot foi aprovado pela OpenAI',
-    description: 'O CoachPilot é o primeiro sistema de gestão para personal trainer com plugin publicado no diretório do ChatGPT. Instale em três cliques, converse com os dados reais dos seus alunos e aplique treinos sem sair do chat.',
+    title: 'App e plugin de personal trainer para ChatGPT: o CoachPilot no diretório',
+    description: 'O CoachPilot é o primeiro sistema de gestão para personal trainer com plugin publicado no Diretório de Plugins do ChatGPT. Instale em três cliques, converse com os dados reais dos seus alunos e aplique treinos sem sair do chat.',
     h1: 'App de personal trainer dentro do ChatGPT',
     datePublished: '2026-08-31',
-    dateModified: '2026-08-31',
-    readingMinutes: 10,
-    intro: 'Desde agosto de 2026 existe um app do CoachPilot dentro do ChatGPT — publicado no diretório público, depois de passar pela revisão da OpenAI. Você abre os Plugins, digita "coachpilot", clica no + e o ChatGPT que você já usa passa a enxergar os seus alunos, treinos, avaliações e agenda de verdade. Pergunta em português e a resposta vem do seu dado; pede um treino e ele grava na sua conta, com o aluno já vendo no app. Este artigo explica o que mudou, o que "aprovado pela OpenAI" significa na prática e por que nenhuma outra plataforma nacional de gestão para personal trainer tem isso hoje.',
+    dateModified: '2026-09-07',
+    readingMinutes: 11,
+    intro: 'Desde agosto de 2026 existe um plugin do CoachPilot dentro do ChatGPT — publicado no diretório público, depois de aprovado para publicação pela OpenAI. Você abre o Diretório de Plugins, digita "coachpilot", clica no + e o ChatGPT que você já usa passa a enxergar os seus alunos, treinos, avaliações e agenda de verdade. Pergunta em português e a resposta vem do seu dado; pede um treino e ele grava na sua conta, com o aluno já vendo no app. Este artigo explica o que mudou, o que a publicação no diretório significa na prática (e o que ela não significa) e por que nenhuma outra plataforma nacional de gestão para personal trainer tem isso hoje.',
     sections: [
       {
         h2: 'O que mudou: de gambiarra de desenvolvedor a três cliques',
@@ -175,11 +559,19 @@ export const BLOG_POSTS = [
         ],
       },
       {
-        h2: 'O que significa ter sido aprovado pela OpenAI',
+        h2: 'App ou plugin? Os dois termos estão certos',
         paragraphs: [
-          'Estar no diretório não é ligar uma chave. É uma submissão que passa por revisão humana, e o que a OpenAI olha diz muito sobre o que você está instalando.',
-          'Três coisas foram verificadas antes da publicação, e as três são do seu interesse. Que o app é mesmo do CoachPilot, e não de alguém se passando por nós. Que o login acontece no site do CoachPilot, de modo que a sua senha nunca passa pelo ChatGPT. E que tudo o que o app pode fazer com a sua conta foi declarado e revisado, separando o que apenas consulta do que altera dado.',
-          'Na prática, é uma revisão do que a IA pode fazer com a sua carteira, feita por gente de fora antes de o app existir para o público. Não sobra zona cinzenta — nem para você nem para a OpenAI.',
+          'Vale esclarecer o vocabulário antes de seguir, porque ele mudou em 2026 e a confusão atrapalha até a busca. Em julho de 2026 a OpenAI migrou o antigo diretório de apps para o Diretório de Plugins: os apps existentes foram empacotados em plugins, e o diretório de plugins passou a ser o lugar onde se descobre e ativa capacidades no ChatGPT.',
+          'Na nomenclatura atual, um plugin pode conter skills, apps e templates, e o app continua sendo a integração que conecta o ChatGPT a dados e ações externas. Traduzindo para o nosso caso: o CoachPilot é um plugin disponível no Diretório de Plugins do ChatGPT, e esse plugin inclui o app que conecta a conversa aos dados e ações autorizadas da sua conta CoachPilot.',
+          'Ou seja: se você procurou por "plugin para personal trainer", "plugin do ChatGPT para personal trainer" ou "app de personal trainer no ChatGPT", chegou no mesmo lugar e nenhum dos termos está errado. O nome do padrão aberto por trás é MCP — é por isso que a mesma conexão funciona também no Claude e no Gemini.',
+        ],
+      },
+      {
+        h2: 'O que significa estar publicado no diretório (e o que não significa)',
+        paragraphs: [
+          'Estar no diretório não é ligar uma chave. É uma submissão que passa por revisão antes da publicação, e o que é olhado diz muito sobre o que você está instalando.',
+          'Três coisas foram verificadas antes da publicação, e as três são do seu interesse. Que o plugin é mesmo do CoachPilot, e não de alguém se passando por nós. Que o login acontece no site do CoachPilot, de modo que a sua senha nunca passa pelo ChatGPT. E que tudo o que o app pode fazer com a sua conta foi declarado e revisado, separando o que apenas consulta do que altera dado.',
+          'A parte honesta: aprovação para publicação não é selo de segurança nem endosso. Os termos da OpenAI para desenvolvedores deixam claro que a responsabilidade pelo aplicativo continua sendo de quem o publica — ou seja, nossa. O que a publicação no diretório entrega é legitimidade de identidade, um caminho de instalação e autorização padronizado e uma revisão externa do escopo de permissões antes de o plugin existir para o público. É bastante, e é diferente de "certificado pela OpenAI", que ninguém pode dizer.',
         ],
       },
       {
@@ -188,8 +580,8 @@ export const BLOG_POSTS = [
           'Leva menos de um minuto. Você precisa de uma conta CoachPilot (o [plano grátis de até 3 alunos](/precos) serve) e de qualquer conta de ChatGPT, inclusive a gratuita. Se você já está logado no ChatGPT, [este link abre o app do CoachPilot direto](https://chatgpt.com/plugins/plugin_asdk_app_6a80cc8edfb48191b895cbaecd19b642) — é só clicar no + e autorizar.',
         ],
         list: [
-          'No menu lateral do ChatGPT, abra "Plugins".',
-          'Busque por "coachpilot" — ele aparece na lista de apps públicos.',
+          'No menu lateral do ChatGPT, abra "Plugins" — o Diretório de Plugins está disponível em todos os planos, inclusive o gratuito.',
+          'Busque por "coachpilot" — ele aparece na lista de plugins públicos.',
           'Clique no + para adicionar. O app entra na sua conta na hora.',
           'A tela do CoachPilot abre sozinha para você entrar e escolher o que autorizar: somente leitura, ou leitura e escrita de treinos.',
           'Volte à conversa e teste com algo que você sabe de cor: "lista meus alunos ativos".',
@@ -220,10 +612,10 @@ export const BLOG_POSTS = [
       {
         h2: 'Como isso se compara com MFIT, Tecnofit e as demais',
         paragraphs: [
-          'Comparativo de recursos de IA das principais plataformas do mercado brasileiro. Dados dos concorrentes verificados em julho de 2026 nos canais oficiais; presença no diretório do ChatGPT verificada em agosto de 2026. Tudo sujeito a alteração — se alguma delas lançar algo equivalente, esta tabela muda.',
+          'Comparativo de recursos de IA das principais plataformas do mercado brasileiro. Dados dos concorrentes verificados em setembro de 2026 nos canais oficiais de cada um (blog e centrais de ajuda). Tudo sujeito a alteração — se alguma delas lançar algo equivalente, esta tabela muda.',
         ],
         table: {
-          headers: ['Plataforma', 'App no diretório do ChatGPT', 'A IA lê seus dados reais', 'A IA grava treino no sistema', 'Tipo de IA'],
+          headers: ['Plataforma', 'Plugin no Diretório do ChatGPT', 'A IA lê seus dados reais', 'A IA grava treino no sistema', 'Tipo de IA'],
           rows: [
             ['CoachPilot', 'Sim', 'Sim', 'Sim, com desfazer', 'Sua IA conectada + geração in-app'],
             ['MFIT Personal', 'Não', 'Não', 'Não', 'Gerador de treino in-app'],
@@ -278,8 +670,9 @@ export const BLOG_POSTS = [
       },
     ],
     faqs: [
-      { q: 'Existe plugin do ChatGPT para personal trainer?', a: 'Sim. O CoachPilot está publicado no diretório público do ChatGPT desde agosto de 2026, aprovado pela revisão da OpenAI. Você busca por "coachpilot" no menu Plugins, clica no + e autoriza com a sua conta CoachPilot.' },
-      { q: 'Chama plugin ou app?', a: 'Os dois nomes circulam, e não é erro usar nenhum: no ChatGPT a instalação fica no menu Plugins, e "Plugin name" é o campo do próprio formulário de submissão da OpenAI. O nome do padrão aberto por trás é MCP — é por isso que a mesma conexão funciona também no Claude e no Gemini.' },
+      { q: 'Existe plugin do ChatGPT para personal trainer?', a: 'Sim. O CoachPilot é um plugin para personal trainers publicado no Diretório de Plugins do ChatGPT desde agosto de 2026, após aprovação para publicação pela OpenAI. Você busca por "coachpilot" no menu Plugins, clica no + e autoriza com a sua conta CoachPilot.' },
+      { q: 'Chama plugin ou app?', a: 'Os dois, e nenhum está errado. Em julho de 2026 a OpenAI migrou o diretório de apps para o Diretório de Plugins, empacotando os apps existentes em plugins. Na nomenclatura atual, o plugin é o que você instala pelo diretório e o app é a integração que conecta o ChatGPT a dados e ações externas — o plugin CoachPilot inclui o app que conversa com a sua conta. O nome do padrão aberto por trás é MCP, e é por isso que a mesma conexão funciona também no Claude e no Gemini.' },
+      { q: 'A OpenAI garante a segurança do CoachPilot?', a: 'Não, e ninguém pode dizer isso. A publicação no diretório significa que a identidade do plugin, o fluxo de login e o escopo de permissões foram declarados e revisados antes da publicação — os termos da OpenAI para desenvolvedores mantêm a responsabilidade pelo aplicativo com quem o publica. Os limites técnicos do que o CoachPilot pode e não pode fazer com a sua conta estão listados neste artigo e valem mais do que qualquer selo.' },
       { q: 'Preciso de ChatGPT Plus?', a: 'Não. O app do diretório funciona também na conta gratuita do ChatGPT, e no aplicativo de celular. O plano pago continua valendo pelos limites maiores de uso, não pelo acesso ao app.' },
       { q: 'O MFIT tem integração com o ChatGPT?', a: 'Na verificação de agosto de 2026, não. O MFIT tem um gerador de treino por IA dentro do próprio aplicativo, que é outra coisa: ele não lê a sua carteira, não consulta o histórico de um aluno específico e não funciona fora do app.' },
       { q: 'O ChatGPT pode apagar meus alunos ou mexer na cobrança?', a: 'Não. O app não faz isso. Ele altera apenas programa de treino, sempre um aluno por vez, com notificação no portal e desfazer por 7 dias. Excluir aluno, apagar histórico e mexer em cobrança estão fora do alcance da IA.' },
@@ -289,9 +682,10 @@ export const BLOG_POSTS = [
       { q: 'A IA vai prescrever no lugar do personal?', a: 'Não. Ela analisa, propõe e aplica o que você aprovou na conversa. Restrições de anamnese e dores relatadas são invioláveis, os exercícios saem da sua biblioteca com os seus vídeos, e a revisão é sua.' },
     ],
     related: [
+      { label: 'Como instalar o CoachPilot no ChatGPT', to: '/blog/como-instalar-coachpilot-no-chatgpt' },
       { label: 'Gerenciar alunos e treinos pelo ChatGPT', to: '/blog/gerenciar-alunos-e-treinos-pelo-chatgpt' },
-      { label: 'Como conectar o ChatGPT ao CoachPilot', to: '/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot' },
-      { label: 'CoachPilot vs MFIT', to: '/blog/coachpilot-vs-mfit' },
+      { label: 'ChatGPT e dados de alunos: segurança', to: '/blog/chatgpt-dados-alunos-personal-trainer-seguranca' },
+      { label: 'Melhores apps para personal trainer com IA', to: '/blog/melhores-apps-personal-trainer-com-ia' },
       { label: 'ChatGPT para personal trainer', to: '/chatgpt-para-personal-trainer' },
     ],
   },
@@ -584,8 +978,8 @@ export const BLOG_POSTS = [
           'É o caminho mais curto, porque o CoachPilot é um app publicado no diretório: nada de configuração manual nem de modo de desenvolvedor. Atalho para quem já está logado: [abrir o app do CoachPilot no ChatGPT](https://chatgpt.com/plugins/plugin_asdk_app_6a80cc8edfb48191b895cbaecd19b642).',
         ],
         list: [
-          'No menu lateral do ChatGPT, abra "Plugins".',
-          'Busque por "coachpilot" — ele aparece na lista de apps públicos.',
+          'No menu lateral do ChatGPT, abra "Plugins" — o Diretório de Plugins está disponível em todos os planos, inclusive o gratuito.',
+          'Busque por "coachpilot" — ele aparece na lista de plugins públicos.',
           'Clique no + para adicionar. O app entra na sua conta na hora.',
           'A tela do CoachPilot abre sozinha: faça login (ou aproveite a sessão já aberta), escolha entre leitura ou leitura e escrita e confirme.',
           'De volta à conversa, teste com "quem não treina há mais de 10 dias?". Se a resposta bater com a sua carteira, está conectado.',
@@ -726,7 +1120,7 @@ export const BLOG_POSTS = [
     description: 'Os três níveis de IA no mercado fitness — chat solto, gerador dentro do app e IA conectada ao seu sistema —, o que cada um resolve de verdade e o que não se deve automatizar.',
     h1: 'IA para personal trainer: o que realmente dá para automatizar',
     datePublished: '2026-08-22',
-    dateModified: '2026-08-31',
+    dateModified: '2026-09-07',
     readingMinutes: 9,
     intro: '"Plataforma com IA" virou item obrigatório de qualquer página de vendas do mercado fitness em 2026 — e o termo passou a significar coisas muito diferentes. Há três níveis distintos de IA em uso hoje, com ganhos que variam de "economiza dez minutos" a "muda a rotina de trabalho". Este guia separa os três, mostra o que cada um resolve e delimita o que não se deve automatizar por motivo técnico, ético e legal.',
     sections: [
@@ -748,7 +1142,7 @@ export const BLOG_POSTS = [
       {
         h2: 'Nível 3 — IA conectada ao seu sistema',
         paragraphs: [
-          'Aqui a lógica se inverte: em vez de a plataforma ter uma IA dentro dela, a sua IA passa a ter acesso à plataforma. É o que o padrão aberto MCP permite, e o que o CoachPilot passou a oferecer em 2026.',
+          'Aqui a lógica se inverte: em vez de a plataforma ter uma IA dentro dela, a sua IA passa a ter acesso à plataforma. É o que o padrão aberto MCP permite, e o que o CoachPilot passou a oferecer em 2026 — no ChatGPT, pelo [plugin publicado no Diretório de Plugins](/blog/app-de-personal-trainer-para-chatgpt), instalável em menos de um minuto e disponível em todos os planos do ChatGPT, inclusive o gratuito.',
           'Na prática você conversa com o ChatGPT, o Claude ou o Gemini que já assina, e ele lê os seus dados reais: alunos, anamnese, avaliações, histórico de sessões, evolução por exercício, agenda, pendências. Com permissão de escrita, monta e aplica programas de treino direto na plataforma, com aviso e desfazer. Sem copiar, sem colar, sem baixar arquivo — e sem abrir o app para consultar.',
           'A diferença de natureza está em quem tem iniciativa. Nos níveis 1 e 2, você pede uma peça de conteúdo. No nível 3, você faz uma pergunta sobre o seu negócio e recebe uma resposta baseada no seu dado — ou dá uma instrução e ela é executada. Os detalhes do que é possível estão em [gerenciar alunos e treinos pelo ChatGPT](/blog/gerenciar-alunos-e-treinos-pelo-chatgpt).',
         ],
@@ -805,18 +1199,20 @@ export const BLOG_POSTS = [
       {
         h2: 'Onde o CoachPilot se posiciona',
         paragraphs: [
-          'O CoachPilot cobre os níveis 1 e 3 — e deliberadamente não vende o nível 2. Para quem não quer conectar nada, existem prompts prontos que fazem a IA gerar o programa no formato exato de importação, com revisão em tela antes de aplicar. Para quem quer a operação inteira por conversa, existe a conexão com a sua IA, gratuita nos dois planos e funcionando com a assinatura que você já tem.',
+          'O CoachPilot cobre os níveis 1 e 3 — e deliberadamente não vende o nível 2. Para quem não quer conectar nada, existem prompts prontos que fazem a IA gerar o programa no formato exato de importação, com revisão em tela antes de aplicar. Para quem quer a operação inteira por conversa, existe a conexão com a sua IA, gratuita nos dois planos e funcionando com a assinatura que você já tem — no ChatGPT, pelo plugin do diretório.',
           'Nas duas pontas, a decisão técnica permanece sua e toda escrita é reversível. Dá para testar o fluxo completo no [plano grátis de até 3 alunos](/precos), sem cartão — e a [conexão com ChatGPT, Claude ou Gemini](/chatgpt-para-personal-trainer) está incluída desde o primeiro dia.',
+          'Se o que você quer é o comparativo entre plataformas por esse critério — quem está em qual nível, e o que cada uma cobra por isso —, ele está em [melhores apps para personal trainer com IA em 2026](/blog/melhores-apps-personal-trainer-com-ia).',
         ],
       },
     ],
     faqs: [
-      { q: 'Qual o melhor app para personal trainer com IA?', a: 'Depende do nível de IA que você precisa. Para gerar treino dentro do app, MFIT e TreinoAI atendem. Para conectar o ChatGPT, o Claude ou o Gemini aos seus próprios dados e operar por conversa, o CoachPilot é a plataforma nacional que oferece essa conexão em produção (agosto/2026).' },
+      { q: 'Qual o melhor app para personal trainer com IA?', a: 'Depende do nível de IA que você precisa. Para gerar treino dentro do app, MFIT e TreinoAI atendem. Para conectar o ChatGPT, o Claude ou o Gemini aos seus próprios dados e operar por conversa, o CoachPilot é a plataforma nacional que oferece essa conexão em produção, com plugin publicado no Diretório de Plugins do ChatGPT (verificado em setembro de 2026). O comparativo plataforma por plataforma está em melhores apps para personal trainer com IA.' },
       { q: 'IA vai substituir o personal trainer?', a: 'Não. IA produz estrutura e texto rapidamente, mas prescrição é ato profissional com responsabilidade técnica e registro no CREF. O ganho real é de tempo operacional, não de julgamento.' },
       { q: 'Preciso pagar ChatGPT Plus para usar IA na gestão?', a: 'Não, nos dois caminhos. Os prompts com importação funcionam nas versões gratuitas, e para conectar o sistema ao ChatGPT também não: desde agosto de 2026 o CoachPilot é um app publicado no diretório público, instalável na conta gratuita e disponível também no aplicativo de celular. No Claude, o conector funciona até no plano grátis, limitado a um.' },
       { q: 'É seguro dar acesso dos meus dados a uma IA?', a: 'Depende de como o acesso é desenhado. Procure autorização explícita com permissão escolhida por você, acesso restrito à sua conta, notificação a cada alteração, opção de desfazer e revogação imediata — e leia o que os termos dizem sobre dado de saúde.' },
     ],
     related: [
+      { label: 'Melhores apps para personal trainer com IA', to: '/blog/melhores-apps-personal-trainer-com-ia' },
       { label: 'Gerenciar alunos e treinos pelo ChatGPT', to: '/blog/gerenciar-alunos-e-treinos-pelo-chatgpt' },
       { label: '25 prompts de ChatGPT para personal trainer', to: '/blog/prompts-de-chatgpt-para-personal-trainer' },
       { label: 'IA para personal trainer', to: '/ia-para-personal-trainer' },
@@ -921,8 +1317,8 @@ export const BLOG_POSTS = [
     description: 'Comparamos os principais apps para personal trainer do Brasil em 2026: MFIT, CoachPilot, Tecnofit, Nexur e mais — preços, IA, WhatsApp e gamificação.',
     h1: 'Os 7 melhores aplicativos para personal trainer em 2026',
     datePublished: '2026-07-10',
-    dateModified: '2026-09-04',
-    readingMinutes: 9,
+    dateModified: '2026-09-07',
+    readingMinutes: 10,
     intro: 'Escolher um aplicativo para personal trainer virou uma decisão de negócio: o app certo economiza horas de montagem de treino, reduz faltas e ajuda a reter alunos. Comparamos as principais opções disponíveis no Brasil em 2026 — com preços e recursos verificados em julho de 2026 nos sites oficiais (valores sujeitos a alteração).',
     sections: [
       {
@@ -937,7 +1333,7 @@ export const BLOG_POSTS = [
         h2: '1. CoachPilot — gestão com IA e WhatsApp integrados',
         paragraphs: [
           'O [CoachPilot](/software-para-personal-trainer) é uma plataforma brasileira com plano grátis para até 3 alunos e Gestão Pro por R$39,90/mês com alunos ilimitados. O diferencial é a operação por IA: você monta pacotes de treino ABC/ABCDE e migra a carteira inteira de alunos conversando com o ChatGPT, Claude ou Gemini que já usa — a IA gera o conteúdo no formato da plataforma e você importa com um clique, revisando antes de aplicar. Esse recurso é gratuito em todos os planos.',
-          'Desde agosto de 2026 há um segundo nível de IA, e é o que mais separa a plataforma do restante da lista: uma [conexão MCP](/ia-para-personal-trainer) que liga o ChatGPT, o Claude ou o Gemini direto aos dados do personal. Conectada, a IA responde "quem não treina há mais de 10 dias?" lendo a carteira real, entrega o dossiê de um aluno antes da sessão e — se autorizada — aplica programas de treino sem copiar e colar, com notificação e desfazer. Nenhuma outra plataforma nacional oferecia isso na verificação de agosto de 2026.',
+          'Desde agosto de 2026 há um segundo nível de IA, e é o que mais separa a plataforma do restante da lista: o CoachPilot é um [plugin publicado no Diretório de Plugins do ChatGPT](/blog/app-de-personal-trainer-para-chatgpt), instalado em três cliques, que liga o ChatGPT direto aos dados do personal — e, por ser [conexão MCP](/ia-para-personal-trainer) por baixo, o mesmo vale para Claude e Gemini. Conectada, a IA responde "quem não treina há mais de 10 dias?" lendo a carteira real, entrega o dossiê de um aluno antes da sessão e — se autorizada — aplica programas de treino sem copiar e colar, com notificação e desfazer. Nenhuma outra plataforma nacional oferecia isso na verificação de setembro de 2026.',
           'Também se destaca na experiência do aluno: app via PWA (sem loja de aplicativos), gamificação completa com ranking, conquistas e streaks, e um assistente de IA opcional que responde o aluno no WhatsApp com contexto do treino real — o aluno manda "fiz 3x10 com 80kg" e o registro entra no treino dele. O financeiro recebe via Pix direto na conta do personal, sem taxa da plataforma.',
           'Pontos a considerar: é uma plataforma mais nova, sem a base de avaliações dos líderes de mercado, e o app do aluno é PWA em vez de app nativo nas lojas.',
         ],
@@ -952,8 +1348,8 @@ export const BLOG_POSTS = [
       {
         h2: '3. Tecnofit Personal — da gigante das academias',
         paragraphs: [
-          'A Tecnofit é forte no software de gestão de academias, e o produto para personal é uma extensão dessa operação. Oferece plano grátis para até 5 alunos (o maior free tier da lista) e o plano Performance a partir de R$24,90/mês no ciclo anual, cobrado via compra no aplicativo (Apple/Google). Tem marketplace "Encontre seu personal" e ranking mensal de alunos.',
-          'O produto Personal não tem recursos de IA nem integração com WhatsApp, e o financeiro registra e lembra cobranças, mas não processa recebimentos. É uma opção sólida para quem quer começar grátis com mais alunos.',
+          'A Tecnofit é forte no software de gestão de academias, e o produto para personal é uma extensão dessa operação. O plano Starter é gratuito e, na verificação de setembro de 2026 na central de ajuda oficial, permite até 10 alunos ativos — o maior free tier da lista — com prescrição ilimitada e biblioteca básica de mais de 250 exercícios. O plano Performance sobe para a biblioteca de 600+ exercícios e a avaliação física completa (Par-Q, avaliação postural, evolução em fotos); o preço não é publicado no site e a assinatura é feita por compra dentro do aplicativo (Apple/Google). Tem marketplace "Encontre seu personal" e ranking mensal de alunos.',
+          'O produto Personal não tem recursos de IA nem integração com WhatsApp — a IA da Tecnofit fica no sistema de academias, que é outro produto e outra faixa de preço — e o financeiro registra e lembra cobranças, mas não processa recebimentos. Nas páginas oficiais de planos consultadas em setembro de 2026 não há menção a integração com ChatGPT, plugin no diretório da OpenAI ou conexão MCP. É uma opção sólida para quem quer começar grátis com mais alunos. O comparativo detalhado está em [CoachPilot vs Tecnofit](/blog/coachpilot-vs-tecnofit).',
         ],
       },
       {
@@ -982,19 +1378,36 @@ export const BLOG_POSTS = [
         ],
       },
       {
-        h2: 'Tabela comparativa (julho/2026)',
+        h2: 'Tabela comparativa: preço e gestão',
         paragraphs: [
-          'Resumo dos principais critérios. Preços verificados nos sites oficiais em julho de 2026 e sujeitos a alteração.',
+          'Resumo dos critérios de gestão. Preços verificados nos sites oficiais em julho de 2026 e o free tier da Tecnofit rechecado na central de ajuda oficial em setembro de 2026 — tudo sujeito a alteração.',
         ],
         table: {
-          headers: ['Plataforma', 'Alunos ilimitados', 'IA gera treino', 'IA no WhatsApp', 'Gamificação', 'Free tier'],
+          headers: ['Plataforma', 'Free tier', 'Alunos ilimitados', 'Prescrição', 'Avaliação física', 'Agenda', 'App do aluno', 'Financeiro'],
           rows: [
-            ['CoachPilot', 'R$39,90/mês', 'Sim + conexão MCP (grátis)', 'Sim (add-on)', 'Ranking + conquistas + streak', '3 alunos'],
-            ['MFIT', 'R$39,90/mês', 'Sim (in-app)', 'Não', 'Não', '1 aluno'],
-            ['Tecnofit Personal', '~R$24,90/mês (anual)', 'Não', 'Não', 'Ranking', '5 alunos'],
-            ['Nexur', 'Não (até R$249,90)', 'Não', 'Não', 'Ranking', 'Não'],
-            ['TreinoAI', 'Não (por faixa)', 'Sim', 'Não', 'Não', 'Não'],
-            ['Internacionais', 'US$25–137/mês', 'Sim (2 de 4)', 'Não', 'Parcial', 'Varia'],
+            ['CoachPilot', '3 alunos, sem prazo', 'R$39,90/mês', 'Templates + rotinas ABC/ABCDE', 'Sim, com gráficos e fotos', 'Sim, com pendências', 'PWA (sem loja)', 'Pix direto, sem taxa da plataforma'],
+            ['MFIT Personal', '1 aluno', 'R$39,90/mês', 'Sim, 1.800+ vídeos', 'Sim', 'Sim', 'Nativo (lojas)', 'Carteira MFIT, taxa 2,59%'],
+            ['Tecnofit Personal', '10 alunos ativos', 'Preço não publicado (via app)', 'Ilimitada', 'Completa no Performance', 'Sim', 'Nativo (lojas)', 'Registro e lembrete, sem recebimento'],
+            ['Nexur', 'Não', 'Não (faixas até R$249,90)', 'Sim, 500+ exercícios', 'Sim', 'Sim', 'Nativo (lojas)', 'Sim'],
+            ['TreinoAI', 'Não', 'Não (por faixa)', 'Sim, com gerador de IA', 'Sim', 'Sim', 'Sim', 'Sim'],
+            ['Internacionais', 'Varia', 'US$25–137/mês', 'Sim', 'Sim', 'Parcial', 'Nativo (lojas)', 'Sem Pix/BRL'],
+          ],
+        },
+      },
+      {
+        h2: 'Tabela comparativa: IA e ChatGPT',
+        paragraphs: [
+          'Este é o recorte que mais separa as plataformas em 2026, e o que quase nenhuma lista mostra. "IA lê dados reais" significa que a IA consegue consultar a sua carteira de verdade — anamnese, histórico de sessões, evolução de carga — e não apenas preencher um formulário. "IA executa ações" significa que ela grava no sistema. Dados de concorrentes verificados em setembro de 2026 nos canais oficiais de cada um; se alguma delas lançar algo equivalente, esta tabela muda.',
+        ],
+        table: {
+          headers: ['Plataforma', 'Tem IA', 'Integra com ChatGPT', 'Plugin no Diretório do ChatGPT', 'IA lê dados reais', 'IA executa ações no sistema'],
+          rows: [
+            ['CoachPilot', 'Sim', 'Sim', 'Sim, desde agosto/2026', 'Sim', 'Sim, com desfazer por 7 dias'],
+            ['MFIT Personal', 'Sim (MFIT IA, in-app)', 'Não', 'Não', 'Não', 'Não'],
+            ['Tecnofit Personal', 'Não (no produto Personal)', 'Não', 'Não', 'Não', 'Não'],
+            ['Nexur', 'Não', 'Não', 'Não', 'Não', 'Não'],
+            ['TreinoAI', 'Sim (gerador in-app)', 'Não', 'Não', 'Não', 'Não'],
+            ['Internacionais (Trainerize, Everfit)', 'Sim (gerador in-app)', 'Não', 'Não', 'Não', 'Não'],
           ],
         },
       },
@@ -1006,14 +1419,17 @@ export const BLOG_POSTS = [
       },
     ],
     faqs: [
-      { q: 'Qual o melhor app gratuito para personal trainer?', a: 'A Tecnofit tem o maior free tier (5 alunos). O CoachPilot oferece 3 alunos grátis sem prazo e com todos os recursos essenciais, incluindo a operação por IA. O MFIT oferece 1 aluno grátis.' },
+      { q: 'Qual o melhor app gratuito para personal trainer?', a: 'O Tecnofit Personal tem o maior free tier: 10 alunos ativos no plano Starter, verificado na central de ajuda oficial em setembro de 2026. O CoachPilot oferece 3 alunos grátis sem prazo e com todos os recursos essenciais, incluindo a operação por IA e o plugin do ChatGPT. O MFIT oferece 1 aluno grátis.' },
       { q: 'Existe app para personal trainer com IA?', a: 'Sim. CoachPilot, MFIT e TreinoAI têm recursos de IA. O CoachPilot é o único que se conecta ao ChatGPT, ao Claude ou ao Gemini do próprio personal por MCP — a IA lê os dados reais dos alunos e aplica treinos conversando —, além de migrar a carteira inteira e responder alunos no WhatsApp com contexto do treino.' },
+      { q: 'Qual app para personal trainer integra com ChatGPT?', a: 'Na verificação de setembro de 2026, o CoachPilot é a única plataforma nacional de gestão para personal trainer com plugin publicado no Diretório de Plugins do ChatGPT. MFIT, Tecnofit Personal, Nexur e TreinoAI não têm plugin no diretório nem conexão equivalente segundo os canais oficiais de cada um.' },
       { q: 'Quanto custa um app para personal trainer?', a: 'Em 2026, os planos nacionais vão de R$10,90 a R$249,90/mês, dependendo do número de alunos. Plataformas com alunos ilimitados custam em torno de R$39,90/mês.' },
     ],
     related: [
+      { label: 'Melhores apps para personal trainer com IA', to: '/blog/melhores-apps-personal-trainer-com-ia' },
       { label: 'Melhor app para personal trainer em 2026: como decidir', to: '/blog/melhor-app-para-personal-trainer-2026' },
       { label: 'CoachPilot vs MFIT: comparativo completo', to: '/blog/coachpilot-vs-mfit' },
-      { label: 'IA para personal trainer: o que automatizar', to: '/blog/ia-para-personal-trainer-o-que-automatizar' },
+      { label: 'CoachPilot vs Tecnofit', to: '/blog/coachpilot-vs-tecnofit' },
+      { label: 'Alternativas ao MFIT', to: '/blog/alternativas-ao-mfit' },
       { label: 'Software para personal trainer', to: '/software-para-personal-trainer' },
       { label: 'Preços do CoachPilot', to: '/precos' },
     ],
@@ -1024,8 +1440,8 @@ export const BLOG_POSTS = [
     description: 'Comparativo honesto entre CoachPilot e MFIT Personal: preços, IA, app dentro do ChatGPT, WhatsApp, gamificação, taxas de pagamento e migração. Atualizado em agosto/2026.',
     h1: 'CoachPilot vs MFIT: qual escolher?',
     datePublished: '2026-07-10',
-    dateModified: '2026-08-31',
-    readingMinutes: 7,
+    dateModified: '2026-09-07',
+    readingMinutes: 8,
     intro: 'MFIT é o líder do mercado brasileiro de apps para personal trainer; o CoachPilot é a alternativa que aposta em IA de ponta a ponta e WhatsApp. Os dois custam os mesmos R$39,90/mês no plano com alunos ilimitados — então a escolha se decide nos detalhes, e um deles ficou grande em agosto de 2026, quando o CoachPilot virou um app publicado no diretório do ChatGPT. Comparamos os dois com dados verificados em julho de 2026 e a checagem de IA refeita em 31 de agosto (tudo sujeito a alteração).',
     sections: [
       {
@@ -1041,6 +1457,13 @@ export const BLOG_POSTS = [
           'Em agosto de 2026 o [CoachPilot foi aprovado pela OpenAI e publicado no diretório de apps do ChatGPT](/blog/app-de-personal-trainer-para-chatgpt). Você abre os Plugins, busca por "coachpilot", clica no + e o ChatGPT que já está no seu celular passa a enxergar os seus alunos de verdade: "quem não treina há mais de 10 dias?", "me dá o resumo da Júlia antes da sessão", "adapta o treino do Pedro pra dor no ombro e aplica". Sem copiar, sem colar, sem abrir o portal. E como o padrão de conexão (MCP) é o mesmo nas três IAs, vale igual para Claude e Gemini.',
           'O MFIT tem IA dentro do aplicativo, que gera treino a partir de um formulário. É útil, mas é outra categoria: não responde sobre a carteira, não lê o histórico de um aluno para propor o ajuste e não existe fora daquela tela. Na verificação de 31 de agosto de 2026, o MFIT não tinha app no diretório do ChatGPT nem conexão equivalente — e nenhuma outra plataforma nacional de gestão para personal trainer tinha.',
           'A conexão do CoachPilot é gratuita nos dois planos, inclusive no grátis, e o custo do modelo é da sua própria assinatura de IA — que nem precisa ser paga, porque o app funciona também na conta gratuita do ChatGPT. O que dá e o que não dá para pedir está detalhado em [gerenciar alunos e treinos pelo ChatGPT](/blog/gerenciar-alunos-e-treinos-pelo-chatgpt).',
+        ],
+      },
+      {
+        h2: 'O MFIT tem integração com ChatGPT?',
+        paragraphs: [
+          'Não, na verificação de setembro de 2026. O que o MFIT tem é a MFIT IA, um assistente de prescrição que roda dentro do próprio aplicativo: você descreve o treino em texto e ele monta a ficha. O blog oficial do MFIT descreve as melhorias de 2026 exatamente nesses termos — melhor compreensão de descrições curtas, mais variação de exercícios — e não menciona ChatGPT, plugin no diretório da OpenAI ou conexão MCP.',
+          'São coisas diferentes, e vale a distinção porque a palavra "IA" cobre as duas: a MFIT IA gera conteúdo dentro do app; o plugin do CoachPilot dá ao ChatGPT que você já usa acesso de leitura à sua carteira e, se você autorizar, de escrita nos treinos. Fonte consultada: blog oficial do MFIT Personal, em setembro de 2026. Se o MFIT lançar algo equivalente, este bloco muda — a análise completa está em [o MFIT tem integração com ChatGPT?](/blog/mfit-tem-integracao-com-chatgpt).',
         ],
       },
       {
@@ -1082,15 +1505,666 @@ export const BLOG_POSTS = [
     ],
     faqs: [
       { q: 'CoachPilot e MFIT custam o mesmo?', a: 'No plano com alunos ilimitados, sim: R$39,90/mês em ambos (julho/2026). O MFIT tem um degrau de R$10,90/mês para até 3 alunos; no CoachPilot, até 3 alunos é grátis.' },
-      { q: 'O MFIT tem integração com o ChatGPT?', a: 'Na verificação de 31 de agosto de 2026, não. A MFIT IA gera treino dentro do próprio aplicativo, a partir de um formulário. O CoachPilot tem um app publicado no diretório do ChatGPT, aprovado pela OpenAI: o ChatGPT lê a sua carteira real e, se autorizado, grava programas de treino na plataforma.' },
+      { q: 'O MFIT tem integração com o ChatGPT?', a: 'Na verificação de setembro de 2026 no blog oficial do MFIT Personal, não. A MFIT IA gera treino dentro do próprio aplicativo, a partir de uma descrição em texto. O CoachPilot é um plugin publicado no Diretório de Plugins do ChatGPT: o ChatGPT lê a sua carteira real e, se autorizado, grava programas de treino na plataforma.' },
+      { q: 'O CoachPilot é um plugin do ChatGPT?', a: 'Sim. Desde agosto de 2026 o CoachPilot está publicado no Diretório de Plugins do ChatGPT, após aprovação para publicação pela OpenAI. O plugin inclui o app que conecta a conversa aos dados e ações autorizadas da sua conta CoachPilot. A instalação é buscar por "coachpilot" no diretório e clicar no +.' },
       { q: 'Consigo migrar do MFIT para o CoachPilot?', a: 'Sim. A operação por IA do CoachPilot converte planilhas, PDFs e exportações em cadastros e treinos importáveis com revisão — sem redigitar aluno por aluno.' },
       { q: 'O CoachPilot tem app na App Store ou Google Play?', a: 'Não. O app do aluno e o portal são PWA: abrem pelo navegador e podem ser instalados na tela inicial, sem loja de aplicativos.' },
     ],
     related: [
-      { label: 'O app do CoachPilot no ChatGPT', to: '/blog/app-de-personal-trainer-para-chatgpt' },
+      { label: 'O MFIT tem integração com ChatGPT?', to: '/blog/mfit-tem-integracao-com-chatgpt' },
+      { label: 'Alternativas ao MFIT em 2026', to: '/blog/alternativas-ao-mfit' },
+      { label: 'O plugin do CoachPilot no ChatGPT', to: '/blog/app-de-personal-trainer-para-chatgpt' },
       { label: 'Os 7 melhores apps para personal trainer', to: '/blog/melhores-aplicativos-para-personal-trainer' },
       { label: 'Preços do CoachPilot', to: '/precos' },
-      { label: 'WhatsApp para personal trainer', to: '/whatsapp-para-personal-trainer' },
+    ],
+  },
+  {
+    slug: 'alternativas-ao-mfit',
+    title: 'Alternativas ao MFIT em 2026: 5 Apps para Personal Trainer',
+    description: 'Cinco alternativas ao MFIT Personal em 2026, com preços e recursos verificados em fontes oficiais: CoachPilot, Tecnofit Personal, Nexur, TreinoAI e Mobitrainer. Qual resolve cada motivo de troca.',
+    h1: 'Alternativas ao MFIT em 2026: 5 apps para personal trainer',
+    datePublished: '2026-09-07',
+    dateModified: '2026-09-07',
+    readingMinutes: 9,
+    intro: 'O MFIT Personal é o app mais usado do Brasil por bons motivos: mais de 1 milhão de downloads, nota 4,9 nas lojas, biblioteca com mais de 1.800 vídeos e app nativo para o aluno. Ainda assim, três motivos levam personais a procurar alternativa — querer IA que leia os dados reais dos alunos, não querer taxa sobre o que recebe, e querer gamificação ou WhatsApp que o MFIT não oferece. Este artigo lista cinco alternativas com preços e recursos verificados em fontes oficiais, e diz qual delas resolve cada um desses motivos.',
+    sections: [
+      {
+        h2: 'Antes: onde o MFIT continua sendo a melhor escolha',
+        paragraphs: [
+          'Trocar de plataforma custa tempo, então vale começar pelo contrário do que você veio buscar. Se o que decide para você é marca consolidada e prova social, o MFIT é a escolha segura do mercado brasileiro: a base instalada e o volume de avaliações não têm concorrente nacional próximo.',
+          'Se o app do aluno precisa ser nativo, baixado da App Store ou da Google Play, o MFIT atende e várias das alternativas desta lista não. E se a biblioteca de vídeos prontos é o que economiza o seu tempo, os 1.800+ vídeos do MFIT são o maior acervo nacional. Nesses três casos, a troca provavelmente não compensa.',
+          'O preço também não é motivo por si só: o plano ilimitado do MFIT custa R$39,90/mês, na mediana do mercado, com um degrau de R$10,90 para até 3 alunos (verificado em julho de 2026).',
+        ],
+      },
+      {
+        h2: 'Os três motivos reais de procurar alternativa',
+        paragraphs: ['Nas conversas com personais que trocaram, são sempre estes três — e cada um leva a uma alternativa diferente:'],
+        list: [
+          'IA que lê os dados reais. A MFIT IA gera treino dentro do aplicativo a partir de uma descrição em texto. Ela não responde sobre a carteira, não lê o histórico de um aluno específico para propor o ajuste e não existe fora daquela tela.',
+          'Taxa sobre o recebimento. A Carteira MFIT cobra 2,59% por transação. Para quem movimenta alguns milhares de reais por mês em mensalidades, essa conta aparece no ano.',
+          'Engajamento e canal. O MFIT não tem gamificação para os alunos (ranking, conquistas, streak) nem integração real com WhatsApp além do compartilhamento de link.',
+        ],
+      },
+      {
+        h2: '1. CoachPilot — para quem quer IA conectada aos dados',
+        paragraphs: [
+          'Mesmo preço do MFIT no plano ilimitado (R$39,90/mês) e plano grátis maior: 3 alunos sem prazo, contra 1 do MFIT. A diferença que mais pesa é a IA: desde agosto de 2026 o CoachPilot é um [plugin publicado no Diretório de Plugins do ChatGPT](/blog/app-de-personal-trainer-para-chatgpt), então o ChatGPT que você já usa passa a ler a sua carteira real e, se você autorizar, a gravar programas de treino na plataforma — com notificação e desfazer por 7 dias. Funciona também na conta gratuita do ChatGPT.',
+          'Também resolve os outros dois motivos da lista: o Pix dos alunos cai direto na conta do personal, sem taxa da plataforma, e a gamificação é completa (ranking, conquistas e streaks), com assistente de IA do aluno no WhatsApp como add-on opcional.',
+          'Ressalvas honestas: é uma plataforma mais nova, sem a base de avaliações do MFIT; o app do aluno é PWA aberto por link, não app nativo de loja; e a biblioteca de vídeos é montada pelo personal, não um acervo de 1.800 vídeos prontos. Comparativo detalhado em [CoachPilot vs MFIT](/blog/coachpilot-vs-mfit).',
+        ],
+      },
+      {
+        h2: '2. Tecnofit Personal — para quem quer o maior plano grátis',
+        paragraphs: [
+          'O plano Starter é gratuito e permite até 10 alunos ativos, com prescrição ilimitada e biblioteca básica de mais de 250 exercícios — o maior free tier desta lista, verificado na central de ajuda oficial em setembro de 2026. O plano Performance sobe para a biblioteca de 600+ exercícios e a avaliação física completa (Par-Q, avaliação postural, evolução em fotos); o preço não é publicado no site e a assinatura é feita por compra dentro do aplicativo.',
+          'O que não tem: IA no produto para personal (a IA da Tecnofit fica no sistema de academias, outro produto e outra faixa de preço), integração com WhatsApp e processamento de recebimentos — o financeiro registra e lembra cobranças, mas o dinheiro não passa por lá. Comparativo em [CoachPilot vs Tecnofit](/blog/coachpilot-vs-tecnofit).',
+        ],
+      },
+      {
+        h2: '3. Nexur — para quem tem poucos alunos e quer o menor preço de entrada',
+        paragraphs: [
+          'Cobra por faixa: R$19,90/mês para até 9 alunos, R$49,90 para 25, R$79,90 para 50, chegando a R$249,90 para 250 (verificado em julho de 2026). Tem biblioteca de exercícios, chat, ranking e financeiro, e publicar um app com a sua marca custa a partir de R$789/ano.',
+          'É a opção mais barata para carteira pequena. A conta a fazer é a do ano que vem: no modelo por faixa, cada aluno novo que você conquista encarece a ferramenta, e um personal com 50 alunos paga o dobro do que pagaria numa plataforma de preço fixo. Não tem recursos de IA.',
+        ],
+      },
+      {
+        h2: '4. TreinoAI — para quem quer gerador de treino por IA',
+        paragraphs: [
+          'Aposta na geração de treinos por IA dentro da própria plataforma, com planos a partir de R$24,90/mês para 5 alunos e R$69,90/mês para 15 (verificado em julho de 2026). É uma porta de entrada razoável para quem quer testar prescrição assistida por IA sem conectar nada.',
+          'Duas ressalvas: o preço escala por número de alunos, como no Nexur, e a IA é do mesmo tipo da MFIT IA — gera treino a partir de um formulário, sem ler o histórico real do aluno. Se o motivo da sua troca é IA, vale entender a diferença entre os níveis em [melhores apps para personal trainer com IA](/blog/melhores-apps-personal-trainer-com-ia).',
+        ],
+      },
+      {
+        h2: '5. Mobitrainer e Wiki4Fit — alternativas de gestão simples',
+        paragraphs: [
+          'O Mobitrainer (a partir de R$29,90/mês para 10 alunos) foca em gestão de alunos e treinos em ambientes variados: parques, condomínios, studios. O Wiki4Fit (a partir de R$29/mês) cobre treinos, vídeos, agenda, avaliação e planos de pagamento online.',
+          'São opções funcionais para quem quer sair do MFIT por preço ou preferência de interface, sem os recursos de IA das plataformas mais recentes. Valores verificados em julho de 2026.',
+        ],
+      },
+      {
+        h2: 'Comparativo das alternativas',
+        paragraphs: [
+          'Preços verificados nos canais oficiais em julho de 2026; o free tier da Tecnofit e os itens de IA rechecados em setembro de 2026. Recursos e valores mudam — confirme antes de assinar.',
+        ],
+        table: {
+          headers: ['Plataforma', 'Plano grátis', 'Ilimitado', 'IA', 'Integra com ChatGPT', 'Gamificação', 'Recebimento'],
+          rows: [
+            ['MFIT Personal', '1 aluno', 'R$39,90/mês', 'Gerador in-app', 'Não', 'Não', 'Carteira, taxa 2,59%'],
+            ['CoachPilot', '3 alunos, sem prazo', 'R$39,90/mês', 'Conectada + prompts', 'Sim, plugin no diretório', 'Ranking, conquistas, streak', 'Pix direto, sem taxa'],
+            ['Tecnofit Personal', '10 alunos ativos', 'Preço não publicado', 'Não', 'Não', 'Ranking', 'Registro e lembrete'],
+            ['Nexur', 'Não', 'Não (até R$249,90)', 'Não', 'Não', 'Ranking', 'Sim'],
+            ['TreinoAI', 'Não', 'Não (por faixa)', 'Gerador in-app', 'Não', 'Não', 'Sim'],
+            ['Mobitrainer / Wiki4Fit', 'Não', 'Não', 'Não', 'Não', 'Não', 'Sim'],
+          ],
+        },
+      },
+      {
+        h2: 'Qual escolher pelo seu motivo de troca',
+        paragraphs: ['Resumindo a lista pelo que fez você procurar alternativa em primeiro lugar:'],
+        list: [
+          'Saiu pela IA — CoachPilot é a única desta lista com IA conectada aos dados reais e plugin no Diretório de Plugins do ChatGPT (setembro/2026). TreinoAI atende se o que você quer é apenas um gerador.',
+          'Saiu pela taxa de recebimento — CoachPilot (Pix direto na sua conta, sem taxa da plataforma) ou Nexur.',
+          'Saiu pelo preço com carteira pequena — Tecnofit Personal (10 alunos grátis) ou Nexur (R$19,90 para 9 alunos).',
+          'Saiu por engajamento do aluno — CoachPilot é a única com ranking, conquistas e streaks; Tecnofit e Nexur têm apenas ranking.',
+          'Saiu por custo de crescer — qualquer plataforma de preço fixo: CoachPilot e o próprio MFIT no plano ilimitado. Modelos por faixa cobram mais conforme você cresce.',
+        ],
+      },
+      {
+        h2: 'Migrar sem redigitar a carteira',
+        paragraphs: [
+          'O maior custo de trocar de plataforma não é a mensalidade, é o retrabalho de recadastrar tudo — e é por isso que muito personal fica onde está mesmo insatisfeito.',
+          'Vale testar isso no período grátis de qualquer candidata antes de decidir. No CoachPilot, o caminho é jogar a planilha, o PDF ou o print da ficha antiga na IA que você já usa, aplicar o prompt pronto da plataforma e importar o resultado com um clique, revisando antes. Se algum dado vier inconsistente, o erro volta como relatório para colar de novo na IA e ela mesma corrigir. Dá para [começar grátis com até 3 alunos](/precos), sem cartão.',
+        ],
+      },
+    ],
+    faqs: [
+      { q: 'Qual a melhor alternativa ao MFIT?', a: 'Depende do motivo da troca. Para IA que lê os dados reais dos alunos e integra com o ChatGPT, o CoachPilot é a única alternativa nacional com plugin no Diretório de Plugins do ChatGPT (setembro/2026). Para o maior plano gratuito, o Tecnofit Personal com 10 alunos ativos. Para o menor preço de entrada com poucos alunos, o Nexur a R$19,90/mês.' },
+      { q: 'Existe app parecido com o MFIT e mais barato?', a: 'No plano ilimitado, o CoachPilot custa os mesmos R$39,90/mês, mas com plano grátis maior (3 alunos, contra 1) e sem taxa sobre os recebimentos. Para carteira pequena, Nexur (R$19,90 para 9 alunos) e Tecnofit Personal (10 alunos grátis) saem mais barato — com menos recursos.' },
+      { q: 'O MFIT tem integração com ChatGPT?', a: 'Na verificação de setembro de 2026 no blog oficial do MFIT Personal, não. A MFIT IA é um gerador de treino que roda dentro do próprio aplicativo. A análise completa está no artigo dedicado ao assunto.' },
+      { q: 'Qual alternativa ao MFIT tem integração com ChatGPT?', a: 'O CoachPilot, publicado no Diretório de Plugins do ChatGPT desde agosto de 2026. A instalação é buscar por "coachpilot" no diretório e clicar no + — funciona também na conta gratuita do ChatGPT.' },
+      { q: 'Consigo migrar meus alunos do MFIT para outra plataforma?', a: 'Sim, e vale testar isso no período grátis antes de decidir. No CoachPilot, a IA converte planilhas, PDFs e exportações em cadastros e treinos importáveis com revisão, sem redigitar aluno por aluno.' },
+      { q: 'Vale a pena sair do MFIT?', a: 'Não, se o que decide para você é marca consolidada, app nativo nas lojas ou a biblioteca de 1.800 vídeos — nesses três critérios o MFIT continua sendo a melhor escolha nacional. Vale se o seu motivo é IA conectada aos dados, taxa sobre recebimento ou engajamento do aluno.' },
+    ],
+    related: [
+      { label: 'CoachPilot vs MFIT: comparativo completo', to: '/blog/coachpilot-vs-mfit' },
+      { label: 'O MFIT tem integração com ChatGPT?', to: '/blog/mfit-tem-integracao-com-chatgpt' },
+      { label: 'Melhores apps para personal trainer com IA', to: '/blog/melhores-apps-personal-trainer-com-ia' },
+      { label: 'Os 7 melhores aplicativos para personal trainer', to: '/blog/melhores-aplicativos-para-personal-trainer' },
+    ],
+  },
+  {
+    slug: 'coachpilot-vs-tecnofit',
+    title: 'CoachPilot vs Tecnofit Personal: qual escolher em 2026?',
+    description: 'Comparativo entre CoachPilot e Tecnofit Personal com dados verificados em fontes oficiais: planos, limite de alunos, avaliação física, IA, integração com ChatGPT, financeiro e app do aluno.',
+    h1: 'CoachPilot vs Tecnofit Personal',
+    datePublished: '2026-09-07',
+    dateModified: '2026-09-07',
+    readingMinutes: 7,
+    intro: 'O Tecnofit Personal é o produto para personal trainer da Tecnofit, empresa forte em software de gestão para academias. O CoachPilot é uma plataforma nacional menor e mais nova, que aposta em IA conectada aos dados reais. A comparação se decide em dois pontos concretos: o Tecnofit tem o maior plano gratuito do mercado em número de alunos, e o CoachPilot é a única das duas com IA — inclusive um plugin publicado no Diretório de Plugins do ChatGPT. Dados verificados em setembro de 2026 nos canais oficiais de cada plataforma.',
+    sections: [
+      {
+        h2: 'Onde o Tecnofit Personal é mais forte',
+        paragraphs: [
+          'O plano Starter é gratuito e permite até 10 alunos ativos, com prescrição ilimitada de treinos, biblioteca básica de mais de 250 exercícios, avaliação física com anamnese, antropometria e composição corporal, e app próprio para o aluno. É o maior plano gratuito do mercado brasileiro em número de alunos, verificado na central de ajuda oficial em setembro de 2026.',
+          'O app do aluno é nativo, publicado nas lojas — o que importa para quem tem aluno resistente a link e a instalação por navegador. E a empresa tem porte: a Tecnofit é uma operação consolidada no software de academias, o que se traduz em estabilidade e continuidade do produto.',
+          'O plano Performance amplia a biblioteca para 600+ exercícios e a avaliação física para o pacote completo — Par-Q, avaliação postural e evolução em fotos —, além da central de treinos e da personalização avançada das planilhas.',
+        ],
+      },
+      {
+        h2: 'A diferença que mais pesa: IA e ChatGPT',
+        paragraphs: [
+          'O produto Personal da Tecnofit não tem recursos de IA. A IA da Tecnofit existe, mas no sistema de gestão de academias, que é outro produto, com outro público e outra faixa de preço. Nas páginas oficiais de planos do Tecnofit Personal consultadas em setembro de 2026 não há menção a IA, integração com ChatGPT, plugin no diretório da OpenAI ou conexão MCP.',
+          'No CoachPilot, a IA é o eixo do produto e existe em dois caminhos. Sem conectar nada: prompts prontos que fazem o ChatGPT, o Claude ou o Gemini gerar o pacote de treinos — ou a migração da carteira inteira a partir de planilha, PDF ou print — já no formato de importação, com revisão em tela antes de aplicar. Conectado: o [plugin do CoachPilot no Diretório de Plugins do ChatGPT](/blog/app-de-personal-trainer-para-chatgpt), instalado em três cliques, que dá ao ChatGPT acesso de leitura à sua carteira real e, se você autorizar, de escrita nos treinos, com notificação e desfazer por 7 dias.',
+          'Os dois caminhos são gratuitos nos dois planos do CoachPilot, e o plugin funciona também na conta gratuita do ChatGPT. Se IA não é um critério para você, essa diferença não deveria decidir nada.',
+        ],
+      },
+      {
+        h2: 'Onde o CoachPilot é mais forte',
+        paragraphs: [
+          'Além da IA, três diferenças práticas. A primeira é o financeiro: no CoachPilot o aluno paga por Pix direto na conta do personal, sem taxa da plataforma; no Tecnofit Personal o financeiro registra e lembra cobranças, mas não processa recebimentos — o dinheiro continua sendo combinado por fora.',
+          'A segunda é o engajamento do aluno: o CoachPilot tem gamificação completa, com ranking, conquistas e streaks de treino; o Tecnofit Personal tem ranking mensal. A terceira é a transparência de preço: o Gestão Pro do CoachPilot custa R$39,90/mês com alunos ilimitados, publicado no site, pago por Pix; o preço do Performance da Tecnofit não é publicado no site e a assinatura é feita por compra dentro do aplicativo, o que passa pelas taxas de loja e adiciona atrito no cancelamento.',
+          'Há ainda o canal de WhatsApp — lembretes de sessão e um assistente de IA opcional que responde o aluno com contexto do treino real —, que o Tecnofit Personal não oferece. É add-on pago no CoachPilot.',
+        ],
+      },
+      {
+        h2: 'Comparativo lado a lado',
+        paragraphs: [
+          'Dados verificados em setembro de 2026 nas centrais de ajuda e páginas oficiais de cada plataforma. Recursos e preços mudam — confirme antes de assinar.',
+        ],
+        table: {
+          headers: ['Critério', 'CoachPilot', 'Tecnofit Personal'],
+          rows: [
+            ['Plano grátis', '3 alunos, sem prazo', '10 alunos ativos (Starter)'],
+            ['Plano pago', 'R$39,90/mês, alunos ilimitados', 'Performance, preço não publicado'],
+            ['Forma de pagamento', 'Pix, direto no site', 'Compra dentro do aplicativo'],
+            ['Prescrição', 'Templates e rotinas ABC/ABCDE', 'Ilimitada, planilhas personalizáveis'],
+            ['Biblioteca de exercícios', 'Montada pelo personal, com vídeos próprios', '250+ (Starter) / 600+ (Performance)'],
+            ['Avaliação física', 'Medidas, fotos e gráficos de evolução', 'Completa no Performance'],
+            ['IA', 'Conectada + prompts, grátis nos dois planos', 'Não tem no produto Personal'],
+            ['Plugin no Diretório do ChatGPT', 'Sim, desde agosto de 2026', 'Não'],
+            ['A IA lê seus dados reais', 'Sim', 'Não'],
+            ['App do aluno', 'PWA (sem loja)', 'Nativo (lojas)'],
+            ['Gamificação', 'Ranking, conquistas, streak', 'Ranking mensal'],
+            ['Financeiro', 'Pix direto, sem taxa da plataforma', 'Registro e lembrete, sem recebimento'],
+            ['WhatsApp', 'Lembretes + assistente IA (add-ons)', 'Não tem'],
+          ],
+        },
+      },
+      {
+        h2: 'Como decidir',
+        paragraphs: [
+          'Escolha o Tecnofit Personal se você está começando e precisa do maior plano gratuito possível — 10 alunos ativos é bastante para validar a operação sem pagar nada —, se o app nativo nas lojas é decisivo para os seus alunos, ou se o porte da empresa por trás pesa na sua escolha.',
+          'Escolha o CoachPilot se IA é critério: é a única das duas em que o ChatGPT que você já usa lê o histórico real dos seus alunos e grava treino no sistema. Também se você quer receber por Pix direto na sua conta sem taxa da plataforma, se engajamento por gamificação importa, ou se você prefere preço publicado e pago fora das lojas de aplicativo.',
+          'O caminho mais barato de decidir é não decidir no papel: os dois têm plano gratuito sem prazo. Cadastre os mesmos três alunos reais nas duas, monte o mesmo programa nas duas e compare o tempo. No CoachPilot dá para [começar grátis](/precos) sem cartão, com o plugin do ChatGPT já incluído.',
+        ],
+      },
+    ],
+    faqs: [
+      { q: 'O Tecnofit tem integração com ChatGPT?', a: 'Nas páginas oficiais de planos do Tecnofit Personal consultadas em setembro de 2026, não há menção a integração com ChatGPT, plugin no diretório da OpenAI ou conexão MCP. O produto Personal também não tem recursos de IA — a IA da Tecnofit fica no sistema de gestão de academias, que é outro produto.' },
+      { q: 'Qual tem o maior plano gratuito, CoachPilot ou Tecnofit?', a: 'O Tecnofit Personal: 10 alunos ativos no plano Starter, verificado na central de ajuda oficial em setembro de 2026. O CoachPilot oferece 3 alunos, sem prazo, mas com a operação por IA e o plugin do ChatGPT incluídos também no plano gratuito.' },
+      { q: 'Quanto custa o Tecnofit Personal?', a: 'O plano Starter é gratuito. O preço do plano Performance não é publicado no site: a assinatura é feita por compra dentro do aplicativo, mensal ou anual. Verificado em setembro de 2026.' },
+      { q: 'O app do aluno do CoachPilot está nas lojas?', a: 'Não. O app do aluno e o portal são PWA: abrem pelo navegador por link e podem ser instalados na tela inicial do celular, sem App Store ou Google Play. O Tecnofit Personal tem app nativo nas lojas.' },
+      { q: 'Dá para migrar do Tecnofit para o CoachPilot sem redigitar?', a: 'Sim. A operação por IA do CoachPilot converte planilhas, PDFs e exportações em cadastros e treinos importáveis, com revisão antes de aplicar — sem recadastrar aluno por aluno.' },
+    ],
+    related: [
+      { label: 'Os 7 melhores aplicativos para personal trainer', to: '/blog/melhores-aplicativos-para-personal-trainer' },
+      { label: 'Melhores apps para personal trainer com IA', to: '/blog/melhores-apps-personal-trainer-com-ia' },
+      { label: 'CoachPilot vs MFIT', to: '/blog/coachpilot-vs-mfit' },
+      { label: 'Preços do CoachPilot', to: '/precos' },
+    ],
+  },
+  {
+    slug: 'mfit-tem-integracao-com-chatgpt',
+    title: 'O MFIT tem integração com ChatGPT? (verificado em setembro de 2026)',
+    description: 'Resposta direta sobre a integração do MFIT Personal com o ChatGPT, o que a MFIT IA faz de fato, a diferença entre IA interna e IA conectada, e quais alternativas oferecem integração — com data e fonte da verificação.',
+    h1: 'O MFIT tem integração com ChatGPT?',
+    datePublished: '2026-09-07',
+    dateModified: '2026-09-07',
+    readingMinutes: 6,
+    intro: 'Resposta curta: não, na verificação de setembro de 2026. O MFIT Personal tem a MFIT IA, um assistente de prescrição que roda dentro do próprio aplicativo, mas não tem plugin no Diretório de Plugins do ChatGPT nem conexão que permita a uma IA externa ler os seus dados. Este artigo explica o que o MFIT oferece de fato, por que a distinção entre IA interna e IA conectada importa na prática, o que procurar antes de acreditar em qualquer anúncio de integração, e quais plataformas oferecem isso hoje.',
+    sections: [
+      {
+        h2: 'A resposta, com data e fonte',
+        paragraphs: [
+          'Não. Em setembro de 2026, o MFIT Personal não tem integração com o ChatGPT, plugin publicado no Diretório de Plugins da OpenAI ou conexão MCP que permita a uma IA externa acessar os dados da sua carteira.',
+          'Fonte consultada: o blog oficial do MFIT Personal, que descreve as atualizações de IA de 2026 — melhorias na compreensão de descrições curtas e mais variação nas sugestões de exercícios — sem menção a ChatGPT, plugins ou conectores externos. Se o MFIT lançar algo equivalente, esta página será atualizada.',
+        ],
+      },
+      {
+        h2: 'O que o MFIT oferece de IA hoje',
+        paragraphs: [
+          'A MFIT IA é um gerador de treino integrado ao aplicativo: você descreve o que quer em texto e ele monta a ficha, já no formato da plataforma, pronta para revisão. As melhorias de 2026 anunciadas oficialmente foram nessa direção — entender descrições mais curtas e menos específicas, e variar mais os exercícios sugeridos.',
+          'É um recurso útil e maduro para o que se propõe. O escopo é o do nível 2 de IA: um treino por vez, dentro de uma tela do app, a partir da descrição que você digita. Não é pouco — é o que a maior parte do mercado brasileiro oferece.',
+        ],
+      },
+      {
+        h2: 'Qual a diferença entre IA interna e ChatGPT conectado?',
+        paragraphs: [
+          'A palavra "IA" cobre as duas coisas, e é aí que a comparação costuma se perder. A distinção que importa é de acesso a dado, não de sofisticação do modelo.',
+          'Uma IA interna gera conteúdo a partir do que você digita naquela tela. Ela não sabe quem faltou essa semana, não lê a evolução de carga de um aluno específico para propor a progressão e não existe fora do app.',
+          'Uma IA conectada é a IA que você já usa — ChatGPT, Claude, Gemini — com acesso autorizado ao sistema. Ela responde "quem não treina há mais de 10 dias?" porque leu a sua carteira naquele segundo, e propõe a progressão do supino da Júlia porque leu a evolução dela. Quando a conexão também permite escrita, ela grava o programa no sistema em vez de devolver texto para você digitar.',
+          'Na prática, a diferença é entre economizar digitação e economizar a leitura de doze telas de histórico. A classificação completa em quatro níveis está em [melhores apps para personal trainer com IA](/blog/melhores-apps-personal-trainer-com-ia).',
+        ],
+      },
+      {
+        h2: 'O que procurar em uma integração com IA',
+        paragraphs: [
+          'Serve para avaliar qualquer plataforma, inclusive as que anunciam integração amanhã. Cinco perguntas que separam anúncio de funcionalidade:',
+        ],
+        list: [
+          'A IA responde sobre a minha carteira? Pergunte algo que você sabe de cor: "quanto o João levantou no agachamento na última vez?". Se a resposta não bater com o seu registro, ela não está lendo o seu dado.',
+          'Onde acontece o login? Autorização séria acontece no site da plataforma, não dentro do chat — a sua senha nunca deveria passar pela IA.',
+          'Eu escolho o que ela pode fazer? Deve haver separação explícita entre somente consultar e também alterar.',
+          'Consigo desfazer e ver o que mudou? Escrita sem notificação e sem desfazer é risco, não recurso.',
+          'O que está declarado que ela não pode fazer? Acesso à base de alunos sem limite declarado é o sinal de alerta mais importante.',
+        ],
+      },
+      {
+        h2: 'Quais plataformas têm integração com o ChatGPT',
+        paragraphs: [
+          'Na verificação de setembro de 2026, entre as plataformas nacionais de gestão para personal trainer, o CoachPilot é a que tem um plugin publicado no Diretório de Plugins do ChatGPT: você busca por "coachpilot" no diretório, clica no + e autoriza com a sua conta. O plugin inclui o app que conecta a conversa aos dados e ações autorizadas da conta CoachPilot, e por baixo é MCP, então a mesma conexão vale para Claude e Gemini.',
+          'MFIT Personal, Tecnofit Personal, Nexur e TreinoAI não têm plugin no diretório nem conexão equivalente, segundo os canais oficiais de cada um. As internacionais Trainerize e Everfit têm AI builders internos, do mesmo tipo da MFIT IA.',
+          'Se você quer testar a diferença sem trocar de plataforma agora, o [plano grátis do CoachPilot](/precos) permite cadastrar até 3 alunos e instalar o plugin no ChatGPT — inclusive na conta gratuita dele. O passo a passo está em [como instalar o CoachPilot no ChatGPT](/blog/como-instalar-coachpilot-no-chatgpt).',
+        ],
+      },
+      {
+        h2: 'Uma nota de justiça com o MFIT',
+        paragraphs: [
+          'Este artigo existe porque a pergunta é feita, não para atacar concorrente. O MFIT é o app mais usado do Brasil por mérito: mais de 1 milhão de downloads, nota 4,9 nas lojas, biblioteca com mais de 1.800 vídeos, app nativo para o aluno e uma base declarada de 200 mil personais. Em marca consolidada, acervo de vídeos e presença nas lojas, ele continua sendo a referência nacional.',
+          'A ausência de integração com ChatGPT é um recorte, não um veredito. Se esse recorte não decide para você, o comparativo completo entre as duas plataformas está em [CoachPilot vs MFIT](/blog/coachpilot-vs-mfit), e o panorama de alternativas em [alternativas ao MFIT](/blog/alternativas-ao-mfit).',
+        ],
+      },
+    ],
+    faqs: [
+      { q: 'O MFIT tem integração com ChatGPT?', a: 'Não, na verificação de setembro de 2026 no blog oficial do MFIT Personal. O MFIT tem a MFIT IA, um gerador de treino que roda dentro do próprio aplicativo, mas não tem plugin no Diretório de Plugins do ChatGPT nem conexão que permita a uma IA externa ler os dados da sua carteira.' },
+      { q: 'O que é a MFIT IA?', a: 'É o assistente de prescrição interno do MFIT Personal: você descreve o treino em texto e ele monta a ficha dentro do aplicativo, pronta para revisão. As melhorias anunciadas em 2026 foram na compreensão de descrições curtas e na variação de exercícios sugeridos.' },
+      { q: 'Dá para usar o ChatGPT junto com o MFIT?', a: 'Dá para usar o ChatGPT à parte, copiando e colando: você descreve o aluno, recebe o treino em texto e digita no MFIT. O que não existe é a conexão que faz o ChatGPT ler os dados do seu MFIT ou gravar treino nele.' },
+      { q: 'Qual app para personal trainer integra com ChatGPT?', a: 'Na verificação de setembro de 2026, o CoachPilot, com plugin publicado no Diretório de Plugins do ChatGPT desde agosto de 2026. A instalação é buscar por "coachpilot" no diretório e clicar no +, e funciona também na conta gratuita do ChatGPT.' },
+      { q: 'Qual a diferença entre a MFIT IA e o plugin do CoachPilot?', a: 'A MFIT IA gera conteúdo dentro do app a partir do que você digita. O plugin do CoachPilot dá ao ChatGPT que você já usa acesso de leitura à sua carteira real — alunos, anamnese, avaliações, sessões, evolução de carga — e, se você autorizar, de escrita nos treinos, com notificação e desfazer por 7 dias.' },
+      { q: 'Se o MFIT lançar integração com ChatGPT, esta página muda?', a: 'Sim. A informação aqui tem data de verificação declarada (setembro de 2026) justamente porque recursos mudam. Se o MFIT publicar um plugin no diretório ou uma conexão equivalente, esta página será atualizada.' },
+    ],
+    related: [
+      { label: 'CoachPilot vs MFIT', to: '/blog/coachpilot-vs-mfit' },
+      { label: 'Alternativas ao MFIT em 2026', to: '/blog/alternativas-ao-mfit' },
+      { label: 'Melhores apps para personal trainer com IA', to: '/blog/melhores-apps-personal-trainer-com-ia' },
+      { label: 'ChatGPT para personal trainer', to: '/chatgpt-para-personal-trainer' },
+    ],
+  },
+  {
+    slug: 'chatgpt-dados-alunos-personal-trainer-seguranca',
+    title: 'ChatGPT e dados de alunos: o que o personal trainer precisa saber',
+    description: 'Autenticação, OAuth, permissões, leitura versus escrita, revogação, isolamento entre contas, auditoria e responsabilidade profissional ao conectar o ChatGPT ao sistema de gestão — incluindo o que a LGPD exige sobre dado de saúde.',
+    h1: 'ChatGPT e dados de alunos: o que o personal trainer precisa saber',
+    datePublished: '2026-09-07',
+    dateModified: '2026-09-07',
+    readingMinutes: 9,
+    intro: 'Conectar uma IA ao seu sistema de gestão significa dar a ela acesso a anamnese, avaliação física, relato de dor e histórico de treino de pessoas reais — dados pessoais sensíveis de saúde na definição da LGPD. Isso não é motivo para não fazer, e também não é detalhe burocrático: é uma decisão que exige entender o que você está autorizando e o que precisa combinar com o aluno. Este guia explica como a autorização funciona por dentro, o que procurar em qualquer plataforma que ofereça isso, e onde fica a sua responsabilidade profissional. Não existe "segurança absoluta" — existe desenho explícito e decisão informada.',
+    sections: [
+      {
+        h2: 'Como a autorização funciona',
+        paragraphs: [
+          'O padrão usado é o OAuth, o mesmo mecanismo de "entrar com" que você já usa em dezenas de serviços — e a característica que importa é onde o login acontece: no site da plataforma, não dentro do chat. No caso do CoachPilot, você clica em adicionar o plugin, a tela do CoachPilot abre, você entra com o seu e-mail e senha e autoriza.',
+          'O que o ChatGPT recebe não é a sua senha: é um token com o escopo que você concedeu, que pode ser revogado depois sem trocar senha nenhuma. Tecnicamente, o CoachPilot usa OAuth 2.1 com PKCE, código de autorização de uso único e refresh token rotativo.',
+          'Regra prática para avaliar qualquer plataforma: se alguém pedir para você digitar a senha do seu sistema dentro do chat, ou colar uma chave de acesso permanente, o desenho está errado.',
+        ],
+      },
+      {
+        h2: 'Leitura e escrita são permissões diferentes',
+        paragraphs: [
+          'A separação entre consultar e alterar é a decisão de segurança mais importante que você toma, e ela deve ser sua — não um pacote único que vem ligado.',
+          'No CoachPilot, a tela de consentimento oferece duas opções: somente leitura, ou leitura com escrita de treinos. A leitura alcança alunos, anamnese, avaliações, sessões, evolução por exercício, agenda e pendências. A escrita alcança exclusivamente programa de treino: aplicar, atualizar e desfazer.',
+          'A recomendação para o primeiro contato é começar por somente leitura. Você descobre em uma semana se as respostas batem com o seu registro, e libera a escrita depois — revogando e reautorizando em Configurações → Conexões.',
+        ],
+      },
+      {
+        h2: 'Isolamento entre contas',
+        paragraphs: [
+          'Um sistema multiusuário precisa garantir que a conexão de um personal jamais alcance o dado de outro. Isso parece óbvio e é onde mora o risco mais sério de sistemas conectados a IA.',
+          'O motivo é específico e vale entender: a IA lê texto escrito por outras pessoas — anamnese preenchida pelo aluno, relato de dor, observação em uma sessão. Se a identificação da conta fosse um parâmetro que o modelo preenche, bastaria alguém escrever uma instrução dentro de um campo de texto para tentar redirecionar o acesso. No CoachPilot, o identificador do personal vem sempre do token de autorização e nunca de um argumento preenchido pelo modelo, e todo pedido sobre um aluno passa pela mesma verificação de propriedade que o portal usa. Texto escrito por aluno é tratado como dado, nunca como instrução.',
+        ],
+      },
+      {
+        h2: 'O que acontece quando a IA escreve',
+        paragraphs: [
+          'Escrita sem rastro é o que transforma uma ferramenta útil em um problema. Cinco garantias que valem exigir de qualquer plataforma — e que são as do CoachPilot:',
+        ],
+        list: [
+          'Snapshot antes de cada alteração, que é o que torna o desfazer possível.',
+          'Desfazer por 7 dias, pelo portal ou pedindo na própria conversa.',
+          'Notificação no portal a cada alteração, com o resumo do que mudou.',
+          'Idempotência: pedido repetido não duplica a gravação.',
+          'Registro de auditoria de toda escrita.',
+        ],
+      },
+      {
+        h2: 'Os limites que não são configuráveis',
+        paragraphs: [
+          'Tão importante quanto o que a IA pode fazer é o que ela não pode fazer em hipótese alguma — inclusive por escolha sua. No CoachPilot, estes limites não são ajustáveis nem pelo personal nem pela IA:',
+        ],
+        list: [
+          'Não existe excluir aluno nem apagar histórico. A operação simplesmente não existe.',
+          'Não existe alterar plano, assinatura, cobrança ou qualquer dado financeiro.',
+          'Não existe escrita em massa: cada programa é aplicado a um aluno por vez, para que o desfazer também seja individual.',
+          'Não existe gravar programa com erro semântico: a validação roda antes da gravação e recusa explicando o que corrigir.',
+          'Restrições de anamnese e dores relatadas são invioláveis: nenhuma proposta passa por cima delas.',
+        ],
+      },
+      {
+        h2: 'Como revogar',
+        paragraphs: [
+          'Em Configurações → Conexões, no portal, a qualquer momento e com efeito imediato. A revogação corta o acesso daquela conexão sem afetar as outras nem os dados já gravados.',
+          'Vale revisar essa lista de vez em quando, como você faria com os aplicativos conectados à sua conta de e-mail. Conexão que você não usa há meses é superfície de risco sem contrapartida.',
+        ],
+      },
+      {
+        h2: 'A parte da LGPD que quase ninguém escreve',
+        paragraphs: [
+          'Anamnese, avaliação física, foto de evolução e relato de dor são dados pessoais sensíveis de saúde na definição da LGPD. Consultá-los por meio de uma IA externa envia essa informação ao provedor daquela IA, tipicamente no exterior — o que configura transferência internacional de dado pessoal sensível.',
+          'Isso exige consentimento específico do aluno para essa finalidade. Não basta o aceite genérico dos seus termos de serviço nem uma cláusula sobre "uso de tecnologia": consentimento para dado sensível precisa ser destacado e específico quanto à finalidade. Na prática, significa incluir no seu contrato de prestação de serviço uma cláusula que explique que os dados de saúde dele podem ser processados por um assistente de IA de terceiro, para qual finalidade, e que ele pode recusar.',
+          'A hipótese está descrita nos [termos de uso](/termos) e na [política de privacidade](/privacidade) do CoachPilot. Mas a relação com o aluno é sua: o consentimento dele é obtido por você, e a responsabilidade de obtê-lo também. Quem não quiser essa transmissão simplesmente não conecta e segue usando o portal normalmente — a conexão é um caminho a mais, nunca um substituto obrigatório.',
+        ],
+      },
+      {
+        h2: 'Onde fica a responsabilidade profissional',
+        paragraphs: [
+          'Prescrição de exercício é ato profissional exercido sob a sua responsabilidade técnica e o seu registro no CREF. Uma IA pode produzir a estrutura e digitar, mas quem responde pelo treino é você — o que significa que a revisão não é formalidade, é a etapa em que a sua responsabilidade se exerce.',
+          'Decisão com sinal de alerta continua fora: dor recente, lesão em investigação, retorno de afastamento longo, resultado de avaliação fora do esperado. Nesses casos a IA serve para organizar informação, não para escolher a conduta, e o encaminhamento a outro profissional de saúde é decisão humana.',
+          'Não há, até setembro de 2026, norma do CONFEF/CREF específica sobre uso de IA na prescrição. O posicionamento seguro é o mesmo de qualquer ferramenta: ela produz, você decide e assina.',
+        ],
+      },
+      {
+        h2: 'Checklist antes de conectar qualquer sistema a uma IA',
+        paragraphs: ['Oito perguntas que valem para qualquer plataforma, não só para esta. Se alguma delas não tiver resposta clara na documentação pública, ela é a pergunta a fazer antes de autorizar:'],
+        list: [
+          'O login acontece no site da plataforma, e não dentro do chat?',
+          'Eu escolho entre somente consultar e também alterar?',
+          'A conexão alcança apenas os dados da minha conta?',
+          'Toda alteração me avisa, mostra o que mudou e pode ser desfeita?',
+          'A revogação é imediata e está em um lugar que eu encontro?',
+          'Existe uma lista pública do que a IA não pode fazer?',
+          'Os termos dizem explicitamente o que acontece com dado de saúde do meu aluno?',
+          'O consentimento que eu obtenho do meu aluno cobre essa finalidade?',
+        ],
+      },
+      {
+        h2: 'A ficha técnica completa',
+        paragraphs: [
+          'Tudo o que está descrito aqui em prosa está listado item a item, com changelog e data de atualização, em [documentação da integração com o ChatGPT](/integracoes/chatgpt). É a página feita para ser consultada e citada, incluindo por quem precisa auditar a decisão antes de aprová-la.',
+        ],
+      },
+    ],
+    faqs: [
+      { q: 'É seguro conectar meu sistema de alunos ao ChatGPT?', a: 'Não existe segurança absoluta, e desconfie de quem prometer. O que existe é desenho explícito: login no site da plataforma e não no chat, permissão escolhida por você entre ler e alterar, acesso restrito à sua conta, notificação e desfazer em toda alteração, revogação imediata e lista pública do que a IA não pode fazer. Se uma plataforma não oferece esses seis itens, a pergunta continua aberta.' },
+      { q: 'Minha senha vai para o ChatGPT?', a: 'Não, quando a autorização é feita por OAuth. Você faz login na tela da própria plataforma e o ChatGPT recebe apenas um token com o escopo concedido, revogável depois sem troca de senha.' },
+      { q: 'O ChatGPT consegue ver os alunos de outro personal?', a: 'No CoachPilot, nunca: cada autorização alcança somente os dados da conta que a concedeu, e a identificação do personal vem do token, não de um argumento que o modelo preenche. Isso importa porque a IA lê texto escrito por alunos, que é tratado como dado e nunca como instrução.' },
+      { q: 'Preciso do consentimento do aluno para usar IA com os dados dele?', a: 'Sim, quando os dados incluem anamnese, avaliação física, foto de evolução ou relato de dor — que são dados sensíveis de saúde pela LGPD. Consultá-los por uma IA externa configura transferência internacional de dado sensível e exige consentimento específico para essa finalidade, e não apenas o aceite genérico dos seus termos.' },
+      { q: 'A IA consegue apagar meus dados?', a: 'No CoachPilot, não: excluir aluno e apagar histórico não existem como operação, com nenhuma permissão. A escrita alcança apenas programa de treino, um aluno por vez, com notificação e desfazer por 7 dias.' },
+      { q: 'Como revogo o acesso do ChatGPT aos meus dados?', a: 'Em Configurações → Conexões, no portal, a qualquer momento e com efeito imediato. A revogação corta o acesso daquela conexão sem afetar as outras nem os dados já gravados.' },
+      { q: 'Se eu não quiser conectar, perco alguma função?', a: 'Não. A conexão é um caminho a mais. Todo o sistema continua funcionando pelo portal, e o fluxo de montar treino por prompt e importar com um clique também continua disponível, sem enviar dado de aluno para IA nenhuma além do que você mesmo colar.' },
+    ],
+    related: [
+      { label: 'Documentação da integração com o ChatGPT', to: '/integracoes/chatgpt' },
+      { label: 'ChatGPT para personal trainer', to: '/chatgpt-para-personal-trainer' },
+      { label: 'MCP para personal trainer', to: '/blog/mcp-para-personal-trainer' },
+      { label: 'Política de privacidade', to: '/privacidade' },
+    ],
+  },
+  {
+    slug: 'mcp-para-personal-trainer',
+    title: 'MCP para Personal Trainer: como a IA acessa seus dados reais',
+    description: 'O que é MCP (Model Context Protocol), como ele difere de um gerador de treino por IA, o que muda na prática para o personal trainer e por que o mesmo padrão funciona no ChatGPT, no Claude e no Gemini.',
+    h1: 'MCP para personal trainer: como a IA acessa seus dados reais',
+    datePublished: '2026-09-07',
+    dateModified: '2026-09-07',
+    readingMinutes: 8,
+    intro: 'MCP é a sigla de Model Context Protocol, um padrão aberto que define como uma IA conversa com um sistema de fora. É o que está por trás da diferença entre uma IA que gera treino a partir de um formulário e uma IA que lê o histórico real dos seus alunos e grava o programa no seu sistema. Você não precisa entender o protocolo para usá-lo — mas entender o que ele é ajuda a avaliar promessas de "plataforma com IA", que em 2026 significam coisas muito diferentes.',
+    sections: [
+      {
+        h2: 'O que é MCP, em uma frase',
+        paragraphs: [
+          'MCP é um padrão que permite a uma IA descobrir quais operações um sistema oferece, pedir a execução dessas operações e receber a resposta em um formato que ela entende — tudo dentro de uma autorização que o dono dos dados concedeu.',
+          'A analogia mais próxima é a tomada elétrica. Antes dela, cada aparelho tinha o seu jeito de se ligar à energia; depois, qualquer aparelho funciona em qualquer tomada do padrão. O MCP fez isso para a conexão entre IA e sistemas: em vez de cada plataforma construir uma integração diferente para cada IA, ela expõe um servidor MCP e qualquer IA que fale o padrão consegue conversar com ele.',
+          'É por isso que a mesma conexão do CoachPilot atende ChatGPT, Claude e Gemini. Não são três integrações — é uma, com três portas de entrada.',
+        ],
+      },
+      {
+        h2: 'Por que isso importa para o personal trainer',
+        paragraphs: [
+          'Porque muda o que a IA sabe quando você pergunta. Sem conexão, a IA responde a partir do que você digitou naquela conversa: nome, idade, objetivo, frequência. Com conexão, ela responde a partir do que existe na sua conta: quem é o aluno, o que ele levantou nas últimas seis semanas, qual ombro doeu em julho, o que a anamnese proíbe, quantas sessões ele fez no mês passado.',
+          'A consequência prática é a que interessa: um treino montado sem esse contexto é plausível, e você mesmo escreveria em cinco minutos. Um treino montado com esse contexto é individualizado — e a individualização é justamente a parte do trabalho que template nenhum resolve.',
+          'Tem ainda um detalhe técnico que decide se o resultado é aproveitável: a IA conectada consulta a biblioteca de exercícios da sua própria conta e as regras de prescrição da plataforma antes de montar qualquer coisa. Sem isso, qualquer IA inventa nome de exercício, unidade e formato, e corrigir dá mais trabalho do que escrever do zero.',
+        ],
+      },
+      {
+        h2: 'O que existe do outro lado da conexão',
+        paragraphs: [
+          'Um servidor MCP expõe um conjunto fechado de operações — nem mais, nem menos. Isso é a diferença entre dar acesso ao seu sistema e dar acesso ao banco de dados: a IA só consegue fazer o que foi explicitamente oferecido.',
+          'No CoachPilot, as operações de leitura são listar alunos, detalhar um aluno, consultar evolução por exercício, resumir a carteira, consultar agenda e histórico de sessões, ler a biblioteca de exercícios da conta e consultar o guia de prescrição da plataforma. As de escrita, disponíveis apenas com permissão concedida, são aplicar programa de treino, atualizar um treino e desfazer a última alteração.',
+          'Não existe operação de excluir aluno, apagar histórico ou mexer em plano e cobrança — não é uma configuração desligada, é uma operação que não existe. A ficha completa está em [documentação da integração](/integracoes/chatgpt).',
+        ],
+      },
+      {
+        h2: 'MCP e o plugin do ChatGPT são a mesma coisa?',
+        paragraphs: [
+          'São camadas diferentes da mesma conexão, e a confusão é compreensível. O MCP é o protocolo — a maneira técnica de a IA falar com o sistema. O plugin do ChatGPT é a embalagem de distribuição: o que você instala pelo Diretório de Plugins, com nome, ícone, tela de autorização e um caminho de instalação em três cliques.',
+          'Em julho de 2026 a OpenAI migrou o antigo diretório de apps para o Diretório de Plugins, empacotando os apps existentes em plugins. Na nomenclatura atual, o plugin é o que se instala pelo diretório e o app é a integração que conecta o ChatGPT a dados e ações externas — e o [plugin CoachPilot](/blog/app-de-personal-trainer-para-chatgpt) inclui o app que fala MCP com o servidor do CoachPilot.',
+          'No Claude e no Gemini não há diretório equivalente para este caso: você copia o endereço da conexão em Configurações → Conexões e adiciona no assistente. Protocolo igual, embalagem diferente.',
+        ],
+      },
+      {
+        h2: 'Por que "IA conectada" é diferente de "gerador de treino"',
+        paragraphs: [
+          'Vale registrar a distinção de uma forma que dê para citar, porque ela vai continuar valendo mesmo quando os produtos mudarem de nome.',
+        ],
+        table: {
+          headers: ['', 'Gerador de treino no app', 'IA conectada por MCP'],
+          rows: [
+            ['De onde vem o contexto', 'Do formulário que você preenche', 'Do dado real da sua conta'],
+            ['Responde sobre a carteira', 'Não', 'Sim'],
+            ['Usa a sua biblioteca de exercícios', 'Às vezes', 'Sim, com os seus vídeos'],
+            ['Qual IA é usada', 'A do fornecedor', 'A que você já assina'],
+            ['Custo do modelo', 'Embutido na mensalidade', 'Da sua assinatura, se houver'],
+            ['Grava no sistema', 'Sim, na tela dele', 'Sim, pela conversa, com desfazer'],
+            ['Precisa abrir o app', 'Sim', 'Não'],
+          ],
+        },
+      },
+      {
+        h2: 'A segurança de um sistema conectado por MCP',
+        paragraphs: [
+          'Três pontos técnicos que valem conhecer, porque são os que separam uma integração séria de uma perigosa.',
+          'Primeiro, a identificação da conta nunca deve ser um parâmetro que o modelo preenche. A IA lê texto escrito por alunos — anamnese, relato de dor, observação de sessão —, e se a conta fosse um argumento, bastaria alguém escrever uma instrução dentro de um campo de texto para tentar acessar outra conta. No CoachPilot, ela vem sempre do token de autorização.',
+          'Segundo, toda referência a um aluno passa pela mesma verificação de propriedade que o portal usa. Terceiro, escrita gera snapshot, notificação, registro de auditoria e desfazer por 7 dias, e nunca acontece em massa: um aluno por vez, para que o desfazer também seja individual. O tratamento completo do assunto, incluindo a parte de LGPD, está em [ChatGPT e dados de alunos](/blog/chatgpt-dados-alunos-personal-trainer-seguranca).',
+        ],
+      },
+      {
+        h2: 'Como isso se parece na prática',
+        paragraphs: [
+          'Nada disso aparece para você. O que aparece é uma conversa em português: "quem não treina há mais de 10 dias?", "me dá o resumo da Júlia antes da sessão", "adapta o treino do Pedro pra dor no ombro e aplica".',
+          'A instalação também não exige entender nada do que está acima: no ChatGPT são três cliques pelo diretório, descritos em [como instalar o CoachPilot no ChatGPT](/blog/como-instalar-coachpilot-no-chatgpt). O protocolo é assunto de quem constrói; para quem usa, é só a IA passando a saber quem são os seus alunos.',
+        ],
+      },
+    ],
+    faqs: [
+      { q: 'O que é MCP?', a: 'MCP (Model Context Protocol) é um padrão aberto que define como uma IA conversa com um sistema externo: descobrir quais operações ele oferece, pedir a execução delas e receber a resposta, dentro de uma autorização concedida pelo dono dos dados. É o que permite ao ChatGPT, ao Claude ou ao Gemini ler os dados reais dos seus alunos em vez de apenas gerar texto.' },
+      { q: 'Preciso entender MCP para usar?', a: 'Não. No ChatGPT, a instalação são três cliques pelo Diretório de Plugins; no Claude e no Gemini, é copiar o endereço da conexão em Configurações → Conexões. O que você usa depois é conversa em português.' },
+      { q: 'MCP é a mesma coisa que o plugin do ChatGPT?', a: 'São camadas diferentes. O MCP é o protocolo — como a IA fala com o sistema. O plugin é a embalagem de distribuição no ChatGPT: o que você instala pelo Diretório de Plugins, com tela de autorização e instalação em três cliques. O plugin CoachPilot inclui o app que fala MCP com o servidor do CoachPilot.' },
+      { q: 'A mesma conexão funciona no Claude e no Gemini?', a: 'Sim, porque o padrão é aberto. No Claude, como conector personalizado, que funciona até no plano grátis, limitado a um; no Gemini, o caminho suportado hoje é CLI ou Vertex. Cada conexão é autorizada e revogada separadamente.' },
+      { q: 'Qual a diferença entre MCP e a IA que vem dentro do app?', a: 'A IA de dentro do app gera conteúdo a partir de um formulário que você preenche, com o modelo do fornecedor e o custo embutido na mensalidade. A IA conectada por MCP é a que você já assina, lendo o dado real da sua conta e usando a sua biblioteca de exercícios — e, com escrita autorizada, gravando pela conversa, com desfazer.' },
+      { q: 'Um sistema conectado por MCP é seguro?', a: 'Depende do desenho, e há três pontos que separam uma integração séria: a identificação da conta vem do token e nunca de um argumento que o modelo preenche; toda referência a um aluno passa pela mesma verificação de propriedade do portal; e escrita gera snapshot, notificação, auditoria e desfazer, sem alteração em massa.' },
+    ],
+    related: [
+      { label: 'ChatGPT e dados de alunos: segurança', to: '/blog/chatgpt-dados-alunos-personal-trainer-seguranca' },
+      { label: 'Documentação da integração', to: '/integracoes/chatgpt' },
+      { label: 'IA para personal trainer: o que automatizar', to: '/blog/ia-para-personal-trainer-o-que-automatizar' },
+      { label: 'Como conectar ChatGPT, Claude ou Gemini', to: '/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot' },
+    ],
+  },
+  {
+    slug: 'app-personal-trainer-gratis-com-ia',
+    title: 'App grátis para personal trainer com IA: o que dá para fazer sem pagar',
+    description: 'Quais apps para personal trainer oferecem IA no plano gratuito em 2026, quantos alunos cada plano grátis permite e onde estão os limites reais — com dados verificados em fontes oficiais.',
+    h1: 'App grátis para personal trainer com IA',
+    datePublished: '2026-09-07',
+    dateModified: '2026-09-07',
+    readingMinutes: 7,
+    intro: 'Plano gratuito de app para personal trainer existe em várias plataformas, mas quase nenhuma inclui os recursos de IA nele — a IA costuma ser o argumento do plano pago. Este artigo mostra quais planos grátis existem hoje no Brasil, quantos alunos cada um permite, quais deles incluem IA de verdade e onde estão os limites, com dados verificados em setembro de 2026. Resposta curta: o Tecnofit Personal tem o maior plano grátis em número de alunos (10 ativos, sem IA) e o CoachPilot é o único cujo plano gratuito inclui a operação por IA completa, com 3 alunos.',
+    sections: [
+      {
+        h2: 'Os planos gratuitos do mercado brasileiro',
+        paragraphs: [
+          'Comparativo dos planos gratuitos, com o recorte que importa: quantos alunos e o que a IA faz — ou não faz — sem pagar. Dados verificados em setembro de 2026 nos canais oficiais.',
+        ],
+        table: {
+          headers: ['Plataforma', 'Alunos no plano grátis', 'Prazo', 'IA incluída no grátis', 'O que a IA faz'],
+          rows: [
+            ['CoachPilot', '3', 'Sem prazo', 'Sim, completa', 'Plugin do ChatGPT, leitura da carteira e escrita de treino'],
+            ['Tecnofit Personal', '10 ativos', 'Sem prazo', 'Não', 'Produto Personal não tem IA'],
+            ['MFIT Personal', '1', 'Sem prazo (trial de 10 dias no pago)', 'Não publicado por plano', 'MFIT IA gera treino dentro do app'],
+            ['Nexur', 'Não tem', '—', 'Não', 'Não tem IA'],
+            ['TreinoAI', 'Não tem', '—', '—', 'Gerador in-app, nos planos pagos'],
+          ],
+        },
+      },
+      {
+        h2: 'O que é grátis de verdade no CoachPilot',
+        paragraphs: [
+          'O plano gratuito permite até 3 alunos reais, sem prazo e sem cartão, com os recursos essenciais de gestão: treinos, avaliações físicas, agenda, app do aluno e dashboard.',
+          'A parte incomum é que a operação por IA vem inteira, e não numa versão reduzida. Isso inclui o [plugin do CoachPilot no Diretório de Plugins do ChatGPT](/blog/como-instalar-coachpilot-no-chatgpt) — com leitura da carteira e, se você autorizar, escrita de treino — e os prompts prontos que geram o pacote de treinos e a migração de carteira no formato de importação, para quem prefere não conectar nada.',
+          'Vale notar o dobro de gratuidade: o Diretório de Plugins do ChatGPT também está disponível na conta gratuita do ChatGPT (verificado em setembro de 2026). Ou seja, dá para operar o fluxo inteiro sem pagar nada em nenhuma das duas pontas.',
+        ],
+      },
+      {
+        h2: 'Onde estão os limites',
+        paragraphs: [
+          'Ser honesto sobre isso é o que torna a comparação útil. O que o plano gratuito do CoachPilot não faz:',
+        ],
+        list: [
+          'Três alunos é o teto. Não é um teto de teste que expira — é grátis enquanto você quiser —, mas para a quarta pessoa é preciso assinar o Gestão Pro (R$39,90/mês, alunos ilimitados).',
+          'Os add-ons não estão incluídos: o canal de WhatsApp (+R$29,90/mês) e o assistente de IA do aluno no WhatsApp (+R$4,90 por aluno habilitado/mês) são separados, em qualquer plano.',
+          'O custo do modelo de IA continua sendo do provedor que você escolher. Ele é zero se você usar a conta gratuita do ChatGPT, mas não é o CoachPilot que paga isso.',
+          'O app do aluno é PWA, aberto por link e instalável na tela inicial — não é app nativo de loja, no grátis nem no pago.',
+        ],
+      },
+      {
+        h2: 'Plano grátis serve como teste real?',
+        paragraphs: [
+          'Serve, e é para isso que ele existe — mas só se você usar alunos de verdade. Aluno fictício esconde exatamente o atrito que você quer descobrir: o exercício que não está na biblioteca, a restrição que complica o split, o aluno que não consegue abrir o link no celular.',
+          'Um roteiro que cabe em uma semana: cadastre os três alunos mais diferentes entre si que você tiver; monte um programa completo na mão, cronometrando; refaça o mesmo programa pelo caminho de IA e compare tempo e qualidade; peça uma adaptação com restrição real; pergunte algo que você sabe de cor para conferir se a IA está lendo o seu dado; e entre como aluno, no celular de outra pessoa. O roteiro completo está em [melhor app para personal trainer em 2026](/blog/melhor-app-para-personal-trainer-2026).',
+        ],
+      },
+      {
+        h2: 'Grátis com mais alunos, ou grátis com IA?',
+        paragraphs: [
+          'É a escolha real entre as duas melhores opções gratuitas do mercado, e ela depende de onde você está.',
+          'Se você está começando e o gargalo é caber a carteira inteira sem pagar, o Tecnofit Personal permite 10 alunos ativos no plano Starter, com prescrição ilimitada e avaliação física básica — sem IA no produto para personal.',
+          'Se o gargalo é o tempo de digitação e você quer testar IA conectada antes de decidir, o CoachPilot entrega a operação por IA completa no gratuito, com o limite de 3 alunos. E as duas opções são gratuitas sem prazo, então testar as duas em paralelo custa apenas o seu tempo. Comparativo detalhado em [CoachPilot vs Tecnofit](/blog/coachpilot-vs-tecnofit).',
+        ],
+      },
+      {
+        h2: 'Como começar',
+        paragraphs: [
+          'No CoachPilot, [criar a conta](/signup) leva um minuto e não pede cartão. Depois, [instale o plugin no ChatGPT](/blog/como-instalar-coachpilot-no-chatgpt) e comece autorizando somente leitura — os primeiros comandos úteis estão em [IA para gerenciar alunos](/blog/ia-para-gerenciar-alunos-personal-trainer).',
+          'Se em algum momento a quarta pessoa aparecer, os valores estão em [preços](/precos): Gestão Pro por R$39,90/mês com alunos ilimitados, sem fidelidade e sem multa.',
+        ],
+      },
+    ],
+    faqs: [
+      { q: 'Existe app grátis para personal trainer com IA?', a: 'Sim. O CoachPilot inclui a operação por IA completa no plano gratuito de até 3 alunos, incluindo o plugin do ChatGPT com leitura da carteira e escrita de treinos. É o único da comparação de setembro de 2026 cujo plano gratuito traz IA sem versão reduzida.' },
+      { q: 'Qual app para personal trainer tem o maior plano grátis?', a: 'O Tecnofit Personal, com 10 alunos ativos no plano Starter, verificado na central de ajuda oficial em setembro de 2026 — sem recursos de IA no produto para personal. O CoachPilot oferece 3 alunos com IA incluída, e o MFIT oferece 1 aluno.' },
+      { q: 'O plano grátis do CoachPilot expira?', a: 'Não. É grátis enquanto você quiser, com até 3 alunos e sem cartão. Não é um trial de 7 ou 30 dias.' },
+      { q: 'Preciso pagar ChatGPT Plus para usar a IA no plano grátis?', a: 'Não. O Diretório de Plugins do ChatGPT está disponível em todos os planos, inclusive o gratuito (verificado em setembro de 2026). Dá para operar sem pagar nada nas duas pontas.' },
+      { q: 'O que não está incluído no plano gratuito?', a: 'O limite de 3 alunos, os add-ons de WhatsApp (canal a +R$29,90/mês e assistente de IA do aluno a +R$4,90 por aluno habilitado/mês) e o custo da sua própria assinatura de IA, se você escolher um plano pago de ChatGPT, Claude ou Gemini.' },
+    ],
+    related: [
+      { label: 'Melhores apps para personal trainer com IA', to: '/blog/melhores-apps-personal-trainer-com-ia' },
+      { label: 'App para personal trainer com alunos ilimitados', to: '/blog/app-personal-trainer-alunos-ilimitados-ia' },
+      { label: 'Preços do CoachPilot', to: '/precos' },
+      { label: 'Como instalar o CoachPilot no ChatGPT', to: '/blog/como-instalar-coachpilot-no-chatgpt' },
+    ],
+  },
+  {
+    slug: 'app-personal-trainer-alunos-ilimitados-ia',
+    title: 'App para personal trainer com alunos ilimitados e IA (2026)',
+    description: 'Quais apps para personal trainer cobram preço fixo com alunos ilimitados em 2026, quanto custa o modelo por faixa quando a carteira cresce e quais deles incluem IA conectada aos dados reais.',
+    h1: 'App para personal trainer com alunos ilimitados e IA',
+    datePublished: '2026-09-07',
+    dateModified: '2026-09-07',
+    readingMinutes: 7,
+    intro: 'Boa parte do mercado nacional cobra por faixa de alunos: começa barato e sobe a cada degrau, até passar de duzentos reais por mês nas faixas altas. O problema desse modelo é que ele cobra você por ter dado certo — cada aluno novo encarece a ferramenta. Este artigo compara as plataformas que cobram preço fixo com alunos ilimitados, mostra a conta de doze meses com a carteira crescendo e diz quais delas incluem IA. Dados verificados em setembro de 2026.',
+    sections: [
+      {
+        h2: 'Quem cobra preço fixo e quem cobra por faixa',
+        paragraphs: [
+          'A distinção é a que mais muda a conta no fim do ano, e ela não aparece na primeira tela de preço de ninguém.',
+        ],
+        table: {
+          headers: ['Plataforma', 'Modelo', 'Preço com alunos ilimitados', 'IA'],
+          rows: [
+            ['CoachPilot', 'Preço fixo', 'R$39,90/mês', 'Conectada (plugin do ChatGPT) + prompts'],
+            ['MFIT Personal', 'Preço fixo', 'R$39,90/mês', 'Gerador in-app'],
+            ['Tecnofit Personal', 'Plano único pago', 'Preço não publicado (via app)', 'Não tem no produto Personal'],
+            ['Nexur', 'Por faixa', 'Não oferece (teto de R$249,90 para 250)', 'Não tem'],
+            ['TreinoAI', 'Por faixa', 'Não oferece', 'Gerador in-app'],
+            ['Mobitrainer', 'Por faixa', 'Não oferece', 'Não tem'],
+          ],
+        },
+      },
+      {
+        h2: 'A conta que ninguém faz antes de assinar',
+        paragraphs: [
+          'A pergunta certa não é quanto custa agora, é quanto vai custar quando a carteira dobrar. Um exemplo com números públicos, verificados em julho de 2026: um personal com 50 alunos paga R$79,90/mês no Nexur e R$39,90/mês numa plataforma de preço fixo. São R$480 de diferença no ano — e o mesmo personal, ao chegar a 100 alunos, passa a R$149,90 no modelo por faixa enquanto o preço fixo continua onde estava.',
+          'O incômodo não é só financeiro. No modelo por faixa, cada aluno novo dispara uma decisão sobre a ferramenta, e é comum o personal segurar o cadastro para não pular de degrau — o que corrompe justamente o dado que ele precisa manter. Preço fixo tira essa fricção do caminho.',
+          'Se você ainda está definindo a sua própria mensalidade, vale partir dos seus custos e horas disponíveis: a [calculadora de quanto cobrar](/calculadoras/quanto-cobrar) faz essa conta.',
+        ],
+      },
+      {
+        h2: 'Alunos ilimitados com IA: o cruzamento',
+        paragraphs: [
+          'Preço fixo com alunos ilimitados e IA de verdade são dois critérios que raramente aparecem juntos, e o cruzamento reduz bastante a lista.',
+          'CoachPilot e MFIT Personal são as duas plataformas nacionais com plano ilimitado a R$39,90/mês (verificado em julho de 2026). A diferença está no tipo de IA: o MFIT tem a MFIT IA, gerador de treino que roda dentro do próprio aplicativo; o CoachPilot tem IA conectada — o [plugin publicado no Diretório de Plugins do ChatGPT](/blog/app-de-personal-trainer-para-chatgpt) dá ao ChatGPT que você já usa acesso de leitura à sua carteira real e, se você autorizar, de escrita nos treinos.',
+          'Nas demais, ou não há plano ilimitado, ou não há IA. A comparação por nível de IA está em [melhores apps para personal trainer com IA](/blog/melhores-apps-personal-trainer-com-ia).',
+        ],
+      },
+      {
+        h2: 'Por que carteira grande é onde a IA conectada rende mais',
+        paragraphs: [
+          'Com cinco alunos, você lembra de tudo de cabeça e a IA economiza pouco. Com quarenta, o gargalo deixa de ser montar treino e passa a ser saber o que está acontecendo — quem parou, quem está sem programa vigente, quem relatou dor, quem estagnou numa progressão.',
+          'É exatamente aí que ler a carteira inteira em uma pergunta muda a rotina: "me dá o resumo da carteira" devolve em um parágrafo o que exigiria abrir dezenas de telas. Os comandos práticos para isso estão em [como usar IA para gerenciar alunos](/blog/ia-para-gerenciar-alunos-personal-trainer).',
+          'A conta de digitação também escala junto: um treino de 8 exercícios tem cerca de 40 campos, um ABC completo tem 120, e quarenta alunos com programa individualizado somam quase 5.000 campos por ciclo. Template resolve a parte repetida; a individualização é o que sobra, e é o que a IA elimina.',
+        ],
+      },
+      {
+        h2: 'O que verificar antes de assinar um plano ilimitado',
+        paragraphs: ['"Ilimitado" é uma palavra que aparece muito e significa coisas diferentes. Cinco conferências que levam dois minutos e evitam surpresa no terceiro mês:'],
+        list: [
+          '"Ilimitado" tem asterisco? Confira se há limite de armazenamento, de treinos por aluno ou de envio de mídia escondido nos termos.',
+          'O preço anunciado é promocional? Pergunte qual é o valor de tabela e quando a promoção termina. No CoachPilot, R$39,90 é promoção de lançamento sobre o valor de tabela de R$69,90.',
+          'Como se paga? Cobrança por compra dentro do aplicativo passa pelas taxas de loja e costuma dificultar o cancelamento. Pix ou cartão direto no site é mais simples nos dois sentidos.',
+          'Tem fidelidade ou multa? Plano ilimitado com contrato de 12 meses anula boa parte da vantagem.',
+          'A IA está incluída ou é add-on? Vale saber se o recurso que decidiu a escolha continua no plano quando a promoção acabar.',
+        ],
+      },
+      {
+        h2: 'Onde o CoachPilot se posiciona',
+        paragraphs: [
+          'Gestão Pro por R$39,90/mês (promoção de lançamento, de R$69,90) com alunos ilimitados: 10, 50 ou 200 alunos custam o mesmo. Pagamento por Pix, sem fidelidade e sem multa de cancelamento, com o valor publicado em [preços](/precos). A operação por IA — incluindo o plugin do ChatGPT — está incluída nos dois planos, e também no [gratuito de até 3 alunos](/blog/app-personal-trainer-gratis-com-ia).',
+          'As ressalvas: os add-ons de WhatsApp são cobrados à parte (canal a +R$29,90/mês e assistente de IA do aluno a +R$4,90 por aluno habilitado/mês), o app do aluno é PWA e não app nativo de loja, e é uma plataforma mais nova que os líderes de mercado, sem a mesma base de avaliações. Se app nativo nas lojas ou marca consolidada é o que decide, o [comparativo geral](/blog/melhores-aplicativos-para-personal-trainer) tem opções melhores nesse critério.',
+        ],
+      },
+    ],
+    faqs: [
+      { q: 'Qual app para personal trainer tem alunos ilimitados?', a: 'No mercado nacional, CoachPilot e MFIT Personal oferecem plano com alunos ilimitados a R$39,90/mês (verificado em julho de 2026). Nexur, TreinoAI e Mobitrainer cobram por faixa de alunos, com o preço subindo conforme a carteira cresce.' },
+      { q: 'Existe app para personal trainer com alunos ilimitados e IA?', a: 'Sim, os dois com plano ilimitado têm IA — em níveis diferentes. O MFIT tem um gerador de treino dentro do aplicativo. O CoachPilot tem IA conectada aos dados reais, com plugin publicado no Diretório de Plugins do ChatGPT, e inclui isso nos dois planos.' },
+      { q: 'Quanto custa um app para personal trainer sem limite de alunos?', a: 'Em torno de R$39,90/mês nas plataformas nacionais com preço fixo. No modelo por faixa, um personal com 50 alunos paga cerca de R$79,90/mês e, com 100 alunos, cerca de R$149,90 — valores do Nexur verificados em julho de 2026.' },
+      { q: 'O preço sobe conforme eu ganho mais alunos?', a: 'Depende do modelo. Em preço fixo, não: 10, 50 ou 200 alunos custam o mesmo. Em modelo por faixa, sim — e é a diferença que mais pesa na conta de doze meses de quem está crescendo.' },
+      { q: 'O plano ilimitado do CoachPilot tem fidelidade?', a: 'Não. Sem fidelidade, sem multa de cancelamento e pagamento por Pix. O valor de R$39,90/mês é promoção de lançamento sobre o preço de tabela de R$69,90.' },
+    ],
+    related: [
+      { label: 'App grátis para personal trainer com IA', to: '/blog/app-personal-trainer-gratis-com-ia' },
+      { label: 'Melhores apps para personal trainer com IA', to: '/blog/melhores-apps-personal-trainer-com-ia' },
+      { label: 'Preços do CoachPilot', to: '/precos' },
+      { label: 'Calculadora de quanto cobrar', to: '/calculadoras/quanto-cobrar' },
     ],
   },
   {
@@ -1166,8 +2240,8 @@ export const BLOG_POSTS = [
     description: 'Passo a passo para personal trainer usar ChatGPT, Claude ou Gemini para montar treinos ABC/ABCDE e migrar alunos de planilha — mantendo a responsabilidade técnica.',
     h1: 'Como montar treino com IA (ChatGPT) na prática',
     datePublished: '2026-07-10',
-    dateModified: '2026-08-22',
-    readingMinutes: 8,
+    dateModified: '2026-09-07',
+    readingMinutes: 9,
     intro: 'Montar treino com IA deixou de ser experimento: em 2026, personal trainers usam ChatGPT, Claude e Gemini para transformar horas de digitação em minutos de revisão. Este guia mostra o fluxo na prática, os cuidados técnicos — e por que a IA deve trabalhar para o personal, nunca substituí-lo.',
     sections: [
       {
@@ -1211,17 +2285,31 @@ export const BLOG_POSTS = [
       {
         h2: 'Atualização: agora dá para pular o copiar e colar',
         paragraphs: [
-          'Desde agosto de 2026, o passo 3 deste guia tem uma versão sem arquivo nenhum. O CoachPilot tem conexão MCP — o padrão que ChatGPT, Claude e Gemini usam para conversar com sistemas de fora — e a IA passa a ler os seus dados e gravar o programa direto na plataforma, sem download, sem colar e sem tela de importação.',
+          'Desde agosto de 2026, o passo 3 deste guia tem uma versão sem arquivo nenhum. O CoachPilot é um plugin publicado no Diretório de Plugins do ChatGPT e, por baixo, uma conexão MCP — o padrão que ChatGPT, Claude e Gemini usam para conversar com sistemas de fora. Com ele instalado, a IA lê os seus dados e grava o programa direto na plataforma: sem download, sem colar e sem tela de importação. A instalação é no [Diretório de Plugins](/blog/como-instalar-coachpilot-no-chatgpt), em menos de um minuto.',
           'O fluxo por prompt continua valendo e continua gratuito: é a opção de quem prefere não conectar nada e revisar em tela. Quem quer a operação inteira por conversa encontra o passo a passo em [como conectar o ChatGPT, o Claude ou o Gemini](/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot) e a lista do que dá para pedir em [gerenciar alunos e treinos pelo ChatGPT](/blog/gerenciar-alunos-e-treinos-pelo-chatgpt).',
+        ],
+      },
+      {
+        h2: 'O ciclo completo: ChatGPT → CoachPilot → revisão → treino no aluno',
+        paragraphs: [
+          'Com o plugin instalado, o caminho de um treino do pedido até o celular do aluno tem quatro etapas e nenhuma delas é digitação. Vale conhecer porque é onde a sua revisão entra — e ela continua obrigatória, só mudou de lugar: ela acontece na conversa, e não numa tela de conferência.',
+        ],
+        list: [
+          'Você pede na conversa. "Monta um ABC de hipertrofia pro Rafael, 4x por semana, respeitando a restrição de ombro." A IA lê antes de escrever: anamnese, avaliações, histórico de sessões, evolução de carga e a sua biblioteca de exercícios.',
+          'O CoachPilot devolve a proposta. Ela aparece na conversa, exercício por exercício, com os vídeos da sua biblioteca. É aqui que você lê, discorda, pede troca — a mesma conversa que você teria com um estagiário.',
+          'Você aprova e ela grava. Só com permissão de escrita autorizada, e um aluno por vez. Programa com erro de estrutura é recusado antes de gravar, com a explicação do que corrigir.',
+          'O aluno vê no app. O treino entra no app do aluno na hora, e você recebe notificação no portal com o resumo do que mudou — com botão de desfazer válido por 7 dias.',
         ],
       },
     ],
     faqs: [
       { q: 'Personal trainer pode usar ChatGPT para montar treino?', a: 'Sim, como ferramenta de produção sob sua responsabilidade técnica. A prescrição continua sendo ato do profissional com CREF; a IA estrutura e digita o que você decidir.' },
-      { q: 'A IA do CoachPilot escreve direto no sistema?', a: 'Não. A IA gera o pacote e você importa com um clique, revisando tudo numa tela de conferência antes de aplicar. Nada entra sem a sua validação.' },
-      { q: 'Preciso pagar ChatGPT Plus para usar?', a: 'Não necessariamente. Os prompts do CoachPilot funcionam nas versões gratuitas de ChatGPT, Claude e Gemini.' },
+      { q: 'A IA do CoachPilot escreve direto no sistema?', a: 'Depende do caminho que você escolher, e os dois existem. No caminho por prompt, não: a IA gera o pacote e você importa com um clique, revisando tudo numa tela de conferência. No caminho conectado — com o plugin do CoachPilot instalado no ChatGPT, ou o conector no Claude —, sim: a IA grava o programa direto na plataforma, desde que você tenha autorizado a escrita. Mesmo assim a proposta aparece na conversa antes de virar treino, a alteração gera notificação no portal e pode ser desfeita por 7 dias.' },
+      { q: 'Como faço o ChatGPT gravar o treino no CoachPilot?', a: 'Instalando o plugin do CoachPilot pelo Diretório de Plugins do ChatGPT e autorizando a permissão de escrita de treinos. Depois disso, "monta um ABC de hipertrofia pro Rafael e aplica" resolve o ciclo inteiro na conversa. O passo a passo está em como instalar o CoachPilot no ChatGPT.' },
+      { q: 'Preciso pagar ChatGPT Plus para usar?', a: 'Não necessariamente. Os prompts do CoachPilot funcionam nas versões gratuitas de ChatGPT, Claude e Gemini, e o Diretório de Plugins do ChatGPT está disponível em todos os planos, inclusive o gratuito (verificado em setembro de 2026).' },
     ],
     related: [
+      { label: 'Como instalar o CoachPilot no ChatGPT', to: '/blog/como-instalar-coachpilot-no-chatgpt' },
       { label: 'Gerenciar alunos e treinos pelo ChatGPT', to: '/blog/gerenciar-alunos-e-treinos-pelo-chatgpt' },
       { label: '25 prompts de ChatGPT para personal trainer', to: '/blog/prompts-de-chatgpt-para-personal-trainer' },
       { label: 'ChatGPT para personal trainer', to: '/chatgpt-para-personal-trainer' },

@@ -173,13 +173,13 @@ function renderHomeContent() {
         <li><a href="/app-de-treino-para-alunos">App do aluno</a> via PWA com gamificação: ranking, conquistas e streaks.</li>
         <li>Financeiro com cobrança via Pix direto na conta do personal, sem taxa da plataforma.</li>
         <li><a href="/whatsapp-para-personal-trainer">Canal WhatsApp e Assistente IA do aluno</a> como add-ons opcionais.</li>
-        <li><a href="/chatgpt-para-personal-trainer">App oficial no ChatGPT</a>: consulte alunos e aplique treinos conversando, incluído nos dois planos.</li>
+        <li><a href="/chatgpt-para-personal-trainer">Plugin no Diretório de Plugins do ChatGPT</a>: consulte alunos e aplique treinos conversando, incluído nos dois planos.</li>
       </ul>
     </section>
     <section>
       <h2>O CoachPilot dentro do ChatGPT</h2>
-      <p>O CoachPilot é um app publicado no diretório do ChatGPT: abra Plugins, busque por "coachpilot", clique no + e entre com a sua conta para autorizar — funciona também na conta gratuita do ChatGPT. A partir daí você gerencia alunos e treinos conversando: pergunta quem não treina há mais de 10 dias, pede o resumo de um aluno antes da sessão, manda adaptar o treino para uma dor no ombro — e ele aplica direto na plataforma, com aviso e desfazer. Sem copiar, sem colar, sem abrir o portal. Por baixo é o padrão aberto MCP, então a mesma conexão vale para Claude e Gemini. Gratuito nos dois planos.</p>
-      <p><a href="/ia-para-personal-trainer">IA para personal trainer</a> · <a href="/chatgpt-para-personal-trainer">ChatGPT para personal trainer</a> · <a href="/blog/gerenciar-alunos-e-treinos-pelo-chatgpt">O que dá para fazer pelo chat</a></p>
+      <p>O CoachPilot é um plugin para personal trainers publicado no Diretório de Plugins do ChatGPT: abra Plugins, busque por "coachpilot", clique no + e entre com a sua conta para autorizar — funciona também na conta gratuita do ChatGPT. A partir daí você gerencia alunos e treinos conversando: pergunta quem não treina há mais de 10 dias, pede o resumo de um aluno antes da sessão, manda adaptar o treino para uma dor no ombro — e ele aplica direto na plataforma, com aviso e desfazer. Sem copiar, sem colar, sem abrir o portal. Por baixo é o padrão aberto MCP, então a mesma conexão vale para Claude e Gemini. Gratuito nos dois planos.</p>
+      <p><a href="/ia-para-personal-trainer">IA para personal trainer</a> · <a href="/chatgpt-para-personal-trainer">ChatGPT para personal trainer</a> · <a href="/blog/como-instalar-coachpilot-no-chatgpt">Como instalar o plugin</a> · <a href="/blog/melhores-apps-personal-trainer-com-ia">Melhores apps com IA</a> · <a href="/integracoes/chatgpt">Documentação da integração</a></p>
     </section>
     <section>
       <h2>Também funciona sem conectar nada</h2>
@@ -457,6 +457,7 @@ const PRIORITY = {
   '/software-para-personal-trainer': { priority: '0.9', changefreq: 'monthly' },
   '/ia-para-personal-trainer': { priority: '0.9', changefreq: 'monthly' },
   '/chatgpt-para-personal-trainer': { priority: '0.9', changefreq: 'monthly' },
+  '/integracoes/chatgpt': { priority: '0.75', changefreq: 'monthly' },
   '/app-para-personal-trainer': { priority: '0.85', changefreq: 'monthly' },
   '/gestao-de-alunos-personal-trainer': { priority: '0.85', changefreq: 'monthly' },
   '/precos': { priority: '0.85', changefreq: 'monthly' },

@@ -566,7 +566,7 @@ Resources:
           '/avaliacao-fisica-digital': 1, '/agenda-para-personal-trainer': 1,
           '/whatsapp-para-personal-trainer': 1, '/coachpilot-vs-planilhas': 1,
           '/precos': 1, '/faq': 1, '/sobre': 1, '/termos': 1, '/privacidade': 1, '/blog': 1,
-          '/calculadoras': 1
+          '/calculadoras': 1, '/integracoes/chatgpt': 1
         };
         function handler(event) {
           var request = event.request;

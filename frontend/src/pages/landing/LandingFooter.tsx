@@ -16,6 +16,7 @@ const RESOURCE_LINKS = [
   { label: 'Software para personal', to: '/software-para-personal-trainer' },
   { label: 'IA para personal', to: '/ia-para-personal-trainer' },
   { label: 'ChatGPT para personal', to: '/chatgpt-para-personal-trainer' },
+  { label: 'Integração com o ChatGPT', to: '/integracoes/chatgpt' },
   { label: 'App para personal', to: '/app-para-personal-trainer' },
   { label: 'Gestão de alunos', to: '/gestao-de-alunos-personal-trainer' },
   { label: 'Preços', to: '/precos' },
