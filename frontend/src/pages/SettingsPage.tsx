@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { QrCode, Phone, CheckCircle, AlertCircle, MessageCircle, WifiOff, RefreshCw, Copy, Smartphone, Banknote, Trash2, Info, Sun, Moon, Monitor } from 'lucide-react'
+import { QrCode, Phone, CheckCircle, AlertCircle, WifiOff, RefreshCw, Copy, Smartphone, Banknote, Trash2, Info, Sun, Moon, Monitor } from 'lucide-react'
 import { wapiApi } from '../api/wapi'
 import { financeiroApi } from '../api/financeiro'
 import { personalApi } from '../api/personal'
@@ -15,8 +15,6 @@ import { ConexoesTab } from '../components/settings/ConexoesTab'
 import { usePlanoStatus } from '../hooks/usePlano'
 import { useTheme, type ThemeChoice } from '../context/ThemeContext'
 import { fusoDoAparelho } from '../utils/datetime'
-
-const SUPPORT_URL = `https://wa.me/5513988088204?text=${encodeURIComponent('Olá! Gostaria de configurar o WhatsApp no meu CoachPilot.')}`
 
 type TabId = 'whatsapp' | 'anamnese' | 'pagamentos' | 'notificacoes' | 'conexoes' | 'regiao' | 'aparencia'
 
@@ -120,30 +118,6 @@ function WhatsAppTab() {
             Canal WhatsApp é um add-on opcional — em breve disponível para contratação.
             Acompanhe novidades em <span className="text-accent-hover">Plano</span>.
           </p>
-        </Card>
-      )}
-
-      {/* Sem instância configurada */}
-      {noInstance && (
-        <Card variant="elevated" className="text-center py-8 space-y-4">
-          <AlertCircle className="w-12 h-12 text-blue-400 mx-auto" />
-          <div>
-            <p className="font-semibold text-lg mb-1">Instância não configurada</p>
-            <p className="text-sm text-text-secondary">
-              Para conectar o WhatsApp, solicite sua instância pelo suporte.
-              Após a ativação, volte aqui para escanear o QR Code.
-            </p>
-          </div>
-          <a
-            href={SUPPORT_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 mx-auto w-fit bg-[#25D366] hover:bg-[#1db954] text-white font-semibold py-3 px-6 rounded-xl transition-colors"
-          >
-            <MessageCircle className="w-5 h-5" />
-            Solicitar pelo WhatsApp
-          </a>
-          <p className="text-xs text-text-secondary">Suporte: +55 (13) 98808-8204</p>
         </Card>
       )}
 
