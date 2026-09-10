@@ -2285,10 +2285,12 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
             <Card variant="elevated">
               <p className="text-sm text-text-secondary mb-3">Volume por semana (kg)</p>
               <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={semanas} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                {/* Mesmo eixo do gráfico empilhado abaixo: o volume da semana passa de
+                    5 dígitos e, sem width/formatter, "24000" era cortado pela margem. */}
+                <BarChart data={semanas} margin={{ top: 5, right: 10, bottom: 5, left: -8 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                   <XAxis dataKey="semana" tick={axisTick} stroke="var(--color-border-strong)" />
-                  <YAxis tick={axisTick} stroke="var(--color-border-strong)" />
+                  <YAxis tick={axisTick} stroke="var(--color-border-strong)" width={44} tickFormatter={fmtVolumeEixo} />
                   <Tooltip contentStyle={chartTip} />
                   <Bar dataKey="volume" fill="var(--color-accent)" radius={[6, 6, 0, 0]} name="Volume (kg)" />
                 </BarChart>
