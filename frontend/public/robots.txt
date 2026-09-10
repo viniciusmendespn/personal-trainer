@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Allow: /divulgadores
+Allow: /midia-kit
 Allow: /software-para-personal-trainer
 Allow: /app-para-personal-trainer
 Allow: /gestao-de-alunos-personal-trainer

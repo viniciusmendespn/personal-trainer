@@ -95,6 +95,14 @@ export default function LandingFooter() {
               >
                 Divulgadores
               </Link>
+              <Link
+                to="/midia-kit"
+                style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
+              >
+                Mídia kit
+              </Link>
             </div>
           </div>
 

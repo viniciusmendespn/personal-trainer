@@ -16,6 +16,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { BASE_URL, PAGES, WIDGET_KINDS, allPublicPaths } from '../src/pages/landing/publicSeoData.js'
 import { BLOG_POSTS, BLOG_BASE } from '../src/pages/landing/blogData.js'
+import { MEDIA_KIT } from '../src/pages/landing/mediaKitData.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..')
@@ -152,6 +153,52 @@ function renderBlogIndexContent() {
     <h1>${escapeHtml(BLOG_BASE.h1)}</h1>
     <p>${escapeHtml(BLOG_BASE.intro)}</p>
     <ul>${items}</ul>
+    ${CTA}
+  </main>`
+}
+
+// Mídia kit: página React própria (MediaKitPage), então o fallback é montado aqui
+// a partir do MESMO mediaKitData.js que o React consome. Um parceiro que abre o
+// link sem JS (preview de link, crawler, bot de rede social) precisa ver a peça
+// institucional inteira — é literalmente o objetivo da página.
+function renderMediaKitContent() {
+  const k = MEDIA_KIT
+  const cards = k.resumo.cards.map((c) => `<li><strong>${escapeHtml(c.titulo)}</strong> — ${escapeHtml(c.desc)}</li>`).join('')
+  const metricas = k.metricas.map((m) => `<li><strong>${escapeHtml(m.valor)}</strong> ${escapeHtml(m.label)}</li>`).join('')
+  const publico = k.publico.itens.map((p) => `<li>${escapeHtml(p)}</li>`).join('')
+  const diferenciais = k.diferenciais.map((d) => `<li><strong>${escapeHtml(d.titulo)}</strong> — ${escapeHtml(d.desc)}</li>`).join('')
+  const beneficios = k.parceria.beneficios.map((b) => `<li>${escapeHtml(b)}</li>`).join('')
+  const formatos = k.formatos.map((f) => `<section><h3>${escapeHtml(f.titulo)}</h3><p>${escapeHtml(f.desc)}</p>`
+    + `<ul>${f.itens.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`
+    + (f.cta ? `<p><a href="${f.cta.href}">${escapeHtml(f.cta.label)}</a></p>` : '')
+    + '</section>').join('')
+  const sinergia = k.sinergia.colunas.map((c) => `<li><strong>${escapeHtml(c.titulo)}</strong> — ${escapeHtml(c.desc)}</li>`).join('')
+  const imagens = k.provaVisual.imagens
+    .map((img) => `<figure><img src="${img.src}" alt="${escapeHtml(img.alt)}" loading="lazy" style="max-width:100%;height:auto" /><figcaption>${escapeHtml(img.legenda)}</figcaption></figure>`)
+    .join('')
+  const links = k.links.map((l) => `<li>${escapeHtml(l.label)}: <a href="${l.href}">${escapeHtml(l.valor)}</a></li>`).join('')
+  const faqs = k.faqs.map((f) => `<h3>${escapeHtml(f.q)}</h3><p>${escapeHtml(f.a)}</p>`).join('')
+
+  return `<main style="font-family:Inter,Arial,sans-serif;max-width:920px;margin:0 auto;padding:48px 24px;color:#0f172a">
+    <p style="font-weight:700;color:#0d9488;text-transform:uppercase">${escapeHtml(k.hero.eyebrow)}</p>
+    <h1>CoachPilot — ${escapeHtml(k.hero.h1)}</h1>
+    <p>${escapeHtml(k.hero.subheadline)}</p>
+    <p><a href="${k.hero.ctaPrimario.href}">${escapeHtml(k.hero.ctaPrimario.label)}</a> | <a href="${k.hero.ctaSecundario.href}">${escapeHtml(k.hero.ctaSecundario.label)}</a></p>
+    <section><h2>Números</h2><ul>${metricas}</ul><p>${escapeHtml(k.metricasNota)}</p></section>
+    <section><h2>${escapeHtml(k.resumo.titulo)}</h2><p>${escapeHtml(k.resumo.paragrafo)}</p><ul>${cards}</ul></section>
+    <section><h2>${escapeHtml(k.provaVisual.titulo)}</h2><p>${escapeHtml(k.provaVisual.intro)}</p>${imagens}</section>
+    <section><h2>${escapeHtml(k.publico.titulo)}</h2><p>${escapeHtml(k.publico.intro)}</p><ul>${publico}</ul><p>${escapeHtml(k.publico.nota)}</p></section>
+    <section><h2>Diferenciais</h2><ul>${diferenciais}</ul></section>
+    <section><h2>${escapeHtml(k.parceria.titulo)}</h2><p>${escapeHtml(k.parceria.paragrafo)}</p><ul>${beneficios}</ul></section>
+    <section><h2>Formatos de parceria</h2>${formatos}<p>${escapeHtml(k.formatosNota)}</p></section>
+    <section><h2>${escapeHtml(k.sinergia.titulo)}</h2><p>${escapeHtml(k.sinergia.paragrafo)}</p><ul>${sinergia}</ul></section>
+    <section><h2>Canais oficiais</h2><ul>${links}</ul></section>
+    <section><h2>Perguntas frequentes</h2>${faqs}</section>
+    <section><h2>${escapeHtml(k.contato.titulo)}</h2><p>${escapeHtml(k.contato.paragrafo)}</p>
+      <p><a href="${k.contato.whatsapp.href}">${escapeHtml(k.contato.whatsapp.label)}</a>
+       | <a href="${k.contato.instagram.href}">${escapeHtml(k.contato.instagram.label)}</a>
+       | <a href="${k.contato.site.href}">${escapeHtml(k.contato.site.label)}</a></p>
+    </section>
     ${CTA}
   </main>`
 }
@@ -406,6 +453,37 @@ function postSchema(post) {
   return jsonLd(graph)
 }
 
+// Espelha schemaGraph() de src/pages/landing/MediaKitPage.tsx — editar os dois juntos.
+function mediaKitSchema() {
+  const canonical = `${BASE_URL}${MEDIA_KIT.path}`
+  return jsonLd([
+    {
+      '@type': 'WebPage',
+      '@id': `${canonical}#webpage`,
+      url: canonical,
+      name: MEDIA_KIT.title,
+      description: MEDIA_KIT.description,
+      inLanguage: 'pt-BR',
+      isPartOf: { '@id': `${BASE_URL}/#website` },
+      about: { '@id': `${BASE_URL}/#app` },
+      publisher: { '@id': `${BASE_URL}/#organization` },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${canonical}#breadcrumb`,
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'CoachPilot', item: BASE_URL },
+        { '@type': 'ListItem', position: 2, name: 'Mídia Kit', item: canonical },
+      ],
+    },
+    {
+      '@type': 'FAQPage',
+      '@id': `${canonical}#faq`,
+      mainEntity: MEDIA_KIT.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+    },
+  ])
+}
+
 function blogIndexSchema() {
   const canonical = `${BASE_URL}/blog`
   return jsonLd([
@@ -466,6 +544,7 @@ const PRIORITY = {
   '/agenda-para-personal-trainer': { priority: '0.8', changefreq: 'monthly' },
   '/coachpilot-vs-planilhas': { priority: '0.8', changefreq: 'monthly' },
   '/divulgadores': { priority: '0.8', changefreq: 'monthly' },
+  '/midia-kit': { priority: '0.6', changefreq: 'monthly' },
   '/calculadoras': { priority: '0.8', changefreq: 'monthly' },
   '/calculadoras/1rm': { priority: '0.75', changefreq: 'monthly' },
   '/calculadoras/dobras-cutaneas': { priority: '0.75', changefreq: 'monthly' },
@@ -526,6 +605,16 @@ for (const page of [...Object.values(PAGES), DIVULGADORES]) {
   count++
 }
 
+// Mídia kit (peça institucional para parceiros)
+writeRoute(MEDIA_KIT.path, renderRoute(template, {
+  path: MEDIA_KIT.path,
+  title: MEDIA_KIT.title,
+  description: MEDIA_KIT.description,
+  schema: mediaKitSchema(),
+  content: renderMediaKitContent(),
+}))
+count++
+
 // Blog: índice + artigos
 writeRoute('/blog', renderRoute(template, {
   path: '/blog',
@@ -554,5 +643,6 @@ console.log(`Prerendered ${count} public pages + home fallback + sitemap.xml (la
 avisarRotasForaDaCdn([
   ...allPublicPaths(),
   '/blog',
+  MEDIA_KIT.path,
   ...BLOG_POSTS.map((post) => `/blog/${post.slug}`),
 ])

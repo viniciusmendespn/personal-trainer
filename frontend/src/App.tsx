@@ -42,6 +42,7 @@ const CapturaPage = lazy(() => import('./pages/CapturaPage').then((m) => ({ defa
 const CaptacaoPage = lazy(() => import('./pages/CaptacaoPage').then((m) => ({ default: m.CaptacaoPage })))
 const AjudaPage = lazy(() => import('./pages/AjudaPage').then((m) => ({ default: m.AjudaPage })))
 const DivulgadoresPage = lazy(() => import('./pages/landing/DivulgadoresPage').then((m) => ({ default: m.DivulgadoresPage })))
+const MediaKitPage = lazy(() => import('./pages/landing/MediaKitPage').then((m) => ({ default: m.MediaKitPage })))
 const BlogIndexPage = lazy(() => import('./pages/landing/BlogPages').then((m) => ({ default: m.BlogIndexPage })))
 const BlogPostPage = lazy(() => import('./pages/landing/BlogPages').then((m) => ({ default: m.BlogPostPage })))
 const PlanoPage = lazy(() => import('./pages/PlanoPage').then((m) => ({ default: m.PlanoPage })))
@@ -112,6 +113,7 @@ const router = createBrowserRouter([
           { path: '/signup', element: <SignUpPage /> },
           { path: '/forgot-password', element: <ForgotPasswordPage /> },
           { path: '/divulgadores', element: lazyPage(<DivulgadoresPage />) },
+          { path: '/midia-kit', element: lazyPage(<MediaKitPage />) },
           // Consentimento OAuth de um conector MCP (ChatGPT/Claude/Gemini). Exige login,
           // mas fica FORA do AppLayout: é uma tela de decisão, sem sidebar nem topbar.
           {
