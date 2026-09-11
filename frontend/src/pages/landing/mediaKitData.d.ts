@@ -19,6 +19,9 @@ export type MediaKitFormato = {
   cta?: MediaKitLink & { label: string }
 }
 
+/** Bloco da seção de conexão com IA (MCP): um caminho de conexão por card. */
+export type MediaKitConexaoGrupo = { titulo: string; desc: string; itens: string[] }
+
 export type MediaKitImagem = {
   src: string
   alt: string
@@ -43,6 +46,15 @@ export type MediaKit = {
   resumo: { titulo: string; paragrafo: string; cards: MediaKitCard[] }
   publico: { titulo: string; intro: string; itens: string[]; nota: string }
   diferenciais: MediaKitCard[]
+  conexaoIa: {
+    eyebrow: string
+    titulo: string
+    intro: string
+    /** Endereço público do servidor MCP, exibido como prova concreta. */
+    endpoint: string
+    grupos: MediaKitConexaoGrupo[]
+    nota: string
+  }
   metricas: { valor: string; label: string }[]
   metricasNota: string
   parceria: { titulo: string; paragrafo: string; beneficios: string[] }

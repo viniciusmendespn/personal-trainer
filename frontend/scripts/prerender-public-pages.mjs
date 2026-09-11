@@ -168,6 +168,8 @@ function renderMediaKitContent() {
   const publico = k.publico.itens.map((p) => `<li>${escapeHtml(p)}</li>`).join('')
   const diferenciais = k.diferenciais.map((d) => `<li><strong>${escapeHtml(d.titulo)}</strong> — ${escapeHtml(d.desc)}</li>`).join('')
   const beneficios = k.parceria.beneficios.map((b) => `<li>${escapeHtml(b)}</li>`).join('')
+  const conexao = k.conexaoIa.grupos.map((g) => `<h3>${escapeHtml(g.titulo)}</h3><p>${escapeHtml(g.desc)}</p>`
+    + `<ul>${g.itens.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`).join('')
   const formatos = k.formatos.map((f) => `<section><h3>${escapeHtml(f.titulo)}</h3><p>${escapeHtml(f.desc)}</p>`
     + `<ul>${f.itens.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`
     + (f.cta ? `<p><a href="${f.cta.href}">${escapeHtml(f.cta.label)}</a></p>` : '')
@@ -189,6 +191,9 @@ function renderMediaKitContent() {
     <section><h2>${escapeHtml(k.provaVisual.titulo)}</h2><p>${escapeHtml(k.provaVisual.intro)}</p>${imagens}</section>
     <section><h2>${escapeHtml(k.publico.titulo)}</h2><p>${escapeHtml(k.publico.intro)}</p><ul>${publico}</ul><p>${escapeHtml(k.publico.nota)}</p></section>
     <section><h2>Diferenciais</h2><ul>${diferenciais}</ul></section>
+    <section><h2>${escapeHtml(k.conexaoIa.titulo)}</h2><p>${escapeHtml(k.conexaoIa.intro)}</p>
+      <p>Servidor MCP: <strong>${escapeHtml(k.conexaoIa.endpoint)}</strong></p>
+      ${conexao}<p>${escapeHtml(k.conexaoIa.nota)}</p></section>
     <section><h2>${escapeHtml(k.parceria.titulo)}</h2><p>${escapeHtml(k.parceria.paragrafo)}</p><ul>${beneficios}</ul></section>
     <section><h2>Formatos de parceria</h2>${formatos}<p>${escapeHtml(k.formatosNota)}</p></section>
     <section><h2>${escapeHtml(k.sinergia.titulo)}</h2><p>${escapeHtml(k.sinergia.paragrafo)}</p><ul>${sinergia}</ul></section>

@@ -25,7 +25,7 @@ export const MEDIA_KIT = {
     eyebrow: 'Mídia Kit · Parcerias',
     h1: 'Tecnologia e Inteligência Artificial para personal trainers',
     subheadline:
-      'O CoachPilot é uma plataforma brasileira de gestão para personal trainers que reúne alunos, treinos, avaliações, evolução, agenda e financeiro em um só lugar — com um app publicado no diretório de plugins do ChatGPT para consultar informações e operar treinos conversando.',
+      'O CoachPilot é uma plataforma brasileira de gestão para personal trainers que reúne alunos, treinos, avaliações, evolução, agenda e financeiro em um só lugar — e fala MCP, o padrão aberto de conexão com IA: do ChatGPT, onde tem app publicado no diretório, ao Claude, ao Gemini e a qualquer assistente compatível, o personal consulta os próprios dados e opera treinos conversando.',
     ctaPrimario: { label: 'Conhecer o CoachPilot', href: 'https://coachpilot.com.br', event: 'media_kit_site_click' },
     ctaSecundario: {
       label: 'Falar sobre uma parceria',
@@ -44,7 +44,7 @@ export const MEDIA_KIT = {
       { titulo: 'Prescrição de treinos', desc: 'Templates, rotinas ABC/ABCDE reutilizáveis e acompanhamento da execução série a série.' },
       { titulo: 'App do aluno', desc: 'PWA sem loja de aplicativos: treino do dia, cargas, histórico, evolução, ranking, conquistas e streak.' },
       { titulo: 'Inteligência Artificial', desc: 'Montagem de pacotes de treino e migração da carteira por conversa, com revisão antes de aplicar.' },
-      { titulo: 'CoachPilot no ChatGPT', desc: 'O personal consulta os próprios dados e opera as funções suportadas em linguagem natural, direto no chat.' },
+      { titulo: 'Conexão com a IA do personal', desc: 'Servidor MCP próprio: ChatGPT pelo app do diretório, Claude, Gemini e qualquer assistente compatível pelo mesmo endereço — com o dado real dentro do chat.' },
       { titulo: 'Agenda e financeiro', desc: 'Sessões, lembretes e cobrança via Pix na conta do próprio personal, sem taxa da plataforma.' },
     ],
   },
@@ -74,8 +74,8 @@ export const MEDIA_KIT = {
       desc: 'Não é geração de texto solta: a IA lê os alunos, anamneses, avaliações e sessões daquele profissional e trabalha em cima disso.',
     },
     {
-      titulo: 'App publicado no diretório do ChatGPT',
-      desc: 'O personal instala o CoachPilot no ChatGPT que já usa e opera a plataforma conversando. Por baixo é o padrão aberto MCP, então vale também para Claude e Gemini.',
+      titulo: 'Conecta em qualquer IA, não em uma só',
+      desc: 'O CoachPilot tem servidor MCP próprio — o padrão aberto de conexão entre IAs e sistemas. No ChatGPT o app já está publicado no diretório; Claude, Gemini e qualquer outro assistente compatível entram pelo mesmo endereço. Nenhuma IA fica de fora, nem as que ainda vão aparecer.',
     },
     {
       titulo: 'Tudo em um só lugar',
@@ -95,12 +95,57 @@ export const MEDIA_KIT = {
     },
   ],
 
+  // ── Conexão com IA (MCP) ──────────────────────────────────────────────────
+  // O que se subestima quando a integração vira só "app do ChatGPT": o servidor
+  // é MCP remoto com OAuth (docs/especificacoes/MCP_SERVER.md), então a lista de
+  // IAs compatíveis não é nossa — é a do padrão, e cresce sem release nosso.
+  // ⚠️ Honestidade: em "onde já funciona hoje" só entra caminho percorrido ponta
+  // a ponta. O resto é descrito como compatível com o padrão, nunca homologado.
+  conexaoIa: {
+    eyebrow: 'Conexão com IA',
+    titulo: 'Não é integração com uma IA. É o padrão que todas usam.',
+    intro:
+      'O CoachPilot publica um servidor MCP próprio em mcp.coachpilot.com.br. O Model Context Protocol é o padrão aberto que o mercado adotou para ligar assistentes de IA a sistemas de fora — não é uma ponte feita sob medida para um fornecedor, é um endereço público com autorização OAuth. Quem fala MCP conversa com o CoachPilot, inclusive assistentes que ainda nem foram lançados.',
+    endpoint: 'mcp.coachpilot.com.br',
+    grupos: [
+      {
+        titulo: 'Onde já funciona hoje',
+        desc: 'Caminhos percorridos ponta a ponta, com autorização, escrita de treino, aviso no portal e desfazer.',
+        itens: [
+          'ChatGPT — app publicado e aprovado no diretório de plugins, instala em um clique',
+          'Claude — conector personalizado na web, no desktop e no Claude Code; funciona até no plano grátis',
+          'Gemini — hoje pelo Gemini CLI e pela Vertex AI',
+        ],
+      },
+      {
+        titulo: 'E em qualquer outro cliente MCP',
+        desc: 'O endereço é público e a autorização é OAuth padrão: ferramentas e editores que falam MCP remoto conectam sem nada de específico do nosso lado.',
+        itens: [
+          'Sem integração sob medida e sem fila de roadmap',
+          'IA nova que adote o padrão já nasce compatível',
+          'Na autorização, o personal escolhe entre somente leitura ou leitura e escrita de treinos',
+        ],
+      },
+      {
+        titulo: 'Ou sem conectar nada',
+        desc: 'Quem prefere não ligar a IA à conta usa os prompts prontos: conversa com a IA que quiser, ela devolve o programa no formato do CoachPilot e o personal importa com um clique.',
+        itens: [
+          'Serve para planilha, PDF ou print da carteira antiga',
+          'Revisão antes de aplicar — quem prescreve continua sendo o personal',
+          'Funciona até em IA que não fala MCP',
+        ],
+      },
+    ],
+    nota:
+      'O custo do modelo é da assinatura de IA do próprio personal e não passa pelo CoachPilot: não há IA embutida no preço nem dependência de um único fornecedor — trocar de assistente é trocar de conexão.',
+  },
+
   // ── Números ────────────────────────────────────────────────────────────────
   // REGRA: nunca inventar número. Só entra aqui o que for verificável e já
   // autorizado nos materiais oficiais (KIT_DIVULGADOR.md §6).
   metricas: [
     { valor: '+500', label: 'alunos gerenciados na plataforma' },
-    { valor: '3', label: 'IAs conectáveis: ChatGPT, Claude e Gemini' },
+    { valor: 'MCP', label: 'padrão aberto: qualquer IA compatível conversa com a plataforma' },
     { valor: 'R$ 39,90', label: 'plano Gestão Pro por mês, sem fidelidade' },
     { valor: '0', label: 'custo para começar — até 3 alunos, sem prazo' },
   ],
@@ -114,7 +159,7 @@ export const MEDIA_KIT = {
       'O CoachPilot está na interseção entre fitness, tecnologia e Inteligência Artificial. Buscamos parceiros que já conversem com personal trainers e profissionais de Educação Física para criar conteúdo útil, demonstrações reais e benefícios exclusivos para suas audiências.',
     beneficios: [
       'Produto com forte apelo demonstrativo — dá para mostrar funcionando em 30 segundos de vídeo',
-      'IA no ChatGPT é assunto que gera curiosidade e alcance orgânico',
+      'IA é assunto que gera curiosidade e alcance orgânico — e aqui roda na IA que a audiência já usa, seja ela qual for',
       'Cupom individual rastreável para medir o resultado da ação',
       'Benefício exclusivo para a sua audiência',
       'Comissão recorrente enquanto o indicado continuar ativo',
@@ -197,6 +242,7 @@ export const MEDIA_KIT = {
     { label: 'Loja de pacotes de treino', valor: 'loja.coachpilot.com.br', href: 'https://loja.coachpilot.com.br' },
     { label: 'Programa de divulgadores', valor: 'coachpilot.com.br/divulgadores', href: '/divulgadores', event: 'media_kit_divulgadores_click' },
     { label: 'O CoachPilot no ChatGPT', valor: 'coachpilot.com.br/chatgpt-para-personal-trainer', href: '/chatgpt-para-personal-trainer' },
+    { label: 'Ficha técnica da conexão com IA', valor: 'coachpilot.com.br/integracoes/chatgpt', href: '/integracoes/chatgpt' },
     { label: 'Instagram', valor: '@coachpilotoficial', href: 'https://instagram.com/coachpilotoficial', event: 'media_kit_instagram_click' },
     { label: 'WhatsApp comercial', valor: '+55 13 98808-8204', href: `https://wa.me/${WA}`, event: 'media_kit_whatsapp_click' },
   ],
@@ -233,8 +279,12 @@ export const MEDIA_KIT = {
       a: 'Sim. O plano gratuito atende até 3 alunos, sem prazo e sem cartão, e conseguimos abrir uma conta de demonstração já populada para você ver a plataforma cheia. É só pedir no WhatsApp.',
     },
     {
+      q: 'A conexão com IA funciona só no ChatGPT?',
+      a: 'Não. O ChatGPT é só o caminho mais fácil, porque o app do CoachPilot já está publicado no diretório de plugins. Por baixo o CoachPilot expõe um servidor MCP próprio em mcp.coachpilot.com.br — o Model Context Protocol é o padrão aberto de conexão entre IAs e sistemas. Qualquer assistente que fale MCP se conecta pelo mesmo endereço, com login e autorização do próprio personal: hoje isso inclui Claude (inclusive no plano grátis) e Gemini por CLI ou Vertex, e vale automaticamente para qualquer cliente MCP novo, sem precisarmos fazer uma integração para cada um.',
+    },
+    {
       q: 'O CoachPilot tem parceria com a OpenAI?',
-      a: 'Não. O CoachPilot é um app publicado e aprovado no diretório de plugins do ChatGPT, o que é diferente de parceria ou endosso da OpenAI. A conexão usa o padrão aberto MCP, que também funciona no Claude e no Gemini.',
+      a: 'Não. O CoachPilot é um app publicado e aprovado no diretório de plugins do ChatGPT, o que é diferente de parceria ou endosso da OpenAI. E a tecnologia por trás é o padrão aberto MCP, não uma tecnologia da OpenAI: por isso a mesma conexão atende Claude, Gemini e outros clientes compatíveis.',
     },
   ],
 }

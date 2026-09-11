@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, ChevronUp, Instagram, MessageCircle, Sparkles,
+  ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, ChevronUp, Instagram, MessageCircle, Plug, Sparkles,
 } from 'lucide-react'
 import LandingFooter from './LandingFooter'
 import { MEDIA_KIT } from './mediaKitData.js'
@@ -334,6 +334,52 @@ export function MediaKitPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── Conexão com IA (MCP) ─────────────────────────────────────────── */}
+      {/* Aprofunda o diferencial "conecta em qualquer IA": para o parceiro, a
+          diferença entre "tem integração com o ChatGPT" e "fala o padrão que
+          todas as IAs usam" é justamente a pauta que rende conteúdo. */}
+      <section style={{ background: 'linear-gradient(160deg, #0f172a 0%, #0a0e1a 55%, #060a14 100%)', padding: '76px 20px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'radial-gradient(rgba(20,184,166,0.6) 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
+        <div style={{ position: 'absolute', top: '8%', right: 0, width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+        <div style={{ maxWidth: 1000, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          <SectionTitle eyebrow={k.conexaoIa.eyebrow} titulo={k.conexaoIa.titulo} sub={k.conexaoIa.intro} dark />
+
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: -24, marginBottom: 36 }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 9,
+              background: 'rgba(20,184,166,0.1)', border: '1px solid rgba(20,184,166,0.28)',
+              borderRadius: 999, padding: '9px 18px',
+              color: '#5eead4', fontSize: 14, fontWeight: 600,
+              fontFamily: "'SFMono-Regular', Consolas, monospace", wordBreak: 'break-all',
+            }}>
+              <Plug size={15} color={TEAL} style={{ flexShrink: 0 }} />
+              {k.conexaoIa.endpoint}
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+            {k.conexaoIa.grupos.map((g) => (
+              <div key={g.titulo} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 18, padding: 26 }}>
+                <h3 style={{ fontFamily: SORA, fontSize: 17, fontWeight: 700, color: '#fff', marginBottom: 10, lineHeight: 1.3 }}>{g.titulo}</h3>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14.5, lineHeight: 1.65, marginBottom: 16 }}>{g.desc}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                  {g.itens.map((it) => (
+                    <div key={it} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                      <Check size={14} color={TEAL} style={{ marginTop: 3, flexShrink: 0 }} />
+                      <span style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13.5, lineHeight: 1.55 }}>{it}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: 13.5, lineHeight: 1.7, marginTop: 26, maxWidth: 720, marginLeft: 'auto', marginRight: 'auto' }}>
+            {k.conexaoIa.nota}
+          </p>
         </div>
       </section>
 
