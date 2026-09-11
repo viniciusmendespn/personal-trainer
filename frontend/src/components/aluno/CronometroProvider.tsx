@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { startAlarm, stopAlarm, startKeepAlive, stopKeepAlive, tick as tickBeep, unlockAudio } from '../../utils/beep'
+import { vibrar } from '../../utils/haptics'
 import { useCronometroPiP, type PiPFrame } from '../../hooks/useCronometroPiP'
 import {
   CronometroContext,
@@ -116,7 +117,7 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
           releaseWakeLock()
           stopKeepAlive()
           startAlarm()
-          navigator.vibrate?.([200, 100, 200])
+          vibrar('alerta')
           // AMRAP: fim do tempo captura os rounds como resultado (pré-preenche o score)
           const w = wodRef.current
           if (w?.formato === 'AMRAP') {
@@ -143,7 +144,7 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
             releaseWakeLock()
             stopKeepAlive()
             startAlarm()
-            navigator.vibrate?.([200, 100, 200])
+            vibrar('alerta')
             return
           }
           // Virada de intervalo: beep + vibração (próximo slot)
@@ -151,13 +152,13 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
           if (slot > lastEmomSlotRef.current) {
             lastEmomSlotRef.current = slot
             tickBeep()
-            navigator.vibrate?.([120, 60, 120])
+            vibrar('virada')
           }
         } else if (w?.formato === 'FOR_TIME' && w.timeCapS && !capAlertedRef.current && elapsed >= w.timeCapS * 1000) {
           // Time cap atingido: alerta pontual, mas o relógio continua (registrar cap + reps)
           capAlertedRef.current = true
           tickBeep()
-          navigator.vibrate?.([300, 100, 300, 100, 300])
+          vibrar('urgente')
         }
         setDisplayMs(elapsed)
       }
@@ -311,11 +312,12 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
   const addRound = useCallback(() => {
     unlockAudio()
     tickBeep()
-    navigator.vibrate?.(80)
+    vibrar('sucesso')
     setWodRounds((r) => r + 1)
   }, [])
 
   const terminarWod = useCallback(() => {
+    vibrar('sucesso')
     setRunning(false)
     releaseWakeLock()
     stopKeepAlive()
@@ -329,6 +331,9 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
 
   const iniciar = useCallback(() => {
     unlockAudio()
+    // Além do feedback, serve de primer de user activation: sem um vibrate dentro de um gesto,
+    // o Chrome recusa os padrões que o tick dispara depois (ver `utils/haptics.ts`).
+    vibrar('impacto')
     stopAlarm()
     startKeepAlive()
     setDone(false)
@@ -344,12 +349,14 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
   }, [modo, requestWakeLock])
 
   const pausar = useCallback(() => {
+    vibrar('impacto')
     setRunning(false)
     releaseWakeLock()
     stopKeepAlive()
   }, [releaseWakeLock])
 
   const resetar = useCallback(() => {
+    vibrar('impacto')
     setRunning(false)
     setDone(false)
     stopAlarm()
@@ -365,12 +372,15 @@ export function CronometroProvider({ children }: { children: ReactNode }) {
   }, [modo, baseSeconds, releaseWakeLock])
 
   const dismiss = useCallback(() => {
+    vibrar('impacto')
     stopAlarm()
     setDone(false)
     setDisplayMs(baseSeconds * 1000)
   }, [baseSeconds])
 
   const addSeconds = useCallback((sec: number) => {
+    // `toque` e não `impacto`: os chips +10s/+30s/+1min são tocados em rajada.
+    vibrar('toque')
     stopAlarm()
     setDone(false)
     setRunning((r) => {
