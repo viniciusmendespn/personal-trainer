@@ -45,6 +45,7 @@ import { videoUrlComFallback } from '../utils/video'
 import { feitoNaSemana, labelDiaCurto, fusoDoAparelho } from '../utils/datetime'
 import { chaveExercicio } from '../utils/normalizeText'
 import { lerRascunho, limparRascunhoEx, limparRascunhoSessao, salvarRascunhoEx } from '../utils/rascunhoSessao'
+import { vibrar } from '../utils/haptics'
 
 const chartTip = {
   background: 'var(--color-surface-elevated)',
@@ -1683,6 +1684,7 @@ function ExercicioCard({ ex, bloco, sessaoId, onVerFeed, onAbrirCronometro }: {
   /** Abrir/fechar o card. Reabrir só descarta o que está na tela quando não há rascunho a
    *  proteger — era o rebuild incondicional daqui que apagava o que o aluno tinha digitado. */
   function alternarAberto() {
+    vibrar('toque')
     if (!open) {
       if (salvoRef.current || !sujo) {
         setRows(buildRows(variante))
@@ -1779,6 +1781,8 @@ function ExercicioCard({ ex, bloco, sessaoId, onVerFeed, onAbrirCronometro }: {
       )}
       <div className="flex items-center gap-1">
         <button className="flex-1 flex items-center justify-between text-left min-w-0"
+          type="button"
+          aria-expanded={open}
           onClick={alternarAberto}>
           <span className="min-w-0">
             <ExpandableText text={nomeAtivo} className={`font-medium block ${ex.aquecimento ? 'text-text-secondary' : ''}`}>
@@ -1798,7 +1802,18 @@ function ExercicioCard({ ex, bloco, sessaoId, onVerFeed, onAbrirCronometro }: {
               }
             </span>
           </span>
-          {feito ? <Check size={16} className="text-success shrink-0" /> : <ChevronRight size={16} className="text-text-muted shrink-0" />}
+          {/* Um slot só carrega os dois estados: cor = registrado, rotação = aberto. Fechado e
+              registrado vira ✓, mesma regra dos chips do registrado logo abaixo. */}
+          {feito && !open ? (
+            <Check size={16} className="text-success shrink-0" />
+          ) : (
+            <ChevronRight
+              size={16}
+              className={`shrink-0 transition-transform duration-200 motion-reduce:transition-none ${
+                open ? 'rotate-90' : ''
+              } ${feito ? 'text-success' : 'text-text-muted'}`}
+            />
+          )}
         </button>
         <button
           onClick={() => onAbrirCronometro(ex.intervalo_s, nomeAtivo)}
