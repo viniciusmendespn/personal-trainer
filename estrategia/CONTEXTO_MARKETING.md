@@ -4,8 +4,11 @@
 > roteiros de vídeo, copy de landing page etc.). Reúne produto, dores, benefícios, identidade
 > visual, preço e provas sociais. Mantenha este arquivo atualizado conforme o produto evolui.
 >
-> **Atualizado em 01/set/2026** — o app do CoachPilot no diretório do ChatGPT passou a ser o
-> diferencial nº 1 do produto (§6). Antes de reusar copy antiga, confira §14.
+> **Atualizado em 11/set/2026** — terminologia do ChatGPT alinhada ao **Diretório de Plugins**
+> ("plugin" e "app" convivem — ver §14), ficha técnica pública em `/integracoes/chatgpt`, Mídia Kit
+> para parceiros em `/midia-kit`, 8 artigos novos no blog e funcionalidades novas (§5: grupos
+> musculares múltiplos + volume por grupo, comentário ao finalizar treino, fuso horário do personal).
+> Desde 01/set o app no ChatGPT é o diferencial nº 1 (§6). Antes de reusar copy antiga, confira §14.
 
 ---
 
@@ -14,13 +17,13 @@
 **CoachPilot** é um SaaS de gestão para personal trainers e estúdios de treinamento: substitui
 planilhas, papel e WhatsApp manual por uma plataforma única que organiza alunos, treinos, agenda,
 avaliações físicas e evolução. Seu maior diferencial é a **operação por linguagem natural**: desde
-setembro/2026 o CoachPilot é um **app publicado e aprovado no diretório de apps do ChatGPT** — o
-personal instala em menos de um minuto e passa a **perguntar sobre os próprios alunos e mandar
-prescrever treino conversando** (por texto ou voz, inclusive pelo celular), com a resposta vindo do
-dado real da conta dele e o treino sendo gravado direto na plataforma. Quem usa Claude ou Gemini
-chega no mesmo lugar pelo conector MCP. Inclui ainda um **app exclusivo para o aluno (PWA)** e,
-como add-on opcional, um **Assistente IA do aluno via WhatsApp** que tira dúvidas e registra a
-execução dos treinos.
+agosto/2026 o CoachPilot é um **plugin publicado no Diretório de Plugins do ChatGPT** (o plugin
+inclui o app que conecta a conversa aos dados e ações da conta) — o personal instala em menos de um
+minuto e passa a **perguntar sobre os próprios alunos e mandar prescrever treino conversando** (por
+texto ou voz, inclusive pelo celular), com a resposta vindo do dado real da conta dele e o treino
+sendo gravado direto na plataforma. Quem usa Claude ou Gemini chega no mesmo lugar pelo conector
+MCP. Inclui ainda um **app exclusivo para o aluno (PWA)** e, como add-on opcional, um **Assistente
+IA do aluno via WhatsApp** que tira dúvidas e registra a execução dos treinos.
 
 **Nome do produto:** CoachPilot
 **Categoria:** SaaS / Software de gestão para personal trainers (fitness management software)
@@ -30,9 +33,14 @@ CloudFront; o domínio `*.cloudfront.net` é só a infraestrutura por trás, nã
 **App do aluno:** https://app.coachpilot.com.br (PWA separado, sem instalação de loja)
 **App no ChatGPT (instalação direta):**
 https://chatgpt.com/plugins/plugin_asdk_app_6a80cc8edfb48191b895cbaecd19b642 — ou, dentro do
-ChatGPT, menu lateral → **Plugins** → buscar "coachpilot" → **+**
+ChatGPT, menu lateral → **Plugins** → buscar "coachpilot" → **+** (o portal também mostra esse link
+direto na tela de Conexões e no empty-state de treinos do aluno)
+**Ficha técnica da integração (referência factual, citável):** https://coachpilot.com.br/integracoes/chatgpt
 **Loja de pacotes de treino:** https://loja.coachpilot.com.br
+**Mídia Kit para parceiros/imprensa:** https://coachpilot.com.br/midia-kit
+**Programa de divulgadores:** https://coachpilot.com.br/divulgadores
 **Instagram oficial:** https://instagram.com/coachpilotoficial (@coachpilotoficial)
+**WhatsApp comercial/suporte:** +55 13 98808-8204 (wa.me/5513988088204)
 **Status:** produto em produção, em fase de aquisição de primeiros clientes pagantes
 
 ---
@@ -70,9 +78,10 @@ ChatGPT, menu lateral → **Plugins** → buscar "coachpilot" → **+**
 
 ## 4. Benefícios / proposta de valor
 
-- **App dentro do ChatGPT, aprovado pela OpenAI (grátis, benefício nº 1)**: o CoachPilot está no
-  diretório de apps do ChatGPT. Instala em menos de um minuto, funciona **até na conta gratuita do
-  ChatGPT** e **também no aplicativo de celular** (iOS/Android). Depois disso o personal simplesmente
+- **Plugin dentro do ChatGPT, publicado no Diretório de Plugins (grátis, benefício nº 1)**: o
+  CoachPilot está no Diretório de Plugins do ChatGPT, após aprovação para publicação pela OpenAI.
+  Instala em menos de um minuto, funciona **até na conta gratuita do ChatGPT** e **também no
+  aplicativo de celular** (iOS/Android). Depois disso o personal simplesmente
   conversa: "quem não treina há 10 dias?", "me dá o resumo da Júlia antes da sessão de amanhã",
   "monta um ABC de hipertrofia pro Rafael e aplica". A resposta sai do dado real da conta dele
   (não é chute de IA) e o treino é **gravado direto no CoachPilot** — sem copiar, sem colar, sem
@@ -103,7 +112,11 @@ ChatGPT, menu lateral → **Plugins** → buscar "coachpilot" → **+**
   — não confundir com a operação por IA do personal (grátis), citada acima.
 - **Rastreabilidade total**: cada registro do aluno (carga, repetição, foto, vídeo, relato de
   dor) fica vinculado a um treino e exercício específico — nada fica "solto"; relato de dor gera
-  alerta imediato para o personal.
+  alerta imediato para o personal. Ao finalizar o treino, o aluno ainda pode deixar um comentário
+  curto (ex.: por que pulou um exercício) que chega ao personal na notificação de treino concluído.
+- **Volume por grupo muscular de verdade**: um exercício pode atingir mais de um grupo (ex.: Peito
+  + Tríceps) e o gráfico "Volume por semana" credita cada grupo corretamente — o personal enxerga
+  se o programa está equilibrado sem calcular nada.
 - **Perfil público do personal**: página de perfil com bio, formação, experiência e redes sociais
   (Instagram, TikTok, YouTube, LinkedIn, Facebook, X, site) — reforça autoridade profissional.
 - **Anamnese digital**: questionário de saúde/objetivos customizável, preenchido pelo aluno antes
@@ -120,14 +133,17 @@ ChatGPT, menu lateral → **Plugins** → buscar "coachpilot" → **+**
 
 | Funcionalidade | Descrição |
 |---|---|
-| **App do CoachPilot no ChatGPT** | **Diferencial nº 1, grátis, incluído em todos os planos.** App publicado e aprovado no diretório do ChatGPT: instala em menos de um minuto (menu Plugins → buscar "coachpilot" → +), funciona na conta gratuita do ChatGPT e no aplicativo de celular. O ChatGPT passa a ler os dados reais do personal (alunos, anamnese, avaliações, sessões, evolução, agenda, pendências) e, se autorizado, a **gravar programas de treino direto na plataforma** — com aviso no portal, auditoria e desfazer por 7 dias. Escopo escolhido na autorização (só leitura ou leitura+escrita); revogável em Configurações → Conexões |
+| **Plugin do CoachPilot no ChatGPT** | **Diferencial nº 1, grátis, incluído em todos os planos.** Plugin publicado no Diretório de Plugins do ChatGPT (após aprovação para publicação pela OpenAI): instala em menos de um minuto (menu Plugins → buscar "coachpilot" → +), funciona na conta gratuita do ChatGPT e no aplicativo de celular. O ChatGPT passa a ler os dados reais do personal (alunos, anamnese, avaliações, sessões, evolução, agenda, pendências, biblioteca de exercícios) e, se autorizado, a **gravar programas de treino direto na plataforma** — com aviso no portal, auditoria e desfazer por 7 dias. Escopo escolhido na autorização (só leitura ou leitura+escrita); revogável em Configurações → Conexões. Ficha técnica pública em `/integracoes/chatgpt` |
 | **Conexão com Claude e Gemini (MCP)** | Mesmo servidor, padrão aberto (Model Context Protocol): quem usa Claude ou Gemini conecta o CoachPilot como conector e tem as mesmas capacidades do app do ChatGPT |
 | **Operação por IA sem conectar (prompt pronto)** | Caminho alternativo, grátis. O personal usa o próprio ChatGPT/Claude/Gemini (texto ou voz) + prompts prontos da plataforma para: montar pacotes de treino completos, atualizar o programa de um aluno e importar/migrar alunos em massa. A IA gera o JSON/CSV, o personal revisa e importa com 1 clique. Erro de importação vira um relatório que se cola de volta na IA para ela mesma corrigir |
 | Gestão de alunos | Cadastro, histórico e timeline de evolução de cada aluno, sem limite de quantidade. Inclui notas internas, endereço, email e data de nascimento. Importação em massa via IA (a partir de planilha/PDF/print) |
 | Treinos e templates | Criação de treinos com séries/reps/carga prescrita/intervalo; templates reutilizáveis aplicáveis a múltiplos alunos com um clique |
 | Rotinas de treino | Split completo (ex.: rotina ABC ou ABCDE) criado juntando templates ou salvo a partir dos treinos de um aluno — aplicável a vários alunos de uma vez (modo adicionar ou substituir) |
 | Pacotes de treino (.cpkg) | Pacotes prontos com exercícios, templates e rotinas empacotados num arquivo .cpkg — importáveis com um clique, criados com ajuda de IA ou editados manualmente; suporte a pacotes licenciados com token de uso único |
-| Sessão ativa de treino | O aluno "inicia" o treino e o sistema acompanha exercício atual, registros e status em tempo real |
+| Sessão ativa de treino | O aluno "inicia" o treino e o sistema acompanha exercício atual, registros e status em tempo real. O que ele digita fica salvo como rascunho no celular (sobrevive a fechar/reabrir o app) até registrar; cronômetro de descanso em pílula com pausa e reset |
+| Comentário ao finalizar treino | Ao concluir a sessão, o aluno vê os exercícios que ficaram pendentes e pode deixar um comentário curto (ex.: motivo de ter pulado). O trecho chega ao personal na notificação "treino concluído", com botão que abre aquela sessão, e fica no histórico dos dois lados |
+| Grupos musculares múltiplos | Cada exercício pode ter mais de um grupo muscular (chips com vocabulário sugerido + texto livre). O gráfico "Volume por semana" da evolução credita o volume a cada grupo, com legenda e 12 cores fixas — funciona inclusive para o histórico antigo, sem retrabalho |
+| Fuso horário do personal | Datas civis (agenda, "hoje", vencimentos, lembretes) respeitam o fuso configurado pelo personal — compromisso da noite não "pula" para o dia seguinte |
 | Exercícios substitutos | O personal cadastra alternativas para cada exercício; o aluno escolhe qual executar durante a sessão sem precisar consultar o personal |
 | Tipos de exercício | Força (carga + repetições, com 1RM/%1RM) e Performance (métrica numérica livre — tempo, km, voltas, reps — com direção de evolução "maior é melhor" ou "menor é melhor"). Unidades de carga e métrica totalmente personalizáveis |
 | % 1RM e IRM | Cadastro do 1RM do aluno, prescrição por percentual (carga calculada automaticamente) e gráfico de Intensidade Relativa Média por sessão |
@@ -165,22 +181,32 @@ ChatGPT, menu lateral → **Plugins** → buscar "coachpilot" → **+**
 > **Desde setembro/2026: "O CoachPilot agora é um app dentro do ChatGPT — gerencie seus alunos e
 > treinos conversando, sem abrir o portal."**
 
-O CoachPilot é um **app publicado e aprovado no diretório do ChatGPT**. O personal instala em menos
-de um minuto (menu Plugins → busca "coachpilot" → +), autoriza uma vez com a conta CoachPilot dele
-e a partir daí o ChatGPT lê os dados reais — alunos, anamnese, avaliações, sessões, evolução,
-agenda, pendências — e, se autorizado, aplica programas de treino direto na plataforma, com
-notificação, auditoria e desfazer por 7 dias. Funciona na conta **gratuita** do ChatGPT e no
-aplicativo de celular, e está incluído nos dois planos do CoachPilot, inclusive no grátis.
+O CoachPilot é um **plugin publicado no Diretório de Plugins do ChatGPT** (desde agosto/2026, após
+aprovação para publicação pela OpenAI; o plugin inclui o app que conecta a conversa aos dados e
+ações da conta). O personal instala em menos de um minuto (menu Plugins → busca "coachpilot" → +),
+autoriza uma vez com a conta CoachPilot dele e a partir daí o ChatGPT lê os dados reais — alunos,
+anamnese, avaliações, sessões, evolução, agenda, pendências — e, se autorizado, aplica programas de
+treino direto na plataforma, com notificação, auditoria e desfazer por 7 dias. Funciona na conta
+**gratuita** do ChatGPT e no aplicativo de celular, e está incluído nos dois planos do CoachPilot,
+inclusive no grátis.
 
 Por baixo, a tecnologia é um **servidor MCP** (`mcp.coachpilot.com.br`) — padrão aberto —, então a
-mesma conexão atende **Claude e Gemini**. Nenhum concorrente nacional oferecia isso na verificação
-de agosto/2026, e o custo de IA fica na assinatura do personal, não na mensalidade. Detalhes e
-limites do que se pode afirmar: §14.
+mesma conexão atende **Claude e Gemini**. Na verificação de setembro/2026 em fontes oficiais (blog
+do MFIT, central de ajuda da Tecnofit), nenhum concorrente nacional tem plugin no diretório nem
+conexão equivalente — o CoachPilot é a única plataforma nacional no "nível 4" da classificação de
+IA usada no blog (IA conectada aos dados reais **e** que executa ações). O custo de IA fica na
+assinatura do personal, não na mensalidade. Detalhes e limites do que se pode afirmar: §14.
 
 **Os três ganchos que mais convertem, nessa ordem:**
 1. *"Não é o ChatGPT chutando um treino genérico — é o ChatGPT olhando os SEUS alunos."*
 2. *"Pede na conversa, o treino já entra no CoachPilot e o aluno já vê no app dele."*
-3. *"Aprovado pela OpenAI, funciona até na conta gratuita do ChatGPT e no celular."*
+3. *"Publicado no Diretório de Plugins do ChatGPT — funciona até na conta gratuita e no celular."*
+
+**Argumento de fundo (artigo "melhor app para personal trainer em 2026"):** a lista de features de
+2023 virou commodity — todo mundo tem agenda, ficha e app do aluno. O que decide em 2026 é (1)
+quanto tempo de digitação *individualizada* a plataforma devolve e (2) se a IA lê o histórico
+completo do aluno antes de prescrever. Template e rotina já resolvem a parte repetida; o que a IA
+conectada elimina é a individualização, que não cabe em template.
 
 > Diferencial anterior, que continua valendo para quem não quer conectar nada:
 > **"Pare de digitar série a série. Converse com a IA — ela cadastra por você."**
@@ -310,6 +336,13 @@ gerenciando seus alunos como um profissional."*
   - https://coachpilot.com.br/apple-touch-icon.png — ícone para iOS.
   - https://coachpilot.com.br/og-image.jpg — imagem de compartilhamento social (Open Graph/
     Twitter Card), 1200×630.
+  - https://coachpilot.com.br/plugin-chatgpt.png — banner/print da instalação no ChatGPT usado na
+    seção `#chatgpt` da landing. ⚠️ Estampa "aprovado pela OpenAI" — não usar em peça institucional
+    ou para parceiro/imprensa (ver §14, "Como nomear").
+  - Prints reais da plataforma (capturados na conta demo, sem dado sensível, liberados para
+    parceiros): https://coachpilot.com.br/media-kit/treino.webp (prescrição),
+    `/media-kit/portal.webp` (dashboard), `/media-kit/recordes.webp` (evolução/recordes),
+    `/media-kit/ranking.webp` (gamificação), `/media-kit/app-aluno.webp` (app do aluno, retrato).
 - **Não usar/não existem mais** (removidos do produto, não referenciar): `coach-icon.png`,
   `icon-semfundo.png`, `horizontal-icon.png`, `vertical-icon.png`.
 
@@ -383,12 +416,31 @@ gerenciando seus alunos como um profissional."*
 13. **Footer** — logo, descrição curta, Instagram (@coachpilotoficial), navegação, links de conta,
     copyright.
 
-**Outras páginas públicas úteis para conteúdo:** `/chatgpt-para-personal-trainer`,
-`/ia-para-personal-trainer`, `/software-para-personal-trainer`, `/calculadoras` (1RM, dobras
-cutâneas, quanto cobrar, volume semanal, TMB e macros), `/precos`, `/faq`, `/divulgadores` e o blog
-(`/blog/app-de-personal-trainer-para-chatgpt`, `/blog/gerenciar-alunos-e-treinos-pelo-chatgpt`,
-`/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot`,
-`/blog/claude-chatgpt-ou-gemini-para-personal-trainer`, entre outros).
+**Outras páginas públicas úteis para conteúdo:**
+- Comerciais/SEO: `/chatgpt-para-personal-trainer`, `/ia-para-personal-trainer`,
+  `/software-para-personal-trainer`, `/app-para-personal-trainer`, `/gestao-de-alunos-personal-trainer`,
+  `/app-de-treino-para-alunos`, `/avaliacao-fisica-digital`, `/calculadoras` (1RM, dobras cutâneas,
+  quanto cobrar, volume semanal, TMB e macros), `/precos`, `/faq`, `/sobre`.
+- **`/integracoes/chatgpt`** — ficha técnica factual da integração (status, instalação, permissões,
+  ações de leitura/escrita, limites, revogação, LGPD, changelog). É a página para citar quando alguém
+  precisa auditar antes de aprovar — inclusive mecanismos de resposta por IA.
+- **`/midia-kit`** — Mídia Kit institucional para parceiros, creators, marcas e educação: produto em
+  30s, público, diferenciais, métricas verificáveis, formatos de parceria (eixo = Programa de
+  Divulgadores), prints reais, links oficiais e contato. Sem linguagem de endosso da OpenAI.
+- `/divulgadores` — regras e faixas do Programa de Divulgadores (fonte única de comissão).
+- Blog (24 artigos em set/2026). Cluster ChatGPT/IA: `app-de-personal-trainer-para-chatgpt`,
+  `como-instalar-coachpilot-no-chatgpt`, `gerenciar-alunos-e-treinos-pelo-chatgpt`,
+  `como-conectar-chatgpt-claude-gemini-ao-coachpilot`, `claude-chatgpt-ou-gemini-para-personal-trainer`,
+  `ia-para-gerenciar-alunos-personal-trainer`, `mcp-para-personal-trainer`,
+  `chatgpt-dados-alunos-personal-trainer-seguranca`, `como-montar-treino-com-ia-chatgpt`,
+  `prompts-de-chatgpt-para-personal-trainer`, `atualizar-treinos-de-todos-os-alunos-com-ia`,
+  `ia-para-personal-trainer-o-que-automatizar`. Decisão/comparativos: `melhor-app-para-personal-trainer-2026`
+  (roteiro de decisão, 8 critérios), `melhores-apps-personal-trainer-com-ia` (classificação em 4
+  níveis de IA), `melhores-aplicativos-para-personal-trainer`, `coachpilot-vs-mfit`,
+  `coachpilot-vs-tecnofit`, `alternativas-ao-mfit`, `mfit-tem-integracao-com-chatgpt`,
+  `app-personal-trainer-gratis-com-ia`, `app-personal-trainer-alunos-ilimitados-ia`. Gestão:
+  `gestao-de-alunos-guia-completo`, `como-conseguir-mais-alunos-personal-trainer`,
+  `planilha-de-treino-ou-sistema-de-gestao`.
 
 ---
 
@@ -399,10 +451,23 @@ cutâneas, quanto cobrar, volume semanal, TMB e macros), `/precos`, `/faq`, `/di
   uma pergunta no celular, a resposta vindo da carteira real; depois "adapta o treino do Pedro pra
   dor no ombro e aplica" e a notificação chegando no portal com o botão de desfazer. É o conteúdo
   mais difícil de o concorrente copiar — ele precisaria construir o produto. Sub-ângulos:
-  "aprovado pela OpenAI, está no diretório de apps", "funciona na conta grátis do ChatGPT",
+  "está no Diretório de Plugins do ChatGPT", "funciona na conta grátis do ChatGPT",
   "funciona no celular, entre um atendimento e outro", "sem abrir o portal", "a IA que você já
   usa", "não é o ChatGPT chutando treino genérico — é o ChatGPT olhando os SEUS alunos",
   "no Claude e no Gemini também, pelo MCP".
+- **Os 4 níveis de IA (educativo + comparativo)**: nível 1 = IA genérica (ChatGPT solto); nível 2 =
+  gerador de treino dentro do app (MFIT IA, TreinoAI, Trainerize); nível 3 = IA conectada à gestão
+  (lê dado real); nível 4 = conectada **e** executa ações. "Seu app tem IA de qual nível?" — o
+  CoachPilot é o único nacional no nível 4 (verificado set/2026). Ótimo para carrossel e para
+  responder "o MFIT também tem IA".
+- **Individualização vs. template**: "Template resolve o que se repete. O que rouba sua noite é o
+  que NÃO se repete — o ombro da Júlia, o joelho do Pedro. É isso que a IA conectada devolve."
+- **Segurança/LGPD como diferencial de confiança**: "O que o ChatGPT vê dos meus alunos?" —
+  responder com a ficha técnica: só a conta que autorizou, escopo escolhido, sem excluir aluno nem
+  mexer em cobrança, desfazer por 7 dias, revogação imediata. Linkar `/integracoes/chatgpt`.
+- **Parcerias/creators (topo de funil B2B2C)**: divulgar o `/midia-kit` para creators do nicho,
+  marcas de equipamento/suplemento, cursos e faculdades — produto "demonstrável em 30 s de vídeo",
+  cupom rastreável e comissão recorrente pelo Programa de Divulgadores.
 - **Operação por IA sem conexão**: "Pare de digitar série a série — fale com o ChatGPT e ele
   cadastra." Demonstrar montar um ABCDE de um aluno em ~2 min conversando (texto ou voz) e importando
   com 1 clique; ou migrar a lista de alunos de uma planilha jogando o arquivo no ChatGPT.
@@ -446,12 +511,20 @@ cutâneas, quanto cobrar, volume semanal, TMB e macros), `/precos`, `/faq`, `/di
   - *Canal por prompt* (sem conexão): prompt pronto → a IA gera JSON/CSV → o personal cola/anexa e
     importa com 1 clique, revisando antes. Só **aqui** vale a regra antiga "a IA gera, não
     escreve" — repetir isso falando do app do ChatGPT é errado hoje.
-  - **Como nomear**: no ChatGPT, "**app**" e "**plugin publicado/aprovado no diretório de apps do
-    ChatGPT**" são nomes corretos (é o rótulo do menu e o termo da submissão da OpenAI). "Aprovado
-    pela OpenAI" é afirmável — passou pela revisão do diretório. NÃO chamar de "GPT Action", nem de
-    "integração nativa/oficial da OpenAI", nem sugerir parceria, endosso ou selo da OpenAI além do
-    fato de o app estar publicado no diretório. Por baixo a tecnologia é **servidor MCP** (Model
-    Context Protocol), padrão aberto — a mesma conexão serve ChatGPT, Claude e Gemini.
+  - **Como nomear (atualizado 07/set/2026)**: em julho/2026 a OpenAI migrou o antigo "diretório de
+    apps" para o **Diretório de Plugins**, empacotando os apps existentes em plugins. Nomenclatura
+    correta hoje: o CoachPilot é um **plugin publicado no Diretório de Plugins do ChatGPT**, e esse
+    plugin **inclui o app** que conecta a conversa aos dados e ações da conta. "Plugin" e "app"
+    convivem e apontam para a mesma coisa — usar "plugin" quando falar de instalar/diretório e
+    "app" quando falar do que ele faz na conversa. NÃO escrever mais "diretório de apps" em peça
+    nova (é o nome antigo). Sobre a OpenAI: a forma preferida é "**publicado após aprovação para
+    publicação pela OpenAI**" — a landing ainda usa o badge "App aprovado pela OpenAI", o que é
+    factual, mas em página institucional (Mídia Kit) e em peça para imprensa/parceiro evitar
+    qualquer leitura de selo de segurança, parceria ou endosso: a publicação significa que
+    identidade, login e escopo foram declarados e revisados, e a responsabilidade pelo app continua
+    com o CoachPilot. NÃO chamar de "GPT Action", nem de "integração nativa/oficial da OpenAI". Por
+    baixo a tecnologia é **servidor MCP** (Model Context Protocol), padrão aberto — a mesma conexão
+    serve ChatGPT, Claude e Gemini.
   - **Nada de implementação em página pública** (31/ago/2026): sem endereço de servidor, OAuth,
     token, snapshot, auditoria, lista de tools/operações ou checklist da revisão da OpenAI. Só o
     efeito para o personal. "MCP" fica como nome (entendimento + SEO); a mecânica em volta, não.
@@ -464,7 +537,15 @@ cutâneas, quanto cobrar, volume semanal, TMB e macros), `/precos`, `/faq`, `/di
     individual, por decisão de projeto. Dizer "um pedido só, a IA aplica aluno por aluno".
     O lote real (mesmo programa para vários alunos) é o template/rotina aplicado pelo portal.
   - NÃO prometer cadastro de aluno, avaliação física ou agenda pelo chat — não existem tools de
-    escrita para isso. Só treino é gravável pela conexão.
+    escrita para isso. Só treino é gravável pela conexão. Também não existe (e é argumento de
+    segurança, não limitação a esconder): excluir aluno, apagar histórico, mexer em plano,
+    assinatura ou cobrança — "não é configuração desligada, é operação que não existe".
+  - **Concorrentes — só com data e fonte oficial** (verificação de set/2026): MFIT Personal tem a
+    "MFIT IA" (gerador dentro do app, nível 2), sem plugin no ChatGPT nem MCP; **Tecnofit Personal:
+    plano grátis de 10 alunos ativos** (era citado como 5 — corrigido; fonte: central de ajuda
+    oficial, 07/2026); Nexur a partir de R$19,90/mês; TreinoAI cobra por faixa de alunos; Trainerize
+    e Everfit em dólar, sem Pix/WhatsApp/português. Toda afirmação sobre concorrente leva "na
+    verificação de <mês/ano>" — eles mudam.
   - Requisito de plano de IA é de terceiro e muda: datar sempre. Em setembro/2026: o **ChatGPT** tem
     o app no diretório (3 cliques, conta gratuita, navegador e celular); o **Claude** aceita conector
     personalizado no plano grátis (limite de 1), com a conexão do navegador/desktop aparecendo no
