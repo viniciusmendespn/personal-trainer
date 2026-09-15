@@ -7,9 +7,20 @@ export interface CobrancasResponse {
   next_cursor?: string
 }
 
+export type StatusConexaoMp = 'ATIVO' | 'REQUER_RECONEXAO'
+
 export interface MercadoPagoStatus {
+  /** "consegue cobrar agora" — REQUER_RECONEXAO responde false. */
   configurado: boolean
-  configurado_em?: string
+  status?: StatusConexaoMp
+  /** nickname da conta no MP — é como o personal reconhece qual conta conectou. */
+  apelido?: string
+  conectado_em?: string
+  renovado_em?: string
+  expira_em?: string
+  reconexao_em?: string
+  /** false = a aplicação OAuth não está configurada na stack; esconde o botão. */
+  oauth_disponivel: boolean
 }
 
 // ── Painel financeiro (visão de carteira do personal) ──────────────────────────
@@ -66,8 +77,10 @@ export const financeiroApi = {
   getMpConfig: () =>
     api.get<MercadoPagoStatus>('/v1/config/mercadopago').then((r) => r.data),
 
-  setMpConfig: (accessToken: string) =>
-    api.put('/v1/config/mercadopago', { access_token: accessToken }),
+  // Não existe função de gravar credencial aqui: ela só entra pelo fluxo OAuth abaixo.
+  // Travado por `pages/pagamentos.trava.test.ts`.
+  mpOauthIniciar: () =>
+    api.get<{ url: string }>('/v1/config/mercadopago/oauth/iniciar').then((r) => r.data),
 
   deleteMpConfig: () =>
     api.delete('/v1/config/mercadopago'),

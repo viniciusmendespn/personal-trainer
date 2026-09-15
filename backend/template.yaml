@@ -25,6 +25,18 @@ Parameters:
     Type: String
     Default: ""
     Description: "Base pública da API (execute-api) p/ auto-configurar o webhook na W-API. Evita dependência circular com o ApiGateway."
+  # Aplicação OAuth do Mercado Pago — o "Conectar com Mercado Pago" do personal.
+  # Criada no painel do MP como Marketplace, com PKCE e Redirect URL EXATA:
+  #   https://coachpilot.com.br/v1/public/mp/oauth/callback
+  MpClientId:
+    Type: String
+    Default: ""
+    Description: "Client ID da aplicação OAuth do MP. Vazio desliga o botão de conectar (oauth_disponivel)."
+  MpClientSecret:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: "Client Secret da aplicação OAuth do MP."
   FrontendUrl:
     Type: String
     Default: ""
@@ -149,6 +161,10 @@ Globals:
         VAPID_PUBLIC_KEY: !Ref VapidPublicKey
         VAPID_SUBJECT: !Ref VapidSubject
         ML_ACCESS_TOKEN: !Ref MlAccessToken
+        # Nos Globals de propósito: além da API (conectar/callback), a SchedulerFunction
+        # precisa delas para renovar o token OAuth dos personais de hora em hora.
+        MP_CLIENT_ID: !Ref MpClientId
+        MP_CLIENT_SECRET: !Ref MpClientSecret
         PROMO_CODE_SECRET: !Ref PromoCodeSecret
         PACOTE_SECRET: !Ref PacoteSecret
         MCP_TOKEN_SECRET: !Ref McpTokenSecret

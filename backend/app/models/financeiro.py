@@ -37,6 +37,5 @@ class RegistrarPagamentoIn(BaseModel):
     notas: Optional[str] = None
     forma_pagamento: str = Field(default="MANUAL", pattern="^(MANUAL|PIX_MP)$")
 
-
-class MercadoPagoConfigIn(BaseModel):
-    access_token: str = Field(min_length=10)
+# MercadoPagoConfigIn foi removido junto com o PUT /v1/config/mercadopago: a credencial
+# do Mercado Pago só entra pelo fluxo OAuth (`mp_service.concluir_oauth`), nunca por body.

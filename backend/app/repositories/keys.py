@@ -410,6 +410,26 @@ def sk_stats_fin_mes(ano_mes: str) -> str:
 SK_CONFIG_MP = "CONFIG#MERCADOPAGO"
 
 
+def pk_mp_oauth(state: str) -> str:
+    """Autorização OAuth pendente: o `state` que vai na URL do Mercado Pago É a PK.
+
+    O callback volta anônimo (quem retorna do MP não carrega o JWT do Cognito), então
+    a identidade do personal vem daqui — `state` → `personal_id` + `code_verifier` em
+    1 GetItem, sem GSI. SK = "META", TTL 10 min. Molde: `pk_mcp_authreq`.
+    """
+    return f"MP_OAUTH#{state}"
+
+
+def gsi1_mp_refresh_pk(dia: str) -> str:
+    """Bucket diário de renovação de token OAuth (GSI1 sparse: só itens com GSI1PK
+    entram). O item de conexão é agendado em `expira_em - 30 dias`."""
+    return f"MP_REFRESH#{dia[:10]}"
+
+
+def gsi1_mp_refresh_sk(dia: str, personal_id: str) -> str:
+    return f"{dia[:10]}#{personal_id}"
+
+
 # ── Financeiro: entradas do scheduler (partição SCHED#) ─────────────────────
 BILLING_GERAR_PREFIX = "BILLING_GERAR#"
 BILLING_AVISO_PREFIX = "BILLING_AVISO#"

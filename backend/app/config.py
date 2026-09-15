@@ -24,6 +24,14 @@ class Settings(BaseSettings):
     admin_secret: str = ""                 # protege POST /v1/wapi/config + assina tokens de impersonação
     admin_email: str = "admin@coachpilot.com.br"  # email do superadmin (impersonação)
     ml_access_token: str = ""              # token MP da PLATAFORMA — cobra o personal (assinatura), nunca o aluno
+
+    # Aplicação OAuth do Mercado Pago — o "Conectar com Mercado Pago" do personal.
+    # Criada no painel do MP como Marketplace, com PKCE e Redirect URL EXATA:
+    #   https://coachpilot.com.br/v1/public/mp/oauth/callback
+    # Distinta de `ml_access_token`: aquele é a NOSSA conta (assinatura Gestão Pro);
+    # estes autorizam o CoachPilot a cobrar em nome da conta de CADA personal.
+    mp_client_id: str = ""
+    mp_client_secret: str = ""
     promo_code_secret: str = ""            # PROMO_CODE_SECRET — segredo compartilhado com o FinPilot para gerar códigos
     pacote_secret: str = ""                # PACOTE_SECRET — assina/valida arquivos .cpkg (HMAC-SHA256)
 

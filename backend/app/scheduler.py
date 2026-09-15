@@ -18,7 +18,7 @@ from datetime import datetime, timedelta, timezone
 
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import financeiro_service, locale_service, notif_service
+from app.services import financeiro_service, locale_service, mp_service, notif_service
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -138,6 +138,15 @@ def handler(event, context):
         totais["treinos"] += _processar_dia_treinos(data_treino, data)
         for prefixo, acao, rotulo in _TAREFAS:
             totais[rotulo] += _processar_prefixo(data, prefixo, acao, rotulo)
+
+    # Renovação preventiva do OAuth do Mercado Pago. Fora do laço de partições: o
+    # agendamento dela vive no GSI1 (bucket por dia), não em SCHED#. Best-effort — uma
+    # falha aqui não pode derrubar vencimentos de treino nem a régua financeira.
+    try:
+        totais["mp_refresh"] = mp_service.renovar_vencendo()
+    except Exception as exc:
+        logger.error("[scheduler] mp_refresh falhou: %s", exc)
+        totais["mp_refresh"] = 0
 
     logger.info("[scheduler] %s", totais)
     return totais

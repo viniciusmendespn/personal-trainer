@@ -1,24 +1,34 @@
 # Mercado Pago — PIX (guia de implementação)
 
 > **Status: ✅ EM PRODUÇÃO.** Este padrão está implementado em três fluxos do CoachPilot:
-> **(1) Financeiro dos alunos** — mensalidades/cobranças com PIX na conta MP do próprio personal
-> (Access Token configurado em Configurações → Pagamentos); **(2) Assinatura do Gestão Pro**
-> (`backend/app/services/mp_assinatura_service.py`); **(3) Loja** — venda de pacotes com PIX
-> automático. O documento permanece como referência do padrão (REST sem SDK, webhook reconsultando
-> o pagamento, idempotência por `MP_LOCK#`).
+> **(1) Financeiro dos alunos** — mensalidades/cobranças com PIX na conta MP do próprio personal;
+> **(2) Assinatura do Gestão Pro** (`backend/app/services/mp_assinatura_service.py`);
+> **(3) Loja** — venda de pacotes com PIX automático. O documento permanece como referência do
+> padrão (REST sem SDK, webhook reconsultando o pagamento, idempotência por `MP_LOCK#`).
 
 Baseado na integração já em produção no `smart-afiliados` (`backend/functions/afiliados-recebedor-pagamento/lambda_function.py`).
 
-## O que é necessário
+## ⚠️ Como a credencial chega (mudou em set/2026)
 
-Só **um Access Token** (Produção ou Teste) gerado no [painel de credenciais do Mercado Pago](https://www.mercadopago.com.br/developers/panel/app).
-Não precisa de SDK oficial, client secret, public key nem certificado — é tudo feito com chamadas REST diretas usando:
+Há **duas** origens de credencial, e confundi-las é o erro clássico:
 
-```
-Authorization: Bearer {MP_ACCESS_TOKEN}
-```
+| Fluxo | Conta | Credencial | Onde mora |
+|---|---|---|---|
+| (1) alunos e (3) loja | do **personal** | OAuth 2.0 + PKCE, com refresh | `PT#{id}` / `CONFIG#MERCADOPAGO` |
+| (2) assinatura Gestão Pro | **nossa** | Access Token fixo | env `ML_ACCESS_TOKEN` |
 
-Guardar o token como variável de ambiente da Lambda (`MP_ACCESS_TOKEN`), nunca hardcoded.
+Para (1) e (3), o personal **não cola mais Access Token** — ele clica em "Conectar com
+Mercado Pago" e autoriza na tela do MP. O fluxo completo (state one-shot, PKCE S256, refresh
+preventivo e reativo, estado `REQUER_RECONEXAO`) está em **`MERCADOPAGO_OAUTH.md`**, e o
+código em `backend/app/services/mp_service.py`.
+
+O resto deste documento descreve o que se faz **depois** de ter um token em mãos — vale
+igual nos dois casos. A única diferença prática: nos fluxos (1) e (3), pegue o token por
+`mp_service._request_personal(...)` em vez de montar o header à mão, senão você perde o
+refresh automático.
+
+> Não há validação de assinatura no webhook do Mercado Pago nesse modelo — a segurança vem de
+> **sempre reconsultar o pagamento pela API** antes de confiar no conteúdo do webhook (ver passo 2).
 
 > Não há validação de assinatura no webhook do Mercado Pago nesse modelo — a segurança vem de
 > **sempre reconsultar o pagamento pela API** antes de confiar no conteúdo do webhook (ver passo 2).
@@ -138,4 +148,6 @@ estar escutando o webhook — assim a UI atualiza mesmo se o webhook atrasar ou 
 | `external_reference` | `"CREDITS\|{phone}\|{valor}"` / `"PLAN\|{phone}\|{plano}"` | algo como `"SESSAO\|{user_id}\|{sessao_id}"` |
 | Efeito ao aprovar | credita saldo / estende plano | liberar sessão, ativar plano, etc |
 
-Variável de ambiente necessária no `template.yaml`: `MP_ACCESS_TOKEN` (Lambda que cria/recebe o PIX).
+Variáveis de ambiente no `template.yaml`: `ML_ACCESS_TOKEN` (nossa conta — assinatura) e
+`MP_CLIENT_ID` / `MP_CLIENT_SECRET` (aplicação OAuth — conexão dos personais). Não existe
+`MP_ACCESS_TOKEN`: o token de cada personal nasce do OAuth e vive no DynamoDB.

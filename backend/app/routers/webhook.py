@@ -10,7 +10,9 @@ import re
 import time
 
 from fastapi import APIRouter, Request
+from fastapi.responses import RedirectResponse
 
+from app.config import settings
 from app.dependencies import verify_wapi_webhook
 from app.models.enums import Ator, CanalOrigem
 from app.repositories import dynamo_repo as repo
@@ -271,6 +273,34 @@ async def mp_webhook(request: Request):
     except Exception as exc:
         logger.exception("MP webhook erro interno: %s", exc)
     return {"ok": 1}
+
+
+@mp_router.get("/oauth/callback")
+def mp_oauth_callback(code: str | None = None, state: str | None = None,
+                      error: str | None = None):
+    """Volta da autorização do Mercado Pago.
+
+    Rota ANÔNIMA de propósito: quem chega aqui é o navegador do personal vindo do MP,
+    sem o JWT do Cognito. A identidade vem do `state`, que só nós emitimos.
+
+    ⚠️ Responde 302 SEMPRE, nunca 500: o destinatário é um navegador, não uma API.
+    O resultado viaja no `?mp=` e a tela de Pagamentos o traduz em toast.
+    """
+    from app.services import mp_service
+    resultado = "erro"
+    try:
+        if error or not code or not state:
+            resultado = "recusado"
+        else:
+            mp_service.concluir_oauth(code, state)
+            resultado = "ok"
+    except mp_service.OAuthMpError as exc:
+        resultado = "expirado" if exc.codigo in ("state_invalido", "state_expirado") else "erro"
+        logger.warning("MP oauth callback: %s (%s)", exc.codigo, exc)
+    except Exception as exc:
+        logger.exception("MP oauth callback erro interno: %s", exc)
+    destino = f"{settings.frontend_url.rstrip('/')}/config?tab=pagamentos&mp={resultado}"
+    return RedirectResponse(destino, status_code=302, headers={"Cache-Control": "no-store"})
 
 
 # ── Mercado Pago webhook — assinatura da plataforma (cobra o personal) ─────────

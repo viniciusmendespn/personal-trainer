@@ -97,8 +97,49 @@ class FakeRepo:
     def delete_item(self, pk, sk):
         self.itens.pop((pk, sk), None)
 
-    def delete_item_if_exists(self, pk, sk):
-        return self.itens.pop((pk, sk), None) is not None
+    def delete_item_if_exists(self, pk, sk, retornar=False):
+        item = self.itens.pop((pk, sk), None)
+        if retornar:
+            return dict(item) if item is not None else None
+        return item is not None
+
+    def update_item_if(self, pk, sk, condicao, fields=None, *, nomes_condicao=None,
+                       valores_condicao=None, remover=None, return_values=False):
+        """Avalia só as condições que o projeto realmente usa (igualdade e
+        attribute_not_exists sobre um atributo), com os aliases `#c_`/`:c_`."""
+        item = self.itens.get((pk, sk))
+        if item is None:
+            return None
+        if not self._condicao_vale(item, condicao, nomes_condicao or {}, valores_condicao or {}):
+            return None
+        for k in remover or []:
+            item.pop(k, None)
+        return self.update_item(pk, sk, fields or {})
+
+    @staticmethod
+    def _condicao_vale(item, condicao, nomes, valores):
+        # Suporta "A OR B" e "A AND B" com termos simples — o bastante para os usos atuais.
+        if " OR " in condicao:
+            return any(FakeRepo._termo_vale(item, t.strip(), nomes, valores)
+                       for t in condicao.split(" OR "))
+        return all(FakeRepo._termo_vale(item, t.strip(), nomes, valores)
+                   for t in condicao.split(" AND "))
+
+    @staticmethod
+    def _termo_vale(item, termo, nomes, valores):
+        if termo.startswith("attribute_not_exists("):
+            alias = termo[len("attribute_not_exists("):-1].strip()
+            return nomes.get(alias, alias) not in item
+        if termo.startswith("attribute_exists("):
+            alias = termo[len("attribute_exists("):-1].strip()
+            return nomes.get(alias, alias) in item
+        alias, _, valor_alias = (p.strip() for p in termo.partition("="))
+        return item.get(nomes.get(alias, alias)) == valores.get(valor_alias)
+
+    def query_gsi1_page(self, gsi1pk, limit=50, cursor=None):
+        achados = [dict(i) for i in self.itens.values() if i.get("GSI1PK") == gsi1pk]
+        achados.sort(key=lambda i: i.get("GSI1SK", ""), reverse=True)
+        return achados[:limit], None
 
     def batch_write(self, puts=None, deletes=None):
         for p in puts or []:

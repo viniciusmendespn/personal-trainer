@@ -25,6 +25,9 @@ _URL_MAP_PERSONAL: dict[str, str] = {
     "LOJA_RESGATE_GRATIS":   "/loja-vendas",
     "LOJA_ANUNCIO_REMOVIDO": "/loja-vendas",
     "LOJA_PEDIDO_LIBERADO":  "/pacotes",
+    # Sem esta entrada o push de reconexão cairia no /dashboard padrão e o personal
+    # teria que caçar a tela justamente no momento em que as cobranças estão paradas.
+    "MP_RECONECTAR": "/config?tab=pagamentos",
 }
 
 

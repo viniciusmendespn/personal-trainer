@@ -7,8 +7,8 @@ import { financeiroApi } from '../api/financeiro'
 import { personalApi } from '../api/personal'
 import { pushPersonalApi } from '../api/push'
 import { usePushPersonal } from '../hooks/usePushPersonal'
-import { Button, Card, ErrorText, Tabs, Modal } from '../components/ui'
-import { useToast } from '../components/ui'
+import { Button, Card, ErrorText, Tabs } from '../components/ui'
+import { useToast, useConfirm } from '../components/ui'
 import { PhoneInput } from '../components/PhoneInput'
 import { AnamneseEditor } from '../components/anamnese/AnamneseEditor'
 import { ConexoesTab } from '../components/settings/ConexoesTab'
@@ -579,45 +579,74 @@ function AnamneseTab() {
   )
 }
 
+/** Traduções do `?mp=` com que o callback do OAuth devolve o personal ao portal. */
+const RETORNO_MP: Record<string, { texto: string; tipo: 'success' | 'error' }> = {
+  ok:       { texto: 'Mercado Pago conectado!', tipo: 'success' },
+  recusado: { texto: 'Conexão recusada no Mercado Pago.', tipo: 'error' },
+  expirado: { texto: 'A sessão de conexão expirou. Tente de novo.', tipo: 'error' },
+  erro:     { texto: 'Não foi possível conectar. Tente de novo.', tipo: 'error' },
+}
+
 function PagamentosTab() {
   const qc = useQueryClient()
   const { show: toast } = useToast()
-  const [token, setToken] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [helpOpen, setHelpOpen] = useState(false)
+  const confirm = useConfirm()
+  const [params, setParams] = useSearchParams()
 
   const status = useQuery({
     queryKey: ['mp-config'],
     queryFn: financeiroApi.getMpConfig,
   })
 
-  const configurado = status.data?.configurado === true
+  const conectado = status.data?.configurado === true
+  const precisaReconectar = status.data?.status === 'REQUER_RECONEXAO'
+  const disponivel = status.data?.oauth_disponivel !== false
 
-  async function handleSalvar(e: React.FormEvent) {
-    e.preventDefault()
-    if (!token.trim()) return
-    setSaving(true)
-    try {
-      await financeiroApi.setMpConfig(token.trim())
-      setToken('')
-      qc.invalidateQueries({ queryKey: ['mp-config'] })
-      toast('Access Token salvo com sucesso.', 'success')
-    } catch {
-      toast('Erro ao salvar o token.', 'error')
-    } finally {
-      setSaving(false)
-    }
-  }
+  // A volta do Mercado Pago chega como ?mp=ok|recusado|expirado|erro. Lida uma vez e a
+  // URL é limpa em seguida — senão um F5 repetiria o toast.
+  useEffect(() => {
+    const r = params.get('mp')
+    if (!r) return
+    const { texto, tipo } = RETORNO_MP[r] ?? RETORNO_MP.erro
+    toast(texto, tipo)
+    qc.invalidateQueries({ queryKey: ['mp-config'] })
+    const resto = new URLSearchParams(params)
+    resto.delete('mp')
+    setParams(resto, { replace: true })
+  }, [params, setParams, toast, qc])
 
-  async function handleRemover() {
+  const oauth = useMutation({
+    mutationFn: financeiroApi.mpOauthIniciar,
+    // Navegação de DOCUMENTO, não fetch: o personal sai para o Mercado Pago e volta
+    // pelo callback. Um XHR aqui só receberia o HTML da tela de login do MP.
+    onSuccess: (d) => window.location.assign(d.url),
+    onError: () => toast('Não foi possível abrir o Mercado Pago.', 'error'),
+  })
+
+  async function handleDesconectar() {
+    const ok = await confirm({
+      title: 'Desconectar Mercado Pago',
+      message: 'Seus alunos deixam de conseguir pagar por Pix até você conectar de novo. '
+        + 'Cobranças já pagas não são afetadas.',
+      confirmLabel: 'Desconectar',
+      tone: 'danger',
+    })
+    if (!ok) return
     try {
       await financeiroApi.deleteMpConfig()
       qc.invalidateQueries({ queryKey: ['mp-config'] })
-      toast('Integração removida.', 'success')
+      toast('Mercado Pago desconectado.', 'success')
     } catch {
-      toast('Erro ao remover integração.', 'error')
+      toast('Erro ao desconectar.', 'error')
     }
   }
+
+  const botaoConectar = (
+    <Button variant="primary" size="sm" disabled={oauth.isPending || !disponivel}
+      onClick={() => oauth.mutate()}>
+      {oauth.isPending ? 'Abrindo…' : precisaReconectar ? 'Reconectar' : 'Conectar com Mercado Pago'}
+    </Button>
+  )
 
   return (
     <div className="space-y-4">
@@ -628,65 +657,56 @@ function PagamentosTab() {
             <p className="font-semibold text-text">Mercado Pago — Pix</p>
             <p className="text-xs text-text-secondary">Opcional · permite que alunos paguem via Pix</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setHelpOpen(true)}
-            className={`p-1 text-text-muted hover:text-text transition-colors ${configurado ? '' : 'ml-auto'}`}
-            aria-label="Como obter o Access Token"
-          >
-            <Info size={16} />
-          </button>
-          {configurado && (
+          {conectado && (
             <span className="ml-auto text-xs font-medium text-success flex items-center gap-1">
-              <CheckCircle size={13} /> Configurado
+              <CheckCircle size={13} /> Conectado
+            </span>
+          )}
+          {precisaReconectar && (
+            <span className="ml-auto text-xs font-medium text-danger flex items-center gap-1">
+              <AlertCircle size={13} /> Reconecte
             </span>
           )}
         </div>
 
-        {configurado ? (
+        {!disponivel ? (
+          <p className="text-sm text-text-secondary">
+            A conexão com o Mercado Pago está temporariamente indisponível. Tente mais tarde.
+          </p>
+        ) : conectado ? (
           <div className="space-y-3">
             <p className="text-sm text-text-secondary">
-              Access Token configurado. Para atualizar, insira um novo token abaixo e salve.
+              {status.data?.apelido && (
+                <>Conta <strong className="text-text">{status.data.apelido}</strong>
+                  {status.data?.conectado_em && <> · conectada desde {new Date(status.data.conectado_em).toLocaleDateString('pt-BR')}</>}
+                  .{' '}
+                </>
+              )}
+              Você pode revogar o acesso aqui ou no painel do Mercado Pago a qualquer momento.
             </p>
-            <form onSubmit={handleSalvar} className="space-y-3">
-              <input
-                type="password"
-                className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-text text-sm placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
-                placeholder="Novo Access Token (APP_USR-…)"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                autoComplete="off"
-              />
-              <div className="flex gap-2">
-                <Button type="submit" variant="primary" size="sm" disabled={saving || !token.trim()}>
-                  {saving ? 'Salvando…' : 'Atualizar token'}
-                </Button>
-                <Button type="button" variant="ghost" size="sm" className="text-danger gap-1"
-                  onClick={handleRemover}>
-                  <Trash2 size={14} /> Remover integração
-                </Button>
-              </div>
-            </form>
+            <Button type="button" variant="ghost" size="sm" className="text-danger gap-1"
+              onClick={handleDesconectar}>
+              <Trash2 size={14} /> Desconectar
+            </Button>
+          </div>
+        ) : precisaReconectar ? (
+          <div className="space-y-3">
+            <p className="text-sm text-text-secondary">
+              A conexão com o Mercado Pago expirou ou foi revogada, então seus alunos não
+              conseguem pagar por Pix agora. Reconectar leva um clique — as cobranças em
+              aberto continuam valendo.
+            </p>
+            {botaoConectar}
           </div>
         ) : (
-          <form onSubmit={handleSalvar} className="space-y-3">
+          <div className="space-y-3">
             <p className="text-sm text-text-secondary">
-              Informe seu Access Token de produção do Mercado Pago para habilitar pagamentos via Pix.
-              O token é salvo com segurança e nunca é exibido.
+              Conecte sua conta do Mercado Pago para que seus alunos paguem por Pix direto pelo
+              app. Você autoriza na tela do próprio Mercado Pago — não precisa criar aplicação
+              nem copiar nenhum código. O dinheiro cai 100% na sua conta.
             </p>
-            <input
-              type="password"
-              className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-text text-sm placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
-              placeholder="APP_USR-…"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              required
-              autoComplete="off"
-            />
-            <Button type="submit" variant="primary" size="sm" disabled={saving || !token.trim()}>
-              {saving ? 'Salvando…' : 'Salvar Access Token'}
-            </Button>
-          </form>
+            {botaoConectar}
+          </div>
         )}
       </Card>
 
@@ -699,36 +719,6 @@ function PagamentosTab() {
           Consulte sua conta Mercado Pago para confirmar as taxas aplicáveis.
         </p>
       </Card>
-
-      <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title="Como obter o Access Token">
-        <ol className="space-y-2 text-sm text-text-secondary list-decimal list-inside">
-          <li>Pré-requisito: ter conta no Mercado Pago.</li>
-          <li>
-            Acesse{' '}
-            <a
-              href="https://www.mercadopago.com.br/developers/panel/app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent underline"
-            >
-              mercadopago.com.br/developers/panel/app
-            </a>
-            .
-          </li>
-          <li>Clique em <strong>Criar aplicação</strong>.</li>
-          <li>Dê um nome para a aplicação, ex.: <strong>"CoachPilot - Vinicius"</strong>.</li>
-          <li>Em "Como você vai usar o Mercado Pago", selecione <strong>Pagamentos online</strong>.</li>
-          <li>Selecione <strong>Com um desenvolvimento próprio</strong>.</li>
-          <li>Informe a URL da loja, ex.: <strong>https://coachpilot.com.br</strong>.</li>
-          <li>Selecione <strong>Checkout Transparente</strong>.</li>
-          <li>Selecione <strong>API de Orders</strong>.</li>
-          <li>Autorize os termos e condições e confirme a criação.</li>
-          <li>Após criar a integração, clique em <strong>Credenciais de produção</strong>.</li>
-          <li>Selecione o Setor: <strong>Serviços de consultoria</strong>.</li>
-          <li>Autorize os termos e ative as credenciais de produção.</li>
-          <li>Copie o <strong>Access Token</strong> (começa com <strong>APP_USR-</strong>) e cole no campo abaixo.</li>
-        </ol>
-      </Modal>
     </div>
   )
 }

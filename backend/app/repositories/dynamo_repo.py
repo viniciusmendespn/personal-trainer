@@ -244,6 +244,46 @@ def update_item(pk: str, sk: str, fields: dict, return_values: bool = False) -> 
     return _get_table().update_item(**kwargs).get("Attributes", {})
 
 
+def update_item_if(pk: str, sk: str, condicao: str, fields: dict | None = None, *,
+                   nomes_condicao: dict | None = None,
+                   valores_condicao: dict | None = None,
+                   remover: list[str] | None = None,
+                   return_values: bool = False) -> dict | None:
+    """Escrita condicional genérica com SET + REMOVE. `None` ⇒ a condição não valeu.
+
+    `update_item_if_exists` cobre a condição recorrente ("o item existe"); esta cobre
+    as que aparecem uma vez só, como "só marque reconexão se ainda estiver ATIVO" — é
+    essa condição que impede disparar a segunda notificação para o mesmo personal.
+
+    ⚠️ `condicao` é uma **string** com aliases próprios (não um `Attr(...)`), e os
+    aliases usam prefixo `#c_`/`:c_` para nunca colidirem com os do SET.
+    """
+    fields = fields or {}
+    partes, names, values = [], {f"#{k}": k for k in fields}, {f":{k}": _san(v) for k, v in fields.items()}
+    if fields:
+        partes.append("SET " + ", ".join(f"#{k} = :{k}" for k in fields))
+    if remover:
+        names.update({f"#rm_{i}": k for i, k in enumerate(remover)})
+        partes.append("REMOVE " + ", ".join(f"#rm_{i}" for i in range(len(remover))))
+    names.update(nomes_condicao or {})
+    values.update(valores_condicao or {})
+    kwargs: dict = {
+        "Key": {"PK": pk, "SK": sk},
+        "UpdateExpression": " ".join(partes),
+        "ConditionExpression": condicao,
+        "ExpressionAttributeNames": names,
+        "ReturnValues": "ALL_NEW" if return_values else "NONE",
+    }
+    if values:
+        kwargs["ExpressionAttributeValues"] = values
+    try:
+        return _get_table().update_item(**kwargs).get("Attributes", {})
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            return None
+        raise
+
+
 def update_item_if_exists(pk: str, sk: str, fields: dict) -> dict | None:
     """1 operação condicional em vez de get + update (ARCHITECTURE §10.2). None se não existe."""
     expr = "SET " + ", ".join(f"#{k} = :{k}" for k in fields)
@@ -444,13 +484,25 @@ def delete_item(pk: str, sk: str) -> None:
     _get_table().delete_item(Key={"PK": pk, "SK": sk})
 
 
-def delete_item_if_exists(pk: str, sk: str) -> bool:
+def delete_item_if_exists(pk: str, sk: str, retornar: bool = False) -> bool | dict | None:
+    """Delete condicional. `retornar=True` devolve o item APAGADO (ALL_OLD) em vez de bool.
+
+    É o que torna um token one-shot sem corrida: dois callbacks OAuth simultâneos com o
+    mesmo `state` disputam o mesmo delete, e só um recebe o item de volta — o outro vê
+    `None`. Ler antes de apagar não daria essa garantia.
+    """
     try:
-        _get_table().delete_item(Key={"PK": pk, "SK": sk}, ConditionExpression=Attr("PK").exists())
-        return True
+        resp = _get_table().delete_item(
+            Key={"PK": pk, "SK": sk},
+            ConditionExpression=Attr("PK").exists(),
+            ReturnValues="ALL_OLD" if retornar else "NONE",
+        )
+        # ⚠️ Item CRU de propósito, sem `clean()`: ele remove `ttl`, e é justamente o
+        # `ttl` que o chamador confere à mão (o TTL do DynamoDB é best-effort).
+        return (resp.get("Attributes") or {}) if retornar else True
     except ClientError as e:
         if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-            return False
+            return None if retornar else False
         raise
 
 

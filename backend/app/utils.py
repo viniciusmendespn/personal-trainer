@@ -1,3 +1,6 @@
+import base64
+import hashlib
+import time
 import uuid
 from calendar import monthrange
 from datetime import date, datetime, timezone
@@ -18,8 +21,39 @@ def det_id(*parts: str) -> str:
     return str(uuid.uuid5(NAMESPACE_PACOTE, ":".join(parts)))
 
 
+def now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def de_iso(texto: str) -> datetime:
+    """Inverso de `now_iso()`: devolve `datetime` ciente de fuso. Aceita tanto o
+    `+00:00` que `isoformat()` produz quanto o sufixo `Z` que o Mercado Pago usa."""
+    instante = datetime.fromisoformat(texto.replace("Z", "+00:00"))
+    if instante.tzinfo is None:                     # ISO sem fuso é UTC neste projeto
+        instante = instante.replace(tzinfo=timezone.utc)
+    return instante
+
+
+def epoch_s() -> int:
+    return int(time.time())
+
+
+def ttl_em(*, dias: int = 0, horas: int = 0, minutos: int = 0) -> int:
+    """Valor para o atributo `ttl` (epoch em segundos)."""
+    return epoch_s() + dias * 86400 + horas * 3600 + minutos * 60
+
+
+def pkce_challenge(verifier: str) -> str:
+    """S256 (RFC 7636): BASE64URL(SHA256(verifier)) sem `=`.
+
+    Usado no OAuth do Mercado Pago, onde nós somos o CLIENTE e geramos o par
+    verifier/challenge — o inverso de `mcp_service._pkce_confere`, que valida o par
+    gerado por outro (lá nós somos o servidor)."""
+    return base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
 
 
 def tz_valido(tz: str | None) -> bool:

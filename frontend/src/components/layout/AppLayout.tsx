@@ -12,6 +12,7 @@ import { ChatWidget } from '../chat/ChatWidget'
 import { ChatContextProvider } from '../../context/ChatContext'
 import { TrialBanner } from '../billing/TrialBanner'
 import { RenewalBanner } from '../billing/RenewalBanner'
+import { ReconectarMpBanner } from '../ReconectarMpBanner'
 import { usePushPersonal } from '../../hooks/usePushPersonal'
 // SplashScreen removido — carregamento unificado via Suspense em App.tsx
 import { getInstallPrompt } from '../../lib/installPrompt'
@@ -356,6 +357,9 @@ export function AppLayout() {
         </header>
 
         <main className="flex-1 p-4 sm:p-6 overflow-auto">
+          {/* Dentro do <main> (e não junto dos banners de billing, que são barras de
+              topo): este é um aviso de conteúdo, some sozinho quando a conexão volta. */}
+          <ReconectarMpBanner />
           <Outlet />
         </main>
       </div>
