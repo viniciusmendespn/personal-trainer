@@ -174,7 +174,9 @@ Toda proposta de acesso ao DynamoDB deve seguir estes princípios **sem exceçã
 **Produto completo em produção** (coachpilot.com.br), em fase de aquisição dos primeiros clientes
 pagantes. Módulos no ar: portal do personal, app do aluno (PWA), loja/marketplace de pacotes
 (.cpkg), painel do divulgador, financeiro PIX (Mercado Pago), gamificação, push notifications,
-landing com SEO. O chat do app do aluno é **direto com o personal** (2026-07); o agente IA de
+landing com SEO. O personal conecta o Mercado Pago por **OAuth 2.0 + PKCE, com um clique**
+(2026-09) — não cola mais Access Token; token se renova sozinho e a conexão tem estado
+`REQUER_RECONEXAO`. Ver `docs/especificacoes/MERCADOPAGO_OAUTH.md`. O chat do app do aluno é **direto com o personal** (2026-07); o agente IA de
 WhatsApp existe no backend mas é add-on por aluno, hoje "em breve" no plano (toggle escondido no
 portal). **RPE não é mais registrado** (campo legado, só exibição de histórico antigo).
 **Servidor MCP no ar** (2026-08) em `mcp.coachpilot.com.br` — o personal conecta o ChatGPT,
