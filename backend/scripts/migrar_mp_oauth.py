@@ -20,8 +20,10 @@ Uso:
   python scripts/migrar_mp_oauth.py --profile pessoal-hotmail --execute
 """
 import argparse
+import os
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 import boto3
 from boto3.dynamodb.conditions import Attr
@@ -41,6 +43,19 @@ MENSAGEM = (
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def carregar_env_local() -> None:
+    """Exporta backend/.env.local para os.environ (só o que ainda não estiver setado)."""
+    caminho = Path(__file__).resolve().parents[1] / ".env.local"
+    if not caminho.exists():
+        return
+    for linha in caminho.read_text(encoding="utf-8").splitlines():
+        linha = linha.strip()
+        if not linha or linha.startswith("#") or "=" not in linha:
+            continue
+        chave, _, valor = linha.partition("=")
+        os.environ.setdefault(chave.strip(), valor.strip())
 
 
 def scan_conexoes(table) -> list[dict]:
@@ -69,6 +84,16 @@ def main() -> int:
                     help="só corta a credencial, não avisa (para reprocessar)")
     args = ap.parse_args()
 
+    # ⚠️ Antes de qualquer import do app: `dynamo_repo` monta o próprio cliente boto3
+    # sem profile, então quem escolhe a conta é a env var (molde de seed_demo_conta.py).
+    if args.profile:
+        os.environ["AWS_PROFILE"] = args.profile
+    os.environ.setdefault("AWS_DEFAULT_REGION", REGION)
+    # ⚠️ E o `push_service` lê VAPID_* de os.environ direto, no import — o pydantic
+    # carrega o .env.local só para `settings`. Sem isto o push sai silenciosamente
+    # ignorado e o personal só descobre a pendência quando abre o portal.
+    carregar_env_local()
+
     sessao = boto3.Session(profile_name=args.profile, region_name=REGION)
     table = sessao.resource("dynamodb").Table(args.table)
 
@@ -89,7 +114,7 @@ def main() -> int:
         return 0
 
     # Import tardio: só o caminho --execute precisa do app carregado (e das env vars).
-    sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from app.services import notif_service
 
     for c in pendentes:

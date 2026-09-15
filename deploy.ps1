@@ -36,6 +36,8 @@ function Deploy-Backend {
     $PromoCodeSecret  = Get-EnvLocal "PROMO_CODE_SECRET"
     $McpTokenSecret   = Get-EnvLocal "MCP_TOKEN_SECRET"
     $OpenaiChallenge  = Get-EnvLocal "OPENAI_APPS_CHALLENGE"
+    $MpClientId       = Get-EnvLocal "MP_CLIENT_ID"
+    $MpClientSecret   = Get-EnvLocal "MP_CLIENT_SECRET"
     $ExtraOverrides = ""
     if ($AdminSecret)     { $ExtraOverrides += " AdminSecret=$AdminSecret" }
     if ($VapidPrivate)    { $ExtraOverrides += " VapidPrivateKey=$VapidPrivate" }
@@ -43,6 +45,10 @@ function Deploy-Backend {
     if ($PromoCodeSecret) { $ExtraOverrides += " PromoCodeSecret=$PromoCodeSecret" }
     if ($McpTokenSecret)  { $ExtraOverrides += " McpTokenSecret=$McpTokenSecret" }
     if ($OpenaiChallenge) { $ExtraOverrides += " OpenaiAppsChallenge=$OpenaiChallenge" }
+    # Aplicação OAuth do Mercado Pago (conexão dos personais). Vazio = botão "Conectar"
+    # desligado na tela de Pagamentos, sem quebrar nada.
+    if ($MpClientId)      { $ExtraOverrides += " MpClientId=$MpClientId" }
+    if ($MpClientSecret)  { $ExtraOverrides += " MpClientSecret=$MpClientSecret" }
 
     Set-Location backend
     sam build
