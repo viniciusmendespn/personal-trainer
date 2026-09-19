@@ -11,6 +11,8 @@ tinha nenhuma cobertura, então o import morto passou pela suíte inteira. Daí 
 daqui — request HTTP de verdade, sem mock do serviço, para que qualquer nome indefinido no
 caminho vire teste vermelho em vez de tela vazia.
 """
+from datetime import datetime, timezone
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -74,6 +76,65 @@ def test_hoje_ignora_treino_fora_do_periodo(cliente):
 
     assert [t["treino_id"] for t in body["treinos"]] == [TREINO]
     assert [t["id"] for t in body["hoje"]] == [TREINO]
+
+
+def _outros_treinos(repo):
+    """Mais dois treinos na rotação, depois do `TREINO` da fixture (ordem 0)."""
+    for tid, nome, ordem in (("t-2", "Treino B", 1), ("t-3", "Treino C", 2)):
+        repo.put_item(keys.pk_aluno(ALUNO), keys.sk_treino(tid), {
+            "treino_id": tid, "aluno_id": ALUNO, "nome": nome, "ordem": ordem, "ativo": True,
+        })
+
+
+def _feito_agora(repo, treino_id, sessao_id="s-1", seq=0):
+    """Sessão concluída neste instante — vira a `ultima` da rotação e marca a semana do treino.
+    Usa `now` de propósito: a semana ISO da execução é sempre a semana corrente, rode quando rodar.
+    `seq` só desempata o SK (o relógio pode dar o mesmo ms para duas chamadas seguidas)."""
+    agora = datetime.now(timezone.utc)
+    iso, ts = agora.isoformat(), int(agora.timestamp() * 1000) + seq
+    repo.put_item(keys.pk_aluno(ALUNO), keys.sk_sessao_hist(f"{ts:013d}", sessao_id), {
+        "sessao_id": sessao_id, "treino_id": treino_id, "status": "FINALIZADA",
+        "treino_nome": treino_id, "data_hora_fim": iso,
+    })
+    repo.update_item(keys.pk_aluno(ALUNO), keys.sk_treino(treino_id), {"ultima_execucao": iso})
+
+
+def test_proximo_pula_treino_ja_feito_nesta_semana(cliente):
+    """Regressão: terminar um treino cujo sucessor da rotação já foi feito na semana apagava o
+    marcador de próximo da tela (o app esconde o selo em treino feito). Ele tem que andar até
+    o primeiro ainda pendente."""
+    tc, repo = cliente
+    _outros_treinos(repo)
+    _feito_agora(repo, "t-2", "s-b", seq=0)   # B já foi nesta semana…
+    _feito_agora(repo, TREINO, "s-a", seq=1)  # …e agora o aluno termina o A
+
+    body = tc.get("/v1/aluno/hoje").json()
+
+    assert body["proximo"]["treino_id"] == "t-3"
+
+
+def test_proximo_da_a_volta_quando_o_pendente_esta_atras(cliente):
+    tc, repo = cliente
+    _outros_treinos(repo)
+    _feito_agora(repo, "t-3", "s-c", seq=0)
+    _feito_agora(repo, "t-2", "s-b", seq=1)   # último é o B → sucessor é o C, já feito
+
+    body = tc.get("/v1/aluno/hoje").json()
+
+    assert body["proximo"]["treino_id"] == TREINO
+
+
+def test_semana_completa_mantem_o_proximo_da_rotacao(cliente):
+    """Nada pendente: devolve o sucessor normal em vez de `None` — o app já mostra
+    'semana completa' e esconde o selo sozinho."""
+    tc, repo = cliente
+    _outros_treinos(repo)
+    for seq, (tid, sid) in enumerate(((TREINO, "s-a"), ("t-3", "s-c"), ("t-2", "s-b"))):
+        _feito_agora(repo, tid, sid, seq=seq)
+
+    body = tc.get("/v1/aluno/hoje").json()
+
+    assert body["proximo"]["treino_id"] == "t-3"
 
 
 def test_treino_sem_id_nao_derruba_a_tela(cliente):

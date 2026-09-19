@@ -1187,18 +1187,27 @@ def ultimo_e_proximo(aluno_id: str) -> dict:
     ultima_raw = next((c for c in candidatos if c.get("status") != SessaoStatus.EM_ANDAMENTO.value), None)
     ultima = repo.clean(ultima_raw) if ultima_raw else None
 
-    hoje_str = locale_service.hoje(locale_service.tz_do_aluno(aluno_id))
+    tz = locale_service.tz_do_aluno(aluno_id)
+    hoje_str = locale_service.hoje(tz)
     treinos = treinos_validos(repo.clean_all(repo.query_pk(pk, sk_prefix=keys.SK_TREINO_PREFIX)))
     treinos = [t for t in treinos if treino_vigente(t, hoje_str)]
     treinos.sort(key=lambda t: t.get("ordem", 0))
 
     proximo = None
     if treinos:
+        idx = None
         if ultima:
             idx = next((i for i, t in enumerate(treinos) if t["treino_id"] == ultima.get("treino_id")), None)
-            proximo = treinos[(idx + 1) % len(treinos)] if idx is not None else treinos[0]
-        else:
-            proximo = treinos[0]
+        inicio = idx + 1 if idx is not None else 0
+        rotacao = [treinos[(inicio + k) % len(treinos)] for k in range(len(treinos))]
+        # O aluno não segue a ordem à risca: se o sucessor da rotação já foi feito nesta semana,
+        # o "próximo" anda até o primeiro ainda pendente em vez de apontar pra um treino já
+        # concluído (o app esconde o selo nesse caso, e o marcador sumia da tela).
+        semana = locale_service.semana_iso_agora(tz)
+        proximo = next(
+            (t for t in rotacao if locale_service.semana_iso(t.get("ultima_execucao"), tz) != semana),
+            rotacao[0],  # semana completa: mantém o da rotação
+        )
 
     return {
         "ultimo": {"treino_nome": ultima.get("treino_nome"), "data": ultima.get("data_hora_fim")} if ultima else None,

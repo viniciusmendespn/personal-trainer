@@ -948,6 +948,11 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
   const treinoPorId = new Map((hoje.data?.treinos ?? []).map((t) => [t.treino_id, t]))
   const feitoEm = (id: string) => feitoNaSemana(treinoPorId.get(id)?.ultima_execucao)
   const feitos = lista.filter((t) => feitoEm(t.id)).length
+  // O backend já pula os feitos na semana, mas o recorte dele é o fuso do aluno e o daqui é o do
+  // aparelho: repetir o passo com `feitoEm` garante que o selo nunca caia num treino marcado como
+  // feito (e suma da tela) num domingo à noite de fuso diferente.
+  const iRot = Math.max(0, lista.findIndex((t) => t.id === proximo?.treino_id))
+  const proximoId = [...lista.slice(iRot), ...lista.slice(0, iRot)].find((t) => !feitoEm(t.id))?.id ?? null
 
   if (previewId) {
     const nomeTreino = lista.find((t) => t.id === previewId)?.nome ?? 'Treino'
@@ -1119,7 +1124,7 @@ function Hoje({ onVerFeed }: { onVerFeed: (exId: string) => void }) {
               <div className="flex items-center gap-2 shrink-0">
                 {feito
                   ? <Badge tone="success"><Check size={12} /> {labelDiaCurto(feito)}</Badge>
-                  : t.id === proximo?.treino_id && <Badge tone="neutral">próximo</Badge>}
+                  : t.id === proximoId && <Badge tone="neutral">próximo</Badge>}
                 <Button variant="energy" onClick={() => setPreviewId(t.id)}>Ver treino</Button>
               </div>
             </Card>
