@@ -16,6 +16,8 @@ import urllib.request
 import urllib.error
 from datetime import date, datetime, timezone, timedelta
 
+import boto3
+
 from app.config import settings
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
@@ -51,9 +53,29 @@ def _mp_request(method: str, path: str, token: str,
         return json.loads(resp.read())
 
 
+def _identificar_personal(personal_id: str) -> tuple[str, str]:
+    """(nome, email) do personal para a descrição do Pix — sem isso o pagamento chega no
+    painel do MP só como "Gestão Pro - 1 mês" e não dá pra saber quem pagou. E-mail vem do
+    Cognito pelo `sub`, não do JWT: sob impersonação o JWT é o do admin. Falha silenciosa:
+    sem identificação o Pix sai igual, só com o `external_reference`."""
+    perfil = repo.get_item(keys.pk_personal(personal_id), keys.SK_PROFILE) or {}
+    nome, email = (perfil.get("nome") or "").strip(), ""
+    try:
+        client = boto3.client("cognito-idp", region_name=settings.cognito_region)
+        users = client.list_users(UserPoolId=settings.cognito_user_pool_id,
+                                  Filter=f'sub = "{personal_id}"', Limit=1)["Users"]
+        if users:
+            attrs = {a["Name"]: a["Value"] for a in users[0]["Attributes"]}
+            email = attrs.get("email", "")
+            nome = nome or attrs.get("name", "")
+    except Exception:
+        logger.warning("assinatura: não identificou o personal %s no Cognito", personal_id)
+    return nome, email
+
+
 # ── Criar Pix ──────────────────────────────────────────────────────────────────
 
-def criar_pix(personal_id: str, payer_email: str | None = None, periodo: str = "mensal") -> dict:
+def criar_pix(personal_id: str, periodo: str = "mensal") -> dict:
     """Cria pagamento Pix da assinatura. Retorna {payment_id, qr_code, qr_code_base64, expires_at}.
     periodo: "mensal" (1 mês, R$39,90) ou "anual" (12 meses, R$399,00)."""
     token = settings.ml_access_token
@@ -72,6 +94,11 @@ def criar_pix(personal_id: str, payer_email: str | None = None, periodo: str = "
         external_reference = f"ASSINATURA|{personal_id}"
         description = f"{plano.get('nome', 'Gestão Pro')} - 1 mês"
 
+    nome, email = _identificar_personal(personal_id)
+    quem = " - ".join(x for x in (nome, email) if x) or personal_id
+    description = f"{description} - {quem}"[:250]
+    primeiro, _, resto = nome.partition(" ")
+
     idempotency_key = f"assinatura-{personal_id}-{int(time.time())}"
     expires_at = (datetime.now(timezone.utc) + timedelta(minutes=30)).strftime(
         "%Y-%m-%dT%H:%M:%S.000+00:00"
@@ -81,9 +108,9 @@ def criar_pix(personal_id: str, payer_email: str | None = None, periodo: str = "
         "transaction_amount": preco,
         "payment_method_id": "pix",
         "payer": {
-            "email": payer_email or f"personal_{personal_id[:8]}@coachpilot.com.br",
-            "first_name": "Personal",
-            "last_name": "CoachPilot",
+            "email": email or f"personal_{personal_id[:8]}@coachpilot.com.br",
+            "first_name": primeiro or "Personal",
+            "last_name": resto or "CoachPilot",
         },
         "description": description,
         "external_reference": external_reference,
