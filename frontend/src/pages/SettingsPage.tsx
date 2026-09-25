@@ -702,8 +702,8 @@ function PagamentosTab() {
           <div className="space-y-3">
             <p className="text-sm text-text-secondary">
               Conecte sua conta do Mercado Pago para que seus alunos paguem por Pix direto pelo
-              app. Você autoriza na tela do próprio Mercado Pago — não precisa criar aplicação
-              nem copiar nenhum código. O dinheiro cai 100% na sua conta.
+              app. Você autoriza na tela do próprio Mercado Pago. O dinheiro cai 100% na sua
+              conta.
             </p>
             {botaoConectar}
           </div>
