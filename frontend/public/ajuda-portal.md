@@ -683,8 +683,10 @@ Exemplos de arquivos úteis: protocolos de treino, explicações de exercícios,
 
 Acesse **Configurações** → aba **"Anamnese"** para configurar o questionário de saúde.
 
+**Já vem pronto:** enquanto você não salvar o seu, vale o **modelo padrão do CoachPilot** — triagem de saúde (PAR-Q), lesões e dores, medicamentos, cirurgias, experiência de treino, disponibilidade, rotina, sono, estresse e hábitos. Edite, remova ou acrescente perguntas e clique em **Salvar template** para torná-lo seu. O botão **"Usar modelo padrão"** carrega o modelo de novo quando quiser recomeçar.
+
 **Como funciona:**
-1. Você cria o questionário uma vez (ou edita quando quiser)
+1. Você usa o modelo pronto ou ajusta o questionário (edite quando quiser)
 2. O sistema gera um link público de cadastro
 3. Você envia o link ao novo aluno antes do primeiro treino
 4. O aluno preenche o formulário sem precisar de login

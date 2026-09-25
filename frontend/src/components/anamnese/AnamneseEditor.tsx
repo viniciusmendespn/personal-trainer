@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, X, Copy, ExternalLink } from 'lucide-react'
+import { Plus, Trash2, X, Copy, ExternalLink, RotateCcw, Sparkles } from 'lucide-react'
 import { anamneseApi, type AnamneseTemplate, type PerguntaAnamnese } from '../../api/anamnese'
 import { Button, Card, Input, Spinner, useToast } from '../ui'
 
@@ -27,15 +27,30 @@ export function AnamneseEditor() {
   const [solNascimento, setSolNascimento] = useState(true)
   const [solObjetivo, setSolObjetivo] = useState(true)
   const [initialized, setInitialized] = useState(false)
+  const [confirmarRestaurar, setConfirmarRestaurar] = useState(false)
+
+  function aplicar(t: AnamneseTemplate) {
+    setPerguntas(t.perguntas)
+    setBoasVindas(t.mensagem_boas_vindas)
+    setSolEmail(t.solicitar_email)
+    setSolNascimento(t.solicitar_nascimento)
+    setSolObjetivo(t.solicitar_objetivo)
+  }
 
   if (template && !initialized) {
-    setPerguntas(template.perguntas)
-    setBoasVindas(template.mensagem_boas_vindas)
-    setSolEmail(template.solicitar_email)
-    setSolNascimento(template.solicitar_nascimento)
-    setSolObjetivo(template.solicitar_objetivo)
+    aplicar(template)
     setInitialized(true)
   }
+
+  const restaurarPadrao = useMutation({
+    mutationFn: anamneseApi.getTemplatePadrao,
+    onSuccess: (padrao) => {
+      aplicar(padrao)
+      setConfirmarRestaurar(false)
+      show('Modelo padrão carregado. Clique em "Salvar template" para aplicar.', 'success')
+    },
+    onError: () => show('Erro ao carregar o modelo padrão.', 'error'),
+  })
 
   const saveTemplate = useMutation({
     mutationFn: (body: AnamneseTemplate) => anamneseApi.saveTemplate(body),
@@ -111,6 +126,17 @@ export function AnamneseEditor() {
           </Button>
         </div>
       </div>
+
+      {template?.padrao && (
+        <div className="mb-4 p-3 rounded-xl border border-accent/30 bg-accent/10 text-sm text-text-secondary flex gap-2">
+          <Sparkles size={16} className="text-accent shrink-0 mt-0.5" />
+          <p>
+            Este é o <strong className="text-text">modelo pronto do CoachPilot</strong> (triagem de saúde PAR-Q,
+            histórico, rotina e hábitos) e já está ativo no seu link de cadastro. Edite, remova ou
+            acrescente o que quiser e salve para torná-lo seu.
+          </p>
+        </div>
+      )}
 
       <form onSubmit={save} className="space-y-5">
         <Input
@@ -193,9 +219,26 @@ export function AnamneseEditor() {
           </Button>
         </div>
 
-        <Button type="submit" disabled={saveTemplate.isPending}>
-          {saveTemplate.isPending ? 'Salvando…' : 'Salvar template'}
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button type="submit" disabled={saveTemplate.isPending}>
+            {saveTemplate.isPending ? 'Salvando…' : 'Salvar template'}
+          </Button>
+          {confirmarRestaurar ? (
+            <span className="flex items-center gap-2 text-xs text-text-secondary">
+              Substituir as perguntas atuais pelo modelo padrão?
+              <Button type="button" variant="outline" size="sm" onClick={() => restaurarPadrao.mutate()} disabled={restaurarPadrao.isPending}>
+                Substituir
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmarRestaurar(false)}>
+                Cancelar
+              </Button>
+            </span>
+          ) : (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmarRestaurar(true)}>
+              <span className="flex items-center gap-1"><RotateCcw size={13} /> Usar modelo padrão</span>
+            </Button>
+          )}
+        </div>
       </form>
 
       <div className="mt-4 pt-4 border-t border-border">

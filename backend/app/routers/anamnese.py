@@ -8,7 +8,7 @@ from app.models.anamnese import AnamneseResposta, AnamneseTemplate
 from app.models.aluno import AlunoCreate
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz, media_service
+from app.services import anamnese_padrao, authz, media_service
 from app.utils import epoch_ms, new_id, now_iso
 
 router = APIRouter(tags=["anamnese"])
@@ -18,16 +18,20 @@ router = APIRouter(tags=["anamnese"])
 
 @router.get("/v1/anamnese/template")
 def get_template(personal_id: str = Depends(get_current_personal_id)):
-    item = repo.get_item(keys.pk_personal(personal_id), keys.SK_ANAMNESE_TEMPLATE)
-    if not item:
-        return AnamneseTemplate().model_dump()
-    return repo.clean(item)
+    return anamnese_padrao.carregar_template(personal_id)
+
+
+@router.get("/v1/anamnese/template/padrao")
+def get_template_padrao(personal_id: str = Depends(get_current_personal_id)):
+    """Modelo pronto do CoachPilot — para o editor oferecer "restaurar modelo padrão"."""
+    return anamnese_padrao.template_padrao()
 
 
 @router.put("/v1/anamnese/template")
 def save_template(body: AnamneseTemplate, personal_id: str = Depends(get_current_personal_id)):
-    repo.put_item(keys.pk_personal(personal_id), keys.SK_ANAMNESE_TEMPLATE, body.model_dump())
-    return body
+    data = {**body.model_dump(), "salvo_em": now_iso()}
+    repo.put_item(keys.pk_personal(personal_id), keys.SK_ANAMNESE_TEMPLATE, data)
+    return data
 
 
 @router.post("/v1/anamnese/cadastro-link")
@@ -74,8 +78,7 @@ def get_form_publico(token: str):
     except ValueError as e:
         raise HTTPException(422, f"Link inválido ou expirado: {e}")
     personal_id = payload["personal_id"]
-    template_raw = repo.get_item(keys.pk_personal(personal_id), keys.SK_ANAMNESE_TEMPLATE)
-    template = repo.clean(template_raw) if template_raw else AnamneseTemplate().model_dump()
+    template = anamnese_padrao.carregar_template(personal_id)
     perfil = repo.get_item(keys.pk_personal(personal_id), keys.SK_PROFILE) or {}
     nome_personal = perfil.get("nome", "Personal")
     foto_key = perfil.get("foto_s3_key")

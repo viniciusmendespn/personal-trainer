@@ -16,6 +16,8 @@ export interface AnamneseTemplate {
   solicitar_email: boolean
   solicitar_nascimento: boolean
   solicitar_objetivo: boolean
+  /** true = modelo pronto do CoachPilot; o personal ainda não salvou o próprio. */
+  padrao?: boolean
 }
 
 export interface AnamneseResposta {
@@ -29,6 +31,8 @@ const publicClient = axios.create({ baseURL: import.meta.env.VITE_API_URL })
 export const anamneseApi = {
   getTemplate: () =>
     api.get<AnamneseTemplate>('/v1/anamnese/template').then((r) => r.data),
+  getTemplatePadrao: () =>
+    api.get<AnamneseTemplate>('/v1/anamnese/template/padrao').then((r) => r.data),
   saveTemplate: (body: AnamneseTemplate) =>
     api.put<AnamneseTemplate>('/v1/anamnese/template', body).then((r) => r.data),
   gerarLink: () =>

@@ -33,7 +33,7 @@ from app.models.contexto_export import (
 )
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import locale_service, meta_service, nota_service, sessao_service
+from app.services import anamnese_padrao, locale_service, meta_service, nota_service, sessao_service
 from app.services.sessao_service import chave_exercicio
 from app.utils import now_iso
 
@@ -100,7 +100,7 @@ def _anamnese(pk: str, personal_id: str) -> AnamneseContexto | None:
     resp = repo.clean(repo.get_item(pk, keys.SK_ANAMNESE_ALUNO))
     if not resp or not resp.get("respostas"):
         return None
-    template = repo.clean(repo.get_item(keys.pk_personal(personal_id), keys.SK_ANAMNESE_TEMPLATE)) or {}
+    template = anamnese_padrao.carregar_template(personal_id)
     labels = {q.get("key"): q.get("label") for q in template.get("perguntas") or []}
     return AnamneseContexto(
         preenchido_em=(resp.get("preenchido_em") or "")[:10] or None,
