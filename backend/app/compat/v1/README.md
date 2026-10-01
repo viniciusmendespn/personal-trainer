@@ -17,3 +17,6 @@ dados enquanto houver writers legados. A migração futura exige validar program
 grandes, desfazer antigo e revisão de todos os writers antes de desligar o modo.
 
 O harness local desliga explicitamente a compatibilidade e usa somente dados fake.
+
+Correção aplicada em 01/10/2026: `openWorldHint` das tools de escrita passou a `true`
+(apontado pela revisão do ChatGPT). Teste: `test_snapshot_marks_writers_as_open_world_and_keeps_the_rest_published`.

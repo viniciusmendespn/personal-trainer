@@ -15,7 +15,7 @@
       "source_path": "app/mcp/tools.py",
       "lambda": "McpFunction",
       "source_sha256": "72f5b87e04bead58aea2c10c915328203e48b9569141d578dc03a1576e09b1d0",
-      "adapted_sha256": "c3a5bb69dd4f2fe6791ff91edb92553f22388f6e5d3ef554875528469ecd6d32"
+      "adapted_sha256": "aede8ab28112893c4ef250bc8f0d2100a12df6e00e3413ceca58e873a5f6551e"
     },
     "jsonrpc.py": {
       "source_path": "app/mcp/jsonrpc.py",

@@ -832,7 +832,8 @@ def listar_tools(tenant: Tenant) -> list[dict]:
                 "readOnlyHint": d.somente_leitura,
                 "destructiveHint": d.destrutiva,
                 "idempotentHint": d.somente_leitura,
-                "openWorldHint": False,
+                # Escrita muda o que o aluno vê no app e dispara avisos para ele.
+                "openWorldHint": not d.somente_leitura,
             },
         }
         if d.output:

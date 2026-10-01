@@ -222,3 +222,14 @@ def test_routine_application_keeps_legacy_writes(compat):
     assert response.status_code == 200, response.text
     assert len(compat.query_pk(keys.pk_aluno(A), "TREINO#")) == 1
     assert commits.revisao(A) == 0
+
+
+def test_snapshot_marks_writers_as_open_world_and_keeps_the_rest_published(compat):
+    """Única correção no snapshot: openWorldHint das tools de escrita (revisão do ChatGPT)."""
+    tenant = tokens.Tenant(personal_id=P, conn_id="c", client_name="ChatGPT", jti="w",
+        scopes=frozenset({tokens.SCOPE_READ, tokens.SCOPE_TREINOS_WRITE}))
+    anotacoes = {d["name"]: d["annotations"] for d in tools.listar_tools(tenant)}
+    assert len(anotacoes) == 13
+    abertas = {n for n, a in anotacoes.items() if a["openWorldHint"]}
+    assert abertas == {"aplicar_programa_treino", "atualizar_treino", "desfazer_alteracao_treino"}
+    assert all(a["openWorldHint"] is not a["readOnlyHint"] for a in anotacoes.values())

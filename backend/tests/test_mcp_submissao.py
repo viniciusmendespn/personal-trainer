@@ -210,8 +210,9 @@ def test_anotacoes_batem_com_o_comportamento_real(monkeypatch):
         ann = por_nome[nome]["annotations"]
         # readOnlyHint: false se a tool cria, atualiza ou apaga qualquer coisa
         assert ann["readOnlyHint"] == (definicao.escopo == mcp_tokens.SCOPE_READ), nome
-        # openWorldHint: false — tudo acontece dentro do CoachPilot, nada é publicado fora
-        assert ann["openWorldHint"] is False, nome
+        # openWorldHint: escrita muda o app do aluno (terceiro) e dispara avisos para ele;
+        # leitura fica dentro do CoachPilot. Apontado pela revisão do ChatGPT em 01/10/2026.
+        assert ann["openWorldHint"] is (not ann["readOnlyHint"]), nome
         assert isinstance(ann["destructiveHint"], bool), nome
 
     # destructiveHint true só onde há sobrescrita irreversível de programa

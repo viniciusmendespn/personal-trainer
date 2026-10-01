@@ -183,17 +183,18 @@ comportamento real é travada por `tests/test_mcp_submissao.py::test_anotacoes_b
 
 ---
 
-## Nota sobre notificações (relevante para Open World nas três tools de escrita)
+## Open World nas três tools de escrita (revisado em 01/10/2026)
 
-Toda escrita gera uma notificação in-app para o **próprio dono da conta**, avisando o que mudou.
-Quando o personal tem push habilitado, essa notificação também sai por Web Push para os
-dispositivos **dele mesmo**. Entendemos que isso não caracteriza Open World: não há publicação,
-nem mensagem a terceiros — é o sistema informando ao próprio usuário a alteração que ele acabou
-de pedir. Se o revisor discordar dessa leitura, a mudança é de uma linha em
-`app/mcp/tools.py` (`openWorldHint`), sem alterar comportamento.
+O Rescan de 01/10/2026 apontou em `aplicar_programa_treino`: *"marked openWorldHint: false, but
+its behavior appears to interact with an independently controlled external system"*. O revisor
+tem razão: a escrita não fica só com o dono da conta — o programa aparece no app **do aluno**
+(outra pessoa) e o scheduler avisa o aluno do vencimento. Desde então as tools de escrita
+(`aplicar_programa_treino`, `atualizar_treino`, `desfazer_alteracao_treino`) declaram
+`openWorldHint: true`; as de leitura continuam `false`. Só a anotação mudou — comportamento igual.
 
-Se preferir mencionar isso na justificativa das três tools de escrita, acrescente ao texto comum:
+Texto para a justificativa dessas três (**Open World: True**):
 
-> The only outbound effect is an in-app notification — and, if the user has enabled it, a web
-> push notification — delivered to the account owner's own devices, informing them of the change
-> they just requested. Nothing is sent to any third party.
+> Writing here changes what the personal trainer's client sees in their own CoachPilot app, and
+> may trigger notifications to that client (for example, when the new program is about to
+> expire). The client is a separate person, so we report this tool as open world. Nothing is
+> posted publicly; the effect stays inside CoachPilot accounts linked to this trainer.
