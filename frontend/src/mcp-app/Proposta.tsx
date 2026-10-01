@@ -1,23 +1,33 @@
 import { useState } from 'react'
-import { Pencil, XCircle, AlertTriangle } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Pencil, XCircle } from 'lucide-react'
 import { Badge } from '../components/ui/Badge'
 import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
-import { formatValue, labels } from './presentation'
+import { agruparDiferencas, formatValue, labels, resumoDiferencas, type GrupoDiferenca, type TipoGrupo } from './presentation'
 import { ProgramaView, prescricao } from './Programa'
-import type { Achado, Diferenca, Exercicio, Programa, Proposta, Serie, Treino } from './types'
+import type { Achado, Exercicio, Programa, Proposta, Serie, Treino } from './types'
 
-const tipoTone: Record<string, 'success' | 'danger' | 'accent'> = { adicionado: 'success', removido: 'danger', alterado: 'accent' }
+const TIPO_LABEL: Record<TipoGrupo, string> = { adicionado: 'Incluído', removido: 'Removido', alterado: 'Ajustado', reordenado: 'Mudou de posição' }
 
+/** "O que mudou": uma unidade de revisão por exercício, agrupada por treino. */
 export function Diferencas({ proposta }: { proposta: Proposta }) {
   const [soMudancas, setSoMudancas] = useState(true)
+  const grupos = agruparDiferencas(proposta)
+  const porTreino = [...new Set(grupos.map(g => g.treino))].map(t => [t, grupos.filter(g => g.treino === t)] as const)
+  const preservados = proposta.programa.treinos.filter(t => !grupos.some(g => g.treino === t.nome)).length
   return <section className="space-y-3">
     <div role="radiogroup" aria-label="Comparação" className="inline-flex rounded-lg border border-border p-0.5 bg-surface">
-      {[[true, 'Somente alterações'], [false, 'Programa completo']].map(([v, l]) => <button key={String(v)} type="button" role="radio" aria-checked={soMudancas === v}
+      {[[true, 'O que mudou'], [false, 'Programa completo']].map(([v, l]) => <button key={String(v)} type="button" role="radio" aria-checked={soMudancas === v}
         onClick={() => setSoMudancas(v as boolean)} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${soMudancas === v ? 'bg-accent text-white' : 'text-text-secondary hover:text-text'}`}>{l as string}</button>)}
     </div>
     {soMudancas
-      ? proposta.diferencas.length ? proposta.diferencas.map((d, i) => <DiferencaCard key={`${d.caminho}-${i}`} d={d} />)
+      ? grupos.length ? <>
+          <p className="text-xs text-text-secondary">{resumoDiferencas(grupos)}{preservados ? ` · ${preservados} treino${preservados > 1 ? 's' : ''} sem mudança` : ''}.</p>
+          {porTreino.map(([treino, gs]) => <Card key={treino} variant="elevated" className="!p-0 overflow-hidden">
+            <h3 className="font-display text-sm font-semibold px-4 pt-3 pb-1">{treino}</h3>
+            <ul className="divide-y divide-border">{gs.map(g => <GrupoCard key={g.chave} g={g} />)}</ul>
+          </Card>)}
+        </>
         : <p className="text-sm text-text-muted">Nenhuma alteração na prescrição.</p>
       : <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div><h3 className="font-display text-sm font-semibold mb-2 text-text-secondary">Atual</h3><ProgramaView programa={proposta.programa_base} /></div>
@@ -26,29 +36,34 @@ export function Diferencas({ proposta }: { proposta: Proposta }) {
   </section>
 }
 
-function DiferencaCard({ d }: { d: Diferenca }) {
-  const campo = labels[d.campo || ''] || (d.caminho.includes('exercicios') ? 'Exercício' : 'Treino')
-  const unico = d.tipo === 'adicionado' || d.tipo === 'removido'
-  return <Card variant="elevated">
-    <div className="flex items-center gap-2 flex-wrap mb-2">
-      <span className={`font-medium ${d.tipo === 'removido' ? 'line-through text-text-secondary' : ''}`}>{d.nome}</span><Badge tone={tipoTone[d.tipo] ?? 'neutral'}>{d.tipo}</Badge>
-      <span className="text-xs text-text-muted">{campo}</span>
+function GrupoCard({ g }: { g: GrupoDiferenca }) {
+  const inteiro = !g.exercicio && (g.tipo === 'adicionado' || g.tipo === 'removido')
+  const titulo = g.exercicio ?? (inteiro ? `Treino ${g.tipo === 'adicionado' ? 'novo' : 'retirado do programa'}` : 'Dados do treino')
+  return <li className="px-4 py-3">
+    <div className="flex items-center gap-2 flex-wrap mb-1.5">
+      <span className={`font-medium ${g.tipo === 'removido' && !inteiro ? 'line-through text-text-secondary' : ''}`}>{titulo}</span>
+      <Badge tone={g.tipo === 'removido' ? 'neutral' : 'accent'}>{TIPO_LABEL[g.tipo]}</Badge>
     </div>
-    {unico
-      ? <div className={`rounded-lg border px-3 py-2 ${d.tipo === 'adicionado' ? 'border-success/30 bg-success/5' : 'border-danger/25 bg-danger/5'}`}><Valor v={d.tipo === 'adicionado' ? d.proposto : d.atual} /></div>
-      : <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <div className="rounded-lg border border-danger/25 bg-danger/5 px-3 py-2 min-w-0"><p className="text-[11px] text-text-muted mb-0.5">Atual</p><Valor v={d.atual} /></div>
-        <div className="rounded-lg border border-success/30 bg-success/5 px-3 py-2 min-w-0"><p className="text-[11px] text-text-muted mb-0.5">Proposto</p><Valor v={d.proposto} /></div>
-      </div>}
-  </Card>
+    {g.tipo === 'adicionado' || g.tipo === 'removido'
+      ? <Valor v={g.item} ex={g.item as Exercicio} />
+      : <dl className="space-y-2">{g.campos.map((d, i) => <div key={i}>
+          <dt className="text-[11px] text-text-muted mb-0.5">{d.campo === 'ordem' ? 'Posição no treino' : labels[d.campo!] ?? d.campo}</dt>
+          <dd className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-x-2 gap-y-0.5 items-start">
+            <div className="min-w-0 text-text-secondary"><span className="sm:hidden text-[11px] text-text-muted">Atual: </span>{d.campo === 'ordem' ? <p className="text-sm">{Number(d.atual) + 1}º</p> : <Valor v={d.atual} ex={g.exAtual} />}</div>
+            <ArrowRight size={14} className="hidden sm:block text-text-muted mt-1" aria-hidden="true" />
+            <div className="min-w-0"><span className="sm:hidden text-[11px] text-text-muted">Proposto: </span>{d.campo === 'ordem' ? <p className="text-sm">{Number(d.proposto) + 1}º</p> : <Valor v={d.proposto} ex={g.exProposto} />}</div>
+          </dd>
+        </div>)}</dl>}
+  </li>
 }
 
 /** Mostra o valor de uma diferença na linguagem do portal: treino vira lista de exercícios,
- *  exercício e séries viram "3 × 10 reps · 20 kg" — nunca o despejo campo: valor. */
-function Valor({ v }: { v: unknown }) {
+ *  exercício e séries viram "3 × 10 reps · 20 kg" — com as unidades do próprio exercício. */
+function Valor({ v, ex }: { v: unknown; ex?: Exercicio }) {
   if (v == null || v === '') return <p className="text-sm text-text-muted">—</p>
   if (Array.isArray(v) && v.every(x => x && typeof x === 'object' && 'series' in x)) {
-    return <p className="text-sm text-text">{prescricao({ series_prescritas: v as Serie[] } as Exercicio).join(' / ') || '—'}</p>
+    const base = ex ?? { tipo_exercicio: 'FORCA' } as Exercicio
+    return <p className="text-sm text-text">{prescricao({ ...base, series_prescritas: v as Serie[] }).join(' / ') || '—'}</p>
   }
   if (typeof v === 'object' && v && Array.isArray((v as Treino).exercicios)) {
     const t = v as Treino
@@ -62,7 +77,7 @@ function Valor({ v }: { v: unknown }) {
   }
   if (typeof v === 'object' && v && 'nome' in v && 'tipo_exercicio' in v) {
     const e = v as Exercicio
-    return <p className="text-sm"><span className="font-medium">{e.nome}</span> <span className="text-xs text-text-secondary">{prescricao(e).join(' / ')}</span></p>
+    return <p className="text-sm"><span className="text-xs text-text-secondary">{prescricao(e).join(' / ') || 'Prescrição pelo bloco'}</span>{e.intervalo_s ? <span className="text-xs text-text-muted"> · {e.intervalo_s}s de intervalo</span> : null}</p>
   }
   return <p className="text-sm text-text break-words">{formatValue(v)}</p>
 }

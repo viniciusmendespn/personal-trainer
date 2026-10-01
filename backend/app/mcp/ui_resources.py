@@ -27,7 +27,8 @@ def ler(uri):
     if uri != URI or not disponivel():
         raise KeyError(uri)
     return {"contents": [{"uri": uri, "mimeType": MIME, "text": _html(uri),
-        # `domain`: origem dedicada do widget e destino do botão "Abrir em CoachPilot" na tela
-        # cheia do ChatGPT — tem que ser um site que existe (o portal).
+        # `domain`: origem de isolamento do widget — tem que ser um site que existe (o portal).
+        # O destino do botão "abrir no app" do host é outra coisa: a própria UI o define por
+        # aluno com `setOpenInAppUrl` (host.ts → setOpenInApp), quando o host oferece.
         "_meta": {"ui": {"prefersBorder": True, "domain": settings.mcp_ui_domain,
                           "csp": {"connectDomains": [], "resourceDomains": []}}}}]}

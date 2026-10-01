@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Activity, Sparkles, Trophy } from 'lucide-react'
+import { Activity, Sparkles } from 'lucide-react'
 import { GraficoArea } from './GraficoArea'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -8,11 +8,13 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { Select } from '../components/ui/Input'
 import { Spinner } from '../components/ui/Spinner'
 import type { Host } from './host'
+import { coberturaEvolucao, melhorValor } from './presentation'
 import { Alert, fmtDate } from './ui'
 import type { Evolucao as EvolucaoData, Programa } from './types'
 
 const SEM_UNIDADE = 'unidade não informada'
-const PERIODOS = [['30', '30 dias'], ['90', '90 dias'], ['', 'Tudo']] as const
+const PERIODOS = [['30', '30 dias'], ['90', '90 dias'], ['', 'Últimos registros']] as const
+const LIMITE = 200
 
 export function Evolucao({ host, alunoId, programa, onAsk }: { host: Host; alunoId: string; programa: Programa; onAsk: (text: string) => Promise<void> }) {
   const exercicios = programa.treinos.flatMap(t => t.exercicios).filter((e, i, arr) => arr.findIndex(x => x.nome === e.nome) === i)
@@ -28,7 +30,7 @@ export function Evolucao({ host, alunoId, programa, onAsk }: { host: Host; aluno
     if (!nome) return
     let active = true
     setLoading(true); setError('')
-    void host.call('evolucao_exercicio', { aluno_id: alunoId, ...(ex?.origem_id ? { exercicio_id: ex.origem_id } : { chave: ex?.chave_historico || nome }), limit: 200 }).then(r => {
+    void host.call('evolucao_exercicio', { aluno_id: alunoId, ...(ex?.origem_id ? { exercicio_id: ex.origem_id } : { chave: ex?.chave_historico || nome }), limit: LIMITE }).then(r => {
       if (active) { setData(r.structuredContent as unknown as EvolucaoData); setSelectedUnit(''); setMetric(ex?.tipo_exercicio === 'PERFORMANCE' ? 'metrica_max' : 'carga_max') }
     }).catch(err => { if (active) setError(err.message) }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
@@ -42,7 +44,10 @@ export function Evolucao({ host, alunoId, programa, onAsk }: { host: Host; aluno
   const cutoff = new Date(Date.now() - Number(dias) * 86400000).toISOString()
   const points = (data?.serie || []).filter(p => (!dias || p.data >= cutoff) && unidadeDe(p) === unit)
     .map(p => ({ data: p.data, valor: p[metric as 'carga_max'] })).filter(p => p.valor != null && Number.isFinite(p.valor)) as { data: string; valor: number }[]
-  const recorde = points.length ? Math.max(...points.map(p => p.valor)) : null
+  // Tempo de prova é melhor quando menor: a direção vem do exercício, nunca presumida.
+  const direcao = metric === 'metrica_max' ? (data?.direcao ?? ex?.metrica_direcao) : 'MAIOR'
+  const melhor = melhorValor(points.map(p => p.valor), direcao)
+  const cobertura = coberturaEvolucao(data?.serie.length ?? 0, LIMITE)
   const legenda = metric === 'volume' ? 'Volume por sessão' : metric === 'metrica_max' ? 'Melhor métrica por sessão' : 'Carga máxima por sessão'
 
   return <div className="space-y-3">
@@ -64,24 +69,24 @@ export function Evolucao({ host, alunoId, programa, onAsk }: { host: Host; aluno
         <Card variant="elevated">
           <div className="flex items-center justify-between gap-2 mb-3">
             <p className="text-sm text-text-secondary">{legenda} <span className="text-text-muted">({unit})</span></p>
-            {recorde != null && unit !== SEM_UNIDADE && <Badge tone="warning"><Trophy size={12} /> PR {recorde.toLocaleString('pt-BR')}</Badge>}
+            {melhor != null && unit !== SEM_UNIDADE && <Badge tone="accent">{dias ? 'Melhor no período' : 'Melhor nos registros'}: {melhor.toLocaleString('pt-BR')}{direcao === 'MENOR' ? ' (menor é melhor)' : ''}</Badge>}
           </div>
           {unit === SEM_UNIDADE
             ? <p className="text-sm text-text-muted">Estes registros antigos não informam a unidade. Confira os valores na tabela; o gráfico precisa de uma unidade registrada.</p>
             : !points.length ? <p className="text-sm text-text-muted">Sem registros com esta métrica no período.</p>
-            : <div role="img" aria-label={`Evolução em ${unit}, de ${Math.min(...points.map(p => p.valor))} a ${recorde}. Valores na tabela abaixo.`}>
+            : <div role="img" aria-label={`Evolução em ${unit}, de ${points[0].valor} em ${fmtDate(points[0].data)} a ${points[points.length - 1].valor} em ${fmtDate(points[points.length - 1].data)}. Valores na tabela abaixo.`}>
               <GraficoArea pontos={points.map(p => ({ rotulo: fmtDate(p.data)?.slice(0, 5) ?? '', valor: p.valor }))} unidade={unit} />
             </div>}
         </Card>
         <Card variant="elevated" className="p-0 overflow-hidden">
           <table className="w-full text-sm">
-            <caption className="text-left text-xs text-text-muted px-4 pt-3 pb-2">{points.length} registro{points.length === 1 ? '' : 's'} de {nome} em {unit} · até os últimos 200, sem estimar ausentes</caption>
+            <caption className="text-left text-xs text-text-muted px-4 pt-3 pb-2">{points.length} registro{points.length === 1 ? '' : 's'} de {nome} em {unit} · consulta com {cobertura}, sem estimar ausentes</caption>
             <thead><tr className="text-xs text-text-muted border-b border-border"><th scope="col" className="text-left font-medium px-4 py-2">Data</th><th scope="col" className="text-right font-medium px-4 py-2">Valor ({unit})</th></tr></thead>
             <tbody>{[...points].reverse().map((p, i) => <tr key={i} className="border-b border-border last:border-b-0"><td className="px-4 py-2 text-text-secondary">{fmtDate(p.data)}</td><td className="px-4 py-2 text-right font-medium">{p.valor}</td></tr>)}</tbody>
           </table>
         </Card>
       </>}
-    <Button variant="outline" size="sm" onClick={() => void onAsk(`Analise a evolução de ${nome} do aluno_id=${alunoId} no período de ${dias || 'todos os'} dias, usando os dados atuais e a unidade ${unit}. Explique a cobertura e sugira ajustes para minha revisão.`)}>
+    <Button variant="outline" size="sm" onClick={() => void onAsk(`Analise a evolução de ${nome} do aluno_id=${alunoId} ${dias ? `nos últimos ${dias} dias` : 'nos registros disponíveis'}, usando os dados atuais e a unidade ${unit}. Explique a cobertura e o que isso sugere para a revisão do treino; não altere nada sem meu pedido.`)}>
       <Sparkles size={14} /> Analisar evolução na conversa
     </Button>
   </div>

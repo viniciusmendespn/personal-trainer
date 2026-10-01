@@ -5,8 +5,8 @@ from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.compat.v1 import tools as legacy, programa_service
-from app.mcp import tokens, ui_resources
-from app.services import carteira_visual_service, contexto_aluno_service, sessao_service
+from app.mcp import resumo_modelo, tokens, ui_resources
+from app.services import carteira_visual_service, contexto_aluno_service, locale_service, sessao_service
 
 
 class CarteiraArgs(BaseModel):
@@ -104,6 +104,9 @@ def chamar_tool(nome, argumentos, tenant):
         else:
             resumo, dados = Resumo(tela="carteira"), _carteira(args, tenant)
         texto = f"CoachPilot: {resumo.nome or 'carteira de alunos'}. Consulta visual somente leitura."
+        if resumo.tela == "aluno":
+            texto = resumo_modelo.ficha_aluno(resumo.nome, dados["contexto_aluno"], dados["programa"],
+                hoje=locale_service.hoje(locale_service.tz_do_personal(tenant.personal_id))) + " Consulta visual somente leitura."
         if resumo.tela == "carteira":
             texto += " " + "; ".join(f"{a['nome']} (aluno_id={a['aluno_id']})" for a in dados["items"])
             if dados.get("next_cursor"):

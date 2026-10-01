@@ -17,6 +17,7 @@ from typing import Any, Callable
 from fastapi import HTTPException
 from pydantic import BaseModel, Field, ValidationError
 
+from app.mcp import resumo_modelo
 from app.mcp.tokens import (
     SCOPE_READ,
     SCOPE_TREINOS_WRITE,
@@ -30,6 +31,7 @@ from app.services import (
     authz,
     biblioteca_service,
     contexto_aluno_service,
+    locale_service,
     mcp_service,
     notif_service,
     pendencia_service,
@@ -699,6 +701,9 @@ def _visual(tela, detalhes, **campos):
         propostas_disponiveis=settings.mcp_propostas_enabled and t.pode(SCOPE_TREINOS_WRITE),
         aplicacao_disponivel=settings.mcp_aplicacao_enabled and t.pode(SCOPE_TREINOS_WRITE), **campos).model_dump(mode="json")
     texto = f"CoachPilot: {campos.get('nome') or tela}. " + (campos.get("resumo_da_mudanca") or "Abra os detalhes para consultar.")
+    if tela == "aluno":
+        texto = resumo_modelo.ficha_aluno(campos.get("nome"), detalhes["contexto_aluno"], detalhes["programa"],
+            hoje=locale_service.hoje(locale_service.tz_do_personal(t.personal_id)))
     if tela == "carteira":
         texto += " " + "; ".join(f"{a['nome']} (aluno_id={a['aluno_id']})" for a in detalhes.get("items", []))
         if detalhes.get("next_cursor"):

@@ -67,7 +67,7 @@ window.addEventListener('message', async event => {
  let result = {};
  if (msg.method === 'ui/initialize') result = {protocolVersion: msg.params.protocolVersion, hostInfo: {name: 'local-test', version: '1'},
  hostCapabilities: {serverTools: {}, updateModelContext: {}, message: {}, openLinks: {}},
- hostContext: {theme: query.get('theme') || 'light', displayMode: query.get('mode') || 'inline', availableDisplayModes: ['inline', 'fullscreen']}};
+ hostContext: {theme: query.get('theme') || 'light', displayMode: query.get('mode') || 'inline', availableDisplayModes: query.get('nofs') ? ['inline'] : ['inline', 'fullscreen']}};
  else if (msg.method === 'tools/call') {
   const resp = await fetch('/mcp?' + query, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(msg)});
   const envelope = await resp.json(); frame.contentWindow.postMessage(envelope, location.origin); return;

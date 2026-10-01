@@ -14,14 +14,25 @@ export function assertResult(result: ToolResult): ToolResult {
   }
   return result
 }
+/** O que o host oferece nesta conversa; a UI decide fallback a partir disso, nunca presume. */
+export interface Capacidades { fullscreen: boolean; contexto: boolean; mensagem: boolean }
+/** Portal do personal: destino de "Abrir no CoachPilot" e fallback quando não há tela cheia. */
+export const PORTAL = 'https://coachpilot.com.br'
 export interface Host {
+  capabilities?(): Capacidades
+  /** Abre uma página do portal em nova aba; `false` se o host recusar. */
+  openPortal?(path: string): Promise<boolean>
+  /** Destino do botão do host "abrir no app" — separado da origem de isolamento (`_meta.ui.domain`). */
+  setOpenInApp?(path: string): void
   preferences?(): { ordem?: string }
   savePreferences?(preferences: { ordem: string }): void
   connect(onResult: (r: ToolResult) => void, onEnvironment: (theme?: string, mode?: string) => void): Promise<void>
   call(name: string, args: Record<string, unknown>): Promise<ToolResult>
-  context(selection: Selecao): Promise<void>
+  /** `false` quando o host não recebe contexto: a UI não pode presumir que a seleção chegou. */
+  context(selection: Selecao): Promise<boolean>
   ask(text: string): Promise<void>
-  expand(): Promise<void>
+  /** `false` quando não há tela cheia: quem chama mantém o card limitado. */
+  expand(): Promise<boolean>
   dispose(): void
 }
 
@@ -48,21 +59,44 @@ export class McpHost implements Host {
   async call(name: string, args: Record<string, unknown>) {
     return assertResult(await this.app.callServerTool({ name, arguments: args }, { timeout: 30000 }) as ToolResult)
   }
+  capabilities(): Capacidades {
+    const caps = this.app.getHostCapabilities()
+    return { fullscreen: this.fullscreenDisponivel(), contexto: !!caps?.updateModelContext, mensagem: !!caps?.message }
+  }
+  async openPortal(path: string) {
+    if (!this.app.getHostCapabilities()?.openLinks) return false
+    const r = await this.app.openLink({ url: PORTAL + path })
+    return !r.isError
+  }
+  setOpenInApp(path: string) {
+    const openai = (window as unknown as { openai?: { setOpenInAppUrl?: (args: { href: string }) => unknown } }).openai
+    try { openai?.setOpenInAppUrl?.({ href: PORTAL + path }) } catch { /* extensão opcional */ }
+  }
+  private openai() {
+    return (window as unknown as { openai?: { requestDisplayMode?: (args: { mode: string }) => Promise<unknown> } }).openai
+  }
+  private fullscreenDisponivel() {
+    return !!this.app.getHostContext()?.availableDisplayModes?.includes('fullscreen') || !!this.openai()?.requestDisplayMode
+  }
   async context(selection: Selecao) {
-    if (this.app.getHostCapabilities()?.updateModelContext) {
-      await this.app.updateModelContext({ structuredContent: { coachpilot: selection } })
-    }
+    if (!this.app.getHostCapabilities()?.updateModelContext) return false
+    await this.app.updateModelContext({ structuredContent: { coachpilot: selection } })
+    return true
   }
   async ask(text: string) {
     const result = await this.app.sendMessage({ role: 'user', content: [{ type: 'text', text }] })
     if (result.isError) throw new Error('O host não aceitou o pedido. Envie-o na conversa.')
   }
   async expand() {
-    const modes = this.app.getHostContext()?.availableDisplayModes
-    if (modes?.includes('fullscreen')) { await this.app.requestDisplayMode({ mode: 'fullscreen' }); return }
+    if (this.app.getHostContext()?.availableDisplayModes?.includes('fullscreen')) {
+      const r = await this.app.requestDisplayMode({ mode: 'fullscreen' })
+      return r.mode === 'fullscreen'
+    }
     // Extensão opcional, isolada da apresentação.
-    const openai = (window as unknown as { openai?: { requestDisplayMode?: (args: { mode: string }) => Promise<unknown> } }).openai
-    if (openai?.requestDisplayMode) await openai.requestDisplayMode({ mode: 'fullscreen' })
+    const openai = this.openai()
+    if (!openai?.requestDisplayMode) return false
+    await openai.requestDisplayMode({ mode: 'fullscreen' })
+    return true
   }
   dispose() { void this.app.close() }
 }

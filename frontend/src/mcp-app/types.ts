@@ -29,13 +29,16 @@ export interface Aluno {
 export interface Carteira { items: Aluno[]; next_cursor: string | null; cobertura: { completa: boolean; alunos_examinados: number }; criterios: { proximos_dias: number; sem_treinar_dias: number; hoje: string } }
 export interface Contexto {
   gerado_em: string; secoes_indisponiveis: string[]
-  perfil: { nome?: string | null; objetivos: string[]; descricao?: string | null }
   anamnese?: { preenchido_em?: string | null; respostas: { pergunta: string; resposta: string }[] } | null
-  dores_e_duvidas: { tipo: string; data?: string | null; descricao: string; exercicio?: string | null }[]
+  perfil: { nome?: string | null; idade?: number | null; objetivos: string[]; descricao?: string | null; observacoes_do_personal?: string | null }
+  dores_e_duvidas: { tipo: string; data?: string | null; descricao: string; exercicio?: string | null; respondido?: boolean; resposta_do_personal?: string | null }[]
   estatisticas_treino?: { total_sessoes: number; sessoes_semana_atual: number; media_sessoes_por_semana: number; ultimo_treino_em?: string | null } | null
+  avaliacoes_fisicas?: { data?: string | null; peso_kg?: number | null; altura_cm?: number | null; percentual_gordura?: number | null; observacoes?: string | null }[]
+  metas?: { titulo: string; status?: string; valor_alvo?: number | null; unidade?: string | null; exercicio?: string | null; data_limite?: string | null }[]
+  notas_do_personal?: { data?: string | null; texto: string }[]
 }
 export interface Operacao { status: string; operation_id: string; revisao_resultante?: number; aplicado_em?: string; aluno_id: string }
-export interface Evolucao { tipo: string; nome: string; serie: { data: string; carga_max?: number | null; volume?: number | null; metrica_max?: number | null; unidade_carga?: string | null; unidade_reps?: string | null }[]; total_sessoes: number }
+export interface Evolucao { tipo: string; nome: string; direcao?: string | null; serie: { data: string; carga_max?: number | null; volume?: number | null; metrica_max?: number | null; unidade_carga?: string | null; unidade_reps?: string | null }[]; total_sessoes: number }
 export interface Resumo {
   carteira_tool?: string
   version: string; tela: 'carteira' | 'aluno' | 'proposta'; aluno_id?: string | null; nome?: string | null
