@@ -13,14 +13,6 @@ export interface Treino {
   blocos: Record<string, unknown>[]; exercicios: Exercicio[]
 }
 export interface Programa { version: string; treinos: Treino[]; revisao?: number }
-export interface Achado { campo?: string; caminho?: string; onde?: string; mensagem: string; correcao?: string }
-export interface Diferenca { caminho: string; nome: string; tipo: string; campo?: string; atual: unknown; proposto: unknown }
-export interface Proposta {
-  proposta_id: string; aluno_id: string; revisao: number; revisao_base: number
-  programa: Programa; programa_base: Programa; resumo_da_mudanca: string
-  estado: string; diferencas: Diferenca[]; validacao: { ok: boolean; erros: Achado[]; avisos: Achado[] }
-  created_at: string; updated_at: string; expires_at: number; operation_id?: string | null
-}
 export interface Aluno {
   aluno_id: string; nome: string; objetivos?: string[] | null; status?: string | null
   ultimo_treino_em?: string | null; urgencia: number; updated_at?: string | null
@@ -37,14 +29,11 @@ export interface Contexto {
   metas?: { titulo: string; status?: string; valor_alvo?: number | null; unidade?: string | null; exercicio?: string | null; data_limite?: string | null }[]
   notas_do_personal?: { data?: string | null; texto: string }[]
 }
-export interface Operacao { status: string; operation_id: string; revisao_resultante?: number; aplicado_em?: string; aluno_id: string }
 export interface Evolucao { tipo: string; nome: string; direcao?: string | null; serie: { data: string; carga_max?: number | null; volume?: number | null; metrica_max?: number | null; unidade_carga?: string | null; unidade_reps?: string | null }[]; total_sessoes: number }
 export interface Resumo {
   carteira_tool?: string
-  version: string; tela: 'carteira' | 'aluno' | 'proposta'; aluno_id?: string | null; nome?: string | null
-  proposta_id?: string | null; revisao?: number | null; estado?: string | null; resumo_da_mudanca?: string | null
-  quantidade_alteracoes?: number | null; somente_leitura: boolean; propostas_disponiveis: boolean; aplicacao_disponivel: boolean
+  version: string; tela: 'carteira' | 'aluno'; aluno_id?: string | null; nome?: string | null; revisao?: number | null
 }
-export interface Detalhes { programa?: Programa; contexto_aluno?: Contexto; proposta?: Proposta; sessao_em_andamento?: { treino_nome?: string; desde?: string } | null }
+export interface Detalhes { programa?: Programa; contexto_aluno?: Contexto; sessao_em_andamento?: { treino_nome?: string; desde?: string } | null }
 export interface ToolResult { content?: { type: string; text?: string }[]; structuredContent?: Record<string, unknown>; _meta?: Record<string, unknown>; isError?: boolean }
-export interface Selecao { aluno_id?: string | null; nome?: string | null; proposta_id?: string | null; revisao?: number | null; tela: string }
+export interface Selecao { aluno_id?: string | null; nome?: string | null; tela: string }

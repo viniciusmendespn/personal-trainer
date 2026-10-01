@@ -14,11 +14,9 @@ from mangum import Mangum
 from app.config import settings
 from app.mcp import oauth
 
-if settings.mcp_compat_mode:
-    if settings.mcp_ui_enabled:
-        from app.mcp import compat_visual_jsonrpc as jsonrpc
-    else:
-        from app.compat.v1 import jsonrpc
+# Com a UI desligada (`McpUiEnabled=false`, interruptor de emergência), só as 13 tools.
+if settings.mcp_ui_enabled:
+    from app.mcp import visual_jsonrpc as jsonrpc
 else:
     from app.mcp import jsonrpc
 

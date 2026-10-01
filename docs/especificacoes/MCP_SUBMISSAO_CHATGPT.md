@@ -4,14 +4,12 @@ Conteúdo pronto para colar no formulário de submissão
 (`developers.openai.com/plugins/deploy/submission`). Cada seção abaixo corresponde a uma aba
 do formulário. Requisitos técnicos do servidor estão em `MCP_SERVER.md`.
 
-**Atualização visual em desenvolvimento:** o fluxo de carteira/aluno/proposta e as novas
-tools estão implementados com flags desligadas por padrão. `MCP_COMPAT_MODE=true`
-preserva as 13 tools publicadas e impede a ativação visual até uma migração validada.
-Antes de submeter esta versão,
-seguir [MCP_PLUGIN_VISUAL.md](MCP_PLUGIN_VISUAL.md), validar no ChatGPT e fazer Rescan.
-Salvar proposta é escrita de rascunho; aplicar substitui o programa e exige revisão exata;
-consultar operação é leitura pura; retomar executa apenas efeitos derivados pendentes.
-Não anunciar disponibilidade publicada das novas telas antes dessas verificações.
+**Consulta visual:** além das 13 tools publicadas, há 3 consultas visuais somente leitura
+(`abrir_coachpilot`, `mostrar_aluno`, `consultar_carteira_visual`). A tela não grava nada: os
+botões dela enviam pedidos à conversa, e a escrita continua pelas tools publicadas, com
+confirmação do personal. Detalhes em [MCP_PLUGIN_VISUAL.md](MCP_PLUGIN_VISUAL.md). O contrato
+anunciado (tools, `instructions`, prompts, resources) é travado por
+`backend/tests/test_mcp_contrato.py`; mudá-lo exige atualizar o fixture e fazer Rescan.
 
 > ⚠️ **Credenciais de revisor não entram neste arquivo** — o repositório é público. Ver
 > "Conta de revisor" no fim.

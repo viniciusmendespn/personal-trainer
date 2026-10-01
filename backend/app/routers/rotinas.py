@@ -1,6 +1,6 @@
 """Rotinas (splits ABC/ABCDE) — partição PT# (pertencem ao personal). Aplicar uma rotina
 em N alunos cria vários treinos por aluno, no mesmo padrão denormalizado de
-`templates.aplicar_template` (1 commit transacional por aluno). Snapshot embutido: a rotina
+`templates.aplicar_template` (1 lote de batch_write por aluno). Snapshot embutido: a rotina
 guarda cópia dos treinos+exercícios, independente dos Templates de origem."""
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -13,7 +13,8 @@ from app.models.template import ExercicioTemplate, TreinoTemplate
 from app.models.treino import Treino
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz, programa_service, programa_commit_service as commits
+from app.services import authz, programa_service
+from app.services.sessao_service import chave_exercicio, upsert_excat
 from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/rotinas", tags=["rotinas"])
@@ -176,9 +177,6 @@ def aplicar_rotina(
     aplicados = []
     for aluno_id in body.aluno_ids:
         authz.authorize_aluno(personal_id, aluno_id)
-        base = commits.revisao(aluno_id)
-        if body.modo == "substituir" and programa_service.sessao_em_andamento(aluno_id):
-            raise HTTPException(409, "Aluno em sessão; finalize a sessão antes de substituir a rotina")
         dest_pk = keys.pk_aluno(aluno_id)
 
         deletes = []
@@ -216,9 +214,16 @@ def aplicar_rotina(
                 )
             treino_ids.append(treino_id)
 
-        commits.commit(personal_id, aluno_id, base, puts=puts, deletes=deletes,
-                       extras=[commits.proteger_sessao(aluno_id)] if body.modo == "substituir" else [],
-                       efeitos={"exercicios": [e.model_dump() for tr in rot.treinos for e in tr.exercicios]})
+        repo.batch_write(puts=puts, deletes=deletes or None)
+        # Semeia o catálogo permanente do aluno (1 upsert por nome canônico distinto)
+        vistos: set[str] = set()
+        for tr in rot.treinos:
+            for et in tr.exercicios:
+                ch = chave_exercicio(et.nome or "")
+                if ch and ch not in vistos:
+                    vistos.add(ch)
+                    upsert_excat(aluno_id, et.nome, et.model_dump())
+        _touch_aluno_pointer(personal_id, aluno_id)
         aplicados.append({"aluno_id": aluno_id, "treinos": treino_ids})
 
     return {"aplicados": aplicados}

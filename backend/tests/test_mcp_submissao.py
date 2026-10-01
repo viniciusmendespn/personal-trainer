@@ -194,12 +194,9 @@ def test_listar_alunos_nao_expoe_contato_nem_token(carteira):
 # ── Anotações das tools ─────────────────────────────────────────────────────
 # "Tool names, descriptions, schemas, and annotations match actual behavior"
 
-def test_anotacoes_batem_com_o_comportamento_real(monkeypatch):
+def test_anotacoes_batem_com_o_comportamento_real():
     from app.mcp import tools as mcp_tools
     from app.mcp.tokens import Tenant
-    from app.config import settings
-    monkeypatch.setattr(settings, "mcp_propostas_enabled", True)
-    monkeypatch.setattr(settings, "mcp_aplicacao_enabled", True)
 
     t = Tenant(personal_id=PERSONAL, conn_id=CONN,
                scopes=frozenset({mcp_tokens.SCOPE_READ, mcp_tokens.SCOPE_TREINOS_WRITE}),
@@ -217,7 +214,7 @@ def test_anotacoes_batem_com_o_comportamento_real(monkeypatch):
 
     # destructiveHint true só onde há sobrescrita irreversível de programa
     destrutivas = {n for n, x in por_nome.items() if x["annotations"]["destructiveHint"]}
-    assert destrutivas == {"aplicar_programa_treino", "aplicar_proposta_programa", "desfazer_alteracao_treino"}
+    assert destrutivas == {"aplicar_programa_treino", "desfazer_alteracao_treino"}
 
 
 def test_toda_tool_tem_nome_descricao_e_schema():

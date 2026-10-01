@@ -123,6 +123,14 @@ Inegociáveis ao mexer nele ou ao criar um novo:
 - `/token` lê o corpo com `parse_qs` — `Form(...)` exige `python-multipart`, que não está no
   `requirements.txt` e derruba o módulo inteiro no import da Lambda.
 - Toda tool nova precisa entrar em `tests/test_mcp_tenant.py` com o token do tenant errado.
+- **Contrato travado:** `tests/test_mcp_contrato.py` compara `tools/list`, `instructions`, prompts
+  e resources com `tests/fixtures/mcp_contrato_publicado.json` (gravado de produção). Mudar nome,
+  schema, descrição ou anotação de tool exige atualizar o fixture de propósito **e** Rescan/revisão
+  no ChatGPT — nunca "consertar o teste" sem essa decisão.
+- **UI do plugin só lê** (`frontend/src/mcp-app`, spec `docs/especificacoes/MCP_PLUGIN_VISUAL.md`).
+  Ação = botão que envia texto à conversa (`pedidos` em `Workspace.tsx`): cita nome + `aluno_id`,
+  só nomeia tools publicadas e pede confirmação antes de gravar. Nada de escrita própria da UI.
+  Consulta visual nova entra como leitura em `app/mcp/visual_tools.py`.
 - **A inteligência de prescrição chega ao LLM por tool (`guia_de_prescricao`), não por
   `prompts/get`** — o ChatGPT não consome o primitivo `prompts`. `prompts/get montar_treino`
   é espelho e usa o mesmo renderizador. Nunca citar em `instructions` algo que não seja um

@@ -1,7 +1,7 @@
-"""Transporte compatível com consultas visuais adicionais, modo stateless.
+"""Transporte MCP com a consulta visual, modo stateless.
 
-As chamadas publicadas delegam ao snapshot v1. Só as três novas consultas e
-resources usam a camada visual; OAuth, quotas e conexão mantêm o serviço v1.
+As 13 tools publicadas delegam a `app.mcp.jsonrpc`. Só as três consultas visuais e os
+resources usam a camada visual; OAuth, quotas e conexão são os mesmos.
 
 Escrito à mão em vez de usar o SDK `mcp`: o `StreamableHTTPSessionManager` do SDK exige um
 task group vivo no lifespan ASGI, e aqui o handler é `Mangum(app, lifespan="off")` em
@@ -17,9 +17,9 @@ from fastapi import APIRouter, Request, Response
 from fastapi.responses import JSONResponse
 
 from app.mcp import tokens as mcp_tokens
-from app.compat.v1 import jsonrpc as legacy
-from app.mcp import compat_visual_tools as visual, ui_resources
-from app.compat.v1 import mcp_service
+from app.mcp import jsonrpc as legacy
+from app.mcp import visual_tools as visual, ui_resources
+from app.services import mcp_service
 
 log = logging.getLogger(__name__)
 router = APIRouter()

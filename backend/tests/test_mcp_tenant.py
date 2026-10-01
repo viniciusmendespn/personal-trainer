@@ -26,12 +26,9 @@ def _tenant(personal_id, scopes=TODOS):
 
 
 @pytest.fixture
-def carteiras(mcp_env, monkeypatch):
+def carteiras(mcp_env):
     """Dois personais, um aluno cada, com um treino no aluno do A."""
     repo = mcp_env
-    from app.config import settings
-    monkeypatch.setattr(settings, "mcp_propostas_enabled", True)
-    monkeypatch.setattr(settings, "mcp_aplicacao_enabled", True)
     repo.put_item(keys.pk_personal(PERSONAL_A), keys.sk_aluno_pointer(ALUNO_DE_A),
                   {"aluno_id": ALUNO_DE_A, "nome": "Marina", "status": "ATIVO"})
     repo.put_item(keys.pk_personal(PERSONAL_B), keys.sk_aluno_pointer(ALUNO_DE_B),
@@ -48,14 +45,6 @@ def carteiras(mcp_env, monkeypatch):
 # ── tools com aluno_id: nenhuma aceita aluno de outro personal ──────────────
 
 CHAMADAS_COM_ALUNO = [
-    ("abrir_coachpilot", {"aluno_id": ALUNO_DE_A}),
-    ("mostrar_aluno", {"aluno_id": ALUNO_DE_A}),
-    ("salvar_proposta_programa", {"aluno_id": ALUNO_DE_A, "programa": {}, "resumo_da_mudanca": "x", "revisao_base": 0}),
-    ("obter_proposta_programa", {"aluno_id": ALUNO_DE_A, "proposta_id": "p"}),
-    ("mostrar_proposta_programa", {"aluno_id": ALUNO_DE_A, "proposta_id": "p"}),
-    ("aplicar_proposta_programa", {"aluno_id": ALUNO_DE_A, "proposta_id": "p", "revisao_proposta": 1}),
-    ("consultar_operacao_programa", {"aluno_id": ALUNO_DE_A, "operation_id": "op"}),
-    ("retomar_operacao_programa", {"aluno_id": ALUNO_DE_A, "operation_id": "op"}),
     ("detalhar_aluno", {"aluno_id": ALUNO_DE_A}),
     ("exportar_programa_treino", {"aluno_id": ALUNO_DE_A}),
     ("historico_sessoes", {"aluno_id": ALUNO_DE_A}),
@@ -185,23 +174,23 @@ def test_tool_sem_contexto_de_tenant_estoura(mcp_env):
         mcp_tools.listar_alunos(mcp_tools.ListarAlunosArgs())
 
 
-# ── consulta visual no modo de compatibilidade (implementação própria) ────────
+# ── consulta visual (somente leitura) ────────────────────────────────────────
 
 @pytest.mark.parametrize("nome", ["abrir_coachpilot", "mostrar_aluno"])
-def test_visual_compativel_nao_alcanca_aluno_de_a(carteiras, monkeypatch, nome):
+def test_visual_nao_alcanca_aluno_de_a(carteiras, monkeypatch, nome):
     from app.config import settings
-    from app.mcp import compat_visual_tools
+    from app.mcp import visual_tools
     monkeypatch.setattr(settings, "mcp_ui_enabled", True)
     with usando_tenant(_tenant(PERSONAL_B)):
-        resposta = compat_visual_tools.chamar_tool(nome, {"aluno_id": ALUNO_DE_A}, _tenant(PERSONAL_B))
+        resposta = visual_tools.chamar_tool(nome, {"aluno_id": ALUNO_DE_A}, _tenant(PERSONAL_B))
     assert resposta.get("isError") is True
     assert "não encontrado" in resposta["content"][0]["text"]
 
 
-def test_carteira_visual_compativel_so_traz_a_propria_carteira(carteiras, monkeypatch):
+def test_carteira_visual_so_traz_a_propria_carteira(carteiras, monkeypatch):
     from app.config import settings
-    from app.mcp import compat_visual_tools
+    from app.mcp import visual_tools
     monkeypatch.setattr(settings, "mcp_ui_enabled", True)
     with usando_tenant(_tenant(PERSONAL_B)):
-        r = compat_visual_tools.chamar_tool("consultar_carteira_visual", {}, _tenant(PERSONAL_B))
+        r = visual_tools.chamar_tool("consultar_carteira_visual", {}, _tenant(PERSONAL_B))
     assert [a["nome"] for a in r["structuredContent"]["items"]] == ["Rafael"]

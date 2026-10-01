@@ -19,7 +19,6 @@ from app.repositories import keys
 from app.services import authz, biblioteca_service, contexto_aluno_service, locale_service, sessao_service
 from app.services.sessao_service import chave_exercicio, upsert_excat
 from app.utils import init_series_prescritas, new_id, now_iso, treinos_validos
-from app.services import programa_commit_service as commits
 
 
 def aluno_nome(personal_id: str, aluno_id: str) -> str | None:
@@ -38,25 +37,20 @@ def upsert_excat_lote(aluno_id: str, exercicios: list[dict]) -> None:
 
 
 def sync_due(personal_id: str, aluno_id: str, treino_id: str, treino_nome: str,
-             data_fim: str | None, old_data_fim: str | None = None, *, revisao_esperada: int | None = None) -> None:
+             data_fim: str | None, old_data_fim: str | None = None) -> None:
     """Mantém a agenda de vencimento do treino (o scheduler diário lê e notifica) — 1
     partição por dia (`SCHED#{data_fim}`), distribuída em vez de uma única partição global."""
-    actions = []
     if old_data_fim and old_data_fim != data_fim:
-        actions.append(commits.delete(keys.pk_sched(old_data_fim), keys.sk_due(treino_id)))
+        repo.delete_item(keys.pk_sched(old_data_fim), keys.sk_due(treino_id))
     if data_fim:
-        actions.append(commits.put({"PK": keys.pk_sched(data_fim), "SK": keys.sk_due(treino_id),
+        repo.put_item(keys.pk_sched(data_fim), keys.sk_due(treino_id), {
             "personal_id": personal_id, "aluno_id": aluno_id, "treino_id": treino_id,
             "treino_nome": treino_nome, "aluno_nome": aluno_nome(personal_id, aluno_id),
             "data_fim": data_fim, "tipo": "TREINO_FIM",
             # Fuso do personal congelado aqui: é ele quem decide em que manhã o aviso
             # "vence amanhã" dispara (docs/TIMEZONE.md §7, Passo 5).
             "tz": locale_service.tz_do_personal(personal_id),
-        }))
-    if actions:
-        if revisao_esperada is not None:
-            actions.append(commits.proteger_revisao(aluno_id, revisao_esperada))
-        repo.transact_write(actions)
+        })
 
 
 def touch_aluno_pointer(personal_id: str, aluno_id: str) -> None:
@@ -67,16 +61,16 @@ def touch_aluno_pointer(personal_id: str, aluno_id: str) -> None:
     Guarda as *janelas* dos treinos ativos, não um booleano: vigência depende da data de hoje,
     um booleano congelado no write estaria errado no dia seguinte. Query consistente porque
     roda logo após o write do treino — uma leitura eventual pode não enxergá-lo."""
-    base = commits.revisao(aluno_id)
     treinos = treinos_validos(repo.query_pk(keys.pk_aluno(aluno_id),
                                             sk_prefix=keys.SK_TREINO_PREFIX, consistent=True))
     vigencias = [
         {k: v for k, v in (("i", t.get("data_inicio")), ("f", t.get("data_fim"))) if v}
         for t in treinos if t.get("ativo", True)
     ]
-    repo.transact_write([commits.proteger_revisao(aluno_id, base),
-        commits.update_action(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id),
-                              {"updated_at": now_iso(), "vigencias": vigencias})])
+    repo.update_item_if_exists(
+        keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id),
+        {"updated_at": now_iso(), "vigencias": vigencias},
+    )
 
 
 def sessao_em_andamento(aluno_id: str, treino_ids: set[str] | None = None) -> dict | None:
@@ -89,7 +83,7 @@ def sessao_em_andamento(aluno_id: str, treino_ids: set[str] | None = None) -> di
     sabendo — ele não tem esse sinal na tela de treinos (o "treinando agora" do
     ATIVIDADE# só aparece no dashboard).
     """
-    s = sessao_service.get_active(aluno_id, consistent=True)
+    s = sessao_service.get_active(aluno_id)
     if not s:
         return None
     if treino_ids is not None and s.get("treino_id") not in treino_ids:
@@ -115,20 +109,18 @@ def exportar(personal_id: str, aluno_id: str,
     """Programa completo do aluno (treinos + exercícios) + `contexto_aluno` (perfil,
     histórico, dores, avaliações…) no formato editável por IA."""
     authz.authorize_aluno(personal_id, aluno_id)
-    base = commits.revisao(aluno_id)
     treinos = treinos_validos(repo.query_pk(keys.pk_aluno(aluno_id),
-                                            sk_prefix=keys.SK_TREINO_PREFIX, consistent=True))
+                                            sk_prefix=keys.SK_TREINO_PREFIX))
     treinos.sort(key=lambda t: t.get("ordem", 0))
     out: list[TreinoFileItem] = []
     nomes_exercicios: list[str] = []
     for i, t in enumerate(treinos):
         exs = repo.query_pk(keys.pk_aluno(aluno_id),
-                            sk_prefix=keys.sk_exercicio_prefix(t["treino_id"]), consistent=True)
+                            sk_prefix=keys.sk_exercicio_prefix(t["treino_id"]))
         exs.sort(key=lambda e: e.get("ordem", 0))
         exercicios = []
         for e in exs:
             ec = repo.clean(e)
-            ec["origem_id"] = ec.get("exercicio_id")
             # normaliza prescrição legada (flat) p/ o formato estruturado — não perde dados
             ec["series_prescritas"] = init_series_prescritas(
                 ec.get("series_prescritas"), ec.get("series"),
@@ -139,7 +131,6 @@ def exportar(personal_id: str, aluno_id: str,
                 nomes_exercicios.append(ec["nome"])
         tc = repo.clean(t)
         out.append(TreinoFileItem(
-            origem_id=t["treino_id"],
             ref=ref_treino(i),
             nome=tc.get("nome") or "",
             foco=tc.get("foco"),
@@ -154,43 +145,26 @@ def exportar(personal_id: str, aluno_id: str,
     if com_contexto:
         contexto = contexto_aluno_service.montar_contexto(
             personal_id, aluno_id, exercicios_programa=nomes_exercicios)
-    if commits.revisao(aluno_id) != base:
-        from fastapi import HTTPException
-        raise HTTPException(409, "O programa mudou durante a leitura; consulte novamente")
-    return ProgramaTreinoExportFile(treinos=out, contexto_aluno=contexto, revisao=base)
+    return ProgramaTreinoExportFile(treinos=out, contexto_aluno=contexto)
 
 
 def aplicar(personal_id: str, aluno_id: str,
-            programa: ProgramaTreinoFile, *, revisao_base: int | None = None,
-            operation_id: str | None = None, extras: list | None = None,
-            origem: str = "portal", resumo: str = "Programa atualizado",
-            client_name: str = "", jti: str = "", confirmar_sessao: bool = False,
-            exigir_videos_revisados: bool = False) -> ImportarProgramaResponse:
+            programa: ProgramaTreinoFile) -> ImportarProgramaResponse:
     """Substituição TOTAL: o JSON vira o programa do aluno. Apaga treinos/exercícios atuais
     (e a agenda de vencimento) e recria a partir do arquivo. Histórico de sessões é
     preservado (vive em SK próprios)."""
     authz.authorize_aluno(personal_id, aluno_id)
-    base = commits.revisao(aluno_id) if revisao_base is None else revisao_base
-    if operation_id:
-        op = commits.obter_operacao(personal_id, aluno_id, operation_id)
-        if op:
-            return ImportarProgramaResponse(treinos_importados=len(programa.treinos),
-                exercicios_importados=sum(len(t.exercicios) for t in programa.treinos),
-                operation_id=operation_id, revisao_resultante=op["revisao_resultante"])
-    anterior = exportar(personal_id, aluno_id, com_contexto=False).model_dump(mode="json")
     pk = keys.pk_aluno(aluno_id)
     # Vídeo já cadastrado na biblioteca do personal tem prioridade sobre o do JSON — uma Query só.
     videos_lib = biblioteca_service.mapa_videos(personal_id)
 
     # 1) Apagar o programa atual (treinos + exercícios + agenda de vencimento)
-    old_treinos = repo.query_pk(pk, sk_prefix=keys.SK_TREINO_PREFIX, consistent=True)
-    old_exs = repo.query_pk(pk, sk_prefix="EX#", consistent=True)
+    old_treinos = repo.query_pk(pk, sk_prefix=keys.SK_TREINO_PREFIX)
+    old_exs = repo.query_pk(pk, sk_prefix="EX#")
     deletes = [(pk, t["SK"]) for t in old_treinos] + [(pk, e["SK"]) for e in old_exs]
-    due_deletes = [(keys.pk_sched(t["data_fim"]), keys.sk_due(t["treino_id"]))
-                   for t in old_treinos if t.get("data_fim")]
-    extras = list(extras or [])
-    if not confirmar_sessao:
-        extras.append(commits.proteger_sessao(aluno_id))
+    for t in old_treinos:
+        if t.get("data_fim"):
+            deletes.append((keys.pk_sched(t["data_fim"]), keys.sk_due(t["treino_id"])))
 
     # 2) Montar o novo programa (canonical dentro do próprio conjunto importado)
     now = now_iso()
@@ -212,10 +186,6 @@ def aplicar(personal_id: str, aluno_id: str,
         if tf.data_fim:
             due_syncs.append((tid, tf.nome, tf.data_fim))
         for ordem_e, ef in enumerate(tf.exercicios):
-            video = biblioteca_service.resolver_video(ef.nome, ef.video_url, videos_lib)
-            if exigir_videos_revisados and video != ef.video_url:
-                from fastapi import HTTPException
-                raise HTTPException(409, "A biblioteca mudou o vídeo efetivo; salve e revise novamente antes de aplicar")
             eid = new_id()
             chave = chave_exercicio(ef.nome or "")
             canonical = canon_by_chave.get(chave) if chave else None
@@ -224,7 +194,7 @@ def aplicar(personal_id: str, aluno_id: str,
             dados = ExercicioCreate(
                 nome=ef.nome, grupos=ef.grupos, grupo=ef.grupo, ordem=ordem_e, tipo_exercicio=ef.tipo_exercicio,
                 series_prescritas=ef.series_prescritas, intervalo_s=ef.intervalo_s,
-                video_url=video,
+                video_url=biblioteca_service.resolver_video(ef.nome, ef.video_url, videos_lib),
                 observacoes=ef.observacoes,
                 unidade_carga=ef.unidade_carga, unidade_reps=ef.unidade_reps,
                 metrica_direcao=ef.metrica_direcao,
@@ -239,13 +209,16 @@ def aplicar(personal_id: str, aluno_id: str,
             all_dados.append(dados)
             n_ex += 1
 
-    # 3) Revisão, programa, snapshot e operação: tudo ou nada.
-    op = commits.commit(personal_id, aluno_id, base, puts=puts, deletes=deletes,
-        extras=extras, operation_id=operation_id, snapshot=anterior,
-        origem=origem, resumo=resumo, client_name=client_name, jti=jti,
-        efeitos={"exercicios": all_dados, "agenda_remover": due_deletes,
-                 "agenda": [[personal_id, aluno_id, tid, nome, fim] for tid, nome, fim in due_syncs]})
+    # 3) Aplicar (apaga e recria), agenda, biblioteca e catálogo do aluno
+    if deletes:
+        repo.batch_write(deletes=deletes)
+    repo.batch_write(puts=puts)
+    for tid, nome, data_fim in due_syncs:
+        sync_due(personal_id, aluno_id, tid, nome, data_fim)
+    if all_dados:
+        biblioteca_service.upsert_from_exercicios(personal_id, all_dados)
+        upsert_excat_lote(aluno_id, all_dados)
+    touch_aluno_pointer(personal_id, aluno_id)
 
     return ImportarProgramaResponse(treinos_importados=len(programa.treinos),
-        exercicios_importados=n_ex, operation_id=op["operation_id"],
-        revisao_resultante=op["revisao_resultante"])
+                                    exercicios_importados=n_ex)

@@ -6,8 +6,6 @@ a mesma superfície de `dynamo_repo` em vez de dezenas de mocks soltos.
 """
 import base64
 import json
-from copy import deepcopy
-import re
 
 _INTERNAL = {"PK", "SK", "GSI1PK", "GSI1SK", "ttl"}
 
@@ -60,57 +58,6 @@ class FakeRepo:
         return {k: dict(self.itens[k]) for k in keys_list if k in self.itens}
 
     # ── escrita ────────────────────────────────────────────────────────────
-    def transact_write(self, actions):
-        from app.repositories.dynamo_repo import TransactionConflict, TransactionTooLarge
-        if len(actions) > 100:
-            raise TransactionTooLarge("mais de 100 ações")
-        shadow = deepcopy(self.itens)
-        targets = set()
-        for action in actions:
-            kind, body = next(iter(action.items()))
-            target = body.get("Item") or body["Key"]
-            key = (target["PK"], target["SK"])
-            assert key not in targets
-            targets.add(key)
-            item = shadow.get(key, {})
-            condition = body.get("ConditionExpression")
-            names = body.get("ExpressionAttributeNames", {})
-            values = body.get("ExpressionAttributeValues", {})
-            def term(txt):
-                txt = txt.strip()
-                match = re.fullmatch(r"attribute_(not_exists|exists)\(([^)]+)\)", txt)
-                if match:
-                    present = names.get(match[2], match[2]) in item
-                    return not present if match[1] == "not_exists" else present
-                attr, comparator, val = re.split(r"\s+(=|<>|>|<|>=|<=)\s+", txt)
-                left, right = item.get(names.get(attr, attr)), values[val]
-                if comparator == "=": return left == right
-                if left is None: return False
-                return {"<>": lambda: left != right, ">": lambda: left > right, "<": lambda: left < right,
-                        ">=": lambda: left >= right, "<=": lambda: left <= right}[comparator]()
-            if condition and not any(all(term(t) for t in part.split(" AND ")) for part in condition.split(" OR ")):
-                raise TransactionConflict()
-            if kind == "Put":
-                if len(json.dumps(body["Item"], ensure_ascii=False, default=str).encode()) > 390_000:
-                    raise TransactionTooLarge("item muito grande")
-                shadow[key] = deepcopy(body["Item"])
-            elif kind == "Delete":
-                shadow.pop(key, None)
-            elif kind == "Update":
-                item = shadow.setdefault(key, dict(target))
-                expr = body["UpdateExpression"]
-                for op, fields in re.findall(r"(SET|REMOVE|ADD)\s+(.*?)(?=\s+(?:SET|REMOVE|ADD)\s+|$)", expr):
-                    for field in fields.split(","):
-                        field = field.strip()
-                        if op == "REMOVE": item.pop(names.get(field, field), None)
-                        elif op == "SET":
-                            name, value = field.split(" = ")
-                            item[names.get(name, name)] = values[value]
-                        else:
-                            name, value = field.split()
-                            item[names.get(name, name)] = item.get(names.get(name, name), 0) + values[value]
-        self.itens = shadow
-
     def put_item(self, pk, sk, data):
         self.itens[(pk, sk)] = {**data, "PK": pk, "SK": sk}
 

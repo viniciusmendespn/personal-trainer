@@ -1,12 +1,13 @@
-"""Consulta visual adicional; nunca substitui contratos ou writers publicados."""
+"""Consulta visual (somente leitura) ao lado das 13 tools publicadas; nunca grava nem
+altera contratos. Ações de escrita acontecem pela conversa, com as tools publicadas."""
 import json
 
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from app.compat.v1 import tools as legacy, programa_service
+from app.mcp import tools as legacy
 from app.mcp import resumo_modelo, tokens, ui_resources
-from app.services import carteira_visual_service, contexto_aluno_service, locale_service, sessao_service
+from app.services import carteira_visual_service, contexto_aluno_service, locale_service, programa_service, sessao_service
 
 
 class CarteiraArgs(BaseModel):

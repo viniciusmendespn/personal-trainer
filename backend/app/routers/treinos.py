@@ -21,7 +21,6 @@ from app.services import (
     biblioteca_service,
     import_erros,
     programa_service,
-    programa_commit_service as commits,
     validacao_programa,
 )
 from app.services.sessao_service import chave_exercicio, list_exercicios_aluno, upsert_excat
@@ -39,7 +38,6 @@ class ImportarProgramaRequest(BaseModel):
     conteudo: str
     # Segunda passada depois do 409 SESSAO_EM_ANDAMENTO (ver `_checar_sessao_aberta`).
     confirmar: bool = False
-    revisao_base: int | None = None
 
 
 SESSAO_EM_ANDAMENTO = "SESSAO_EM_ANDAMENTO"
@@ -127,15 +125,7 @@ def importar_programa(aluno_id: str, body: ImportarProgramaRequest,
     programa, avisos = _validar_conteudo(personal_id, body.conteudo)
     # Substituição total: todo treino atual vai sumir, então qualquer sessão aberta conta.
     _checar_sessao_aberta(aluno_id, None, body.confirmar)
-    revisao_arquivo = json.loads(body.conteudo).get("revisao")
-    if revisao_arquivo is not None and (type(revisao_arquivo) is not int or revisao_arquivo < 0):
-        raise HTTPException(400, "A revisão do arquivo deve ser um inteiro não negativo")
-    if body.revisao_base is not None and revisao_arquivo is not None and body.revisao_base != revisao_arquivo:
-        raise HTTPException(409, {"code": "REVISAO_DESATUALIZADA",
-                                 "mensagem": "O arquivo foi gerado a partir de outra revisão. Exporte e revise novamente."})
-    revisao_base = body.revisao_base if body.revisao_base is not None else revisao_arquivo
-    resultado = programa_service.aplicar(personal_id, aluno_id, programa,
-        revisao_base=revisao_base, confirmar_sessao=body.confirmar)
+    resultado = programa_service.aplicar(personal_id, aluno_id, programa)
     resultado.avisos = validacao_programa.achados_json(avisos)
     resultado.relatorio_ia = (import_erros.relatorio_para_ia([], avisos) if avisos else None)
     return resultado
@@ -174,12 +164,13 @@ def list_treinos(aluno_id: str, personal_id: str = Depends(get_current_personal_
 @router.post("", response_model=Treino, status_code=201)
 def create_treino(aluno_id: str, body: TreinoCreate, personal_id: str = Depends(get_current_personal_id)):
     _guard(personal_id, aluno_id)
-    base = commits.revisao(aluno_id)
     treino_id = new_id()
     now = now_iso()
     treino = Treino(treino_id=treino_id, aluno_id=aluno_id, created_at=now, updated_at=now, **body.model_dump())
-    commits.commit(personal_id, aluno_id, base, puts=[
-        {"PK": keys.pk_aluno(aluno_id), "SK": keys.sk_treino(treino_id), **treino.model_dump()}])
+    repo.put_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id), treino.model_dump())
+    if body.data_fim:
+        _sync_due(personal_id, aluno_id, treino_id, body.nome, body.data_fim)
+    _touch_aluno_pointer(personal_id, aluno_id)
     return treino
 
 
@@ -187,13 +178,11 @@ def create_treino(aluno_id: str, body: TreinoCreate, personal_id: str = Depends(
 def copiar_treino(aluno_id: str, body: CopiarBody, personal_id: str = Depends(get_current_personal_id)):
     """Copia um treino (e seus exercícios) de outro aluno para este — templates."""
     _guard(personal_id, aluno_id)
-    base = commits.revisao(aluno_id)
     _guard(personal_id, body.from_aluno_id)
-    source_base = commits.revisao(body.from_aluno_id)
-    src = repo.get_item(keys.pk_aluno(body.from_aluno_id), keys.sk_treino(body.treino_id), consistent=True)
+    src = repo.get_item(keys.pk_aluno(body.from_aluno_id), keys.sk_treino(body.treino_id))
     if not src:
         raise HTTPException(404, "Treino de origem não encontrado")
-    exs = repo.query_pk(keys.pk_aluno(body.from_aluno_id), sk_prefix=keys.sk_exercicio_prefix(body.treino_id), consistent=True)
+    exs = repo.query_pk(keys.pk_aluno(body.from_aluno_id), sk_prefix=keys.sk_exercicio_prefix(body.treino_id))
     now = now_iso()
     new_tid = new_id()
     dest_pk = keys.pk_aluno(aluno_id)
@@ -210,21 +199,22 @@ def copiar_treino(aluno_id: str, body: CopiarBody, personal_id: str = Depends(ge
         new_eid = new_id()
         ne.update({"exercicio_id": new_eid, "treino_id": new_tid, "aluno_id": aluno_id})
         puts.append({"PK": dest_pk, "SK": keys.sk_exercicio(new_tid, new_eid), **ne})
-    commits.commit(personal_id, aluno_id, base, puts=puts,
-                   extras=[commits.proteger_revisao(body.from_aluno_id, source_base)] if body.from_aluno_id != aluno_id else [],
-                   efeitos={"exercicios": [repo.clean(e) for e in exs]})
+    repo.batch_write(puts=puts)
+    _upsert_excat_lote(aluno_id, [repo.clean(e) for e in exs])
+    _touch_aluno_pointer(personal_id, aluno_id)
     return {"treino_id": new_tid, "exercicios": len(exs)}
 
 
 @router.put("/{treino_id}")
 def update_treino(aluno_id: str, treino_id: str, body: TreinoCreate, personal_id: str = Depends(get_current_personal_id)):
     _guard(personal_id, aluno_id)
-    base = commits.revisao(aluno_id)
     old = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id))
     if not old:
         raise HTTPException(404, "Treino não encontrado")
     fields = {**body.model_dump(), "updated_at": now_iso()}
-    updated = commits.atualizar(personal_id, aluno_id, keys.sk_treino(treino_id), fields, base=base)
+    updated = repo.update_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id), fields, return_values=True)
+    _sync_due(personal_id, aluno_id, treino_id, body.nome, body.data_fim, old.get("data_fim"))
+    _touch_aluno_pointer(personal_id, aluno_id)
     return repo.clean(updated)
 
 
@@ -232,7 +222,6 @@ def update_treino(aluno_id: str, treino_id: str, body: TreinoCreate, personal_id
 def delete_treino(aluno_id: str, treino_id: str, confirmar: bool = False,
                   personal_id: str = Depends(get_current_personal_id)):
     _guard(personal_id, aluno_id)
-    base = commits.revisao(aluno_id)
     _checar_sessao_aberta(aluno_id, {treino_id}, confirmar)
     # remove o treino + seus exercícios (+ agenda de vencimento) em lote
     treino = repo.get_item(keys.pk_aluno(aluno_id), keys.sk_treino(treino_id))
@@ -241,8 +230,8 @@ def delete_treino(aluno_id: str, treino_id: str, confirmar: bool = False,
     deletes += [(keys.pk_aluno(aluno_id), e["SK"]) for e in exs]
     if treino and treino.get("data_fim"):
         deletes.append((keys.pk_sched(treino["data_fim"]), keys.sk_due(treino_id)))
-    commits.commit(personal_id, aluno_id, base, deletes=deletes,
-                   extras=[] if confirmar else [commits.proteger_sessao(aluno_id, treino_id)])
+    repo.batch_write(deletes=deletes)
+    _touch_aluno_pointer(personal_id, aluno_id)
 
 
 # ── Exercícios (do treino) ───────────────────────────────────────────────────
@@ -258,7 +247,6 @@ def list_exercicios(aluno_id: str, treino_id: str, personal_id: str = Depends(ge
 def create_exercicio(aluno_id: str, treino_id: str, body: ExercicioCreate,
                      personal_id: str = Depends(get_current_personal_id)):
     _guard(personal_id, aluno_id)
-    base = commits.revisao(aluno_id)
     chave_nova = chave_exercicio(body.nome)
     existentes = list_exercicios_aluno(aluno_id)
     primario = next(
@@ -270,11 +258,10 @@ def create_exercicio(aluno_id: str, treino_id: str, body: ExercicioCreate,
     if primario:
         dados["canonical_exercicio_id"] = primario["exercicio_id"]
     ex = Exercicio(exercicio_id=exercicio_id, treino_id=treino_id, aluno_id=aluno_id, **dados)
-    commits.commit(personal_id, aluno_id, base, puts=[
-        {"PK": keys.pk_aluno(aluno_id), "SK": keys.sk_exercicio(treino_id, exercicio_id), **ex.model_dump()}],
-        extras=[{"ConditionCheck": {"Key": {"PK": keys.pk_aluno(aluno_id), "SK": keys.sk_treino(treino_id)},
-                                      "ConditionExpression": "attribute_exists(PK)"}}],
-        efeitos={"exercicios": [dados]})
+    repo.put_item(keys.pk_aluno(aluno_id), keys.sk_exercicio(treino_id, exercicio_id), ex.model_dump())
+    biblioteca_service.upsert_from_exercicios(personal_id, [dados])
+    upsert_excat(aluno_id, body.nome, dados)
+    _touch_aluno_pointer(personal_id, aluno_id)
     return ex
 
 
@@ -282,13 +269,16 @@ def create_exercicio(aluno_id: str, treino_id: str, body: ExercicioCreate,
 def update_exercicio(aluno_id: str, treino_id: str, exercicio_id: str, body: ExercicioCreate,
                      personal_id: str = Depends(get_current_personal_id)):
     _guard(personal_id, aluno_id)
-    base = commits.revisao(aluno_id)
-    if not repo.get_item(keys.pk_aluno(aluno_id), keys.sk_exercicio(treino_id, exercicio_id)):
+    updated = repo.update_item_if_exists(
+        keys.pk_aluno(aluno_id), keys.sk_exercicio(treino_id, exercicio_id), body.model_dump()
+    )
+    if updated is None:
         raise HTTPException(404, "Exercício não encontrado")
-    updated = commits.atualizar(personal_id, aluno_id, keys.sk_exercicio(treino_id, exercicio_id),
-                                body.model_dump(), base=base)
     # Renomear = tratar como exercício novo: o nome (identidade de feed/carga/PR) passa a valer,
     # então cadastra o nome no catálogo do personal para buscas seguintes (first-write-wins).
+    biblioteca_service.upsert_from_exercicios(personal_id, [body.model_dump()])
+    upsert_excat(aluno_id, body.nome, body.model_dump())
+    _touch_aluno_pointer(personal_id, aluno_id)
     return repo.clean(updated)
 
 
@@ -296,6 +286,5 @@ def update_exercicio(aluno_id: str, treino_id: str, exercicio_id: str, body: Exe
 def delete_exercicio(aluno_id: str, treino_id: str, exercicio_id: str,
                      personal_id: str = Depends(get_current_personal_id)):
     _guard(personal_id, aluno_id)
-    base = commits.revisao(aluno_id)
-    commits.commit(personal_id, aluno_id, base,
-                   deletes=[(keys.pk_aluno(aluno_id), keys.sk_exercicio(treino_id, exercicio_id))])
+    repo.delete_item(keys.pk_aluno(aluno_id), keys.sk_exercicio(treino_id, exercicio_id))
+    _touch_aluno_pointer(personal_id, aluno_id)

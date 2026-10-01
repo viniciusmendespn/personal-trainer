@@ -156,9 +156,8 @@ def test_programa_limpo_importa_sem_avisos(cliente):
     r = _importar(cliente, json.dumps(BOM))
     assert r.status_code == 201
     body = r.json()
-    assert {k: body[k] for k in ("treinos_importados", "exercicios_importados", "avisos", "relatorio_ia")} == {
-        "treinos_importados": 1, "exercicios_importados": 1, "avisos": [], "relatorio_ia": None}
-    assert body["operation_id"] and body["revisao_resultante"] == 1
+    assert body == {"treinos_importados": 1, "exercicios_importados": 1,
+                    "avisos": [], "relatorio_ia": None}
 
 
 def test_export_colado_de_volta_sem_editar_continua_valendo(cliente):
@@ -190,18 +189,3 @@ def test_validar_recusa_com_o_mesmo_corpo_do_import(cliente):
     d = r.json()["detail"]
     assert d["code"] == "PROGRAMA_VAZIO"
     assert d["relatorio_ia"]
-
-
-def test_arquivo_antigo_nao_recebe_revisao_atual_do_modal(cliente):
-    tc, repo = cliente
-    repo.put_item(keys.pk_aluno(ALUNO), "PROGRAMA#REVISAO", {"revisao": 2})
-    r = tc.post(URL, json={"conteudo": json.dumps(dict(BOM, revisao=1)), "revisao_base": 2})
-    assert r.status_code == 409
-    assert r.json()["detail"]["code"] == "REVISAO_DESATUALIZADA"
-    assert _treinos_no_banco(repo)[0]["nome"] == "Treino Original"
-
-
-@pytest.mark.parametrize("revisao", [-1, "0", True])
-def test_revisao_embutida_deve_ser_inteiro_nao_negativo(cliente, revisao):
-    r = _importar(cliente, json.dumps(dict(BOM, revisao=revisao)))
-    assert r.status_code == 400

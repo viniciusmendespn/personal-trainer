@@ -113,28 +113,6 @@ def _assinatura_aviso(it: dict) -> None:
             "Seu plano Gestão Pro vence em 7 dias. Renove para manter alunos ilimitados.")
 
 
-def _processar_programas(data: str, context=None) -> int:
-    """Outbox de programas: não faz claim destrutivo antes de concluir os upserts.
-
-    Trabalho limitado por invocação; itens não concluídos continuam para a próxima hora.
-    """
-    from app.config import settings
-    if settings.mcp_compat_mode:
-        return 0
-    from app.services import programa_commit_service as commits
-    items, _ = repo.query_pk_page(keys.pk_sched(data), commits.PENDING_PREFIX, limit=50)
-    n = 0
-    for item in items:
-        if context and context.get_remaining_time_in_millis() < 5000:
-            break
-        try:
-            commits.retomar_efeitos(item["personal_id"], item["aluno_id"], item["operation_id"])
-            n += 1
-        except Exception:
-            logger.warning("[scheduler] efeito pendente operation=%s", item["operation_id"])
-    return n
-
-
 _TAREFAS = (
     (keys.BILLING_GERAR_PREFIX,    _billing_gerar,     "billing_gerar"),
     (keys.BILLING_AVISO_PREFIX,    _billing_aviso,     "billing_aviso"),
@@ -148,14 +126,12 @@ def handler(event, context):
     # fuso-ok: janela de PARTIÇÕES a varrer, não a data civil de ninguém. Quem decide se
     # chegou a hora é `_na_hora`, no fuso de cada entrada.
     hoje = datetime.now(timezone.utc).date()
-    totais: dict[str, int] = {"treinos": 0, "programas": 0}
+    totais: dict[str, int] = {"treinos": 0}
     for prefixo, _acao, rotulo in _TAREFAS:
         totais[rotulo] = 0
 
     for i in range(_JANELA_DIAS, -_JANELA_FUTURO_DIAS - 1, -1):
         data = (hoje - timedelta(days=i)).isoformat()
-        if 0 <= i <= 7:
-            totais["programas"] += _processar_programas(data, context)
         # O aviso de treino sai um dia ANTES do vencimento: a partição é `data_fim`, mas
         # quem manda no horário é a véspera.
         data_treino = (hoje - timedelta(days=i - 1)).isoformat()

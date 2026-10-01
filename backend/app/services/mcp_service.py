@@ -305,9 +305,7 @@ def ultimo_snapshot(aluno_id: str) -> dict | None:
     if not itens:
         return None
     item = itens[0]
-    if item.get("ttl", 0) <= agora():
-        return None
-    return {**repo.clean(item), "programa": json.loads(item["programa"])}
+    return {"ts": item.get("ts"), "programa": json.loads(item["programa"])}
 
 
 def descartar_snapshot(aluno_id: str, ts: str) -> None:

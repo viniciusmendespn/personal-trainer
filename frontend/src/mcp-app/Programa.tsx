@@ -1,17 +1,26 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Clock, Dumbbell, Repeat, StickyNote, Video } from 'lucide-react'
+import { ArrowLeftRight, CalendarClock, ChevronDown, ChevronRight, Clock, Dumbbell, MessageSquare, Repeat, StickyNote, Video } from 'lucide-react'
 import { Badge } from '../components/ui/Badge'
 import { Card } from '../components/ui/Card'
 import { EmptyState } from '../components/ui/EmptyState'
 import { treinoRelevante } from './presentation'
-import { diaLocal, fmtDate } from './ui'
+import { BotaoPedido, LinkPedido, diaLocal, fmtDate } from './ui'
 import type { Exercicio, Programa, Treino } from './types'
 
+/** Ações que viram pedido na conversa (o ChatGPT grava com as tools publicadas, após confirmar).
+ *  Sem elas — host que não aceita mensagem — a lista é só leitura. */
+export interface AcoesPrograma {
+  ajustar(treino: Treino): string
+  renovar(treino: Treino): string
+  trocar(treino: Treino, ex: Exercicio): string
+  pedir(texto: string): Promise<void>
+}
+
 /** Abre só o treino que importa agora (o primeiro vigente); os demais ficam a um clique. */
-export function ProgramaView({ programa }: { programa: Programa }) {
+export function ProgramaView({ programa, acoes }: { programa: Programa; acoes?: AcoesPrograma }) {
   if (!programa.treinos.length) return <EmptyState icon={<Dumbbell />} title="Sem programa atual." description="Este aluno ainda não tem treinos cadastrados." />
   const aberto = treinoRelevante(programa, diaLocal(new Date()))
-  return <div className="space-y-3">{programa.treinos.map((t, i) => <TreinoCard key={t.origem_id || i} treino={t} inicialAberto={i === aberto} />)}</div>
+  return <div className="space-y-3">{programa.treinos.map((t, i) => <TreinoCard key={t.origem_id || i} treino={t} inicialAberto={i === aberto} acoes={acoes} />)}</div>
 }
 
 interface Bloco { id?: string; nome?: string; ordem?: number; formato?: string; aquecimento?: boolean; descanso?: boolean
@@ -34,7 +43,7 @@ function vencido(t: Treino) {
   return !!t.data_fim && t.data_fim < diaLocal(new Date())
 }
 
-function TreinoCard({ treino, inicialAberto }: { treino: Treino; inicialAberto: boolean }) {
+function TreinoCard({ treino, inicialAberto, acoes }: { treino: Treino; inicialAberto: boolean; acoes?: AcoesPrograma }) {
   const [open, setOpen] = useState(inicialAberto)
   const expired = vencido(treino)
   const meta = [treino.foco, [treino.data_inicio && `de ${fmtDate(treino.data_inicio)}`, treino.data_fim && `até ${fmtDate(treino.data_fim)}`].filter(Boolean).join(' ')].filter(Boolean).join(' · ')
@@ -52,13 +61,17 @@ function TreinoCard({ treino, inicialAberto }: { treino: Treino; inicialAberto: 
     </div>
     {open && <div className="mt-3 pl-2 sm:pl-6">
       {treino.observacoes && <p className="text-xs text-text-secondary mb-2 flex items-start gap-1.5"><StickyNote size={12} className="text-warning shrink-0 mt-0.5" />{treino.observacoes}</p>}
-      <ExerciciosDoTreino treino={treino} />
+      <ExerciciosDoTreino treino={treino} acoes={acoes} />
+      {acoes && <div className="flex flex-wrap gap-2 mt-3">
+        <BotaoPedido variant="outline" size="sm" texto={acoes.ajustar(treino)} onPedir={acoes.pedir}><MessageSquare size={14} /> Ajustar este treino</BotaoPedido>
+        {expired && <BotaoPedido variant="outline" size="sm" texto={acoes.renovar(treino)} onPedir={acoes.pedir}><CalendarClock size={14} /> Renovar vigência</BotaoPedido>}
+      </div>}
     </div>}
   </Card>
 }
 
 /** Cada bloco com os próprios exercícios; os sem bloco ficam na lista clássica. */
-function ExerciciosDoTreino({ treino }: { treino: Treino }) {
+function ExerciciosDoTreino({ treino, acoes }: { treino: Treino; acoes?: AcoesPrograma }) {
   if (!treino.exercicios.length && !treino.blocos.length) return <p className="text-xs text-text-muted">Sem exercícios neste treino.</p>
   const blocos = [...treino.blocos as Bloco[]].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
   const ids = new Set(blocos.map(b => b.id))
@@ -72,10 +85,10 @@ function ExerciciosDoTreino({ treino }: { treino: Treino }) {
       const detalhe = descreverBloco(b)
       return <section key={b.id ?? i} className="mt-2 first:mt-0 rounded-lg border border-border px-3 py-2">
         <h4 className="text-xs font-semibold text-text-secondary">{b.nome || `Bloco ${i + 1}`}{detalhe && <span className="font-normal text-text-muted"> · {detalhe}</span>}</h4>
-        {exs.map(e => <ExercicioRow key={numero.get(e)} ex={e} index={numero.get(e)!} />)}
+        {exs.map(e => <ExercicioRow key={numero.get(e)} ex={e} index={numero.get(e)!} trocar={acoes?.trocar(treino, e)} pedir={acoes?.pedir} />)}
       </section>
     })}
-    {!!soltos.length && <div className={blocos.length ? 'mt-2' : ''}>{soltos.map(e => <ExercicioRow key={numero.get(e)} ex={e} index={numero.get(e)!} />)}</div>}
+    {!!soltos.length && <div className={blocos.length ? 'mt-2' : ''}>{soltos.map(e => <ExercicioRow key={numero.get(e)} ex={e} index={numero.get(e)!} trocar={acoes?.trocar(treino, e)} pedir={acoes?.pedir} />)}</div>}
   </>
 }
 
@@ -84,7 +97,7 @@ export function prescricao(e: Exercicio) {
   return e.series_prescritas?.map(s => `${s.series} × ${s.reps}${unidadeReps ? ` ${unidadeReps}` : ''}${s.carga ? ` · ${s.carga} ${e.unidade_carga || 'kg'}` : ''}${s.aquecimento ? ' (aprox.)' : ''}`) ?? []
 }
 
-function ExercicioRow({ ex, index }: { ex: Exercicio; index: number }) {
+function ExercicioRow({ ex, index, trocar, pedir }: { ex: Exercicio; index: number; trocar?: string; pedir?: (t: string) => Promise<void> }) {
   const [subs, setSubs] = useState(false)
   const grupos = ex.grupos?.length ? ex.grupos : ex.grupo ? [ex.grupo] : []
   const linhas = prescricao(ex)
@@ -102,6 +115,7 @@ function ExercicioRow({ ex, index }: { ex: Exercicio; index: number }) {
           {ex.intervalo_s ? <span className="inline-flex items-center gap-0.5" title="Intervalo de descanso"><Clock size={11} />{ex.intervalo_s}s</span> : null}
           {ex.video_url && /^https?:\/\//.test(ex.video_url) && <a href={ex.video_url} target="_blank" rel="noreferrer" aria-label={`Vídeo de ${ex.nome}`} className="inline-flex items-center gap-0.5 text-accent-hover hover:underline"><Video size={12} />vídeo</a>}
           {!!ex.substitutos.length && <button type="button" onClick={() => setSubs(v => !v)} aria-expanded={subs} className="inline-flex items-center gap-0.5 hover:text-text"><Repeat size={11} />{ex.substitutos.length} substituto{ex.substitutos.length > 1 ? 's' : ''}</button>}
+          {trocar && pedir && <LinkPedido texto={trocar} onPedir={pedir} label={`Trocar ${ex.nome}`}><ArrowLeftRight size={11} />trocar</LinkPedido>}
         </div>
         {ex.observacoes && <p className="text-xs text-warning mt-1 flex items-start gap-1"><StickyNote size={11} className="shrink-0 mt-0.5" />{ex.observacoes}</p>}
         {subs && <ul className="mt-1.5 space-y-1 border-l-2 border-border pl-2">{ex.substitutos.map((s, i) => <li key={i} className="text-xs text-text-secondary">

@@ -39,12 +39,8 @@ class Settings(BaseSettings):
     mcp_token_secret: str = ""             # assina os access tokens OAuth do MCP (HS256)
     mcp_server_url: str = ""               # URL canônica do servidor — vira o `aud` do token (RFC 8707)
     openai_apps_challenge: str = ""        # token de verificação de domínio da submissão de app do ChatGPT
-    mcp_compat_mode: bool = True           # preserva o contrato e os writers publicados
-    mcp_ui_enabled: bool = False
-    mcp_propostas_enabled: bool = False
-    mcp_aplicacao_enabled: bool = False
+    mcp_ui_enabled: bool = False           # consulta visual no ChatGPT (interruptor de emergência)
     mcp_ui_domain: str = "https://coachpilot.com.br"
-    mcp_proposta_ttl_s: int = 7 * 24 * 3600
 
     class Config:
         env_file = (".env", ".env.local")

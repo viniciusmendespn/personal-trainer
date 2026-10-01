@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react'
+import { Button } from '../components/ui/Button'
 import icon from './assets/coachpilot-icon.png'
 import type { Aluno } from './types'
 
@@ -62,4 +63,36 @@ export function SectionTitle({ icon, children, aside }: { icon?: ReactNode; chil
     <h3 className="font-display font-semibold text-sm text-text flex items-center gap-2 [&>svg]:text-accent-hover">{icon}{children}</h3>
     {aside}
   </div>
+}
+
+/** Ação da tela = texto enviado à conversa. Quem grava é o ChatGPT, com as tools publicadas e
+ *  a confirmação do personal. Trava por alguns segundos depois do clique (sem pedido duplicado). */
+type ButtonProps = ComponentProps<typeof Button>
+
+/** Envia uma vez e trava por alguns segundos: evita pedido duplicado na conversa. */
+function usePedido(texto: string, onPedir: (texto: string) => Promise<void>) {
+  const [enviado, setEnviado] = useState(false)
+  useEffect(() => {
+    if (!enviado) return
+    const t = setTimeout(() => setEnviado(false), 4000)
+    return () => clearTimeout(t)
+  }, [enviado])
+  return { enviado, pedir: () => void onPedir(texto).then(() => setEnviado(true), () => {}) }
+}
+
+export function BotaoPedido({ texto, onPedir, children, ...props }: { texto: string; onPedir: (texto: string) => Promise<void>
+  children: ReactNode; variant?: ButtonProps['variant']; size?: ButtonProps['size']; className?: string; disabled?: boolean }) {
+  const { enviado, pedir } = usePedido(texto, onPedir)
+  return <Button {...props} disabled={props.disabled || enviado} onClick={pedir}>
+    {enviado ? <span role="status">Pedido enviado na conversa</span> : children}
+  </Button>
+}
+
+/** Mesma ação em forma de link discreto, para dentro de listas (ex.: trocar um exercício). */
+export function LinkPedido({ texto, onPedir, children, label }: { texto: string; onPedir: (texto: string) => Promise<void>; children: ReactNode; label: string }) {
+  const { enviado, pedir } = usePedido(texto, onPedir)
+  return <button type="button" onClick={pedir} disabled={enviado} aria-label={label}
+    className="inline-flex items-center gap-0.5 text-accent-hover hover:underline disabled:no-underline disabled:text-text-muted">
+    {enviado ? <span role="status">enviado na conversa</span> : children}
+  </button>
 }

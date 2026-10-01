@@ -4,7 +4,6 @@ import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import type { Host } from './host'
 import { frequencia, lerAnamnese, respostaLegivel, respostaNegativa, situacaoPrograma } from './presentation'
-import { unpack } from './useCases'
 import { Alert, SectionTitle, diaLocal, fmtDate, fmtDateTime, tempoRelativo } from './ui'
 import type { Contexto, Programa } from './types'
 
@@ -148,19 +147,4 @@ export function DadosPrivados({ host, alunoId }: { host: Host; alunoId: string }
 
 function Secao({ titulo, vazio, children }: { titulo: string; vazio?: string | false; children: ReactNode }) {
   return <section><h4 className="text-xs font-semibold text-text-secondary mb-1">{titulo}</h4>{vazio ? <p className="text-xs text-text-muted">{vazio}</p> : children}</section>
-}
-
-export function RestricoesDaProposta({ host, alunoId }: { host: Host; alunoId: string }) {
-  const [contexto, setContexto] = useState<Contexto>()
-  const [error, setError] = useState('')
-  useEffect(() => {
-    let active = true
-    setContexto(undefined); setError('')
-    void host.call('mostrar_aluno', { aluno_id: alunoId }).then(r => { if (active) setContexto(unpack(r).detalhes.contexto_aluno) })
-      .catch(err => { if (active) setError(err.message) })
-    return () => { active = false }
-  }, [host, alunoId])
-  if (contexto) return <AtencaoSaude contexto={contexto} />
-  return error ? <Alert tone="warning">Não foi possível carregar as restrições. Confira os dados do aluno.</Alert>
-    : <p className="text-sm text-text-muted">Carregando restrições informadas…</p>
 }
