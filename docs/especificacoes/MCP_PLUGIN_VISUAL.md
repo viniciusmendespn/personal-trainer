@@ -1,6 +1,6 @@
 # Plugin visual CoachPilot — implementação e ativação
 
-Implementação em 30/09/2026 do fluxo prioritário do [plano](../../PLANO_COACHPILOT_PLUGIN_VISUAL.md): carteira → aluno → proposta → revisão → aplicação → restauração. Inclui evolução com gráfico e tabela. Backend e portal publicados em modo de compatibilidade; a ativação visual, o piloto e a validação no cliente ChatGPT permanecem pendentes.
+Implementação do fluxo prioritário do [plano](../../PLANO_COACHPILOT_PLUGIN_VISUAL.md): carteira → aluno → proposta → revisão → aplicação → restauração. Inclui evolução com gráfico e tabela. A entrega de 01/10/2026 permite consulta visual junto do plugin publicado: carteira, ficha, treinos e evolução. Propostas e aplicação pela tela continuam bloqueadas. A validação no cliente ChatGPT depende do Rescan e permanece pendente.
 
 ## Interface e transporte
 
@@ -56,16 +56,20 @@ A compatibilidade começa ligada; as flags do fluxo visual começam desabilitada
 
 | Ambiente | SAM | Efeito |
 |---|---|---|
-| `MCP_COMPAT_MODE` | `McpCompatMode` | Padrão `true`: contrato publicado e writers legados; prevalece sobre flags visuais |
+| `MCP_COMPAT_MODE` | `McpCompatMode` | Padrão `true`: contrato publicado e writers legados; bloqueia escritores novos |
 | `MCP_UI_ENABLED` | `McpUiEnabled` | Recursos e metadados UI |
 | `MCP_PROPOSTAS_ENABLED` | `McpPropostasEnabled` | Consulta/salvamento de propostas |
 | `MCP_APLICACAO_ENABLED` | `McpAplicacaoEnabled` | Aplicação de propostas |
 | `MCP_UI_DOMAIN` | `McpUiDomain` | Origem de isolamento declarada para a UI |
 | `MCP_PROPOSTA_TTL_S` | variável de ambiente | TTL do rascunho; padrão 604800 segundos |
 
-Em ambiente dev isolado, desligar `MCP_COMPAT_MODE` e começar com UI ligada e propostas/aplicação desligadas. Depois habilitar propostas; liberar aplicação somente após testes de escrita. Configurar o domínio de isolamento aceito pelo host antes da submissão. A conexão MCP continua exigindo OAuth; o bundle não contém credenciais. Desabilitar UI remove seus metadados e mantém tools textuais.
+Para consulta visual compatível, manter `MCP_COMPAT_MODE=true`, ligar `MCP_UI_ENABLED=true` e manter propostas/aplicação desligadas. Em ambiente dev isolado, desligar compatibilidade para testar o fluxo novo de propostas; liberar aplicação somente após testes de escrita. Configurar o domínio de isolamento aceito pelo host antes da submissão. A conexão MCP continua exigindo OAuth; o bundle não contém credenciais. Desabilitar UI remove as três consultas novas e mantém as ferramentas publicadas.
 
-`MCP_COMPAT_MODE=true` seleciona as ferramentas e routers capturados diretamente das Lambdas publicadas (`app/compat/v1`, com hashes em `manifest.json`). Mantém os 13 contratos existentes, importações grandes por batch e desfazer com snapshots anteriores ao deploy. Bloqueia recursos UI, propostas, commit transacional e sua outbox, mesmo com outras flags ligadas. OAuth, URL e segredos continuam os atuais. O portal aceita exports sem revisão nesse modo. Não alternar writers legados e transacionais nos mesmos dados sem um procedimento de migração/rollback: as revisões não refletem alterações feitas pelo legado.
+`MCP_COMPAT_MODE=true` seleciona as ferramentas e routers capturados diretamente das Lambdas publicadas (`app/compat/v1`, com hashes em `manifest.json`). Mantém os 13 contratos existentes, importações grandes por batch e desfazer com snapshots anteriores ao deploy. Bloqueia propostas, commit transacional e sua outbox, mesmo com outras flags ligadas. OAuth, URL e segredos continuam os atuais. O portal aceita exports sem revisão nesse modo. Não alternar writers legados e transacionais nos mesmos dados sem um procedimento de migração/rollback: as revisões não refletem alterações feitas pelo legado.
+
+Com UI habilitada, `mcp/compat_visual_jsonrpc.py` acrescenta recursos e três ferramentas somente leitura: `abrir_coachpilot`, `mostrar_aluno` e `consultar_carteira_visual`. As chamadas antigas continuam delegadas integralmente ao snapshot. A carteira usa uma ferramenta distinta para preservar o schema e o resultado de `listar_alunos`. A ficha exporta o programa legado e acrescenta `chave_historico` somente ao resultado privado da consulta visual, permitindo consultar evolução sem IDs novos. Nenhuma revisão, snapshot ou proposta é criada pela consulta. A interface oculta controles de proposta e aplicação, inclusive para tokens de escrita; as ferramentas antigas continuam podendo gravar pelo chat conforme a autorização existente.
+
+Após deploy, no painel do plugin: **MCPs → servidor conectado → Issues → Rescan**. A publicação das novas definições depende da validação automática do host. Em modo desenvolvedor, atualizar as ferramentas e abrir uma conversa nova para testar. Pedir “Abra minha carteira no CoachPilot”, buscar um aluno e verificar Treinos/Evolução. Não é necessário gerar um ZIP novo para uma atualização somente do MCP. Se o visual ainda não aparecer, conferir as definições aprovadas e os Issues; o deploy sozinho não comprova a renderização no ChatGPT.
 
 Comandos locais, a partir da raiz:
 
@@ -91,7 +95,7 @@ Antes de ativar o visual: testar OAuth, CSP, global/thread, tela cheia, tema e c
 
 ## Publicação com compatibilidade
 
-Manter `McpCompatMode=true`, `McpUiEnabled=false`, `McpPropostasEnabled=false` e `McpAplicacaoEnabled=false` no deploy de produção. Preservar os segredos do stack: parâmetros omitidos reutilizam os valores existentes. Gerar o changeset com `sam deploy --no-execute-changeset`, verificar ausência de remoções/substituições e só então executá-lo. Publicar o frontend com `deploy.ps1 frontend`, que trata os quatro manifests/CloudFronts.
+Manter `McpCompatMode=true`, `McpUiEnabled=true` (consulta visual; fixado em `deploy.ps1` e `samconfig.toml`), `McpPropostasEnabled=false` e `McpAplicacaoEnabled=false` no deploy de produção. Preservar os segredos do stack: parâmetros omitidos reutilizam os valores existentes. Gerar o changeset com `sam deploy --no-execute-changeset`, verificar ausência de remoções/substituições e só então executá-lo. Publicar o frontend com `deploy.ps1 frontend`, que trata os quatro manifests/CloudFronts.
 
 Os testes de compatibilidade verificam seleção dos routers no boot, integridade do snapshot, 13 schemas publicados, token OAuth existente, importação de 110 exercícios pelos dois canais, retry, desfazer antigo, CRUD/templates/rotinas, confirmação de sessão e isolamento de tenant. Esse modo não oferece as novas telas no ChatGPT. Para testá-las localmente, executar `python backend/tests/visual_harness.py` e abrir `http://127.0.0.1:8766`.
 

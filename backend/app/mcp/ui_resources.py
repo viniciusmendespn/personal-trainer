@@ -10,7 +10,7 @@ DIST = Path(__file__).parent / "ui_dist"
 
 
 def disponivel():
-    return not settings.mcp_compat_mode and settings.mcp_ui_enabled and (DIST / "v1.html").is_file()
+    return settings.mcp_ui_enabled and (DIST / "v1.html").is_file()
 
 
 def listar():

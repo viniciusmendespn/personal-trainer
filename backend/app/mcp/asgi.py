@@ -15,7 +15,10 @@ from app.config import settings
 from app.mcp import oauth
 
 if settings.mcp_compat_mode:
-    from app.compat.v1 import jsonrpc
+    if settings.mcp_ui_enabled:
+        from app.mcp import compat_visual_jsonrpc as jsonrpc
+    else:
+        from app.compat.v1 import jsonrpc
 else:
     from app.mcp import jsonrpc
 

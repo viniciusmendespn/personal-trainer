@@ -11,6 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parents[1]))
 from fake_repo import FakeRepo
 from fastapi.testclient import TestClient
+from fastapi import FastAPI
 from app.config import settings
 settings.mcp_compat_mode = False
 from app.repositories import dynamo_repo as repo, keys
@@ -27,6 +28,10 @@ for name in dir(fake):
         setattr(repo, name, getattr(fake, name))
 authz.assinatura_service.get_alunos_bloqueados = lambda _: set()
 client = TestClient(app)
+from app.mcp import compat_visual_jsonrpc
+compat_app = FastAPI()
+compat_app.include_router(compat_visual_jsonrpc.router)
+compat_client = TestClient(compat_app)
 PID, AID = "harness-personal", "harness-mariana"
 
 
@@ -45,10 +50,10 @@ def reset():
     fake.put_item(keys.pk_personal(PID), keys.SK_ANAMNESE_TEMPLATE, {"perguntas": []}) if hasattr(keys, 'SK_ANAMNESE_TEMPLATE') else None
 
 
-def rpc(payload, read=False):
+def rpc(payload, read=False, compat=False):
     scopes = [tokens.SCOPE_READ] if read else [tokens.SCOPE_READ, tokens.SCOPE_TREINOS_WRITE]
     token, _ = tokens.emitir_access_token(PID, 'read' if read else 'write', scopes, "Harness")
-    return client.post('/mcp', json=payload, headers={"Authorization": f"Bearer {token}"}).json()
+    return (compat_client if compat else client).post('/mcp', json=payload, headers={"Authorization": f"Bearer {token}"}).json()
 
 
 PAGE = '''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>CoachPilot — harness local</title></head><body style="margin:0">
@@ -106,6 +111,13 @@ class Handler(BaseHTTPRequestHandler):
                     "series_exec": [{"carga": value, "reps": 10}], "unidade_carga": unit,
                     "GSI1PK": keys.gsi1_registro(AID, 'supino'), "GSI1SK": str(i)})
             self.send({"ok": True}); return
+        if self.path.startswith('/_test/legacy-program'):
+            fake.put_item(keys.pk_aluno(AID), keys.sk_treino('legacy'),
+                {"treino_id": "legacy", "nome": "Treino anterior", "ativo": True, "ordem": 0})
+            fake.put_item(keys.pk_aluno(AID), keys.sk_exercicio('legacy', 'exercise'),
+                {"exercicio_id": "exercise", "treino_id": "legacy", "nome": "Supino", "ordem": 0,
+                 "series_prescritas": [{"series": 3, "reps": "10", "carga": "20"}]})
+            self.send({"ok": True}); return
         if self.path.startswith('/_test/proposal'):
             saved = rpc({"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {
                 "name": "salvar_proposta_programa", "arguments": {"aluno_id": AID,
@@ -117,7 +129,7 @@ class Handler(BaseHTTPRequestHandler):
                     "proposta_id": saved['result']['structuredContent']['proposta_id']}}}, read='read=1' in self.path)); return
         if self.path.startswith('/mcp'):
             payload = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))))
-            self.send(rpc(payload, read='read=1' in self.path)); return
+            self.send(rpc(payload, read='read=1' in self.path, compat='compat=1' in self.path)); return
         self.send({"error": "rota desconhecida"})
 
 

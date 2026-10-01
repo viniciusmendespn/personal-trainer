@@ -1,6 +1,33 @@
 import { expect, test } from '@playwright/test'
 
 test.beforeEach(async ({ request }) => { await request.post('/_test/reset') })
+
+test('visual compatível consulta programa legado e evolução sem controles de escrita', async ({ page, request }) => {
+  const errors: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
+  await request.post('/_test/legacy-program')
+  await request.post('/_test/evolution')
+  const before = await (await request.get('/_test/status')).json()
+  await page.goto('/?compat=1')
+  const app = page.frameLocator('iframe')
+  await expect(app.getByText('Somente leitura', { exact: true })).toBeVisible()
+  await app.getByRole('button', { name: 'Abrir carteira' }).click()
+  await app.getByRole('textbox', { name: 'Buscar aluno' }).fill('ninguém')
+  await expect(app.getByText('Nenhum aluno encontrado para estes filtros.')).toBeVisible()
+  await app.getByRole('textbox', { name: 'Buscar aluno' }).fill('MARIANA')
+  await app.getByRole('button', { name: 'Abrir aluno Mariana' }).click()
+  await expect(app.getByRole('button', { name: 'Pedir revisão do programa' })).toHaveCount(0)
+  await app.getByRole('button', { name: 'Treinos', exact: true }).click()
+  await expect(app.getByText('Treino anterior', { exact: true })).toBeVisible()
+  await expect(app.getByRole('button', { name: 'Preparar alteração' })).toHaveCount(0)
+  await app.getByRole('button', { name: 'Evolução', exact: true }).click()
+  await expect(app.getByRole('cell', { name: '20', exact: true })).toBeVisible()
+  await app.getByLabel('Unidade', { exact: true }).selectOption('lb')
+  await expect(app.getByRole('cell', { name: '40', exact: true })).toBeVisible()
+  expect(await (await request.get('/_test/status')).json()).toEqual(before)
+  expect(await page.evaluate(() => (window as unknown as { messages: unknown[] }).messages)).toEqual([])
+  expect(errors).toEqual([])
+})
 test('card, carteira, aluno e pedido explícito sem mensagens por navegação', async ({ page }) => {
   await page.goto('/')
   const app = page.frameLocator('iframe')

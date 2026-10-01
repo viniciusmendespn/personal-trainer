@@ -1,5 +1,6 @@
 export interface Serie { series: number; reps: string; carga?: string | null; aquecimento?: boolean | null }
 export interface Exercicio {
+  chave_historico?: string
   origem_id?: string | null; nome: string; tipo_exercicio: string; bloco_id?: string | null
   grupos?: string[] | null; grupo?: string | null; aquecimento?: boolean
   series_prescritas?: Serie[] | null; intervalo_s?: number | null; observacoes?: string | null
@@ -36,6 +37,7 @@ export interface Contexto {
 export interface Operacao { status: string; operation_id: string; revisao_resultante?: number; aplicado_em?: string; aluno_id: string }
 export interface Evolucao { tipo: string; nome: string; serie: { data: string; carga_max?: number | null; volume?: number | null; metrica_max?: number | null; unidade_carga?: string | null; unidade_reps?: string | null }[]; total_sessoes: number }
 export interface Resumo {
+  carteira_tool?: string
   version: string; tela: 'carteira' | 'aluno' | 'proposta'; aluno_id?: string | null; nome?: string | null
   proposta_id?: string | null; revisao?: number | null; estado?: string | null; resumo_da_mudanca?: string | null
   quantidade_alteracoes?: number | null; somente_leitura: boolean; propostas_disponiveis: boolean; aplicacao_disponivel: boolean

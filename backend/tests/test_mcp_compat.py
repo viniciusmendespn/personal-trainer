@@ -164,8 +164,8 @@ def test_undo_accepts_snapshot_created_before_this_deploy(compat):
     assert commits.revisao(A) == 0
 
 
-def test_compatibility_blocks_visual_even_when_all_flags_are_enabled(compat):
-    assert ui_resources.listar() == []
+def test_compatibility_blocks_new_writers_even_when_all_flags_are_enabled(compat):
+    assert ui_resources.listar()[0]["uri"] == ui_resources.URI
     assert call("abrir_coachpilot", {})["isError"]
     with pytest.raises(HTTPException) as error:
         propostas.salvar(P, A, PROGRAM, "Teste", 0)

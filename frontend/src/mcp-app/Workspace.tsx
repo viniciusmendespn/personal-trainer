@@ -64,12 +64,12 @@ export function Workspace({ host }: { host: Host }) {
     let active = true
     const timer = setTimeout(() => {
       setBusy(true)
-      void host.call('listar_alunos', { busca, filtro: filtro || null, limit: 50 })
+      void host.call(resumo?.carteira_tool || 'listar_alunos', { busca, filtro: filtro || null, limit: 50 })
         .then(r => { if (active) setCarteira(r.structuredContent as unknown as Carteira) })
         .catch(err => { if (active) setError(err.message) }).finally(() => { if (active) setBusy(false) })
     }, 300)
     return () => { active = false; clearTimeout(timer) }
-  }, [ready, resumo?.tela, busca, filtro, expanded, mode, host])
+  }, [ready, resumo?.tela, resumo?.carteira_tool, busca, filtro, expanded, mode, host])
 
   async function run(task: () => Promise<void>) {
     setBusy(true); setError('')
@@ -147,7 +147,7 @@ export function Workspace({ host }: { host: Host }) {
     {!resumo && <p>{ready ? 'Carregando sua carteira…' : 'Aguardando a conexão autenticada.'}</p>}
     {resumo && isCard && <section className="cp-card">
       <h1>{resumo.nome || 'Sua carteira de alunos'}</h1>
-      <p>{p ? estadoLabel(p.estado) : details.contexto_aluno?.perfil.objetivos.join(', ') || 'Consulte alunos, acompanhe a evolução e revise programas.'}</p>
+      <p>{p ? estadoLabel(p.estado) : details.contexto_aluno?.perfil.objetivos.join(', ') || (resumo.propostas_disponiveis ? 'Consulte alunos, acompanhe a evolução e revise programas.' : 'Consulte alunos, programas e evolução.')}</p>
       {p && <p>{p.resumo_da_mudanca}<br />{p.diferencas.length} alterações para revisar.</p>}
       <button className="cp-primary" onClick={() => setExpanded(true)}>{p ? 'Revisar proposta' : resumo.tela === 'aluno' ? 'Abrir aluno' : 'Abrir carteira'} <ChevronRight size={18} /></button>
     </section>}
@@ -169,7 +169,7 @@ export function Workspace({ host }: { host: Host }) {
             <button disabled={busy} onClick={() => void openAluno(a.aluno_id)} aria-label={`Abrir aluno ${a.nome}`}>Abrir aluno <ChevronRight size={16} /></button></li>)}</ul>
           {!carteira.items.length && <p>{carteira.next_cursor ? 'Nenhum resultado nas páginas examinadas. Continue a busca.' : 'Nenhum aluno encontrado para estes filtros.'}</p>}
           {carteira.next_cursor && <button disabled={busy} onClick={() => void run(async () => {
-            const r = await host.call('listar_alunos', { busca, filtro: filtro || null, limit: 50, cursor: carteira.next_cursor })
+            const r = await host.call(resumo?.carteira_tool || 'listar_alunos', { busca, filtro: filtro || null, limit: 50, cursor: carteira.next_cursor })
             const next = r.structuredContent as unknown as Carteira
             setCarteira({ ...next, items: [...carteira.items, ...next.items].filter((a, i, arr) => arr.findIndex(b => b.aluno_id === a.aluno_id) === i) })
           })}>Continuar busca / carregar mais</button>}
@@ -179,13 +179,13 @@ export function Workspace({ host }: { host: Host }) {
       {resumo.tela === 'aluno' && details.programa && <>
         <nav aria-label="Ficha do aluno" className="cp-tabs">{[['geral', 'Visão geral'], ['treinos', 'Treinos'], ['evolucao', 'Evolução']].map(([id, text]) => <button key={id} aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)}>{text}</button>)}</nav>
         {tab === 'geral' && <>
-          <p className="cp-muted">Dados consultados em {details.contexto_aluno?.gerado_em || 'data não informada'}. Revisão {resumo.revisao}.</p>
+          <p className="cp-muted">Dados consultados em {details.contexto_aluno?.gerado_em || 'data não informada'}.{resumo.revisao != null && ` Revisão ${resumo.revisao}.`}</p>
           {details.contexto_aluno && <><div className="cp-stats"><span><strong>{details.contexto_aluno.estatisticas_treino?.sessoes_semana_atual ?? '—'}</strong> sessões nesta semana</span><span><strong>{details.contexto_aluno.estatisticas_treino?.media_sessoes_por_semana ?? '—'}</strong> média por semana</span></div><Restricoes contexto={details.contexto_aluno} /></>}
           {details.sessao_em_andamento && <p className="cp-warning">Aluno treinando agora: {details.sessao_em_andamento.treino_nome}.</p>}
-          <button className="cp-primary" disabled={busy} onClick={() => void ask(`Leia o guia de prescrição, o contexto atualizado e o programa do aluno ${resumo.nome} (aluno_id=${resumo.aluno_id}). ${details.programa!.treinos.length ? 'Prepare uma proposta de revisão do programa' : 'Monte o primeiro programa e pergunte apenas os dados essenciais ausentes'}. Salve uma proposta para minha revisão, preservando os treinos não solicitados.`)}>{details.programa.treinos.length ? 'Pedir revisão do programa' : 'Montar primeiro programa'}</button>
+          {resumo.propostas_disponiveis && <button className="cp-primary" disabled={busy} onClick={() => void ask(`Leia o guia de prescrição, o contexto atualizado e o programa do aluno ${resumo.nome} (aluno_id=${resumo.aluno_id}). ${details.programa!.treinos.length ? 'Prepare uma proposta de revisão do programa' : 'Monte o primeiro programa e pergunte apenas os dados essenciais ausentes'}. Salve uma proposta para minha revisão, preservando os treinos não solicitados.`)}>{details.programa.treinos.length ? 'Pedir revisão do programa' : 'Montar primeiro programa'}</button>}
           <details><summary>Dados privados e anamnese completa</summary><p>Carregar apenas quando precisar revisar os dados completos do aluno.</p><button onClick={() => void run(async () => { const version = selectionVersion.current; const r = await host.call('detalhar_aluno', { aluno_id: resumo.aluno_id }); if (version === selectionVersion.current) setPrivateData(r.structuredContent) })}>Carregar dados privados</button><PrivateDetails data={privateData} /></details>
         </>}
-        {tab === 'treinos' && <><ProgramaView programa={details.programa} /><button onClick={() => void ask(`Prepare uma alteração para o programa do aluno ${resumo.nome} (aluno_id=${resumo.aluno_id}), consulte o guia e os dados atuais e salve uma proposta para eu revisar.`)}>Preparar alteração</button></>}
+        {tab === 'treinos' && <><ProgramaView programa={details.programa} />{resumo.propostas_disponiveis && <button onClick={() => void ask(`Prepare uma alteração para o programa do aluno ${resumo.nome} (aluno_id=${resumo.aluno_id}), consulte o guia e os dados atuais e salve uma proposta para eu revisar.`)}>Preparar alteração</button>}</>}
         {tab === 'evolucao' && <Evolution host={host} alunoId={resumo.aluno_id!} programa={details.programa} onAsk={ask} />}
       </>}
       {resumo.tela === 'proposta' && p && <section>
@@ -292,7 +292,7 @@ function Evolution({ host, alunoId, programa, onAsk }: { host: Host; alunoId: st
     if (!nome) return
     let active = true
     setLoading(true); setError('')
-    void host.call('evolucao_exercicio', { aluno_id: alunoId, exercicio_id: ex?.origem_id, limit: 200 }).then(r => {
+    void host.call('evolucao_exercicio', { aluno_id: alunoId, ...(ex?.origem_id ? { exercicio_id: ex.origem_id } : { chave: ex?.chave_historico || nome }), limit: 200 }).then(r => {
       if (active) { setData(r.structuredContent as unknown as Evolucao); setSelectedUnit(''); setMetric(ex?.tipo_exercicio === 'PERFORMANCE' ? 'metrica_max' : 'carga_max') }
     }).catch(err => { if (active) setError(err.message) }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }

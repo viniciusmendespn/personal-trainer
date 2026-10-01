@@ -183,3 +183,25 @@ def test_tool_sem_contexto_de_tenant_estoura(mcp_env):
     silenciosamente usar um tenant vazio."""
     with pytest.raises(RuntimeError):
         mcp_tools.listar_alunos(mcp_tools.ListarAlunosArgs())
+
+
+# ── consulta visual no modo de compatibilidade (implementação própria) ────────
+
+@pytest.mark.parametrize("nome", ["abrir_coachpilot", "mostrar_aluno"])
+def test_visual_compativel_nao_alcanca_aluno_de_a(carteiras, monkeypatch, nome):
+    from app.config import settings
+    from app.mcp import compat_visual_tools
+    monkeypatch.setattr(settings, "mcp_ui_enabled", True)
+    with usando_tenant(_tenant(PERSONAL_B)):
+        resposta = compat_visual_tools.chamar_tool(nome, {"aluno_id": ALUNO_DE_A}, _tenant(PERSONAL_B))
+    assert resposta.get("isError") is True
+    assert "não encontrado" in resposta["content"][0]["text"]
+
+
+def test_carteira_visual_compativel_so_traz_a_propria_carteira(carteiras, monkeypatch):
+    from app.config import settings
+    from app.mcp import compat_visual_tools
+    monkeypatch.setattr(settings, "mcp_ui_enabled", True)
+    with usando_tenant(_tenant(PERSONAL_B)):
+        r = compat_visual_tools.chamar_tool("consultar_carteira_visual", {}, _tenant(PERSONAL_B))
+    assert [a["nome"] for a in r["structuredContent"]["items"]] == ["Rafael"]
