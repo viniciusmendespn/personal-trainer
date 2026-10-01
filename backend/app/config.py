@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     mcp_ui_enabled: bool = False
     mcp_propostas_enabled: bool = False
     mcp_aplicacao_enabled: bool = False
-    mcp_ui_domain: str = "https://ui.coachpilot.com.br"
+    mcp_ui_domain: str = "https://coachpilot.com.br"
     mcp_proposta_ttl_s: int = 7 * 24 * 3600
 
     class Config:

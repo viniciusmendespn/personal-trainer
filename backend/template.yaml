@@ -142,7 +142,7 @@ Parameters:
     AllowedValues: ["true", "false"]
   McpUiDomain:
     Type: String
-    Default: "https://ui.coachpilot.com.br"
+    Default: "https://coachpilot.com.br"
 
 Conditions:
   CreateFrontendInfra: !Equals [!Ref DeployFrontendInfra, "true"]

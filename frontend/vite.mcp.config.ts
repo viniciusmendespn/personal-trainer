@@ -7,9 +7,12 @@ export default defineConfig({
   define: { 'process.env.NODE_ENV': JSON.stringify('production') },
   plugins: [react(), {
     name: 'coachpilot-inline-resource',
+    // 'post': o CSS só entra no bundle no generateBundle do próprio Vite; antes disso sai <style> vazio.
+    enforce: 'post',
     generateBundle(_options, bundle) {
       const js = Object.values(bundle).filter(x => x.type === 'chunk').map(x => x.type === 'chunk' ? x.code : '').join('\n')
-      const css = Object.values(bundle).filter(x => x.type === 'asset' && x.fileName.endsWith('.css')).map(x => x.type === 'asset' ? String(x.source) : '').join('\n')
+      const css = Object.values(bundle).filter(x => x.type === 'asset' && x.fileName.endsWith('.css')).map(x => x.type === 'asset' ? (typeof x.source === 'string' ? x.source : new TextDecoder().decode(x.source)) : '').join('\n')
+      if (!css.includes('.cp{')) throw new Error('CSS da interface MCP não entrou no HTML')
       for (const key of Object.keys(bundle)) delete bundle[key]
       this.emitFile({ type: 'asset', fileName: 'v1.html', source: `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CoachPilot</title><style>${css.replaceAll('</style', '<\\/style')}</style></head><body><div id="root"></div><script type="module">${js.replaceAll('</script', '<\\/script')}</script></body></html>` })
     },

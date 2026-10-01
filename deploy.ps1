@@ -60,7 +60,7 @@ function Deploy-Backend {
     if ($LASTEXITCODE -ne 0) { Write-Host "Build falhou." -ForegroundColor Red; Set-Location ..; exit 1 }
 
     if ($ExtraOverrides) {
-        sam deploy --profile $Profile --parameter-overrides "Stage=prod DeployFrontendInfra=true FrontendUrl=https://coachpilot.com.br AlunoFrontendUrl=https://app.coachpilot.com.br McpUiEnabled=true$ExtraOverrides"
+        sam deploy --profile $Profile --parameter-overrides "Stage=prod DeployFrontendInfra=true FrontendUrl=https://coachpilot.com.br AlunoFrontendUrl=https://app.coachpilot.com.br McpUiEnabled=true McpUiDomain=https://coachpilot.com.br$ExtraOverrides"
     } else {
         sam deploy --profile $Profile
     }

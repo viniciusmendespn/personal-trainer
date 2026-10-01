@@ -104,3 +104,13 @@ def test_visual_connection_without_read_scope_cannot_discover_or_call(visual_env
     tenant = tokens.Tenant(personal_id=P, conn_id="c", client_name="ChatGPT", jti="n", scopes=frozenset())
     assert visual.listar_tools(tenant) == []
     assert call("mostrar_aluno", {"aluno_id": A}, tenant)["isError"]
+
+
+def test_bundle_da_interface_traz_o_css_e_domain_existente():
+    """O build já gerou `<style></style>` vazio (plugin rodava antes do CSS do Vite), e o
+    `domain` já apontou para um subdomínio inexistente — o botão "Abrir em" do ChatGPT leva lá."""
+    import re
+    html = (ui_resources.DIST / "v1.html").read_text(encoding="utf-8")
+    css = re.search(r"<style>(.*?)</style>", html, re.S).group(1)
+    assert ".cp{" in css and len(css) > 1000
+    assert settings.mcp_ui_domain == "https://coachpilot.com.br"
