@@ -1,6 +1,6 @@
 # Plugin visual CoachPilot — implementação e ativação
 
-Implementação em 30/09/2026 do fluxo prioritário do [plano](../../PLANO_COACHPILOT_PLUGIN_VISUAL.md): carteira → aluno → proposta → revisão → aplicação → restauração. Inclui evolução com gráfico e tabela. O pacote está preparado para publicação em modo de compatibilidade; a ativação visual, o piloto e a validação no cliente ChatGPT permanecem pendentes.
+Implementação em 30/09/2026 do fluxo prioritário do [plano](../../PLANO_COACHPILOT_PLUGIN_VISUAL.md): carteira → aluno → proposta → revisão → aplicação → restauração. Inclui evolução com gráfico e tabela. Backend e portal publicados em modo de compatibilidade; a ativação visual, o piloto e a validação no cliente ChatGPT permanecem pendentes.
 
 ## Interface e transporte
 
@@ -94,6 +94,8 @@ Antes de ativar o visual: testar OAuth, CSP, global/thread, tela cheia, tema e c
 Manter `McpCompatMode=true`, `McpUiEnabled=false`, `McpPropostasEnabled=false` e `McpAplicacaoEnabled=false` no deploy de produção. Preservar os segredos do stack: parâmetros omitidos reutilizam os valores existentes. Gerar o changeset com `sam deploy --no-execute-changeset`, verificar ausência de remoções/substituições e só então executá-lo. Publicar o frontend com `deploy.ps1 frontend`, que trata os quatro manifests/CloudFronts.
 
 Os testes de compatibilidade verificam seleção dos routers no boot, integridade do snapshot, 13 schemas publicados, token OAuth existente, importação de 110 exercícios pelos dois canais, retry, desfazer antigo, CRUD/templates/rotinas, confirmação de sessão e isolamento de tenant. Esse modo não oferece as novas telas no ChatGPT. Para testá-las localmente, executar `python backend/tests/visual_harness.py` e abrir `http://127.0.0.1:8766`.
+
+Deploy do commit `239041d` concluído em 01/10/2026 UTC (30/09 no Brasil): changeset inspecionado antes da execução, stack `personal-trainer-prod` em `UPDATE_COMPLETE` e quatro invalidações CloudFront concluídas. As 29 configurações anteriores de API/MCP foram comparadas por hash e preservadas, incluindo segredos OAuth; os outputs do stack também ficaram iguais. O pacote instalado foi conferido contra os snapshots e entrypoints locais. MCP/API health retornaram 200, descoberta OAuth 200, GET `/mcp` 405 e POST sem token 401 com desafio OAuth. HTML, manifest e bundle dos quatro frontends foram verificados. As verificações em produção não alteraram treinos ou dados de alunos; chamadas autenticadas e escrita foram exercitadas com dados fake nos testes locais.
 
 ## Etapas posteriores
 

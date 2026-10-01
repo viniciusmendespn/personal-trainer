@@ -1,6 +1,6 @@
 # CoachPilot — planejamento do plugin visual no ChatGPT
 
-Data: 30/09/2026. Status: fluxo prioritário implementado e validado localmente. Deploy preparado com `MCP_COMPAT_MODE=true` e recursos visuais desligados, preservando o plugin publicado. Ativação visual e validação no ChatGPT pendentes.
+Data: 30/09/2026. Status: fluxo prioritário implementado e validado localmente. Backend e portal publicados com `MCP_COMPAT_MODE=true` e recursos visuais desligados, preservando o plugin publicado. Stack `UPDATE_COMPLETE`, endpoints verificados e quatro invalidações CloudFront concluídas. Ativação visual e validação no ChatGPT pendentes.
 
 Entrega e ativação: [MCP_PLUGIN_VISUAL.md](docs/especificacoes/MCP_PLUGIN_VISUAL.md). Os itens marcados abaixo representam código e verificação local; não substituem os critérios de aceite no ChatGPT. Etapas de lotes e eventos permanecem posteriores ao fluxo principal.
 
