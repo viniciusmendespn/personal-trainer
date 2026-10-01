@@ -116,6 +116,8 @@ Aplicação da 1ª entrega e de parte da 2ª do [replanejamento](../../PLANO_UX_
 - **Evolução honesta.** Melhor valor respeita `direcao` (MENOR = tempo de prova); rótulo "Melhor no período/nos registros", nunca "PR"; consulta no teto de 200 avisa que pode haver registros mais antigos.
 - **Ficha.** Indicadores coloridos viraram uma linha de frequência; dados completos em seções humanas (avaliações, metas, notas), recarregados a cada aluno; programa abre só o treino vigente e cada bloco CrossFit/HIIT mostra os próprios exercícios com os parâmetros em linguagem de treino.
 
+Deploy do commit `fdcb506` em 01/10/2026: changeset só com modificações, 32 parâmetros idênticos ao stack (flags inalteradas: `McpCompatMode=true`, `McpUiEnabled=true`, propostas/aplicação `false`). Stack `UPDATE_COMPLETE`; health/descoberta OAuth 200, GET `/mcp` 405, POST sem token 401 com desafio OAuth, sem erros no log. Testes: pytest 566, Vitest 241, Playwright 10 fluxos. Pendente: reabrir a conexão no ChatGPT e conferir os cards no host.
+
 Fora deste ciclo, por decisão do plano: ativação de escrita (etapa 3 — migração dos writers legados), alteração focal com aplicação, lote e eventos.
 
 ## Etapas posteriores
