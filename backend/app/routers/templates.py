@@ -1,6 +1,6 @@
 """Templates de treino reutilizáveis — partição PT# (pertencem ao personal, não a
 um aluno específico). Aplicar um template em N alunos usa o mesmo padrão denormalizado
-de `treinos.copiar_treino`: 1 lote de batch_write por aluno."""
+de `treinos.copiar_treino`: 1 commit transacional por aluno."""
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.dependencies import get_current_personal_id
@@ -12,8 +12,7 @@ from app.models.template import (
 from app.models.treino import Treino
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import authz, biblioteca_service, programa_service
-from app.services.sessao_service import chave_exercicio, upsert_excat
+from app.services import authz, biblioteca_service, programa_service, programa_commit_service as commits
 from app.utils import new_id, now_iso
 
 router = APIRouter(prefix="/v1/templates", tags=["templates"])
@@ -135,15 +134,8 @@ def aplicar_template(
             et_data["origem_licenciada"] = et.origem_licenciada or tpl.origem_licenciada
             ex = Exercicio(exercicio_id=exercicio_id, treino_id=treino_id, aluno_id=aluno_id, **et_data)
             puts.append({"PK": dest_pk, "SK": keys.sk_exercicio(treino_id, exercicio_id), **ex.model_dump()})
-        repo.batch_write(puts=puts)
-        # Semeia o catálogo permanente do aluno (1 upsert por nome canônico distinto)
-        vistos: set[str] = set()
-        for et in tpl.exercicios:
-            ch = chave_exercicio(et.nome or "")
-            if ch and ch not in vistos:
-                vistos.add(ch)
-                upsert_excat(aluno_id, et.nome, et.model_dump())
-        _touch_aluno_pointer(personal_id, aluno_id)
+        commits.commit(personal_id, aluno_id, commits.revisao(aluno_id), puts=puts,
+                       efeitos={"exercicios": [e.model_dump() for e in tpl.exercicios]})
         aplicados.append({"aluno_id": aluno_id, "treino_id": treino_id})
 
     return {"aplicados": aplicados}

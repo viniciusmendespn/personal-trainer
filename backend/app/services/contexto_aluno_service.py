@@ -11,6 +11,7 @@ Regras:
 - Cada seção é best-effort: erro numa seção vira seção vazia + log, nunca derruba
   o export do programa."""
 import logging
+from contextvars import ContextVar
 from datetime import date, datetime, timedelta, timezone
 
 from app.models.contexto_export import (
@@ -38,6 +39,7 @@ from app.services.sessao_service import chave_exercicio
 from app.utils import now_iso
 
 logger = logging.getLogger(__name__)
+_indisponiveis: ContextVar[list[str] | None] = ContextVar("contexto_indisponiveis", default=None)
 
 MAX_SESSOES = 20
 MAX_RELATOS_RESPONDIDOS = 10
@@ -80,7 +82,9 @@ def _secao(nome: str, fn, default):
     try:
         return fn()
     except Exception:
-        logger.exception("[contexto_aluno] falha ao montar seção %s", nome)
+        if _indisponiveis.get() is not None:
+            _indisponiveis.get().append(nome)
+        logger.warning("[contexto_aluno] seção indisponível: %s", nome)
         return default
 
 
@@ -354,13 +358,23 @@ def _gamificacao(pk: str) -> GamificacaoContexto | None:
 
 # ── Entrada pública ──────────────────────────────────────────────────────────
 def montar_contexto(personal_id: str, aluno_id: str,
-                    exercicios_programa: list[str]) -> ContextoAluno:
+                    exercicios_programa: list[str], *, compacto: bool = False) -> ContextoAluno:
+    indisponiveis: list[str] = []
+    token = _indisponiveis.set(indisponiveis)
+    try:
+        return _montar_contexto(personal_id, aluno_id, exercicios_programa, indisponiveis, compacto=compacto)
+    finally:
+        _indisponiveis.reset(token)
+
+
+def _montar_contexto(personal_id: str, aluno_id: str, exercicios_programa: list[str],
+                     indisponiveis: list[str], *, compacto: bool = False) -> ContextoAluno:
     """`exercicios_programa`: nomes dos exercícios do programa atual (o router já os
     carregou para o export — evita re-query de EX#). Usados na seção de evolução."""
     pk = keys.pk_aluno(aluno_id)
     resumo = _secao("estatisticas", lambda: sessao_service.resumo_aluno(aluno_id), {})
     sessoes = _secao("sessoes", lambda: _ultimas_sessoes_raw(pk), [])
-    return ContextoAluno(
+    contexto = ContextoAluno(
         gerado_em=now_iso()[:10],
         perfil=_secao("perfil", lambda: _perfil(pk), PerfilContexto()),
         anamnese=_secao("anamnese", lambda: _anamnese(pk, personal_id), None),
@@ -372,8 +386,12 @@ def montar_contexto(personal_id: str, aluno_id: str,
         evolucao_por_exercicio=_secao("evolucao", lambda: _evolucao_do_programa(
             sessoes, resumo.get("prs") or [], exercicios_programa), []),
         dores_e_duvidas=_secao("dores_duvidas", lambda: _dores_e_duvidas(pk), []),
-        postagens_recentes=_secao("postagens", lambda: _postagens(pk), []),
-        notas_do_personal=_secao("notas", lambda: _notas(aluno_id), []),
-        chat_recente=_secao("chat", lambda: _chat(pk), []),
+        postagens_recentes=[] if compacto else _secao("postagens", lambda: _postagens(pk), []),
+        notas_do_personal=[] if compacto else _secao("notas", lambda: _notas(aluno_id), []),
+        chat_recente=[] if compacto else _secao("chat", lambda: _chat(pk), []),
         gamificacao=_secao("gamificacao", lambda: _gamificacao(pk), None),
     )
+    contexto.secoes_indisponiveis = indisponiveis
+    if compacto:
+        contexto.perfil.observacoes_do_personal = None
+    return contexto

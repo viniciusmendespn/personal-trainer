@@ -54,8 +54,8 @@ export function useExportarPrograma() {
 export function useImportarPrograma(alunoId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ conteudo, confirmar }: { conteudo: string; confirmar?: boolean }) =>
-      treinosApi.importarPrograma(alunoId, conteudo, confirmar),
+    mutationFn: ({ conteudo, confirmar, revisao_base }: { conteudo: string; confirmar?: boolean; revisao_base?: number }) =>
+      treinosApi.importarPrograma(alunoId, conteudo, confirmar, revisao_base),
     onSuccess: () => {
       // substituição total: invalida treinos + exercícios do aluno + biblioteca (auto-cadastro)
       qc.invalidateQueries({ queryKey: ['treinos', alunoId] })

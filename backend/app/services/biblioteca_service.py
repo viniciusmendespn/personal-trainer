@@ -13,7 +13,7 @@ from app.models.grupos_musculares import grupos_do_item
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
 from app.services.sessao_service import chave_exercicio
-from app.utils import new_id
+from app.utils import det_id
 
 
 def url_busca_youtube(nome: str) -> str:
@@ -135,7 +135,7 @@ def upsert_from_exercicios(personal_id: str, exercicios: list[dict]) -> int:
         if eh_busca_youtube(video_url):
             video_url = None
         item = ExLib(
-            exlib_id=new_id(),
+            exlib_id=det_id(personal_id, "programa", chave),
             nome=nome,
             grupos=ex.get("grupos"),
             grupo=ex.get("grupo"),
@@ -148,6 +148,6 @@ def upsert_from_exercicios(personal_id: str, exercicios: list[dict]) -> int:
         puts.append({"PK": pk, "SK": keys.sk_exlib(item.exlib_id), **item.model_dump(), "pacote_id": "manual"})
         chaves.add(chave)
 
-    if puts:
-        repo.batch_write(puts=puts)
-    return len(puts)
+    # IDs por tenant/nome e escrita condicional: retomadas concorrentes ou uma Query
+    # ainda desatualizada não duplicam o item nem sobrescrevem edição na biblioteca.
+    return sum(repo.put_item_if_absent(pk, item["SK"], repo.clean(item)) for item in puts)

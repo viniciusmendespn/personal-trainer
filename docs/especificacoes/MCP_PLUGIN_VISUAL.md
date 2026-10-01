@@ -1,0 +1,105 @@
+# Plugin visual CoachPilot — implementação e ativação
+
+Implementação em 30/09/2026 do fluxo prioritário do [plano](../../PLANO_COACHPILOT_PLUGIN_VISUAL.md): carteira → aluno → proposta → revisão → aplicação → restauração. Inclui evolução com gráfico e tabela. O pacote está preparado para publicação em modo de compatibilidade; a ativação visual, o piloto e a validação no cliente ChatGPT permanecem pendentes.
+
+## Interface e transporte
+
+`frontend/src/mcp-app` é uma entrada React independente do portal. O adaptador `host.ts` usa `@modelcontextprotocol/ext-apps` para inicialização, resultados, tools, seleção mínima no contexto, pedidos explícitos à conversa e expansão. Preferências de ordenação e fallback de tela cheia usam extensões opcionais isoladas no adaptador. Não há chamada à API OpenAI para navegação ou renderização.
+
+`npm run build:mcp` verifica TypeScript e gera `backend/app/mcp/ui_dist/v1.html`, com JS/CSS locais inline, aproximadamente 466 KB (133 KB gzip). O `deploy.ps1` executa esse build antes do SAM. O recurso autenticado é `ui://coachpilot/workspace/v1.html`, MIME `text/html;profile=mcp-app`, com CSP sem origens externas de conexão/recursos. Vídeos são links explícitos; não são embeds.
+
+O transporte JSON-RPC stateless existente continua com Mangum sem lifespan. Foram acrescentados `resources/list`, `resources/read` e `resources/templates/list`; a autenticação OAuth e a resolução de tenant continuam compartilhadas. `abrir_coachpilot` anuncia entrypoints global/thread e aceita aluno/proposta explicitamente autorizados. Links nativos da extensão OpenAI ainda não foram registrados.
+
+Os detalhes de programa e contexto ficam em `_meta.coachpilot`; `structuredContent` mantém contrato conciso, IDs, revisão, estado e permissões. `obter_proposta_programa`, `exportar_programa_treino` e `detalhar_aluno` fornecem dados completos quando solicitados. Anotações privadas e conversas não entram na consulta compacta inicial. Falhas por seção são distinguidas de ausência de dados.
+
+A carteira normaliza acentos/caixa, aplica filtros antes de preencher a página e mantém cursor quando a busca é parcial. Examina até oito páginas por chamada. Os resumos e a ordenação da interface se referem aos alunos carregados; não são totais globais inferidos. Filtros usam a data local do personal, sete dias para vencimento próximo e a regra existente de dez dias sem treino.
+
+A evolução carrega até 200 registros e separa kg, lb e outras unidades registradas. Registros legados sem unidade ficam na tabela com indicação de unidade desconhecida e não entram no gráfico. Novos registros de sessão preservam tipo e unidade do snapshot. CrossFit/HIIT mantêm blocos e parâmetros; mudanças complexas seguem pelo pedido explícito ao chat.
+
+## Contratos e permissões
+
+| Tool | Permissão e comportamento |
+|---|---|
+| `abrir_coachpilot` | Leitura; carteira ou rota autorizada |
+| `mostrar_aluno` | Leitura; programa, restrições relatadas, contexto compacto |
+| `salvar_proposta_programa` | `treinos:write`; rascunho completo; criação exige `revisao_base`; edição exige `proposta_id` e `revisao_proposta` |
+| `obter_proposta_programa` | Leitura; programa, base, diff e validação completos |
+| `mostrar_proposta_programa` | Leitura; revisão visual da proposta |
+| `aplicar_proposta_programa` | `treinos:write`; destrutiva; exige aluno/proposta/revisão exatos e decisão explícita |
+| `consultar_operacao_programa` | Leitura pura; resultado confirmado ou `nao_confirmada` |
+| `retomar_operacao_programa` | `treinos:write`; somente efeitos pendentes de uma aplicação já confirmada |
+| `desfazer_alteracao_treino` | Tool legada; aceita `operation_id`; revisão e janela de restauração verificadas |
+
+Os contratos de entrada/saída estão nos modelos de `mcp/tools.py`. Todo acesso verifica o aluno e o tenant autenticado; nenhum argumento aceita `personal_id`. Flags e escopos são verificados também em chamadas manuais. Interface somente leitura não salva/aplica/restaura propostas. Seleção/contexto não concede permissão nem confirma escrita. O guia orienta a salvar proposta quando o fluxo está habilitado; clientes textuais continuam atendidos.
+
+## Consistência do programa
+
+Foi adotado commit transacional sobre o modelo de itens existente. `PROGRAMA#REVISAO`, programa, resultado da operação, snapshot, estado da proposta, auditoria e notificação MCP são gravados em uma única transação. A revisão base e a existência do vínculo do aluno são condições da gravação. Portais, importação, CRUD, cópia, templates, rotinas e tools legadas usam o mesmo coordenador. Programa legado começa em revisão zero; a primeira gravação cria revisão um. Atualizações parciais preservam agregados de execução.
+
+A aplicação usa ID determinístico vinculado a tenant, aluno, proposta e revisão. Uma repetição devolve a operação confirmada. Após timeout a UI lê proposta/operação; não reaplica automaticamente. `nao_confirmada` significa que não há registro confirmado disponível, não uma prova de que o host concluiu ou falhou. O estado transitório de processamento fica na UI; não há fila de aplicação assíncrona.
+
+Propostas têm revisão própria, normalização com a biblioteca, diff no servidor e TTL configurável de sete dias. Edição recalcula diff/validação. Vídeo efetivo e regras são revalidados antes de aplicar. Pareamento usa `origem_id` ou nome único nos dois conjuntos; homônimos ambíguos viram adição/remoção. TTL é verificado por timestamp antes da limpeza do DynamoDB. Sessão ativa é verificada antes e como condição da transação; substituir/restaurar exige confirmação explícita quando o aluno está treinando.
+
+Restaurar exige a operação exata, snapshot disponível por sete dias e revisão resultante ainda atual. Não sobrescreve uma edição posterior. A restauração também recebe ID determinístico e revisão nova. Importação do portal carrega a revisão ao abrir/exportar e respeita a revisão embutida no arquivo; um arquivo antigo não recebe silenciosamente a revisão atual do modal.
+
+Agenda, catálogo e ponteiro têm pendências persistidas na operação e outbox `SCHED#dia / PROGRAMA_EFEITO#operation_id`. São retomados após commit, por tool de escrita ou pelo scheduler horário. Falha nesses efeitos não muda o sucesso do programa. Progresso é registrado por conjunto de efeitos; agenda/ponteiro usam condição de revisão e biblioteca usa ID determinístico/escrita condicional para tolerar retomadas concorrentes. Auditoria mantém TTL de 180 dias; notificações, 30 dias. Retomada não cria nova notificação nem incrementa revisão.
+
+### Limites e decisão de lançamento
+
+A transação permite até 100 chaves distintas, incluindo programa antigo/novo e controles. Há guardas conservadores de tamanho por item (390.000 bytes serializados) e conjunto (3.900.000 bytes). Programas/propostas acima dos limites recebem erro antes de alterar o programa. Não há divisão em batches para simular atomicidade.
+
+Tamanhos reais de produção não foram medidos. Isso é um critério de lançamento pendente: levantar quantidade de ações e tamanho de proposta/snapshot em uma amostra autorizada. Se programas reais excederem os limites, a próxima decisão deve ser versões imutáveis com ponteiro ativo e adaptação de todos os leitores/escritores, conforme o plano. Não ativar escrita visual para esses programas sem essa decisão. A outbox retoma até 50 operações por dia consultado, dentro do orçamento do scheduler, por até sete dias; monitorar backlog no piloto.
+
+## Flags e validação em desenvolvimento
+
+A compatibilidade começa ligada; as flags do fluxo visual começam desabilitadas:
+
+| Ambiente | SAM | Efeito |
+|---|---|---|
+| `MCP_COMPAT_MODE` | `McpCompatMode` | Padrão `true`: contrato publicado e writers legados; prevalece sobre flags visuais |
+| `MCP_UI_ENABLED` | `McpUiEnabled` | Recursos e metadados UI |
+| `MCP_PROPOSTAS_ENABLED` | `McpPropostasEnabled` | Consulta/salvamento de propostas |
+| `MCP_APLICACAO_ENABLED` | `McpAplicacaoEnabled` | Aplicação de propostas |
+| `MCP_UI_DOMAIN` | `McpUiDomain` | Origem de isolamento declarada para a UI |
+| `MCP_PROPOSTA_TTL_S` | variável de ambiente | TTL do rascunho; padrão 604800 segundos |
+
+Em ambiente dev isolado, desligar `MCP_COMPAT_MODE` e começar com UI ligada e propostas/aplicação desligadas. Depois habilitar propostas; liberar aplicação somente após testes de escrita. Configurar o domínio de isolamento aceito pelo host antes da submissão. A conexão MCP continua exigindo OAuth; o bundle não contém credenciais. Desabilitar UI remove seus metadados e mantém tools textuais.
+
+`MCP_COMPAT_MODE=true` seleciona as ferramentas e routers capturados diretamente das Lambdas publicadas (`app/compat/v1`, com hashes em `manifest.json`). Mantém os 13 contratos existentes, importações grandes por batch e desfazer com snapshots anteriores ao deploy. Bloqueia recursos UI, propostas, commit transacional e sua outbox, mesmo com outras flags ligadas. OAuth, URL e segredos continuam os atuais. O portal aceita exports sem revisão nesse modo. Não alternar writers legados e transacionais nos mesmos dados sem um procedimento de migração/rollback: as revisões não refletem alterações feitas pelo legado.
+
+Comandos locais, a partir da raiz:
+
+```powershell
+Push-Location backend
+python -m pytest -q
+Pop-Location
+Push-Location frontend
+npm ci
+npm run build:mcp
+npm test
+npm run test:mcp-ui
+npm run build
+Pop-Location
+sam validate --lint --template-file backend/template.yaml --region us-east-1
+```
+
+O Playwright inicia `backend/tests/visual_harness.py` em `127.0.0.1:8766`, com TestClient do MCP real, token de teste e DynamoDB em memória. O harness desliga explicitamente a compatibilidade; não usa AWS/contas reais e não faz parte das rotas publicadas. Usa Edge instalado; `CP_BROWSER_CHANNEL=chrome` seleciona Chrome instalado. Para inspeção manual, executar `python backend/tests/visual_harness.py` e abrir a URL local. Os testes cobrem consulta, restrições, edição/revisão, aplicação/restauração, somente leitura, teclado/320 px/tema escuro, atualização externa com edição pendente e unidades da evolução.
+
+Em 30/09/2026: pytest com 553 testes aprovados (incluindo 13 regressões de compatibilidade); Vitest com 229 testes aprovados; Playwright com seis fluxos aprovados; UI e portal compilados; validação SAM aprovada. Os testes boto3 verificam a serialização única e uma única chamada transacional, além dos fakes de serviço.
+
+Antes de ativar o visual: testar OAuth, CSP, global/thread, tela cheia, tema e confirmação de escrita dentro do ChatGPT; validar conexão somente leitura e conflitos em dev; conferir amostras de tamanho e latência; atualizar submissão com flags/efeitos reais; fazer Rescan e piloto. Alteração incompatível de bundle/contrato deve ganhar novo URI/versionamento e preservar recursos necessários aos cards existentes.
+
+## Publicação com compatibilidade
+
+Manter `McpCompatMode=true`, `McpUiEnabled=false`, `McpPropostasEnabled=false` e `McpAplicacaoEnabled=false` no deploy de produção. Preservar os segredos do stack: parâmetros omitidos reutilizam os valores existentes. Gerar o changeset com `sam deploy --no-execute-changeset`, verificar ausência de remoções/substituições e só então executá-lo. Publicar o frontend com `deploy.ps1 frontend`, que trata os quatro manifests/CloudFronts.
+
+Os testes de compatibilidade verificam seleção dos routers no boot, integridade do snapshot, 13 schemas publicados, token OAuth existente, importação de 110 exercícios pelos dois canais, retry, desfazer antigo, CRUD/templates/rotinas, confirmação de sessão e isolamento de tenant. Esse modo não oferece as novas telas no ChatGPT. Para testá-las localmente, executar `python backend/tests/visual_harness.py` e abrir `http://127.0.0.1:8766`.
+
+## Etapas posteriores
+
+O código entrega o fluxo principal das etapas 1–2 e a evolução da etapa 3. A integração hospedada da etapa 0 ainda depende do ambiente dev/ChatGPT. Deep links nativos, preferências completas de prescrição e skill empacotada ficam após estabilização do contrato no host. Lotes, eventos, menções, formulários ricos e arquivos continuam nas fases posteriores explicitamente previstas; não foram adicionados ao transporte atual.
+
+## Referências verificadas
+
+- [UI de plugins OpenAI](https://developers.openai.com/plugins/build/chatgpt-ui), [referência](https://developers.openai.com/plugins/reference) e [extensões](https://developers.openai.com/plugins/build/extensions).
+- [Transações DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html), [permissões IAM](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis-iam.html) e [políticas SAM](https://github.com/aws/serverless-application-model/blob/develop/samtranslator/policy_templates_data/policy_templates.json). `DynamoDBCrudPolicy` já inclui `ConditionCheckItem`; Put/Update/Delete usam as permissões das operações correspondentes.

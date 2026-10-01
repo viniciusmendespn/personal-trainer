@@ -342,6 +342,7 @@ def _processar_scores_wod(aluno_id: str, s: dict, scores_blocos: list, fim_iso: 
             "aluno_id": aluno_id,
             "data_hora": fim_iso,
             "series_exec": [{"reps": score_valor}],
+            "tipo_exercicio": "PERFORMANCE", "unidade_reps": unidade,
             "wod": True, "formato": formato, "rx": sc.rx,
             "GSI1PK": keys.gsi1_registro(aluno_id, chave_wod),
             "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
@@ -677,9 +678,13 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
         raise HTTPException(400, "Exercício não identificado")
     chave = chave_exercicio(ex_nome)
     pk = keys.pk_aluno(aluno_id)
+    ex_snap = next((e for e in snaps if e.get("exercicio_id") == ex_id), None) or ex
     on_insert = {
         "sessao_id": s["sessao_id"], "exercicio_id": ex_id, "exercicio_nome": ex_nome,
         "aluno_id": aluno_id, "data_hora": now_iso(),
+        "tipo_exercicio": normalizar_tipo_exercicio(ex_snap.get("tipo_exercicio")),
+        "unidade_carga": ex_snap.get("unidade_carga") or "kg",
+        "unidade_reps": ex_snap.get("unidade_reps"),
         "canal_origem": canal.value, "classificacao": classificacao.value, "ator": ator.value,
         "GSI1PK": keys.gsi1_registro(aluno_id, chave), "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
         "ttl": int(time.time()) + REG_TTL_S,   # só GC: o finish (manual ou automático) remove
@@ -688,7 +693,6 @@ def record(aluno_id: str, series: list, exercicio_id: str | None = None,
                                  set_always={"atualizado_em": now_iso()})
 
     # Agregação na escrita (ESPEC §3.1): volume desta gravação + recorde de carga.
-    ex_snap = next((e for e in snaps if e.get("exercicio_id") == ex_id), None) or ex
     ex_tipo = normalizar_tipo_exercicio(ex_snap.get("tipo_exercicio"))
     ex_direcao = ex_snap.get("metrica_direcao") or "MAIOR"
     _marcar_aquecimento(series, ex_snap)
@@ -792,6 +796,8 @@ def set_series(aluno_id: str, exercicio_id: str | None, series: list,
     on_insert = {
         "sessao_id": s["sessao_id"], "exercicio_id": ex_id, "exercicio_nome": ex_nome,
         "aluno_id": aluno_id, "data_hora": now_iso(),
+        "tipo_exercicio": ex_tipo, "unidade_carga": ex_snap.get("unidade_carga") or "kg",
+        "unidade_reps": ex_snap.get("unidade_reps"),
         "canal_origem": canal.value, "classificacao": classificacao.value, "ator": ator.value,
         "GSI1PK": keys.gsi1_registro(aluno_id, chave), "GSI1SK": keys.gsi1sk_registro(epoch_ms()),
         "ttl": int(time.time()) + REG_TTL_S,   # só GC: o finish (manual ou automático) remove
@@ -1090,9 +1096,10 @@ def _evolucao_serie(aluno_id: str, chave: str, info: dict, limit: int) -> dict:
         series_exec = [s for s in (c.get("series_exec") or []) if _serie_valida(s)]
         if not series_exec:
             continue   # só aquecimento/anotação de contexto — não vira ponto de evolução
-        ponto: dict = {"data": c.get("data_hora")}
+        ponto: dict = {"data": c.get("data_hora"), "unidade_carga": c.get("unidade_carga"),
+                       "unidade_reps": c.get("unidade_reps")}
 
-        if tipo == "PERFORMANCE":
+        if (c.get("tipo_exercicio") or tipo) == "PERFORMANCE":
             # Métrica livre no campo `reps`. Ponto da sessão = melhor série (máx ou mín conforme direção).
             vals = [v for v in (_num(s.get("reps")) for s in series_exec) if v is not None]
             metrica_max = (min(vals) if direcao == "MENOR" else max(vals)) if vals else None

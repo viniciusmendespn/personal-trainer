@@ -11,7 +11,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
-from app.mcp import jsonrpc, oauth
+from app.config import settings
+from app.mcp import oauth
+
+if settings.mcp_compat_mode:
+    from app.compat.v1 import jsonrpc
+else:
+    from app.mcp import jsonrpc
 
 app = FastAPI(
     title="CoachPilot MCP",

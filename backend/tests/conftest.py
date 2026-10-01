@@ -6,11 +6,17 @@ que o importa: como todos fazem `from app.repositories import dynamo_repo as rep
 compartilham o mesmo objeto de módulo, e um serviço novo entrando na cadeia de chamadas
 não vira falha misteriosa de boto3.
 """
+import os
+
+# A suíte principal exercita o fluxo novo; a compatibilidade tem testes próprios.
+os.environ["MCP_COMPAT_MODE"] = "false"
+
 import pytest
 
 from fake_repo import FakeRepo
 
 _FUNCOES = [
+    "transact_write",
     "get_item", "query_pk", "query_pk_last_n", "query_between", "query_pk_page",
     "batch_get_items", "put_item", "put_item_if_absent", "update_item",
     "update_item_if_exists", "add_and_set", "increment_counter", "delete_item",

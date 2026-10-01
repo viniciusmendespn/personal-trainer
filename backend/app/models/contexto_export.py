@@ -128,6 +128,7 @@ class GamificacaoContexto(BaseModel):
 
 
 class ContextoAluno(BaseModel):
+    secoes_indisponiveis: list[str] = Field(default_factory=list)
     descricao_do_bloco: str = (
         "Contexto completo do aluno (perfil, saúde, histórico de treinos, feedbacks) para a IA "
         "analisar antes de montar/ajustar o programa. NÃO incluir este bloco na resposta."

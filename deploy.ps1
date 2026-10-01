@@ -27,6 +27,11 @@ function Get-EnvLocal {
 
 function Deploy-Backend {
     Write-Host "`n=== Deploy Backend ===" -ForegroundColor Green
+    Push-Location (Join-Path $PSScriptRoot "frontend")
+    try {
+        npm run build:mcp
+        if ($LASTEXITCODE -ne 0) { throw "Build da interface MCP falhou" }
+    } finally { Pop-Location }
 
     # Secrets NoEcho: lidos do .env.local e passados como override pontual
     # (não ficam no samconfig.toml para não sobrescrever acidentalmente em produção)

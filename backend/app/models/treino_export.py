@@ -22,6 +22,7 @@ from app.models.treino import BlocoTreino
 
 
 class ExercicioTreinoFile(BaseModel):
+    origem_id: Optional[str] = None   # identidade opcional para pareamento de propostas
     nome: str
     grupos: Optional[list[str]] = None         # grupos musculares atingidos — ex.: ["Peito", "Tríceps"]
     grupo: Optional[str] = None                # derivado de `grupos`; legado nos arquivos antigos
@@ -41,6 +42,7 @@ class ExercicioTreinoFile(BaseModel):
 
 
 class TreinoFileItem(BaseModel):
+    origem_id: Optional[str] = None
     ref: Optional[str] = None              # só legibilidade (t_a, t_b…) — não persistido
     nome: str
     foco: Optional[str] = None
@@ -61,11 +63,14 @@ class ProgramaTreinoExportFile(ProgramaTreinoFile):
     """Formato do DOWNLOAD: programa + contexto completo do aluno para análise por IA.
     O import aceita este mesmo arquivo de volta — `contexto_aluno` é ignorado."""
     contexto_aluno: Optional[ContextoAluno] = None
+    revisao: int = 0
 
 
 class ImportarProgramaResponse(BaseModel):
     treinos_importados: int
     exercicios_importados: int
+    operation_id: Optional[str] = None
+    revisao_resultante: Optional[int] = None
     # Achados que não impedem a gravação (campo inventado pela IA que foi descartado, nome que
     # divergiu da biblioteca…). Erro bloqueia e sai como 400; aviso volta aqui, no 201.
     avisos: list[dict] = Field(default_factory=list)

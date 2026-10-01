@@ -9,12 +9,14 @@ from decimal import Decimal
 
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
+from boto3.dynamodb.types import TypeSerializer
 from botocore.exceptions import ClientError
 
 from app.config import settings
 
 _table = None
 _resource = None
+_transaction_client = None
 _INTERNAL = {"PK", "SK", "GSI1PK", "GSI1SK", "ttl"}
 
 
@@ -51,6 +53,8 @@ def _undec(v):
         return {k: _undec(x) for k, x in v.items()}
     if isinstance(v, list):
         return [_undec(x) for x in v]
+    if isinstance(v, set):
+        return sorted(_undec(x) for x in v)
     return v
 
 
@@ -77,8 +81,14 @@ def query_pk(pk: str, sk_prefix: str | None = None, consistent: bool = False) ->
     cond = Key("PK").eq(pk)
     if sk_prefix:
         cond &= Key("SK").begins_with(sk_prefix)
-    resp = _get_table().query(KeyConditionExpression=cond, ConsistentRead=consistent)
-    return resp.get("Items", [])
+    kwargs = {"KeyConditionExpression": cond, "ConsistentRead": consistent}
+    items = []
+    while True:
+        resp = _get_table().query(**kwargs)
+        items.extend(resp.get("Items", []))
+        if not resp.get("LastEvaluatedKey"):
+            return items
+        kwargs["ExclusiveStartKey"] = resp["LastEvaluatedKey"]
 
 
 def query_pk_last_n(pk: str, sk_prefix: str, limit: int) -> list[dict]:
@@ -206,6 +216,52 @@ def query_gsi1_page(gsi1pk: str, limit: int, cursor: str | None = None) -> tuple
 
 
 # ── Escrita ──────────────────────────────────────────────────────────────────
+class TransactionConflict(Exception):
+    """Uma condição de concorrência mudou; nenhum item foi gravado."""
+
+
+class TransactionTooLarge(Exception):
+    """Recusar antes de escrever, nunca dividir um commit em batches."""
+
+
+def transact_write(actions: list[dict]) -> None:
+    """Uma única TransactWriteItems. Recebe valores Python, serializa só aqui.
+
+    Limites conservadores incluem o envelope serializado (maior que o item real).
+    Não usa o client do resource: seus handlers também serializam e causam dupla conversão.
+    """
+    global _transaction_client
+    serializer = TypeSerializer()
+    encoded = []
+    targets = set()
+    for action in actions:
+        kind, body = next(iter(action.items()))
+        body = {"TableName": settings.table_name, **body}
+        target = body.get("Item") or body["Key"]
+        key = (target["PK"], target["SK"])
+        if key in targets:
+            raise ValueError("uma transação não pode agir duas vezes na mesma chave")
+        targets.add(key)
+        for field in ("Item", "Key", "ExpressionAttributeValues"):
+            if field in body:
+                body[field] = {k: serializer.serialize(_san(v)) for k, v in body[field].items()}
+        if "Item" in body and len(json.dumps(body["Item"], ensure_ascii=False).encode()) > 390_000:
+            raise TransactionTooLarge("um item excede o limite de tamanho do DynamoDB")
+        encoded.append({kind: body})
+    if len(encoded) > 100 or len(json.dumps(encoded, ensure_ascii=False).encode()) > 3_900_000:
+        raise TransactionTooLarge("o programa excede os limites de uma transação (100 ações / 4 MB)")
+    if _transaction_client is None:
+        _transaction_client = boto3.client("dynamodb", region_name=settings.cognito_region)
+    try:
+        _transaction_client.transact_write_items(TransactItems=encoded)
+    except ClientError as exc:
+        if exc.response["Error"]["Code"] == "TransactionCanceledException":
+            reasons = exc.response.get("CancellationReasons", [])
+            if any(r.get("Code") == "ConditionalCheckFailed" for r in reasons):
+                raise TransactionConflict() from exc
+        raise
+
+
 def put_item(pk: str, sk: str, data: dict) -> None:
     _get_table().put_item(Item={"PK": pk, "SK": sk, **_san(data)})
 

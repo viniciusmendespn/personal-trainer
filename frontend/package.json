@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:mcp": "tsc --noEmit && vite build --config vite.mcp.config.ts",
+    "test:mcp-ui": "playwright test --config playwright.mcp.config.ts",
     "postbuild": "node scripts/prerender-public-pages.mjs",
     "preview": "vite preview",
     "test": "vitest run",
@@ -15,6 +17,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@modelcontextprotocol/ext-apps": "^2.0.3",
     "@resvg/resvg-wasm": "^2.6.2",
     "@tanstack/react-query": "^5.95.2",
     "@tiptap/extension-underline": "^3.27.1",
@@ -35,6 +38,7 @@
     "satori": "^0.26.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.2.2",
     "@types/dompurify": "^3.0.5",
     "@types/node": "^26.2.0",

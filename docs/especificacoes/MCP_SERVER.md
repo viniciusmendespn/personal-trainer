@@ -1,5 +1,8 @@
 # Servidor MCP — ChatGPT, Claude e Gemini falando direto com o CoachPilot
 
+O fluxo visual de carteira, aluno e revisão/aplicação de propostas está documentado em
+[MCP_PLUGIN_VISUAL.md](MCP_PLUGIN_VISUAL.md), incluindo flags, contratos, consistência e critérios pendentes de publicação.
+
 ## Por que existe
 
 O fluxo já existia, manual: `frontend/public/prompt-treino-aluno.md` instrui o personal a baixar o

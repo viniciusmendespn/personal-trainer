@@ -15,10 +15,10 @@ export const treinosApi = {
     api.delete(`/v1/alunos/${alunoId}/treinos/${treinoId}`, { params: { confirmar } }),
 
   exportarPrograma: (alunoId: string) =>
-    api.get<object>(`/v1/alunos/${alunoId}/treinos/exportar`).then((r) => r.data),
-  importarPrograma: (alunoId: string, conteudo: string, confirmar = false) =>
+    api.get<{ revisao?: number }>(`/v1/alunos/${alunoId}/treinos/exportar`).then((r) => r.data),
+  importarPrograma: (alunoId: string, conteudo: string, confirmar = false, revisao_base?: number) =>
     api
-      .post<ImportarProgramaResponse>(`/v1/alunos/${alunoId}/treinos/importar`, { conteudo, confirmar })
+      .post<ImportarProgramaResponse>(`/v1/alunos/${alunoId}/treinos/importar`, { conteudo, confirmar, revisao_base })
       .then((r) => r.data),
   /** Confere o JSON sem gravar nada. Recusa vem como 400, no mesmo formato do import. */
   validarPrograma: (alunoId: string, conteudo: string) =>

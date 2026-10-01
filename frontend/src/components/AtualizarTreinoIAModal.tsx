@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Download, ExternalLink, Check, FileUp, ListChecks } from 'lucide-react'
 import { Modal, Button, Textarea, Spinner, useToast, useConfirm } from './ui'
 import { RelatorioImportIA } from './RelatorioImportIA'
@@ -39,11 +39,20 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome, semT
   const [erro, setErro] = useState<ErroImport | null>(null)
   const [conferido, setConferido] = useState<Conferido | null>(null)
   const [baixando, setBaixando] = useState(false)
+  const [revisaoBase, setRevisaoBase] = useState<number>()
   const exportar = useExportarPrograma()
   const importar = useImportarPrograma(alunoId)
   const validar = useValidarPrograma(alunoId)
   const confirm = useConfirm()
   const { show } = useToast()
+  useEffect(() => {
+    if (!open) return
+    let active = true
+    setRevisaoBase(undefined)
+    void exportar.mutateAsync(alunoId).then(p => { if (active) setRevisaoBase(p.revisao ?? 0) })
+      .catch(() => { if (active) show('Não foi possível consultar a revisão do programa. Reabra a janela antes de aplicar.', 'error') })
+    return () => { active = false }
+  }, [open, alunoId])
 
   async function handleBaixarArquivo() {
     setBaixando(true)
@@ -53,6 +62,7 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome, semT
         fetchPromptMd('/prompt-treino-aluno.md'),
         bibliotecaApi.list(),
       ])
+      setRevisaoBase(programa.revisao ?? 0)
       const md = montarArquivoIA(renderizarPromptIA(prompt, slimBiblioteca(lib)), [
         {
           titulo: '📦 DADOS DO ALUNO (gerado automaticamente — não edite)',
@@ -102,8 +112,13 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome, semT
   }
 
   async function handleImportar() {
+    if (revisaoBase === undefined) {
+      show('Aguarde a consulta da revisão do programa antes de aplicar.', 'error')
+      return
+    }
     const conteudo = prepararJson()
     if (!conteudo) return
+    const baseDoArquivo = JSON.parse(conteudo)?.revisao ?? revisaoBase
     if (!semTreinos) {
       const ok = await confirm({
         title: 'Sobrescrever treino',
@@ -116,7 +131,7 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome, semT
     setErro(null)
     setConferido(null)
     try {
-      const res = await importar.mutateAsync({ conteudo })
+      const res = await importar.mutateAsync({ conteudo, revisao_base: baseDoArquivo })
       setResult(res)
       setJson('')
     } catch (err) {
@@ -130,7 +145,7 @@ export function AtualizarTreinoIAModal({ open, onClose, alunoId, alunoNome, semT
         })
         if (!mesmoAssim) return
         try {
-          const res = await importar.mutateAsync({ conteudo, confirmar: true })
+          const res = await importar.mutateAsync({ conteudo, confirmar: true, revisao_base: baseDoArquivo })
           setResult(res)
           setJson('')
         } catch (err2) {

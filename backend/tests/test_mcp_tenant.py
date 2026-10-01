@@ -26,9 +26,12 @@ def _tenant(personal_id, scopes=TODOS):
 
 
 @pytest.fixture
-def carteiras(mcp_env):
+def carteiras(mcp_env, monkeypatch):
     """Dois personais, um aluno cada, com um treino no aluno do A."""
     repo = mcp_env
+    from app.config import settings
+    monkeypatch.setattr(settings, "mcp_propostas_enabled", True)
+    monkeypatch.setattr(settings, "mcp_aplicacao_enabled", True)
     repo.put_item(keys.pk_personal(PERSONAL_A), keys.sk_aluno_pointer(ALUNO_DE_A),
                   {"aluno_id": ALUNO_DE_A, "nome": "Marina", "status": "ATIVO"})
     repo.put_item(keys.pk_personal(PERSONAL_B), keys.sk_aluno_pointer(ALUNO_DE_B),
@@ -45,6 +48,14 @@ def carteiras(mcp_env):
 # ── tools com aluno_id: nenhuma aceita aluno de outro personal ──────────────
 
 CHAMADAS_COM_ALUNO = [
+    ("abrir_coachpilot", {"aluno_id": ALUNO_DE_A}),
+    ("mostrar_aluno", {"aluno_id": ALUNO_DE_A}),
+    ("salvar_proposta_programa", {"aluno_id": ALUNO_DE_A, "programa": {}, "resumo_da_mudanca": "x", "revisao_base": 0}),
+    ("obter_proposta_programa", {"aluno_id": ALUNO_DE_A, "proposta_id": "p"}),
+    ("mostrar_proposta_programa", {"aluno_id": ALUNO_DE_A, "proposta_id": "p"}),
+    ("aplicar_proposta_programa", {"aluno_id": ALUNO_DE_A, "proposta_id": "p", "revisao_proposta": 1}),
+    ("consultar_operacao_programa", {"aluno_id": ALUNO_DE_A, "operation_id": "op"}),
+    ("retomar_operacao_programa", {"aluno_id": ALUNO_DE_A, "operation_id": "op"}),
     ("detalhar_aluno", {"aluno_id": ALUNO_DE_A}),
     ("exportar_programa_treino", {"aluno_id": ALUNO_DE_A}),
     ("historico_sessoes", {"aluno_id": ALUNO_DE_A}),

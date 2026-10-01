@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 
 from app.mcp import tokens as mcp_tokens
 from app.mcp import tools as mcp_tools
+from app.mcp import ui_resources
 from app.services import mcp_service
 
 log = logging.getLogger(__name__)
@@ -66,6 +67,7 @@ def _tratar(metodo: str, params: dict, req_id, tenant: mcp_tokens.Tenant) -> dic
         return _resultado(req_id, {
             "protocolVersion": _negociar_versao(params.get("protocolVersion")),
             "capabilities": {"tools": {"listChanged": False},
+                             "resources": {"subscribe": False, "listChanged": False},
                              "prompts": {"listChanged": False}},
             "serverInfo": SERVER_INFO,
             "instructions": mcp_tools.INSTRUCOES_SERVIDOR,
@@ -76,6 +78,18 @@ def _tratar(metodo: str, params: dict, req_id, tenant: mcp_tokens.Tenant) -> dic
 
     if metodo == "ping":
         return _resultado(req_id, {})
+
+    if metodo == "resources/list":
+        return _resultado(req_id, {"resources": ui_resources.listar()})
+
+    if metodo == "resources/templates/list":
+        return _resultado(req_id, {"resourceTemplates": []})
+
+    if metodo == "resources/read":
+        try:
+            return _resultado(req_id, ui_resources.ler(params.get("uri")))
+        except KeyError:
+            return _erro(req_id, INVALID_PARAMS, "recurso desconhecido ou UI desabilitada")
 
     if metodo == "tools/list":
         return _resultado(req_id, {"tools": mcp_tools.listar_tools(tenant)})

@@ -123,6 +123,26 @@ Parameters:
     Type: String
     Default: ""
     Description: "Token de verificacao de dominio da submissao de app do ChatGPT. Servido em texto puro em mcp.{dominio}/.well-known/openai-apps-challenge."
+  McpCompatMode:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: "Preserva as ferramentas e writers publicados; bloqueia o fluxo visual."
+  McpUiEnabled:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+  McpPropostasEnabled:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+  McpAplicacaoEnabled:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+  McpUiDomain:
+    Type: String
+    Default: "https://ui.coachpilot.com.br"
 
 Conditions:
   CreateFrontendInfra: !Equals [!Ref DeployFrontendInfra, "true"]
@@ -169,6 +189,11 @@ Globals:
         PACOTE_SECRET: !Ref PacoteSecret
         MCP_TOKEN_SECRET: !Ref McpTokenSecret
         MCP_SERVER_URL: !Sub "https://mcp.${DomainName}"
+        MCP_COMPAT_MODE: !Ref McpCompatMode
+        MCP_UI_ENABLED: !Ref McpUiEnabled
+        MCP_PROPOSTAS_ENABLED: !Ref McpPropostasEnabled
+        MCP_APLICACAO_ENABLED: !Ref McpAplicacaoEnabled
+        MCP_UI_DOMAIN: !Ref McpUiDomain
         OPENAI_APPS_CHALLENGE: !Ref OpenaiAppsChallenge
 
 Resources:

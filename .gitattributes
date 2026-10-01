@@ -1,0 +1,3 @@
+# Hashes do snapshot de produção devem permanecer estáveis em qualquer checkout.
+backend/app/compat/v1/** text eol=lf
+backend/app/mcp/ui_dist/** text eol=lf

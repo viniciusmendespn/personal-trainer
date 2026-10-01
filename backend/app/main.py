@@ -6,6 +6,9 @@ from app.config import settings
 from app.routers import (admin, agenda, aluno, alunos, anamnese, avaliacoes, biblioteca, captura, conhecimento, config, cupom, dashboard, divulgador,
                          feedback, feed_global, ferias, financeiro, leads, loja, loja_public, mcp_portal, metas, notificacoes, pacotes, personal, personal_chat, plano, preview, push, rotinas, sessoes, telemetry, templates, treinos, wapi, webhook)
 
+if settings.mcp_compat_mode:
+    from app.compat.v1 import rotinas, templates, treinos
+
 app = FastAPI(
     title="Personal Trainer",
     version="0.1.0",

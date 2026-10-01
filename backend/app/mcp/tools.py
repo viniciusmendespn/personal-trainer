@@ -8,7 +8,6 @@ anamnese, descrição de pacote da loja) — é entrada não-confiável por defi
 Todo `aluno_id` que chega do LLM passa por `authz.authorize_aluno` antes de qualquer
 leitura ou escrita, mesmo quando "só poderia" ter vindo de um `listar_alunos` anterior.
 """
-import hashlib
 import json
 from dataclasses import dataclass
 from functools import lru_cache
@@ -39,6 +38,8 @@ from app.services import (
     validacao_programa,
 )
 from app.utils import now_iso
+from app.config import settings
+from app.services import programa_commit_service as commits, proposta_programa_service as propostas
 
 INSTRUCOES_SERVIDOR = (
     "Você está conectado ao CoachPilot, o sistema de gestão de um personal trainer. "
@@ -82,6 +83,9 @@ class ToolDef:
     escopo: str
     somente_leitura: bool
     destrutiva: bool
+    ui: bool = False
+    entrypoints: tuple[str, ...] = ()
+    output: type[BaseModel] | None = None
 
 
 TOOLS: dict[str, ToolDef] = {}
@@ -89,11 +93,11 @@ TOOLS: dict[str, ToolDef] = {}
 
 def tool(*, nome: str, titulo: str, descricao: str, args: type[BaseModel],
          escopo: str = SCOPE_READ, somente_leitura: bool = True,
-         destrutiva: bool = False):
+         destrutiva: bool = False, ui: bool = False, entrypoints=(), output=None):
     def deco(fn):
         TOOLS[nome] = ToolDef(nome=nome, titulo=titulo, descricao=descricao, args=args,
                               fn=fn, escopo=escopo, somente_leitura=somente_leitura,
-                              destrutiva=destrutiva)
+                              destrutiva=destrutiva, ui=ui, entrypoints=entrypoints, output=output)
         return fn
     return deco
 
@@ -158,6 +162,7 @@ class ListarAlunosArgs(BaseModel):
     busca: str | None = Field(None, description="Filtro por parte do nome, sem acento/caixa")
     limit: int = Field(50, description="Máximo de alunos por página (teto 200)")
     cursor: str | None = Field(None, description="Cursor da página anterior")
+    filtro: str | None = Field(None, description="SEM_TREINO_VIGENTE, VENCIDOS, PROXIMOS ou SEM_TREINAR")
 
 
 @tool(nome="listar_alunos", titulo="Listar alunos", args=ListarAlunosArgs,
@@ -165,24 +170,11 @@ class ListarAlunosArgs(BaseModel):
                 "última vez. Ponto de partida: é daqui que saem os `aluno_id`.")
 def listar_alunos(a: ListarAlunosArgs) -> dict:
     t = tenant_atual()
-    itens, cursor = repo.query_pk_page(
-        keys.pk_personal(t.personal_id), "ALUNO#", _limite(a.limit, 50), a.cursor,
-        filters={"status": a.status} if a.status else None,
-    )
-    alvo = (a.busca or "").strip().lower()
-    out = []
-    for i in itens:
-        nome = i.get("nome") or ""
-        if alvo and alvo not in nome.lower():
-            continue
-        out.append({
-            "aluno_id": i.get("aluno_id"),
-            "nome": nome,
-            "status": i.get("status"),
-            "objetivos": i.get("objetivos"),
-            "ultimo_treino_em": i.get("ultimo_treino_em"),
-        })
-    return {"items": out, "next_cursor": cursor}
+    from app.services.carteira_visual_service import pagina
+    return pagina(t.personal_id, busca=a.busca, status=a.status, filtro=a.filtro,
+                  limit=_limite(a.limit, 50), cursor=a.cursor)
+
+
 
 
 class AlunoArgs(BaseModel):
@@ -378,7 +370,7 @@ def _schema_programa(campo: str) -> str:
 
 # O schema completo custa ~1,7k tokens e vai no system prompt de toda conversa. Uma cópia
 # basta: `validar_programa_treino` aponta para esta na sua description em vez de repeti-lo.
-_TOOLS_COM_SCHEMA_DO_PROGRAMA = {"aplicar_programa_treino"}
+_TOOLS_COM_SCHEMA_DO_PROGRAMA = {"aplicar_programa_treino", "salvar_proposta_programa"}
 
 
 def _com_schema_do_programa(schema: dict, nome: str) -> dict:
@@ -454,6 +446,7 @@ def _relatorio(programa, erros, avisos) -> dict:
 # ---------------------------------------------------------------------------
 
 class AplicarProgramaArgs(BaseModel):
+    revisao_base: int | None = None
     aluno_id: str = Field(..., description="Id do aluno")
     programa: dict = Field(
         ...,
@@ -523,43 +516,28 @@ def aplicar_programa_treino(a: AplicarProgramaArgs) -> dict:
             )
 
     # Idempotência: o LLM costuma repetir a mesma chamada. Um replay em menos de 60s
-    # devolve o resultado anterior em vez de apagar e recriar o programa de novo.
-    assinatura = hashlib.sha256(
-        json.dumps({"a": a.aluno_id, "p": a.programa}, sort_keys=True, default=str).encode()
-    ).hexdigest()
-    if not repo.put_item_if_absent(keys.pk_mcp_idem(assinatura), "META",
-                                   {"ttl": mcp_service.agora() + 60}):
-        return {"status": "ja_aplicado",
-                "mensagem": "este mesmo programa acabou de ser aplicado; nada foi alterado"}
-
-    anterior = programa_service.exportar(t.personal_id, a.aluno_id, com_contexto=False)
-    mcp_service.salvar_snapshot(a.aluno_id, anterior.model_dump(mode="json"),
-                                tool="aplicar_programa_treino", client_name=t.client_name)
-
-    resultado = programa_service.aplicar(t.personal_id, a.aluno_id, programa)
-
-    nome = programa_service.aluno_nome(t.personal_id, a.aluno_id) or "aluno"
-    mcp_service.registrar_auditoria(
-        t.personal_id, tool="aplicar_programa_treino", client_name=t.client_name,
-        jti=t.jti, resumo=a.resumo_da_mudanca, alvo=a.aluno_id,
-    )
-    notif_service.criar(
-        t.personal_id, "MCP_ESCRITA", f"Treino de {nome} atualizado",
-        f"{t.client_name}: {a.resumo_da_mudanca}", aluno_id=a.aluno_id,
-    )
-    saida = {
-        "status": "aplicado",
-        "treinos": resultado.treinos_importados,
-        "exercicios": resultado.exercicios_importados,
-        "desfazer": "chame `desfazer_alteracao_treino` para restaurar o programa anterior",
-    }
-    if avisos:
-        # Não bloqueiam, mas o personal precisa ficar sabendo — e quem conta a ele é o LLM,
-        # na mesma conversa.
-        saida["avisos"] = validacao_programa.achados_json(avisos)
-        saida["sobre_os_avisos"] = ("o programa foi gravado; conte estes pontos ao personal "
-                                    "e ajuste se ele concordar")
-    return saida
+    base = a.revisao_base if a.revisao_base is not None else commits.revisao(a.aluno_id)
+    operation_id = commits.idempotencia(t.personal_id, a.aluno_id, a.programa, base)
+    rev = repo.get_item(keys.pk_aluno(a.aluno_id), commits.REV_SK, consistent=True) or {}
+    if a.revisao_base is None and rev.get("ultima_operacao"):
+        last = commits.obter_operacao(t.personal_id, a.aluno_id, rev["ultima_operacao"])
+        if last and last["expires_at"] - 7 * 86400 + 60 > mcp_service.agora():
+            expected = commits.idempotencia(t.personal_id, a.aluno_id, a.programa, last["revisao_base"])
+            if expected == last["operation_id"]:
+                operation_id = expected
+    previous = commits.obter_operacao(t.personal_id, a.aluno_id, operation_id)
+    if previous:
+        return {"status": "ja_aplicado", "operation_id": operation_id,
+                "revisao_resultante": previous["revisao_resultante"]}
+    resultado = programa_service.aplicar(t.personal_id, a.aluno_id, programa,
+        revisao_base=base, operation_id=operation_id,
+        origem="aplicar_programa_treino", resumo=a.resumo_da_mudanca,
+        client_name=t.client_name, jti=t.jti, confirmar_sessao=a.confirmar_sessao_em_andamento)
+    return {"status": "aplicado", "treinos": resultado.treinos_importados,
+            "exercicios": resultado.exercicios_importados,
+            "operation_id": operation_id, "revisao_resultante": resultado.revisao_resultante,
+            "avisos": validacao_programa.achados_json(avisos),
+            "desfazer": "chame desfazer_alteracao_treino com o operation_id desta chamada"}
 
 
 class AtualizarTreinoArgs(BaseModel):
@@ -586,59 +564,254 @@ def atualizar_treino(a: AtualizarTreinoArgs) -> dict:
     if not campos:
         raise ToolErro("informe pelo menos um campo para alterar")
 
+    base = commits.revisao(a.aluno_id)
     atual = repo.get_item(keys.pk_aluno(a.aluno_id), keys.sk_treino(a.treino_id))
     if not atual:
         raise ToolErro(f"treino {a.treino_id} não existe; "
                        "use `exportar_programa_treino` para ver os treinos do aluno")
 
     campos["updated_at"] = now_iso()
-    repo.update_item_if_exists(keys.pk_aluno(a.aluno_id), keys.sk_treino(a.treino_id), campos)
-    if "data_fim" in campos or "ativo" in campos:
-        programa_service.sync_due(t.personal_id, a.aluno_id, a.treino_id,
-                                  campos.get("nome") or atual.get("nome") or "",
-                                  campos.get("data_fim", atual.get("data_fim")),
-                                  old_data_fim=atual.get("data_fim"))
-        programa_service.touch_aluno_pointer(t.personal_id, a.aluno_id)
-
-    mcp_service.registrar_auditoria(
-        t.personal_id, tool="atualizar_treino", client_name=t.client_name, jti=t.jti,
-        resumo=f"campos alterados: {', '.join(sorted(campos))}", alvo=a.aluno_id,
-    )
+    commits.atualizar(t.personal_id, a.aluno_id, keys.sk_treino(a.treino_id), campos, base=base,
+                      origem="atualizar_treino", resumo="Dados do treino atualizados", client_name=t.client_name, jti=t.jti)
     return {"status": "atualizado", "campos": sorted(campos)}
 
 
+class RestaurarArgs(AlunoArgs):
+    operation_id: str | None = None
+    confirmar_sessao_em_andamento: bool = False
+
+
 @tool(nome="desfazer_alteracao_treino", titulo="Desfazer alteração de treino",
-      args=AlunoArgs, escopo=SCOPE_TREINOS_WRITE, somente_leitura=False, destrutiva=True,
+      args=RestaurarArgs, escopo=SCOPE_TREINOS_WRITE, somente_leitura=False, destrutiva=True,
       descricao="Restaura o programa de treino como estava antes da última alteração feita "
                 "por aqui. Só funciona dentro de 7 dias.")
-def desfazer_alteracao_treino(a: AlunoArgs) -> dict:
+def desfazer_alteracao_treino(a: RestaurarArgs) -> dict:
     t = tenant_atual()
     _guard(a.aluno_id)
-    snap = mcp_service.ultimo_snapshot(a.aluno_id)
-    if not snap:
-        raise ToolErro("não há alteração recente para desfazer neste aluno")
-
-    programa = ProgramaTreinoFile(**snap["programa"])
-    resultado = programa_service.aplicar(t.personal_id, a.aluno_id, programa)
-    mcp_service.descartar_snapshot(a.aluno_id, snap["ts"])
-
-    nome = programa_service.aluno_nome(t.personal_id, a.aluno_id) or "aluno"
-    mcp_service.registrar_auditoria(
-        t.personal_id, tool="desfazer_alteracao_treino", client_name=t.client_name,
-        jti=t.jti, resumo=f"restaurado o programa de {snap['ts']}", alvo=a.aluno_id,
-    )
-    notif_service.criar(
-        t.personal_id, "MCP_ESCRITA", f"Treino de {nome} restaurado",
-        f"{t.client_name} desfez a última alteração.", aluno_id=a.aluno_id,
-    )
-    return {"status": "restaurado", "de": snap["ts"],
-            "treinos": resultado.treinos_importados,
-            "exercicios": resultado.exercicios_importados}
+    operation_id = a.operation_id
+    if not operation_id:
+        snap = mcp_service.ultimo_snapshot(a.aluno_id)
+        if not snap or not snap.get("operation_id"):
+            raise ToolErro("nenhuma operacao recente disponivel para desfazer neste aluno")
+        operation_id = snap["operation_id"]
+    op = propostas.restaurar(t.personal_id, a.aluno_id, operation_id,
+        a.confirmar_sessao_em_andamento, client_name=t.client_name, jti=t.jti)
+    return {"status": "restaurado", "operation_id": op["operation_id"],
+            "revisao_resultante": op["revisao_resultante"]}
 
 
 # ---------------------------------------------------------------------------
 # Protocolo: listagem, execução e prompts
 # ---------------------------------------------------------------------------
+
+@dataclass
+class VisualResult:
+    resumo: dict
+    detalhes: dict
+    texto: str
+
+
+class WorkspaceOutput(BaseModel):
+    version: str = "1"
+    tela: str
+    aluno_id: str | None = None
+    nome: str | None = None
+    proposta_id: str | None = None
+    revisao: int | None = None
+    estado: str | None = None
+    resumo_da_mudanca: str | None = None
+    quantidade_alteracoes: int | None = None
+    somente_leitura: bool
+    propostas_disponiveis: bool
+    aplicacao_disponivel: bool
+
+
+class AbrirArgs(ListarAlunosArgs):
+    aluno_id: str | None = None
+    proposta_id: str | None = None
+
+
+class PropostaArgs(AlunoArgs):
+    proposta_id: str
+
+
+class SalvarPropostaArgs(AlunoArgs):
+    programa: dict
+    resumo_da_mudanca: str = Field(..., max_length=1000)
+    revisao_base: int = Field(..., ge=0)
+    proposta_id: str | None = None
+    revisao_proposta: int | None = Field(None, ge=1)
+
+
+class AplicarPropostaArgs(PropostaArgs):
+    revisao_proposta: int = Field(..., ge=1)
+    confirmar_sessao_em_andamento: bool = False
+
+
+class OperacaoArgs(AlunoArgs):
+    operation_id: str
+
+
+class OperacaoOutput(BaseModel):
+    status: str
+    operation_id: str
+    aluno_id: str
+    revisao_base: int | None = None
+    revisao_resultante: int | None = None
+    aplicado_em: str | None = None
+
+
+class PropostaOutput(BaseModel):
+    proposta_id: str
+    aluno_id: str
+    revisao: int
+    revisao_base: int
+    programa: ProgramaTreinoFile
+    programa_base: ProgramaTreinoFile
+    resumo_da_mudanca: str
+    diferencas: list[dict]
+    validacao: dict
+    created_at: str
+    updated_at: str
+    expires_at: int
+    estado: str
+    operation_id: str | None = None
+
+
+def _habilitada(nome):
+    if settings.mcp_compat_mode:
+        return nome in {
+            "guia_de_prescricao", "listar_alunos", "detalhar_aluno", "exportar_programa_treino",
+            "listar_biblioteca_exercicios", "historico_sessoes", "evolucao_exercicio",
+            "resumo_carteira", "agenda_periodo", "validar_programa_treino",
+            "aplicar_programa_treino", "atualizar_treino", "desfazer_alteracao_treino",
+        }
+    if nome in {"salvar_proposta_programa", "obter_proposta_programa", "mostrar_proposta_programa"}:
+        return settings.mcp_propostas_enabled
+    if nome == "aplicar_proposta_programa":
+        return settings.mcp_propostas_enabled and settings.mcp_aplicacao_enabled
+    return True
+
+
+def _visual(tela, detalhes, **campos):
+    t = tenant_atual()
+    resumo = WorkspaceOutput(tela=tela, somente_leitura=not t.pode(SCOPE_TREINOS_WRITE),
+        propostas_disponiveis=settings.mcp_propostas_enabled and t.pode(SCOPE_TREINOS_WRITE),
+        aplicacao_disponivel=settings.mcp_aplicacao_enabled and t.pode(SCOPE_TREINOS_WRITE), **campos).model_dump(mode="json")
+    texto = f"CoachPilot: {campos.get('nome') or tela}. " + (campos.get("resumo_da_mudanca") or "Abra os detalhes para consultar.")
+    if tela == "carteira":
+        texto += " " + "; ".join(f"{a['nome']} (aluno_id={a['aluno_id']})" for a in detalhes.get("items", []))
+        if detalhes.get("next_cursor"):
+            texto += " Busca parcial; continue com listar_alunos e o cursor disponibilizado."
+    if tela == "proposta":
+        texto += f" Estado: {campos.get('estado')}; revisão: {campos.get('revisao')}. Consulte obter_proposta_programa para os detalhes em clientes sem interface."
+    return VisualResult(resumo, detalhes, texto)
+
+
+@tool(nome="abrir_coachpilot", titulo="Abrir CoachPilot", args=AbrirArgs,
+      descricao="Abre a carteira de alunos ou uma rota autorizada de aluno/proposta. Funciona também em texto.",
+      ui=True, entrypoints=("global", "thread"), output=WorkspaceOutput)
+def abrir_coachpilot(a: AbrirArgs):
+    if a.proposta_id:
+        if not a.aluno_id:
+            raise ToolErro("informe o aluno_id original da proposta")
+        return mostrar_proposta_programa(PropostaArgs(aluno_id=a.aluno_id, proposta_id=a.proposta_id))
+    if a.aluno_id:
+        return mostrar_aluno(AlunoArgs(aluno_id=a.aluno_id))
+    return _visual("carteira", listar_alunos(a))
+
+
+@tool(nome="mostrar_aluno", titulo="Abrir aluno", args=AlunoArgs,
+      descricao="Apresenta resumo, restrições informadas e programa do aluno. Dados privados completos só em detalhar_aluno.",
+      ui=True, output=WorkspaceOutput)
+def mostrar_aluno(a: AlunoArgs):
+    _guard(a.aluno_id)
+    t = tenant_atual()
+    programa = programa_service.exportar(t.personal_id, a.aluno_id, com_contexto=False).model_dump(mode="json")
+    contexto = contexto_aluno_service.montar_contexto(t.personal_id, a.aluno_id,
+        exercicios_programa=[e["nome"] for tr in programa["treinos"] for e in tr["exercicios"]], compacto=True).model_dump(mode="json")
+    nome = contexto["perfil"].get("nome") or programa_service.aluno_nome(t.personal_id, a.aluno_id)
+    return _visual("aluno", {"programa": programa, "contexto_aluno": contexto,
+        "sessao_em_andamento": programa_service.sessao_em_andamento(a.aluno_id),
+        "aviso_seguranca": AVISO_CONTEUDO_DE_TERCEIROS}, aluno_id=a.aluno_id, nome=nome, revisao=programa["revisao"])
+
+
+def _proposta_visual(p):
+    t = tenant_atual()
+    return _visual("proposta", {"proposta": p}, aluno_id=p["aluno_id"],
+        nome=programa_service.aluno_nome(t.personal_id, p["aluno_id"]), proposta_id=p["proposta_id"],
+        revisao=p["revisao"], estado=p["estado"], resumo_da_mudanca=p["resumo_da_mudanca"],
+        quantidade_alteracoes=len(p["diferencas"]))
+
+
+@tool(nome="salvar_proposta_programa", titulo="Salvar proposta de programa", args=SalvarPropostaArgs,
+      escopo=SCOPE_TREINOS_WRITE, somente_leitura=False, ui=True, output=WorkspaceOutput,
+      descricao="Salva um rascunho completo sem mudar o programa ativo. Normaliza vídeos, valida e calcula diferenças. Informe revisão base do export; edição exige revisão da proposta.")
+def salvar_proposta_programa(a: SalvarPropostaArgs):
+    _guard(a.aluno_id)
+    return _proposta_visual(propostas.salvar(tenant_atual().personal_id, a.aluno_id, a.programa,
+        a.resumo_da_mudanca, a.revisao_base, a.proposta_id, a.revisao_proposta))
+
+
+@tool(nome="obter_proposta_programa", titulo="Consultar proposta", args=PropostaArgs,
+      output=PropostaOutput,
+      descricao="Lê programa completo, diferenças e validação para raciocinar ou ajustar uma proposta persistida.")
+def obter_proposta_programa(a: PropostaArgs):
+    _guard(a.aluno_id)
+    return propostas.obter(tenant_atual().personal_id, a.aluno_id, a.proposta_id)
+
+
+@tool(nome="mostrar_proposta_programa", titulo="Revisar proposta", args=PropostaArgs,
+      descricao="Abre a comparação atual/proposto e edição visual da revisão exata, sem aplicar.", ui=True, output=WorkspaceOutput)
+def mostrar_proposta_programa(a: PropostaArgs):
+    return _proposta_visual(obter_proposta_programa(a))
+
+
+@tool(nome="aplicar_proposta_programa", titulo="Aplicar proposta revisada", args=AplicarPropostaArgs,
+      output=OperacaoOutput,
+      escopo=SCOPE_TREINOS_WRITE, somente_leitura=False, destrutiva=True,
+      descricao="Substitui o programa pela revisão exata da proposta. Só após revisão e decisão explícita do personal. Recusa base antiga, expiração, erros e sessão ativa sem confirmação.")
+def aplicar_proposta_programa(a: AplicarPropostaArgs):
+    _guard(a.aluno_id)
+    t = tenant_atual()
+    op = propostas.aplicar(t.personal_id, a.aluno_id, a.proposta_id, a.revisao_proposta,
+        a.confirmar_sessao_em_andamento, client_name=t.client_name, jti=t.jti)
+    return _operacao_publica(op)
+
+
+def _operacao_publica(op):
+    return {k: op.get(k) for k in ("status", "operation_id", "aluno_id", "revisao_base", "revisao_resultante", "aplicado_em")}
+
+
+@tool(nome="consultar_operacao_programa", titulo="Consultar operação", args=OperacaoArgs,
+      output=OperacaoOutput,
+      descricao="Consulta resultado confirmado após timeout. Nunca reaplique por um timeout sem consultar o status.")
+def consultar_operacao_programa(a: OperacaoArgs):
+    _guard(a.aluno_id)
+    t = tenant_atual()
+    op = commits.obter_operacao(t.personal_id, a.aluno_id, a.operation_id)
+    if not op:
+        return {"status": "nao_confirmada", "operation_id": a.operation_id, "aluno_id": a.aluno_id}
+    # Leitura não executa efeitos colaterais: retomada é ferramenta de escrita própria.
+    return _operacao_publica(op)
+
+
+@tool(nome="retomar_operacao_programa", titulo="Retomar pendências da operação", args=OperacaoArgs,
+      output=OperacaoOutput,
+      escopo=SCOPE_TREINOS_WRITE, somente_leitura=False,
+      descricao="Retoma apenas agenda e catálogos de uma operação confirmada, sem reaplicar o programa.")
+def retomar_operacao_programa(a: OperacaoArgs):
+    _guard(a.aluno_id)
+    t = tenant_atual()
+    commits.retomar_efeitos(t.personal_id, a.aluno_id, a.operation_id)
+    return consultar_operacao_programa(a)
+
+
+INSTRUCOES_SERVIDOR += (
+    " Quando salvar_proposta_programa estiver disponível, prefira salvar e mostrar a proposta para revisão antes de aplicar. "
+    "Proposta não altera o programa ativo. Preserve origem_id do export. Seleção na UI não confirma uma escrita. "
+    "Só aplique a revisão exata que o personal decidiu aplicar. Não declare segurança clínica a partir da validação técnica."
+)
 
 def listar_tools(tenant: Tenant) -> list[dict]:
     """Só anuncia o que a conexão pode de fato usar — uma conexão só-leitura não vê as
@@ -647,7 +820,9 @@ def listar_tools(tenant: Tenant) -> list[dict]:
     for d in TOOLS.values():
         if not tenant.pode(d.escopo):
             continue
-        out.append({
+        if not _habilitada(d.nome):
+            continue
+        descriptor = {
             "name": d.nome,
             "title": d.titulo,
             "description": d.descricao,
@@ -659,7 +834,17 @@ def listar_tools(tenant: Tenant) -> list[dict]:
                 "idempotentHint": d.somente_leitura,
                 "openWorldHint": False,
             },
-        })
+        }
+        if d.output:
+            descriptor["outputSchema"] = d.output.model_json_schema()
+        if d.ui:
+            from app.mcp import ui_resources
+            if ui_resources.disponivel():
+                descriptor["_meta"] = {"ui": {"resourceUri": ui_resources.URI, "visibility": ["model", "app"]},
+                    "openai/widgetAccessible": True}
+                if d.entrypoints:
+                    descriptor["_meta"]["openai/ui"] = {"entrypoints": [{"type": v} for v in d.entrypoints]}
+        out.append(descriptor)
     return out
 
 
@@ -682,6 +867,8 @@ def chamar_tool(nome: str, argumentos: dict, tenant: Tenant) -> dict:
     if not tenant.pode(definicao.escopo):
         return _erro(f"esta conexão não tem permissão de `{definicao.escopo}`. "
                      "O personal precisa reconectar concedendo esse acesso.")
+    if not _habilitada(nome):
+        return _erro("ferramenta desabilitada nesta implantação")
     try:
         args = definicao.args(**(argumentos or {}))
     except ValidationError as exc:
@@ -692,9 +879,15 @@ def chamar_tool(nome: str, argumentos: dict, tenant: Tenant) -> dict:
     except ToolErro as exc:
         return _erro(str(exc))
     except HTTPException as exc:
-        return _erro(f"operação recusada: {exc.detail}")
+        resultado = _erro(f"operação recusada: {_texto(exc.detail)}")
+        if isinstance(exc.detail, dict):
+            resultado["_meta"] = {"erro": exc.detail}
+        return resultado
 
     saida = {"content": [{"type": "text", "text": _texto(resultado)}]}
+    if isinstance(resultado, VisualResult):
+        return {"content": [{"type": "text", "text": resultado.texto}],
+                "structuredContent": resultado.resumo, "_meta": {"coachpilot": resultado.detalhes}}
     if isinstance(resultado, dict):
         saida["structuredContent"] = resultado
     return saida
@@ -721,6 +914,14 @@ ENTREGA_ESCRITA = (
 ENTREGA_SO_LEITURA = (
     "**Exiba o JSON no chat**, num bloco ` ```json `. Esta conexão é somente leitura, então o "
     "personal copia da tela e cola no CoachPilot (Aluno → Treinos → Atualizar com IA)."
+)
+
+ENTREGA_PROPOSTA = (
+    "**Não imprima o programa inteiro no chat.** Consulte o programa e sua revisão, "
+    "salve o programa COMPLETO com `salvar_proposta_programa` (revisao_base do export) e "
+    "apresente a proposta para o personal revisar. Salvar não muda o programa ativo. "
+    "A aplicação exige decisão explícita sobre a revisão exata. Para ajustar, leia "
+    "`obter_proposta_programa` e salve com proposta_id e revisao_proposta."
 )
 
 
@@ -761,6 +962,8 @@ def montar_treino_texto(*, topico: str = "tudo", com_biblioteca: bool = True) ->
     # Mandar chamar uma tool de escrita numa conexão que nem a enxerga em `tools/list` seria
     # ensinar o LLM a bater numa porta que não existe.
     entrega = ENTREGA_ESCRITA if t.pode(SCOPE_TREINOS_WRITE) else ENTREGA_SO_LEITURA
+    if settings.mcp_propostas_enabled and t.pode(SCOPE_TREINOS_WRITE):
+        entrega = ENTREGA_PROPOSTA
     return texto.replace(MARCADOR_BIBLIOTECA, biblioteca).replace(MARCADOR_ENTREGA, entrega)
 
 
