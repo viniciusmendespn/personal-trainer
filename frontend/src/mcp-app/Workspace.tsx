@@ -1,9 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, Check, ChevronRight, Dumbbell, Maximize2, Search } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, ChevronRight, Clock, Maximize2, RotateCcw, Search, Sparkles, Users } from 'lucide-react'
+import { Avatar } from '../components/ui/Avatar'
+import { Badge } from '../components/ui/Badge'
+import { Button } from '../components/ui/Button'
+import { Card } from '../components/ui/Card'
+import { EmptyState } from '../components/ui/EmptyState'
+import { Input, Select } from '../components/ui/Input'
+import { SkeletonCard } from '../components/ui/Skeleton'
+import { Spinner } from '../components/ui/Spinner'
+import { StatChip } from '../components/ui/StatChip'
+import { Tabs } from '../components/ui/Tabs'
 import { ToolError, type Host } from './host'
 import { CoachPilot, unpack } from './useCases'
-import { estadoLabel, formatValue, labels, ordenarAlunos } from './presentation'
-import type { Carteira, Contexto, Detalhes, Evolucao, Operacao, Programa, Proposta, Resumo, ToolResult } from './types'
+import { estadoLabel, ordenarAlunos } from './presentation'
+import { Alert, Brand, fmtDateTime, statusAluno, tempoRelativo } from './ui'
+import { DadosPrivados, Indicadores, Restricoes, RestricoesDaProposta } from './Aluno'
+import { ProgramaView } from './Programa'
+import { Evolucao } from './Evolucao'
+import { Diferencas, EditorPrograma, Validacao } from './Proposta'
+import type { Aluno, Carteira, Detalhes, Operacao, Programa, Resumo, ToolResult } from './types'
+
+const FILTROS = [['', 'Todos'], ['SEM_TREINO_VIGENTE', 'Sem treino vigente'], ['VENCIDOS', 'Vencidos'], ['PROXIMOS', 'Vencendo'], ['SEM_TREINAR', 'Sem treinar']] as const
 
 export function Workspace({ host }: { host: Host }) {
   const api = useMemo(() => new CoachPilot(host), [host])
@@ -13,7 +30,6 @@ export function Workspace({ host }: { host: Host }) {
   const [expanded, setExpanded] = useState(false)
   const [resumo, setResumo] = useState<Resumo | null>(null)
   const [details, setDetails] = useState<Detalhes>({})
-  const [privateData, setPrivateData] = useState<unknown>()
   const selectionVersion = useRef(0)
   const [carteira, setCarteira] = useState<Carteira | null>(null)
   const [busca, setBusca] = useState('')
@@ -29,7 +45,9 @@ export function Workspace({ host }: { host: Host }) {
   const [operation, setOperation] = useState<Operacao | null>(null)
   const [confirmSession, setConfirmSession] = useState(false)
   const [sessionRequired, setSessionRequired] = useState(false)
-  const [onlyChanges, setOnlyChanges] = useState(true)
+
+  // Os tokens do portal valem a partir do <html> (fundo, barra de rolagem).
+  useEffect(() => { document.documentElement.dataset.theme = theme; document.body.dataset.mode = mode }, [theme, mode])
 
   function receive(result: ToolResult) {
     if (result.isError) { setError(result.content?.map(x => x.text).join('\n') || 'Não foi possível carregar.'); return }
@@ -37,7 +55,6 @@ export function Workspace({ host }: { host: Host }) {
     if (!data.resumo?.tela) return
     if (dirtyRef.current) { setPending(result); setNotice('Há uma atualização disponível. Salve ou descarte suas edições antes de abrir.'); return }
     selectionVersion.current += 1
-    setPrivateData(undefined)
     setResumo(data.resumo); setDetails(data.detalhes); setError(''); setOperation(null)
     setSessionRequired(false); setConfirmSession(false); setTab('geral')
     if (data.resumo.tela === 'carteira') setCarteira(result._meta?.coachpilot as unknown as Carteira)
@@ -49,7 +66,7 @@ export function Workspace({ host }: { host: Host }) {
 
   useEffect(() => {
     let active = true
-    void host.connect(r => { if (active) receive(r) }, (t, m) => { if (active) { setTheme(t); setMode(m) } })
+    void host.connect(r => { if (active) receive(r) }, (t, m) => { if (!active) return; if (t) setTheme(t); if (m) setMode(m) })
       .then(() => { if (active) setReady(true) }).catch(err => { if (active) setError(String(err.message ?? err)) })
     return () => { active = false; host.dispose() }
   }, [host]) // Resultados externos nunca apagam edições locais.
@@ -76,8 +93,10 @@ export function Workspace({ host }: { host: Host }) {
     try { await task() } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível concluir. Tente novamente.') }
     finally { setBusy(false) }
   }
+  /** Sair do card: abre em tela cheia quando o host permite; senão expande no próprio chat. */
+  function abrir() { setExpanded(true); void host.expand().catch(() => {}) }
   async function openAluno(id: string) {
-    await run(async () => { const data = await api.aluno(id); receive({ structuredContent: data.resumo as unknown as Record<string, unknown>, _meta: { coachpilot: data.detalhes } }); setExpanded(true) })
+    await run(async () => { const data = await api.aluno(id); receive({ structuredContent: data.resumo as unknown as Record<string, unknown>, _meta: { coachpilot: data.detalhes } }); abrir() })
   }
   async function back() {
     if (dirty) { setNotice('Salve ou descarte as edições da proposta para navegar.'); return }
@@ -95,8 +114,15 @@ export function Workspace({ host }: { host: Host }) {
     if (!details.proposta) return
     await run(async () => {
       const data = await api.salvar(details.proposta!)
-      dirtyRef.current = false; setDirty(false); setNotice('Salvo')
+      dirtyRef.current = false; setDirty(false); setNotice('Proposta salva')
       receive({ structuredContent: data.resumo as unknown as Record<string, unknown>, _meta: { coachpilot: data.detalhes } })
+    })
+  }
+  async function discard(alunoId: string, propostaId: string) {
+    await run(async () => {
+      const r = await api.proposta(alunoId, propostaId)
+      dirtyRef.current = false; setDirty(false); setNotice('Edições descartadas')
+      receive({ structuredContent: r.resumo as unknown as Record<string, unknown>, _meta: { coachpilot: r.detalhes } })
     })
   }
   async function apply() {
@@ -107,7 +133,7 @@ export function Workspace({ host }: { host: Host }) {
         const op = await api.aplicar(p, confirmSession)
         if (op.status !== 'aplicado') throw new Error('Aplicação ainda não confirmada. Consulte a operação novamente.')
         setOperation(op); setDetails({ ...details, proposta: { ...p, estado: 'aplicada', operation_id: op.operation_id } })
-        setNotice('Programa aplicado'); setSessionRequired(false)
+        setNotice(''); setSessionRequired(false)
         await host.context({ aluno_id: p.aluno_id, proposta_id: p.proposta_id, revisao: op.revisao_resultante, tela: 'aplicada' }).catch(() => {})
       } catch (err) {
         if (err instanceof ToolError && (err.detail?.code === 'SESSAO_EM_ANDAMENTO' || /SESSAO_EM_ANDAMENTO/.test(err.message))) setSessionRequired(true)
@@ -124,7 +150,7 @@ export function Workspace({ host }: { host: Host }) {
     await run(async () => {
       try {
         const r = await host.call('desfazer_alteracao_treino', { aluno_id: p.aluno_id, operation_id: p.operation_id, confirmar_sessao_em_andamento: confirmSession })
-        setNotice('Programa anterior restaurado'); setOperation(r.structuredContent as unknown as Operacao)
+        setNotice(''); setOperation(r.structuredContent as unknown as Operacao)
         setDetails({ ...details, proposta: { ...p, estado: 'descartada' } })
       } catch (err) {
         if (err instanceof ToolError && /SESSAO_EM_ANDAMENTO/.test(err.message)) setSessionRequired(true)
@@ -135,185 +161,193 @@ export function Workspace({ host }: { host: Host }) {
 
   const isCard = mode === 'inline' && !expanded
   const p = details.proposta
-  const canEdit = resumo?.propostas_disponiveis && p && ['valida', 'invalida', 'rascunho'].includes(p.estado)
-  return <main className="cp" data-theme={theme} aria-busy={busy}>
-    <header className="cp-header"><span className="cp-brand"><Dumbbell size={20} aria-hidden="true" /> CoachPilot</span>
-      <span className="cp-muted" role="status">{ready ? (resumo?.somente_leitura ? 'Somente leitura' : 'Conectado') : 'Conectando'}</span>
-      {!isCard && <button className="cp-icon" aria-label="Abrir tela cheia" onClick={() => void host.expand().catch(err => setError(err.message))}><Maximize2 size={18} /></button>}
-    </header>
-    {error && <div className="cp-error" role="alert">{error}<button onClick={() => setError('')} aria-label="Fechar mensagem">×</button></div>}
-    <div role="status" className="cp-status">{busy ? (dirty ? 'Salvando…' : 'Carregando…') : notice}</div>
-    {pending && !dirty && <button onClick={() => { const r = pending; setPending(null); receive(r) }}>Abrir atualização disponível</button>}
-    {!resumo && <p>{ready ? 'Carregando sua carteira…' : 'Aguardando a conexão autenticada.'}</p>}
-    {resumo && isCard && <section className="cp-card">
-      <h1>{resumo.nome || 'Sua carteira de alunos'}</h1>
-      <p>{p ? estadoLabel(p.estado) : details.contexto_aluno?.perfil.objetivos.join(', ') || (resumo.propostas_disponiveis ? 'Consulte alunos, acompanhe a evolução e revise programas.' : 'Consulte alunos, programas e evolução.')}</p>
-      {p && <p>{p.resumo_da_mudanca}<br />{p.diferencas.length} alterações para revisar.</p>}
-      <button className="cp-primary" onClick={() => setExpanded(true)}>{p ? 'Revisar proposta' : resumo.tela === 'aluno' ? 'Abrir aluno' : 'Abrir carteira'} <ChevronRight size={18} /></button>
-    </section>}
-    {resumo && !isCard && <>
-      {resumo.tela !== 'carteira' && <div className="cp-sticky"><button className="cp-back" onClick={() => void run(back)} disabled={busy}><ArrowLeft size={16} />{resumo.tela === 'proposta' ? 'Aluno' : 'Carteira'}</button>
-        <h1>{resumo.nome || 'Aluno'}</h1><p className="cp-muted">{p ? estadoLabel(p.estado) : details.contexto_aluno?.perfil.objetivos.join(', ') || 'Objetivo não informado'}</p>
-      </div>}
-      {resumo.tela === 'carteira' && <section>
-        <h1>Seus alunos</h1><p className="cp-muted">Priorize os programas que precisam de atenção.</p>
-        <label className="cp-search"><Search size={18} aria-hidden="true" /><span className="cp-sr">Buscar aluno</span><input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar por nome" /></label>
-        <div className="cp-controls"><label>Mostrar<select aria-label="Mostrar" value={filtro} onChange={e => setFiltro(e.target.value)}>
-          <option value="">Todos</option><option value="SEM_TREINO_VIGENTE">Sem treino vigente</option><option value="VENCIDOS">Vencidos</option><option value="PROXIMOS">Próximos do vencimento</option><option value="SEM_TREINAR">Sem treinar</option>
-        </select></label><label>Ordenar<select aria-label="Ordenar" value={ordem} onChange={e => { setOrdem(e.target.value); host.savePreferences?.({ ordem: e.target.value }) }}><option value="urgencia">Urgência</option><option value="nome">Nome</option></select></label></div>
-        <p className="cp-muted">Próximos: até 7 dias. Sem treinar: 10 dias ou mais. Urgência considera vigência, vencimento e atividade entre os alunos carregados.</p>
-        {carteira && <>
-          <div className="cp-stats"><span><strong>{carteira.items.filter(x => x.status !== 'INATIVO').length}</strong> ativos carregados</span><span><strong>{carteira.items.filter(x => x.filtros.includes('SEM_TREINO_VIGENTE')).length}</strong> sem treino vigente</span><span><strong>{carteira.items.filter(x => x.filtros.includes('SEM_TREINAR')).length}</strong> sem atividade recente</span></div>
-          <ul className="cp-students">{ordenarAlunos(carteira.items, ordem).map(a => <li key={a.aluno_id}><div><h2>{a.nome}</h2><p>{a.objetivos?.join(', ') || 'Objetivo não informado'}</p><p className="cp-muted">Último treino: {a.ultimo_treino_em?.slice(0, 10) || 'Não informado'}</p>
-            <span className="cp-badge">{a.pendencias[0]?.titulo || (a.filtros.includes('PROXIMOS') ? 'Programa vencendo' : a.vigencia_informada ? 'Sem pendência informada' : 'Vigência não informada')}</span></div>
-            <button disabled={busy} onClick={() => void openAluno(a.aluno_id)} aria-label={`Abrir aluno ${a.nome}`}>Abrir aluno <ChevronRight size={16} /></button></li>)}</ul>
-          {!carteira.items.length && <p>{carteira.next_cursor ? 'Nenhum resultado nas páginas examinadas. Continue a busca.' : 'Nenhum aluno encontrado para estes filtros.'}</p>}
-          {carteira.next_cursor && <button disabled={busy} onClick={() => void run(async () => {
-            const r = await host.call(resumo?.carteira_tool || 'listar_alunos', { busca, filtro: filtro || null, limit: 50, cursor: carteira.next_cursor })
+  const canEdit = !!(resumo?.propostas_disponiveis && p && ['valida', 'invalida', 'rascunho'].includes(p.estado))
+  const status = ready ? (resumo?.somente_leitura ? 'Somente leitura' : 'Conectado') : 'Conectando'
+
+  return <main data-theme={theme} aria-busy={busy} className={`font-sans text-text text-sm leading-relaxed ${isCard ? 'p-4 bg-surface' : 'min-h-screen'}`}>
+    {isCard ? <div className="flex items-center justify-between gap-2 mb-3">
+      <Brand />
+      <Badge tone={resumo?.somente_leitura ? 'neutral' : 'success'}><span role="status">{status}</span></Badge>
+    </div> : <header className="sticky top-0 z-20 border-b border-border bg-bg/85 backdrop-blur-xl">
+      <div className="max-w-3xl mx-auto px-4 h-12 flex items-center justify-between gap-2">
+        <Brand>{busy && <Spinner className="w-4 h-4 border-[1.5px] ml-1" />}</Brand>
+        <div className="flex items-center gap-2">
+          <Badge tone={resumo?.somente_leitura ? 'neutral' : 'success'}><span role="status">{status}</span></Badge>
+          {mode !== 'fullscreen' && <Button variant="ghost" size="sm" iconOnly aria-label="Abrir tela cheia" onClick={() => void host.expand().catch(err => setError(err.message))}><Maximize2 size={16} /></Button>}
+        </div>
+      </div>
+    </header>}
+
+    <div className={isCard ? 'space-y-3' : 'max-w-3xl mx-auto px-4 py-4 space-y-4'}>
+      {error && <Alert tone="danger" role="alert" onClose={() => setError('')}>{error}</Alert>}
+      <p role="status" className={notice ? 'text-xs text-text-secondary' : 'sr-only'}>{busy ? (dirty ? 'Salvando…' : 'Carregando…') : notice}</p>
+      {pending && !dirty && <Button variant="outline" size="sm" onClick={() => { const r = pending; setPending(null); receive(r) }}><RotateCcw size={14} /> Abrir atualização disponível</Button>}
+
+      {!resumo && !error && <div className="space-y-3"><p className="text-text-secondary">{ready ? 'Carregando sua carteira…' : 'Aguardando a conexão autenticada.'}</p><SkeletonCard /></div>}
+
+      {resumo && isCard && <ResumoCard resumo={resumo} details={details} carteira={carteira} busy={busy} onOpen={abrir} onAluno={id => void openAluno(id)} />}
+
+      {resumo && !isCard && <>
+        {resumo.tela === 'carteira' && <CarteiraView carteira={carteira} busy={busy} busca={busca} setBusca={setBusca} filtro={filtro} setFiltro={setFiltro}
+          ordem={ordem} setOrdem={o => { setOrdem(o); host.savePreferences?.({ ordem: o }) }} onAluno={id => void openAluno(id)}
+          onMore={() => void run(async () => {
+            const r = await host.call(resumo.carteira_tool || 'listar_alunos', { busca, filtro: filtro || null, limit: 50, cursor: carteira!.next_cursor })
             const next = r.structuredContent as unknown as Carteira
-            setCarteira({ ...next, items: [...carteira.items, ...next.items].filter((a, i, arr) => arr.findIndex(b => b.aluno_id === a.aluno_id) === i) })
-          })}>Continuar busca / carregar mais</button>}
-          {!carteira.cobertura.completa && <p className="cp-muted">Busca parcial. Há páginas ainda não examinadas.</p>}
+            setCarteira({ ...next, items: [...carteira!.items, ...next.items].filter((a, i, arr) => arr.findIndex(b => b.aluno_id === a.aluno_id) === i) })
+          })} />}
+
+        {resumo.tela !== 'carteira' && <div>
+          <button type="button" onClick={() => void run(back)} disabled={busy} className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text mb-3 disabled:opacity-50">
+            <ArrowLeft size={16} />{resumo.tela === 'proposta' ? 'Aluno' : 'Alunos'}
+          </button>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <Avatar name={resumo.nome || '?'} size="lg" />
+              <div className="min-w-0">
+                <h2 className="font-display text-xl font-semibold truncate">{resumo.nome || 'Aluno'}</h2>
+                {p ? <Badge tone={p.estado === 'aplicada' ? 'success' : p.estado === 'valida' ? 'accent' : p.estado === 'invalida' ? 'danger' : 'neutral'} className="mt-1">{estadoLabel(p.estado)}</Badge>
+                  : <div className="flex flex-wrap gap-1 mt-1">{details.contexto_aluno?.perfil.objetivos.length
+                    ? details.contexto_aluno.perfil.objetivos.map(o => <StatChip key={o} tone="accent">{o}</StatChip>)
+                    : <span className="text-xs text-text-muted">Objetivo não informado</span>}</div>}
+              </div>
+            </div>
+            {resumo.tela === 'aluno' && resumo.propostas_disponiveis && details.programa && <Button disabled={busy} onClick={() => void ask(`Leia o guia de prescrição, o contexto atualizado e o programa do aluno ${resumo.nome} (aluno_id=${resumo.aluno_id}). ${details.programa!.treinos.length ? 'Prepare uma proposta de revisão do programa' : 'Monte o primeiro programa e pergunte apenas os dados essenciais ausentes'}. Salve uma proposta para minha revisão, preservando os treinos não solicitados.`)}>
+              <Sparkles size={15} />{details.programa.treinos.length ? 'Pedir revisão do programa' : 'Montar primeiro programa'}
+            </Button>}
+          </div>
+          {details.sessao_em_andamento && <div className="mt-3"><Alert tone="warning">Aluno treinando agora{details.sessao_em_andamento.treino_nome ? `: ${details.sessao_em_andamento.treino_nome}` : ''}.</Alert></div>}
+        </div>}
+
+        {resumo.tela === 'aluno' && details.programa && <>
+          <Tabs tabs={[{ key: 'geral', label: 'Visão geral' }, { key: 'treinos', label: 'Treinos', badge: details.programa.treinos.length }, { key: 'evolucao', label: 'Evolução' }]} active={tab} onChange={setTab} />
+          {tab === 'geral' && <div className="space-y-4">
+            {details.contexto_aluno && <><Indicadores contexto={details.contexto_aluno} /><Restricoes contexto={details.contexto_aluno} /></>}
+            <DadosPrivados host={host} alunoId={resumo.aluno_id!} version={() => selectionVersion.current} />
+            <p className="text-[11px] text-text-muted">Dados consultados {details.contexto_aluno?.gerado_em ? `em ${fmtDateTime(details.contexto_aluno.gerado_em)}` : 'agora'}{resumo.revisao != null && ` · revisão ${resumo.revisao} do programa`}.</p>
+          </div>}
+          {tab === 'treinos' && <div className="space-y-3">
+            <ProgramaView programa={details.programa} />
+            {resumo.propostas_disponiveis && <Button variant="outline" size="sm" onClick={() => void ask(`Prepare uma alteração para o programa do aluno ${resumo.nome} (aluno_id=${resumo.aluno_id}), consulte o guia e os dados atuais e salve uma proposta para eu revisar.`)}><Sparkles size={14} /> Preparar alteração</Button>}
+          </div>}
+          {tab === 'evolucao' && <Evolucao host={host} alunoId={resumo.aluno_id!} programa={details.programa} onAsk={ask} />}
         </>}
-      </section>}
-      {resumo.tela === 'aluno' && details.programa && <>
-        <nav aria-label="Ficha do aluno" className="cp-tabs">{[['geral', 'Visão geral'], ['treinos', 'Treinos'], ['evolucao', 'Evolução']].map(([id, text]) => <button key={id} aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)}>{text}</button>)}</nav>
-        {tab === 'geral' && <>
-          <p className="cp-muted">Dados consultados em {details.contexto_aluno?.gerado_em || 'data não informada'}.{resumo.revisao != null && ` Revisão ${resumo.revisao}.`}</p>
-          {details.contexto_aluno && <><div className="cp-stats"><span><strong>{details.contexto_aluno.estatisticas_treino?.sessoes_semana_atual ?? '—'}</strong> sessões nesta semana</span><span><strong>{details.contexto_aluno.estatisticas_treino?.media_sessoes_por_semana ?? '—'}</strong> média por semana</span></div><Restricoes contexto={details.contexto_aluno} /></>}
-          {details.sessao_em_andamento && <p className="cp-warning">Aluno treinando agora: {details.sessao_em_andamento.treino_nome}.</p>}
-          {resumo.propostas_disponiveis && <button className="cp-primary" disabled={busy} onClick={() => void ask(`Leia o guia de prescrição, o contexto atualizado e o programa do aluno ${resumo.nome} (aluno_id=${resumo.aluno_id}). ${details.programa!.treinos.length ? 'Prepare uma proposta de revisão do programa' : 'Monte o primeiro programa e pergunte apenas os dados essenciais ausentes'}. Salve uma proposta para minha revisão, preservando os treinos não solicitados.`)}>{details.programa.treinos.length ? 'Pedir revisão do programa' : 'Montar primeiro programa'}</button>}
-          <details><summary>Dados privados e anamnese completa</summary><p>Carregar apenas quando precisar revisar os dados completos do aluno.</p><button onClick={() => void run(async () => { const version = selectionVersion.current; const r = await host.call('detalhar_aluno', { aluno_id: resumo.aluno_id }); if (version === selectionVersion.current) setPrivateData(r.structuredContent) })}>Carregar dados privados</button><PrivateDetails data={privateData} /></details>
-        </>}
-        {tab === 'treinos' && <><ProgramaView programa={details.programa} />{resumo.propostas_disponiveis && <button onClick={() => void ask(`Prepare uma alteração para o programa do aluno ${resumo.nome} (aluno_id=${resumo.aluno_id}), consulte o guia e os dados atuais e salve uma proposta para eu revisar.`)}>Preparar alteração</button>}</>}
-        {tab === 'evolucao' && <Evolution host={host} alunoId={resumo.aluno_id!} programa={details.programa} onAsk={ask} />}
+
+        {resumo.tela === 'proposta' && p && <section className="space-y-4">
+          <Card variant="elevated">
+            <p className="text-text">{p.resumo_da_mudanca}</p>
+            <p className="text-xs text-text-muted mt-1">Revisão da proposta {p.revisao} · sobre a revisão {p.revisao_base} do programa · atualizada em {fmtDateTime(p.updated_at)}</p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <StatChip tone="accent">{p.diferencas.length} alteraç{p.diferencas.length === 1 ? 'ão' : 'ões'}</StatChip>
+              {!!p.validacao.erros.length && <StatChip tone="warning">{p.validacao.erros.length} erro{p.validacao.erros.length > 1 ? 's' : ''}</StatChip>}
+              {!!p.validacao.avisos.length && <StatChip>{p.validacao.avisos.length} aviso{p.validacao.avisos.length > 1 ? 's' : ''}</StatChip>}
+            </div>
+          </Card>
+          <RestricoesDaProposta host={host} alunoId={p.aluno_id} />
+          <Diferencas proposta={p} />
+          <Validacao erros={p.validacao.erros} avisos={p.validacao.avisos} />
+          {canEdit && <EditorPrograma programa={p.programa} disabled={busy} errors={p.validacao.erros} onChange={edit} />}
+          {sessionRequired && <Alert tone="warning">
+            <p>O aluno está treinando agora. Ele pode terminar, mas a execução não conta no programa substituído.</p>
+            <label className="flex items-center gap-2 mt-2 cursor-pointer"><input type="checkbox" className="w-4 h-4 accent-[var(--color-accent)]" checked={confirmSession} onChange={e => setConfirmSession(e.target.checked)} />Aplicar mesmo com o aluno treinando</label>
+          </Alert>}
+          {operation && <Alert tone="success" role="status">
+            <p className="font-medium">{p.estado === 'descartada' ? 'Programa restaurado' : 'Programa aplicado'} em {fmtDateTime(operation.aplicado_em)}.</p>
+            <p className="text-xs text-text-muted">Revisão {operation.revisao_resultante} · operação {operation.operation_id}</p>
+          </Alert>}
+          <footer className="sticky bottom-0 -mx-4 px-4 py-3 border-t border-border bg-bg/90 backdrop-blur-xl flex flex-wrap gap-2">
+            {['desatualizada', 'expirada'].includes(p.estado) && <Button variant="outline" disabled={busy} onClick={() => void openAluno(p.aluno_id)}>Ver programa atual</Button>}
+            {canEdit && <Button variant="outline" disabled={busy || !dirty} onClick={() => void save()}>Salvar proposta</Button>}
+            {dirty && <Button variant="ghost" disabled={busy} onClick={() => void discard(p.aluno_id, p.proposta_id)}>Descartar edições</Button>}
+            {p.estado === 'aplicada'
+              ? <><Button onClick={() => void openAluno(p.aluno_id)}>Ver programa</Button><Button variant="outline" disabled={busy || resumo.somente_leitura || (sessionRequired && !confirmSession)} onClick={() => void restore()}><RotateCcw size={14} /> Restaurar programa anterior</Button></>
+              : <><Button variant="energy" disabled={busy || dirty || p.estado !== 'valida' || !resumo.aplicacao_disponivel || (sessionRequired && !confirmSession)} onClick={() => void apply()}><Check size={15} /> Aplicar programa</Button>
+                <Button variant="outline" disabled={busy} onClick={() => void ask(`Ajuste a proposta ${p.proposta_id}, revisão ${p.revisao}, do aluno ${resumo.nome} (aluno_id=${p.aluno_id}). Leia obter_proposta_programa e o guia antes de alterar; salve uma nova revisão para eu conferir.`)}><Sparkles size={14} /> Pedir ajuste</Button></>}
+          </footer>
+        </section>}
       </>}
-      {resumo.tela === 'proposta' && p && <section>
-        <p>{p.resumo_da_mudanca}</p><p className="cp-muted">Revisão da proposta {p.revisao} · Base do programa {p.revisao_base} · Atualizada em {p.updated_at}</p>
-        <ProposalRestrictions host={host} alunoId={p.aluno_id} />
-        <label className="cp-check"><input type="checkbox" checked={onlyChanges} onChange={e => setOnlyChanges(e.target.checked)} />Somente alterações</label>
-        {onlyChanges ? <div className="cp-diff">{p.diferencas.length ? p.diferencas.map((d, i) => <article key={`${d.caminho}-${i}`}><h2>{d.nome} <span className="cp-badge">{d.tipo}</span></h2><p>{labels[d.campo || ''] || (d.caminho.includes('exercicios') ? 'Exercício' : 'Treino')}</p><div className="cp-compare"><div><h3>Atual</h3><p>{formatValue(d.atual)}</p></div><div><h3>Proposto</h3><p>{formatValue(d.proposto)}</p></div></div></article>) : <p>Nenhuma alteração na prescrição.</p>}</div>
-          : <div className="cp-compare"><div><h2>Atual</h2><ProgramaView programa={p.programa_base} /></div><div><h2>Proposto</h2><ProgramaView programa={p.programa} /></div></div>}
-        <Report title="Erros que impedem a aplicação" items={p.validacao.erros} /><Report title="Avisos para revisão" items={p.validacao.avisos} />
-        {canEdit && <details><summary>Editar proposta</summary><ProgramEditor programa={p.programa} disabled={busy} errors={p.validacao.erros} onChange={edit} /></details>}
-        {sessionRequired && <div className="cp-warning"><p>O aluno está em sessão. Ele poderá terminar, mas a execução não será contabilizada no programa substituído.</p><label className="cp-check"><input type="checkbox" checked={confirmSession} onChange={e => setConfirmSession(e.target.checked)} />Aplicar mesmo com sessão em andamento</label></div>}
-        {operation && <div className="cp-success" role="status"><Check size={18} />{p.estado === 'descartada' ? 'Programa restaurado' : 'Programa aplicado'} em {operation.aplicado_em}. Revisão {operation.revisao_resultante}.<br />Operação: {operation.operation_id}</div>}
-        <footer className="cp-actions">
-          {['desatualizada', 'expirada'].includes(p.estado) && <button disabled={busy} onClick={() => void openAluno(p.aluno_id)}>Ver programa atual</button>}
-          {canEdit && <button disabled={busy || !dirty} onClick={() => void save()}>Salvar proposta</button>}
-          {dirty && <button disabled={busy} onClick={() => void run(async () => { const r = await api.proposta(p.aluno_id, p.proposta_id); dirtyRef.current = false; setDirty(false); setNotice('Edições descartadas'); receive({ structuredContent: r.resumo as unknown as Record<string, unknown>, _meta: { coachpilot: r.detalhes } }) })}>Descartar edições</button>}
-          {p.estado === 'aplicada' ? <><button className="cp-primary" onClick={() => void openAluno(p.aluno_id)}>Ver programa</button><button disabled={busy || resumo.somente_leitura || (sessionRequired && !confirmSession)} onClick={() => void restore()}>Restaurar programa anterior</button></>
-            : <><button className="cp-primary" disabled={busy || dirty || p.estado !== 'valida' || !resumo.aplicacao_disponivel || (sessionRequired && !confirmSession)} onClick={() => void apply()}>Aplicar programa</button><button disabled={busy} onClick={() => void ask(`Ajuste a proposta ${p.proposta_id}, revisão ${p.revisao}, do aluno ${resumo.nome} (aluno_id=${p.aluno_id}). Leia obter_proposta_programa e o guia antes de alterar; salve uma nova revisão para eu conferir.`)}>Pedir ajuste</button></>}
-        </footer>
-      </section>}
-    </>}
+    </div>
   </main>
-
 }
 
-function PrivateDetails({ data }: { data?: unknown }) { return data ? <p>{formatValue(data)}</p> : null }
-
-function Restricoes({ contexto }: { contexto: Contexto }) {
-  return <section className="cp-restrictions"><h2>Saúde e restrições informadas</h2>
-    {contexto.secoes_indisponiveis.includes('anamnese') ? <p className="cp-warning">Não foi possível carregar a anamnese. Confira antes de prescrever.</p>
-      : contexto.anamnese ? <><p className="cp-muted">Anamnese de {contexto.anamnese.preenchido_em || 'data não informada'}</p><dl>{contexto.anamnese.respostas.map((r, i) => <div key={i}><dt>{r.pergunta}</dt><dd>{r.resposta}</dd></div>)}</dl></> : <p>Anamnese: não informado.</p>}
-    {contexto.secoes_indisponiveis.includes('dores_duvidas') ? <p className="cp-warning">Não foi possível carregar dores e dúvidas.</p>
-      : contexto.dores_e_duvidas.filter(x => x.tipo === 'DOR').map((r, i) => <p key={i}><strong>Dor relatada {r.data || ''} {r.exercicio || ''}:</strong> {r.descricao}</p>)}
-    {!!contexto.secoes_indisponiveis.length && <p className="cp-muted">Seções indisponíveis: {contexto.secoes_indisponiveis.join(', ')}.</p>}
-  </section>
-}
-
-function ProposalRestrictions({ host, alunoId }: { host: Host; alunoId: string }) {
-  const [contexto, setContexto] = useState<Contexto>()
-  const [error, setError] = useState('')
-  useEffect(() => {
-    let active = true
-    void host.call('mostrar_aluno', { aluno_id: alunoId }).then(r => { if (active) setContexto(unpack(r).detalhes.contexto_aluno) })
-      .catch(err => { if (active) setError(err.message) })
-    return () => { active = false }
-  }, [host, alunoId])
-  return contexto ? <Restricoes contexto={contexto} /> : <p className={error ? 'cp-warning' : 'cp-muted'}>{error ? 'Não foi possível carregar as restrições. Confira os dados do aluno.' : 'Carregando restrições informadas…'}</p>
-}
-
-export function ProgramaView({ programa }: { programa: Programa }) {
-  if (!programa.treinos.length) return <p>Sem programa atual.</p>
-  return <div className="cp-program">{programa.treinos.map((t, i) => <details key={t.origem_id || i} open><summary>{t.nome}</summary>
-    <p>{t.foco || 'Foco não informado'} · {t.ativo ? 'Ativo' : 'Inativo'}</p><p className="cp-muted">Vigência: {t.data_inicio || 'sem início informado'} a {t.data_fim || 'sem fim informado'}</p>
-    {t.observacoes && <p>{t.observacoes}</p>}
-    {t.blocos.map((b, n) => <div className="cp-block" key={n}><h3>Bloco {String(b.nome || b.formato || n + 1)}</h3><p>{formatValue(b)}</p></div>)}
-    {t.exercicios.map((e, n) => <article className="cp-exercise" key={e.origem_id || n}>
-      <h3>{e.nome}{e.aquecimento ? ' · Aquecimento' : ''}</h3><p className="cp-muted">{e.tipo_exercicio} · {e.grupos?.join(', ') || e.grupo || 'Grupo não informado'}{e.bloco_id ? ` · Bloco ${e.bloco_id}` : ''}</p>
-      <p>{e.series_prescritas?.map(s => `${s.series} × ${s.reps} ${e.unidade_reps || (e.tipo_exercicio === 'FORCA' ? 'reps' : '')}${s.carga ? ` · ${s.carga} ${e.unidade_carga || 'kg'}` : ''}${s.aquecimento ? ' (aproximação)' : ''}`).join(' / ') || 'Prescrição por bloco / não informada'}</p>
-      <p>Intervalo: {e.intervalo_s == null ? 'Não informado' : `${e.intervalo_s} s`}</p>{e.observacoes && <p>{e.observacoes}</p>}
-      {e.video_url && /^https?:\/\//.test(e.video_url) && <a href={e.video_url} target="_blank" rel="noreferrer">Vídeo de {e.nome}</a>}
-      {!!e.substitutos.length && <details><summary>Substitutos</summary>{e.substitutos.map((s, si) => <p key={si}>{s.nome}{s.observacao ? `: ${s.observacao}` : ''}{s.series_prescritas ? ` · ${formatValue(s.series_prescritas)}` : ''}{s.video_url && /^https?:\/\//.test(s.video_url) && <> · <a href={s.video_url} target="_blank" rel="noreferrer">Vídeo</a></>}</p>)}</details>}
-    </article>)}
-  </details>)}</div>
-}
-
-function Report({ title, items }: { title: string; items: Proposta['validacao']['erros'] }) {
-  if (!items.length) return null
-  return <section className="cp-report"><h2>{title}</h2><ul>{items.map((e, i) => <li key={i}>{e.onde && <strong>{e.onde}: </strong>}{e.mensagem}{e.correcao && <p>{e.correcao}</p>}</li>)}</ul></section>
-}
-
-function ProgramEditor({ programa, onChange, disabled, errors }: { programa: Programa; onChange: (p: Programa) => void; disabled: boolean; errors: Proposta['validacao']['erros'] }) {
-  function change(fn: (p: Programa) => void) { const copy = structuredClone(programa); fn(copy); onChange(copy) }
-  function field(path: string, label: string, value: string | number | null | undefined, update: (value: string) => void, type = 'text') {
-    const error = errors.find(x => (x.campo || x.caminho) === path)
-    const id = `cp-${path}`
-    return <label key={path} htmlFor={id}>{label}<input id={id} type={type} value={value ?? ''} disabled={disabled} min={type === 'number' ? 0 : undefined} onChange={e => update(e.target.value)} aria-invalid={!!error} aria-describedby={error ? `${id}-error` : undefined} />{error && <span id={`${id}-error`} className="cp-error">{error.mensagem}</span>}</label>
+/** Card na conversa: o essencial para decidir se vale abrir, sem rolagem. */
+function ResumoCard({ resumo, details, carteira, busy, onOpen, onAluno }: { resumo: Resumo; details: Detalhes; carteira: Carteira | null; busy: boolean; onOpen: () => void; onAluno: (id: string) => void }) {
+  const p = details.proposta
+  if (resumo.tela === 'proposta' && p) return <div className="space-y-3">
+    <div className="flex items-center gap-3"><Avatar name={resumo.nome || '?'} /><div className="min-w-0"><h1 className="font-display text-base font-semibold truncate">{resumo.nome}</h1><p className="text-xs text-text-muted">{estadoLabel(p.estado)}</p></div></div>
+    <p className="text-text-secondary">{p.resumo_da_mudanca}</p>
+    <div className="flex flex-wrap gap-2"><StatChip tone="accent">{p.diferencas.length} alterações para revisar</StatChip>{!!p.validacao.erros.length && <StatChip tone="warning">{p.validacao.erros.length} erros</StatChip>}</div>
+    <Button className="w-full" onClick={onOpen}>Revisar proposta <ChevronRight size={16} /></Button>
+  </div>
+  if (resumo.tela === 'aluno') {
+    const c = details.contexto_aluno
+    const dores = c?.dores_e_duvidas.filter(x => x.tipo === 'DOR').length ?? 0
+    return <div className="space-y-3">
+      <div className="flex items-center gap-3"><Avatar name={resumo.nome || '?'} /><div className="min-w-0"><h1 className="font-display text-base font-semibold truncate">{resumo.nome}</h1><p className="text-xs text-text-muted truncate">{c?.perfil.objetivos.join(', ') || 'Objetivo não informado'}</p></div></div>
+      <div className="flex flex-wrap gap-2">
+        <StatChip tone="accent">{details.programa?.treinos.length ?? 0} treinos</StatChip>
+        {c?.estatisticas_treino && <StatChip>{c.estatisticas_treino.sessoes_semana_atual} sessões nesta semana</StatChip>}
+        {!!dores && <StatChip tone="warning"><AlertTriangle size={12} /> {dores} dor{dores > 1 ? 'es' : ''} relatada{dores > 1 ? 's' : ''}</StatChip>}
+      </div>
+      <Button className="w-full" onClick={onOpen}>Abrir aluno <ChevronRight size={16} /></Button>
+    </div>
   }
-  return <div className="cp-editor">{programa.treinos.map((t, ti) => <fieldset key={ti}><legend>{t.nome}</legend><div className="cp-fields">
-    {field(`treinos[${ti}].data_inicio`, 'Início da vigência', t.data_inicio, v => change(p => { p.treinos[ti].data_inicio = v || null }), 'date')}
-    {field(`treinos[${ti}].data_fim`, 'Fim da vigência', t.data_fim, v => change(p => { p.treinos[ti].data_fim = v || null }), 'date')}
-    {field(`treinos[${ti}].observacoes`, 'Observações do treino', t.observacoes, v => change(p => { p.treinos[ti].observacoes = v || null }))}
-  </div>{t.exercicios.map((e, ei) => <fieldset key={ei}><legend>{e.nome}</legend>
-    {t.blocos.length || e.bloco_id ? <p>Para alterar a prescrição deste bloco, use “Pedir ajuste”.</p> : <div className="cp-fields">{e.series_prescritas?.map((s, si) => <div className="cp-series" key={si}>
-      {field(`treinos[${ti}].exercicios[${ei}].series_prescritas[${si}].series`, `Séries (grupo ${si + 1})`, s.series, v => change(p => { p.treinos[ti].exercicios[ei].series_prescritas![si].series = Number(v) }), 'number')}
-      {field(`treinos[${ti}].exercicios[${ei}].series_prescritas[${si}].reps`, `${e.tipo_exercicio === 'PERFORMANCE' ? 'Métrica' : 'Repetições'} ${e.unidade_reps || ''}`, s.reps, v => change(p => { p.treinos[ti].exercicios[ei].series_prescritas![si].reps = v }))}
-      {field(`treinos[${ti}].exercicios[${ei}].series_prescritas[${si}].carga`, `Carga ${e.unidade_carga || ''}`, s.carga, v => change(p => { p.treinos[ti].exercicios[ei].series_prescritas![si].carga = v || null }))}
-    </div>)}</div>}
-    <div className="cp-fields">{field(`treinos[${ti}].exercicios[${ei}].intervalo_s`, 'Intervalo (segundos)', e.intervalo_s, v => change(p => { p.treinos[ti].exercicios[ei].intervalo_s = v === '' ? null : Number(v) }), 'number')}
-      {field(`treinos[${ti}].exercicios[${ei}].observacoes`, 'Observações do exercício', e.observacoes, v => change(p => { p.treinos[ti].exercicios[ei].observacoes = v || null }))}</div>
-  </fieldset>)}</fieldset>)}</div>
+  const itens = carteira?.items ?? []
+  const atencao = ordenarAlunos(itens.filter(a => a.urgencia < 3 && a.status !== 'INATIVO'), 'urgencia')
+  return <div className="space-y-3">
+    <div><h1 className="font-display text-base font-semibold">Sua carteira de alunos</h1>
+      <p className="text-xs text-text-muted">{itens.length ? `${itens.length} aluno${itens.length > 1 ? 's' : ''} carregado${itens.length > 1 ? 's' : ''} · ${atencao.length ? `${atencao.length} precisa${atencao.length > 1 ? 'm' : ''} de atenção` : 'nenhuma pendência'}` : 'Consulte alunos, treinos e evolução.'}</p></div>
+    {!!atencao.length && <ul className="rounded-xl border border-border divide-y divide-border overflow-hidden">{atencao.slice(0, 3).map(a => <li key={a.aluno_id}>
+      <AlunoLinha aluno={a} busy={busy} onClick={() => onAluno(a.aluno_id)} compact />
+    </li>)}</ul>}
+    <Button className="w-full" onClick={onOpen}>Abrir carteira <ChevronRight size={16} /></Button>
+  </div>
 }
 
-function Evolution({ host, alunoId, programa, onAsk }: { host: Host; alunoId: string; programa: Programa; onAsk: (text: string) => Promise<void> }) {
-  const exercicios = programa.treinos.flatMap(t => t.exercicios).filter((e, i, arr) => arr.findIndex(x => x.nome === e.nome) === i)
-  const [nome, setNome] = useState(exercicios[0]?.nome || '')
-  const [dias, setDias] = useState('90')
-  const [metric, setMetric] = useState('carga_max')
-  const [selectedUnit, setSelectedUnit] = useState('')
-  const [data, setData] = useState<Evolucao>()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const ex = exercicios.find(e => e.nome === nome)
-  useEffect(() => {
-    if (!nome) return
-    let active = true
-    setLoading(true); setError('')
-    void host.call('evolucao_exercicio', { aluno_id: alunoId, ...(ex?.origem_id ? { exercicio_id: ex.origem_id } : { chave: ex?.chave_historico || nome }), limit: 200 }).then(r => {
-      if (active) { setData(r.structuredContent as unknown as Evolucao); setSelectedUnit(''); setMetric(ex?.tipo_exercicio === 'PERFORMANCE' ? 'metrica_max' : 'carga_max') }
-    }).catch(err => { if (active) setError(err.message) }).finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
-  }, [host, alunoId, nome])
-  const units = [...new Set((data?.serie || []).map(p => (metric === 'metrica_max' ? p.unidade_reps : p.unidade_carga) || 'unidade não informada'))]
-  const unit = units.includes(selectedUnit) ? selectedUnit : units[0] || 'unidade não informada'
-  const cutoff = new Date(Date.now() - Number(dias) * 86400000).toISOString()
-  const points = (data?.serie || []).filter(p => (!dias || p.data >= cutoff) && ((metric === 'metrica_max' ? p.unidade_reps : p.unidade_carga) || 'unidade não informada') === unit).map(p => ({ data: p.data, valor: p[metric as 'carga_max'] })).filter(p => p.valor != null && Number.isFinite(p.valor)) as { data: string; valor: number }[]
-  return <section><h2>Evolução por exercício</h2>{!exercicios.length ? <p>Nenhum exercício no programa atual.</p> : <>
-    <div className="cp-controls"><label>Exercício<select aria-label="Exercício" value={nome} onChange={e => setNome(e.target.value)}>{exercicios.map(e => <option key={e.nome}>{e.nome}</option>)}</select></label><label>Período<select aria-label="Período" value={dias} onChange={e => setDias(e.target.value)}><option value="30">30 dias</option><option value="90">90 dias</option><option value="">Todo histórico disponível</option></select></label>
-      <label>Métrica<select aria-label="Métrica" value={metric} onChange={e => { setMetric(e.target.value); setSelectedUnit('') }}>{ex?.tipo_exercicio === 'PERFORMANCE' ? <option value="metrica_max">Melhor métrica da sessão</option> : <><option value="carga_max">Carga máxima</option><option value="volume">Volume</option></>}</select></label>
-      <label>Unidade<select aria-label="Unidade" value={unit} onChange={e => setSelectedUnit(e.target.value)}>{units.map(u => <option key={u}>{u}</option>)}</select></label>
-    </div>{loading && <p role="status">Carregando evolução…</p>}{error && <p className="cp-error" role="alert">{error}</p>}
-    {!loading && !error && <><p>{points.length} registros com {metric === 'volume' ? 'volume' : 'valor'} informado ({unit}). Cobertura: até os últimos 200 registros. Valores ausentes não são estimados.</p>{unit === 'unidade não informada' ? <p>Estes registros antigos não informam a unidade. Confira os valores na tabela; o gráfico exige uma unidade registrada.</p> : <EvolutionChart points={points} unit={unit} />}<table><caption>Registros de {nome} — {unit}</caption><thead><tr><th scope="col">Data</th><th scope="col">Valor ({unit})</th></tr></thead><tbody>{points.map((p, i) => <tr key={i}><td>{p.data.slice(0, 10)}</td><td>{p.valor}</td></tr>)}</tbody></table></>}
-    <button onClick={() => void onAsk(`Analise a evolução de ${nome} do aluno_id=${alunoId} no período de ${dias || 'todos os'} dias, usando os dados atuais e a unidade ${unit}. Explique a cobertura e proponha ajustes para minha revisão.`)}>Analisar evolução</button>
-  </>}</section>
+function AlunoLinha({ aluno: a, busy, onClick, compact }: { aluno: Aluno; busy: boolean; onClick: () => void; compact?: boolean }) {
+  const st = statusAluno(a)
+  return <button type="button" disabled={busy} onClick={onClick} aria-label={`Abrir aluno ${a.nome}`}
+    className={`w-full flex items-center gap-3 text-left transition-colors disabled:opacity-60 ${compact ? 'px-3 py-2.5 bg-surface hover:bg-surface-elevated' : ''}`}>
+    <Avatar name={a.nome} size={compact ? 'sm' : 'md'} />
+    <span className="min-w-0 flex-1">
+      <span className="flex items-center gap-1.5 flex-wrap"><span className="font-medium truncate">{a.nome}</span><Badge tone={st.tone}>{st.label}</Badge></span>
+      {!compact && <span className="block text-xs text-text-muted truncate">{a.objetivos?.join(', ') || 'Objetivo não informado'}</span>}
+      <span className="flex items-center gap-1 text-[11px] text-text-muted mt-0.5"><Clock size={10} className="shrink-0" />{a.ultimo_treino_em ? `Treinou ${tempoRelativo(a.ultimo_treino_em)}` : 'Ainda não treinou'}</span>
+    </span>
+    <ChevronRight size={18} className="text-text-muted shrink-0" />
+  </button>
 }
 
-export function EvolutionChart({ points, unit }: { points: { data: string; valor: number }[]; unit: string }) {
-  if (!points.length) return <p>Sem registros com esta métrica no período.</p>
-  const min = Math.min(...points.map(p => p.valor)); const max = Math.max(...points.map(p => p.valor))
-  const coordinates = points.map((p, i) => ({ x: 40 + i * 280 / Math.max(points.length - 1, 1), y: 140 - (p.valor - min) * 105 / Math.max(max - min, 1) }))
-  return <figure className="cp-chart"><svg viewBox="0 0 350 180" role="img" aria-label={`Evolução em ${unit}, de ${min} a ${max}. Valores disponíveis na tabela.`}><text x="5" y="25">{max} {unit}</text><text x="5" y="165">{min} {unit}</text><polyline fill="none" stroke="currentColor" strokeWidth="3" points={coordinates.map(p => `${p.x},${p.y}`).join(' ')} />{coordinates.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="4" fill="currentColor"><title>{points[i].data}: {points[i].valor} {unit}</title></circle>)}</svg></figure>
+function CarteiraView({ carteira, busy, busca, setBusca, filtro, setFiltro, ordem, setOrdem, onAluno, onMore }: {
+  carteira: Carteira | null; busy: boolean; busca: string; setBusca: (v: string) => void; filtro: string; setFiltro: (v: string) => void
+  ordem: string; setOrdem: (v: string) => void; onAluno: (id: string) => void; onMore: () => void
+}) {
+  const itens = carteira?.items ?? []
+  const conta = (f: string) => itens.filter(a => a.filtros.includes(f)).length
+  return <section className="space-y-4">
+    <div className="flex items-end justify-between gap-3 flex-wrap">
+      <div><h2 className="font-display text-xl font-semibold">Alunos</h2>
+        <p className="text-xs text-text-muted">{itens.length} carregado{itens.length === 1 ? '' : 's'}{carteira && !carteira.cobertura.completa ? ' · há mais páginas' : ''}</p></div>
+      <div className="w-36"><Select aria-label="Ordenar" value={ordem} onChange={e => setOrdem(e.target.value)} className="py-1.5 text-xs">
+        <option value="urgencia">Mais urgentes</option><option value="nome">Nome (A–Z)</option>
+      </Select></div>
+    </div>
+    <div className="relative">
+      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+      <Input aria-label="Buscar aluno" placeholder="Buscar por nome…" value={busca} onChange={e => setBusca(e.target.value)} className="pl-9" />
+    </div>
+    <div role="radiogroup" aria-label="Mostrar" className="flex gap-1 flex-wrap">
+      {FILTROS.map(([v, l]) => <Button key={v} role="radio" aria-checked={filtro === v} size="sm" variant={filtro === v ? 'primary' : 'outline'} onClick={() => setFiltro(v)}>
+        {l}{v && !filtro && conta(v) ? <span className="opacity-70">({conta(v)})</span> : null}
+      </Button>)}
+    </div>
+    {!carteira ? <div className="space-y-3"><SkeletonCard /><SkeletonCard /></div>
+      : itens.length ? <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{ordenarAlunos(itens, ordem).map(a => <Card key={a.aluno_id} variant="elevated" className="hover:border-accent/50 transition-colors">
+          <AlunoLinha aluno={a} busy={busy} onClick={() => onAluno(a.aluno_id)} />
+        </Card>)}</div>
+      : <EmptyState icon={<Users />} title={carteira.next_cursor ? 'Nenhum resultado nas páginas examinadas.' : 'Nenhum aluno encontrado para estes filtros.'}
+          description={carteira.next_cursor ? 'Continue a busca para examinar o restante da carteira.' : busca || filtro ? 'Tente outro nome ou limpe o filtro.' : undefined}
+          action={(busca || filtro) && !carteira.next_cursor ? <Button variant="outline" size="sm" onClick={() => { setBusca(''); setFiltro('') }}>Limpar busca</Button> : undefined} />}
+    {carteira?.next_cursor && <div className="flex justify-center"><Button variant="outline" size="sm" disabled={busy} onClick={onMore}>{itens.length ? 'Carregar mais alunos' : 'Continuar busca'}</Button></div>}
+    <p className="text-[11px] text-text-muted">“Vencendo”: até {carteira?.criterios.proximos_dias ?? 7} dias. “Sem treinar”: {carteira?.criterios.sem_treinar_dias ?? 10} dias ou mais.</p>
+  </section>
 }

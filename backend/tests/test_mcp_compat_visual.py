@@ -112,5 +112,5 @@ def test_bundle_da_interface_traz_o_css_e_domain_existente():
     import re
     html = (ui_resources.DIST / "v1.html").read_text(encoding="utf-8")
     css = re.search(r"<style>(.*?)</style>", html, re.S).group(1)
-    assert ".cp{" in css and len(css) > 1000
+    assert "--color-accent" in css and "font-face" in css and len(css) > 1000
     assert settings.mcp_ui_domain == "https://coachpilot.com.br"

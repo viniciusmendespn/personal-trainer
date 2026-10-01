@@ -17,7 +17,7 @@ export function assertResult(result: ToolResult): ToolResult {
 export interface Host {
   preferences?(): { ordem?: string }
   savePreferences?(preferences: { ordem: string }): void
-  connect(onResult: (r: ToolResult) => void, onEnvironment: (theme: string, mode: string) => void): Promise<void>
+  connect(onResult: (r: ToolResult) => void, onEnvironment: (theme?: string, mode?: string) => void): Promise<void>
   call(name: string, args: Record<string, unknown>): Promise<ToolResult>
   context(selection: Selecao): Promise<void>
   ask(text: string): Promise<void>
@@ -36,9 +36,10 @@ export class McpHost implements Host {
     const bridge = (window as unknown as { openai?: { widgetState?: Record<string, unknown>; setWidgetState?: (state: Record<string, unknown>) => void } }).openai
     bridge?.setWidgetState?.({ ...bridge.widgetState, preferences })
   }
-  async connect(onResult: (r: ToolResult) => void, onEnvironment: (theme: string, mode: string) => void) {
+  async connect(onResult: (r: ToolResult) => void, onEnvironment: (theme?: string, mode?: string) => void) {
     this.app.ontoolresult = result => onResult(result as ToolResult)
-    this.app.onhostcontextchanged = ctx => onEnvironment(ctx.theme ?? 'light', ctx.displayMode ?? 'inline')
+    // A notificação traz só o que mudou (ex.: só displayMode): campo ausente mantém o valor atual.
+    this.app.onhostcontextchanged = ctx => onEnvironment(ctx.theme, ctx.displayMode)
     if (window.parent === window) throw new Error('Abra o CoachPilot pela conexão autenticada no ChatGPT.')
     await this.app.connect(undefined, { timeout: 15000 })
     const ctx = this.app.getHostContext()
