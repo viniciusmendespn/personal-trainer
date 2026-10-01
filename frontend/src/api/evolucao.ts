@@ -8,6 +8,7 @@ export interface PontoEvolucao {
   reps?: string
   metrica_max?: number | null
   irm?: number | null
+  pse?: number | null   // percepção de esforço daquela execução (0-10); null = não informada
 }
 
 export interface Evolucao {

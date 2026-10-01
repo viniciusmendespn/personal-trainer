@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Dumbbell, TrendingUp, MessageCircle, History, Trophy, Check, ChevronRight, ChevronDown, Video, Timer, Clock, Bell, BellRing, AlertTriangle, HelpCircle, Wrench, X, BarChart3, Camera, Newspaper, Download, UserCircle, User, Flame, Medal, ArrowLeft, Info, Repeat, Zap, AlarmClock, CalendarDays, List } from 'lucide-react'
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ComposedChart, Line,
 } from 'recharts'
 import { alunoApi, type ExSessao, type SessaoAtiva, type SessaoFinalizada, type PostGlobal, type FinishPayload, type ScoreBlocoInput } from '../api/alunoApp'
 import { ScoreWodModal } from '../components/aluno/ScoreWodModal'
@@ -13,6 +13,7 @@ import { SeriesPrescritasCompact, fmtPrescricaoFlat } from '../components/exerci
 import { AlunoSessaoDetalheCard } from '../components/historico/SessaoDetalheCard'
 import { AlunoTreinoDoDiaModal } from '../components/historico/TreinoDoDiaModal'
 import { RecordesList } from '../components/evolucao/RecordesList'
+import { VolumeGruposChart, LegendaGrafico } from '../components/evolucao/VolumeGruposChart'
 import { alunoClient } from '../api/alunoClient'
 import { FeedGlobalTab } from '../components/feed/FeedGlobalTab'
 import { PontosWidget } from '../components/gamificacao/PontosWidget'
@@ -55,14 +56,9 @@ const chartTip = {
   fontSize: 12,
 }
 const axisTick = { fill: 'var(--color-text-secondary)', fontSize: 12 }
-// O rótulo da legenda usa tinta de texto; a bolinha ao lado é quem carrega a identidade.
-const legendStyle = { fontSize: 11, color: 'var(--color-text-secondary)', paddingTop: 8 }
 /** Eixo de volume em toneladas a partir de 1000 kg: com um exercício somando em vários grupos,
  *  o total da semana passa de 5 dígitos e "10500" era cortado pela margem do eixo. */
 const fmtVolumeEixo = (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(1).replace('.', ',')}t` : String(v))
-// Espelho de `PALETA_GRUPOS` do portal — 12 matizes, ordem fixa, passos próprios por tema
-// (ver `--color-chart-*` em index.css).
-const PALETA_GRUPOS = Array.from({ length: 12 }, (_, i) => `var(--color-chart-${i + 1})`)
 
 function formatDiaCompleto(iso: string) {
   const d = new Date(iso)
@@ -2130,7 +2126,11 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
     .map((p) => ({
       data: new Date(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
       carga: tipoEvo === 'PERFORMANCE' ? p.metrica_max : p.carga_max,
+      pse: p.pse ?? null,
     }))
+  // PSE vira um segundo traço (eixo 0-10 à direita). WOD não pede PSE; exercício sem nenhuma
+  // PSE registrada fica com o gráfico de sempre.
+  const temPse = !isWod && chartData.some((p) => p.pse != null)
 
   const pontosIrm = tipoEvo === 'FORCA'
     ? (evo.data?.serie ?? [])
@@ -2225,7 +2225,7 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
                     </Badge>
                   </div>
                   <ResponsiveContainer width="100%" height={200}>
-                    <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                    <ComposedChart data={chartData} margin={{ top: 5, right: temPse ? 0 : 10, bottom: 5, left: -20 }}>
                       <defs>
                         <linearGradient id="alunoCargaGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="var(--color-energy)" stopOpacity={0.4} />
@@ -2235,20 +2235,49 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                       <XAxis dataKey="data" tick={axisTick} stroke="var(--color-border-strong)" />
                       <YAxis
+                        yAxisId="carga"
                         tick={axisTick}
                         stroke="var(--color-border-strong)"
                       />
+                      {temPse && (
+                        <YAxis
+                          yAxisId="pse"
+                          orientation="right"
+                          domain={[0, 10]}
+                          ticks={[0, 5, 10]}
+                          width={24}
+                          tick={axisTick}
+                          stroke="var(--color-border-strong)"
+                        />
+                      )}
                       <Tooltip
                         contentStyle={chartTip}
-                        formatter={(v: number) => [
-                          fmtValor(v),
-                          isWod ? 'Score' : tipoEvo === 'PERFORMANCE' ? (unidadePerf || 'Métrica') : (exSel?.unidade_carga ?? 'kg'),
-                        ]}
+                        formatter={(v: number, _n: string, item: { dataKey?: string | number }) =>
+                          item.dataKey === 'pse'
+                            ? [`${v}/10`, 'PSE']
+                            : [
+                                fmtValor(v),
+                                isWod ? 'Score' : tipoEvo === 'PERFORMANCE' ? (unidadePerf || 'Métrica') : (exSel?.unidade_carga ?? 'kg'),
+                              ]}
                       />
-                      <Area type="monotone" dataKey="carga" stroke="var(--color-energy)" strokeWidth={2.5}
+                      <Area yAxisId="carga" type="monotone" dataKey="carga" stroke="var(--color-energy)" strokeWidth={2.5}
                         fill="url(#alunoCargaGradient)" dot={{ r: 3, fill: 'var(--color-energy)' }} />
-                    </AreaChart>
+                      {temPse && (
+                        // Sessão sem PSE ("não sei dizer") fica sem ponto; a linha atravessa o vão.
+                        <Line yAxisId="pse" type="monotone" dataKey="pse" stroke="var(--color-accent)" strokeWidth={2}
+                          strokeDasharray="4 3" connectNulls dot={{ r: 2.5, fill: 'var(--color-accent)', strokeWidth: 0 }} />
+                      )}
+                    </ComposedChart>
                   </ResponsiveContainer>
+                  {temPse && (
+                    <LegendaGrafico
+                      className="mt-2"
+                      itens={[
+                        { nome: tipoEvo === 'PERFORMANCE' ? (unidadePerf || 'Métrica') : 'Carga', cor: 'var(--color-energy)' },
+                        { nome: 'Esforço (PSE 0-10)', cor: 'var(--color-accent)', tracejado: true },
+                      ]}
+                    />
+                  )}
                 </Card>
                 {pontosIrm.length > 0 && (
                   <Card variant="elevated" className="mt-4">
@@ -2319,30 +2348,7 @@ function Evolucao({ initialExRef }: { initialExRef?: string }) {
             {gruposNomes.length > 0 && (
               <Card variant="elevated">
                 <p className="text-sm text-text-secondary mb-3">Volume por grupo muscular (kg)</p>
-                <ResponsiveContainer width="100%" height={230}>
-                  <BarChart data={semanasPorGrupo} margin={{ top: 5, right: 10, bottom: 5, left: -8 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                    <XAxis dataKey="semana" tick={axisTick} stroke="var(--color-border-strong)" />
-                    <YAxis tick={axisTick} stroke="var(--color-border-strong)" width={44} tickFormatter={fmtVolumeEixo} />
-                    <Tooltip contentStyle={chartTip} />
-                    {/* Identidade não pode depender só da cor: com o grupo virando lista, o
-                        número de séries subiu e alguns pares vizinhos ficam próximos p/ daltonismo. */}
-                    <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} />
-                    {gruposNomes.map((g, i) => (
-                      <Bar
-                        key={g}
-                        dataKey={g}
-                        stackId="grupo"
-                        fill={PALETA_GRUPOS[i % PALETA_GRUPOS.length]}
-                        name={g}
-                        // Fresta de 2px na cor da superfície entre os segmentos empilhados.
-                        stroke="var(--color-surface)"
-                        strokeWidth={2}
-                        radius={i === gruposNomes.length - 1 ? [6, 6, 0, 0] : undefined}
-                      />
-                    ))}
-                  </BarChart>
-                </ResponsiveContainer>
+                <VolumeGruposChart data={semanasPorGrupo} grupos={gruposNomes} />
               </Card>
             )}
           </>

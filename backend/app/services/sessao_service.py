@@ -1097,7 +1097,9 @@ def _evolucao_serie(aluno_id: str, chave: str, info: dict, limit: int) -> dict:
         if not series_exec:
             continue   # só aquecimento/anotação de contexto — não vira ponto de evolução
         ponto: dict = {"data": c.get("data_hora"), "unidade_carga": c.get("unidade_carga"),
-                       "unidade_reps": c.get("unidade_reps")}
+                       "unidade_reps": c.get("unidade_reps"),
+                       # PSE do exercício naquela execução (0-10); None = "não sei dizer"/legado/WOD
+                       "pse": _num(c.get("pse"))}
 
         if (c.get("tipo_exercicio") or tipo) == "PERFORMANCE":
             # Métrica livre no campo `reps`. Ponto da sessão = melhor série (máx ou mín conforme direção).

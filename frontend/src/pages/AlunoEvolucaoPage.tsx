@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Trophy, TrendingUp, Activity, BarChart3, CalendarCheck, FileDown, MessageSquareDot, MessageCircle, Zap } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, ReferenceLine, Legend,
+  CartesianGrid, ReferenceLine,
 } from 'recharts'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAluno } from '../hooks/useAlunos'
@@ -11,6 +11,7 @@ import { useExerciciosAlunoHistorico, useEvolucaoPorChave, useResumo } from '../
 import { Card, Spinner, StatCard, Badge, EmptyState, Button, SearchableSelect, useToast } from '../components/ui'
 import { ExercicioFeedCard } from '../components/exercicio/ExercicioFeedCard'
 import { RecordesList } from '../components/evolucao/RecordesList'
+import { VolumeGruposChart } from '../components/evolucao/VolumeGruposChart'
 import { evolucaoApi } from '../api/evolucao'
 import { fmtScoreValor } from '../utils/wod'
 import { PostComposer } from '../components/exercicio/PostComposer'
@@ -28,17 +29,10 @@ const chartTip = {
   color: 'var(--color-text)',
   fontSize: 12,
 }
-// O rótulo da legenda usa tinta de texto, não a cor da série — a bolinha ao lado é quem
-// carrega a identidade.
-const legendStyle = { fontSize: 11, color: 'var(--color-text-secondary)', paddingTop: 8 }
 /** Eixo de volume em toneladas a partir de 1000 kg: com um exercício somando em vários grupos,
  *  o total da semana passa de 5 dígitos e "10500" era cortado pela margem do eixo. */
 const fmtVolumeEixo = (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(1).replace('.', ',')}t` : String(v))
 const axisTick = { fill: 'var(--color-text-secondary)', fontSize: 12 }
-// 12 matizes, ordem fixa, com passos próprios por tema (ver `--color-chart-*` em index.css).
-// Eram 6 cores de status recicladas; com os grupos musculares virando lista, um exercício de
-// peito+tríceps entra em duas barras e o número de séries distintas subiu.
-const PALETA_GRUPOS = Array.from({ length: 12 }, (_, i) => `var(--color-chart-${i + 1})`)
 
 type AbaEvolucao = 'carga' | 'volume' | 'recordes' | 'feed'
 
@@ -351,24 +345,7 @@ const chartData = (evo?.serie ?? [])
           {aba === 'volume' && gruposNomes.length > 0 && (
             <Card variant="elevated" className="mt-3">
               <p className="text-sm text-text-secondary mb-3">Volume por grupo muscular (kg)</p>
-              <ResponsiveContainer width="100%" height={230}>
-                <BarChart data={semanasPorGrupo} margin={{ top: 5, right: 10, bottom: 5, left: -8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                  <XAxis dataKey="semana" tick={axisTick} stroke="var(--color-border-strong)" />
-                  <YAxis tick={axisTick} stroke="var(--color-border-strong)" width={44} tickFormatter={fmtVolumeEixo} />
-                  <Tooltip contentStyle={chartTip} />
-                  {/* A legenda é o que dá identidade sem depender só da cor — com 12 séries
-                      possíveis, alguns pares vizinhos ficam próximos para daltonismo. */}
-                  <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} />
-                  {gruposNomes.map((g, i) => (
-                    <Bar key={g} dataKey={g} stackId="grupo" fill={PALETA_GRUPOS[i % PALETA_GRUPOS.length]} name={g}
-                      // Fresta de 2px na cor da superfície: separa os segmentos empilhados
-                      // mesmo quando duas cores vizinhas se parecem.
-                      stroke="var(--color-surface)" strokeWidth={2}
-                      radius={i === gruposNomes.length - 1 ? [6, 6, 0, 0] : undefined} />
-                  ))}
-                </BarChart>
-              </ResponsiveContainer>
+              <VolumeGruposChart data={semanasPorGrupo} grupos={gruposNomes} />
             </Card>
           )}
 
