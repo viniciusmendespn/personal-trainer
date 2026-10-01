@@ -129,3 +129,11 @@ def test_ficha_entrega_ao_modelo_resumo_factual_sem_texto_do_aluno(visual_env):
     assert "1 relato(s) de dor em aberto, o mais recente em 2026-09-29" in texto
     assert "Anamnese não respondida" in texto and "detalhar_aluno" in texto
     assert "apague" not in texto
+
+
+def test_anamnese_chega_legivel_na_ficha(visual_env):
+    """BOOL e lista da anamnese viravam "False" e "['a', 'b']" na tela e no texto ao LLM."""
+    visual_env.put_item(keys.pk_aluno(A), keys.SK_ANAMNESE_ALUNO, {"preenchido_em": "2026-09-29",
+        "respostas": {"fumante": False, "lesao": True, "locais": ["Academia", "Em casa"]}})
+    respostas = call("mostrar_aluno", {"aluno_id": A})["_meta"]["coachpilot"]["contexto_aluno"]["anamnese"]["respostas"]
+    assert {r["resposta"] for r in respostas} == {"Não", "Sim", "Academia, Em casa"}

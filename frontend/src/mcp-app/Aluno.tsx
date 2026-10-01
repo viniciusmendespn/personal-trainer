@@ -3,7 +3,7 @@ import { AlertTriangle, ClipboardList, Lock } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import type { Host } from './host'
-import { frequencia, lerAnamnese, situacaoPrograma } from './presentation'
+import { frequencia, lerAnamnese, respostaLegivel, respostaNegativa, situacaoPrograma } from './presentation'
 import { unpack } from './useCases'
 import { Alert, SectionTitle, diaLocal, fmtDate, fmtDateTime, tempoRelativo } from './ui'
 import type { Contexto, Programa } from './types'
@@ -80,15 +80,27 @@ export function Restricoes({ contexto }: { contexto: Contexto }) {
     <div className="border-t border-border pt-3 mt-3">
       <p className="text-xs font-semibold text-text-secondary flex items-center gap-1.5 mb-2"><ClipboardList size={13} /> Anamnese{contexto.anamnese?.preenchido_em ? ` · respondida em ${fmtDate(contexto.anamnese.preenchido_em)}` : ''}</p>
       {semAnamnese ? <p className="text-xs text-text-muted">Indisponível nesta consulta.</p>
-        : contexto.anamnese?.respostas.length ? <details>
-            <summary className="cursor-pointer text-xs text-text-secondary">Ver as {contexto.anamnese.respostas.length} respostas</summary>
-            <dl className="space-y-2 mt-2">{contexto.anamnese.respostas.map((r, i) => <div key={i}>
-              <dt className="text-xs text-text-muted">{r.pergunta}</dt><dd className="text-sm text-text">{r.resposta}</dd>
-            </div>)}</dl>
-          </details>
+        : contexto.anamnese?.respostas.length ? <RespostasAnamnese respostas={contexto.anamnese.respostas} />
         : <p className="text-xs text-text-muted">O aluno ainda não respondeu a anamnese.</p>}
     </div>
   </Card>
+}
+
+/** O que o aluno respondeu de fato em destaque; os "não" viram uma linha, abrível. */
+function RespostasAnamnese({ respostas }: { respostas: { pergunta: string; resposta: string }[] }) {
+  const legiveis = respostas.map(r => ({ ...r, resposta: respostaLegivel(r.resposta) }))
+  const relevantes = legiveis.filter(r => !respostaNegativa(r.resposta))
+  const negativas = legiveis.filter(r => respostaNegativa(r.resposta))
+  return <div className="space-y-2">
+    {!!relevantes.length && <dl className="divide-y divide-border">{relevantes.map((r, i) => <div key={i} className="py-1.5 sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:gap-3">
+      <dt className="text-xs text-text-muted">{r.pergunta}</dt>
+      <dd className="text-sm text-text break-words">{r.resposta}</dd>
+    </div>)}</dl>}
+    {!!negativas.length && <details className="text-xs">
+      <summary className="cursor-pointer text-text-secondary">Respondeu “não” a {negativas.length} pergunta{negativas.length > 1 ? 's' : ''}</summary>
+      <ul className="mt-1.5 space-y-0.5 text-text-muted list-disc pl-4">{negativas.map((r, i) => <li key={i}>{r.pergunta}</li>)}</ul>
+    </details>}
+  </div>
 }
 
 /** Dados completos só sob pedido: não entram no contexto até o personal clicar.

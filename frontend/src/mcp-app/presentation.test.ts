@@ -104,3 +104,15 @@ describe('anamnese', () => {
     expect(saude.map(r => r.resposta)).toEqual(['Ombro direito'])
   })
 })
+
+describe('respostas da anamnese', () => {
+  it('mostra como o aluno responderia', async () => {
+    const { respostaLegivel, respostaNegativa } = await import('./presentation')
+    expect(respostaLegivel('False')).toBe('Não')
+    expect(respostaLegivel('True')).toBe('Sim')
+    expect(respostaLegivel("['Academia', 'Em casa']")).toBe('Academia, Em casa')
+    expect(respostaLegivel('45 minutos')).toBe('45 minutos')
+    expect(respostaNegativa('False')).toBe(true)
+    expect(respostaNegativa('Ombro direito')).toBe(false)
+  })
+})

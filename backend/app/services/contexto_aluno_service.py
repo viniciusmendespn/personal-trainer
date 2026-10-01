@@ -100,6 +100,15 @@ def _perfil(pk: str) -> PerfilContexto:
     )
 
 
+def _resposta_legivel(v) -> str:
+    """BOOL vira "Sim"/"Não" e lista vira "a, b" — `str()` entregava "False" e "['a', 'b']"."""
+    if isinstance(v, bool):
+        return "Sim" if v else "Não"
+    if isinstance(v, (list, tuple)):
+        return ", ".join(str(x) for x in v)
+    return str(v)
+
+
 def _anamnese(pk: str, personal_id: str) -> AnamneseContexto | None:
     resp = repo.clean(repo.get_item(pk, keys.SK_ANAMNESE_ALUNO))
     if not resp or not resp.get("respostas"):
@@ -109,7 +118,7 @@ def _anamnese(pk: str, personal_id: str) -> AnamneseContexto | None:
     return AnamneseContexto(
         preenchido_em=(resp.get("preenchido_em") or "")[:10] or None,
         respostas=[
-            RespostaAnamnese(pergunta=labels.get(k) or k, resposta=str(v))
+            RespostaAnamnese(pergunta=labels.get(k) or k, resposta=_resposta_legivel(v))
             for k, v in resp["respostas"].items()
             if v not in (None, "")
         ],

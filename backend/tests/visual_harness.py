@@ -46,7 +46,8 @@ def reset():
         "nome": "Mariana", "objetivos": ["Hipertrofia"], "vigencias": [], "status": "ATIVO"})
     fake.put_item(keys.pk_aluno(AID), keys.SK_PROFILE, {"nome": "Mariana", "objetivos": ["Hipertrofia"]})
     fake.put_item(keys.pk_aluno(AID), keys.SK_ANAMNESE_ALUNO,
-        {"preenchido_em": "2026-09-29", "respostas": {"restricoes": "Dor no ombro relatada pelo aluno"}})
+        {"preenchido_em": "2026-09-29", "respostas": {"restricoes": "Dor no ombro relatada pelo aluno",
+            "fumante": False, "objetivo_extra": ["Postura", "Condicionamento"]}})
     fake.put_item(keys.pk_personal(PID), keys.SK_ANAMNESE_TEMPLATE, {"perguntas": []}) if hasattr(keys, 'SK_ANAMNESE_TEMPLATE') else None
 
 

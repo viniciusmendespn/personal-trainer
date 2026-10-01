@@ -131,8 +131,19 @@ const ROTINA: [string, RegExp][] = [
 const SAUDE = /cora[cç][aã]o|press[aã]o|dor\b|tontura|desmai|doen[cç]a|medicament|les[aã]o|coluna|cirurgia|restri[cç]|gr[aá]vida|limita/i
 const NEGATIVA = /^(n[aã]o|false|nenhum[a]?|nada|sem|-|n\/a)[.!]?$/i
 
+/** Resposta como o aluno a daria: "False" → "Não", "['a', 'b']" → "a, b". */
+export function respostaLegivel(v: string): string {
+  const t = v.trim()
+  if (/^true$/i.test(t)) return 'Sim'
+  if (/^false$/i.test(t)) return 'Não'
+  const lista = /^\[(.*)\]$/.exec(t)
+  if (lista) return lista[1].split(',').map(x => x.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean).join(', ')
+  return t
+}
+export const respostaNegativa = (v: string) => NEGATIVA.test(respostaLegivel(v))
+
 export function lerAnamnese(c: Contexto) {
-  const respostas = c.anamnese?.respostas ?? []
+  const respostas = (c.anamnese?.respostas ?? []).map(r => ({ ...r, resposta: respostaLegivel(r.resposta) }))
   const rotina = ROTINA.map(([rotulo, re]) => ({ rotulo, resposta: respostas.find(r => re.test(r.pergunta))?.resposta ?? null }))
   const saude = respostas.filter(r => SAUDE.test(r.pergunta) && !NEGATIVA.test(r.resposta.trim()))
   return { rotina, saude }

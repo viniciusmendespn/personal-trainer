@@ -159,6 +159,10 @@ test('dados completos carregam em seções e recomeçam a cada abertura do aluno
   const app = page.frameLocator('iframe')
   await app.getByRole('button', { name: 'Abrir carteira' }).click()
   await app.getByRole('button', { name: 'Abrir aluno Mariana' }).click()
+  // Anamnese legível: nada de "False" ou "['a', 'b']"; os "não" resumidos numa linha.
+  await expect(app.getByText('Postura, Condicionamento')).toBeVisible()
+  await expect(app.getByText('Respondeu “não” a 1 pergunta')).toBeVisible()
+  await expect(app.getByText(/^(False|True)$/)).toHaveCount(0)
   await app.getByRole('button', { name: 'Carregar', exact: true }).click()
   await expect(app.getByText('Nenhuma avaliação registrada.')).toBeVisible()
   await expect(app.getByText(/contexto aluno|aviso_seguranca/)).toHaveCount(0)
