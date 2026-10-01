@@ -120,9 +120,10 @@ test('evolução consulta o ID exportado e separa unidades do histórico', async
   await app.getByLabel('Unidade', { exact: true }).selectOption('lb')
   await expect(app.getByRole('cell', { name: '40', exact: true })).toBeVisible()
   await expect(app.getByRole('cell', { name: '20', exact: true })).toHaveCount(0)
-  await app.getByLabel('Unidade', { exact: true }).selectOption('unidade não informada')
+  // Registro legado sem unidade de carga entra como kg.
+  await app.getByLabel('Unidade', { exact: true }).selectOption('kg')
   await expect(app.getByRole('cell', { name: '10', exact: true })).toBeVisible()
-  await expect(app.locator('svg[role="img"]')).toHaveCount(0)
+  await expect(app.getByLabel('Unidade', { exact: true }).locator('option', { hasText: 'unidade não informada' })).toHaveCount(0)
   expect(browserErrors).toEqual([])
 })
 

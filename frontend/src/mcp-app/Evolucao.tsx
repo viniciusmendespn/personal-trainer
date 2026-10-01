@@ -38,7 +38,11 @@ export function Evolucao({ host, alunoId, programa, onAsk }: { host: Host; aluno
 
   if (!exercicios.length) return <EmptyState icon={<Activity />} title="Sem exercícios" description="O programa atual não tem exercícios para acompanhar." />
 
-  const unidadeDe = (p: EvolucaoData['serie'][number]) => (metric === 'metrica_max' ? p.unidade_reps : p.unidade_carga) || SEM_UNIDADE
+  // Carga sem unidade registrada é kg (padrão do app). Métrica de PERFORMANCE não tem padrão
+  // seguro (s, m, reps…): usa a do exercício e, sem ela, fica como não informada.
+  const unidadeDe = (p: EvolucaoData['serie'][number]) => metric === 'metrica_max'
+    ? p.unidade_reps || ex?.unidade_reps || SEM_UNIDADE
+    : p.unidade_carga || 'kg'
   const units = [...new Set((data?.serie || []).map(unidadeDe))]
   const unit = units.includes(selectedUnit) ? selectedUnit : units[0] || SEM_UNIDADE
   const cutoff = new Date(Date.now() - Number(dias) * 86400000).toISOString()

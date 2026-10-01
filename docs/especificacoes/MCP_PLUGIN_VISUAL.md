@@ -16,7 +16,7 @@ Os detalhes de programa e contexto ficam em `_meta.coachpilot`; `structuredConte
 
 A carteira normaliza acentos/caixa, aplica filtros antes de preencher a página e mantém cursor quando a busca é parcial. Examina até oito páginas por chamada. Os resumos e a ordenação da interface se referem aos alunos carregados; não são totais globais inferidos. Filtros usam a data local do personal, sete dias para vencimento próximo e a regra existente de dez dias sem treino.
 
-A evolução carrega até 200 registros e separa kg, lb e outras unidades registradas. Registros legados sem unidade ficam na tabela com indicação de unidade desconhecida e não entram no gráfico. Novos registros de sessão preservam tipo e unidade do snapshot. CrossFit/HIIT mantêm blocos e parâmetros; mudanças complexas seguem pelo pedido explícito ao chat.
+A evolução carrega até 200 registros e separa kg, lb e outras unidades registradas. Carga sem unidade registrada conta como kg (padrão do app); métrica de PERFORMANCE sem unidade usa a do exercício e, sem ela, fica como "unidade não informada", fora do gráfico. Novos registros de sessão preservam tipo e unidade do snapshot. CrossFit/HIIT mantêm blocos e parâmetros; mudanças complexas seguem pelo pedido explícito ao chat.
 
 ## Contratos e permissões
 
