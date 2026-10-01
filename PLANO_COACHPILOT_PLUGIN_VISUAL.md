@@ -1,6 +1,6 @@
 # CoachPilot — planejamento do plugin visual no ChatGPT
 
-Data: 30/09/2026; atualização em 01/10/2026. Status: fluxo prioritário implementado. Consulta visual compatível preparada com `MCP_COMPAT_MODE=true`, `MCP_UI_ENABLED=true` e propostas/aplicação desabilitadas. As 13 ferramentas e escritores publicados permanecem no snapshot v1. Carteira, aluno, treinos e evolução usam consultas adicionais de leitura. Deploy desta atualização e validação no ChatGPT pendentes.
+Data: 30/09/2026; atualização em 01/10/2026. Status: fluxo prioritário implementado. Consulta visual compatível preparada com `MCP_COMPAT_MODE=true`, `MCP_UI_ENABLED=true` e propostas/aplicação desabilitadas. As 13 ferramentas e escritores publicados permanecem no snapshot v1. Carteira, aluno, treinos e evolução usam consultas adicionais de leitura. Publicado em 01/10/2026 (commit `c03f8d7`, `McpUiEnabled=true`); Rescan e validação no ChatGPT pendentes.
 
 Entrega e ativação: [MCP_PLUGIN_VISUAL.md](docs/especificacoes/MCP_PLUGIN_VISUAL.md). Os itens marcados abaixo representam código e verificação local; não substituem os critérios de aceite no ChatGPT. Etapas de lotes e eventos permanecem posteriores ao fluxo principal.
 
