@@ -59,6 +59,10 @@ Qualquer mudança de contrato exige atualizar o fixture de propósito e fazer Re
     obrigatório — nome não é chave;
   - a carteira de fallback do card não entra quando a tool pediu um aluno, nem sobrescreve o
     resultado entregue pelo host;
+  - o card é a foto do momento da consulta — gravar pela conversa não o avisa. Botão
+    "Atualizar" (card e cabeçalho da ficha) recarrega a tela atual mantendo a aba, e voltar ao
+    card (foco ou aba visível) recarrega sozinho se a última carga tem mais de 20 s. Sem
+    polling; card novo após cada gravação exigiria UI na tool de escrita (mudança de contrato);
   - abrir aluno pelo card mantém o card;
   - a tela cheia só abre por escolha e volta a card ao sair;
   - sem tela cheia no host, oferece o portal (`openLink`).

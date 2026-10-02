@@ -148,3 +148,33 @@ test('320 px, tema escuro e foco de teclado sem rolagem horizontal', async ({ pa
   await expect(app.getByRole('button', { name: 'Renovar vigência' })).toBeVisible()
   expect(await frame.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })
+
+test('treino gravado pela conversa aparece ao atualizar o card, sem recarregar a página', async ({ page, request }) => {
+  await page.goto('/')
+  const app = page.frameLocator('iframe')
+  await app.getByRole('button', { name: 'Abrir aluno Mariana' }).click()
+  await expect(app.getByText('Sem programa vigente')).toBeVisible()
+  await request.post('/_test/legacy-program')  // gravação feita fora do card
+  const before = await (await request.get('/_test/status')).json()
+  await app.getByRole('button', { name: 'Atualizar' }).click()
+  await expect(app.getByText('Sem programa vigente')).toHaveCount(0)
+  await expect(app.getByRole('heading', { name: 'Mariana', exact: true })).toBeVisible()
+  expect(await (await request.get('/_test/status')).json()).toEqual(before)
+  expect(await mensagens(page)).toEqual([])
+})
+
+test('voltar ao card depois de um tempo recarrega sozinho; logo em seguida não', async ({ page, request }) => {
+  await page.clock.install()
+  await page.goto('/')
+  const app = page.frameLocator('iframe')
+  await app.getByRole('button', { name: 'Abrir aluno Mariana' }).click()
+  await expect(app.getByText('Sem programa vigente')).toBeVisible()
+  await request.post('/_test/legacy-program')
+  const focar = () => page.frames()[1].evaluate(() => window.dispatchEvent(new Event('focus')))
+  await focar()
+  await page.waitForTimeout(300)
+  await expect(app.getByText('Sem programa vigente')).toBeVisible()
+  await page.clock.fastForward(25_000)
+  await focar()
+  await expect(app.getByText('Sem programa vigente')).toHaveCount(0)
+})

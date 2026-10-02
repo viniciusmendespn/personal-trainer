@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, ChevronRight, Clock, ExternalLink, Maximize2, MessageSquare, RotateCcw, Search, Sparkles, Users } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Clock, ExternalLink, Maximize2, MessageSquare, RefreshCw, RotateCcw, Search, Sparkles, Users } from 'lucide-react'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -23,6 +23,8 @@ const FILAS: Record<string, string> = { SEM_TREINO_VIGENTE: 'sem treino vigente'
 /** Host sem `capabilities()` (testes, versões antigas): presume o comportamento anterior. */
 const CAPS_PADRAO: Capacidades = { fullscreen: true, contexto: true, mensagem: true }
 const CONFIRMAR = 'Só grave depois que eu confirmar.'
+/** Intervalo mínimo entre recargas automáticas (foco/aba visível): uma leitura por volta ao card. */
+const RECARGA_AUTOMATICA_MS = 20_000
 
 /** A tela só lê; toda ação é um pedido à conversa, e quem grava é o ChatGPT com as tools
  *  publicadas. Sempre com nome e `aluno_id` explícitos — não depende de o host ter recebido
@@ -75,6 +77,8 @@ export function Workspace({ host }: { host: Host }) {
     const data = unpack(result)
     if (!data.resumo?.tela) return
     const mesmoAluno = data.resumo.aluno_id && data.resumo.aluno_id === resumo?.aluno_id && data.resumo.tela === resumo?.tela
+    telaAtual.current = `${data.resumo.tela}:${data.resumo.aluno_id ?? ''}`
+    ultimaCarga.current = Date.now()
     setResumo(data.resumo); setDetails(data.detalhes); setError('')
     if (!(manterAba && mesmoAluno)) setTab('geral')
     if (data.resumo.tela === 'carteira') setCarteira(result._meta?.coachpilot as unknown as Carteira)
@@ -86,6 +90,9 @@ export function Workspace({ host }: { host: Host }) {
   // entra se a tool pediu um aluno, nem sobrescreve o resultado que o host entregou.
   const resultadoDoHost = useRef(false)
   const alunoPedido = useRef(false)
+  const telaAtual = useRef('')
+  const ultimaCarga = useRef(0)
+  const recarregando = useRef(false)
   useEffect(() => {
     let active = true
     void host.connect(r => { if (!active) return; resultadoDoHost.current = true; receive(r) },
@@ -111,6 +118,32 @@ export function Workspace({ host }: { host: Host }) {
     }, 300)
     return () => { active = false; clearTimeout(timer) }
   }, [ready, resumo?.tela, resumo?.carteira_tool, busca, filtro, expanded, mode, host])
+
+  /** O card é uma foto do momento da consulta: a gravação pela conversa não o avisa. Recarrega a
+   *  tela atual mantendo a aba; se a navegação mudou de tela no meio, descarta a resposta. */
+  async function atualizar() {
+    if (!resumo || recarregando.current) return
+    recarregando.current = true
+    const tela = telaAtual.current
+    try {
+      const r = resumo.tela === 'aluno' && resumo.aluno_id
+        ? await api.aluno(resumo.aluno_id).then(data => ({ structuredContent: data.resumo as unknown as Record<string, unknown>, _meta: { coachpilot: data.detalhes } }))
+        : await host.call('abrir_coachpilot', { busca, filtro: filtro || null })
+      if (telaAtual.current === tela) receive(r, true)
+    } finally { recarregando.current = false }
+  }
+  const atualizarRef = useRef(atualizar)
+  atualizarRef.current = atualizar
+  // Voltar ao card (clique nele ou aba visível de novo) traz o que mudou pela conversa.
+  useEffect(() => {
+    const aoVoltar = () => {
+      if (document.visibilityState !== 'visible' || Date.now() - ultimaCarga.current < RECARGA_AUTOMATICA_MS) return
+      void atualizarRef.current().catch(() => { /* silenciosa: o botão Atualizar mostra o erro */ })
+    }
+    window.addEventListener('focus', aoVoltar)
+    document.addEventListener('visibilitychange', aoVoltar)
+    return () => { window.removeEventListener('focus', aoVoltar); document.removeEventListener('visibilitychange', aoVoltar) }
+  }, [])
 
   async function run(task: () => Promise<void>) {
     setBusy(true); setError('')
@@ -157,7 +190,10 @@ export function Workspace({ host }: { host: Host }) {
     {!isCard && <header className="sticky top-0 z-20 border-b border-border bg-bg/85 backdrop-blur-xl">
       <div className="max-w-3xl mx-auto px-4 h-12 flex items-center justify-between gap-2">
         <Brand>{busy && <Spinner className="w-4 h-4 border-[1.5px] ml-1" />}</Brand>
+        <div className="flex items-center gap-1">
+        {resumo && <Button variant="ghost" size="sm" iconOnly aria-label="Atualizar" title="Atualizar" disabled={busy} onClick={() => void run(atualizar)}><RefreshCw size={16} /></Button>}
         {mode !== 'fullscreen' && caps.fullscreen && <Button variant="ghost" size="sm" iconOnly aria-label="Abrir tela cheia" onClick={() => void host.expand().catch(err => setError(err.message))}><Maximize2 size={16} /></Button>}
+        </div>
       </div>
     </header>}
 
@@ -168,7 +204,7 @@ export function Workspace({ host }: { host: Host }) {
       {!resumo && !error && <div className="space-y-3"><p className="text-text-secondary">{ready ? 'Carregando sua carteira…' : 'Aguardando a conexão autenticada.'}</p><SkeletonCard /></div>}
 
       {resumo && isCard && <ResumoCard resumo={resumo} details={details} carteira={carteira} busy={busy} caps={caps}
-        onOpen={() => void run(ampliar)} onAluno={id => void openAluno(id, false)} onAsk={ask} onPortal={portal} />}
+        onRefresh={() => void run(atualizar)} onOpen={() => void run(ampliar)} onAluno={id => void openAluno(id, false)} onAsk={ask} onPortal={portal} />}
 
       {resumo && !isCard && <>
         {resumo.tela === 'carteira' && <CarteiraView carteira={carteira} busy={busy} busca={busca} setBusca={setBusca} filtro={filtro} setFiltro={setFiltro}
@@ -220,17 +256,26 @@ export function Workspace({ host }: { host: Host }) {
   </main>
 }
 
+function BotaoAtualizar({ busy, onClick }: { busy: boolean; onClick: () => void }) {
+  return <Button variant="ghost" size="sm" iconOnly aria-label="Atualizar" title="Atualizar" disabled={busy} onClick={onClick}>
+    <RefreshCw size={14} className={busy ? 'animate-spin' : undefined} />
+  </Button>
+}
+
 /** Card na conversa: um escopo, no máximo duas ações, sem rolagem interna. */
-function ResumoCard({ resumo, details, carteira, busy, caps, onOpen, onAluno, onAsk, onPortal }: {
+function ResumoCard({ resumo, details, carteira, busy, caps, onRefresh, onOpen, onAluno, onAsk, onPortal }: {
   resumo: Resumo; details: Detalhes; carteira: Carteira | null; busy: boolean; caps: Capacidades
-  onOpen: () => void; onAluno: (id: string) => void; onAsk: (text: string) => Promise<void>; onPortal: (path: string) => Promise<void>
+  onRefresh: () => void; onOpen: () => void; onAluno: (id: string) => void; onAsk: (text: string) => Promise<void>; onPortal: (path: string) => Promise<void>
 }) {
   if (resumo.tela === 'aluno') {
     const c = details.contexto_aluno
     const temTreino = !!details.programa?.treinos.length
     return <div className="space-y-3">
-      <div className="min-w-0"><h1 className="font-display text-base font-semibold break-words">{resumo.nome}</h1>
-        <p className="text-[11px] text-text-muted">Antes de prescrever · dados de {fmtDateTime(c?.gerado_em) ?? 'agora'}</p></div>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0"><h1 className="font-display text-base font-semibold break-words">{resumo.nome}</h1>
+          <p className="text-[11px] text-text-muted">Antes de prescrever · dados de {fmtDateTime(c?.gerado_em) ?? 'agora'}</p></div>
+        <BotaoAtualizar busy={busy} onClick={onRefresh} />
+      </div>
       {details.sessao_em_andamento && <Alert tone="warning">Treinando agora{details.sessao_em_andamento.treino_nome ? `: ${details.sessao_em_andamento.treino_nome}` : ''}.</Alert>}
       {c ? <><AtencaoSaude contexto={c} limite={2} /><ContextoPrescricao contexto={c} programa={details.programa} /></>
         : <p className="text-sm text-text-muted">Contexto do aluno indisponível nesta consulta.</p>}
@@ -250,10 +295,11 @@ function ResumoCard({ resumo, details, carteira, busy, caps, onOpen, onAluno, on
   const atencao = ordenarAlunos(itens.filter(a => a.urgencia < 3 && a.status !== 'INATIVO'), 'urgencia')
   const escopo = completa ? '' : ' entre os carregados'
   return <div className="space-y-3">
-    <div><h1 className="font-display text-base font-semibold">Quem precisa de atenção</h1>
+    <div className="flex items-start justify-between gap-2"><div><h1 className="font-display text-base font-semibold">Quem precisa de atenção</h1>
       <p className="text-xs text-text-muted">{itens.length
         ? `${itens.length} aluno${itens.length > 1 ? 's' : ''} ${completa ? 'na carteira' : 'carregados'} · ${atencao.length ? `${atencao.length} com pendência${escopo}` : `nenhuma pendência${escopo}`}`
         : 'Consulte alunos, treinos e evolução.'}</p></div>
+      <BotaoAtualizar busy={busy} onClick={onRefresh} /></div>
     {!!atencao.length && <ul className="rounded-xl border border-border divide-y divide-border overflow-hidden">{atencao.slice(0, 3).map(a => <li key={a.aluno_id}>
       <AlunoLinha aluno={a} busy={busy} onClick={() => onAluno(a.aluno_id)} compact />
     </li>)}</ul>}
