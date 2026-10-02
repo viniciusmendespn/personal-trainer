@@ -212,3 +212,21 @@ def test_mostrar_aluno_orienta_buscar_id_e_perguntar_homonimo(visual_env):
     tool = next(t for t in dispatch("tools/list")["result"]["tools"] if t["name"] == "mostrar_aluno")
     assert "listar_alunos" in tool["description"] and "pergunte" in tool["description"]
     assert "listar_alunos" in tool["inputSchema"]["properties"]["aluno_id"]["description"]
+
+
+# ── dor relatada pelo app (postagem do feed) chega à atenção para a prescrição ──
+
+def test_dor_postada_no_feed_entra_nos_relatos_e_resposta_e_comentario_do_personal(visual_env):
+    pk = keys.pk_aluno(A)
+    visual_env.put_item(pk, "POST#ex#1#p1", {"tipo": "DOR", "ator": "ALUNO", "exercicio_nome": "Agachamento livre",
+        "descricao": "Dor no joelho", "data_hora": "2026-09-20T10:00:00", "respondido": False, "comentarios": []})
+    visual_env.put_item(pk, "POST#ex#2#p2", {"tipo": "DOR", "ator": "ALUNO", "exercicio_nome": "Supino reto",
+        "descricao": "Ombro", "data_hora": "2026-09-12T10:00:00", "respondido": False,
+        "comentarios": [{"ator": "ALUNO", "texto": "ainda dói"}, {"ator": "PERSONAL", "texto": "Reduza a carga"}]})
+    visual_env.put_item(pk, "POST#ex#3#p3", {"tipo": "EXECUCAO", "ator": "ALUNO", "descricao": "PR!", "data_hora": "2026-09-21T10:00:00"})
+    visual_env.put_item(pk, "POST#ex#4#p4", {"tipo": "DOR", "ator": "PERSONAL", "descricao": "nota", "data_hora": "2026-09-22T10:00:00"})
+    relatos = call("mostrar_aluno", {"aluno_id": A})["_meta"]["coachpilot"]["contexto_aluno"]["dores_e_duvidas"]
+    assert [(r["exercicio"], r["respondido"], r["resposta_do_personal"]) for r in relatos] == [
+        ("Agachamento livre", False, None), ("Supino reto", True, "Reduza a carga")]
+    texto = call("mostrar_aluno", {"aluno_id": A})["content"][0]["text"]
+    assert "1 relato(s) de dor em aberto" in texto

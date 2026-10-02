@@ -291,10 +291,26 @@ def _relato(item: dict, tipo: str) -> RelatoContexto:
     )
 
 
+def _relato_de_postagem(item: dict) -> RelatoContexto:
+    """Postagem DOR/DUVIDA do feed: o personal responde comentando na thread, e o item não
+    ganha `respondido` — respondida é a que tem comentário do personal."""
+    respostas = [c for c in item.get("comentarios") or [] if c.get("ator") == "PERSONAL" and c.get("texto")]
+    relato = _relato(item, item["tipo"])
+    relato.respondido = relato.respondido or bool(respostas)
+    relato.resposta_do_personal = relato.resposta_do_personal or (respostas[-1]["texto"] if respostas else None)
+    return relato
+
+
 def _dores_e_duvidas(pk: str) -> list[RelatoContexto]:
-    """Todas as não respondidas + as N respondidas mais recentes."""
+    """Todas as não respondidas + as N respondidas mais recentes.
+
+    Duas origens: o relato antigo (`DOR#`/`DUVIDA#`, `/relato` e agente) e a postagem do feed
+    com tipo DOR/DUVIDA, que é como o app do aluno relata hoje. Sem a segunda, dor relatada
+    pelo app não chegava à atenção para a prescrição nem ao `detalhar_aluno`."""
     relatos = [_relato(repo.clean(i), "DOR") for i in repo.query_pk(pk, sk_prefix="DOR#")]
     relatos += [_relato(repo.clean(i), "DUVIDA") for i in repo.query_pk(pk, sk_prefix=keys.DUVIDA_PREFIX)]
+    relatos += [_relato_de_postagem(i) for i in repo.clean_all(repo.query_pk(pk, sk_prefix=keys.POST_PREFIX))
+                if i.get("tipo") in ("DOR", "DUVIDA") and (i.get("ator") or "ALUNO") == "ALUNO"]
     relatos.sort(key=lambda r: r.data or "", reverse=True)
     abertas = [r for r in relatos if not r.respondido]
     respondidas = [r for r in relatos if r.respondido][:MAX_RELATOS_RESPONDIDOS]
