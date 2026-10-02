@@ -3,7 +3,7 @@ import { AlertTriangle, ClipboardList, Lock } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import type { Host } from './host'
-import { frequencia, lerAnamnese, respostaLegivel, respostaNegativa, situacaoPrograma } from './presentation'
+import { frequencia, historicoDor, lerAnamnese, respostaLegivel, respostaNegativa, situacaoPrograma } from './presentation'
 import { Alert, SectionTitle, diaLocal, fmtDate, fmtDateTime, tempoRelativo } from './ui'
 import type { Contexto, Programa } from './types'
 
@@ -49,14 +49,21 @@ export function AtencaoSaude({ contexto: c, limite }: { contexto: Contexto; limi
   ]
   const visiveis = limite != null ? itens.slice(0, limite) : itens
   const resto = itens.length - visiveis.length
-  if (!itens.length && !semDores && !semAnamnese) return <p className="text-xs text-text-muted">
+  // Fora do limite: é uma linha só, e é ela que diz quais exercícios já doeram.
+  const historico = semDores ? null : historicoDor(c)
+  if (!itens.length && !historico && !semDores && !semAnamnese) return <p className="text-xs text-text-muted">
     {c.anamnese ? 'Nenhuma dor em aberto nem restrição de saúde na anamnese.' : 'Nenhuma dor em aberto. A anamnese ainda não foi respondida.'}
   </p>
   return <div className="space-y-2">
     {(semDores || semAnamnese) && <Alert tone="warning">Não foi possível carregar {[semDores && 'os relatos de dor', semAnamnese && 'a anamnese'].filter(Boolean).join(' e ')}. Confira antes de prescrever.</Alert>}
-    {!!visiveis.length && <div className="rounded-xl border border-warning/40 bg-warning/5 px-3 py-2">
+    {(!!visiveis.length || historico) && <div className="rounded-xl border border-warning/40 bg-warning/5 px-3 py-2">
       <p className="text-xs font-semibold text-warning flex items-center gap-1.5 mb-1"><AlertTriangle size={13} /> Atenção para a prescrição</p>
-      <ul className="space-y-1.5 text-sm">{visiveis}</ul>
+      {!!visiveis.length && <ul className="space-y-1.5 text-sm">{visiveis}</ul>}
+      {historico && <p className={`text-sm ${visiveis.length ? 'mt-1.5' : ''}`}>
+        <span className="font-medium">Histórico de dor{historico.parcial ? ' (relatos mais recentes)' : ''}:</span>{' '}
+        {historico.exercicios.map(e => `${e.nome} ${e.vezes}×`).join(' · ')}
+        {historico.ultima && <span className="text-text-muted"> · última em {fmtDate(historico.ultima)}</span>}
+      </p>}
       {resto > 0 && <p className="text-xs text-text-muted mt-1.5">+ {resto} {resto > 1 ? 'outros itens' : 'outro item'} — veja todos na ficha.</p>}
     </div>}
   </div>

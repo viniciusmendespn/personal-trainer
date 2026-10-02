@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { coberturaEvolucao, lerAnamnese, melhorValor, situacaoPrograma, treinoRelevante } from './presentation'
+import { coberturaEvolucao, historicoDor, lerAnamnese, melhorValor, situacaoPrograma, treinoRelevante } from './presentation'
 import { descreverBloco } from './Programa'
 import type { Contexto, Exercicio, Programa, Treino } from './types'
 
@@ -61,5 +61,26 @@ describe('respostas da anamnese', () => {
     expect(respostaLegivel('45 minutos')).toBe('45 minutos')
     expect(respostaNegativa('False')).toBe(true)
     expect(respostaNegativa('Ombro direito')).toBe(false)
+  })
+})
+
+describe('histórico de dor', () => {
+  const ctx = (relatos: Contexto['dores_e_duvidas']) => ({ dores_e_duvidas: relatos }) as unknown as Contexto
+  const dor = (exercicio: string | null, data: string, respondido = true) => ({ tipo: 'DOR', descricao: 'x', exercicio, data, respondido })
+
+  it('agrupa as respondidas por exercício, mais frequente primeiro, e traz a última data', () => {
+    const h = historicoDor(ctx([dor('Supino', '2026-09-12'), dor('Agachamento', '2026-09-20'), dor('supino', '2026-08-01'),
+      dor(null, '2026-07-01'), dor('Remada', '2026-09-30', false)]))
+    expect(h).toEqual({ exercicios: [{ nome: 'Supino', vezes: 2 }, { nome: 'Agachamento', vezes: 1 }, { nome: 'geral', vezes: 1 }],
+      ultima: '2026-09-20', parcial: false })
+  })
+
+  it('sem dor respondida não há histórico; dúvida não conta', () => {
+    expect(historicoDor(ctx([dor('Supino', '2026-09-12', false), { tipo: 'DUVIDA', descricao: 'x', respondido: true }]))).toBeNull()
+  })
+
+  it('no teto de relatos respondidos avisa que pode haver mais antigos', () => {
+    const relatos = Array.from({ length: 10 }, (_, i) => ({ ...dor('Supino', `2026-09-${String(i + 1).padStart(2, '0')}`), tipo: i < 3 ? 'DOR' : 'DUVIDA' }))
+    expect(historicoDor(ctx(relatos))?.parcial).toBe(true)
   })
 })

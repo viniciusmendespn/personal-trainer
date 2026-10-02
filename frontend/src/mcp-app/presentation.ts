@@ -77,3 +77,25 @@ export function frequencia(c: Contexto): string | null {
   const media = e.media_sessoes_por_semana.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
   return `${e.sessoes_semana_atual} sess${e.sessoes_semana_atual === 1 ? 'ão' : 'ões'} nesta semana · média ${media}/semana`
 }
+
+/** Teto de relatos respondidos (dor + dúvida) que o contexto traz — `MAX_RELATOS_RESPONDIDOS`
+ *  em `contexto_aluno_service.py`. Bateu o teto: pode haver mais antigos fora da conta. */
+export const MAX_RELATOS_RESPONDIDOS = 10
+
+/** Dores já respondidas agrupadas por exercício: responder não quer dizer que a dor passou. */
+export function historicoDor(c: Contexto): { exercicios: { nome: string; vezes: number }[]; ultima: string | null; parcial: boolean } | null {
+  const respondidas = c.dores_e_duvidas.filter(r => r.respondido)
+  const dores = respondidas.filter(r => r.tipo === 'DOR')
+  if (!dores.length) return null
+  const porExercicio = new Map<string, { nome: string; vezes: number; ultima: string }>()
+  for (const r of dores) {
+    const nome = r.exercicio?.trim() || 'geral'
+    const atual = porExercicio.get(nome.toLowerCase()) ?? { nome, vezes: 0, ultima: '' }
+    atual.vezes += 1
+    if ((r.data ?? '') > atual.ultima) atual.ultima = r.data ?? ''
+    porExercicio.set(nome.toLowerCase(), atual)
+  }
+  const exercicios = [...porExercicio.values()].sort((a, b) => b.vezes - a.vezes || b.ultima.localeCompare(a.ultima))
+  const ultima = dores.map(r => r.data ?? '').sort().pop() || null
+  return { exercicios: exercicios.map(({ nome, vezes }) => ({ nome, vezes })), ultima, parcial: respondidas.length >= MAX_RELATOS_RESPONDIDOS }
+}

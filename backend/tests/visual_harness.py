@@ -104,6 +104,11 @@ class Handler(BaseHTTPRequestHandler):
                     "series_exec": [{"carga": value, "reps": 10}], "unidade_carga": unit,
                     "GSI1PK": keys.gsi1_registro(AID, 'supino'), "GSI1SK": str(i)})
             self.send({"ok": True}); return
+        if self.path.startswith('/_test/dores-respondidas'):
+            for i, (exercicio, data) in enumerate([('Supino', '2026-09-12'), ('Supino', '2026-08-01'), ('Agachamento', '2026-09-20')]):
+                fake.put_item(keys.pk_aluno(AID), keys.sk_dor('ex', f'{data}T10:00:00', f'd{i}'), {
+                    "data_hora": f'{data}T10:00:00', "exercicio_nome": exercicio, "descricao": "Incômodo", "respondido": True})
+            self.send({"ok": True}); return
         if self.path.startswith('/_test/legacy-program'):
             fake.put_item(keys.pk_aluno(AID), keys.sk_treino('legacy'),
                 {"treino_id": "legacy", "nome": "Treino anterior", "ativo": True, "ordem": 0,

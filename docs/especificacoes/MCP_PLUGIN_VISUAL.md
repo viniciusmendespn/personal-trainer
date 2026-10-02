@@ -35,7 +35,8 @@ Qualquer mudança de contrato exige atualizar o fixture de propósito e fazer Re
 ## Telas
 
 - **Card do aluno:** contexto para prescrever. Mostra atenção de saúde (dores em aberto com
-  data e origem, respostas de saúde da anamnese), objetivo, rotina lida da anamnese, situação
+  data e origem, histórico das dores já respondidas agrupado por exercício — responder não
+  quer dizer que a dor passou —, respostas de saúde da anamnese), objetivo, rotina lida da anamnese, situação
   do programa e frequência. Restrição nunca é truncada em silêncio. Ações: "Ver ficha" e
   "Revisar treino".
 - **Ficha (tela cheia):**

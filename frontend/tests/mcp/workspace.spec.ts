@@ -178,3 +178,13 @@ test('voltar ao card depois de um tempo recarrega sozinho; logo em seguida não'
   await focar()
   await expect(app.getByText('Sem programa vigente')).toHaveCount(0)
 })
+
+test('atenção do card mostra o histórico de dor já respondida por exercício', async ({ page, request }) => {
+  await request.post('/_test/dores-respondidas')
+  await page.goto('/')
+  const app = page.frameLocator('iframe')
+  await app.getByRole('button', { name: 'Abrir aluno Mariana' }).click()
+  await expect(app.getByText('Atenção para a prescrição')).toBeVisible()
+  await expect(app.getByText(/Histórico de dor:\s*Supino 2× · Agachamento 1×/)).toBeVisible()
+  await expect(app.getByText('última em 20/09/2026')).toBeVisible()
+})
