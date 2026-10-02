@@ -25,7 +25,7 @@ class AbrirArgs(CarteiraArgs):
 
 class AlunoArgs(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    aluno_id: str
+    aluno_id: str = Field(..., description="Id do aluno, obtido em `listar_alunos`")
 
 
 class Resumo(BaseModel):
@@ -43,7 +43,10 @@ DEFINICOES = {
     "abrir_coachpilot": ("Abrir CoachPilot", AbrirArgs,
         "Abre a carteira ou a ficha de um aluno para consulta visual, sem alterar dados."),
     "mostrar_aluno": ("Abrir aluno", AlunoArgs,
-        "Consulta programa, restrições informadas e evolução do aluno. A interface é somente leitura."),
+        "Abre na conversa a ficha visual de um aluno: programa, restrições informadas e evolução. "
+        "Use quando o personal pedir para ver, abrir ou mostrar um aluno. Busque o `aluno_id` "
+        "com `listar_alunos`; se mais de um aluno tiver o nome pedido, pergunte qual antes de "
+        "abrir. A interface é somente leitura."),
     "consultar_carteira_visual": ("Consultar carteira visual", CarteiraArgs,
         "Consulta alunos com filtros, pendências e paginação para a carteira visual, sem alterar dados."),
 }

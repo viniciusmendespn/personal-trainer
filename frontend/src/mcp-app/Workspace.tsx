@@ -82,16 +82,22 @@ export function Workspace({ host }: { host: Host }) {
     void host.context({ aluno_id: data.resumo.aluno_id, nome: data.resumo.nome, tela: data.resumo.tela }).catch(() => false)
   }
 
+  // `mostrar_aluno` pode terminar depois de o card ficar pronto. A carteira de fallback não
+  // entra se a tool pediu um aluno, nem sobrescreve o resultado que o host entregou.
+  const resultadoDoHost = useRef(false)
+  const alunoPedido = useRef(false)
   useEffect(() => {
     let active = true
-    void host.connect(r => { if (active) receive(r) }, (t, m) => { if (!active) return; if (t) setTheme(t); if (m) setMode(m) })
+    void host.connect(r => { if (!active) return; resultadoDoHost.current = true; receive(r) },
+      (t, m) => { if (!active) return; if (t) setTheme(t); if (m) setMode(m) },
+      args => { if (typeof args.aluno_id === 'string' && args.aluno_id) alunoPedido.current = true })
       .then(() => { if (active) setReady(true) }).catch(err => { if (active) setError(String(err.message ?? err)) })
     return () => { active = false; host.dispose() }
   }, [host])
 
   useEffect(() => {
-    if (!ready || resumo) return
-    void host.call('abrir_coachpilot', {}).then(r => receive(r)).catch(err => setError(err.message))
+    if (!ready || resumo || alunoPedido.current) return
+    void host.call('abrir_coachpilot', {}).then(r => { if (!resultadoDoHost.current) receive(r) }).catch(err => setError(err.message))
   }, [ready])
 
   useEffect(() => {

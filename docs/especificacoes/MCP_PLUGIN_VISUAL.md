@@ -53,6 +53,12 @@ Qualquer mudança de contrato exige atualizar o fixture de propósito e fazer Re
   - busca sem acento/caixa, filtros e cursor;
   - contagens valem para os alunos carregados.
 - **Navegação:**
+  - "mostra a ficha da Márcia" abre direto, sem passar pela carteira: o modelo resolve o id
+    com `listar_alunos` (busca sem acento/caixa, pagina além da primeira página) e chama
+    `mostrar_aluno`; com homônimos, pergunta qual antes de abrir. `aluno_id` segue
+    obrigatório — nome não é chave;
+  - a carteira de fallback do card não entra quando a tool pediu um aluno, nem sobrescreve o
+    resultado entregue pelo host;
   - abrir aluno pelo card mantém o card;
   - a tela cheia só abre por escolha e volta a card ao sair;
   - sem tela cheia no host, oferece o portal (`openLink`).

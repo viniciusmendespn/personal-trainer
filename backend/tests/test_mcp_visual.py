@@ -181,3 +181,34 @@ def test_query_pk_le_todas_as_paginas(monkeypatch):
     monkeypatch.setattr(repo, "_get_table", lambda: table)
     assert len(repo.query_pk("p", consistent=True)) == 2
     assert table.query.call_args_list[1].kwargs["ExclusiveStartKey"] == {"PK": "p", "SK": "1"}
+
+
+# ── abrir a ficha pelo nome: listar_alunos → mostrar_aluno ──
+
+def test_listar_alunos_busca_alem_da_primeira_pagina_e_sem_acento(visual_env):
+    """O `aluno_id` da ficha sai daqui: a busca não pode parar na primeira página."""
+    for i in range(5):
+        visual_env.put_item(keys.pk_personal(P), keys.sk_aluno_pointer(f"a{i:03}"), {"aluno_id": f"a{i}", "nome": "Outro"})
+    visual_env.put_item(keys.pk_personal(P), keys.sk_aluno_pointer("zzz"), {"aluno_id": "zzz", "nome": "JOSÉ"})
+    r = call("listar_alunos", {"busca": "jose", "limit": 2})["structuredContent"]
+    assert [a["aluno_id"] for a in r["items"]] == ["zzz"]
+
+
+def test_listar_alunos_devolve_homonimos_para_o_modelo_perguntar(visual_env):
+    visual_env.put_item(keys.pk_personal(P), keys.sk_aluno_pointer("m2"),
+        {"aluno_id": "m2", "nome": "Marcia", "status": "INATIVO"})
+    r = call("listar_alunos", {"busca": "márcia"})["structuredContent"]
+    assert {a["aluno_id"] for a in r["items"]} == {A, "m2"}
+
+
+def test_listar_alunos_sem_busca_mantem_uma_pagina(visual_env):
+    for i in range(5):
+        visual_env.put_item(keys.pk_personal(P), keys.sk_aluno_pointer(f"a{i:03}"), {"aluno_id": f"a{i}", "nome": "Outro"})
+    r = call("listar_alunos", {"limit": 2})["structuredContent"]
+    assert len(r["items"]) == 2 and r["next_cursor"]
+
+
+def test_mostrar_aluno_orienta_buscar_id_e_perguntar_homonimo(visual_env):
+    tool = next(t for t in dispatch("tools/list")["result"]["tools"] if t["name"] == "mostrar_aluno")
+    assert "listar_alunos" in tool["description"] and "pergunte" in tool["description"]
+    assert "listar_alunos" in tool["inputSchema"]["properties"]["aluno_id"]["description"]

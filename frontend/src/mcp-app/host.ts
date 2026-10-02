@@ -26,7 +26,9 @@ export interface Host {
   setOpenInApp?(path: string): void
   preferences?(): { ordem?: string }
   savePreferences?(preferences: { ordem: string }): void
-  connect(onResult: (r: ToolResult) => void, onEnvironment: (theme?: string, mode?: string) => void): Promise<void>
+  /** `onInput` recebe os argumentos da tool que abriu o card, antes do resultado chegar. */
+  connect(onResult: (r: ToolResult) => void, onEnvironment: (theme?: string, mode?: string) => void,
+    onInput?: (args: Record<string, unknown>) => void): Promise<void>
   call(name: string, args: Record<string, unknown>): Promise<ToolResult>
   /** `false` quando o host não recebe contexto: a UI não pode presumir que a seleção chegou. */
   context(selection: Selecao): Promise<boolean>
@@ -47,8 +49,10 @@ export class McpHost implements Host {
     const bridge = (window as unknown as { openai?: { widgetState?: Record<string, unknown>; setWidgetState?: (state: Record<string, unknown>) => void } }).openai
     bridge?.setWidgetState?.({ ...bridge.widgetState, preferences })
   }
-  async connect(onResult: (r: ToolResult) => void, onEnvironment: (theme?: string, mode?: string) => void) {
+  async connect(onResult: (r: ToolResult) => void, onEnvironment: (theme?: string, mode?: string) => void,
+    onInput?: (args: Record<string, unknown>) => void) {
     this.app.ontoolresult = result => onResult(result as ToolResult)
+    this.app.ontoolinput = params => onInput?.(params.arguments ?? {})
     // A notificação traz só o que mudou (ex.: só displayMode): campo ausente mantém o valor atual.
     this.app.onhostcontextchanged = ctx => onEnvironment(ctx.theme, ctx.displayMode)
     if (window.parent === window) throw new Error('Abra o CoachPilot pela conexão autenticada no ChatGPT.')

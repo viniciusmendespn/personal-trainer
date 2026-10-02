@@ -30,6 +30,7 @@ from app.repositories import keys
 from app.services import (
     authz,
     biblioteca_service,
+    carteira_visual_service,
     contexto_aluno_service,
     mcp_service,
     notif_service,
@@ -50,6 +51,8 @@ INSTRUCOES_SERVIDOR = (
     "Depois leia `detalhar_aluno` e `exportar_programa_treino` — `aplicar_programa_treino` "
     "substitui o programa inteiro, então devolva todos os treinos, inclusive os que não "
     "mudaram. "
+    "Para mostrar um aluno, busque o `aluno_id` com `listar_alunos` e abra a ficha com "
+    "`mostrar_aluno`; se mais de um aluno tiver o nome pedido, pergunte qual antes de abrir. "
     "REGRA DE OURO: o vídeo cadastrado na biblioteca do personal tem prioridade sobre "
     "qualquer outro. Ao adicionar ou trocar um exercício, procure-o primeiro na biblioteca; "
     "se estiver lá, use o `nome` idêntico e copie o `video_url` exatamente como está — nunca "
@@ -165,23 +168,30 @@ class ListarAlunosArgs(BaseModel):
                 "última vez. Ponto de partida: é daqui que saem os `aluno_id`.")
 def listar_alunos(a: ListarAlunosArgs) -> dict:
     t = tenant_atual()
-    itens, cursor = repo.query_pk_page(
-        keys.pk_personal(t.personal_id), "ALUNO#", _limite(a.limit, 50), a.cursor,
-        filters={"status": a.status} if a.status else None,
-    )
-    alvo = (a.busca or "").strip().lower()
-    out = []
-    for i in itens:
-        nome = i.get("nome") or ""
-        if alvo and alvo not in nome.lower():
-            continue
-        out.append({
-            "aluno_id": i.get("aluno_id"),
-            "nome": nome,
-            "status": i.get("status"),
-            "objetivos": i.get("objetivos"),
-            "ultimo_treino_em": i.get("ultimo_treino_em"),
-        })
+    limite = _limite(a.limit, 50)
+    alvo = carteira_visual_service.normalizar((a.busca or "").strip())
+    # O nome não cabe no FilterExpression (sem acento/caixa), então a busca filtra aqui. Filtrar
+    # só a primeira página fazia "Márcia" sumir em carteira com mais de `limit` alunos: com
+    # busca, segue paginando até encher a página ou esgotar — mesmo teto da carteira visual.
+    out, cursor = [], a.cursor
+    for _ in range(8 if alvo else 1):
+        itens, cursor = repo.query_pk_page(
+            keys.pk_personal(t.personal_id), "ALUNO#", limite - len(out), cursor,
+            filters={"status": a.status} if a.status else None, max_scans=1 if alvo else 8,
+        )
+        for i in itens:
+            nome = i.get("nome") or ""
+            if alvo and alvo not in carteira_visual_service.normalizar(nome):
+                continue
+            out.append({
+                "aluno_id": i.get("aluno_id"),
+                "nome": nome,
+                "status": i.get("status"),
+                "objetivos": i.get("objetivos"),
+                "ultimo_treino_em": i.get("ultimo_treino_em"),
+            })
+        if len(out) >= limite or not cursor:
+            break
     return {"items": out, "next_cursor": cursor}
 
 
