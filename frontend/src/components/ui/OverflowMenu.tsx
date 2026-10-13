@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { MoreVertical } from 'lucide-react'
 
 export type OverflowMenuItem = {
@@ -13,6 +14,10 @@ export type OverflowMenuItem = {
  * Menu de overflow (botão "⋮" + popover) para consolidar ações de uma linha/card e
  * economizar largura no mobile. Fecha ao clicar fora e no Escape.
  * Segue o padrão de popover manual usado no menu do usuário da sidebar (AppLayout).
+ *
+ * O popover é renderizado em portal no <body> com `position: fixed`: um ancestral com
+ * `opacity < 1` (ex.: card de treino vencido) ou `overflow: hidden` cria stacking context /
+ * recorte, e o menu ficaria translúcido e coberto pelo card seguinte, sem receber clique.
  */
 export function OverflowMenu({
   items,
@@ -24,21 +29,37 @@ export function OverflowMenu({
   className?: string
 }) {
   const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
   const ref = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    if (!open || !ref.current) { setPos(null); return }
+    const r = ref.current.getBoundingClientRect()
+    setPos({ top: r.bottom + 4, right: window.innerWidth - r.right })
+  }, [open])
 
   useEffect(() => {
     if (!open) return
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const t = e.target as Node
+      if (ref.current?.contains(t) || menuRef.current?.contains(t)) return
+      setOpen(false)
     }
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') setOpen(false)
     }
+    // Posição é fixa na viewport — rolar/redimensionar descolaria o menu do botão.
+    function close() { setOpen(false) }
     document.addEventListener('mousedown', handleClickOutside)
     document.addEventListener('keydown', handleKey)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('keydown', handleKey)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
     }
   }, [open])
 
@@ -54,10 +75,12 @@ export function OverflowMenu({
       >
         <MoreVertical size={16} />
       </button>
-      {open && (
+      {open && pos && createPortal(
         <div
+          ref={menuRef}
           role="menu"
-          className="absolute right-0 top-full z-50 mt-1 min-w-[10rem] rounded-lg border border-border bg-surface-elevated shadow-xl overflow-hidden"
+          style={{ top: pos.top, right: pos.right }}
+          className="fixed z-50 min-w-[10rem] rounded-lg border border-border bg-surface-elevated shadow-xl overflow-hidden"
         >
           {items.map((item, i) => (
             <button
@@ -76,7 +99,8 @@ export function OverflowMenu({
               {item.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

@@ -948,9 +948,10 @@ function TreinoCard({ alunoId, treino, expired, onRenovar }: { alunoId: string; 
           ariaLabel="Ações do treino"
           items={[
             { icon: <LayoutTemplate size={14} />, label: 'Salvar template', onClick: salvarComoTemplate, disabled: saveAsTemplate.isPending },
-            expired
-              ? { icon: <RefreshCw size={14} />, label: 'Renovar vigência', onClick: () => onRenovar?.() }
-              : { icon: <Pencil size={14} />, label: 'Editar treino', onClick: () => setEditT(true) },
+            ...(expired
+              ? [{ icon: <RefreshCw size={14} />, label: 'Renovar vigência', onClick: () => onRenovar?.() }]
+              : []),
+            { icon: <Pencil size={14} />, label: 'Editar treino', onClick: () => setEditT(true) },
             { icon: <Trash2 size={14} />, label: 'Excluir treino', tone: 'danger', onClick: removerTreino },
           ]}
         />
