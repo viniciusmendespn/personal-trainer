@@ -155,8 +155,12 @@ function Deploy-Frontend {
         --cache-control "no-cache, no-store, must-revalidate" `
         --content-type "text/html; charset=utf-8" `
         --region $Region --profile $Profile
-    # Bundle com hash no nome (dist/assets/*): cache de 1 ano, nome muda a cada build
-    aws s3 sync dist/assets/ "s3://$Bucket/assets/" --delete `
+    # Bundle com hash no nome (dist/assets/*): cache de 1 ano, nome muda a cada build.
+    # SEM --delete: chunks de deploys anteriores ficam no S3. Aba aberta antes do deploy
+    # e o renderizador do Google (que reusa main.js em cache) ainda pedem os hashes
+    # antigos; apagá-los fazia o import() falhar e a página virar "Algo deu errado"
+    # (Soft 404 no Search Console). Limpeza fica para a lifecycle rule do bucket.
+    aws s3 sync dist/assets/ "s3://$Bucket/assets/" `
         --cache-control "public, max-age=31536000, immutable" `
         --region $Region --profile $Profile
     # Demais arquivos públicos sem hash (ícones, logos, imagens, robots.txt etc.):

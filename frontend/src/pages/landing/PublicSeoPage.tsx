@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react'
+import { Component, Suspense, useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react'
 import LandingFooter from './LandingFooter'
@@ -10,6 +10,21 @@ import type { PageKey, SeoPage } from './publicSeoData.js'
 const LABELS: Record<PageKey, string> = Object.fromEntries(
   Object.entries(PAGES).map(([key, page]) => [key, page.label ?? page.h1.replace('CoachPilot vs ', 'Vs ')])
 ) as Record<PageKey, string>
+
+// Widget é chunk lazy: se não carregar, some só a calculadora — o texto da página
+// continua (sem isso o erro subia até o ErrorPage e a página inteira sumia).
+class WidgetBoundary extends Component<{ children: ReactNode }, { falhou: boolean }> {
+  state = { falhou: false }
+  static getDerivedStateFromError() {
+    return { falhou: true }
+  }
+  render() {
+    if (this.state.falhou) {
+      return <p style={{ color: '#475569', fontSize: 15 }}>A calculadora não carregou. Recarregue a página para usá-la.</p>
+    }
+    return this.props.children
+  }
+}
 
 function upsertMeta(selector: string, create: () => HTMLMetaElement | HTMLLinkElement, attr: string, value: string) {
   let el = document.querySelector(selector) as HTMLMetaElement | HTMLLinkElement | null
@@ -204,7 +219,7 @@ export function PublicSeoPage({ pageKey }: { pageKey: PageKey }) {
               {page.widgetNote && (
                 <p style={{ color: '#475569', fontSize: 16, lineHeight: 1.7, marginBottom: 20 }}>{renderInline(page.widgetNote)}</p>
               )}
-              {Widget && <Suspense fallback={<CalcSkeleton />}><Widget /></Suspense>}
+              {Widget && <WidgetBoundary><Suspense fallback={<CalcSkeleton />}><Widget /></Suspense></WidgetBoundary>}
               {page.index && <IndexCards keys={page.index} />}
             </div>
           </section>

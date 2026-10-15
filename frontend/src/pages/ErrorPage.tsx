@@ -1,4 +1,12 @@
+import { PrerenderFallback, prerenderDaUrlAtual } from '../lib/prerenderSnapshot'
+
 export function ErrorPage({ error }: { error?: Error | null }) {
+  // Página pública prerenderizada (blog, calculadoras, SEO): o conteúdo estático já
+  // estava certo — devolvê-lo em vez de "Algo deu errado", que o Google lê como Soft 404.
+  // Caso típico: chunk lazy de um deploy anterior que não existe mais.
+  const prerender = prerenderDaUrlAtual()
+  if (prerender) return <PrerenderFallback html={prerender} />
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full text-center space-y-6">

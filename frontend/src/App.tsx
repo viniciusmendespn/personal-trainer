@@ -16,6 +16,7 @@ import { PublicSeoPage } from './pages/landing/PublicSeoPage'
 import { AppLayout } from './components/layout/AppLayout'
 import { ErrorPage } from './pages/ErrorPage'
 import { PortalErrorPage } from './pages/PortalErrorPage'
+import { PrerenderFallback, prerenderDaUrlAtual } from './lib/prerenderSnapshot'
 
 // Code-splitting: cada página do portal autenticado e o app do aluno viram chunks
 // separados — o aluno (link de WhatsApp, rede móvel) não baixa o JS do portal inteiro
@@ -52,6 +53,10 @@ const FinanceiroPanelPage = lazy(() => import('./pages/FinanceiroPanelPage').the
 const OAuthConsentPage = lazy(() => import('./pages/OAuthConsentPage').then((m) => ({ default: m.OAuthConsentPage })))
 
 function PageFallback() {
+  // Página pública prerenderizada: mantém o texto na tela enquanto o chunk chega
+  // (o Google renderiza nesse intervalo — splash vazio virava "Soft 404")
+  const prerender = prerenderDaUrlAtual()
+  if (prerender) return <PrerenderFallback html={prerender} />
   return <SplashScreen src="/novo-logo-slogan-vertical-semfundo.png" srcLight="/novo-logo-slogan-vertical-brancosemfundo.png" rounded={false} />
 }
 

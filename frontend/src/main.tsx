@@ -4,6 +4,7 @@ import './index.css'
 import './lib/installPrompt' // suprime beforeinstallprompt antes do React montar
 import App from './App'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
+import { capturarPrerender } from './lib/prerenderSnapshot'
 
 // O manifest correto já está no <head> do HTML servido pelo CloudFront:
 // aluno.html → aluno.webmanifest (verde, "Treinos — CoachPilot")
@@ -12,6 +13,9 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary'
 if (window.location.pathname.startsWith('/aluno')) {
   document.title = 'Meus Treinos — CoachPilot'
 }
+
+// Antes do createRoot, que apaga o HTML prerenderizado (ver lib/prerenderSnapshot)
+capturarPrerender()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
