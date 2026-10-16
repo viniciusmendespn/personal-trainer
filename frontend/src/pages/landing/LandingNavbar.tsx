@@ -1,122 +1,89 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { Menu, X } from 'lucide-react'
-
-const NAV_LINKS = [
-  { label: 'App no ChatGPT', href: '#chatgpt' },
-  { label: 'Funcionalidades', href: '#features' },
-  { label: 'Como funciona', href: '#how' },
-  { label: 'Loja', href: '#loja' },
-  { label: 'Planos', href: '#pricing' },
-  { label: 'Comparativo', href: '#compare' },
-]
+import { useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { ArrowRight, Menu, X } from 'lucide-react'
+import './public-site.css'
 
 export default function LandingNavbar() {
-  const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-
+  const { pathname } = useLocation()
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', handler)
-    return () => window.removeEventListener('scroll', handler)
-  }, [])
-
-  function scrollTo(href: string) {
     setMenuOpen(false)
-    const el = document.querySelector(href)
-    if (el) {
-      const y = (el as HTMLElement).getBoundingClientRect().top + window.scrollY - 72
-      window.scrollTo({ top: y, behavior: 'smooth' })
+  }, [pathname])
+  useEffect(() => {
+    if (!menuOpen) return
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false)
     }
-  }
-
+    window.addEventListener('keydown', close)
+    return () => window.removeEventListener('keydown', close)
+  }, [menuOpen])
+  const links = [
+    { label: 'Plataforma', href: '/#features' },
+    { label: 'Inteligência artificial', href: '/#chatgpt' },
+    { label: 'Planos', href: '/#pricing' },
+    { label: 'Blog', href: '/blog' },
+    { label: 'Loja', href: 'https://loja.coachpilot.com.br' },
+  ]
   return (
-    <header
-      style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-        transition: 'background 0.3s, box-shadow 0.3s',
-        background: scrolled ? 'rgba(10,14,26,0.95)' : 'transparent',
-        boxShadow: scrolled ? '0 1px 20px rgba(0,0,0,0.4)' : 'none',
-        backdropFilter: scrolled ? 'blur(12px)' : 'none',
-      }}
-    >
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 52, width: 'auto', display: 'block' }} />
-        </button>
-
-        <nav style={{ display: 'flex', alignItems: 'center', gap: 32 }} className="hidden lg:flex">
-          {NAV_LINKS.map(l => (
-            <button
-              key={l.href}
-              onClick={() => scrollTo(l.href)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: 500, transition: 'color 0.2s' }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.75)')}
+    <header className="cp-header">
+      <div className="cp-container cp-nav-inner">
+        <Link to="/" aria-label="CoachPilot — início">
+          <img
+            className="cp-logo"
+            src="/novo-logo-slogan-semfundo.png"
+            alt="CoachPilot — Gestão completa para personal trainers"
+          />
+        </Link>
+        <nav className="cp-nav-links" aria-label="Navegação principal">
+          {links.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              aria-current={pathname === link.href ? 'page' : undefined}
             >
-              {l.label}
-            </button>
+              {link.label}
+            </a>
           ))}
         </nav>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }} className="hidden lg:flex">
-          <Link
-            to="/login"
-            style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: 500, textDecoration: 'none', padding: '8px 16px', borderRadius: 8, transition: 'color 0.2s' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.8)')}
-          >
+        <div className="cp-nav-actions">
+          <Link className="cp-login" to="/login">
             Entrar
           </Link>
-          <Link
-            to="/signup"
-            style={{
-              background: 'linear-gradient(135deg, #14b8a6, #10b981)',
-              color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none',
-              padding: '9px 20px', borderRadius: 8,
-              boxShadow: '0 4px 15px rgba(20,184,166,0.3)',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(20,184,166,0.4)' }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(20,184,166,0.3)' }}
-          >
-            Começar grátis
+          <Link className="cp-button" to="/signup">
+            Começar grátis <ArrowRight size={14} />
           </Link>
         </div>
-
         <button
-          onClick={() => setMenuOpen(o => !o)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#fff', padding: 4 }}
-          className="flex lg:hidden"
+          className="cp-menu-toggle"
+          aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+          aria-expanded={menuOpen}
+          aria-controls="cp-mobile-navigation"
+          onClick={() => setMenuOpen(!menuOpen)}
         >
-          {menuOpen ? <X size={24} /> : <Menu size={24} />}
+          {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
-
       {menuOpen && (
-        <div style={{ background: 'rgba(10,14,26,0.98)', borderTop: '1px solid rgba(255,255,255,0.08)', padding: '16px 24px 24px' }} className="flex lg:hidden flex-col gap-4">
-          {NAV_LINKS.map(l => (
-            <button
-              key={l.href}
-              onClick={() => scrollTo(l.href)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.8)', fontSize: 15, fontWeight: 500, textAlign: 'left', padding: '8px 0' }}
-            >
-              {l.label}
-            </button>
-          ))}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <Link to="/login" onClick={() => setMenuOpen(false)} style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 500, padding: '10px 0', textAlign: 'center' }}>
-              Entrar
-            </Link>
-            <Link
-              to="/signup"
+        <nav
+          id="cp-mobile-navigation"
+          className="cp-mobile-menu"
+          aria-label="Navegação pelo celular"
+        >
+          {links.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
               onClick={() => setMenuOpen(false)}
-              style={{ background: 'linear-gradient(135deg, #14b8a6, #10b981)', color: '#fff', textDecoration: 'none', fontWeight: 600, padding: '12px', borderRadius: 8, textAlign: 'center' }}
             >
-              Começar grátis
-            </Link>
-          </div>
-        </div>
+              {link.label}
+            </a>
+          ))}
+          <Link to="/divulgadores">Seja um divulgador</Link>
+          <Link to="/login">Entrar na minha conta</Link>
+          <Link className="cp-button" to="/signup">
+            Começar grátis <ArrowRight size={15} />
+          </Link>
+        </nav>
       )}
     </header>
   )

@@ -1,17 +1,51 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { ArrowRight, ArrowLeft, Check, ChevronDown, ChevronUp, Users, Share2, DollarSign, TrendingUp } from 'lucide-react'
+import { useEffect } from 'react'
+import {
+  ArrowRight,
+  Check,
+  Users,
+  Share2,
+  DollarSign,
+  TrendingUp,
+} from 'lucide-react'
+import LandingNavbar from './LandingNavbar'
 import LandingFooter from './LandingFooter'
-
-const WA_DIVULGADOR = 'https://wa.me/5514996906105?text=Oi%2C%20quero%20ser%20divulgador%20do%20CoachPilot'
-const WA_EMBAIXADOR = 'https://wa.me/5514996906105?text=Oi%2C%20quero%20conversar%20sobre%20ser%20Embaixador%20CoachPilot'
-const WA_ENTRAR = 'https://wa.me/5514996906105?text=Oi%2C%20quero%20entrar%20no%20programa%20de%20divulgadores%20do%20CoachPilot'
+import './public-site.css'
+const WA_DIVULGADOR =
+  'https://wa.me/5514996906105?text=Oi%2C%20quero%20ser%20divulgador%20do%20CoachPilot'
+const WA_EMBAIXADOR =
+  'https://wa.me/5514996906105?text=Oi%2C%20quero%20conversar%20sobre%20ser%20Embaixador%20CoachPilot'
+const WA_ENTRAR =
+  'https://wa.me/5514996906105?text=Oi%2C%20quero%20entrar%20no%20programa%20de%20divulgadores%20do%20CoachPilot'
 
 const NIVEIS = [
-  { nivel: 'Divulgador Inicial', clientes: '1 a 4 clientes ativos', comissao: '20%', turbo: '25% no mês com 2+ vendas novas', cor: '#64748b' },
-  { nivel: 'Divulgador Oficial', clientes: '5 a 14 clientes ativos', comissao: '25%', turbo: '30% no mês com 2+ vendas novas', cor: '#14b8a6' },
-  { nivel: 'Divulgador Master', clientes: '15+ clientes ativos', comissao: '30%', turbo: '+R$100 no mês com 4+ vendas novas', cor: '#10b981' },
-  { nivel: 'Embaixador da Marca', clientes: 'Somente por convite', comissao: '35%', turbo: 'produção de conteúdo + benefícios exclusivos', cor: '#0d9488' },
+  {
+    nivel: 'Divulgador Inicial',
+    clientes: '1 a 4 clientes ativos',
+    comissao: '20%',
+    turbo: '25% no mês com 2+ vendas novas',
+    cor: '#64748b',
+  },
+  {
+    nivel: 'Divulgador Oficial',
+    clientes: '5 a 14 clientes ativos',
+    comissao: '25%',
+    turbo: '30% no mês com 2+ vendas novas',
+    cor: '#14b8a6',
+  },
+  {
+    nivel: 'Divulgador Master',
+    clientes: '15+ clientes ativos',
+    comissao: '30%',
+    turbo: '+R$100 no mês com 4+ vendas novas',
+    cor: '#10b981',
+  },
+  {
+    nivel: 'Embaixador da Marca',
+    clientes: 'Somente por convite',
+    comissao: '35%',
+    turbo: 'produção de conteúdo + benefícios exclusivos',
+    cor: '#0d9488',
+  },
 ]
 
 const SIMULACAO = [
@@ -23,10 +57,26 @@ const SIMULACAO = [
 ]
 
 const PASSOS = [
-  { icon: <Share2 size={24} />, titulo: 'Você recebe um cupom ou link exclusivo', desc: 'Cada divulgador recebe um identificador próprio para acompanhar suas indicações.' },
-  { icon: <Users size={24} />, titulo: 'Você divulga o CoachPilot', desc: 'Nos stories, reels, grupos, alunos, colegas de profissão ou conteúdos educativos.' },
-  { icon: <Check size={24} />, titulo: 'O personal indicado assina o Gestão Pro', desc: 'A comissão é calculada sobre o plano Gestão Pro de R$39,90/mês.' },
-  { icon: <DollarSign size={24} />, titulo: 'Você recebe comissão recorrente', desc: 'A comissão-base da sua faixa é paga todo mês — e sobe 5 pontos percentuais nos meses em que você fizer 2 ou mais vendas novas.' },
+  {
+    icon: <Share2 size={24} />,
+    titulo: 'Você recebe um cupom ou link exclusivo',
+    desc: 'Cada divulgador recebe um identificador próprio para acompanhar suas indicações.',
+  },
+  {
+    icon: <Users size={24} />,
+    titulo: 'Você divulga o CoachPilot',
+    desc: 'Nos stories, reels, grupos, alunos, colegas de profissão ou conteúdos educativos.',
+  },
+  {
+    icon: <Check size={24} />,
+    titulo: 'O personal indicado assina o Gestão Pro',
+    desc: 'A comissão é calculada sobre o plano Gestão Pro de R$39,90/mês.',
+  },
+  {
+    icon: <DollarSign size={24} />,
+    titulo: 'Você recebe comissão recorrente',
+    desc: 'A comissão-base da sua faixa é paga todo mês — e sobe 5 pontos percentuais nos meses em que você fizer 2 ou mais vendas novas.',
+  },
 ]
 
 const REGRAS = [
@@ -47,371 +97,371 @@ const REGRAS = [
 const FAQS = [
   {
     pergunta: 'Preciso ser personal trainer para divulgar?',
-    resposta: 'Não obrigatoriamente, mas o programa é ideal para personal trainers, donos de studio, criadores de conteúdo fitness e profissionais que falam com outros personal trainers.',
+    resposta:
+      'Não obrigatoriamente, mas o programa é ideal para personal trainers, donos de studio, criadores de conteúdo fitness e profissionais que falam com outros personal trainers.',
   },
   {
     pergunta: 'A comissão é sobre todos os produtos?',
-    resposta: 'Não. A comissão é calculada somente sobre o plano Gestão Pro. Add-ons de WhatsApp, Assistente IA e serviços extras não entram na comissão.',
+    resposta:
+      'Não. A comissão é calculada somente sobre o plano Gestão Pro. Add-ons de WhatsApp, Assistente IA e serviços extras não entram na comissão.',
   },
   {
     pergunta: 'O plano grátis gera comissão?',
-    resposta: 'Não. A comissão é gerada quando o indicado assina o plano Gestão Pro.',
+    resposta:
+      'Não. A comissão é gerada quando o indicado assina o plano Gestão Pro.',
   },
   {
     pergunta: 'Por quanto tempo recebo comissão?',
-    resposta: 'Você recebe comissão enquanto o cliente indicado permanecer ativo no plano Gestão Pro, de acordo com as regras do programa.',
+    resposta:
+      'Você recebe comissão enquanto o cliente indicado permanecer ativo no plano Gestão Pro, de acordo com as regras do programa.',
   },
   {
     pergunta: 'Como funciona o acelerador de performance?',
-    resposta: 'Todo mês em que você fizer 2 ou mais vendas novas, a comissão daquele mês sobe 5 pontos percentuais sobre toda a sua carteira (ex.: um Divulgador Oficial passa de 25% para 30%). No mês seguinte, basta vender de novo para manter o acelerador ativo.',
+    resposta:
+      'Todo mês em que você fizer 2 ou mais vendas novas, a comissão daquele mês sobe 5 pontos percentuais sobre toda a sua carteira (ex.: um Divulgador Oficial passa de 25% para 30%). No mês seguinte, basta vender de novo para manter o acelerador ativo.',
   },
   {
     pergunta: 'Como chego aos 35%?',
-    resposta: 'A comissão de 35% é exclusiva do programa Embaixador da Marca, que funciona por convite: além de indicar, o Embaixador produz conteúdos sobre a plataforma e acompanha seus indicados nos primeiros passos. Divulgadores com boa performance e presença digital no nicho são convidados.',
+    resposta:
+      'A comissão de 35% é exclusiva do programa Embaixador da Marca, que funciona por convite: além de indicar, o Embaixador produz conteúdos sobre a plataforma e acompanha seus indicados nos primeiros passos. Divulgadores com boa performance e presença digital no nicho são convidados.',
   },
   {
     pergunta: 'Como entro no programa?',
-    resposta: 'Basta falar com a equipe pelo WhatsApp e solicitar sua entrada como divulgador CoachPilot.',
+    resposta:
+      'Basta falar com a equipe pelo WhatsApp e solicitar sua entrada como divulgador CoachPilot.',
   },
 ]
 
-function FaqItem({ pergunta, resposta }: { pergunta: string; resposta: string }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div style={{ border: '1px solid rgba(20,184,166,0.15)', borderRadius: 12, overflow: 'hidden', marginBottom: 8 }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '16px 20px', background: open ? 'rgba(20,184,166,0.05)' : '#fff',
-          border: 'none', cursor: 'pointer', textAlign: 'left', gap: 12,
-          transition: 'background 0.2s',
-        }}
-      >
-        <span style={{ color: '#0f172a', fontWeight: 600, fontSize: 15 }}>{pergunta}</span>
-        {open ? <ChevronUp size={18} color="#14b8a6" /> : <ChevronDown size={18} color="#94a3b8" />}
-      </button>
-      {open && (
-        <div style={{ padding: '0 20px 16px', background: 'rgba(20,184,166,0.03)' }}>
-          <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.65 }}>{resposta}</p>
-          {pergunta.includes('Como entro') && (
-            <a
-              href={WA_ENTRAR}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#14b8a6', fontWeight: 600, fontSize: 14, textDecoration: 'none', marginTop: 10 }}
-            >
-              Falar no WhatsApp <ArrowRight size={14} />
-            </a>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
 export function DivulgadoresPage() {
   useEffect(() => {
-    document.title = 'Seja um Divulgador CoachPilot — Ganhe comissão recorrente'
-    document.querySelector('meta[name="description"]')
-      ?.setAttribute('content', 'Divulgue o CoachPilot e ganhe comissão recorrente de até 35% enquanto o personal indicado permanecer ativo. Programa de divulgadores para personal trainers.')
-    document.querySelector('link[rel="canonical"]')
+    document.title = 'Divulgadores CoachPilot | Comissão recorrente'
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute(
+        'content',
+        'Indique o CoachPilot para personal trainers e receba comissão recorrente sobre assinaturas Gestão Pro ativas. Conheça os níveis e participe do programa.',
+      )
+    document
+      .querySelector('link[rel="canonical"]')
       ?.setAttribute('href', 'https://coachpilot.com.br/divulgadores')
-    return () => {
-      document.querySelector('link[rel="canonical"]')
-        ?.setAttribute('href', 'https://coachpilot.com.br/')
-    }
+    window.scrollTo(0, 0)
   }, [])
-
   return (
-    <div style={{ fontFamily: "'Sora', sans-serif", background: '#fff', minHeight: '100vh' }}>
-      {/* Header mínimo */}
-      <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: 'rgba(10,14,26,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.06)', height: 60 }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 48, width: 'auto' }} />
-          </Link>
-          <Link
-            to="/"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.6)', fontSize: 14, textDecoration: 'none', fontWeight: 500, transition: 'color 0.2s' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
-          >
-            <ArrowLeft size={14} /> Voltar ao site
-          </Link>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section style={{
-        minHeight: '70vh',
-        background: 'linear-gradient(160deg, #0f172a 0%, #0a0e1a 50%, #060a14 100%)',
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        overflow: 'hidden',
-        paddingTop: 60,
-      }}>
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.12, backgroundImage: 'radial-gradient(rgba(20,184,166,0.6) 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-        <div style={{ position: 'absolute', top: '15%', left: '5%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(20,184,166,0.12) 0%, transparent 70%)', filter: 'blur(40px)' }} />
-
-        <div style={{ maxWidth: 860, margin: '0 auto', padding: '80px 24px', position: 'relative', zIndex: 1, width: '100%', textAlign: 'center' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(20,184,166,0.12)', border: '1px solid rgba(20,184,166,0.3)', borderRadius: 20, padding: '6px 14px', marginBottom: 24 }}>
-            <TrendingUp size={14} color="#14b8a6" />
-            <span style={{ color: '#14b8a6', fontSize: 13, fontWeight: 600 }}>Comissão recorrente · Até 35%</span>
-          </div>
-
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(28px, 5vw, 52px)', fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 20, letterSpacing: '-1px' }}>
-            Ganhe comissão indicando o{' '}
-            <span style={{ background: 'linear-gradient(135deg, #14b8a6, #10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              CoachPilot
-            </span>
-            {' '}para outros personal trainers
-          </h1>
-
-          <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, marginBottom: 36, maxWidth: 600, margin: '0 auto 36px' }}>
-            Seja um divulgador CoachPilot, indique a plataforma para outros profissionais e receba comissão recorrente sobre cada assinatura Gestão Pro ativa.
-          </p>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}>
-            <a
-              href={WA_DIVULGADOR}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                background: 'linear-gradient(135deg, #14b8a6, #10b981)',
-                color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none',
-                padding: '14px 28px', borderRadius: 12,
-                boxShadow: '0 8px 25px rgba(20,184,166,0.35)',
-              }}
-            >
-              Quero ser divulgador <ArrowRight size={18} />
-            </a>
-            <Link
-              to="/"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                background: 'transparent', border: '1.5px solid rgba(255,255,255,0.25)',
-                color: 'rgba(255,255,255,0.85)', fontWeight: 600, fontSize: 16, textDecoration: 'none',
-                padding: '14px 28px', borderRadius: 12,
-              }}
-            >
-              Conhecer o CoachPilot
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Como funciona */}
-      <section style={{ background: '#f0fdfa', padding: '80px 24px' }}>
-        <div style={{ maxWidth: 960, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <div style={{ display: 'inline-block', background: 'rgba(20,184,166,0.12)', border: '1px solid rgba(20,184,166,0.3)', borderRadius: 20, padding: '5px 14px', marginBottom: 16 }}>
-              <span style={{ color: '#0d9488', fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Programa</span>
+    <div className="cp-public">
+      <a className="cp-skip" href="#conteudo">
+        Ir para o conteúdo
+      </a>
+      <LandingNavbar />
+      <main id="conteudo">
+        <section className="cp-hero cp-partner-hero">
+          <div className="cp-container cp-hero-grid">
+            <div className="cp-hero-copy">
+              <p className="cp-eyebrow" style={{ color: '#77dfb9' }}>
+                Programa de divulgadores
+              </p>
+              <h1>
+                Boas conexões.
+                <br />
+                Novas oportunidades.
+                <br />
+                <em>Cresça com a gente.</em>
+              </h1>
+              <p>
+                Indique uma plataforma que faz parte da rotina de personal
+                trainers e receba comissão recorrente por cada assinatura Gestão
+                Pro ativa.
+              </p>
+              <div className="cp-actions">
+                <a
+                  className="cp-button"
+                  href={WA_DIVULGADOR}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Quero ser divulgador <ArrowRight size={16} />
+                </a>
+                <a className="cp-button cp-button-outline" href="#comissoes">
+                  Entender as comissões
+                </a>
+              </div>
+              <div className="cp-hero-note">
+                <span>
+                  <Check size={13} /> Link ou cupom exclusivo
+                </span>
+                <span>
+                  <Check size={13} /> Comissão recorrente
+                </span>
+              </div>
             </div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px, 4vw, 38px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', marginBottom: 12 }}>
-              Como funciona
-            </h2>
+            <div className="cp-partner-visual">
+              <img
+                src="/images/coachpilot-coaching-v2.webp"
+                width="1536"
+                height="1024"
+                alt="Profissionais conectando conhecimento, tecnologia e treinamento"
+                fetchPriority="high"
+              />
+              <div className="cp-partner-highlight">
+                <span>Sua parceria continua rendendo.</span>
+                <strong>20% a 30%</strong>
+                <span>de comissão-base para divulgadores</span>
+                <small>
+                  Embaixadores por convite: 35%. Consulte as regras e o
+                  acelerador abaixo.
+                </small>
+              </div>
+            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24 }}>
-            {PASSOS.map((p, i) => (
-              <div key={i} style={{ background: '#fff', border: '1.5px solid rgba(20,184,166,0.12)', borderRadius: 16, padding: 28 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(20,184,166,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#14b8a6', flexShrink: 0 }}>
-                    {p.icon}
+        </section>
+        <section id="programa" className="cp-section">
+          <div className="cp-container">
+            <div className="cp-section-head">
+              <div>
+                <p className="cp-eyebrow">
+                  Uma indicação, novas possibilidades
+                </p>
+                <h2 className="cp-heading">
+                  Você abre a conversa.
+                  <br />A parceria faz o resto.
+                </h2>
+              </div>
+              <p
+                className="cp-subtitle"
+                style={{ maxWidth: 330, fontSize: 14 }}
+              >
+                Da primeira indicação ao acompanhamento da sua carteira: entenda
+                o caminho.
+              </p>
+            </div>
+            <div className="cp-steps">
+              {PASSOS.map((passo, i) => (
+                <div className="cp-step" key={passo.titulo}>
+                  <div className="cp-step-number">
+                    0{i + 1}
+                    {passo.icon}
                   </div>
-                  <span style={{ background: 'linear-gradient(135deg, #14b8a6, #10b981)', color: '#fff', fontSize: 12, fontWeight: 700, borderRadius: 20, padding: '2px 10px' }}>Passo {i + 1}</span>
-                </div>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>{p.titulo}</h3>
-                <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.6 }}>{p.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Níveis de comissão */}
-      <section style={{ background: '#fff', padding: '80px 24px' }}>
-        <div style={{ maxWidth: 860, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px, 4vw, 38px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', marginBottom: 12 }}>
-              Quanto você pode ganhar
-            </h2>
-            <p style={{ color: '#475569', fontSize: 16, maxWidth: 520, margin: '0 auto' }}>
-              Comece com 20% de comissão-base, suba de faixa com o volume de indicações ativas e ganhe +5 pontos nos meses em que vender mais.
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 40 }}>
-            {NIVEIS.map((n, i) => (
-              <div key={i} style={{ background: i === 3 ? 'linear-gradient(135deg, #14b8a6, #10b981)' : '#f8fafc', border: `1.5px solid ${i === 3 ? 'transparent' : '#e2e8f0'}`, borderRadius: 16, padding: 28, textAlign: 'center' }}>
-                <div style={{ color: i === 3 ? 'rgba(255,255,255,0.8)' : '#64748b', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{n.nivel}</div>
-                <div style={{ color: i === 3 ? '#fff' : '#0f172a', fontSize: 44, fontWeight: 800, lineHeight: 1, letterSpacing: '-2px', marginBottom: 8 }}>{n.comissao}</div>
-                <div style={{ color: i === 3 ? 'rgba(255,255,255,0.75)' : '#64748b', fontSize: 14, marginBottom: 6 }}>{n.clientes}</div>
-                <div style={{ color: i === 3 ? 'rgba(255,255,255,0.9)' : '#0d9488', fontSize: 12, fontWeight: 600 }}>{n.turbo}</div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ background: 'rgba(20,184,166,0.06)', border: '1px solid rgba(20,184,166,0.15)', borderRadius: 12, padding: '14px 20px', textAlign: 'center' }}>
-            <p style={{ color: '#475569', fontSize: 13 }}>
-              A comissão é calculada somente sobre o plano Gestão Pro. Add-ons como WhatsApp, Assistente IA e serviços extras não entram no cálculo da comissão.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Simulação de ganhos */}
-      <section style={{ background: '#f0fdfa', padding: '80px 24px' }}>
-        <div style={{ maxWidth: 680, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px, 3vw, 34px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', marginBottom: 12 }}>
-              Exemplo de ganhos mensais
-            </h2>
-            <p style={{ color: '#475569', fontSize: 15 }}>
-              Considerando o plano Gestão Pro de R$39,90/mês
-            </p>
-          </div>
-
-          <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', border: '1px solid rgba(20,184,166,0.15)' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
-              {['Clientes ativos', 'Comissão', 'Ganho mensal'].map((h, i) => (
-                <div key={i} style={{ padding: '14px 20px', background: i === 2 ? 'linear-gradient(135deg, #14b8a6, #10b981)' : '#f8fefd', borderBottom: '2px solid rgba(20,184,166,0.15)', textAlign: 'center' }}>
-                  <span style={{ color: i === 2 ? '#fff' : '#475569', fontSize: 13, fontWeight: 700 }}>{h}</span>
+                  <h3>{passo.titulo}</h3>
+                  <p>{passo.desc}</p>
                 </div>
               ))}
             </div>
-            {SIMULACAO.map((s, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: i % 2 === 0 ? '#fff' : '#f8fefd', borderBottom: i < SIMULACAO.length - 1 ? '1px solid rgba(20,184,166,0.08)' : 'none' }}>
-                <div style={{ padding: '12px 20px', textAlign: 'center' }}><span style={{ color: '#0f172a', fontWeight: 600 }}>{s.clientes}</span></div>
-                <div style={{ padding: '12px 20px', textAlign: 'center' }}><span style={{ color: '#14b8a6', fontWeight: 600 }}>{s.comissao}</span></div>
-                <div style={{ padding: '12px 20px', textAlign: 'center' }}><span style={{ color: '#0f172a', fontWeight: 700 }}>{s.ganho}</span></div>
-              </div>
-            ))}
           </div>
-          <p style={{ textAlign: 'center', color: '#64748b', fontSize: 13, marginTop: 16 }}>
-            "→" indica o acelerador de performance: +5 pontos percentuais em todo mês com 2 ou mais vendas novas.
-            A comissão de 35% é exclusiva do programa Embaixador da Marca (por convite).
-          </p>
-        </div>
-      </section>
-
-      {/* Embaixadores */}
-      <section style={{ background: 'linear-gradient(160deg, #0f172a 0%, #060a14 100%)', padding: '80px 24px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.08, backgroundImage: 'radial-gradient(rgba(20,184,166,0.8) 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-        <div style={{ maxWidth: 860, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 48, alignItems: 'start' }}>
-            <div>
-              <div style={{ display: 'inline-block', background: 'rgba(20,184,166,0.12)', border: '1px solid rgba(20,184,166,0.3)', borderRadius: 20, padding: '5px 14px', marginBottom: 20 }}>
-                <span style={{ color: '#14b8a6', fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Embaixadores</span>
-              </div>
-              <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px, 3vw, 34px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', marginBottom: 16 }}>
-                Quer ser um Embaixador CoachPilot?
+        </section>
+        <section id="comissoes" className="cp-section cp-soft">
+          <div className="cp-container">
+            <p className="cp-eyebrow">Uma parceria que evolui</p>
+            <div className="cp-section-head">
+              <h2 className="cp-heading">
+                Sua carteira cresce.
+                <br />
+                Sua comissão acompanha.
               </h2>
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 15, lineHeight: 1.7, marginBottom: 24 }}>
-                O Embaixador da Marca é a camada mais alta do programa, por convite: quem cria conteúdo, ajuda os novos usuários nos primeiros passos e participa de perto da evolução da plataforma recebe a maior comissão do programa — 35%.
+              <p
+                className="cp-subtitle"
+                style={{ maxWidth: 340, fontSize: 14 }}
+              >
+                Comece com 20% de comissão-base e avance conforme os clientes
+                indicados permanecem ativos.
+              </p>
+            </div>
+            <div className="cp-levels">
+              {NIVEIS.map((nivel) => (
+                <div className="cp-level" key={nivel.nivel}>
+                  <h3>{nivel.nivel}</h3>
+                  <strong>{nivel.comissao}</strong>
+                  <p>{nivel.clientes}</p>
+                  <small>{nivel.turbo}</small>
+                </div>
+              ))}
+            </div>
+            <p className="cp-fine-print">
+              Comissões somente sobre assinaturas ativas do Gestão Pro. Plano
+              grátis, WhatsApp, IA e outros serviços extras não entram no
+              cálculo. A faixa Embaixador da Marca é exclusiva para convidados.
+            </p>
+          </div>
+        </section>
+        <section className="cp-section">
+          <div className="cp-container cp-split">
+            <div>
+              <p className="cp-eyebrow">Veja na prática</p>
+              <h2 className="cp-heading">
+                Uma indicação pode
+                <br />
+                continuar gerando valor.
+              </h2>
+              <p className="cp-subtitle">
+                A comissão é recorrente enquanto o personal indicado permanecer
+                ativo no Gestão Pro. Estes exemplos consideram o plano mensal de
+                R$39,90.
               </p>
               <a
+                className="cp-text-link"
+                href={WA_DIVULGADOR}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ marginTop: 25 }}
+              >
+                Converse com a equipe <ArrowRight size={15} />
+              </a>
+            </div>
+            <div>
+              <div
+                className="cp-table-wrap"
+                tabIndex={0}
+                role="region"
+                aria-label="Exemplos de comissão mensal"
+              >
+                <table className="cp-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Clientes ativos</th>
+                      <th scope="col">Comissão</th>
+                      <th scope="col">Ganho mensal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {SIMULACAO.map((item) => (
+                      <tr key={item.clientes}>
+                        <td>{item.clientes}</td>
+                        <td>{item.comissao}</td>
+                        <td>{item.ganho}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="cp-fine-print">
+                Simulação ilustrativa, sem garantia de ganhos. A seta indica o
+                acelerador de +5 pontos percentuais no mês com 2 ou mais vendas
+                novas. A comissão de 35% exige convite para Embaixador.
+              </p>
+            </div>
+          </div>
+        </section>
+        <section className="cp-section cp-dark">
+          <div className="cp-container cp-split">
+            <div>
+              <p className="cp-eyebrow">Embaixadores da marca</p>
+              <h2 className="cp-heading">
+                Sua voz pode ir
+                <br />
+                ainda mais longe.
+              </h2>
+              <p className="cp-subtitle">
+                Um programa por convite para quem cria conteúdo, acompanha os
+                primeiros passos dos indicados e participa de perto da evolução
+                do CoachPilot.
+              </p>
+              <a
+                className="cp-button"
                 href={WA_EMBAIXADOR}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 8,
-                  background: 'linear-gradient(135deg, #14b8a6, #10b981)',
-                  color: '#fff', fontWeight: 700, fontSize: 15, textDecoration: 'none',
-                  padding: '13px 24px', borderRadius: 10,
-                }}
+                style={{ marginTop: 28 }}
               >
-                Falar sobre parceria <ArrowRight size={16} />
+                Conversar sobre parceria <ArrowRight size={16} />
               </a>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div>
-                <div style={{ color: '#14b8a6', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Benefícios</div>
-                {['Comissão de 35% — a maior do programa', 'Assinatura Gestão Pro bonificada', 'Cupom exclusivo', 'Acesso antecipado a novidades', 'Destaque como parceiro oficial'].map((b, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
-                    <Check size={14} color="#14b8a6" style={{ marginTop: 2, flexShrink: 0 }} />
-                    <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 1.5 }}>{b}</span>
-                  </div>
+            <div>
+              <h3 style={{ fontSize: 17, marginBottom: 20 }}>
+                Mais proximidade. Mais possibilidades.
+              </h3>
+              <ul className="cp-check-list">
+                {[
+                  'Comissão de 35%, a maior do programa',
+                  'Assinatura Gestão Pro bonificada e cupom exclusivo',
+                  'Acesso antecipado a novidades e destaque como parceiro',
+                  'Produção de 2 conteúdos por mês sobre o CoachPilot',
+                  'Uso da plataforma, apoio aos indicados e feedbacks',
+                ].map((item) => (
+                  <li key={item}>
+                    <Check />
+                    {item}
+                  </li>
                 ))}
-              </div>
-              <div>
-                <div style={{ color: '#10b981', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Contrapartidas</div>
-                {['Criar 2 conteúdos por mês sobre o CoachPilot', 'Usar a plataforma na prática', 'Direcionar os indicados nos primeiros passos', 'Dar feedbacks para o produto'].map((b, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
-                    <Check size={14} color="#10b981" style={{ marginTop: 2, flexShrink: 0 }} />
-                    <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 1.5 }}>{b}</span>
-                  </div>
-                ))}
-              </div>
+              </ul>
+              <p className="cp-caption">
+                Benefícios e contrapartidas do programa Embaixador da Marca.
+              </p>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Regras */}
-      <section style={{ background: '#fff', padding: '80px 24px' }}>
-        <div style={{ maxWidth: 680, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px, 3vw, 34px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', marginBottom: 12 }}>
-              Regras principais
-            </h2>
+        </section>
+        <section className="cp-section">
+          <div className="cp-container">
+            <p className="cp-eyebrow">Transparência desde o início</p>
+            <h2 className="cp-heading">Uma parceria com regras claras.</h2>
+            <ol className="cp-rules">
+              {REGRAS.map((regra, i) => (
+                <li key={regra}>
+                  <span>{String(i + 1).padStart(2, '0')}</span>
+                  {regra}
+                </li>
+              ))}
+            </ol>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {REGRAS.map((r, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 20px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
-                <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(20,184,166,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                  <span style={{ color: '#14b8a6', fontSize: 11, fontWeight: 700 }}>{i + 1}</span>
-                </div>
-                <span style={{ color: '#475569', fontSize: 14, lineHeight: 1.6 }}>{r}</span>
-              </div>
-            ))}
+        </section>
+        <section className="cp-section cp-soft">
+          <div className="cp-container cp-faq-layout">
+            <div>
+              <p className="cp-eyebrow">Ficou alguma dúvida?</p>
+              <h2 className="cp-heading">
+                Vamos esclarecer
+                <br />
+                antes de começar.
+              </h2>
+              <a
+                className="cp-text-link"
+                href={WA_ENTRAR}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Falar com a equipe <ArrowRight size={15} />
+              </a>
+            </div>
+            <div className="cp-faq-list">
+              {FAQS.map((faq) => (
+                <details key={faq.pergunta}>
+                  <summary>{faq.pergunta}</summary>
+                  <p>{faq.resposta}</p>
+                </details>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section style={{ background: '#f0fdfa', padding: '80px 24px' }}>
-        <div style={{ maxWidth: 680, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px, 3vw, 34px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', marginBottom: 12 }}>
-              Perguntas frequentes
-            </h2>
+        </section>
+        <section className="cp-final">
+          <div className="cp-container cp-final-inner">
+            <div>
+              <p className="cp-eyebrow">Vamos dar o primeiro passo</p>
+              <h2 className="cp-heading">
+                Conecte sua rede
+                <br />a novas possibilidades.
+              </h2>
+              <p>
+                Converse com a equipe e solicite seu link ou cupom de
+                divulgação.
+              </p>
+            </div>
+            <div>
+              <a
+                className="cp-button"
+                href={WA_DIVULGADOR}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Quero fazer parte <ArrowRight size={17} />
+              </a>
+              <a
+                href="https://divulgador.coachpilot.com.br"
+                className="cp-text-link"
+                style={{ display: 'flex', marginTop: 17, fontSize: 12 }}
+              >
+                Já sou divulgador: acessar meu painel <TrendingUp size={14} />
+              </a>
+            </div>
           </div>
-          {FAQS.map((f, i) => (
-            <FaqItem key={i} pergunta={f.pergunta} resposta={f.resposta} />
-          ))}
-        </div>
-      </section>
-
-      {/* CTA Final */}
-      <section style={{ background: 'linear-gradient(135deg, #0f172a 0%, #0d9488 50%, #14b8a6 100%)', padding: '80px 24px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'radial-gradient(rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '25px 25px' }} />
-        <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px, 4vw, 42px)', fontWeight: 800, color: '#fff', lineHeight: 1.2, marginBottom: 16, letterSpacing: '-0.5px' }}>
-            Pronto para ganhar indicando o CoachPilot?
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 17, lineHeight: 1.6, marginBottom: 32 }}>
-            Fale com a gente no WhatsApp e solicite seu link ou cupom de divulgador.
-          </p>
-          <a
-            href={WA_DIVULGADOR}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: '#fff',
-              color: '#0d9488', fontWeight: 700, fontSize: 16, textDecoration: 'none',
-              padding: '16px 32px', borderRadius: 12,
-              boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
-            }}
-          >
-            Quero ser divulgador <ArrowRight size={18} />
-          </a>
-        </div>
-      </section>
-
+        </section>
+      </main>
       <LandingFooter />
     </div>
   )

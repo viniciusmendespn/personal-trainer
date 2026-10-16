@@ -1,170 +1,77 @@
 import { Link } from 'react-router-dom'
 import { Instagram } from 'lucide-react'
-
-
-const NAV_LINKS = [
-  { label: 'Funcionalidades', href: '#features' },
-  { label: 'Como funciona', href: '#how' },
-  { label: 'Loja', href: '#loja' },
-  { label: 'Planos', href: '#pricing' },
-  { label: 'Comparativo', href: '#compare' },
-]
-
-const RESOURCE_LINKS = [
-  { label: 'Blog', to: '/blog' },
-  { label: 'Calculadoras', to: '/calculadoras' },
-  { label: 'Software para personal', to: '/software-para-personal-trainer' },
-  { label: 'IA para personal', to: '/ia-para-personal-trainer' },
-  { label: 'ChatGPT para personal', to: '/chatgpt-para-personal-trainer' },
-  { label: 'Integração com o ChatGPT', to: '/integracoes/chatgpt' },
-  { label: 'App para personal', to: '/app-para-personal-trainer' },
-  { label: 'Gestão de alunos', to: '/gestao-de-alunos-personal-trainer' },
-  { label: 'Preços', to: '/precos' },
-  { label: 'FAQ', to: '/faq' },
-  { label: 'Sobre', to: '/sobre' },
-]
-
-function scrollTo(href: string) {
-  const el = document.querySelector(href)
-  if (el) window.scrollTo({ top: (el as HTMLElement).getBoundingClientRect().top + window.scrollY - 72, behavior: 'smooth' })
-}
-
+import './public-site.css'
 export default function LandingFooter() {
   return (
-    <footer style={{
-      background: '#060a14',
-      borderTop: '1px solid rgba(20,184,166,0.08)',
-      padding: '48px 24px 32px',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      <div style={{
-        position: 'absolute', inset: 0, opacity: 0.05,
-        backgroundImage: 'radial-gradient(rgba(20,184,166,0.8) 1px, transparent 1px)',
-        backgroundSize: '30px 30px',
-      }} />
-
-      <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 40, marginBottom: 40 }}>
+    <footer className="cp-footer">
+      <div className="cp-container">
+        <div className="cp-footer-grid">
           <div>
-            <div style={{ marginBottom: 14 }}>
-              <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 56, width: 'auto' }} />
-            </div>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, lineHeight: 1.7, maxWidth: 260, marginBottom: 16 }}>
-              Gestão profissional de alunos, treinos e evolução para personal trainers que querem escalar o negócio.
+            <Link to="/">
+              <img
+                className="cp-logo"
+                src="/novo-logo-slogan-semfundo.png"
+                alt="CoachPilot"
+                width="220"
+                height="77"
+              />
+            </Link>
+            <p>
+              Tecnologia para organizar sua rotina e aproximar você de cada
+              aluno.
             </p>
             <a
               href="https://instagram.com/coachpilotoficial"
               target="_blank"
               rel="noopener noreferrer"
-              title="@coachpilotoficial no Instagram"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                color: 'rgba(255,255,255,0.5)', fontSize: 14, textDecoration: 'none',
-                transition: 'color 0.2s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
-              <Instagram size={18} />
-              @coachpilotoficial
+              <Instagram size={15} /> @coachpilotoficial
             </a>
           </div>
-
           <div>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 16 }}>
-              Navegação
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {NAV_LINKS.map(l => (
-                <button
-                  key={l.href}
-                  onClick={() => scrollTo(l.href)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: 14, textAlign: 'left', padding: 0, transition: 'color 0.2s' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
-                >
-                  {l.label}
-                </button>
-              ))}
-              <Link
-                to="/divulgadores"
-                style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
-              >
-                Divulgadores
-              </Link>
-              <Link
-                to="/midia-kit"
-                style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
-              >
-                Mídia kit
-              </Link>
-            </div>
+            <h3>Plataforma</h3>
+            <nav aria-label="Plataforma">
+              <a href="/#features">Funcionalidades</a>
+              <a href="/#chatgpt">Inteligência artificial</a>
+              <a href="/#how">Como funciona</a>
+              <a href="/#pricing">Planos e preços</a>
+              <a href="https://loja.coachpilot.com.br">Loja de pacotes</a>
+            </nav>
           </div>
-
           <div>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 16 }}>
-              Conta
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <Link to="/signup" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
-              >
-                Criar conta grátis
+            <h3>Explore</h3>
+            <nav aria-label="Recursos">
+              <Link to="/blog">Blog CoachPilot</Link>
+              <Link to="/calculadoras">Calculadoras</Link>
+              <Link to="/integracoes/chatgpt">Integração com ChatGPT</Link>
+              <Link to="/gestao-de-alunos-personal-trainer">
+                Gestão de alunos
               </Link>
-              <Link to="/login" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
-              >
-                Fazer login
-              </Link>
-            </div>
+              <Link to="/faq">Perguntas frequentes</Link>
+            </nav>
           </div>
-
           <div>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 16 }}>
-              Recursos
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {RESOURCE_LINKS.map(l => (
-                <Link
-                  key={l.to}
-                  to={l.to}
-                  style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
-                >
-                  {l.label}
-                </Link>
-              ))}
-              <a
-                href="https://loja.coachpilot.com.br"
-                style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#14b8a6')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
-              >
-                Loja de pacotes de treino
-              </a>
-            </div>
+            <h3>Vamos crescer juntos</h3>
+            <nav aria-label="CoachPilot">
+              <Link to="/divulgadores">Seja um divulgador</Link>
+              <Link to="/midia-kit">Mídia kit</Link>
+              <Link to="/sobre">Sobre o CoachPilot</Link>
+              <Link to="/signup">Crie sua conta grátis</Link>
+              <Link to="/login">Acesse sua conta</Link>
+            </nav>
           </div>
         </div>
-
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 24, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>
-            © {new Date().getFullYear()} CoachPilot. Todos os direitos reservados.
-            {' · '}
-            <Link to="/termos" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Termos de Uso</Link>
-            {' · '}
-            <Link to="/privacidade" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Privacidade</Link>
+        <div className="cp-footer-bottom">
+          <span>
+            © {new Date().getFullYear()} CoachPilot. Todos os direitos
+            reservados.
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>
-            Feito com 💪 para personal trainers brasileiros
-          </span>
+          <nav aria-label="Informações legais">
+            <Link to="/termos">Termos de uso</Link>
+            <Link to="/privacidade">Privacidade</Link>
+          </nav>
+          <span>Feito para quem treina pessoas.</span>
         </div>
       </div>
     </footer>

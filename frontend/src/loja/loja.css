@@ -1,53 +1,393 @@
-/*
- * Override de identidade visual da Loja — importado DEPOIS de index.css só no
- * entry loja (loja-main.tsx). Alinha a loja à marca pública da landing
- * (teal→emerald sobre navy) sem tocar nos tokens do portal/app do aluno.
- * Precisa redefinir em :root E [data-theme="dark"], porque index.css
- * re-declara os tokens no seletor de tema (especificidade maior).
- */
+@import '../pages/landing/public-site.css';
+
+/* Store-only tokens. Keep the portal and student app themes independent. */
 :root,
-[data-theme="dark"] {
-  --color-bg: #060a14;
-  --color-surface: #0d1526;
-  --color-surface-elevated: #131e33;
-  --color-border: #1e2a44;
-  --color-border-strong: #2c3b5c;
-  --color-text: #f1f5f9;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
-
-  --color-accent: #14b8a6;
-  --color-accent-hover: #2dd4bf;
-  --color-accent-active: #0d9488;
-  --color-energy: #10b981;
-  --color-energy-hover: #34d399;
-
-  --shadow-glow-accent: 0 0 24px -8px rgb(20 184 166 / 0.45);
-  --shadow-glow-energy: 0 0 24px -8px rgb(16 185 129 / 0.4);
+[data-theme='dark'] {
+  --color-bg: #f5f7f4;
+  --color-surface: #fff;
+  --color-surface-elevated: #edf3ed;
+  --color-border: #dce5dd;
+  --color-border-strong: #b7cbbd;
+  --color-text: #173425;
+  --color-text-secondary: #5b7162;
+  --color-text-muted: #697c6d;
+  --color-accent: #087f6e;
+  --color-accent-hover: #066b5c;
+  --color-accent-active: #055447;
+  --color-energy: #167b55;
+  --color-energy-hover: #126344;
+  --color-success: #167b55;
+  --shadow-glow-accent: 0 0 24px -8px #0b7e6633;
+  --shadow-card: 0 12px 32px -12px #163e2c30;
 }
-
-/* Radial-gradients do body vêm hardcoded em indigo/lime no index.css */
 body {
-  background-image:
-    radial-gradient(circle at 15% -10%, rgb(20 184 166 / 0.14), transparent 55%),
-    radial-gradient(circle at 100% 0%, rgb(16 185 129 / 0.07), transparent 45%);
+  background: #f5f7f4;
+  background-image: none;
 }
-
-/* Padrão pontilhado da landing, para o mini-hero do catálogo */
-.loja-dots {
-  background-image: radial-gradient(rgba(20, 184, 166, 0.35) 1px, transparent 1px);
-  background-size: 30px 30px;
-  -webkit-mask-image: radial-gradient(ellipse 70% 90% at 50% 0%, black 30%, transparent 75%);
-  mask-image: radial-gradient(ellipse 70% 90% at 50% 0%, black 30%, transparent 75%);
+.loja-app {
+  background: #f5f7f4;
 }
-
-/* Gradiente de marca (mesmo da landing) para CTAs/acentos pontuais */
+.loja-header {
+  background: #0b1918f5;
+  border-color: #ffffff16;
+  color: #e8f3ee;
+}
+.loja-header .text-text-secondary {
+  color: #c0d2c6;
+}
+.loja-header .text-text-muted {
+  color: #a3bdad;
+}
+.loja-header nav a:hover,
+.loja-header nav button:hover {
+  color: #80e6bf;
+}
+.loja-header-logo {
+  width: 206px;
+  height: auto;
+  display: block;
+}
 .loja-gradient {
-  background: linear-gradient(135deg, #14b8a6, #10b981);
+  background: #1e5c42;
+  color: #d4f2e3;
 }
 .loja-gradient-text {
-  background: linear-gradient(135deg, #14b8a6, #10b981);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #087f6e;
+}
+.loja-hero {
+  background: #0b1918;
+  color: #fff;
+  padding: 56px 0 60px;
+}
+.loja-hero-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 70px;
+  align-items: center;
+}
+.loja-hero .cp-eyebrow {
+  color: #78dcb7;
+}
+.loja-hero h1 {
+  font-family: Sora, sans-serif;
+  font-size: clamp(37px, 4.2vw, 57px);
+  line-height: 1.15;
+  letter-spacing: -2px;
+  margin-bottom: 23px;
+}
+.loja-hero h1 em {
+  color: #7be0b8;
+  font-style: normal;
+}
+.loja-hero p {
+  font-size: 14px;
+  line-height: 1.9;
+  color: #b3c9bc;
+  max-width: 490px;
+  margin-bottom: 28px;
+}
+.loja-hero .loja-hero-note {
+  font-size: 10px;
+  color: #9fb8a8;
+  margin: 20px 0 0;
+}
+.loja-hero .cp-button {
+  font-size: 12px;
+  padding: 12px 17px;
+}
+.loja-hero-visual {
+  position: relative;
+  padding-bottom: 24px;
+}
+.loja-hero-visual > img {
+  width: 100%;
+  height: 395px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.loja-hero-label {
+  position: absolute;
+  left: -20px;
+  bottom: 0;
+  background: #e5efe4;
+  border: 1px solid #c8dfcd;
+  border-radius: 7px;
+  padding: 18px 23px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #1c5237;
+}
+.loja-hero-label strong {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.loja-hero-label span {
+  font-size: 10px;
+  color: #587963;
+}
+.loja-benefits {
+  background: #edf2eb;
+  border-bottom: 1px solid #dce6dc;
+  padding: 23px 0;
+}
+.loja-benefits > .cp-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 25px;
+}
+.loja-benefits span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: #526e59;
+}
+.loja-benefits svg {
+  color: #167b55;
+  flex-shrink: 0;
+}
+.loja-catalog {
+  padding-top: 64px;
+  padding-bottom: 76px;
+  scroll-margin-top: 110px;
+}
+.loja-catalog .cp-heading {
+  font-size: clamp(27px, 3vw, 37px);
+}
+.loja-toolbar {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #dce5dd;
+}
+.loja-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #cfddd1;
+  background: #fff;
+  border-radius: 6px;
+  padding: 12px 15px;
+  flex: 1;
+  color: #748a79;
+  max-width: 440px;
+}
+.loja-search:focus-within {
+  outline: 2px solid #087f6e;
+  outline-offset: 2px;
+}
+.loja-search input {
+  width: 100%;
+  min-width: 0;
+  font-size: 12px;
+  outline: none;
+  color: #173425;
+}
+.loja-filters {
+  display: flex;
+  gap: 6px;
+}
+.loja-filters button {
+  font-size: 11px;
+  border: 1px solid #d2dfd4;
+  color: #4f6d59;
+  padding: 9px 13px;
+  border-radius: 5px;
+  background: #fff;
+}
+.loja-filters button[aria-pressed='true'] {
+  background: #1c4b32;
+  color: #fff;
+  border-color: #1c4b32;
+}
+.loja-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #5b7663;
+}
+.loja-sort select {
+  font-size: 11px;
+  max-width: 160px;
+  padding: 10px 4px;
+  background: transparent;
+  border: 0;
+  color: #4f6d59;
+  cursor: pointer;
+}
+.loja-result-count {
+  font-size: 11px;
+  color: #6c816f;
+  margin: 21px 0;
+}
+.loja-product {
+  border-radius: 9px;
+  box-shadow: 0 2px 4px #17342503;
+  display: flex;
+  flex-direction: column;
+}
+.loja-product-body {
+  padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.loja-product-body > h3 {
+  font-family: Sora, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.loja-product-body > div:last-child {
+  border-top: 1px solid #e7eee7;
+  margin-top: auto;
+  padding-top: 17px;
+}
+.loja-product-body .bg-white\/5 {
+  background: #eef4ed;
+}
+.loja-cover-fallback {
+  position: relative;
+}
+.loja-cover-fallback img {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+}
+.loja-cover-fallback > span {
+  position: absolute;
+  right: 9px;
+  bottom: 9px;
+  font-size: 9px;
+  background: #092518c9;
+  color: #d4e8dc;
+  border-radius: 3px;
+  padding: 3px 7px;
+}
+.loja-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #5b7162;
+  display: grid;
+  justify-items: center;
+  gap: 15px;
+}
+.loja-empty h3 {
+  font-size: 18px;
+  color: #173425;
+}
+.loja-sell {
+  padding: 60px 0;
+  background: #deeadc;
+  border-top: 1px solid #d4e1d3;
+}
+.loja-sell .cp-heading {
+  font-size: clamp(25px, 3vw, 36px);
+}
+.loja-sell p {
+  font-size: 13px;
+  color: #58745f;
+}
+.loja-sell .cp-eyebrow {
+  font-size: 10px;
+}
+.loja-sell .cp-button {
+  background: #184a30;
+  color: #fff;
+  font-size: 12px;
+}
+.loja-footer {
+  background: #0b1918;
+  border-color: #ffffff16;
+  color: #a6beae;
+  padding-top: 12px;
+}
+.loja-footer .border-border\/60 {
+  border-color: #ffffff15;
+}
+.loja-footer .text-text-secondary,
+.loja-footer .text-text-muted {
+  color: #a6beae;
+}
+.loja-footer a:hover {
+  color: #7be0b8;
+}
+@media (max-width: 960px) {
+  .loja-hero-grid {
+    gap: 40px;
+  }
+  .loja-toolbar {
+    flex-wrap: wrap;
+  }
+  .loja-search {
+    max-width: none;
+    min-width: 45%;
+  }
+  .loja-header-logo {
+    width: 190px;
+  }
+}
+@media (max-width: 700px) {
+  .loja-hero {
+    padding: 35px 0 40px;
+  }
+  .loja-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+  .loja-hero h1 {
+    font-size: 39px;
+    letter-spacing: -1.5px;
+  }
+  .loja-hero-visual > img {
+    height: 300px;
+  }
+  .loja-hero-label {
+    left: 12px;
+    padding: 15px 18px;
+  }
+  .loja-benefits > .cp-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+  .loja-catalog {
+    padding-top: 44px;
+  }
+  .loja-toolbar {
+    gap: 15px;
+  }
+  .loja-search {
+    flex-basis: 100%;
+  }
+  .loja-sort {
+    margin-left: auto;
+  }
+  .loja-sort select {
+    max-width: 130px;
+  }
+  .loja-header-logo {
+    width: 160px;
+  }
+  .loja-header .cp-container {
+    width: calc(100% - 28px);
+  }
+  .loja-header .h-20 {
+    height: 72px;
+  }
+  .loja-product-body {
+    padding: 21px;
+  }
+}
+.loja-login-brand {
+  background: #0b1918;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 20px;
+}
+@media (max-width: 360px) {
+  .loja-header-logo { width: 130px; }
 }

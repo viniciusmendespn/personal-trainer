@@ -14,8 +14,14 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { BASE_URL, PAGES, WIDGET_KINDS, allPublicPaths } from '../src/pages/landing/publicSeoData.js'
+import {
+  BASE_URL,
+  PAGES,
+  WIDGET_KINDS,
+  allPublicPaths,
+} from '../src/pages/landing/publicSeoData.js'
 import { BLOG_POSTS, BLOG_BASE } from '../src/pages/landing/blogData.js'
+import { blogPresentation } from '../src/pages/landing/blogPresentation.js'
 import { MEDIA_KIT } from '../src/pages/landing/mediaKitData.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -27,16 +33,36 @@ const buildDate = new Date().toISOString().slice(0, 10)
 const DIVULGADORES = {
   path: '/divulgadores',
   title: 'Divulgadores CoachPilot | Comissão recorrente',
-  description: 'Programa de divulgadores do CoachPilot para indicar a plataforma a personal trainers e ganhar comissão recorrente.',
+  description:
+    'Programa de divulgadores do CoachPilot para indicar a plataforma a personal trainers e ganhar comissão recorrente.',
   h1: 'Ganhe comissão indicando o CoachPilot para outros personal trainers',
-  intro: 'Divulgadores CoachPilot indicam a plataforma para outros profissionais e recebem comissão recorrente sobre assinaturas Gestão Pro ativas.',
-  bullets: ['Comissão recorrente enquanto o cliente estiver ativo', 'Escada de comissão que cresce com a sua carteira', 'Comissão somente sobre Gestão Pro', 'Contato pelo WhatsApp público'],
+  intro:
+    'Divulgadores CoachPilot indicam a plataforma para outros profissionais e recebem comissão recorrente sobre assinaturas Gestão Pro ativas.',
+  bullets: [
+    'Comissão recorrente enquanto o cliente estiver ativo',
+    'Escada de comissão que cresce com a sua carteira',
+    'Comissão somente sobre Gestão Pro',
+    'Contato pelo WhatsApp público',
+  ],
   sections: [],
   faqs: [],
   related: [],
 }
 
-const MES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
+const MES = [
+  'janeiro',
+  'fevereiro',
+  'março',
+  'abril',
+  'maio',
+  'junho',
+  'julho',
+  'agosto',
+  'setembro',
+  'outubro',
+  'novembro',
+  'dezembro',
+]
 
 function formatDate(iso) {
   const [y, m, d] = iso.split('-').map(Number)
@@ -54,29 +80,40 @@ function escapeHtml(value) {
 // [texto](/caminho) → <a href="/caminho">texto</a> (mesmo formato do React)
 // Link externo ganha target/rel, espelhando renderInline de prose.tsx.
 function inline(text) {
-  return escapeHtml(text).replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label, href) => (
-    href.startsWith('http')
-      ? `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>`
-      : `<a href="${href}">${label}</a>`
-  ))
+  return escapeHtml(text).replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    (_m, label, href) =>
+      href.startsWith('http')
+        ? `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>`
+        : `<a href="${href}">${label}</a>`,
+  )
 }
 
-const CTA = '<p><a href="/signup">Começar grátis</a> | <a href="/precos">Ver preços</a> | <a href="/">Página inicial</a></p>'
+const CTA =
+  '<p><a href="/signup">Começar grátis</a> | <a href="/precos">Ver preços</a> | <a href="/">Página inicial</a></p>'
 
 // Espelha ProseTable de src/pages/landing/prose.tsx. O overflow-x é obrigatório:
 // sem ele o Googlebot mobile acusa conteúdo mais largo que a viewport.
 function renderTable(t) {
   const head = t.headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('')
-  const body = t.rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')
-  return `<div style="overflow-x:auto"><table border="1" cellpadding="6" style="border-collapse:collapse">`
-    + `<thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`
+  const body = t.rows
+    .map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`)
+    .join('')
+  return (
+    `<div style="overflow-x:auto"><table border="1" cellpadding="6" style="border-collapse:collapse">` +
+    `<thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`
+  )
 }
 
 // Espelha o map de sections em PublicSeoPage.tsx: paragraphs vence body,
 // body vira array de 1, e os dois aceitam links inline.
 function renderSeoSection(s) {
-  const paragraphs = (s.paragraphs ?? (s.body ? [s.body] : [])).map((p) => `<p>${inline(p)}</p>`).join('')
-  const list = s.list ? `<ul>${s.list.map((item) => `<li>${inline(item)}</li>`).join('')}</ul>` : ''
+  const paragraphs = (s.paragraphs ?? (s.body ? [s.body] : []))
+    .map((p) => `<p>${inline(p)}</p>`)
+    .join('')
+  const list = s.list
+    ? `<ul>${s.list.map((item) => `<li>${inline(item)}</li>`).join('')}</ul>`
+    : ''
   const table = s.table ? renderTable(s.table) : ''
   return `<section><h2>${escapeHtml(s.title)}</h2>${paragraphs}${list}${table}</section>`
 }
@@ -86,11 +123,15 @@ function renderSeoSection(s) {
 // precisa ranquear vive em sections/faqs, e aqui sai só a ponte.
 function renderSlot(page) {
   if (!page.widget && !page.index) return ''
-  const head = (page.widgetTitle ? `<h2>${escapeHtml(page.widgetTitle)}</h2>` : '')
-    + (page.widgetNote ? `<p>${inline(page.widgetNote)}</p>` : '')
+  const head =
+    (page.widgetTitle ? `<h2>${escapeHtml(page.widgetTitle)}</h2>` : '') +
+    (page.widgetNote ? `<p>${inline(page.widgetNote)}</p>` : '')
   if (page.index) {
     const items = page.index
-      .map((k) => `<li><a href="${PAGES[k].path}"><strong>${escapeHtml(PAGES[k].label ?? PAGES[k].h1)}</strong></a> — ${escapeHtml(PAGES[k].description)}</li>`)
+      .map(
+        (k) =>
+          `<li><a href="${PAGES[k].path}"><strong>${escapeHtml(PAGES[k].label ?? PAGES[k].h1)}</strong></a> — ${escapeHtml(PAGES[k].description)}</li>`,
+      )
       .join('')
     return `<section id="calculadora">${head}<ul>${items}</ul></section>`
   }
@@ -98,7 +139,9 @@ function renderSlot(page) {
 }
 
 function renderSeoPageContent(page) {
-  const bullets = page.bullets.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
+  const bullets = page.bullets
+    .map((item) => `<li>${escapeHtml(item)}</li>`)
+    .join('')
   const sections = page.sections.map(renderSeoSection).join('')
   const faqs = page.faqs.length
     ? `<section><h2>Perguntas frequentes</h2>${page.faqs.map((f) => `<h3>${escapeHtml(f.q)}</h3><p>${escapeHtml(f.a)}</p>`).join('')}</section>`
@@ -119,12 +162,17 @@ function renderSeoPageContent(page) {
 }
 
 function renderBlogPostContent(post) {
-  const sections = post.sections.map((s) => {
-    const paragraphs = s.paragraphs.map((p) => `<p>${inline(p)}</p>`).join('')
-    const list = s.list ? `<ul>${s.list.map((item) => `<li>${inline(item)}</li>`).join('')}</ul>` : ''
-    const table = s.table ? renderTable(s.table) : ''
-    return `<section><h2>${escapeHtml(s.h2)}</h2>${paragraphs}${list}${table}</section>`
-  }).join('')
+  const cover = blogPresentation(post.slug)
+  const sections = post.sections
+    .map((s) => {
+      const paragraphs = s.paragraphs.map((p) => `<p>${inline(p)}</p>`).join('')
+      const list = s.list
+        ? `<ul>${s.list.map((item) => `<li>${inline(item)}</li>`).join('')}</ul>`
+        : ''
+      const table = s.table ? renderTable(s.table) : ''
+      return `<section><h2>${escapeHtml(s.h2)}</h2>${paragraphs}${list}${table}</section>`
+    })
+    .join('')
   const faqs = post.faqs.length
     ? `<section><h2>Perguntas frequentes</h2>${post.faqs.map((f) => `<h3>${escapeHtml(f.q)}</h3><p>${escapeHtml(f.a)}</p>`).join('')}</section>`
     : ''
@@ -135,6 +183,7 @@ function renderBlogPostContent(post) {
     <p style="font-weight:700;color:#0d9488;text-transform:uppercase"><a href="/blog">Blog CoachPilot</a></p>
     <article>
       <h1>${escapeHtml(post.h1)}</h1>
+      <img src="${cover.image}" alt="${escapeHtml(cover.alt)}" width="1536" height="1024" style="width:100%;height:auto;border-radius:8px" />
       <p>Publicado em ${formatDate(post.datePublished)} · ${post.readingMinutes} min de leitura</p>
       <p>${escapeHtml(post.intro)}</p>
       ${sections}
@@ -146,8 +195,9 @@ function renderBlogPostContent(post) {
 }
 
 function renderBlogIndexContent() {
-  const items = BLOG_POSTS.map((post) =>
-    `<li><a href="/blog/${post.slug}"><strong>${escapeHtml(post.h1)}</strong></a><br>${escapeHtml(post.description)}</li>`
+  const items = BLOG_POSTS.map(
+    (post) =>
+      `<li><a href="/blog/${post.slug}"><strong>${escapeHtml(post.h1)}</strong></a><br>${escapeHtml(post.description)}</li>`,
   ).join('')
   return `<main style="font-family:Inter,Arial,sans-serif;max-width:920px;margin:0 auto;padding:48px 24px;color:#0f172a">
     <h1>${escapeHtml(BLOG_BASE.h1)}</h1>
@@ -163,23 +213,69 @@ function renderBlogIndexContent() {
 // institucional inteira — é literalmente o objetivo da página.
 function renderMediaKitContent() {
   const k = MEDIA_KIT
-  const cards = k.resumo.cards.map((c) => `<li><strong>${escapeHtml(c.titulo)}</strong> — ${escapeHtml(c.desc)}</li>`).join('')
-  const metricas = k.metricas.map((m) => `<li><strong>${escapeHtml(m.valor)}</strong> ${escapeHtml(m.label)}</li>`).join('')
-  const publico = k.publico.itens.map((p) => `<li>${escapeHtml(p)}</li>`).join('')
-  const diferenciais = k.diferenciais.map((d) => `<li><strong>${escapeHtml(d.titulo)}</strong> — ${escapeHtml(d.desc)}</li>`).join('')
-  const beneficios = k.parceria.beneficios.map((b) => `<li>${escapeHtml(b)}</li>`).join('')
-  const conexao = k.conexaoIa.grupos.map((g) => `<h3>${escapeHtml(g.titulo)}</h3><p>${escapeHtml(g.desc)}</p>`
-    + `<ul>${g.itens.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`).join('')
-  const formatos = k.formatos.map((f) => `<section><h3>${escapeHtml(f.titulo)}</h3><p>${escapeHtml(f.desc)}</p>`
-    + `<ul>${f.itens.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`
-    + (f.cta ? `<p><a href="${f.cta.href}">${escapeHtml(f.cta.label)}</a></p>` : '')
-    + '</section>').join('')
-  const sinergia = k.sinergia.colunas.map((c) => `<li><strong>${escapeHtml(c.titulo)}</strong> — ${escapeHtml(c.desc)}</li>`).join('')
-  const imagens = k.provaVisual.imagens
-    .map((img) => `<figure><img src="${img.src}" alt="${escapeHtml(img.alt)}" loading="lazy" style="max-width:100%;height:auto" /><figcaption>${escapeHtml(img.legenda)}</figcaption></figure>`)
+  const cards = k.resumo.cards
+    .map(
+      (c) =>
+        `<li><strong>${escapeHtml(c.titulo)}</strong> — ${escapeHtml(c.desc)}</li>`,
+    )
     .join('')
-  const links = k.links.map((l) => `<li>${escapeHtml(l.label)}: <a href="${l.href}">${escapeHtml(l.valor)}</a></li>`).join('')
-  const faqs = k.faqs.map((f) => `<h3>${escapeHtml(f.q)}</h3><p>${escapeHtml(f.a)}</p>`).join('')
+  const metricas = k.metricas
+    .map(
+      (m) =>
+        `<li><strong>${escapeHtml(m.valor)}</strong> ${escapeHtml(m.label)}</li>`,
+    )
+    .join('')
+  const publico = k.publico.itens
+    .map((p) => `<li>${escapeHtml(p)}</li>`)
+    .join('')
+  const diferenciais = k.diferenciais
+    .map(
+      (d) =>
+        `<li><strong>${escapeHtml(d.titulo)}</strong> — ${escapeHtml(d.desc)}</li>`,
+    )
+    .join('')
+  const beneficios = k.parceria.beneficios
+    .map((b) => `<li>${escapeHtml(b)}</li>`)
+    .join('')
+  const conexao = k.conexaoIa.grupos
+    .map(
+      (g) =>
+        `<h3>${escapeHtml(g.titulo)}</h3><p>${escapeHtml(g.desc)}</p>` +
+        `<ul>${g.itens.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`,
+    )
+    .join('')
+  const formatos = k.formatos
+    .map(
+      (f) =>
+        `<section><h3>${escapeHtml(f.titulo)}</h3><p>${escapeHtml(f.desc)}</p>` +
+        `<ul>${f.itens.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>` +
+        (f.cta
+          ? `<p><a href="${f.cta.href}">${escapeHtml(f.cta.label)}</a></p>`
+          : '') +
+        '</section>',
+    )
+    .join('')
+  const sinergia = k.sinergia.colunas
+    .map(
+      (c) =>
+        `<li><strong>${escapeHtml(c.titulo)}</strong> — ${escapeHtml(c.desc)}</li>`,
+    )
+    .join('')
+  const imagens = k.provaVisual.imagens
+    .map(
+      (img) =>
+        `<figure><img src="${img.src}" alt="${escapeHtml(img.alt)}" loading="lazy" style="max-width:100%;height:auto" /><figcaption>${escapeHtml(img.legenda)}</figcaption></figure>`,
+    )
+    .join('')
+  const links = k.links
+    .map(
+      (l) =>
+        `<li>${escapeHtml(l.label)}: <a href="${l.href}">${escapeHtml(l.valor)}</a></li>`,
+    )
+    .join('')
+  const faqs = k.faqs
+    .map((f) => `<h3>${escapeHtml(f.q)}</h3><p>${escapeHtml(f.a)}</p>`)
+    .join('')
 
   return `<main style="font-family:Inter,Arial,sans-serif;max-width:920px;margin:0 auto;padding:48px 24px;color:#0f172a">
     <p style="font-weight:700;color:#0d9488;text-transform:uppercase">${escapeHtml(k.hero.eyebrow)}</p>
@@ -210,10 +306,13 @@ function renderMediaKitContent() {
 
 function renderHomeContent() {
   const featured = BLOG_POSTS.slice(0, 3)
-    .map((post) => `<li><a href="/blog/${post.slug}">${escapeHtml(post.h1)}</a></li>`)
+    .map(
+      (post) =>
+        `<li><a href="/blog/${post.slug}">${escapeHtml(post.h1)}</a></li>`,
+    )
     .join('')
   return `<main style="font-family:Inter,Arial,sans-serif;max-width:960px;margin:0 auto;padding:48px 24px;color:#0f172a">
-    <h1>CoachPilot — Gestão para personal trainers</h1>
+    <h1>Mais tempo para treinar pessoas. Mais controle para crescer.</h1>
     <p>Plataforma SaaS brasileira para personal trainers gerenciarem alunos, treinos, avaliações físicas, agenda, financeiro, app do aluno e evolução em um só lugar — com app oficial no ChatGPT para operar tudo conversando, sem digitar série a série.</p>
     <section>
       <h2>Tudo que você precisa para profissionalizar sua gestão</h2>
@@ -279,31 +378,50 @@ function assertDataIntegrity() {
 
   for (const [key, page] of Object.entries(PAGES)) {
     const where = `${key}`
-    if (!page.path.startsWith('/')) errors.push(`${where}: path "${page.path}" não começa com /`)
-    if (page.path.includes('.')) errors.push(`${where}: path "${page.path}" tem ponto — a CloudFront Function trata como asset e não serve o prerender`)
+    if (!page.path.startsWith('/'))
+      errors.push(`${where}: path "${page.path}" não começa com /`)
+    if (page.path.includes('.'))
+      errors.push(
+        `${where}: path "${page.path}" tem ponto — a CloudFront Function trata como asset e não serve o prerender`,
+      )
 
     for (const s of page.sections) {
       // Uma seção só com lista ou só com tabela é conteúdo legítimo. O que não pode
       // é <h2> órfão: título sem nada embaixo.
-      const temConteudo = s.body || s.paragraphs?.length || s.list?.length || s.table
-      if (!temConteudo) errors.push(`${where} › "${s.title}": seção sem conteúdo (nem body, paragraphs, list ou table)`)
+      const temConteudo =
+        s.body || s.paragraphs?.length || s.list?.length || s.table
+      if (!temConteudo)
+        errors.push(
+          `${where} › "${s.title}": seção sem conteúdo (nem body, paragraphs, list ou table)`,
+        )
       if (s.table) {
         const cols = s.table.headers.length
         s.table.rows.forEach((row, i) => {
-          if (row.length !== cols) errors.push(`${where} › "${s.title}": linha ${i + 1} tem ${row.length} células para ${cols} colunas`)
+          if (row.length !== cols)
+            errors.push(
+              `${where} › "${s.title}": linha ${i + 1} tem ${row.length} células para ${cols} colunas`,
+            )
         })
       }
     }
 
-    for (const r of page.related) if (!PAGES[r]) errors.push(`${where}: related "${r}" não existe em PAGES`)
-    for (const c of page.index ?? []) if (!PAGES[c]) errors.push(`${where}: index "${c}" não existe em PAGES`)
-    if (page.parent && !PAGES[page.parent]) errors.push(`${where}: parent "${page.parent}" não existe em PAGES`)
-    if (page.widget && page.index) errors.push(`${where}: widget e index são mutuamente exclusivos`)
+    for (const r of page.related)
+      if (!PAGES[r]) errors.push(`${where}: related "${r}" não existe em PAGES`)
+    for (const c of page.index ?? [])
+      if (!PAGES[c]) errors.push(`${where}: index "${c}" não existe em PAGES`)
+    if (page.parent && !PAGES[page.parent])
+      errors.push(`${where}: parent "${page.parent}" não existe em PAGES`)
+    if (page.widget && page.index)
+      errors.push(`${where}: widget e index são mutuamente exclusivos`)
     if (page.widget && !WIDGET_KINDS.includes(page.widget)) {
-      errors.push(`${where}: widget "${page.widget}" não está em WIDGET_KINDS (${WIDGET_KINDS.join(', ')})`)
+      errors.push(
+        `${where}: widget "${page.widget}" não está em WIDGET_KINDS (${WIDGET_KINDS.join(', ')})`,
+      )
     }
     if (appTsx && !appTsx.includes(`'${page.path}'`)) {
-      errors.push(`${where}: rota ${page.path} ausente de src/App.tsx — a página seria indexada mas a navegação no SPA cairia no ErrorPage`)
+      errors.push(
+        `${where}: rota ${page.path} ausente de src/App.tsx — a página seria indexada mas a navegação no SPA cairia no ErrorPage`,
+      )
     }
   }
 
@@ -324,7 +442,9 @@ function avisarRotasForaDaCdn(paths) {
   } catch {
     return
   }
-  const prefixos = [...yaml.matchAll(/path\.indexOf\('([^']+)'\)\s*===\s*0/g)].map((m) => m[1])
+  const prefixos = [
+    ...yaml.matchAll(/path\.indexOf\('([^']+)'\)\s*===\s*0/g),
+  ].map((m) => m[1])
   const descobertas = paths.filter((p) => {
     if (p === '/') return false
     if (yaml.includes(`'${p}': 1`)) return false
@@ -332,26 +452,41 @@ function avisarRotasForaDaCdn(paths) {
   })
   if (descobertas.length) {
     console.warn(
-      '\n⚠  Rotas prerenderizadas SEM cobertura na SpaRouterFunction (backend/template.yaml):\n'
-      + descobertas.map((p) => `   ${p}`).join('\n')
-      + '\n   Em produção a CDN vai servir o shell da home nessas URLs. Adicione ao mapa'
-      + ' PRERENDERED ou a uma regra de prefixo, e rode sam deploy.\n'
+      '\n⚠  Rotas prerenderizadas SEM cobertura na SpaRouterFunction (backend/template.yaml):\n' +
+        descobertas.map((p) => `   ${p}`).join('\n') +
+        '\n   Em produção a CDN vai servir o shell da home nessas URLs. Adicione ao mapa' +
+        ' PRERENDERED ou a uma regra de prefixo, e rode sam deploy.\n',
     )
   }
 }
 
 function jsonLd(graph) {
-  return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replaceAll('</', '<\\/')
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': graph,
+  }).replaceAll('</', '<\\/')
 }
 
 // Espelha breadcrumbTrail() de src/pages/landing/PublicSeoPage.tsx.
 function breadcrumbTrail(page, canonical) {
-  const trail = [{ '@type': 'ListItem', position: 1, name: 'CoachPilot', item: BASE_URL }]
+  const trail = [
+    { '@type': 'ListItem', position: 1, name: 'CoachPilot', item: BASE_URL },
+  ]
   const parent = page.parent ? PAGES[page.parent] : null
   if (parent) {
-    trail.push({ '@type': 'ListItem', position: 2, name: parent.label ?? parent.h1, item: `${BASE_URL}${parent.path}` })
+    trail.push({
+      '@type': 'ListItem',
+      position: 2,
+      name: parent.label ?? parent.h1,
+      item: `${BASE_URL}${parent.path}`,
+    })
   }
-  trail.push({ '@type': 'ListItem', position: trail.length + 1, name: page.label ?? page.h1, item: canonical })
+  trail.push({
+    '@type': 'ListItem',
+    position: trail.length + 1,
+    name: page.label ?? page.h1,
+    item: canonical,
+  })
   return trail
 }
 
@@ -417,7 +552,11 @@ function pageSchema(page) {
     graph.push({
       '@type': 'FAQPage',
       '@id': `${canonical}#faq`,
-      mainEntity: page.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+      mainEntity: page.faqs.map((f) => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
     })
   }
   return jsonLd(graph)
@@ -430,20 +569,35 @@ function postSchema(post) {
       '@type': 'BlogPosting',
       '@id': `${canonical}#article`,
       headline: post.h1,
+      image: `${BASE_URL}${blogPresentation(post.slug).image}`,
       description: post.description,
       datePublished: post.datePublished,
       dateModified: post.dateModified,
       inLanguage: 'pt-BR',
       mainEntityOfPage: canonical,
-      author: { '@type': 'Organization', name: 'CoachPilot', '@id': `${BASE_URL}/#organization` },
+      author: {
+        '@type': 'Organization',
+        name: 'CoachPilot',
+        '@id': `${BASE_URL}/#organization`,
+      },
       publisher: { '@id': `${BASE_URL}/#organization` },
     },
     {
       '@type': 'BreadcrumbList',
       '@id': `${canonical}#breadcrumb`,
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'CoachPilot', item: BASE_URL },
-        { '@type': 'ListItem', position: 2, name: 'Blog', item: `${BASE_URL}/blog` },
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'CoachPilot',
+          item: BASE_URL,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Blog',
+          item: `${BASE_URL}/blog`,
+        },
         { '@type': 'ListItem', position: 3, name: post.h1, item: canonical },
       ],
     },
@@ -452,7 +606,11 @@ function postSchema(post) {
     graph.push({
       '@type': 'FAQPage',
       '@id': `${canonical}#faq`,
-      mainEntity: post.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+      mainEntity: post.faqs.map((f) => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
     })
   }
   return jsonLd(graph)
@@ -477,14 +635,28 @@ function mediaKitSchema() {
       '@type': 'BreadcrumbList',
       '@id': `${canonical}#breadcrumb`,
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'CoachPilot', item: BASE_URL },
-        { '@type': 'ListItem', position: 2, name: 'Mídia Kit', item: canonical },
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'CoachPilot',
+          item: BASE_URL,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Mídia Kit',
+          item: canonical,
+        },
       ],
     },
     {
       '@type': 'FAQPage',
       '@id': `${canonical}#faq`,
-      mainEntity: MEDIA_KIT.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+      mainEntity: MEDIA_KIT.faqs.map((f) => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
     },
   ])
 }
@@ -511,20 +683,84 @@ function replaceOrInsertMeta(html, selectorRegex, tag) {
 
 // Troca title/description/canonical/OG do template pelo da rota e injeta o
 // JSON-LD específico + conteúdo estático dentro de #root.
-function renderRoute(template, { path, title, description, schema, content, ogType = 'website' }) {
+function renderRoute(
+  template,
+  { path, title, description, schema, content, ogType = 'website', image },
+) {
   const canonical = `${BASE_URL}${path}`
   let html = template
-  html = html.replace(/<title>.*?<\/title>/s, `<title>${escapeHtml(title)}</title>`)
-  html = replaceOrInsertMeta(html, /<meta name="description" content=".*?" \/>/s, `<meta name="description" content="${escapeHtml(description)}" />`)
-  html = replaceOrInsertMeta(html, /<link rel="canonical" href=".*?" \/>/s, `<link rel="canonical" href="${canonical}" />`)
-  html = replaceOrInsertMeta(html, /<meta property="og:type" content=".*?" \/>/s, `<meta property="og:type" content="${ogType}" />`)
-  html = replaceOrInsertMeta(html, /<meta property="og:title" content=".*?" \/>/s, `<meta property="og:title" content="${escapeHtml(title)}" />`)
-  html = replaceOrInsertMeta(html, /<meta property="og:description" content=".*?" \/>/s, `<meta property="og:description" content="${escapeHtml(description)}" />`)
-  html = replaceOrInsertMeta(html, /<meta property="og:url" content=".*?" \/>/s, `<meta property="og:url" content="${canonical}" />`)
-  html = replaceOrInsertMeta(html, /<meta name="twitter:title" content=".*?" \/>/s, `<meta name="twitter:title" content="${escapeHtml(title)}" />`)
-  html = replaceOrInsertMeta(html, /<meta name="twitter:description" content=".*?" \/>/s, `<meta name="twitter:description" content="${escapeHtml(description)}" />`)
-  html = html.replace('</head>', `    <script type="application/ld+json" id="static-page-json-ld">${schema}</script>\n  </head>`)
-  html = html.replace('<div id="root"></div>', `<div id="root">${content}</div>`)
+  html = html.replace(
+    /<title>.*?<\/title>/s,
+    `<title>${escapeHtml(title)}</title>`,
+  )
+  html = replaceOrInsertMeta(
+    html,
+    /<meta name="description" content=".*?" \/>/s,
+    `<meta name="description" content="${escapeHtml(description)}" />`,
+  )
+  html = replaceOrInsertMeta(
+    html,
+    /<link rel="canonical" href=".*?" \/>/s,
+    `<link rel="canonical" href="${canonical}" />`,
+  )
+  html = replaceOrInsertMeta(
+    html,
+    /<meta property="og:type" content=".*?" \/>/s,
+    `<meta property="og:type" content="${ogType}" />`,
+  )
+  html = replaceOrInsertMeta(
+    html,
+    /<meta property="og:title" content=".*?" \/>/s,
+    `<meta property="og:title" content="${escapeHtml(title)}" />`,
+  )
+  html = replaceOrInsertMeta(
+    html,
+    /<meta property="og:description" content=".*?" \/>/s,
+    `<meta property="og:description" content="${escapeHtml(description)}" />`,
+  )
+  html = replaceOrInsertMeta(
+    html,
+    /<meta property="og:url" content=".*?" \/>/s,
+    `<meta property="og:url" content="${canonical}" />`,
+  )
+  html = replaceOrInsertMeta(
+    html,
+    /<meta name="twitter:title" content=".*?" \/>/s,
+    `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
+  )
+  html = replaceOrInsertMeta(
+    html,
+    /<meta name="twitter:description" content=".*?" \/>/s,
+    `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
+  )
+  html = html.replace(
+    '</head>',
+    `    <script type="application/ld+json" id="static-page-json-ld">${schema}</script>\n  </head>`,
+  )
+  if (image) {
+    html = replaceOrInsertMeta(
+      html,
+      /<meta property="og:image" content=".*?" \/>/s,
+      `<meta property="og:image" content="${BASE_URL}${image}" />`,
+    )
+    html = replaceOrInsertMeta(
+      html,
+      /<meta name="twitter:image" content=".*?" \/>/s,
+      `<meta name="twitter:image" content="${BASE_URL}${image}" />`,
+    )
+    html = html.replace(
+      /<meta property="og:image:width" content=".*?" \/>/s,
+      '<meta property="og:image:width" content="1536" />',
+    )
+    html = html.replace(
+      /<meta property="og:image:height" content=".*?" \/>/s,
+      '<meta property="og:image:height" content="1024" />',
+    )
+  }
+  html = html.replace(
+    '<div id="root"></div>',
+    `<div id="root">${content}</div>`,
+  )
   return html
 }
 
@@ -542,7 +778,10 @@ const PRIORITY = {
   '/chatgpt-para-personal-trainer': { priority: '0.9', changefreq: 'monthly' },
   '/integracoes/chatgpt': { priority: '0.75', changefreq: 'monthly' },
   '/app-para-personal-trainer': { priority: '0.85', changefreq: 'monthly' },
-  '/gestao-de-alunos-personal-trainer': { priority: '0.85', changefreq: 'monthly' },
+  '/gestao-de-alunos-personal-trainer': {
+    priority: '0.85',
+    changefreq: 'monthly',
+  },
   '/precos': { priority: '0.85', changefreq: 'monthly' },
   '/app-de-treino-para-alunos': { priority: '0.8', changefreq: 'monthly' },
   '/avaliacao-fisica-digital': { priority: '0.8', changefreq: 'monthly' },
@@ -556,7 +795,10 @@ const PRIORITY = {
   '/calculadoras/quanto-cobrar': { priority: '0.75', changefreq: 'monthly' },
   '/calculadoras/volume-semanal': { priority: '0.75', changefreq: 'monthly' },
   '/calculadoras/tmb-e-macros': { priority: '0.75', changefreq: 'monthly' },
-  '/whatsapp-para-personal-trainer': { priority: '0.75', changefreq: 'monthly' },
+  '/whatsapp-para-personal-trainer': {
+    priority: '0.75',
+    changefreq: 'monthly',
+  },
   '/faq': { priority: '0.75', changefreq: 'monthly' },
   '/blog': { priority: '0.75', changefreq: 'weekly' },
   '/sobre': { priority: '0.65', changefreq: 'monthly' },
@@ -570,7 +812,9 @@ const PRIORITY = {
 const DEFAULT_PRIORITY = { priority: '0.7', changefreq: 'monthly' }
 
 function buildSitemap() {
-  const paths = [...new Set([...allPublicPaths(), '/blog', ...Object.keys(PRIORITY)])]
+  const paths = [
+    ...new Set([...allPublicPaths(), '/blog', ...Object.keys(PRIORITY)]),
+  ]
   const staticUrls = paths.map((path) => ({
     loc: `${BASE_URL}${path === '/' ? '/' : path}`,
     lastmod: buildDate,
@@ -583,7 +827,10 @@ function buildSitemap() {
     changefreq: 'monthly',
   }))
   const entries = [...staticUrls, ...postUrls]
-    .map((u) => `  <url>\n    <loc>${u.loc}</loc>\n    <lastmod>${u.lastmod}</lastmod>\n    <changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`)
+    .map(
+      (u) =>
+        `  <url>\n    <loc>${u.loc}</loc>\n    <lastmod>${u.lastmod}</lastmod>\n    <changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`,
+    )
     .join('\n')
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`
 }
@@ -594,56 +841,79 @@ assertDataIntegrity()
 const template = readFileSync(join(dist, 'index.html'), 'utf8')
 
 // Home: injeta fallback rico no index.html raiz
-writeFileSync(join(dist, 'index.html'), template.replace('<div id="root"></div>', `<div id="root">${renderHomeContent()}</div>`), 'utf8')
+writeFileSync(
+  join(dist, 'index.html'),
+  template.replace(
+    '<div id="root"></div>',
+    `<div id="root">${renderHomeContent()}</div>`,
+  ),
+  'utf8',
+)
 
 let count = 0
 
 // Páginas SEO + termos/privacidade + divulgadores
 for (const page of [...Object.values(PAGES), DIVULGADORES]) {
-  writeRoute(page.path, renderRoute(template, {
-    path: page.path,
-    title: page.title,
-    description: page.description,
-    schema: pageSchema(page),
-    content: renderSeoPageContent(page),
-  }))
+  writeRoute(
+    page.path,
+    renderRoute(template, {
+      path: page.path,
+      title: page.title,
+      description: page.description,
+      schema: pageSchema(page),
+      content: renderSeoPageContent(page),
+    }),
+  )
   count++
 }
 
 // Mídia kit (peça institucional para parceiros)
-writeRoute(MEDIA_KIT.path, renderRoute(template, {
-  path: MEDIA_KIT.path,
-  title: MEDIA_KIT.title,
-  description: MEDIA_KIT.description,
-  schema: mediaKitSchema(),
-  content: renderMediaKitContent(),
-}))
+writeRoute(
+  MEDIA_KIT.path,
+  renderRoute(template, {
+    path: MEDIA_KIT.path,
+    title: MEDIA_KIT.title,
+    description: MEDIA_KIT.description,
+    schema: mediaKitSchema(),
+    content: renderMediaKitContent(),
+  }),
+)
 count++
 
 // Blog: índice + artigos
-writeRoute('/blog', renderRoute(template, {
-  path: '/blog',
-  title: BLOG_BASE.title,
-  description: BLOG_BASE.description,
-  schema: blogIndexSchema(),
-  content: renderBlogIndexContent(),
-}))
+writeRoute(
+  '/blog',
+  renderRoute(template, {
+    path: '/blog',
+    title: BLOG_BASE.title,
+    description: BLOG_BASE.description,
+    schema: blogIndexSchema(),
+    content: renderBlogIndexContent(),
+    image: '/images/coachpilot-editorial-v2.webp',
+  }),
+)
 count++
 for (const post of BLOG_POSTS) {
-  writeRoute(`/blog/${post.slug}`, renderRoute(template, {
-    path: `/blog/${post.slug}`,
-    title: post.title,
-    description: post.description,
-    schema: postSchema(post),
-    content: renderBlogPostContent(post),
-    ogType: 'article',
-  }))
+  writeRoute(
+    `/blog/${post.slug}`,
+    renderRoute(template, {
+      path: `/blog/${post.slug}`,
+      title: post.title,
+      description: post.description,
+      schema: postSchema(post),
+      content: renderBlogPostContent(post),
+      image: blogPresentation(post.slug).image,
+      ogType: 'article',
+    }),
+  )
   count++
 }
 
 writeFileSync(join(dist, 'sitemap.xml'), buildSitemap(), 'utf8')
 
-console.log(`Prerendered ${count} public pages + home fallback + sitemap.xml (lastmod ${buildDate}).`)
+console.log(
+  `Prerendered ${count} public pages + home fallback + sitemap.xml (lastmod ${buildDate}).`,
+)
 
 avisarRotasForaDaCdn([
   ...allPublicPaths(),

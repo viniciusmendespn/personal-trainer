@@ -1,136 +1,84 @@
-import { Users, Dumbbell, Activity, Calendar, Smartphone, Trophy, MessageCircle, BarChart2, Bell, Sparkles, Plug } from 'lucide-react'
-import { useState } from 'react'
-
-const FEATURES = [
+import {
+  Users,
+  Dumbbell,
+  Activity,
+  CalendarDays,
+  Smartphone,
+  ChartNoAxesCombined,
+  Trophy,
+  MessageCircle,
+  ArrowRight,
+} from 'lucide-react'
+const features = [
   {
-    icon: <Sparkles size={28} />,
-    title: 'App oficial no ChatGPT',
-    desc: 'Grátis nos dois planos: instale o CoachPilot no seu ChatGPT em 3 cliques e gerencie tudo conversando — consultar alunos, preparar a sessão, montar e aplicar treinos. Ele grava direto na plataforma, sem copiar e colar.',
-    color: '#10b981',
+    icon: Users,
+    title: 'Cada aluno, bem acompanhado',
+    text: 'Cadastro, anamnese e histórico reunidos. Tenha o contexto que precisa antes de cada atendimento.',
   },
   {
-    icon: <Plug size={28} />,
-    title: 'Também no Claude e no Gemini',
-    desc: 'A mesma conexão (padrão MCP) vale para Claude e Gemini. E, se preferir não conectar nada, os prompts prontos geram treinos e a migração da carteira para importar com 1 clique.',
-    color: '#14b8a6',
+    icon: Dumbbell,
+    title: 'Treinos com a sua assinatura',
+    text: 'Crie treinos personalizados, reutilize templates e organize rotinas de acordo com cada objetivo.',
   },
   {
-    icon: <Users size={28} />,
-    title: 'Gestão de Alunos',
-    desc: 'Cadastro, histórico e evolução de cada aluno em um só lugar. Acesse tudo em segundos, sem planilhas espalhadas.',
-    color: '#14b8a6',
+    icon: Activity,
+    title: 'Evolução que dá para ver',
+    text: 'Registre medidas, avaliações e fotos. Transforme o progresso dos seus alunos em gráficos claros.',
   },
   {
-    icon: <Dumbbell size={28} />,
-    title: 'Treinos Personalizados',
-    desc: 'Monte templates de treino reutilizáveis e aplique em vários alunos com um clique. Economize horas de trabalho repetitivo.',
-    color: '#10b981',
+    icon: CalendarDays,
+    title: 'Uma agenda organizada',
+    text: 'Reúna sessões e avaliações em uma visão prática para planejar melhor sua semana.',
   },
   {
-    icon: <Activity size={28} />,
-    title: 'Avaliações Físicas',
-    desc: 'Registre medidas e fotos e acompanhe a evolução do aluno com gráficos automáticos, gerados a cada nova avaliação.',
-    color: '#14b8a6',
+    icon: Smartphone,
+    title: 'Seu trabalho no celular do aluno',
+    text: 'Um app para consultar o treino do dia, registrar as séries e acompanhar a própria evolução.',
   },
   {
-    icon: <Calendar size={28} />,
-    title: 'Agenda Inteligente',
-    desc: 'Organize sessões e horários com lembretes automáticos por WhatsApp, para você e para o aluno nunca esquecerem um treino.',
-    color: '#10b981',
-  },
-  {
-    icon: <Smartphone size={28} />,
-    title: 'App do Aluno (PWA)',
-    desc: 'Seu aluno acompanha o treino do dia, registra a evolução e recebe notificações direto no celular — sem instalar nada da loja de apps.',
-    color: '#14b8a6',
-  },
-  {
-    icon: <Trophy size={28} />,
-    title: 'Ranking e Gamificação',
-    desc: 'Engaje seus alunos com ranking de frequência e desempenho. Quem treina mais, sobe no ranking — e continua motivado.',
-    color: '#10b981',
-  },
-  {
-    icon: <MessageCircle size={28} />,
-    title: 'Canal WhatsApp (opcional)',
-    desc: 'Add-on opcional por +R$29,90/mês. Conecte um número de WhatsApp para facilitar a comunicação com seus alunos e, se quiser, ativar o assistente IA do aluno via WA.',
-    color: '#14b8a6',
-  },
-  {
-    icon: <BarChart2 size={28} />,
-    title: 'Relatórios e Métricas',
-    desc: 'Visualize evolução de força, cardio e composição corporal com gráficos detalhados. Mostre resultados concretos para seus alunos.',
-    color: '#10b981',
-  },
-  {
-    icon: <Bell size={28} />,
-    title: 'Notificações Automáticas',
-    desc: 'Lembretes de treino, avaliação e renovação enviados automaticamente pelo WhatsApp — sem você precisar fazer nada manualmente.',
-    color: '#14b8a6',
+    icon: ChartNoAxesCombined,
+    title: 'Decisões com mais contexto',
+    text: 'Acompanhe frequência, cargas e recordes para ajustar o planejamento com dados do dia a dia.',
   },
 ]
-
 export default function FeaturesSection() {
-  const [hovered, setHovered] = useState<number | null>(null)
-
   return (
-    <section id="features" style={{ background: '#f0fdfa', padding: '80px 24px' }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 56 }}>
-          <div style={{
-            display: 'inline-block',
-            background: 'rgba(20,184,166,0.12)',
-            border: '1px solid rgba(20,184,166,0.3)',
-            borderRadius: 20, padding: '5px 14px', marginBottom: 16,
-          }}>
-            <span style={{ color: '#0d9488', fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Funcionalidades</span>
+    <section id="features" className="cp-section cp-soft">
+      <div className="cp-container">
+        <div className="cp-section-head">
+          <div>
+            <p className="cp-eyebrow">Sua rotina, simplificada</p>
+            <h2 className="cp-heading">
+              Você cuida dos alunos.
+              <br />O CoachPilot conecta o resto.
+            </h2>
           </div>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', marginBottom: 14 }}>
-            Tudo que você precisa para profissionalizar{' '}
-            <span style={{ background: 'linear-gradient(135deg, #14b8a6, #10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              sua gestão
-            </span>
-          </h2>
-          <p style={{ color: '#475569', fontSize: 17, maxWidth: 560, margin: '0 auto', lineHeight: 1.6 }}>
-            Uma plataforma completa para personal trainers que querem dar um upgrade na forma como cuidam dos alunos.
+          <p className="cp-subtitle" style={{ maxWidth: 330, fontSize: 14 }}>
+            Uma visão completa do seu trabalho, do primeiro cadastro ao próximo
+            resultado.
           </p>
         </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}
-          className="features-grid">
-          <style>{`
-            @media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr) !important; } }
-            @media (max-width: 580px) { .features-grid { grid-template-columns: 1fr !important; } }
-          `}</style>
-          {FEATURES.map((f, i) => (
-            <div
-              key={i}
-              onMouseEnter={() => setHovered(i)}
-              onMouseLeave={() => setHovered(null)}
-              style={{
-                background: '#fff',
-                border: `1.5px solid ${hovered === i ? f.color : 'rgba(20,184,166,0.12)'}`,
-                borderRadius: 16,
-                padding: 28,
-                cursor: 'default',
-                transform: hovered === i ? 'translateY(-6px)' : 'none',
-                boxShadow: hovered === i ? `0 12px 32px rgba(20,184,166,0.15)` : '0 2px 8px rgba(0,0,0,0.06)',
-                transition: 'all 0.25s ease',
-              }}
-            >
-              <div style={{
-                width: 52, height: 52, borderRadius: 14,
-                background: `rgba(20,184,166,0.1)`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginBottom: 18, color: f.color,
-                transition: 'background 0.25s',
-              }}>
-                {f.icon}
+        <div className="cp-feature-grid">
+          {features.map(({ icon: Icon, title, text }) => (
+            <div className="cp-feature" key={title}>
+              <div className="cp-feature-icon">
+                <Icon size={21} strokeWidth={1.6} />
               </div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, color: '#0f172a', marginBottom: 10 }}>{f.title}</h3>
-              <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.65 }}>{f.desc}</p>
+              <h3>{title}</h3>
+              <p>{text}</p>
             </div>
           ))}
+        </div>
+        <div className="cp-feature-footer">
+          <span>
+            <Trophy size={16} /> Ranking e gamificação para engajar
+          </span>
+          <span>
+            <MessageCircle size={16} /> Chat interno para conversar
+          </span>
+          <a className="cp-text-link" href="#pricing">
+            Conheça os planos <ArrowRight size={14} />
+          </a>
         </div>
       </div>
     </section>

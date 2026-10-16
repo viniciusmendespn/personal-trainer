@@ -1,5 +1,13 @@
 import { createContext, useContext, useEffect } from 'react'
-import { BrowserRouter, Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import {
+  BrowserRouter,
+  Link,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
 import { Instagram, LogIn, LogOut, ShoppingBag } from 'lucide-react'
 import { useLojaAuth } from './useLojaAuth'
 import { CatalogoPage } from './pages/CatalogoPage'
@@ -20,15 +28,26 @@ function Header() {
   const { user, signOut } = useLojaAuthContext()
   const navigate = useNavigate()
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-bg/80 backdrop-blur-xl">
-      <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between gap-3">
-        <Link to="/" aria-label="Loja CoachPilot — início" className="flex items-center gap-2.5 shrink-0">
-          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" className="h-12 w-auto" />
+    <header className="loja-header sticky top-0 z-40 border-b border-border bg-bg/80 backdrop-blur-xl">
+      <div className="cp-container h-20 flex items-center justify-between gap-3">
+        <Link
+          to="/"
+          aria-label="Loja CoachPilot — início"
+          className="flex items-center gap-2.5 shrink-0"
+        >
+          <img
+            src="/novo-logo-slogan-semfundo.png"
+            alt="CoachPilot"
+            className="loja-header-logo"
+          />
           <span className="loja-gradient rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
             Loja
           </span>
         </Link>
-        <nav className="flex items-center gap-1.5">
+        <nav
+          className="flex items-center gap-1.5"
+          aria-label="Navegação da loja"
+        >
           {user && (
             <Link
               to="/compras"
@@ -40,7 +59,10 @@ function Header() {
           )}
           {user ? (
             <button
-              onClick={async () => { await signOut(); navigate('/') }}
+              onClick={async () => {
+                await signOut()
+                navigate('/')
+              }}
               className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-text-secondary hover:text-text hover:bg-white/5 transition-colors"
             >
               <LogOut size={16} />
@@ -63,21 +85,41 @@ function Header() {
 
 function Footer() {
   return (
-    <footer className="border-t border-border mt-12">
+    <footer className="loja-footer border-t border-border">
       <div className="mx-auto max-w-6xl px-4 py-8 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
         <div className="flex flex-col items-center sm:items-start gap-2">
-          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" className="h-9 w-auto" />
+          <img
+            src="/novo-logo-slogan-semfundo.png"
+            alt="CoachPilot"
+            className="h-9 w-auto"
+          />
           <p className="text-xs text-text-muted max-w-xs text-center sm:text-left">
             Marketplace de pacotes de treino criados por personal trainers.
           </p>
         </div>
         <nav className="flex flex-col items-center sm:items-end gap-1.5 text-xs">
-          <Link to="/" className="text-text-secondary hover:text-accent transition-colors">Catálogo</Link>
-          <Link to="/compras" className="text-text-secondary hover:text-accent transition-colors">Minhas compras</Link>
-          <a href="https://coachpilot.com.br/loja-vendas" className="text-text-secondary hover:text-accent transition-colors">
+          <Link
+            to="/"
+            className="text-text-secondary hover:text-accent transition-colors"
+          >
+            Catálogo
+          </Link>
+          <Link
+            to="/compras"
+            className="text-text-secondary hover:text-accent transition-colors"
+          >
+            Minhas compras
+          </Link>
+          <a
+            href="https://coachpilot.com.br/loja-vendas"
+            className="text-text-secondary hover:text-accent transition-colors"
+          >
             Anuncie seu método
           </a>
-          <a href="https://coachpilot.com.br" className="text-text-secondary hover:text-accent transition-colors">
+          <a
+            href="https://coachpilot.com.br"
+            className="text-text-secondary hover:text-accent transition-colors"
+          >
             Conheça o CoachPilot
           </a>
           <a
@@ -101,7 +143,9 @@ function Footer() {
 
 function ScrollToTop() {
   const { pathname } = useLocation()
-  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
   return null
 }
 
@@ -111,12 +155,18 @@ export function LojaApp() {
     <AuthCtx.Provider value={auth}>
       <BrowserRouter>
         <ScrollToTop />
-        <div className="min-h-screen bg-bg text-text flex flex-col">
+        <div className="cp-public loja-app min-h-screen bg-bg text-text flex flex-col">
+          <a className="cp-skip" href="#conteudo">
+            Ir para o conteúdo
+          </a>
           <Header />
-          <main className="flex-1">
+          <main id="conteudo" className="flex-1">
             <Routes>
               <Route path="/" element={<CatalogoPage />} />
-              <Route path="/anuncio/:anuncioId" element={<AnuncioDetailPage />} />
+              <Route
+                path="/anuncio/:anuncioId"
+                element={<AnuncioDetailPage />}
+              />
               <Route path="/compras" element={<ComprasPage />} />
               <Route path="/login" element={<LojaLoginPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />

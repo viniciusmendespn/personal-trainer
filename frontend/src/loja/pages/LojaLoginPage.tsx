@@ -39,13 +39,21 @@ export function LojaLoginPage() {
       <div
         aria-hidden
         className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-72 w-72 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(20,184,166,0.18), transparent 70%)', filter: 'blur(24px)' }}
+        style={{
+          background:
+            'radial-gradient(circle, rgba(20,184,166,0.18), transparent 70%)',
+          filter: 'blur(24px)',
+        }}
       />
       <Card variant="glass" className="relative w-full max-w-sm p-6">
         <form onSubmit={handle} className="space-y-4">
           <div className="text-center mb-2">
-            <div className="flex flex-col items-center gap-1.5 mb-2">
-              <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" className="h-16 w-auto" />
+            <div className="loja-login-brand flex flex-col items-center gap-1.5 mb-2">
+              <img
+                src="/novo-logo-slogan-semfundo.png"
+                alt="CoachPilot"
+                className="h-16 w-auto"
+              />
               <span className="loja-gradient rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
                 Loja
               </span>
@@ -54,7 +62,13 @@ export function LojaLoginPage() {
               Entre com sua conta CoachPilot para comprar
             </p>
           </div>
-          <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <Input
+            label="E-mail"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
           <div className="relative">
             <Input
               label="Senha"
@@ -80,12 +94,18 @@ export function LojaLoginPage() {
           </Button>
           <p className="text-center text-xs text-text-secondary">
             Ainda não tem conta?{' '}
-            <a href="https://coachpilot.com.br/signup" className="text-accent-hover hover:underline">
+            <a
+              href="https://coachpilot.com.br/signup"
+              className="text-accent-hover hover:underline"
+            >
               Crie grátis no CoachPilot
             </a>
           </p>
           <p className="text-center text-xs text-text-muted">
-            <a href="https://coachpilot.com.br/forgot-password" className="hover:underline">
+            <a
+              href="https://coachpilot.com.br/forgot-password"
+              className="hover:underline"
+            >
               Esqueceu a senha?
             </a>
           </p>

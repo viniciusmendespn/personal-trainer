@@ -1,6 +1,4 @@
-import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
-
+import { ArrowRight } from 'lucide-react'
 const FAQS = [
   {
     q: 'Como eu instalo o plugin do CoachPilot no ChatGPT?',
@@ -65,77 +63,38 @@ const FAQS = [
 ]
 
 export default function FaqSection() {
-  const [open, setOpen] = useState<number | null>(null)
-
   return (
-    <section id="faq" style={{ background: '#f8fafc', padding: '80px 24px' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 52 }}>
-          <div style={{
-            display: 'inline-block',
-            background: 'rgba(20,184,166,0.12)',
-            border: '1px solid rgba(20,184,166,0.3)',
-            borderRadius: 20, padding: '5px 14px', marginBottom: 16,
-          }}>
-            <span style={{ color: '#0d9488', fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>FAQ</span>
-          </div>
-          <h2 style={{
-            fontFamily: "'Sora', sans-serif",
-            fontSize: 'clamp(26px, 4vw, 38px)',
-            fontWeight: 800, color: '#0f172a',
-            letterSpacing: '-0.5px', marginBottom: 14,
-          }}>
-            Perguntas{' '}
-            <span style={{ background: 'linear-gradient(135deg, #14b8a6, #10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              frequentes
-            </span>
+    <section id="faq" className="cp-section cp-soft">
+      <div className="cp-container cp-faq-layout">
+        <div>
+          <p className="cp-eyebrow">Antes de começar</p>
+          <h2 className="cp-heading">
+            Suas dúvidas,
+            <br />
+            com clareza.
           </h2>
-          <p style={{ color: '#475569', fontSize: 16, lineHeight: 1.6 }}>
-            Tudo que você precisa saber antes de começar.
+          <p className="cp-subtitle" style={{ fontSize: 14 }}>
+            Entenda os planos, o app do aluno e a conexão com inteligência
+            artificial.
           </p>
+          <a className="cp-text-link" href="/faq" style={{ marginTop: 24 }}>
+            Todas as perguntas <ArrowRight size={15} />
+          </a>
         </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {FAQS.map((item, i) => (
-            <div
-              key={i}
-              style={{
-                background: '#fff',
-                border: `1.5px solid ${open === i ? 'rgba(20,184,166,0.4)' : 'rgba(20,184,166,0.12)'}`,
-                borderRadius: 14,
-                overflow: 'hidden',
-                transition: 'border-color 0.2s',
-              }}
-            >
-              <button
-                onClick={() => setOpen(open === i ? null : i)}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center',
-                  justifyContent: 'space-between', gap: 16,
-                  padding: '20px 24px', background: 'none', border: 'none',
-                  cursor: 'pointer', textAlign: 'left',
-                }}
-                aria-expanded={open === i}
-              >
-                <span style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', lineHeight: 1.4 }}>
-                  {item.q}
-                </span>
-                <ChevronDown
-                  size={20}
-                  color="#14b8a6"
-                  style={{
-                    flexShrink: 0,
-                    transform: open === i ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.25s',
-                  }}
-                />
-              </button>
-              {open === i && (
-                <div style={{ padding: '0 24px 20px', color: '#475569', fontSize: 15, lineHeight: 1.7 }}>
-                  {item.a}
-                </div>
-              )}
-            </div>
+        <div className="cp-faq-list">
+          {[
+            FAQS[3],
+            FAQS[4],
+            FAQS[6],
+            FAQS[7],
+            FAQS[11],
+            FAQS[13],
+            FAQS[14],
+          ].map((item) => (
+            <details key={item.q}>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
           ))}
         </div>
       </div>

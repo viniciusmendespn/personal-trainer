@@ -1,18 +1,41 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, CalendarDays, Clock } from 'lucide-react'
+import {
+  ArrowRight,
+  CalendarDays,
+  Clock,
+  Search,
+  ChevronRight,
+  BookOpen,
+} from 'lucide-react'
 import LandingFooter from './LandingFooter'
+import LandingNavbar from './LandingNavbar'
+import CtaSection from './CtaSection'
+import { blogPresentation, BLOG_CATEGORIES } from './blogPresentation.js'
+import './public-site.css'
 import { renderInline, ProseList, ProseTable } from './prose'
 import { BASE_URL } from './publicSeoData.js'
 import { BLOG_POSTS, BLOG_BASE } from './blogData.js'
 import type { BlogPost } from './blogData.js'
 
 function formatDate(iso: string) {
-  return new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
+  return new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
 }
 
-function upsertMeta(selector: string, create: () => HTMLMetaElement | HTMLLinkElement, attr: string, value: string) {
-  let el = document.querySelector(selector) as HTMLMetaElement | HTMLLinkElement | null
+function upsertMeta(
+  selector: string,
+  create: () => HTMLMetaElement | HTMLLinkElement,
+  attr: string,
+  value: string,
+) {
+  let el = document.querySelector(selector) as
+    | HTMLMetaElement
+    | HTMLLinkElement
+    | null
   if (!el) {
     el = create()
     document.head.appendChild(el)
@@ -20,44 +43,112 @@ function upsertMeta(selector: string, create: () => HTMLMetaElement | HTMLLinkEl
   el.setAttribute(attr, value)
 }
 
-function useBlogMeta(title: string, description: string, path: string, post?: BlogPost) {
+function useBlogMeta(
+  title: string,
+  description: string,
+  path: string,
+  post?: BlogPost,
+) {
   useEffect(() => {
     const canonical = `${BASE_URL}${path}`
     document.title = title
-    upsertMeta('meta[name="description"]', () => {
-      const el = document.createElement('meta')
-      el.setAttribute('name', 'description')
-      return el
-    }, 'content', description)
-    upsertMeta('link[rel="canonical"]', () => {
-      const el = document.createElement('link')
-      el.setAttribute('rel', 'canonical')
-      return el
-    }, 'href', canonical)
-    upsertMeta('meta[property="og:title"]', () => {
-      const el = document.createElement('meta')
-      el.setAttribute('property', 'og:title')
-      return el
-    }, 'content', title)
-    upsertMeta('meta[property="og:description"]', () => {
-      const el = document.createElement('meta')
-      el.setAttribute('property', 'og:description')
-      return el
-    }, 'content', description)
-    upsertMeta('meta[property="og:url"]', () => {
-      const el = document.createElement('meta')
-      el.setAttribute('property', 'og:url')
-      return el
-    }, 'content', canonical)
+    upsertMeta(
+      'meta[name="description"]',
+      () => {
+        const el = document.createElement('meta')
+        el.setAttribute('name', 'description')
+        return el
+      },
+      'content',
+      description,
+    )
+    upsertMeta(
+      'link[rel="canonical"]',
+      () => {
+        const el = document.createElement('link')
+        el.setAttribute('rel', 'canonical')
+        return el
+      },
+      'href',
+      canonical,
+    )
+    upsertMeta(
+      'meta[property="og:title"]',
+      () => {
+        const el = document.createElement('meta')
+        el.setAttribute('property', 'og:title')
+        return el
+      },
+      'content',
+      title,
+    )
+    upsertMeta(
+      'meta[property="og:description"]',
+      () => {
+        const el = document.createElement('meta')
+        el.setAttribute('property', 'og:description')
+        return el
+      },
+      'content',
+      description,
+    )
+    upsertMeta(
+      'meta[property="og:url"]',
+      () => {
+        const el = document.createElement('meta')
+        el.setAttribute('property', 'og:url')
+        return el
+      },
+      'content',
+      canonical,
+    )
 
+    const cover = BASE_URL + blogPresentation(post?.slug ?? '').image
+    for (const [property, value] of [
+      ['og:image', cover],
+      ['og:type', post ? 'article' : 'website'],
+      ['og:image:alt', blogPresentation(post?.slug ?? '').alt],
+      ['twitter:image', cover],
+    ]) {
+      const attr = property.startsWith('twitter:') ? 'name' : 'property'
+      upsertMeta(
+        'meta[' + attr + '="' + property + '"]',
+        () => {
+          const el = document.createElement('meta')
+          el.setAttribute(attr, property)
+          return el
+        },
+        'content',
+        value,
+      )
+    }
     const graph: object[] = [
       {
         '@type': 'BreadcrumbList',
         '@id': `${canonical}#breadcrumb`,
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'CoachPilot', item: BASE_URL },
-          { '@type': 'ListItem', position: 2, name: 'Blog', item: `${BASE_URL}/blog` },
-          ...(post ? [{ '@type': 'ListItem', position: 3, name: post.h1, item: canonical }] : []),
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'CoachPilot',
+            item: BASE_URL,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Blog',
+            item: `${BASE_URL}/blog`,
+          },
+          ...(post
+            ? [
+                {
+                  '@type': 'ListItem',
+                  position: 3,
+                  name: post.h1,
+                  item: canonical,
+                },
+              ]
+            : []),
         ],
       },
     ]
@@ -66,12 +157,17 @@ function useBlogMeta(title: string, description: string, path: string, post?: Bl
         '@type': 'BlogPosting',
         '@id': `${canonical}#article`,
         headline: post.h1,
+        image: cover,
         description: post.description,
         datePublished: post.datePublished,
         dateModified: post.dateModified,
         inLanguage: 'pt-BR',
         mainEntityOfPage: canonical,
-        author: { '@type': 'Organization', name: 'CoachPilot', '@id': `${BASE_URL}/#organization` },
+        author: {
+          '@type': 'Organization',
+          name: 'CoachPilot',
+          '@id': `${BASE_URL}/#organization`,
+        },
         publisher: { '@id': `${BASE_URL}/#organization` },
       })
       if (post.faqs.length > 0) {
@@ -97,7 +193,9 @@ function useBlogMeta(title: string, description: string, path: string, post?: Bl
       })
     }
     const schema = { '@context': 'https://schema.org', '@graph': graph }
-    let script = document.querySelector('#page-json-ld') as HTMLScriptElement | null
+    let script = document.querySelector(
+      '#page-json-ld',
+    ) as HTMLScriptElement | null
     if (!script) {
       script = document.createElement('script')
       script.id = 'page-json-ld'
@@ -109,68 +207,158 @@ function useBlogMeta(title: string, description: string, path: string, post?: Bl
   }, [title, description, path, post])
 }
 
-function BlogHeader() {
+function PostMeta({ post }: { post: BlogPost }) {
   return (
-    <header style={{ background: '#060a14', borderBottom: '1px solid rgba(20,184,166,0.14)' }}>
-      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-        <Link to="/" style={{ textDecoration: 'none' }}>
-          <img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot" style={{ height: 52, width: 'auto' }} />
-        </Link>
-        <Link to="/blog" style={{ color: 'rgba(255,255,255,0.74)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600 }}>
-          <ArrowLeft size={15} /> Blog
-        </Link>
-      </div>
-    </header>
+    <div className="cp-post-meta">
+      <span>
+        <CalendarDays size={13} />
+        <time dateTime={post.datePublished}>
+          {formatDate(post.datePublished)}
+        </time>
+      </span>
+      <span>
+        <Clock size={13} />
+        {post.readingMinutes} min de leitura
+      </span>
+    </div>
   )
 }
 
-function CtaBox() {
+export function BlogCard({ post }: { post: BlogPost }) {
+  const visual = blogPresentation(post.slug)
   return (
-    <div style={{ background: 'linear-gradient(160deg, #0f172a 0%, #060a14 100%)', borderRadius: 16, padding: '32px 28px', marginTop: 48 }}>
-      <p style={{ color: '#14b8a6', fontWeight: 800, fontSize: 13, textTransform: 'uppercase', marginBottom: 10 }}>CoachPilot</p>
-      <p style={{ color: '#fff', fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 700, marginBottom: 8 }}>
-        Gestão de alunos, treinos e evolução em um só lugar
-      </p>
-      <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 15, lineHeight: 1.7, marginBottom: 20 }}>
-        Grátis para até 3 alunos, sem cartão. Monte treinos conversando com a IA e migre sua planilha sem redigitar.
-      </p>
-      <Link to="/signup" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg, #14b8a6, #10b981)', color: '#fff', textDecoration: 'none', fontWeight: 800, padding: '13px 20px', borderRadius: 10 }}>
-        Começar grátis <ArrowRight size={17} />
-      </Link>
-    </div>
+    <Link className="cp-article-card" to={'/blog/' + post.slug}>
+      <img
+        src={visual.image}
+        alt={visual.alt}
+        width="1536"
+        height="1024"
+        loading="lazy"
+      />
+      <span className="cp-category">{visual.category}</span>
+      <h2>{post.h1}</h2>
+      <p>{post.description}</p>
+      <PostMeta post={post} />
+    </Link>
   )
 }
 
 export function BlogIndexPage() {
   useBlogMeta(BLOG_BASE.title, BLOG_BASE.description, BLOG_BASE.path)
-
+  const [category, setCategory] = useState('Todos')
+  const [search, setSearch] = useState('')
+  const featured = BLOG_POSTS[0]
+  const visual = blogPresentation(featured.slug)
+  const normalize = (value: string) =>
+    value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLocaleLowerCase('pt-BR')
+  const filtered = BLOG_POSTS.filter(
+    (post) =>
+      (category === 'Todos' ||
+        blogPresentation(post.slug).category === category) &&
+      normalize(post.h1 + ' ' + post.description).includes(normalize(search)),
+  )
   return (
-    <div style={{ minHeight: '100vh', background: '#fff', color: '#0f172a' }}>
-      <BlogHeader />
-      <main>
-        <section style={{ background: 'linear-gradient(160deg, #0f172a 0%, #0a0e1a 55%, #060a14 100%)', padding: '64px 24px 56px' }}>
-          <div style={{ maxWidth: 980, margin: '0 auto' }}>
-            <p style={{ color: '#14b8a6', fontWeight: 800, fontSize: 13, textTransform: 'uppercase', marginBottom: 16 }}>Conteúdo para personal trainers</p>
-            <h1 style={{ fontFamily: "'Sora', sans-serif", color: '#fff', fontSize: 'clamp(32px, 5vw, 52px)', lineHeight: 1.1, marginBottom: 16 }}>{BLOG_BASE.h1}</h1>
-            <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 18, lineHeight: 1.7, maxWidth: 720 }}>{BLOG_BASE.intro}</p>
+    <div className="cp-public">
+      <a className="cp-skip" href="#conteudo">
+        Ir para o conteúdo
+      </a>
+      <LandingNavbar />
+      <main id="conteudo">
+        <section className="cp-blog-hero">
+          <div className="cp-container">
+            <p className="cp-eyebrow">Blog CoachPilot</p>
+            <h1 className="cp-heading">
+              Conhecimento para
+              <br />o seu próximo nível.
+            </h1>
+            <p className="cp-subtitle">
+              Gestão, tecnologia e prática profissional. Conteúdo para quem quer
+              cuidar melhor dos alunos e fazer o próprio negócio evoluir.
+            </p>
           </div>
         </section>
-
-        <section style={{ padding: '56px 24px', background: '#f8fafc' }}>
-          <div style={{ maxWidth: 980, margin: '0 auto', display: 'grid', gap: 18 }}>
-            {BLOG_POSTS.map((post) => (
-              <Link key={post.slug} to={`/blog/${post.slug}`} style={{ textDecoration: 'none', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '26px 28px', display: 'block' }}>
-                <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, color: '#0f172a', marginBottom: 10, lineHeight: 1.3 }}>{post.h1}</h2>
-                <p style={{ color: '#475569', fontSize: 15, lineHeight: 1.7, marginBottom: 14 }}>{post.description}</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 18, color: '#64748b', fontSize: 13 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><CalendarDays size={14} /> {formatDate(post.datePublished)}</span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Clock size={14} /> {post.readingMinutes} min de leitura</span>
-                  <span style={{ color: '#0f766e', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>Ler artigo <ArrowRight size={14} /></span>
-                </div>
-              </Link>
-            ))}
+        <section className="cp-container" aria-label="Artigos do blog">
+          <Link className="cp-blog-featured" to={'/blog/' + featured.slug}>
+            <img
+              src={visual.image}
+              alt={visual.alt}
+              width="1536"
+              height="1024"
+              fetchPriority="high"
+            />
+            <div className="cp-blog-featured-copy">
+              <span className="cp-eyebrow" style={{ marginBottom: 10 }}>
+                Leitura em destaque
+              </span>
+              <span className="cp-category">{visual.category}</span>
+              <h2>{featured.h1}</h2>
+              <p>{featured.description}</p>
+              <PostMeta post={featured} />
+              <span className="cp-text-link" style={{ marginTop: 25 }}>
+                Ler artigo completo <ArrowRight size={15} />
+              </span>
+            </div>
+          </Link>
+          <div className="cp-blog-toolbar">
+            <div className="cp-blog-filters" aria-label="Filtrar por assunto">
+              {BLOG_CATEGORIES.map((item) => (
+                <button
+                  key={item}
+                  aria-pressed={category === item}
+                  onClick={() => setCategory(item)}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+            <label className="cp-blog-search">
+              <Search size={16} />
+              <input
+                type="search"
+                placeholder="Buscar um assunto..."
+                aria-label="Buscar artigos"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </label>
           </div>
+          <p
+            className="cp-fine-print"
+            role="status"
+            style={{ margin: '0 0 24px' }}
+          >
+            {filtered.length}{' '}
+            {filtered.length === 1
+              ? 'artigo encontrado'
+              : 'artigos encontrados'}
+          </p>
+          {filtered.length ? (
+            <div className="cp-blog-grid">
+              {filtered.map((post) => (
+                <BlogCard key={post.slug} post={post} />
+              ))}
+            </div>
+          ) : (
+            <div className="cp-blog-empty">
+              <h2>Nenhum artigo encontrado.</h2>
+              <p>Tente outro termo ou explore todos os assuntos.</p>
+              <button
+                className="cp-button cp-button-light"
+                style={{ marginTop: 20 }}
+                onClick={() => {
+                  setCategory('Todos')
+                  setSearch('')
+                }}
+              >
+                Ver todos os artigos
+              </button>
+            </div>
+          )}
         </section>
+        <CtaSection />
       </main>
       <LandingFooter />
     </div>
@@ -180,67 +368,198 @@ export function BlogIndexPage() {
 export function BlogPostPage() {
   const { slug } = useParams()
   const post = BLOG_POSTS.find((p) => p.slug === slug)
-  useBlogMeta(post?.title ?? BLOG_BASE.title, post?.description ?? BLOG_BASE.description, post ? `/blog/${post.slug}` : BLOG_BASE.path, post)
+  const progress = useRef<HTMLDivElement>(null)
+  const article = useRef<HTMLElement>(null)
+  useBlogMeta(
+    post?.title ?? BLOG_BASE.title,
+    post?.description ?? BLOG_BASE.description,
+    post ? '/blog/' + post.slug : BLOG_BASE.path,
+    post,
+  )
+  useEffect(() => {
+    const update = () => {
+      if (!progress.current || !article.current) return
+      const start = article.current.offsetTop
+      const length = article.current.offsetHeight - window.innerHeight
+      const value = Math.max(
+        0,
+        Math.min(1, (window.scrollY - start) / Math.max(1, length)),
+      )
+      progress.current.style.transform = 'scaleX(' + value + ')'
+    }
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+    }
+  }, [slug])
   if (!post) return <Navigate to="/blog" replace />
-
+  const visual = blogPresentation(post.slug)
+  const related = BLOG_POSTS.filter(
+    (item) =>
+      item.slug !== post.slug &&
+      blogPresentation(item.slug).category === visual.category,
+  ).slice(0, 3)
   return (
-    <div style={{ minHeight: '100vh', background: '#fff', color: '#0f172a' }}>
-      <BlogHeader />
-      <main>
-        <section style={{ background: 'linear-gradient(160deg, #0f172a 0%, #0a0e1a 55%, #060a14 100%)', padding: '64px 24px 56px' }}>
-          <div style={{ maxWidth: 860, margin: '0 auto' }}>
-            <p style={{ color: '#14b8a6', fontWeight: 800, fontSize: 13, textTransform: 'uppercase', marginBottom: 16 }}>Blog CoachPilot</p>
-            <h1 style={{ fontFamily: "'Sora', sans-serif", color: '#fff', fontSize: 'clamp(30px, 4.5vw, 46px)', lineHeight: 1.15, marginBottom: 18 }}>{post.h1}</h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 18, color: 'rgba(255,255,255,0.6)', fontSize: 14 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><CalendarDays size={15} /> {formatDate(post.datePublished)}</span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Clock size={15} /> {post.readingMinutes} min de leitura</span>
+    <div className="cp-public">
+      <a className="cp-skip" href="#conteudo">
+        Ir para o conteúdo
+      </a>
+      <LandingNavbar />
+      <div
+        className="cp-reading-progress"
+        ref={progress}
+        style={{ transform: 'scaleX(0)' }}
+        aria-hidden="true"
+      />
+      <main id="conteudo">
+        <section className="cp-blog-hero">
+          <div className="cp-container">
+            <nav className="cp-breadcrumb" aria-label="Você está aqui">
+              <Link to="/">CoachPilot</Link>
+              <ChevronRight size={12} />
+              <Link to="/blog">Blog</Link>
+              <ChevronRight size={12} />
+              <span>{visual.category}</span>
+            </nav>
+            <span className="cp-category">{visual.category}</span>
+            <h1 className="cp-article-title">{post.h1}</h1>
+            <p className="cp-article-standfirst">{post.description}</p>
+            <PostMeta post={post} />
+            <div className="cp-author">
+              <span className="cp-author-mark">
+                <BookOpen size={17} />
+              </span>
+              <div>
+                <strong>Equipe CoachPilot</strong>
+                <small>
+                  Atualizado em{' '}
+                  <time dateTime={post.dateModified}>
+                    {formatDate(post.dateModified)}
+                  </time>
+                </small>
+              </div>
             </div>
           </div>
         </section>
-
-        <article style={{ padding: '56px 24px', background: '#fff' }}>
-          <div style={{ maxWidth: 780, margin: '0 auto' }}>
-            <p style={{ color: '#334155', fontSize: 18, lineHeight: 1.8, marginBottom: 36, fontWeight: 500 }}>{post.intro}</p>
-
-            {post.sections.map((section) => (
-              <section key={section.h2} style={{ marginBottom: 36 }}>
-                <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, marginBottom: 14, lineHeight: 1.3 }}>{section.h2}</h2>
-                {section.paragraphs.map((paragraph, i) => (
-                  <p key={i} style={{ color: '#475569', fontSize: 16, lineHeight: 1.8, marginBottom: 14 }}>{renderInline(paragraph)}</p>
-                ))}
-                {section.list && <ProseList items={section.list} />}
-                {section.table && <ProseTable table={section.table} />}
-              </section>
-            ))}
-
-            {post.faqs.length > 0 && (
-              <section style={{ marginTop: 44 }}>
-                <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, marginBottom: 18 }}>Perguntas frequentes</h2>
-                <div style={{ display: 'grid', gap: 14 }}>
-                  {post.faqs.map((faq) => (
-                    <div key={faq.q} style={{ background: '#f0fdfa', border: '1px solid rgba(20,184,166,0.18)', borderRadius: 12, padding: 22 }}>
-                      <h3 style={{ fontSize: 17, marginBottom: 8 }}>{faq.q}</h3>
-                      <p style={{ color: '#475569', lineHeight: 1.7 }}>{faq.a}</p>
-                    </div>
+        <div className="cp-container">
+          <div className="cp-article-layout">
+            <article className="cp-article-body" ref={article}>
+              <img
+                className="cp-article-cover"
+                src={visual.image}
+                alt={visual.alt}
+                width="1536"
+                height="1024"
+                fetchPriority="high"
+              />
+              <p>{post.intro}</p>
+              <details className="cp-mobile-toc">
+                <summary>Neste artigo</summary>
+                <nav
+                  className="cp-toc"
+                  aria-label="Índice do artigo no celular"
+                >
+                  {post.sections.map((section, i) => (
+                    <a href={'#secao-' + i} key={section.h2}>
+                      {section.h2}
+                    </a>
+                  ))}
+                </nav>
+              </details>
+              {post.sections.map((section, i) => (
+                <section
+                  className="cp-article-section"
+                  key={section.h2}
+                  id={'secao-' + i}
+                >
+                  <h2>{section.h2}</h2>
+                  {section.paragraphs.map((paragraph, index) => (
+                    <p key={index}>{renderInline(paragraph)}</p>
+                  ))}
+                  {section.list && <ProseList items={section.list} />}
+                  {section.table && <ProseTable table={section.table} />}
+                </section>
+              ))}
+              {post.faqs.length > 0 && (
+                <section id="perguntas" className="cp-article-section">
+                  <h2>Perguntas frequentes</h2>
+                  <div className="cp-faq-list">
+                    {post.faqs.map((faq) => (
+                      <details key={faq.q}>
+                        <summary>{faq.q}</summary>
+                        <p>{faq.a}</p>
+                      </details>
+                    ))}
+                  </div>
+                </section>
+              )}
+              <section
+                className="cp-article-section"
+                style={{ borderTop: '1px solid #dfe6e1', paddingTop: 26 }}
+              >
+                <h2>Continue explorando</h2>
+                <div className="cp-related-links">
+                  {post.related.map((rel) => (
+                    <Link key={rel.to} to={rel.to}>
+                      {rel.label} ↗
+                    </Link>
                   ))}
                 </div>
               </section>
-            )}
-
-            <section style={{ marginTop: 44 }}>
-              <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, marginBottom: 16 }}>Leia também</h2>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                {post.related.map((rel) => (
-                  <Link key={rel.to} to={rel.to} style={{ color: '#0f766e', textDecoration: 'none', fontWeight: 700, background: '#f0fdfa', border: '1px solid rgba(20,184,166,0.22)', borderRadius: 999, padding: '10px 14px' }}>
-                    {rel.label}
-                  </Link>
+            </article>
+            <aside className="cp-article-aside">
+              <h2>Neste artigo</h2>
+              <nav className="cp-toc" aria-label="Índice do artigo">
+                {post.sections.map((section, i) => (
+                  <a href={'#secao-' + i} key={section.h2}>
+                    {section.h2}
+                  </a>
+                ))}
+                {post.faqs.length > 0 && (
+                  <a href="#perguntas">Perguntas frequentes</a>
+                )}
+              </nav>
+              <div className="cp-aside-cta">
+                <h3>
+                  Leve essas ideias
+                  <br />
+                  para a sua rotina.
+                </h3>
+                <p>
+                  Organize alunos, treinos e evolução. Comece grátis para até 3
+                  alunos, sem cartão.
+                </p>
+                <Link className="cp-button" to="/signup">
+                  Conhecer o CoachPilot <ArrowRight size={14} />
+                </Link>
+              </div>
+            </aside>
+          </div>
+        </div>
+        {related.length > 0 && (
+          <section className="cp-section cp-soft">
+            <div className="cp-container">
+              <div className="cp-section-head">
+                <div>
+                  <p className="cp-eyebrow">Mais sobre o assunto</p>
+                  <h2 className="cp-heading">Sua próxima leitura.</h2>
+                </div>
+                <Link className="cp-text-link" to="/blog">
+                  Todos os artigos <ArrowRight size={15} />
+                </Link>
+              </div>
+              <div className="cp-blog-grid" style={{ paddingBottom: 0 }}>
+                {related.map((item) => (
+                  <BlogCard key={item.slug} post={item} />
                 ))}
               </div>
-            </section>
-
-            <CtaBox />
-          </div>
-        </article>
+            </div>
+          </section>
+        )}
+        <CtaSection />
       </main>
       <LandingFooter />
     </div>
