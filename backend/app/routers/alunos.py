@@ -11,7 +11,8 @@ from app.models.aluno import Aluno, AlunoCreate, AlunoUpdate, ImportarAlunosBody
 from app.models.enums import AlunoStatus
 from app.repositories import dynamo_repo as repo
 from app.repositories import keys
-from app.services import assinatura_service, authz, media_service, pendencia_service
+from app.services import (aluno_exclusao_service, assinatura_service, authz, media_service,
+                          pendencia_service)
 from app.services.wapi_service import WAPIClient
 from app.utils import new_id, now_iso
 
@@ -353,27 +354,4 @@ def enviar_link(aluno_id: str, personal_id: str = Depends(get_current_personal_i
 @router.delete("/{aluno_id}", status_code=204)
 def delete_aluno(aluno_id: str, personal_id: str = Depends(get_current_personal_id)):
     authz.authorize_aluno(personal_id, aluno_id)
-    current = repo.get_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
-    if current and current.get("telefone"):
-        repo.delete_item(keys.pk_phone(personal_id, current["telefone"]), "PHONE")
-    repo.delete_item(keys.pk_personal(personal_id), keys.sk_aluno_pointer(aluno_id))
-    repo.delete_item(keys.pk_aluno(aluno_id), keys.SK_PROFILE)
-    authz.invalidate(personal_id, aluno_id)
-    assinatura_service.invalidate_alunos_bloqueados(personal_id)
-    decremento = {"total": -1}
-    if current and current.get("status") == AlunoStatus.ATIVO:
-        decremento["ativos"] = -1
-    repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_ALUNOS, add=decremento)
-    if current:
-        for obj in _coerce_objetivos(current):
-            repo.add_and_set(keys.pk_personal(personal_id), keys.SK_STATS_OBJETIVOS,
-                             add={keys.normalize_objetivo(obj): -1})
-    # Limpa entradas DUE# para evitar notificações fantasma após deleção do aluno.
-    # Dados completos (treinos/sessões/registros) permanecem em AL# — limpeza em lote futura.
-    treinos = repo.query_pk(keys.pk_aluno(aluno_id), sk_prefix=keys.SK_TREINO_PREFIX)
-    due_deletes = [
-        (keys.pk_sched(t["data_fim"]), keys.sk_due(t["treino_id"]))
-        for t in treinos if t.get("data_fim") and t.get("treino_id")
-    ]
-    if due_deletes:
-        repo.batch_write(deletes=due_deletes)
+    aluno_exclusao_service.excluir(personal_id, aluno_id)

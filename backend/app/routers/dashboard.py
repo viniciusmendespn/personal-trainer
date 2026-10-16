@@ -100,7 +100,9 @@ def dashboard(personal_id: str = Depends(get_current_personal_id)):
 
     atividade_recente = []
     for a in atividade_raw:
-        perfil = perfis.get(a["aluno_id"]) or {}
+        perfil = perfis.get(a["aluno_id"])
+        if not perfil:
+            continue   # aluno excluído: o ponteiro órfão viraria "?" preso em andamento
         foto_s3_key = perfil.get("foto_s3_key")
         status_ef = _status_efetivo(a)
         em_andamento = status_ef == SessaoStatus.EM_ANDAMENTO.value
