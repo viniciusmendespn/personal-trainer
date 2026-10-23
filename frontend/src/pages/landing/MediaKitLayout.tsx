@@ -2,9 +2,8 @@ import { useRef, useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ArrowDown, ArrowRight, ArrowUpRight, Building2, CalendarDays, Check,
-  ChevronDown, Dumbbell, GraduationCap, Instagram, Layers3, MessageCircle,
-  Monitor, Play, Plug, Share2, Smartphone, Sparkles, Users,
+  ArrowDown, ArrowUpRight, Building2, Check, Dumbbell, GraduationCap,
+  Instagram, Layers3, MessageCircle, Monitor, Play, Share2, Smartphone, Users,
 } from 'lucide-react'
 import LandingNavbar from './LandingNavbar'
 import LandingFooter from './LandingFooter'
@@ -42,7 +41,7 @@ function Checklist({ items }: { items: string[] }) {
 }
 
 const shotLabels = ['Prescrição de treino', 'Portal do personal', 'Evolução', 'Ranking', 'App do aluno']
-const featureIcons = [Users, Dumbbell, Smartphone, Sparkles, Plug, CalendarDays]
+const featureIcons = [Users, Dumbbell, Smartphone]
 const formatIcons = [Share2, Play, Building2, GraduationCap]
 
 function ProductGallery() {
@@ -101,19 +100,14 @@ export default function MediaKitLayout({ track }: { track: Track }) {
             <div className="mk-hero-copy">
               <p className="cp-eyebrow">{k.hero.eyebrow}</p>
               <h1>Boas conexões.<br />Novas <em>possibilidades.</em></h1>
-              <p className="mk-hero-lead">Tecnologia e inteligência artificial para quem transforma vidas pelo treino.</p>
-              <p className="mk-hero-description">Somos o CoachPilot: a plataforma brasileira de gestão para personal trainers. Conectamos fitness, tecnologia e marcas que querem crescer com esse mercado.</p>
+              <p className="mk-hero-description">{k.hero.subheadline}</p>
               <div className="cp-actions">
                 <KitLink {...k.hero.ctaSecundario} track={track} />
                 <a className="mk-hero-explore" href="#plataforma">Explore o mídia kit <ArrowDown size={16} aria-hidden="true" /></a>
               </div>
-              <div className="mk-hero-tags"><span>Para marcas</span><span>Para creators</span><span>Para educadores</span></div>
             </div>
             <div className="mk-hero-art">
               <img className="mk-hero-image" src="/images/coachpilot-editorial-v2.webp" alt="Tecnologia e planejamento na rotina de uma academia, com notebook e equipamentos de treino" width="1536" height="1024" fetchPriority="high" />
-              <div className="mk-image-caption"><span className="mk-live-dot" /> O próximo passo do personal começa aqui.</div>
-              <div className="mk-art-card"><span className="mk-art-icon"><Sparkles size={21} aria-hidden="true" /></span><div><small>GESTÃO + INTELIGÊNCIA ARTIFICIAL</small><strong>Mais potencial.<br />Mais perto das pessoas.</strong></div><ArrowUpRight size={25} aria-hidden="true" /></div>
-              <span className="mk-art-index" aria-hidden="true">CP / CONEXÕES QUE MOVEM</span>
             </div>
           </div>
           <nav className="mk-section-nav" aria-label="Explore o mídia kit">
@@ -146,10 +140,9 @@ export default function MediaKitLayout({ track }: { track: Track }) {
 
       <section id="publico" className="cp-section cp-soft">
         <div className="cp-container mk-audience-grid">
-          <div className="mk-audience-photo"><img src="/images/coachpilot-coaching-v2.webp" alt="Personal trainer orientando uma aluna durante o planejamento de treino" width="1536" height="1024" loading="lazy" /><div><span>A NOSSA CONEXÃO É COM GENTE.</span><strong>Quem treina pessoas.<br />Quem move o mercado.</strong></div></div>
+          <div className="mk-audience-photo"><img src="/images/coachpilot-coaching-v2.webp" alt="Personal trainer orientando uma aluna durante o planejamento de treino" width="1536" height="1024" loading="lazy" /></div>
           <div><SectionIntro eyebrow="Uma audiência com propósito" title={k.publico.titulo}>{k.publico.intro}</SectionIntro>
             <div className="mk-audience-tags">{k.publico.itens.map((item) => <span key={item}>{item}</span>)}</div>
-            <p className="mk-audience-note"><Users size={22} aria-hidden="true" /><span>{k.publico.nota}</span></p>
           </div>
         </div>
       </section>
@@ -157,37 +150,24 @@ export default function MediaKitLayout({ track }: { track: Track }) {
       <section className="cp-section cp-dark mk-ai-section">
         <div className="cp-container">
           <div className="mk-ai-grid"><div>
-            <SectionIntro eyebrow="Inteligência que conecta" title="A IA que o personal já usa. Os dados que fazem a diferença.">Alunos, avaliações e treinos conectados ao assistente do profissional. Mais contexto para a IA, mais autonomia para quem prescreve.</SectionIntro>
-            <a href="/integracoes/chatgpt" className="mk-light-link">Conheça a conexão com IA <ArrowUpRight size={16} aria-hidden="true" /></a>
+            <SectionIntro eyebrow={k.conexaoIa.eyebrow} title={k.conexaoIa.titulo}>{k.conexaoIa.intro}</SectionIntro>
+            <a href="/integracoes/chatgpt" className="mk-light-link">Detalhes da integração <ArrowUpRight size={16} aria-hidden="true" /></a>
           </div><div className="mk-connection" aria-label="CoachPilot conecta os dados do personal a assistentes de inteligência artificial via MCP">
             <div className="mk-connection-source"><Layers3 size={26} aria-hidden="true" /><strong>CoachPilot</strong><span>Alunos · Treinos · Evolução</span></div>
             <div className="mk-connection-line"><span>MCP · CONEXÃO ABERTA</span></div>
             <div className="mk-assistants"><span>ChatGPT<small>App no diretório</small></span><span>Claude<small>Conector MCP</small></span><span>Gemini<small>CLI / Vertex AI</small></span></div>
           </div></div>
-          <details className="mk-ai-details"><summary>Como funciona a conexão com IA <ChevronDown size={18} aria-hidden="true" /></summary><div>
-            <h3>{k.conexaoIa.titulo}</h3><p>{k.conexaoIa.intro}</p><span className="mk-endpoint"><Plug size={14} aria-hidden="true" />{k.conexaoIa.endpoint}</span>
-            <div className="mk-ai-details-grid">{k.conexaoIa.grupos.map((group) => <article key={group.titulo}><h4>{group.titulo}</h4><p>{group.desc}</p><Checklist items={group.itens} /></article>)}</div>
-            <p className="mk-note">{k.conexaoIa.nota}</p>
-          </div></details>
-        </div>
-      </section>
-
-      <section className="cp-section">
-        <div className="cp-container"><SectionIntro eyebrow="O que nos move" title="Um produto pensado para a rotina real." />
-          <div className="mk-differences">{k.diferenciais.map((item, index) => <article key={item.titulo}><span>0{index + 1}</span><div><h3>{item.titulo}</h3><p>{item.desc}</p></div></article>)}</div>
         </div>
       </section>
 
       <section id="parcerias" className="cp-section cp-soft">
         <div className="cp-container">
-          <div className="mk-split-intro"><SectionIntro eyebrow="Crescer é um trabalho em conjunto" title={k.parceria.titulo} /><p className="cp-subtitle">{k.parceria.paragrafo}</p></div>
-          <div className="mk-partner-benefits"><Checklist items={k.parceria.beneficios} /></div>
-          <div className="mk-formats-heading"><p className="cp-eyebrow">Encontre a sua conexão</p><h3>Uma parceria. Diferentes possibilidades.</h3><p>Do primeiro conteúdo a uma relação de longo prazo, construímos o formato que faz sentido para a sua audiência.</p></div>
+          <SectionIntro eyebrow="Parcerias" title={k.parceria.titulo}>{k.parceria.paragrafo}</SectionIntro>
           <div className="mk-formats">{k.formatos.map((format, index) => {
             const Icon = formatIcons[index]
             return <article key={format.titulo} className={`mk-format${format.destaque ? ' mk-format-featured cp-dark' : ''}`}>
               <div className="mk-format-top"><Icon size={24} strokeWidth={1.5} aria-hidden="true" /><span>{format.destaque ? 'FORMATO PRINCIPAL' : `0${index + 1}`}</span></div>
-              <h3>{format.titulo}</h3><p>{format.desc}</p><Checklist items={format.itens} />
+              <h3>{format.titulo}</h3><p>{format.desc}</p>{format.itens.length > 0 && <Checklist items={format.itens} />}
               {format.cta && <KitLink {...format.cta} track={track} />}
             </article>
           })}</div>
@@ -195,24 +175,14 @@ export default function MediaKitLayout({ track }: { track: Track }) {
         </div>
       </section>
 
-      <section className="cp-section mk-synergy"><div className="cp-container">
-        <SectionIntro eyebrow="Valor para todos os lados" title={k.sinergia.titulo}>{k.sinergia.paragrafo}</SectionIntro>
-        <div className="mk-synergy-grid">{k.sinergia.colunas.map((column, index) => <article key={column.titulo}><span className="mk-synergy-number">0{index + 1}</span><h3>{column.titulo}</h3><p>{column.desc}</p><ArrowRight size={22} aria-hidden="true" /></article>)}</div>
-      </div></section>
-
-      <section className="cp-section cp-soft"><div className="cp-container mk-faq-grid">
-        <div><SectionIntro eyebrow="Antes da primeira conversa" title="Talvez você esteja se perguntando…" /><p className="cp-subtitle">Da afinidade de público ao formato da parceria, vamos esclarecer cada detalhe.</p><KitLink {...k.contato.whatsapp} className="cp-text-link mk-faq-contact" track={track} icon={<MessageCircle size={17} aria-hidden="true" />} /></div>
+      <section className="cp-section"><div className="cp-container mk-faq-grid">
+        <SectionIntro eyebrow="Dúvidas práticas" title="Antes de começar" />
         <div className="cp-faq-list">{k.faqs.map((faq) => <details key={faq.q}><summary>{faq.q}</summary><p>{faq.a}</p></details>)}</div>
       </div></section>
 
-      <section className="cp-section mk-channels"><div className="cp-container">
-        <div className="mk-split-intro"><SectionIntro eyebrow="Canais oficiais" title="Conheça. Explore. Conecte-se." /><p className="cp-subtitle">Todos os caminhos para conhecer o ecossistema CoachPilot e acompanhar o que estamos construindo.</p></div>
-        <div className="mk-channels-grid">{k.links.map((link) => <KitLink key={link.label} {...link} label={<span>{link.label}<strong>{link.valor}</strong></span>} className="mk-channel" track={track} />)}</div>
-      </div></section>
-
       <section id="contato" className="cp-dark mk-contact"><div className="cp-container mk-contact-grid">
-        <div><p className="cp-eyebrow">A próxima conexão pode ser a nossa</p><h2>Vamos criar<br /><em>algo juntos?</em></h2><p>{k.contato.paragrafo}</p><div className="cp-actions"><KitLink {...k.contato.whatsapp} track={track} icon={<MessageCircle size={18} aria-hidden="true" />} /><KitLink {...k.contato.instagram} className="mk-light-link" track={track} icon={<Instagram size={18} aria-hidden="true" />} /></div></div>
-        <div className="mk-contact-symbol" aria-hidden="true"><span>c<span>p</span><i>↗</i></span><small>CONEXÕES QUE MOVEM O FITNESS.</small></div>
+        <div><h2>Vamos criar<br /><em>algo juntos?</em></h2><p>{k.contato.paragrafo}</p><div className="cp-actions"><KitLink {...k.contato.whatsapp} track={track} icon={<MessageCircle size={18} aria-hidden="true" />} /><KitLink {...k.contato.instagram} className="mk-light-link" track={track} icon={<Instagram size={18} aria-hidden="true" />} /></div></div>
+        <div className="mk-contact-brand"><img src="/novo-logo-slogan-semfundo.png" alt="CoachPilot — Gestão completa para personal trainers" width="1703" height="631" loading="lazy" /></div>
       </div></section>
     </main>
     <LandingFooter />

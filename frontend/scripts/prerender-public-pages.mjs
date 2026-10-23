@@ -228,49 +228,21 @@ function renderMediaKitContent() {
   const publico = k.publico.itens
     .map((p) => `<li>${escapeHtml(p)}</li>`)
     .join('')
-  const diferenciais = k.diferenciais
-    .map(
-      (d) =>
-        `<li><strong>${escapeHtml(d.titulo)}</strong> — ${escapeHtml(d.desc)}</li>`,
-    )
-    .join('')
-  const beneficios = k.parceria.beneficios
-    .map((b) => `<li>${escapeHtml(b)}</li>`)
-    .join('')
-  const conexao = k.conexaoIa.grupos
-    .map(
-      (g) =>
-        `<h3>${escapeHtml(g.titulo)}</h3><p>${escapeHtml(g.desc)}</p>` +
-        `<ul>${g.itens.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`,
-    )
-    .join('')
   const formatos = k.formatos
     .map(
       (f) =>
         `<section><h3>${escapeHtml(f.titulo)}</h3><p>${escapeHtml(f.desc)}</p>` +
-        `<ul>${f.itens.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>` +
+        (f.itens.length ? `<ul>${f.itens.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>` : '') +
         (f.cta
           ? `<p><a href="${f.cta.href}">${escapeHtml(f.cta.label)}</a></p>`
           : '') +
         '</section>',
     )
     .join('')
-  const sinergia = k.sinergia.colunas
-    .map(
-      (c) =>
-        `<li><strong>${escapeHtml(c.titulo)}</strong> — ${escapeHtml(c.desc)}</li>`,
-    )
-    .join('')
   const imagens = k.provaVisual.imagens
     .map(
       (img) =>
         `<figure><img src="${img.src}" alt="${escapeHtml(img.alt)}" loading="lazy" style="max-width:100%;height:auto" /><figcaption>${escapeHtml(img.legenda)}</figcaption></figure>`,
-    )
-    .join('')
-  const links = k.links
-    .map(
-      (l) =>
-        `<li>${escapeHtml(l.label)}: <a href="${l.href}">${escapeHtml(l.valor)}</a></li>`,
     )
     .join('')
   const faqs = k.faqs
@@ -285,15 +257,11 @@ function renderMediaKitContent() {
     <section><h2>Números</h2><ul>${metricas}</ul><p>${escapeHtml(k.metricasNota)}</p></section>
     <section><h2>${escapeHtml(k.resumo.titulo)}</h2><p>${escapeHtml(k.resumo.paragrafo)}</p><ul>${cards}</ul></section>
     <section><h2>${escapeHtml(k.provaVisual.titulo)}</h2><p>${escapeHtml(k.provaVisual.intro)}</p>${imagens}</section>
-    <section><h2>${escapeHtml(k.publico.titulo)}</h2><p>${escapeHtml(k.publico.intro)}</p><ul>${publico}</ul><p>${escapeHtml(k.publico.nota)}</p></section>
-    <section><h2>Diferenciais</h2><ul>${diferenciais}</ul></section>
+    <section><h2>${escapeHtml(k.publico.titulo)}</h2><p>${escapeHtml(k.publico.intro)}</p><ul>${publico}</ul></section>
     <section><h2>${escapeHtml(k.conexaoIa.titulo)}</h2><p>${escapeHtml(k.conexaoIa.intro)}</p>
-      <p>Servidor MCP: <strong>${escapeHtml(k.conexaoIa.endpoint)}</strong></p>
-      ${conexao}<p>${escapeHtml(k.conexaoIa.nota)}</p></section>
-    <section><h2>${escapeHtml(k.parceria.titulo)}</h2><p>${escapeHtml(k.parceria.paragrafo)}</p><ul>${beneficios}</ul></section>
-    <section><h2>Formatos de parceria</h2>${formatos}<p>${escapeHtml(k.formatosNota)}</p></section>
-    <section><h2>${escapeHtml(k.sinergia.titulo)}</h2><p>${escapeHtml(k.sinergia.paragrafo)}</p><ul>${sinergia}</ul></section>
-    <section><h2>Canais oficiais</h2><ul>${links}</ul></section>
+      <p>ChatGPT: app no diretório. Claude: conector MCP. Gemini: CLI / Vertex AI.</p>
+      <p><a href="/integracoes/chatgpt">Detalhes da integração</a></p></section>
+    <section><h2>${escapeHtml(k.parceria.titulo)}</h2><p>${escapeHtml(k.parceria.paragrafo)}</p>${formatos}<p>${escapeHtml(k.formatosNota)}</p></section>
     <section><h2>Perguntas frequentes</h2>${faqs}</section>
     <section><h2>${escapeHtml(k.contato.titulo)}</h2><p>${escapeHtml(k.contato.paragrafo)}</p>
       <p><a href="${k.contato.whatsapp.href}">${escapeHtml(k.contato.whatsapp.label)}</a>
