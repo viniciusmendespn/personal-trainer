@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Shield, LogIn, Search, Gift, Megaphone, Check, Trash2, BarChart3, MessageSquareText, Archive, Users, UserPlus, CalendarDays } from 'lucide-react'
+import { Shield, LogIn, Search, Gift, Megaphone, Check, Trash2, BarChart3, MessageSquareText, Archive, Users, UserPlus, CalendarDays, ChevronLeft, ChevronRight, ChevronDown, Eye, Link2, Copy, MousePointerClick } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { adminApi, type DivulgadorAdmin, type FeedbackAdmin, type Personal } from '../api/admin'
+import { adminApi, adminCampanhasApi, type CampanhasMes, type DivulgadorAdmin, type FeedbackAdmin, type Personal } from '../api/admin'
 import { AdminDivulgadorDetail } from './admin/AdminDivulgadorDetail'
 import { normalizeText } from '../utils/normalizeText'
 import { useAuth } from '../auth/AuthProvider'
 import { Tabs, Modal, Button, useToast, useConfirm } from '../components/ui'
 import { DivStatCard, mesLabel } from '../divulgador/historico'
 
-type Tab = 'personais' | 'indicacoes' | 'divulgadores' | 'feedbacks'
+type Tab = 'personais' | 'campanhas' | 'indicacoes' | 'divulgadores' | 'feedbacks'
 
 export function AdminPage() {
   const [tab, setTab] = useState<Tab>('personais')
@@ -25,6 +25,7 @@ export function AdminPage() {
         className="mb-4"
         tabs={[
           { key: 'personais', label: 'Personais' },
+          { key: 'campanhas', label: 'Campanhas' },
           { key: 'indicacoes', label: 'Campanha de Indicação' },
           { key: 'divulgadores', label: 'Divulgadores' },
           { key: 'feedbacks', label: 'Feedbacks' },
@@ -34,6 +35,7 @@ export function AdminPage() {
       />
 
       {tab === 'personais' && <PersonaisTab />}
+      {tab === 'campanhas' && <CampanhasTab />}
       {tab === 'indicacoes' && <IndicacoesTab />}
       {tab === 'divulgadores' && <DivulgadoresTab />}
       {tab === 'feedbacks' && <FeedbacksTab />}
@@ -123,7 +125,7 @@ function useLargura<T extends HTMLElement>() {
   return [ref, largura] as const
 }
 
-function BarrasCadastros({ baldes }: { baldes: Balde[] }) {
+function BarrasCadastros({ baldes, unidade = 'cadastro' }: { baldes: Balde[]; unidade?: string }) {
   const [ref, largura] = useLargura<HTMLDivElement>()
   const [ativoKey, setAtivoKey] = useState<string | null>(null)
 
@@ -155,7 +157,7 @@ function BarrasCadastros({ baldes }: { baldes: Balde[] }) {
           <>
             <span className="font-semibold text-text">{ativo.titulo}</span>
             <span className="text-text-secondary">
-              {' · '}{ativo.valor} cadastro{ativo.valor === 1 ? '' : 's'}
+              {' · '}{ativo.valor} {unidade}{ativo.valor === 1 ? '' : 's'}
             </span>
           </>
         ) : (
@@ -178,7 +180,7 @@ function BarrasCadastros({ baldes }: { baldes: Balde[] }) {
               type="button"
               onPointerEnter={() => setAtivoKey(b.key)}
               onClick={() => setAtivoKey((k) => (k === b.key ? null : b.key))}
-              aria-label={`${b.titulo}: ${b.valor} cadastro${b.valor === 1 ? '' : 's'}`}
+              aria-label={`${b.titulo}: ${b.valor} ${unidade}${b.valor === 1 ? '' : 's'}`}
               className="relative flex-1 min-w-0 h-full flex flex-col items-center justify-end gap-1"
             >
               <span className="text-[9px] leading-none text-text-secondary font-medium">
@@ -508,6 +510,269 @@ function FeedbacksTab() {
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+// ── Campanhas: visitas do site por origem e por página ────────────────────────
+// Uma Query no backend (partição CAMPANHA#{mês}); tudo daqui é derivado da mesma resposta.
+
+/** Nomes legíveis das origens deduzidas em `utils/campanha.ts`. As marcadas à mão
+ * (`?campanha-xyz`) e os referrers sem apelido aparecem como vieram. */
+const ROTULO_ORIGEM: Record<string, string> = {
+  direto: 'Acesso direto (sem origem)',
+  'google-busca': 'Google (busca orgânica)',
+  'google-ads': 'Google Ads (gclid)',
+  meta: 'Anúncio Meta (fbclid)',
+  'chatgpt-com': 'ChatGPT',
+  loja: 'Loja (loja.coachpilot)',
+  'painel-divulgador': 'Painel do divulgador',
+  'app-aluno': 'App do aluno',
+}
+
+function rotuloOrigem(origem: string): string {
+  if (ROTULO_ORIGEM[origem]) return ROTULO_ORIGEM[origem]
+  if (origem.startsWith('cupom-')) return `Link de divulgador · ${origem.slice(6).toUpperCase()}`
+  return origem
+}
+
+function mesSeguinte(ym: string): string {
+  const [y, m] = ym.split('-').map(Number)
+  return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`
+}
+
+/** Um balde por dia do mês, até `hoje` quando é o mês corrente (dia futuro não é zero, é vazio). */
+function baldesDoMes(mes: string, hoje: string, porDia: Record<string, number>): Balde[] {
+  const [y, m] = mes.split('-').map(Number)
+  const ultimo = new Date(y, m, 0).getDate()
+  const ate = hoje.startsWith(mes) ? Number(hoje.slice(8, 10)) : ultimo
+  return Array.from({ length: ate }, (_, i) => {
+    const dia = i + 1
+    const key = `${mes}-${String(dia).padStart(2, '0')}`
+    return {
+      key,
+      curto: String(dia),
+      longo: `${dia}/${MESES_CURTOS[m - 1]}`,
+      titulo: key === hoje
+        ? 'hoje'
+        : new Date(y, m - 1, dia).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }),
+      valor: porDia[key] ?? 0,
+    }
+  })
+}
+
+function somarDias(itens: { por_dia: Record<string, number> }[]): Record<string, number> {
+  const total: Record<string, number> = {}
+  for (const it of itens) for (const [d, v] of Object.entries(it.por_dia)) total[d] = (total[d] ?? 0) + v
+  return total
+}
+
+function porcento(v: number, total: number): string {
+  return total ? `${Math.round((v / total) * 100)}%` : '0%'
+}
+
+function BarraHorizontal({ valor, maior }: { valor: number; maior: number }) {
+  return (
+    <div className="h-1.5 rounded-full bg-border/60 overflow-hidden">
+      <div className="h-full rounded-full bg-accent" style={{ width: `${maior ? Math.max((valor / maior) * 100, 2) : 0}%` }} />
+    </div>
+  )
+}
+
+function GeradorLink() {
+  const toast = useToast()
+  const [nome, setNome] = useState('')
+  const [destino, setDestino] = useState('/')
+  const origem = nome.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 24).replace(/^-+|-+$/g, '')
+  const link = origem ? `https://coachpilot.com.br${destino}?campanha-${origem}` : ''
+
+  async function copiar() {
+    try {
+      await navigator.clipboard.writeText(link)
+      toast.show('Link copiado', 'success')
+    } catch {
+      toast.show('Não foi possível copiar', 'error')
+    }
+  }
+
+  return (
+    <div className="p-4 bg-surface-elevated border border-border rounded-lg space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted flex items-center gap-1.5">
+        <Link2 size={13} /> Gerar link de campanha
+      </p>
+      <div className="grid sm:grid-cols-2 gap-2">
+        <input
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          placeholder="Nome da campanha (ex.: instagram-bio)"
+          className="px-3 py-2 rounded-lg bg-bg border border-border text-sm text-text placeholder:text-text-muted"
+        />
+        <input
+          value={destino}
+          onChange={(e) => setDestino(e.target.value.startsWith('/') ? e.target.value : `/${e.target.value}`)}
+          placeholder="Página de destino (ex.: /precos)"
+          className="px-3 py-2 rounded-lg bg-bg border border-border text-sm text-text placeholder:text-text-muted"
+        />
+      </div>
+      {link && (
+        <div className="flex items-center gap-2">
+          <code className="flex-1 min-w-0 truncate text-xs px-3 py-2 rounded-lg bg-bg border border-border text-text-secondary">{link}</code>
+          <Button size="sm" variant="outline" onClick={copiar}><Copy size={14} /> Copiar</Button>
+        </div>
+      )}
+      <p className="text-[11px] text-text-muted leading-relaxed">
+        Também valem <code>?utm_source=nome</code> (de qualquer ferramenta) e os links de divulgador
+        (<code>?ref=CODIGO</code>), que aparecem como "Link de divulgador". Sem marcação, a origem é
+        deduzida do anúncio (gclid/fbclid), do site de onde a pessoa veio, ou fica como acesso direto.
+      </p>
+    </div>
+  )
+}
+
+function CampanhasTab() {
+  const [mes, setMes] = useState<string | null>(null)
+  const [abertas, setAbertas] = useState<Set<string>>(new Set())
+  const [todasPaginas, setTodasPaginas] = useState(false)
+
+  const { data, isLoading, error } = useQuery<CampanhasMes>({
+    queryKey: ['admin-campanhas', mes],
+    queryFn: () => adminCampanhasApi.resumo(mes ?? undefined),
+  })
+
+  const serie = useMemo(
+    () => (data ? baldesDoMes(data.mes, data.hoje, somarDias(data.origens)) : []),
+    [data],
+  )
+
+  if (isLoading && !data) return <p className="text-sm text-text-muted">Carregando...</p>
+  if (error || !data) return <p className="text-sm text-red-400">Erro ao carregar campanhas.</p>
+
+  const mesAtivo = mes ?? data.mes
+  const mesCorrente = data.hoje.slice(0, 7)
+  const hoje = data.origens.reduce((acc, o) => acc + (o.por_dia[data.hoje] ?? 0), 0)
+  const paginas = todasPaginas ? data.paginas : data.paginas.slice(0, 15)
+  // Origens que não são deduzidas (direto, busca, auto-tagging): links marcados e sites externos.
+  const marcadas = data.origens.filter((o) => !ROTULO_ORIGEM[o.origem] && o.origem !== 'google-busca').length
+
+  function alternar(origem: string) {
+    setAbertas((atual) => {
+      const prox = new Set(atual)
+      if (prox.has(origem)) prox.delete(origem)
+      else prox.add(origem)
+      return prox
+    })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-text-muted max-w-xl">
+          Quem abriu o site (landing, páginas de SEO, blog, calculadoras, cadastro). Portal, app do
+          aluno e as páginas <code>/@slug</code> dos personais ficam de fora.
+        </p>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            aria-label="Mês anterior"
+            onClick={() => setMes(mesAnterior(mesAtivo))}
+            className="p-1.5 rounded-lg border border-border text-text-secondary hover:bg-white/5"
+          ><ChevronLeft size={16} /></button>
+          <span className="text-sm font-medium text-text w-32 text-center">{mesExtenso(mesAtivo)}</span>
+          <button
+            aria-label="Próximo mês"
+            disabled={mesAtivo >= mesCorrente}
+            onClick={() => setMes(mesSeguinte(mesAtivo))}
+            className="p-1.5 rounded-lg border border-border text-text-secondary hover:bg-white/5 disabled:opacity-30 disabled:pointer-events-none"
+          ><ChevronRight size={16} /></button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <DivStatCard icon={<MousePointerClick size={14} />} label="Visitas" value={String(data.total)} sub={`${data.origens.length} origem(ns)`} />
+        <DivStatCard icon={<CalendarDays size={14} />} label="Hoje" value={data.mes === mesCorrente ? String(hoje) : '—'} sub="visitas" />
+        <DivStatCard icon={<Eye size={14} />} label="Páginas vistas" value={String(data.total_paginas)} sub={`${data.paginas.length} página(s)`} />
+        <DivStatCard icon={<Megaphone size={14} />} label="Campanhas" value={String(marcadas)} sub="links marcados e sites" />
+      </div>
+
+      <div className="p-4 bg-surface-elevated border border-border rounded-lg">
+        <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-4">Visitas por dia</p>
+        <BarrasCadastros baldes={serie} unidade="visita" />
+      </div>
+
+      <div className="rounded-lg border border-border overflow-hidden">
+        <p className="px-4 py-2.5 bg-surface-elevated text-xs font-semibold uppercase tracking-wide text-text-muted">De onde vieram</p>
+        {!data.origens.length ? (
+          <p className="px-4 py-6 text-sm text-text-muted">Nenhuma visita registrada neste mês.</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {data.origens.map((o) => {
+              const aberta = abertas.has(o.origem)
+              return (
+                <li key={o.origem}>
+                  <button
+                    type="button"
+                    onClick={() => alternar(o.origem)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/5"
+                  >
+                    <ChevronDown size={14} className={`shrink-0 text-text-muted transition-transform ${aberta ? '' : '-rotate-90'}`} />
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className="text-sm text-text truncate">{rotuloOrigem(o.origem)}</p>
+                      <BarraHorizontal valor={o.visitas} maior={data.origens[0].visitas} />
+                    </div>
+                    <span className="shrink-0 text-sm font-semibold text-text tabular-nums">{o.visitas}</span>
+                    <span className="shrink-0 w-10 text-right text-xs text-text-muted tabular-nums">{porcento(o.visitas, data.total)}</span>
+                  </button>
+                  {aberta && (
+                    <div className="px-4 pb-3 pt-1">
+                      <BarrasCadastros baldes={baldesDoMes(data.mes, data.hoje, o.por_dia)} unidade="visita" />
+                    </div>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </div>
+
+      <div className="rounded-lg border border-border overflow-hidden">
+        <p className="px-4 py-2.5 bg-surface-elevated text-xs font-semibold uppercase tracking-wide text-text-muted">Páginas mais vistas</p>
+        {!data.paginas.length ? (
+          <p className="px-4 py-6 text-sm text-text-muted">Nenhuma página vista neste mês.</p>
+        ) : (
+          <>
+            <ul className="divide-y divide-border">
+              {paginas.map((p) => (
+                <li key={p.pagina} className="flex items-center gap-3 px-4 py-2">
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <a href={p.pagina} target="_blank" rel="noreferrer" className="block text-sm text-text truncate hover:text-accent">
+                      {p.pagina === '/' ? '/ (início)' : p.pagina}
+                    </a>
+                    <BarraHorizontal valor={p.visitas} maior={data.paginas[0].visitas} />
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold text-text tabular-nums">{p.visitas}</span>
+                </li>
+              ))}
+            </ul>
+            {data.paginas.length > 15 && (
+              <button
+                type="button"
+                onClick={() => setTodasPaginas((v) => !v)}
+                className="w-full px-4 py-2 text-xs text-accent border-t border-border hover:bg-white/5"
+              >
+                {todasPaginas ? 'Mostrar só as 15 primeiras' : `Ver todas (${data.paginas.length})`}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      <GeradorLink />
+
+      <p className="text-[11px] text-text-muted leading-relaxed">
+        Este número não bate com o do Google Ads/Meta, por construção: lá conta quem tocou no
+        anúncio; aqui, só quem chegou com a página carregada. A diferença é o que se perde no
+        caminho (desistência no carregamento, bloqueador, bot). Cada origem conta uma vez por aba;
+        cada página, uma vez por aba.
+      </p>
     </div>
   )
 }

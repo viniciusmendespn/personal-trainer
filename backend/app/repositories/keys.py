@@ -697,3 +697,29 @@ def sk_mcp_snap(ts: str) -> str:
 def pk_mcp_idem(payload_hash: str) -> str:
     """Guarda o resultado de uma escrita para deduplicar repetição do LLM (SK=META, TTL curto)."""
     return f"MCPIDEM#{payload_hash}"
+
+
+# ── Visitas do site institucional (aba Campanhas do admin — campanha_service) ──
+# Partição por MÊS, e não por origem: o painel mostra todas as origens de um mês numa Query
+# só, sem saber de antemão quais existem (e sem Scan). Dois tipos de item na mesma partição:
+#   CAMPANHA#{aaaa-MM}  {origem}#{aaaa-MM-DD}           visitas por origem
+#   CAMPANHA#{aaaa-MM}  PAGINA#{caminho}#{aaaa-MM-DD}   visitas por página
+# `PAGINA#` em maiúsculas nunca colide com origem: a origem só aceita minúsculas.
+CAMPANHA_PAGINA_PREFIX = "PAGINA#"
+
+
+def pk_campanhas(aaaa_mm: str) -> str:
+    return f"CAMPANHA#{aaaa_mm}"
+
+
+def sk_campanha_dia(origem: str, dia: str) -> str:
+    return f"{origem}#{dia}"
+
+
+def sk_pagina_dia(caminho: str, dia: str) -> str:
+    return f"{CAMPANHA_PAGINA_PREFIX}{caminho}#{dia}"
+
+
+def pk_quota_visita(ip_hash: str) -> str:
+    """Rate limit anônimo por IP (hash) do contador de visitas. SK = janela, TTL curto."""
+    return f"VISITAQUOTA#{ip_hash}"

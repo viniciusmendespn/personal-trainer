@@ -1,6 +1,7 @@
 """Superadmin: lista personals e emite tokens de impersonação (view-as).
 O admin loga com Cognito normalmente; este router valida o email do caller e emite
 tokens HS256 de curta duração que o frontend envia no header X-Impersonate."""
+import re
 import time
 
 import boto3
@@ -11,7 +12,7 @@ from pydantic import BaseModel
 
 from app.config import settings
 from app.dependencies import _verify_token
-from app.services import assinatura_service, cupom_service, feedback_service
+from app.services import assinatura_service, campanha_service, cupom_service, feedback_service
 
 router = APIRouter(prefix="/v1/admin", tags=["admin"])
 _security = HTTPBearer()
@@ -121,6 +122,17 @@ def criar_cupom(body: CriarCupomBody, _: str = Depends(_require_admin)):
         campanha=body.campanha, dias=body.dias, plano=body.plano,
         max_usos=body.max_usos, expira_em=body.expira_em,
     )
+
+
+# ── Campanhas: visitas do site institucional por origem e por página ───────────
+
+@router.get("/campanhas")
+def campanhas(mes: str | None = None, _: str = Depends(_require_admin)):
+    """Visitas do mês (`YYYY-MM`, padrão = mês corrente em São Paulo): por origem e por
+    página, cada uma com a série diária. Uma Query na partição do mês (`campanha_service`)."""
+    if mes is not None and not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", mes):
+        raise HTTPException(400, {"code": "MES_INVALIDO"})
+    return campanha_service.resumo(mes or campanha_service.mes_atual())
 
 
 # ── Canal de feedback/sugestões do personal ────────────────────────────────────

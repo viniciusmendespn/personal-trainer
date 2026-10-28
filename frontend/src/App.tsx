@@ -17,6 +17,7 @@ import { AppLayout } from './components/layout/AppLayout'
 import { ErrorPage } from './pages/ErrorPage'
 import { PortalErrorPage } from './pages/PortalErrorPage'
 import { PrerenderFallback, prerenderDaUrlAtual } from './lib/prerenderSnapshot'
+import { registrarVisita } from './utils/campanha'
 
 // Code-splitting: cada página do portal autenticado e o app do aluno viram chunks
 // separados — o aluno (link de WhatsApp, rede móvel) não baixa o JS do portal inteiro
@@ -170,6 +171,26 @@ const router = createBrowserRouter([
     ],
   },
 ])
+
+// Visitas do site (aba Campanhas do admin — utils/campanha.ts): a carga inicial e cada
+// navegação client-side. Aqui no router, e não numa página, para que a campanha possa
+// apontar para qualquer rota (um artigo, uma calculadora) sem código novo. Este módulo só
+// roda no navegador — o prerender é estático (scripts/prerender-public-pages.mjs).
+function contarVisita(pathname: string) {
+  registrarVisita({
+    pathname,
+    search: window.location.search,
+    referrer: document.referrer,
+    host: window.location.hostname,
+  })
+}
+let caminhoContado = router.state.location.pathname
+contarVisita(caminhoContado)
+router.subscribe(({ location }) => {
+  if (location.pathname === caminhoContado) return
+  caminhoContado = location.pathname
+  contarVisita(caminhoContado)
+})
 
 export default function App() {
   return (

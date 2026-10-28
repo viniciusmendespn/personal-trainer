@@ -91,3 +91,18 @@ export const adminApi = {
   setFeedbackStatus: (body: { ref: string; status: FeedbackAdmin['status'] }) =>
     api.post('/v1/admin/feedbacks/status', body).then((r) => r.data),
 }
+
+/** Espelho de `campanha_service.resumo` — aba Campanhas (visitas do site por origem/página). */
+export interface CampanhasMes {
+  mes: string            // YYYY-MM
+  hoje: string           // YYYY-MM-DD em São Paulo (o mesmo relógio que grava)
+  total: number
+  origens: { origem: string; visitas: number; por_dia: Record<string, number> }[]
+  total_paginas: number
+  paginas: { pagina: string; visitas: number; por_dia: Record<string, number> }[]
+}
+
+export const adminCampanhasApi = {
+  resumo: (mes?: string) =>
+    api.get<CampanhasMes>('/v1/admin/campanhas', { params: mes ? { mes } : undefined }).then((r) => r.data),
+}
