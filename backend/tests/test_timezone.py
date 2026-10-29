@@ -7,6 +7,8 @@ O que está sendo travado aqui (docs/TIMEZONE.md):
   • `historico_mes` agrupa na LEITURA, então trocar o fuso reescreve o passado inteiro;
   • data civil (vencimento, prazo) compara com hoje no fuso do dono, não com o dia UTC.
 """
+from datetime import datetime
+
 import pytest
 
 from app.repositories import keys
@@ -109,10 +111,18 @@ def _sessao_finalizada(fake, monkeypatch, inicio_iso, fim_iso):
     """Roda um treino inteiro com instantes controlados."""
     fake.put_item(keys.pk_aluno(ALUNO), keys.sk_exercicio(TREINO, "e-1"),
                   {"exercicio_id": "e-1", "nome": "Supino", "ordem": 0, "grupos": ["Peito"]})
+    # `epoch_ms` também: é dele que sai o SK `SESSION#{ts}` que o `historico_mes` filtra por
+    # BETWEEN. Fixando só o `now_iso`, a sessão nascia com o relógio real e o teste passava
+    # só enquanto a data de hoje caía perto do mês simulado.
+    def _ms(iso):
+        return f"{int(datetime.fromisoformat(iso.replace('Z', '+00:00')).timestamp() * 1000):013d}"
+
     monkeypatch.setattr(sessao_service, "now_iso", lambda: inicio_iso)
+    monkeypatch.setattr(sessao_service, "epoch_ms", lambda: _ms(inicio_iso))
     sessao_service.start_session(PERSONAL, ALUNO, TREINO, iniciado_pelo_aluno=True)
     sessao_service.set_series(ALUNO, "e-1", [{"reps": 10, "carga": 50}])
     monkeypatch.setattr(sessao_service, "now_iso", lambda: fim_iso)
+    monkeypatch.setattr(sessao_service, "epoch_ms", lambda: _ms(fim_iso))
     sessao_service.finish(ALUNO)
 
 
