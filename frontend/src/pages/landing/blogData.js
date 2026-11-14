@@ -32,7 +32,7 @@ export const BLOG_POSTS = [
           ],
         },
         callout: {
-          title: 'O CoachPilot é o único app de gestão para personal com plugin oficial no ChatGPT',
+          title: 'Plugin oficial do CoachPilot no ChatGPT: instale em 1 minuto',
           text: 'No ChatGPT, abra Plugins no menu lateral, busque "coachpilot", clique no + e entre com a sua conta. Leva menos de um minuto, funciona na conta gratuita e no app de celular — e todos os prompts marcados "com plugin" passam a responder com os seus alunos de verdade.',
           cta: { label: 'Ver como instalar o plugin', to: '/blog/como-instalar-coachpilot-no-chatgpt' },
         },
