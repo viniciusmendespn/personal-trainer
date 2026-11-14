@@ -13,10 +13,20 @@ import LandingNavbar from './LandingNavbar'
 import CtaSection from './CtaSection'
 import { blogPresentation, BLOG_CATEGORIES } from './blogPresentation.js'
 import './public-site.css'
-import { renderInline, ProseList, ProseTable } from './prose'
+import { renderInline, ProseList, ProseTable, ProsePrompts, ProseCallout } from './prose'
 import { BASE_URL } from './publicSeoData.js'
 import { BLOG_POSTS, BLOG_BASE } from './blogData.js'
 import type { BlogPost } from './blogData.js'
+
+// Numeração contínua dos prompts entre seções ("30 prompts" = 1..30 no artigo todo).
+function promptStart(post: BlogPost, index: number) {
+  return (
+    1 +
+    post.sections
+      .slice(0, index)
+      .reduce((n, s) => n + (s.prompts ? s.prompts.length : 0), 0)
+  )
+}
 
 function formatDate(iso: string) {
   return new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR', {
@@ -480,7 +490,14 @@ export function BlogPostPage() {
                     <p key={index}>{renderInline(paragraph)}</p>
                   ))}
                   {section.list && <ProseList items={section.list} />}
+                  {section.prompts && (
+                    <ProsePrompts
+                      items={section.prompts}
+                      start={promptStart(post, i)}
+                    />
+                  )}
                   {section.table && <ProseTable table={section.table} />}
+                  {section.callout && <ProseCallout callout={section.callout} />}
                 </section>
               ))}
               {post.faqs.length > 0 && (

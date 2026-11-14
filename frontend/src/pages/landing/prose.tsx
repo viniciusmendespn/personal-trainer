@@ -2,6 +2,7 @@
 // Extraído de BlogPages.tsx para que os dois caminhos usem o MESMO parser —
 // o equivalente em Node vive em scripts/prerender-public-pages.mjs (inline/renderTable).
 // Mexeu aqui, mexa lá: é o par que diverge silenciosamente.
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -59,6 +60,49 @@ export function ProseTable({ table }: { table: ProseTableData }) {
           ))}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+// Prompts copiáveis: lista numerada (a numeração continua entre seções via `start`)
+// com botão de copiar. No prerender vira <ol start> simples — ver renderPrompts.
+export function ProsePrompts({ items, start = 1 }: { items: string[]; start?: number }) {
+  const [copied, setCopied] = useState<number | null>(null)
+  const copy = (text: string, i: number) => {
+    const clean = text.replace(/^"|"$/g, '')
+    navigator.clipboard?.writeText(clean).then(() => {
+      setCopied(i)
+      window.setTimeout(() => setCopied((c) => (c === i ? null : c)), 1800)
+    }).catch(() => {})
+  }
+  return (
+    <ol className="cp-prompts" start={start}>
+      {items.map((item, i) => (
+        <li key={item} className="cp-prompt">
+          <span className="cp-prompt-num" aria-hidden="true">{start + i}</span>
+          <p>{renderInline(item)}</p>
+          <button type="button" className="cp-prompt-copy" onClick={() => copy(item, i)} aria-label={`Copiar prompt ${start + i}`}>
+            {copied === i ? 'Copiado ✓' : 'Copiar'}
+          </button>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+export type ProseCalloutData = { title: string; text: string; cta?: { label: string; to: string } }
+
+// Caixa de destaque com chamada para ação — usada para apontar o caminho
+// conectado (plugin do ChatGPT) no meio do artigo, sem depender do aside.
+export function ProseCallout({ callout }: { callout: ProseCalloutData }) {
+  const { cta } = callout
+  return (
+    <div className="cp-callout">
+      <strong>{callout.title}</strong>
+      <p>{renderInline(callout.text)}</p>
+      {cta && (cta.to.startsWith('http')
+        ? <a className="cp-button" href={cta.to} target="_blank" rel="noopener noreferrer">{cta.label} →</a>
+        : <Link className="cp-button" to={cta.to}>{cta.label} →</Link>)}
     </div>
   )
 }

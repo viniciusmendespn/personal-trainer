@@ -6,7 +6,7 @@ export function blogPresentation(slug) {
       image: '/images/coachpilot-editorial-v2.webp',
       alt: 'Ambiente de trabalho do personal trainer com planejamento e tecnologia',
     }
-  if (/conseguir|gestao|planilha|ilimitados|gratis/.test(slug))
+  if (/conseguir|gestao|planilha|ilimitados|gratis|whatsapp|instagram|consultoria/.test(slug))
     return {
       category: 'Gestão e carreira',
       image: '/images/coachpilot-coaching-v2.webp',

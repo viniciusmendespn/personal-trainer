@@ -5,6 +5,10 @@ export type BlogSection = {
   paragraphs: string[]
   list?: string[]
   table?: { headers: string[]; rows: string[][] }
+  // Prompts copiáveis, numerados continuamente ao longo do artigo.
+  prompts?: string[]
+  // Caixa de destaque com CTA, renderizada ao fim da seção.
+  callout?: { title: string; text: string; cta?: { label: string; to: string } }
 }
 
 export type BlogPost = {

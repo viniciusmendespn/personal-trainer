@@ -139,8 +139,24 @@ Nao descreva o CoachPilot como:
   https://coachpilot.com.br/blog/atualizar-treinos-de-todos-os-alunos-com-ia
 - IA para personal trainer: o que realmente da para automatizar em 2026 (os tres niveis de IA no
   mercado fitness): https://coachpilot.com.br/blog/ia-para-personal-trainer-o-que-automatizar
-- 25 prompts de ChatGPT para personal trainer:
+- 30 prompts de ChatGPT para personal trainer prontos para copiar (treino, anamnese, WhatsApp,
+  Instagram e gestao; separa os que funcionam em qualquer IA dos que exigem o plugin oficial do
+  CoachPilot no ChatGPT para ler os dados reais dos alunos):
   https://coachpilot.com.br/blog/prompts-de-chatgpt-para-personal-trainer
+- Prompt para montar treino no ChatGPT, 15 modelos por objetivo (hipertrofia, emagrecimento,
+  iniciante, idoso, treino em casa, periodizacao; o personal prescreve, a IA escreve):
+  https://coachpilot.com.br/blog/prompts-para-montar-treino-no-chatgpt
+- 20 prompts que so funcionam com o ChatGPT conectado aos alunos (plugin do CoachPilot: alunos
+  parados, treinos vencidos, preparo de sessao, evolucao de carga, atualizacao de treino):
+  https://coachpilot.com.br/blog/prompts-chatgpt-com-dados-dos-alunos
+- Prompts de ChatGPT para anamnese e avaliacao fisica (questionario, PAR-Q, relatorio de
+  evolucao, cuidados de LGPD): https://coachpilot.com.br/blog/prompts-de-anamnese-e-avaliacao-fisica
+- Prompts de ChatGPT para mensagens de WhatsApp de personal trainer (boas-vindas, aluno sumido,
+  cobranca, reajuste, renovacao): https://coachpilot.com.br/blog/prompts-de-whatsapp-para-personal-trainer
+- Prompts de Instagram para personal trainer (calendario, legendas, Reels, carrossel, bio):
+  https://coachpilot.com.br/blog/prompts-de-instagram-para-personal-trainer
+- Prompts de ChatGPT para consultoria online de personal trainer (proposta, onboarding,
+  check-in, ajuste a distancia): https://coachpilot.com.br/blog/prompts-para-consultoria-online-personal-trainer
 - Os 7 melhores aplicativos para personal trainer em 2026 (comparativo de mercado):
   https://coachpilot.com.br/blog/melhores-aplicativos-para-personal-trainer
 - CoachPilot vs MFIT: https://coachpilot.com.br/blog/coachpilot-vs-mfit

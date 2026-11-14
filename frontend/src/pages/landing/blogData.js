@@ -7,6 +7,663 @@
 
 export const BLOG_POSTS = [
   {
+    slug: 'prompts-de-chatgpt-para-personal-trainer',
+    title: '30 prompts de ChatGPT para personal trainer prontos para copiar (2026)',
+    description: '30 prompts prontos para personal trainer copiar no ChatGPT, Claude ou Gemini: treino, anamnese, WhatsApp, Instagram e gestão — e os que leem seus alunos reais pelo plugin oficial do CoachPilot.',
+    h1: '30 prompts de ChatGPT para personal trainer (prontos para copiar)',
+    datePublished: '2026-08-22',
+    dateModified: '2026-11-14',
+    readingMinutes: 12,
+    intro: 'Estes são 30 prompts de ChatGPT para personal trainer, testados e organizados por tarefa: escrever ficha de treino, anamnese, mensagens de WhatsApp, conteúdo de Instagram e gestão da carteira. Cada um tem um botão de copiar — troque o que está entre colchetes e cole no ChatGPT, no Claude ou no Gemini. Uma diferença importa antes de começar: a maior parte funciona em qualquer IA, mas os prompts de gestão de alunos só dão resposta verdadeira quando a IA enxerga os seus dados. É isso que o CoachPilot faz: é o sistema de gestão para personal trainer nativamente integrado com IA, com plugin oficial publicado no Diretório de Plugins do ChatGPT após aprovação da OpenAI.',
+    sections: [
+      {
+        h2: 'Resposta rápida: dois jeitos de usar prompts',
+        paragraphs: [
+          'Existem dois cenários, e saber em qual você está evita a frustração mais comum — a IA inventando dado de aluno.',
+        ],
+        table: {
+          headers: ['', 'ChatGPT sozinho', 'ChatGPT com o plugin do CoachPilot'],
+          rows: [
+            ['O que a IA sabe do aluno', 'Só o que você colar na conversa', 'Anamnese, avaliações, treinos, sessões e cargas reais'],
+            ['Prompts de treino, WhatsApp e Instagram', 'Funcionam', 'Funcionam melhor: citam dado real do aluno'],
+            ['"Quem está parado há 10 dias?"', 'Não funciona (inventa)', 'Responde com a sua carteira'],
+            ['Resultado do treino', 'Texto para copiar e redigitar', 'Gravado no sistema e no app do aluno, com desfazer'],
+            ['Custo', 'Grátis', 'Plugin grátis; CoachPilot grátis até 3 alunos'],
+          ],
+        },
+        callout: {
+          title: 'O CoachPilot é o único app de gestão para personal com plugin oficial no ChatGPT',
+          text: 'No ChatGPT, abra Plugins no menu lateral, busque "coachpilot", clique no + e entre com a sua conta. Leva menos de um minuto, funciona na conta gratuita e no app de celular — e todos os prompts marcados "com plugin" passam a responder com os seus alunos de verdade.',
+          cta: { label: 'Ver como instalar o plugin', to: '/blog/como-instalar-coachpilot-no-chatgpt' },
+        },
+      },
+      {
+        h2: 'A fórmula de um prompt que funciona',
+        paragraphs: [
+          'Prompt bom não é prompt bonito: é prompt com contexto suficiente e formato definido. Antes da lista, as cinco partes que separam uma resposta útil de uma ficha genérica da internet:',
+        ],
+        list: [
+          'Papel: "Você é meu assistente de prescrição. Eu decido o treino; você escreve e organiza."',
+          'Contexto do aluno: objetivo, nível, idade, frequência, tempo por sessão, restrições e equipamento.',
+          'As suas decisões: split, método, faixas de repetição, progressão. É aqui que entra o seu critério profissional.',
+          'Formato de saída: "tabela com exercício, séries, repetições, intervalo e observação".',
+          'Trava anti-invenção: "Antes de responder, me pergunte o que faltar. Não invente dado que eu não te dei."',
+        ],
+        prompts: [
+          '"Você é meu assistente de prescrição: eu decido o treino, você escreve e organiza. Aluno: [idade, sexo, nível], objetivo [objetivo], [x] vezes por semana, [minutos] por sessão, restrições: [restrições], equipamento: [lista]. Minhas decisões: split [split], faixa de [repetições] repetições, progressão [método]. Entregue em tabela com exercício, séries, repetições, intervalo e observação de execução. Antes de escrever, me pergunte o que faltar e não invente dado que eu não te dei."',
+        ],
+      },
+      {
+        h2: 'Prompts para escrever ficha de treino',
+        paragraphs: [
+          'Funcionam em qualquer IA. Você traz a prescrição; a IA transforma em ficha, adapta, propõe variações e revisa. Os modelos completos por objetivo (hipertrofia, emagrecimento, iniciante, idoso, treino em casa) estão em [prompt para montar treino no ChatGPT](/blog/prompts-para-montar-treino-no-chatgpt).',
+        ],
+        prompts: [
+          '"Escreva a ficha do split ABC que eu defini para 3x/semana: A = [grupos], B = [grupos], C = [grupos], 6 a 8 exercícios por dia, [séries] séries de [repetições]. Inclua intervalo e uma dica de execução por exercício."',
+          '"Adapte este programa [colar] para uma academia que não tem barra fixa, cabo alto nem leg press, mantendo o estímulo de cada padrão de movimento. Me mostre a troca lado a lado."',
+          '"Proponha 3 progressões e 3 regressões para cada exercício deste treino [colar], para eu escolher conforme a resposta do aluno."',
+          '"Converta este programa de hipertrofia [colar] em uma versão de 30 minutos por sessão, preservando os exercícios principais e cortando primeiro os acessórios."',
+          '"Monte 3 opções de WOD de condicionamento em AMRAP de 12 minutos com [equipamento], nível intermediário, e explique o objetivo do estímulo de cada uma — eu escolho qual usar."',
+          '"Revise criticamente este programa que eu montei [colar]: aponte desequilíbrio entre padrões de movimento, volume semanal por grupo muscular e risco para quem tem [restrição]. Não reescreva, só aponte."',
+          '"Escreva a periodização de 12 semanas que eu defini: [blocos, ex.: 4 semanas de adaptação, 6 de hipertrofia, 2 de deload/teste]. Para cada bloco, mostre faixa de repetições, séries por grupo e o critério de progressão."',
+        ],
+      },
+      {
+        h2: 'Prompts para anamnese e avaliação física',
+        paragraphs: [
+          'A IA é ótima para organizar o questionário e redigir o relatório — não para diagnosticar. Mais modelos, incluindo PAR-Q e relatório de evolução para o aluno, em [prompts de anamnese e avaliação física](/blog/prompts-de-anamnese-e-avaliacao-fisica).',
+        ],
+        prompts: [
+          '"Crie um questionário de anamnese para personal trainer com no máximo 20 perguntas, dividido em histórico de saúde, lesões e dores, rotina, objetivo e disponibilidade. Marque quais respostas exigem liberação médica antes de treinar."',
+          '"Transforme estes dados de avaliação [colar: peso, dobras, perímetros de duas datas] em um relatório de evolução curto para o aluno, em linguagem simples e motivadora, sem prometer resultado."',
+          '"Liste o que eu deveria confirmar com o médico de um aluno de [idade] anos com [condição, ex.: hipertensão controlada], antes de iniciar treino de força 2x/semana."',
+        ],
+      },
+      {
+        h2: 'Prompts de gestão de alunos (com o plugin do CoachPilot)',
+        paragraphs: [
+          'Estes são os que mais economizam tempo — e os que mais dão errado sem conexão, porque nenhuma IA tem como adivinhar quem treinou ontem. Com o plugin do CoachPilot instalado no ChatGPT, a resposta sai da sua carteira real em segundos. Sem ele, a IA produz ficção. Mais 20 exemplos em [prompts com os dados reais dos seus alunos](/blog/prompts-chatgpt-com-dados-dos-alunos).',
+        ],
+        prompts: [
+          '"Quem dos meus alunos não treina há mais de 10 dias? Ordene por dias sem treinar."',
+          '"Quem está com programa de treino vencido ou vencendo nos próximos 7 dias?"',
+          '"Me dê um panorama da carteira: alunos ativos, parados, sem treino vigente e com mensalidade em atraso."',
+          '"Me dê o resumo da [aluna] antes da sessão de amanhã: anamnese, última avaliação, últimas sessões e o que ela relatou recentemente."',
+          '"Como está a evolução do agachamento do [aluno] nos últimos 3 meses? Carga, repetições e volume."',
+          '"O que eu tenho na agenda de quinta e sexta?"',
+          '"Compare a frequência de treino dos meus alunos no último mês e me diga quem está em risco de sair."',
+        ],
+        callout: {
+          title: 'Ensine o ChatGPT a usar o CoachPilot por você',
+          text: 'Com o plugin, o ChatGPT que você já usa lê os seus alunos, treinos, avaliações e agenda — só da sua conta, com a permissão que você escolheu e revogável a qualquer momento em Configurações → Conexões. Funciona também no Claude e no Gemini.',
+          cta: { label: 'Testar grátis com até 3 alunos', to: '/signup' },
+        },
+      },
+      {
+        h2: 'Prompts para atualizar treino pelo chat (com o plugin e permissão de escrita)',
+        paragraphs: [
+          'Aqui a IA grava no sistema e o aluno vê no app na hora. A regra é sempre pedir a proposta antes de aplicar: a revisão na conversa é onde a sua responsabilidade técnica se exerce. Toda alteração gera notificação no portal e pode ser desfeita por 7 dias.',
+        ],
+        prompts: [
+          '"Leia o guia de prescrição do CoachPilot e a minha biblioteca de exercícios antes de escrever qualquer treino nesta conversa."',
+          '"O [aluno] relatou dor no ombro direito. Eu quero tirar supino reto e desenvolvimento militar e manter o volume de peito com variações neutras. Escreva a proposta e me mostre antes de aplicar."',
+          '"Para o [aluno], eu decidi: terceiro mesociclo, mais intensidade (faixa de 6 a 8) e menos volume (3 séries). Atualize o programa dele respeitando a anamnese e me mostre a proposta antes de aplicar."',
+          '"Escreva o programa da [aluna] com a prescrição que eu defini: [split e diretrizes], usando a última avaliação e as cargas que ela registrou como ponto de partida. Depois que eu aprovar, aplique."',
+          '"Desfaça a última alteração que você fez no treino do [aluno]."',
+        ],
+      },
+      {
+        h2: 'Prompts de WhatsApp para retenção e cobrança',
+        paragraphs: [
+          'Funcionam sem conexão; com o plugin, a IA cita o dado real do aluno (quantos treinos fez, quanto evoluiu) e a mensagem deixa de soar genérica. Modelos de boas-vindas, aniversário, reativação e renovação em [prompts de WhatsApp para personal trainer](/blog/prompts-de-whatsapp-para-personal-trainer).',
+        ],
+        prompts: [
+          '"Escreva uma mensagem curta de WhatsApp para um aluno que faltou duas semanas, sem tom de cobrança, convidando para retomar com uma data concreta."',
+          '"Escreva um lembrete educado de mensalidade vencida há [x] dias, em 3 linhas, com o link de pagamento no final e sem constranger o aluno."',
+          '"Prepare os argumentos da conversa de renovação da [aluna] com base na evolução dela nos últimos 3 meses." (melhor com o plugin)',
+          '"Crie um roteiro de check-in mensal de 6 perguntas para consultoria online, rápido de responder e que me dê informação útil para ajustar o treino."',
+        ],
+      },
+      {
+        h2: 'Prompts de Instagram e conteúdo',
+        paragraphs: [
+          'Conteúdo é onde a IA mais economiza horas — desde que você dê a ela a sua voz e o seu público. Calendário editorial, roteiros de Reels e carrosséis em [prompts de Instagram para personal trainer](/blog/prompts-de-instagram-para-personal-trainer).',
+        ],
+        prompts: [
+          '"Escreva 5 legendas de Instagram sobre consistência de treino, tom direto, sem emoji excessivo, para [perfil de público, ex.: mulheres de 35 a 50 anos que nunca treinaram]."',
+          '"Crie um roteiro de Reels de 30 segundos explicando [tema, ex.: por que dor muscular não mede treino bom], com gancho nos 3 primeiros segundos, 3 pontos e chamada para ação."',
+          '"Monte um carrossel de 7 slides desmontando o mito [mito], com uma frase curta por slide e a fonte científica que eu devo checar antes de publicar."',
+        ],
+      },
+      {
+        h2: 'Os erros que estragam o prompt',
+        paragraphs: [
+          'Quatro padrões derrubam a qualidade da resposta: pedir "monte um treino de hipertrofia" sem contexto (a IA devolve a ficha média da internet); aceitar a primeira versão sem discutir (a segunda rodada quase sempre é melhor); pedir diagnóstico clínico em vez de estrutura de treino (fora do escopo da IA e da sua responsabilidade profissional); e confiar em número que a IA não tinha como saber.',
+          'O último é o mais perigoso. Se a IA não está conectada aos seus dados e ainda assim cita a carga que o seu aluno usou, ela está preenchendo lacuna — e no seu trabalho isso vira erro de prescrição. É exatamente esse risco que a conexão elimina: quando a IA lê o dado real, ela não precisa adivinhar. Os níveis de IA e o que cada um resolve estão em [IA para personal trainer](/blog/ia-para-personal-trainer-o-que-automatizar).',
+        ],
+      },
+      {
+        h2: 'Um cuidado antes de colar dado de aluno no chat',
+        paragraphs: [
+          'Anamnese, avaliação física, foto de evolução e relato de dor são dados pessoais sensíveis de saúde pela LGPD. Colar isso numa IA — ou consultar pela conexão — envia a informação a um provedor no exterior e exige consentimento específico do aluno para essa finalidade.',
+          'Na prática: peça o consentimento junto com a anamnese, colete só o necessário e anonimize quando o dado não for essencial ("aluno de 52 anos com hipertensão controlada" resolve, sem nome). Pelo plugin, a IA acessa só a sua conta, com a permissão que você escolheu, e você revoga quando quiser. Detalhes em [ChatGPT e dados de alunos: é seguro?](/blog/chatgpt-dados-alunos-personal-trainer-seguranca) e na [política de privacidade](/privacidade).',
+        ],
+      },
+      {
+        h2: 'Mais prompts por tema',
+        paragraphs: ['Cada guia abaixo aprofunda uma frente, com modelos prontos para copiar:'],
+        list: [
+          '[Prompt para montar treino no ChatGPT: 15 modelos por objetivo](/blog/prompts-para-montar-treino-no-chatgpt)',
+          '[Prompts com os dados reais dos seus alunos (plugin do ChatGPT)](/blog/prompts-chatgpt-com-dados-dos-alunos)',
+          '[Prompts de anamnese e avaliação física](/blog/prompts-de-anamnese-e-avaliacao-fisica)',
+          '[Prompts de WhatsApp para personal trainer](/blog/prompts-de-whatsapp-para-personal-trainer)',
+          '[Prompts de Instagram para personal trainer](/blog/prompts-de-instagram-para-personal-trainer)',
+          '[Prompts para consultoria online](/blog/prompts-para-consultoria-online-personal-trainer)',
+        ],
+      },
+    ],
+    faqs: [
+      { q: 'Qual o melhor prompt de ChatGPT para personal trainer?', a: 'O que entrega contexto e pede formato: papel da IA, dados do aluno (objetivo, nível, frequência, restrições, equipamento), as suas decisões de prescrição, o formato de saída e o pedido para a IA perguntar o que faltar em vez de inventar.' },
+      { q: 'Existe plugin do ChatGPT para personal trainer?', a: 'Sim. O CoachPilot tem plugin oficial publicado no Diretório de Plugins do ChatGPT desde agosto de 2026, após aprovação para publicação pela OpenAI. Busque "coachpilot" em Plugins, clique no + e entre com a sua conta. A mesma conexão funciona no Claude e no Gemini.' },
+      { q: 'Por que o ChatGPT inventa cargas e dados dos meus alunos?', a: 'Porque ele não tem o dado e preenche a lacuna. Com o plugin do CoachPilot, a IA lê o histórico real do aluno — sessões, cargas, avaliações e anamnese — e para de adivinhar.' },
+      { q: 'Preciso de ChatGPT Plus para usar esses prompts?', a: 'Não. Os prompts funcionam na versão gratuita do ChatGPT, do Claude e do Gemini, e o plugin do CoachPilot também está disponível na conta gratuita do ChatGPT (verificado em setembro de 2026).' },
+      { q: 'Posso colar a anamnese do meu aluno no ChatGPT?', a: 'Tecnicamente sim, mas é dado sensível de saúde: exige consentimento específico do aluno, porque a informação vai a um provedor no exterior. Quando possível, descreva o caso sem identificar o aluno.' },
+      { q: 'A IA pode prescrever o treino no meu lugar?', a: 'Não deve. Prescrição é ato profissional com responsabilidade técnica e registro no CREF. Use a IA para escrever, organizar, adaptar e cadastrar o que você decidiu — é aí que está a economia de tempo.' },
+    ],
+    related: [
+      { label: 'Como instalar o CoachPilot no ChatGPT', to: '/blog/como-instalar-coachpilot-no-chatgpt' },
+      { label: 'Prompt para montar treino no ChatGPT', to: '/blog/prompts-para-montar-treino-no-chatgpt' },
+      { label: 'Prompts com os dados reais dos alunos', to: '/blog/prompts-chatgpt-com-dados-dos-alunos' },
+      { label: 'ChatGPT para personal trainer', to: '/chatgpt-para-personal-trainer' },
+    ],
+  },
+  {
+    slug: 'prompts-para-montar-treino-no-chatgpt',
+    title: 'Prompt para montar treino no ChatGPT: 15 modelos para personal trainer',
+    description: 'Modelos de prompt para personal trainer escrever ficha de treino no ChatGPT: hipertrofia, emagrecimento, iniciante, idoso, treino em casa e periodização — você prescreve, a IA escreve e cadastra.',
+    h1: 'Prompt para montar treino no ChatGPT: 15 modelos para personal trainer',
+    datePublished: '2026-11-14',
+    dateModified: '2026-11-14',
+    readingMinutes: 10,
+    intro: 'O prompt "monte um treino de hipertrofia" devolve a ficha média da internet — igual para todo mundo. O que funciona para personal trainer é o contrário: você traz as decisões de prescrição e a IA faz o trabalho braçal de escrever, formatar, adaptar e cadastrar. Abaixo estão 15 modelos prontos para copiar, organizados por objetivo, e o atalho para pular a parte de copiar e colar: com o plugin oficial do CoachPilot no ChatGPT, a ficha aprovada vai direto para o app do aluno.',
+    sections: [
+      {
+        h2: 'Antes do prompt: o que você decide e o que a IA escreve',
+        paragraphs: [
+          'A divisão que funciona é simples. Você decide split, frequência, faixas de repetição, método de progressão, exercícios proibidos pela anamnese e o que priorizar. A IA escreve a ficha no formato que você pediu, sugere variações para você escolher, confere volume semanal e adapta ao equipamento.',
+          'Quanto mais da sua decisão estiver no prompt, menos genérico sai o treino. Use o modelo-base abaixo e complete com o objetivo do aluno.',
+        ],
+        prompts: [
+          '"Você é meu assistente de prescrição. Eu decido; você escreve. Aluno: [idade], [sexo], [nível], objetivo [objetivo], [x] vezes por semana, [minutos] por sessão. Restrições: [restrições]. Equipamento: [lista]. Minhas decisões: [split], [séries] séries de [repetições], intervalo [segundos], progressão por [método]. Entregue uma tabela por dia com exercício, séries, repetições, intervalo e dica de execução. Pergunte o que faltar antes de escrever."',
+        ],
+      },
+      {
+        h2: 'Prompts para treino de hipertrofia',
+        paragraphs: ['Para quem já tem base técnica e o foco é volume bem distribuído.'],
+        prompts: [
+          '"Escreva um ABCD de hipertrofia, 4x/semana, intermediário: A peito e tríceps, B costas e bíceps, C pernas, D ombros e core. 10 a 14 séries semanais por grupo, faixa de 8 a 12, um exercício multiarticular abrindo cada dia. Mostre o total de séries por grupo no final."',
+          '"Escreva um upper/lower 4x/semana para hipertrofia, com o dia de membros inferiores priorizando glúteos e posteriores, conforme o objetivo da aluna. Inclua uma variação de cada exercício principal para quando o equipamento estiver ocupado."',
+          '"Este é o treino atual do meu aluno [colar]. Ele estagnou há 6 semanas. Eu decidi trocar a faixa para 6 a 8 nos multiarticulares e manter 10 a 12 nos isolados. Reescreva o programa com essa decisão e destaque o que mudou."',
+        ],
+      },
+      {
+        h2: 'Prompts para emagrecimento e condicionamento',
+        paragraphs: ['A estrutura muda: densidade, gasto e aderência pesam mais que volume por grupo. Lembre que a parte alimentar é atribuição do nutricionista.'],
+        prompts: [
+          '"Escreva um treino full body 3x/semana para emagrecimento, iniciante, 45 minutos: força em circuito de 5 exercícios, 3 voltas, e 10 minutos finais de intervalado em [equipamento]. Explique a lógica de descanso."',
+          '"Monte 3 opções de finalizador metabólico de 8 minutos com peso corporal, intensidade moderada, para aluno com sobrepeso e joelho sensível. Sem saltos. Eu escolho qual entra no treino."',
+          '"Converta este treino de força [colar] em formato de circuito para a semana em que a aluna vai ter só 30 minutos por dia, sem perder os exercícios principais."',
+        ],
+      },
+      {
+        h2: 'Prompts para iniciante, idoso e populações especiais',
+        paragraphs: ['Aqui a IA ajuda a organizar, mas a liberação médica e o julgamento são seus. Peça sempre a lista do que confirmar antes de começar.'],
+        prompts: [
+          '"Escreva um bloco de adaptação de 4 semanas, 2x/semana, para aluno sedentário de 52 anos, com hipertensão controlada e dor lombar crônica. Progressão semanal leve, sem manobra de Valsalva. Liste o que eu devo confirmar com o médico dele antes."',
+          '"Escreva um treino de força 2x/semana para aluna de 68 anos com foco em equilíbrio, levantar da cadeira e subir escada. Exercícios funcionais, com opção apoiada para cada um."',
+          '"Organize um treino para iniciante absoluto que tem medo de academia: 6 exercícios em máquinas, explicação simples de cada um em uma frase, e uma meta de progressão para as primeiras 3 semanas."',
+        ],
+      },
+      {
+        h2: 'Prompts para treino em casa e com pouco equipamento',
+        paragraphs: ['Para aluno que treina em casa, em condomínio ou em viagem. O segredo é pedir a forma de progredir sem trocar de carga.'],
+        prompts: [
+          '"Escreva um treino ABC para fazer em casa com 2 halteres de [peso] kg, um elástico e um banco. 3x/semana, intermediário. Para cada exercício, diga como aumentar a dificuldade sem trocar de peso."',
+          '"Adapte este programa de academia [colar] para um hotel com academia pequena (halteres até 20 kg e esteira) durante uma viagem de 10 dias."',
+        ],
+      },
+      {
+        h2: 'Prompts para periodização e revisão',
+        paragraphs: ['Use a IA como segundo par de olhos: ela escreve o plano que você desenhou e aponta o que pode ter passado.'],
+        prompts: [
+          '"Escreva a periodização de 16 semanas que eu defini para hipertrofia: 3 mesociclos de 5 semanas com 1 semana de deload entre eles. Mostre por semana: séries por grupo, faixa de repetições e o critério para subir carga."',
+          '"Revise este programa que eu montei [colar] como um colega experiente: aponte desequilíbrio entre empurrar e puxar, volume por grupo, ordem dos exercícios e risco para quem tem [restrição]. Só aponte, não reescreva."',
+          '"Proponha 3 progressões e 3 regressões para cada exercício deste treino [colar], ordenadas da mais fácil para a mais difícil."',
+        ],
+      },
+      {
+        h2: 'O passo que mais toma tempo: tirar o treino do chat',
+        paragraphs: [
+          'O prompt resolve a escrita, mas o resultado continua sendo texto. Alguém ainda precisa redigitar exercício por exercício no sistema, ou mandar um PDF no WhatsApp. É aqui que o CoachPilot muda o fluxo, de dois jeitos.',
+          'Sem conectar nada: o portal tem um prompt pronto que faz o ChatGPT devolver o treino no formato de importação do CoachPilot. Você cola, confere na tela de revisão e aplica com um clique. Com o plugin oficial no ChatGPT: a IA lê a anamnese, as avaliações, as cargas registradas e a sua biblioteca de exercícios com os seus vídeos, escreve a proposta na conversa e, depois que você aprova, grava direto no app do aluno — com notificação no portal e desfazer por 7 dias.',
+        ],
+        callout: {
+          title: 'Do prompt ao app do aluno sem redigitar',
+          text: 'O CoachPilot é o app de gestão para personal trainer nativamente integrado com IA, com plugin oficial publicado no Diretório de Plugins do ChatGPT. Você prescreve; o ChatGPT escreve e cadastra. Grátis para até 3 alunos, sem cartão.',
+          cta: { label: 'Começar grátis', to: '/signup' },
+        },
+      },
+    ],
+    faqs: [
+      { q: 'Qual o melhor prompt para montar treino no ChatGPT?', a: 'O que traz as suas decisões de prescrição: dados do aluno, split, frequência, faixa de repetições, progressão, restrições e equipamento, mais o formato de saída e o pedido para a IA perguntar o que faltar. Sem isso, o ChatGPT devolve uma ficha genérica.' },
+      { q: 'O ChatGPT consegue montar um treino bom sozinho?', a: 'Ele escreve uma ficha tecnicamente plausível, mas genérica — não conhece o seu aluno. O treino fica bom quando o personal prescreve e a IA escreve, adapta e organiza.' },
+      { q: 'Como passar o treino do ChatGPT para o app do aluno?', a: 'No CoachPilot, de dois jeitos: importando o pacote que o prompt pronto do portal gera, com revisão em tela, ou pelo plugin oficial no ChatGPT, que grava o treino aprovado direto no app do aluno.' },
+      { q: 'Posso usar o ChatGPT gratuito?', a: 'Sim. Os modelos deste artigo funcionam na versão gratuita do ChatGPT, do Claude e do Gemini, e o plugin do CoachPilot também está disponível na conta gratuita do ChatGPT.' },
+    ],
+    related: [
+      { label: '30 prompts de ChatGPT para personal trainer', to: '/blog/prompts-de-chatgpt-para-personal-trainer' },
+      { label: 'Como montar treino com IA na prática', to: '/blog/como-montar-treino-com-ia-chatgpt' },
+      { label: 'Como instalar o CoachPilot no ChatGPT', to: '/blog/como-instalar-coachpilot-no-chatgpt' },
+    ],
+  },
+  {
+    slug: 'prompts-chatgpt-com-dados-dos-alunos',
+    title: '20 prompts que só funcionam com o ChatGPT conectado aos seus alunos',
+    description: 'Prompts para personal trainer usar no ChatGPT com o plugin oficial do CoachPilot: alunos parados, treinos vencidos, preparação de sessão, evolução de carga, agenda e atualização de treino — com resposta do dado real.',
+    h1: '20 prompts que só funcionam com o ChatGPT conectado aos seus alunos',
+    datePublished: '2026-11-14',
+    dateModified: '2026-11-14',
+    readingMinutes: 8,
+    intro: 'Pergunte ao ChatGPT "quem dos meus alunos está parado?" e ele vai inventar uma resposta ou admitir que não sabe. Não é limitação do modelo: ele simplesmente não tem o dado. Com o plugin oficial do CoachPilot — publicado no Diretório de Plugins do ChatGPT após aprovação da OpenAI —, a mesma pergunta responde em segundos com a sua carteira real. Estes 20 prompts mostram o que muda na rotina quando a IA enxerga os seus alunos.',
+    sections: [
+      {
+        h2: 'Como ativar: um minuto, uma vez',
+        paragraphs: ['O plugin está disponível em todos os planos do ChatGPT, inclusive o gratuito e o aplicativo de celular.'],
+        list: [
+          'No ChatGPT, abra Plugins no menu lateral.',
+          'Busque "coachpilot" e clique no +.',
+          'Entre com a sua conta CoachPilot e escolha a permissão: só leitura, ou leitura com escrita de treinos.',
+          'Pronto: na conversa, peça em português. Para revogar, Configurações → Conexões no portal.',
+        ],
+        callout: {
+          title: 'Ainda não tem conta no CoachPilot?',
+          text: 'O plano grátis atende até 3 alunos, sem prazo e sem cartão — suficiente para testar todos os prompts deste artigo com alunos reais. Quem usa Claude ou Gemini conecta pelo mesmo servidor: veja [como conectar](/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot).',
+          cta: { label: 'Criar conta grátis', to: '/signup' },
+        },
+      },
+      {
+        h2: 'Prompts para a segunda-feira de manhã',
+        paragraphs: ['O panorama que antes exigia abrir aluno por aluno.'],
+        prompts: [
+          '"Me dê um panorama da carteira: alunos ativos, parados, sem treino vigente e com mensalidade em atraso."',
+          '"Quem dos meus alunos não treina há mais de 10 dias? Ordene por dias sem treinar."',
+          '"Quem está com programa de treino vencido ou vencendo nos próximos 7 dias?"',
+          '"O que eu tenho na agenda desta semana? Agrupe por dia."',
+          '"Quais alunos treinaram mais e quais treinaram menos no último mês?"',
+        ],
+      },
+      {
+        h2: 'Prompts para preparar a sessão',
+        paragraphs: ['Os cinco minutos antes do aluno chegar, sem abrir ficha por ficha.'],
+        prompts: [
+          '"Me dê o resumo da [aluna] antes da sessão de amanhã: anamnese, última avaliação, últimas sessões e o que ela relatou."',
+          '"O que o [aluno] respondeu na anamnese sobre lesões e cirurgias?"',
+          '"Mostre as últimas 5 sessões do [aluno]: o que ele fez, cargas e observações."',
+          '"Abra a ficha da [aluna] aqui na conversa."',
+        ],
+      },
+      {
+        h2: 'Prompts de evolução e resultado',
+        paragraphs: ['A conversa de renovação muda quando você chega com número em vez de impressão.'],
+        prompts: [
+          '"Como está a evolução do agachamento do [aluno] nos últimos 3 meses? Carga, repetições e volume."',
+          '"Compare a primeira e a última avaliação física da [aluna] e escreva um resumo da evolução para eu mandar para ela."',
+          '"Em quais exercícios o [aluno] estagnou nas últimas 6 semanas?"',
+          '"Prepare os argumentos da conversa de renovação da [aluna] com base na evolução dela nos últimos 3 meses."',
+        ],
+      },
+      {
+        h2: 'Prompts para atualizar treino (com permissão de escrita)',
+        paragraphs: [
+          'Peça sempre a proposta antes de aplicar. O CoachPilot recusa programa com erro de estrutura antes de gravar, avisa no portal o que mudou e deixa desfazer por 7 dias. A prescrição continua sendo sua: a IA escreve e cadastra o que você decidiu.',
+        ],
+        prompts: [
+          '"Leia o guia de prescrição do CoachPilot e a minha biblioteca de exercícios antes de escrever qualquer treino nesta conversa."',
+          '"O [aluno] relatou dor no ombro. Eu quero tirar desenvolvimento e supino reto e manter o volume de peito com pegada neutra. Escreva a proposta e me mostre antes de aplicar."',
+          '"O treino da [aluna] vence sexta. Eu decidi manter o split e subir a faixa para 6 a 8 nos multiarticulares. Escreva a nova versão com os vídeos da minha biblioteca e me mostre antes de aplicar."',
+          '"Troque o leg press do treino B do [aluno] por um exercício da minha biblioteca que trabalhe o mesmo padrão."',
+          '"Valide este programa antes de eu aplicar: [colar]. Me diga se tem algum erro de estrutura."',
+          '"Mostre o programa atual do [aluno] completo, treino por treino."',
+          '"Desfaça a última alteração que você fez no treino do [aluno]."',
+        ],
+      },
+      {
+        h2: 'Por que isso não é só "um ChatGPT com acesso a planilha"',
+        paragraphs: [
+          'Três coisas fazem diferença no dia a dia. A primeira é que a IA lê o histórico completo — anamnese, avaliações, sessões, cargas e relatos — e não só o que você lembrou de colar. A segunda é que a sua biblioteca de exercícios, com os seus vídeos, tem prioridade: o treino sai com o seu padrão, não com o vídeo aleatório da internet. A terceira é que a escrita tem trava: um aluno por vez, proposta antes, notificação e desfazer.',
+          'Na segurança, o acesso é restrito à sua conta, com a permissão que você escolheu e revogação imediata. Texto escrito por aluno é tratado como dado, nunca como instrução. Os detalhes estão em [ChatGPT e dados de alunos: é seguro?](/blog/chatgpt-dados-alunos-personal-trainer-seguranca).',
+        ],
+      },
+    ],
+    faqs: [
+      { q: 'O ChatGPT consegue ver os dados dos meus alunos?', a: 'Só se você conectar. Com o plugin oficial do CoachPilot no ChatGPT, a IA lê os dados da sua conta com a permissão que você autorizou — e você revoga quando quiser em Configurações → Conexões.' },
+      { q: 'O plugin do CoachPilot é oficial?', a: 'Sim. Ele está publicado no Diretório de Plugins do ChatGPT desde agosto de 2026, após aprovação para publicação pela OpenAI. Aprovação não é endosso nem selo de segurança: a responsabilidade pelo app continua sendo do CoachPilot.' },
+      { q: 'A IA pode alterar o treino sem eu ver?', a: 'Não sem permissão de escrita, que você escolhe ao conectar. Mesmo com ela, a proposta aparece na conversa, a alteração é de um aluno por vez, gera notificação no portal e pode ser desfeita por 7 dias.' },
+      { q: 'Funciona no Claude e no Gemini?', a: 'Sim. Por baixo, o plugin é um servidor MCP, padrão aberto. No Claude, você adiciona o conector; no Gemini, o caminho hoje é mais técnico.' },
+    ],
+    related: [
+      { label: '30 prompts de ChatGPT para personal trainer', to: '/blog/prompts-de-chatgpt-para-personal-trainer' },
+      { label: 'Gerenciar alunos e treinos pelo ChatGPT', to: '/blog/gerenciar-alunos-e-treinos-pelo-chatgpt' },
+      { label: 'Como instalar o CoachPilot no ChatGPT', to: '/blog/como-instalar-coachpilot-no-chatgpt' },
+    ],
+  },
+  {
+    slug: 'prompts-de-anamnese-e-avaliacao-fisica',
+    title: 'Prompts de ChatGPT para anamnese e avaliação física (personal trainer)',
+    description: 'Prompts para personal trainer criar questionário de anamnese, PAR-Q, roteiro de avaliação física e relatório de evolução no ChatGPT — com os cuidados de LGPD e os limites do que a IA pode interpretar.',
+    h1: 'Prompts de ChatGPT para anamnese e avaliação física',
+    datePublished: '2026-11-14',
+    dateModified: '2026-11-14',
+    readingMinutes: 8,
+    intro: 'Anamnese e avaliação são o momento em que o personal mais escreve e menos tem tempo: questionário, roteiro, cálculo, relatório para o aluno. A IA acelera tudo isso — desde que fique no papel de organizar e redigir, e não de diagnosticar. Estes prompts cobrem do primeiro contato ao relatório de reavaliação, com os cuidados de dado sensível que a LGPD exige.',
+    sections: [
+      {
+        h2: 'Prompts para criar a anamnese',
+        paragraphs: ['Uma anamnese curta e bem dividida é respondida inteira; a de 50 perguntas volta pela metade.'],
+        prompts: [
+          '"Crie um questionário de anamnese para personal trainer com no máximo 20 perguntas, em 5 blocos: saúde e medicamentos, lesões e dores, rotina e sono, histórico de treino, objetivo e disponibilidade. Use linguagem simples e respostas de múltipla escolha sempre que possível."',
+          '"Adapte este questionário [colar] para consultoria online: o aluno vai responder sozinho pelo celular, então as perguntas precisam ser autoexplicativas e rápidas."',
+          '"Escreva a versão em português simples do PAR-Q+ que eu uso, mantendo o sentido de cada pergunta, e marque quais respostas positivas exigem liberação médica antes do início do treino."',
+          '"Escreva o texto de consentimento que vai junto da anamnese explicando, em linguagem clara, que os dados de saúde serão usados para prescrição, armazenados no sistema e que o aluno pode pedir exclusão. Eu vou revisar com o meu jurídico."',
+        ],
+      },
+      {
+        h2: 'Prompts para interpretar respostas (sem diagnosticar)',
+        paragraphs: ['A IA aponta o que merece atenção; quem decide é você — e, quando for o caso, o médico ou fisioterapeuta do aluno.'],
+        prompts: [
+          '"Estas são as respostas de anamnese de um aluno, sem identificação [colar]. Liste os pontos de atenção para a prescrição de treino de força e o que eu deveria perguntar na primeira conversa. Não faça diagnóstico."',
+          '"Liste o que eu deveria confirmar com o médico de um aluno de [idade] anos com [condição], antes de iniciar treino de força 2x/semana."',
+          '"Com base nestas restrições relatadas [colar], liste os exercícios e padrões de movimento que eu devo evitar ou adaptar, com o motivo de cada um."',
+        ],
+      },
+      {
+        h2: 'Prompts para avaliação física',
+        paragraphs: ['Roteiro, ficha e explicação para o aluno — o cálculo fica com ferramenta de fórmula declarada.'],
+        prompts: [
+          '"Monte um roteiro de avaliação física de 40 minutos para primeira consulta: medidas, dobras pelo protocolo [protocolo], testes de força e mobilidade. Em ordem, com o tempo de cada etapa."',
+          '"Escreva uma ficha de reavaliação trimestral comparando dados antigos e novos, com campos para peso, % de gordura, perímetros, testes de força e observações."',
+          '"Explique para um aluno leigo, em 5 linhas, o que significa o percentual de gordura que ele teve e por que a balança sozinha engana."',
+        ],
+        callout: {
+          title: 'Calcule antes de pedir o relatório',
+          text: 'Para o cálculo em si, use ferramentas com fórmula declarada em vez de pedir conta ao chat: a [calculadora de dobras cutâneas](/calculadoras/dobras-cutaneas) e a [de 1RM](/calculadoras/1rm) são gratuitas e mostram o protocolo usado. Depois, a IA redige o relatório.',
+        },
+      },
+      {
+        h2: 'Prompts para o relatório de evolução do aluno',
+        paragraphs: ['O relatório bem escrito é a melhor peça de retenção que existe — e o que mais demora para fazer à mão.'],
+        prompts: [
+          '"Transforme estes dados de duas avaliações [colar] em um relatório de evolução curto para o aluno, linguagem simples e motivadora, sem prometer resultado e destacando o que melhorou primeiro."',
+          '"Escreva a mensagem de WhatsApp que acompanha o relatório de reavaliação, em 4 linhas, convidando o aluno para conversar sobre a próxima fase."',
+          '"Os números desta reavaliação pioraram [colar]. Escreva um feedback honesto, sem culpar o aluno, com 3 ajustes práticos para o próximo ciclo."',
+        ],
+      },
+      {
+        h2: 'O cuidado de LGPD que não é opcional',
+        paragraphs: [
+          'Anamnese e avaliação são dados pessoais sensíveis de saúde. Colar isso numa IA envia o dado a um provedor no exterior — o que exige consentimento específico do aluno para essa finalidade. A regra prática: anonimize sempre que puder ("mulher, 45 anos, hipertensa controlada") e cole só o necessário para o pedido.',
+          'No CoachPilot, a anamnese e as avaliações já ficam no sistema, com histórico e gráfico de evolução automáticos. Com o plugin oficial no ChatGPT, você não precisa colar nada: a IA lê da sua conta, só com a permissão que você autorizou, e você revoga quando quiser. Um prompt como "compare a primeira e a última avaliação da Carla e escreva o resumo para ela" resolve o relatório inteiro.',
+        ],
+        callout: {
+          title: 'Anamnese digital, avaliação com gráfico e IA conectada',
+          text: 'O CoachPilot guarda anamnese, avaliações e fotos de evolução de cada aluno — e é nativamente integrado com IA, com plugin oficial no ChatGPT. Grátis para até 3 alunos.',
+          cta: { label: 'Conhecer a avaliação física digital', to: '/avaliacao-fisica-digital' },
+        },
+      },
+    ],
+    faqs: [
+      { q: 'O ChatGPT pode fazer a anamnese do aluno?', a: 'Ele pode criar e organizar o questionário e apontar pontos de atenção nas respostas. A interpretação clínica e a decisão de liberar o treino são do profissional — e do médico, quando a anamnese indicar.' },
+      { q: 'Posso colar a avaliação física do aluno no ChatGPT?', a: 'Com consentimento específico do aluno, sim, mas prefira anonimizar. Com o plugin do CoachPilot, a IA lê a avaliação da sua conta sem você colar nada, com a permissão que você autorizou.' },
+      { q: 'O ChatGPT calcula percentual de gordura?', a: 'Ele erra contas com frequência. Use uma calculadora com o protocolo declarado, como a de dobras cutâneas do CoachPilot, e peça à IA só a redação do relatório.' },
+    ],
+    related: [
+      { label: '30 prompts de ChatGPT para personal trainer', to: '/blog/prompts-de-chatgpt-para-personal-trainer' },
+      { label: 'Avaliação física digital', to: '/avaliacao-fisica-digital' },
+      { label: 'ChatGPT e dados de alunos: é seguro?', to: '/blog/chatgpt-dados-alunos-personal-trainer-seguranca' },
+    ],
+  },
+  {
+    slug: 'prompts-de-whatsapp-para-personal-trainer',
+    title: 'Prompts de ChatGPT para mensagens de WhatsApp de personal trainer',
+    description: 'Prompts prontos para personal trainer escrever mensagens de WhatsApp no ChatGPT: boas-vindas, aluno sumido, cobrança de mensalidade, renovação, reajuste de preço, aniversário e reativação de ex-aluno.',
+    h1: 'Prompts de ChatGPT para mensagens de WhatsApp de personal trainer',
+    datePublished: '2026-11-14',
+    dateModified: '2026-11-14',
+    readingMinutes: 8,
+    intro: 'A mensagem que você adia escrever — cobrar a mensalidade, chamar o aluno que sumiu, anunciar reajuste — é exatamente a que mais pesa no faturamento. A IA escreve em segundos, no tom certo, sem constrangimento. Estes prompts cobrem o ciclo inteiro do aluno no WhatsApp, e o fim do artigo mostra como tirar a parte mais repetitiva (cobrança e lembrete) das suas mãos.',
+    sections: [
+      {
+        h2: 'Como pedir para a mensagem não soar robótica',
+        paragraphs: [
+          'Três instruções mudam o resultado: dê o seu tom ("direto, informal, sem emoji excessivo"), limite o tamanho ("no máximo 4 linhas", porque WhatsApp longo não é lido) e peça variações ("me dê 3 versões") para escolher a que parece com você. Se puder, cole uma mensagem real sua como exemplo de estilo.',
+        ],
+        prompts: [
+          '"A partir de agora, escreva mensagens de WhatsApp no meu estilo: [descreva, ex.: informal, direto, chamo o aluno pelo primeiro nome, uso no máximo 1 emoji]. Exemplo de mensagem minha: [colar]. Sempre no máximo 4 linhas e sempre 3 versões."',
+        ],
+      },
+      {
+        h2: 'Começo: boas-vindas e primeira semana',
+        paragraphs: ['A primeira semana define se o aluno fica. Mensagens curtas e no momento certo mostram acompanhamento desde o primeiro dia.'],
+        prompts: [
+          '"Escreva a mensagem de boas-vindas para um aluno novo de [modalidade], explicando em 4 linhas como vai funcionar a primeira semana, como ele recebe o treino e como falar comigo."',
+          '"Escreva a mensagem do terceiro dia de treino perguntando como o aluno está se sentindo, que mostre cuidado sem soar como formulário."',
+          '"Escreva o lembrete da véspera da avaliação física dizendo o que o aluno precisa levar e como chegar (jejum, roupa, horário)."',
+        ],
+      },
+      {
+        h2: 'Retenção: aluno sumido, falta e desmotivação',
+        paragraphs: ['O aluno que some raramente avisa que vai sair. A mensagem certa, na hora certa, recupera boa parte deles.'],
+        prompts: [
+          '"Escreva uma mensagem curta para um aluno que faltou duas semanas, sem tom de cobrança, convidando para retomar com uma data concreta."',
+          '"Escreva uma mensagem para aluna que disse estar desmotivada por não ver resultado, reconhecendo o sentimento e propondo uma reavaliação para mostrar o que já mudou."',
+          '"Escreva 3 versões de mensagem de reativação para ex-aluno que parou há 3 meses, com uma oferta de retorno de [oferta], sem parecer desesperado."',
+        ],
+        callout: {
+          title: 'Saber quem está sumindo antes de escrever',
+          text: 'O prompt escreve a mensagem, mas alguém precisa descobrir quem está parado. Com o plugin oficial do CoachPilot no ChatGPT, pergunte "quem não treina há mais de 10 dias?" e a resposta vem da sua carteira real — depois, "escreva a mensagem para cada um citando o último treino dele".',
+          cta: { label: 'Ver os prompts com dados reais', to: '/blog/prompts-chatgpt-com-dados-dos-alunos' },
+        },
+      },
+      {
+        h2: 'Dinheiro: cobrança, reajuste e renovação',
+        paragraphs: ['As mensagens que mais se adiam. Peça tom cordial e firme ao mesmo tempo, e sempre com o próximo passo claro.'],
+        prompts: [
+          '"Escreva um lembrete educado de mensalidade vencida há [x] dias, em 3 linhas, com o link de pagamento no final e sem constranger o aluno."',
+          '"Escreva o segundo lembrete, para mensalidade vencida há 15 dias, mais firme mas ainda cordial, informando que o treino fica pausado a partir de [data]."',
+          '"Escreva o comunicado de reajuste de [valor antigo] para [valor novo] a partir de [mês], justificando pelo que melhorou no acompanhamento, com 30 dias de antecedência."',
+          '"Prepare a mensagem de renovação do plano trimestral da [aluna], destacando a evolução dela: [dados]. Termine com uma pergunta simples de sim ou não."',
+        ],
+      },
+      {
+        h2: 'Relacionamento: aniversário, conquista e indicação',
+        paragraphs: ['Pequenos gestos que viram indicação. Cite algo específico do aluno: é o que separa cuidado de mensagem em massa.'],
+        prompts: [
+          '"Escreva uma mensagem de aniversário para aluno, curta e pessoal, que cite [algo específico dele, ex.: a meta de correr 10 km]."',
+          '"Escreva a mensagem parabenizando a aluna por [conquista, ex.: 50 treinos no mês, primeira barra fixa], pedindo autorização para eu postar."',
+          '"Escreva um pedido de indicação para um aluno satisfeito, logo após a reavaliação, oferecendo [benefício] para ele e para o indicado."',
+        ],
+      },
+      {
+        h2: 'O que não precisa mais de mensagem',
+        paragraphs: [
+          'Parte desses textos existe só porque a operação é manual. No CoachPilot, a cobrança da mensalidade sai por Pix automático com o Mercado Pago conectado, o aluno recebe o treino e os avisos por notificação no app, e o chat do app do aluno fala direto com você — sem misturar com o WhatsApp pessoal.',
+          'Sobram para a IA as mensagens que pedem toque humano: retenção, renovação e relacionamento. E, com o plugin no ChatGPT, elas saem com o dado do aluno em vez de frase genérica.',
+        ],
+        callout: {
+          title: 'Menos cobrança manual, mais tempo para o aluno',
+          text: 'CoachPilot: gestão de alunos, treinos, agenda e financeiro por Pix, nativamente integrado com IA pelo plugin oficial no ChatGPT. Grátis para até 3 alunos.',
+          cta: { label: 'Começar grátis', to: '/signup' },
+        },
+      },
+    ],
+    faqs: [
+      { q: 'Como cobrar aluno de personal sem constrangimento?', a: 'Com lembrete curto, educado e com o link de pagamento pronto — ou, melhor, com cobrança automática por Pix, que tira a conversa da sua mão. O prompt de cobrança deste artigo gera as três versões do lembrete.' },
+      { q: 'Qual mensagem mandar para aluno que sumiu?', a: 'Uma mensagem curta, sem cobrança, que demonstre cuidado e proponha uma data concreta para retomar. Mandar cedo, por volta de 10 dias sem treino, recupera mais do que esperar o aluno avisar que saiu.' },
+      { q: 'O ChatGPT sabe quais alunos estão sumidos?', a: 'Não sozinho. Com o plugin oficial do CoachPilot no ChatGPT, ele consulta a sua carteira e lista quem está parado há mais tempo, para você escrever a mensagem certa para cada um.' },
+    ],
+    related: [
+      { label: '30 prompts de ChatGPT para personal trainer', to: '/blog/prompts-de-chatgpt-para-personal-trainer' },
+      { label: 'Prompts com os dados reais dos alunos', to: '/blog/prompts-chatgpt-com-dados-dos-alunos' },
+      { label: 'Como conseguir mais alunos', to: '/blog/como-conseguir-mais-alunos-personal-trainer' },
+    ],
+  },
+  {
+    slug: 'prompts-de-instagram-para-personal-trainer',
+    title: 'Prompts de Instagram para personal trainer: legendas, Reels e carrossel',
+    description: 'Prompts prontos para personal trainer criar conteúdo de Instagram no ChatGPT: calendário editorial, legendas, roteiros de Reels, carrosséis, stories e bio — com a sua voz e sem conteúdo genérico.',
+    h1: 'Prompts de ChatGPT para Instagram de personal trainer',
+    datePublished: '2026-11-14',
+    dateModified: '2026-11-14',
+    readingMinutes: 8,
+    intro: 'O problema do conteúdo feito com IA não é a IA: é o prompt genérico, que produz o mesmo post motivacional de todo mundo. Os prompts abaixo começam definindo o seu público e a sua voz, e depois cobrem o mês inteiro — calendário, legenda, Reels, carrossel, stories e bio. No fim, como transformar resultado real dos alunos em conteúdo que vende.',
+    sections: [
+      {
+        h2: 'Primeiro: ensine a IA quem você é',
+        paragraphs: ['Rode este prompt uma vez no começo da conversa. Todo o resto sai melhor.'],
+        prompts: [
+          '"Você vai me ajudar com conteúdo de Instagram. Sou personal trainer em [cidade], atendo [presencial/online], meu público é [perfil, ex.: mulheres de 30 a 50 anos que nunca gostaram de academia]. Meu tom é [ex.: direto, bem-humorado, sem promessa milagrosa]. Eu não falo de [temas que evita]. Confirme o que entendeu em 5 linhas antes de criarmos qualquer coisa."',
+        ],
+      },
+      {
+        h2: 'Planejamento: calendário e pautas',
+        paragraphs: ['Constância vence viralização. Planeje o mês de uma vez e pare de decidir o post do dia na hora.'],
+        prompts: [
+          '"Monte um calendário editorial de 4 semanas, 3 posts por semana: 1 educativo, 1 de prova (resultado ou bastidor) e 1 de conversão. Para cada post: formato, tema e gancho da primeira frase."',
+          '"Liste 20 dúvidas reais que o meu público tem sobre treino, do jeito que eles perguntariam no Google, para eu transformar em posts."',
+          '"Liste 10 mitos de treino comuns entre [público] e, para cada um, a explicação correta em uma frase e o que eu preciso checar em fonte científica antes de publicar."',
+        ],
+      },
+      {
+        h2: 'Legendas e carrosséis',
+        paragraphs: ['Carrossel educativo é o formato que mais gera salvamento — e salvamento é o sinal que o algoritmo mais valoriza em conteúdo de nicho.'],
+        prompts: [
+          '"Escreva 5 legendas sobre consistência de treino, tom direto, sem emoji excessivo, com uma pergunta no final que gere comentário."',
+          '"Monte um carrossel de 7 slides desmontando o mito [mito]: slide 1 com gancho, 5 slides com uma ideia curta cada e slide final com chamada para salvar o post."',
+          '"Transforme esta resposta que eu dei a um aluno no WhatsApp [colar] em um carrossel educativo de 6 slides, mantendo o meu jeito de explicar."',
+        ],
+      },
+      {
+        h2: 'Reels e stories',
+        paragraphs: ['No Reels, os 3 primeiros segundos decidem tudo. Peça vários ganchos e escolha o melhor.'],
+        prompts: [
+          '"Crie um roteiro de Reels de 30 segundos sobre [tema], com gancho nos 3 primeiros segundos, 3 pontos e chamada para ação. Indique o que aparece na tela em cada trecho."',
+          '"Escreva 5 ganchos diferentes para um Reels sobre [tema] e diga qual tende a reter mais e por quê."',
+          '"Crie uma sequência de 5 stories com enquete e caixinha de perguntas sobre [tema], terminando com convite para avaliação gratuita."',
+        ],
+      },
+      {
+        h2: 'Bio, destaques e conversão',
+        paragraphs: ['Conteúdo atrai; bio e post de vagas convertem. Diga para quem você é — e para quem não é.'],
+        prompts: [
+          '"Escreva 5 opções de bio de Instagram para personal trainer com o meu público e diferencial [diferencial], em até 150 caracteres, com chamada para o link."',
+          '"Escreva o post de abertura de vagas para [número] alunos de consultoria online, com o que está incluso, para quem é e para quem não é, e chamada para o direct."',
+        ],
+      },
+      {
+        h2: 'O conteúdo que mais converte: resultado real',
+        paragraphs: [
+          'Antes e depois, evolução de carga e números de avaliação convertem mais que qualquer post motivacional — e são justamente o que a IA não tem como inventar. Com autorização do aluno, use dados reais: "Carla subiu de 40 para 70 kg no agachamento em 4 meses" vale mais do que dez dicas genéricas.',
+          'No CoachPilot, esses dados já estão organizados: avaliações com gráfico, histórico de carga por exercício e a imagem de compartilhamento que o próprio aluno posta no story ao bater uma meta. Com o plugin oficial no ChatGPT, peça "escreva um post sobre a evolução do agachamento da Carla nos últimos 4 meses" e a IA busca os números certos — você só confirma a autorização dela e publica.',
+        ],
+        callout: {
+          title: 'Prova de resultado sem garimpar planilha',
+          text: 'O CoachPilot organiza a evolução de cada aluno e é nativamente integrado com IA pelo plugin oficial no ChatGPT. Grátis para até 3 alunos.',
+          cta: { label: 'Começar grátis', to: '/signup' },
+        },
+      },
+    ],
+    faqs: [
+      { q: 'Pode usar ChatGPT para criar conteúdo de Instagram de personal?', a: 'Sim, e funciona bem quando você define público, tom e temas antes. O cuidado é revisar informação técnica e não publicar promessa de resultado ou orientação de dieta, que é atribuição do nutricionista.' },
+      { q: 'Como evitar que o conteúdo da IA fique genérico?', a: 'Dê à IA o seu público, a sua voz e exemplos reais — dúvidas de alunos, respostas suas, resultados autorizados. Conteúdo com dado real é o que a IA sozinha não consegue copiar.' },
+      { q: 'Posso postar resultado de aluno?', a: 'Com autorização expressa dele, sim. Foto e dado de evolução são dados pessoais; peça o consentimento por escrito e respeite se o aluno preferir não aparecer.' },
+    ],
+    related: [
+      { label: '30 prompts de ChatGPT para personal trainer', to: '/blog/prompts-de-chatgpt-para-personal-trainer' },
+      { label: 'Como conseguir mais alunos', to: '/blog/como-conseguir-mais-alunos-personal-trainer' },
+      { label: 'Prompts de WhatsApp para personal', to: '/blog/prompts-de-whatsapp-para-personal-trainer' },
+    ],
+  },
+  {
+    slug: 'prompts-para-consultoria-online-personal-trainer',
+    title: 'Prompts de ChatGPT para consultoria online de personal trainer',
+    description: 'Prompts para personal trainer estruturar consultoria online no ChatGPT: proposta comercial, onboarding, check-in semanal, feedback por vídeo, ajuste de treino à distância e renovação.',
+    h1: 'Prompts de ChatGPT para consultoria online de personal trainer',
+    datePublished: '2026-11-14',
+    dateModified: '2026-11-14',
+    readingMinutes: 9,
+    intro: 'Consultoria online é onde o personal quebra o teto de horas — e onde a operação mais pesa: proposta, onboarding, check-in, feedback e ajuste de treino para dezenas de alunos que você não vê. A IA faz boa parte da escrita. Estes prompts cobrem o ciclo do aluno online do primeiro contato à renovação, e o fim mostra como cortar a etapa que mais consome tempo: ler o check-in e atualizar o treino.',
+    sections: [
+      {
+        h2: 'Prompts para vender a consultoria',
+        paragraphs: ['Consultoria online vende quando o aluno entende exatamente o que recebe. Clareza de entregável vale mais que desconto.'],
+        prompts: [
+          '"Escreva a proposta comercial de um plano de consultoria online de 3 meses para [perfil], no valor de [valor], com entregáveis claros (treino, ajustes, check-ins, canal de contato), o que não está incluso e a política de cancelamento."',
+          '"Monte 3 planos de consultoria (básico, completo e premium) a partir destes entregáveis [lista], com preço sugerido por ancoragem e o argumento de cada um. Eu defino o valor final."',
+          '"Escreva as respostas para as 5 objeções mais comuns de quem pensa em contratar consultoria online: preço, medo de não ter acompanhamento, falta de tempo, já tentei e não deu certo, prefiro presencial."',
+        ],
+      },
+      {
+        h2: 'Prompts para o onboarding',
+        paragraphs: ['Sem o aluno na sua frente, o onboarding substitui a primeira sessão. Ele precisa ser guiado, curto e com datas.'],
+        prompts: [
+          '"Escreva a sequência de onboarding da primeira semana de um aluno online: dia 0 boas-vindas, dia 1 anamnese, dia 2 vídeos de avaliação de movimento, dia 3 entrega do treino, dia 7 primeiro check-in. Uma mensagem curta por etapa."',
+          '"Liste os 6 vídeos de avaliação de movimento que eu devo pedir a um aluno online (ex.: agachamento livre de frente e de lado) e escreva a instrução de gravação de cada um."',
+          '"Escreva um guia de uma página para o aluno online: como ler o treino, como registrar cargas, quando falar comigo e o que fazer se sentir dor."',
+        ],
+      },
+      {
+        h2: 'Prompts de check-in e feedback',
+        paragraphs: ['Check-in bom é curto e comparável semana a semana. Feedback bom corrige pouco por vez.'],
+        prompts: [
+          '"Crie um check-in semanal de 6 perguntas, rápido de responder pelo celular, que me diga aderência, energia, sono, dor e percepção de esforço em escala de 0 a 10."',
+          '"Estas são as respostas de check-in de um aluno [colar, sem nome]. Resuma em 3 linhas o que mudou em relação à semana passada e o que merece a minha atenção."',
+          '"Escreva um feedback para o aluno sobre o vídeo de agachamento que ele mandou, a partir das minhas observações [colar], em tom de incentivo, com no máximo 2 correções por vez."',
+        ],
+      },
+      {
+        h2: 'Prompts para ajustar treino à distância',
+        paragraphs: ['Viagem, falta de equipamento, nova fase: você decide o ajuste, a IA reescreve e destaca o que mudou para o aluno.'],
+        prompts: [
+          '"O aluno relatou que vai viajar 2 semanas e só terá halteres até 10 kg. Adapte o programa dele [colar] mantendo o estímulo principal de cada dia."',
+          '"Eu decidi a progressão da próxima fase: [decisão]. Reescreva o programa do aluno [colar] com essa mudança e destaque o que mudou para eu mandar junto."',
+          '"Escreva a mensagem de renovação para o fim do trimestre, resumindo a evolução do aluno [dados] e propondo o objetivo da próxima fase."',
+        ],
+      },
+      {
+        h2: 'O gargalo da consultoria: ler tudo e atualizar o treino',
+        paragraphs: [
+          'Com 30 alunos online, o trabalho não é escrever — é ler. Conferir quem treinou, quem sumiu, quem relatou dor, quem está com o treino vencendo, e então atualizar um por um. Colar check-in no ChatGPT resolve a redação, mas não a varredura.',
+          'É aí que o CoachPilot entra. O aluno treina pelo app, registra carga e fala com você no chat do próprio app. Com o plugin oficial do CoachPilot no ChatGPT, a varredura vira pergunta: "quem não treinou esta semana?", "quem relatou dor?", "quem está com treino vencendo?". E o ajuste vira pedido: você decide a mudança, a IA escreve a nova versão com os vídeos da sua biblioteca e grava no app do aluno depois da sua aprovação.',
+        ],
+        callout: {
+          title: 'Consultoria online com IA nativa',
+          text: 'App do aluno com treino, registro de carga e chat direto com você; gestão, agenda e Pix no portal; e plugin oficial no ChatGPT, publicado no Diretório de Plugins após aprovação da OpenAI. Grátis para até 3 alunos.',
+          cta: { label: 'Conhecer o app do aluno', to: '/app-de-treino-para-alunos' },
+        },
+      },
+    ],
+    faqs: [
+      { q: 'Como fazer check-in de consultoria online?', a: 'Com poucas perguntas objetivas e semanais — aderência, energia, sono, dor e esforço — respondidas pelo celular. O prompt de check-in deste artigo gera um modelo de 6 perguntas.' },
+      { q: 'Dá para atender mais alunos online com IA?', a: 'Sim, principalmente cortando o tempo de leitura e atualização. Com o plugin do CoachPilot no ChatGPT, você pergunta quem precisa de atenção e aplica o ajuste que decidiu sem redigitar o treino.' },
+      { q: 'A IA pode responder os alunos por mim?', a: 'Ela pode escrever rascunhos, mas o acompanhamento é o que o aluno compra. Use a IA para escrever mais rápido e revisar; o julgamento e o contato continuam seus.' },
+    ],
+    related: [
+      { label: '30 prompts de ChatGPT para personal trainer', to: '/blog/prompts-de-chatgpt-para-personal-trainer' },
+      { label: 'App de treino para alunos', to: '/app-de-treino-para-alunos' },
+      { label: 'Prompts com os dados reais dos alunos', to: '/blog/prompts-chatgpt-com-dados-dos-alunos' },
+    ],
+  },
+  {
     slug: 'melhores-apps-personal-trainer-com-ia',
     title: 'Melhores Apps para Personal Trainer com IA em 2026: Comparativo',
     description: 'Comparativo dos apps para personal trainer com IA em 2026: MFIT, Tecnofit, TreinoAI, Nexur e CoachPilot. Quatro níveis de IA, o que cada plataforma realmente entrega e quais delas a IA consegue ler e operar de verdade.',
@@ -370,7 +1027,7 @@ export const BLOG_POSTS = [
         h2: 'Como começar',
         paragraphs: [
           'O caminho mais curto é o [plugin do CoachPilot no ChatGPT](/blog/como-instalar-coachpilot-no-chatgpt): instalação em menos de um minuto, funcionando também na conta gratuita do ChatGPT, e incluído nos dois planos do CoachPilot — inclusive no [grátis de até 3 alunos](/precos), sem cartão. Comece autorizando somente leitura e libere a escrita depois de se acostumar com as respostas.',
-          'Se você prefere prompts sem conectar nada, a lista está em [25 prompts de ChatGPT para personal trainer](/blog/prompts-de-chatgpt-para-personal-trainer). E o panorama de gestão além da IA está em [gestão de alunos: guia completo](/blog/gestao-de-alunos-guia-completo).',
+          'Se você prefere prompts sem conectar nada, a lista está em [30 prompts de ChatGPT para personal trainer](/blog/prompts-de-chatgpt-para-personal-trainer). E o panorama de gestão além da IA está em [gestão de alunos: guia completo](/blog/gestao-de-alunos-guia-completo).',
         ],
       },
     ],
@@ -1214,101 +1871,8 @@ export const BLOG_POSTS = [
     related: [
       { label: 'Melhores apps para personal trainer com IA', to: '/blog/melhores-apps-personal-trainer-com-ia' },
       { label: 'Gerenciar alunos e treinos pelo ChatGPT', to: '/blog/gerenciar-alunos-e-treinos-pelo-chatgpt' },
-      { label: '25 prompts de ChatGPT para personal trainer', to: '/blog/prompts-de-chatgpt-para-personal-trainer' },
+      { label: '30 prompts de ChatGPT para personal trainer', to: '/blog/prompts-de-chatgpt-para-personal-trainer' },
       { label: 'IA para personal trainer', to: '/ia-para-personal-trainer' },
-    ],
-  },
-  {
-    slug: 'prompts-de-chatgpt-para-personal-trainer',
-    title: '25 prompts de ChatGPT para personal trainer (2026)',
-    description: 'Prompts prontos para personal trainer usar no ChatGPT, Claude ou Gemini: prescrição, gestão de carteira, retenção, comunicação e conteúdo — incluindo os que só funcionam com a IA conectada ao sistema.',
-    h1: '25 prompts de ChatGPT para personal trainer',
-    datePublished: '2026-08-22',
-    dateModified: '2026-08-22',
-    readingMinutes: 10,
-    intro: 'Prompt bom não é prompt bonito: é prompt que entrega contexto suficiente e pede um formato definido. Reunimos 25 prompts testados para as cinco frentes em que a IA realmente economiza tempo do personal trainer — e separamos os que funcionam em qualquer ChatGPT dos que só fazem sentido com a IA conectada aos seus dados, porque dependem de informação que nenhum modelo tem como adivinhar.',
-    sections: [
-      {
-        h2: 'As três regras que valem para todo prompt',
-        paragraphs: [
-          'Antes da lista, o que separa uma resposta útil de um texto genérico. Primeira: dê contexto específico — objetivo, nível, frequência, restrições, equipamento disponível e as suas diretrizes de prescrição. Segunda: peça o formato de saída, não só o conteúdo ("tabela com exercício, séries, repetições, intervalo e observação"). Terceira: peça para a IA perguntar o que falta antes de responder — é o que evita que ela preencha lacunas com invenção.',
-          'Nos prompts abaixo, substitua o que está entre colchetes. E onde estiver marcado "requer conexão", o prompt só funciona com o [ChatGPT, o Claude ou o Gemini conectados ao CoachPilot](/blog/como-conectar-chatgpt-claude-gemini-ao-coachpilot) — sem isso, a IA não tem de onde tirar o dado e vai inventar.',
-        ],
-      },
-      {
-        h2: 'Prescrição e montagem de treino',
-        paragraphs: ['Funcionam em qualquer IA, sem conexão. O resultado é texto que você revisa e transporta — ou importa, se a plataforma aceitar o formato.'],
-        list: [
-          '"Monte um split ABC para 3x/semana, aluno [nível], objetivo [objetivo], com 6 a 8 exercícios por dia, séries, repetições, intervalo e observação de execução. Antes de montar, me pergunte o que faltar de contexto."',
-          '"Tenho um aluno de 52 anos, sedentário há 10 anos, com hipertensão controlada e dor lombar crônica. Monte um bloco de adaptação de 4 semanas, 2x/semana, e liste o que eu deveria confirmar com o médico dele."',
-          '"Adapte este programa [colar] para uma academia que não tem barra fixa, cabo alto nem leg press, mantendo o estímulo de cada padrão de movimento."',
-          '"Proponha 3 progressões e 3 regressões para cada exercício deste treino [colar], para eu usar conforme a resposta do aluno."',
-          '"Converta este programa de hipertrofia [colar] em uma versão de 30 minutos por sessão, preservando os exercícios principais."',
-          '"Monte um WOD de condicionamento em AMRAP de 12 minutos com equipamento [lista], nível intermediário, e explique o objetivo do estímulo."',
-          '"Revise criticamente este programa que eu montei [colar]: aponte desequilíbrio entre padrões de movimento, volume excessivo e risco para quem tem [restrição]."',
-        ],
-      },
-      {
-        h2: 'Gestão de carteira (requer conexão)',
-        paragraphs: ['Aqui a IA precisa dos seus dados reais. Sem conexão, esses prompts produzem ficção — com conexão, são os que mais economizam tempo, porque respondem em segundos o que exige varredura manual.'],
-        list: [
-          '"Quem dos meus alunos não treina há mais de 10 dias? Ordene por dias sem treinar."',
-          '"Quem está com programa de treino vencido ou vencendo nos próximos 7 dias?"',
-          '"Me dê um panorama da carteira: alunos ativos, parados, sem treino vigente e com mensalidade em atraso."',
-          '"Me dê o resumo completo da [aluna] antes da sessão de amanhã: anamnese, últimas avaliações, últimas sessões e o que ela relatou recentemente."',
-          '"Quais alunos relataram dor nos últimos 15 dias e o que exatamente eles relataram?"',
-          '"Como está a evolução do agachamento do [aluno] nos últimos 3 meses? Carga, repetições e volume."',
-          '"Compare a aderência dos meus alunos no último mês e me diga quem está em risco de sair."',
-          '"O que eu tenho na agenda de quinta e sexta?"',
-        ],
-      },
-      {
-        h2: 'Atualização de treino pelo chat (requer conexão com escrita)',
-        paragraphs: ['Estes escrevem no sistema. Peça sempre a proposta antes da aplicação — a revisão na conversa é onde a sua responsabilidade técnica se exerce.'],
-        list: [
-          '"Leia o guia de prescrição do CoachPilot e a minha biblioteca de exercícios antes de montar qualquer treino nesta conversa."',
-          '"O [aluno] relatou dor no ombro direito. Adapte o programa dele evitando supino reto e desenvolvimento militar, mantendo o volume de peito. Me mostre a proposta antes de aplicar."',
-          '"Meus alunos de hipertrofia entram no terceiro mesociclo. Atualize o programa de cada um aumentando intensidade e reduzindo volume, respeitando a anamnese. Vá de cinco em cinco e me mostre cada proposta."',
-          '"Monte o programa da [aluna] com base no objetivo dela, na última avaliação física e nas cargas que ela registrou, e aplique."',
-          '"Desfaça a última alteração que você fez no treino do [aluno]."',
-        ],
-      },
-      {
-        h2: 'Retenção, comunicação e vendas',
-        paragraphs: ['Funcionam sem conexão, mas ficam bem melhores com ela — porque a IA passa a citar dado real do aluno em vez de falar no genérico.'],
-        list: [
-          '"Escreva uma mensagem curta de WhatsApp para um aluno que faltou duas semanas, sem tom de cobrança, convidando para retomar."',
-          '"Prepare os argumentos da conversa de renovação da [aluna] com base na evolução dela nos últimos 3 meses." (melhor com conexão)',
-          '"Escreva 5 legendas de Instagram sobre consistência de treino, tom direto, sem emoji excessivo, para o público de [perfil de aluno]."',
-          '"Crie um roteiro de check-in mensal de 6 perguntas para consultoria online, que me dê informação útil e seja rápido de responder."',
-          '"Escreva a proposta comercial de um plano de consultoria online de 3 meses, com entregáveis claros, para [perfil], no valor de [valor]."',
-        ],
-      },
-      {
-        h2: 'Os erros que estragam o prompt',
-        paragraphs: [
-          'Quatro padrões que aparecem sempre e derrubam a qualidade da resposta: pedir "monte um treino de hipertrofia" sem contexto nenhum (a IA responde com a ficha média da internet); aceitar a primeira versão sem discutir (a segunda rodada quase sempre é melhor que a primeira); pedir diagnóstico clínico em vez de estrutura de treino (fora do escopo, e fora da sua responsabilidade profissional); e confiar em número que a IA não tinha como saber.',
-          'Esse último é o mais perigoso. Se a IA não está conectada aos seus dados e ainda assim cita a carga que o seu aluno usou, ela está preenchendo lacuna — e no seu trabalho isso vira erro de prescrição. É exatamente esse risco que a conexão elimina: quando a IA lê o dado real, ela não precisa adivinhar. Os três níveis de IA e o que cada um resolve estão em [IA para personal trainer](/blog/ia-para-personal-trainer-o-que-automatizar).',
-        ],
-      },
-      {
-        h2: 'Um cuidado antes de colar dado de aluno no chat',
-        paragraphs: [
-          'Anamnese, avaliação física, foto de evolução e relato de dor são dados pessoais sensíveis de saúde pela LGPD. Colar isso numa IA — ou consultar por conexão — envia a informação a um provedor no exterior, e exige consentimento específico do aluno para essa finalidade. Não é burocracia inútil: é o que separa uso profissional de exposição de dado de terceiro.',
-          'Na prática: peça o consentimento específico junto com a anamnese, colete só o necessário para prescrever e prefira anonimizar quando o dado não for essencial ao pedido ("aluno de 52 anos com hipertensão controlada" resolve, sem nome). Se quiser o quadro completo, está detalhado na [política de privacidade](/privacidade) e no [guia de gestão de alunos](/blog/gestao-de-alunos-guia-completo).',
-        ],
-      },
-    ],
-    faqs: [
-      { q: 'Qual o melhor prompt para montar treino no ChatGPT?', a: 'O que entrega contexto e pede formato: objetivo, nível, frequência, restrições, equipamento e as suas diretrizes, mais o formato de saída desejado e o pedido de que a IA pergunte o que faltar antes de responder.' },
-      { q: 'Por que a IA inventa cargas dos meus alunos?', a: 'Porque ela não tem o dado. Modelos preenchem lacunas quando não têm de onde buscar. Com a IA conectada ao seu sistema por MCP, ela lê o histórico real e para de adivinhar.' },
-      { q: 'Posso colar a anamnese do meu aluno no ChatGPT?', a: 'Tecnicamente sim, mas é dado sensível de saúde: exige consentimento específico do aluno para essa finalidade, porque a informação é enviada a um provedor no exterior. Quando possível, descreva o caso sem identificar o aluno.' },
-      { q: 'Preciso de plano pago de IA para usar esses prompts?', a: 'Não para os prompts de prescrição e comunicação — as versões gratuitas dão conta. Os prompts marcados como "requer conexão" dependem de conectar a IA ao seu sistema, e aí o requisito de plano varia por provedor.' },
-    ],
-    related: [
-      { label: 'Como montar treino com IA na prática', to: '/blog/como-montar-treino-com-ia-chatgpt' },
-      { label: 'IA para personal trainer: o que automatizar', to: '/blog/ia-para-personal-trainer-o-que-automatizar' },
-      { label: 'ChatGPT para personal trainer', to: '/chatgpt-para-personal-trainer' },
     ],
   },
   {
@@ -2311,7 +2875,7 @@ export const BLOG_POSTS = [
     related: [
       { label: 'Como instalar o CoachPilot no ChatGPT', to: '/blog/como-instalar-coachpilot-no-chatgpt' },
       { label: 'Gerenciar alunos e treinos pelo ChatGPT', to: '/blog/gerenciar-alunos-e-treinos-pelo-chatgpt' },
-      { label: '25 prompts de ChatGPT para personal trainer', to: '/blog/prompts-de-chatgpt-para-personal-trainer' },
+      { label: '30 prompts de ChatGPT para personal trainer', to: '/blog/prompts-de-chatgpt-para-personal-trainer' },
       { label: 'ChatGPT para personal trainer', to: '/chatgpt-para-personal-trainer' },
     ],
   },

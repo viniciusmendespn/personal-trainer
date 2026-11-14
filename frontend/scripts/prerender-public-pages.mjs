@@ -161,16 +161,29 @@ function renderSeoPageContent(page) {
   </main>`
 }
 
+// Espelha ProsePrompts/ProseCallout de src/pages/landing/prose.tsx (sem o botão de copiar).
+function renderCallout(c) {
+  const cta = c.cta ? `<p><a href="${c.cta.to}">${escapeHtml(c.cta.label)}</a></p>` : ''
+  return `<aside><p><strong>${escapeHtml(c.title)}</strong></p><p>${inline(c.text)}</p>${cta}</aside>`
+}
+
 function renderBlogPostContent(post) {
   const cover = blogPresentation(post.slug)
+  let promptN = 1
   const sections = post.sections
     .map((s) => {
       const paragraphs = s.paragraphs.map((p) => `<p>${inline(p)}</p>`).join('')
       const list = s.list
         ? `<ul>${s.list.map((item) => `<li>${inline(item)}</li>`).join('')}</ul>`
         : ''
+      let prompts = ''
+      if (s.prompts) {
+        prompts = `<ol start="${promptN}">${s.prompts.map((item) => `<li>${inline(item)}</li>`).join('')}</ol>`
+        promptN += s.prompts.length
+      }
       const table = s.table ? renderTable(s.table) : ''
-      return `<section><h2>${escapeHtml(s.h2)}</h2>${paragraphs}${list}${table}</section>`
+      const callout = s.callout ? renderCallout(s.callout) : ''
+      return `<section><h2>${escapeHtml(s.h2)}</h2>${paragraphs}${list}${prompts}${table}${callout}</section>`
     })
     .join('')
   const faqs = post.faqs.length
